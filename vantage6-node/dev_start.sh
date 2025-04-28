@@ -32,9 +32,9 @@ for dir in $config_dir/*; do
             continue
         fi
 
-        # Source the .env file to set environment variables
-        source "$dotenv_file"
-        python /vantage6/vantage6-node/vantage6/dev_start.py "$config" &
+        # Source the .env file to set environment variables in their own shell as we
+        # start a new shell for each node
+        bash -c "source \"$dotenv_file\" && python /vantage6/vantage6-node/vantage6/dev_start.py \"$config\" &"
     fi
 done
 
