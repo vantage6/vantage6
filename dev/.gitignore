@@ -1,5 +1,5 @@
 # virtual environments
-venv/
+venv*
 .venv/
 
 # debugpy package for use within container
