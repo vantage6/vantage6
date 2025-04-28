@@ -260,5 +260,5 @@ class NodeContext(AppContext):
             Unique identifier for the node
         """
         return hashlib.sha256(
-            self.config.get("api_key").encode(STRING_ENCODING)
+            os.environ.get("V6_API_KEY").encode(STRING_ENCODING)
         ).hexdigest()[:16]
