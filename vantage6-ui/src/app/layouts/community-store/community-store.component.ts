@@ -3,7 +3,7 @@ import {PageHeaderComponent} from "src/app/components/page-header/page-header.co
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {MatToolbar, MatToolbarRow} from "@angular/material/toolbar";
 import {routePaths} from 'src/app/routes';
-import {RouterOutlet} from "@angular/router";
+import {RouterLink, RouterOutlet} from "@angular/router";
 
 @Component({
     selector: 'app-community-store',
@@ -14,6 +14,7 @@ import {RouterOutlet} from "@angular/router";
         MatToolbar,
         MatToolbarRow,
         RouterOutlet,
+        RouterLink,
     ],
     styleUrl: './community-store.component.scss'
 })
