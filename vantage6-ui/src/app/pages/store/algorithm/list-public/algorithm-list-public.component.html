@@ -1,10 +1,13 @@
-<app-page-header title="{{ 'resources.algorithms' | translate }}">
-    <button actions mat-flat-button color="primary" *ngIf="canAddAlgorithm"
-            [routerLink]="routes.algorithmCreate">
-        <mat-icon>add</mat-icon>
-        {{ "algorithm-create.short-title" | translate }}
-    </button>
-</app-page-header>
+<mat-card>
+    <mat-card-content>
+        <h1>{{ 'communitystore.welcome' | translate }}</h1>
+        <span>
+        {{ 'communitystore.introduction' | translate }}
+    </span>
+    </mat-card-content>
+</mat-card>
+
+<app-page-header title="{{ 'communitystore.algorithms' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
     <app-display-algorithms [algorithms]="algorithms"
                             [routeOnClick]="routePaths.communityStoreAlgorithms"></app-display-algorithms>

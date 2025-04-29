@@ -833,5 +833,10 @@
       "length": "Password must be at least 8 characters long",
       "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
     }
+  },
+  "communitystore": {
+    "algorithms": "Algorithms",
+    "welcome": "Welcome",
+    "introduction": "The community store is a place where you can find algorithms that are shared by members of the\n        vantage6 community. More information about vantage6 can be found on\n            <a href='https://vantage6.ai'>vantage6.ai</a>."
   }
 }

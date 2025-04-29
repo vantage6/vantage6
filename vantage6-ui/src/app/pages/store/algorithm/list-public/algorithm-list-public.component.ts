@@ -5,9 +5,6 @@ import {routePaths} from 'src/app/routes';
 import {AlgorithmService} from 'src/app/services/algorithm.service';
 import {PageHeaderComponent} from '../../../../components/page-header/page-header.component';
 import {NgIf} from '@angular/common';
-import {MatButton} from '@angular/material/button';
-import {RouterLink} from '@angular/router';
-import {MatIcon} from '@angular/material/icon';
 import {
   DisplayAlgorithmsComponent
 } from '../../../../components/algorithm/display-algorithms/display-algorithms.component';
@@ -22,9 +19,6 @@ import {TranslateModule} from '@ngx-translate/core';
   imports: [
     PageHeaderComponent,
     NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
     DisplayAlgorithmsComponent,
     MatCard,
     MatCardContent,
@@ -40,8 +34,6 @@ export class AlgorithmListPublicComponent implements OnInit, OnDestroy {
   routes = routePaths;
 
   algorithms: Algorithm[] = [];
-
-  canAddAlgorithm = false;
 
   constructor(
     private algorithmService: AlgorithmService
