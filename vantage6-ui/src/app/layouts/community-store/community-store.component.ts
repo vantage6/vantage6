@@ -1,20 +1,24 @@
 import {Component} from '@angular/core';
-import {PageHeaderComponent} from "src/app/components/page-header/page-header.component";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
-import {MatToolbar, MatToolbarRow} from "@angular/material/toolbar";
+import {MatToolbar} from "@angular/material/toolbar";
 import {routePaths} from 'src/app/routes';
 import {RouterLink, RouterOutlet} from "@angular/router";
+import {BreadcrumbsComponent} from "../../components/breadcrumbs/breadcrumbs.component";
+import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
 
 @Component({
     selector: 'app-community-store',
     templateUrl: './community-store.component.html',
     imports: [
-        PageHeaderComponent,
         MatProgressSpinner,
         MatToolbar,
-        MatToolbarRow,
         RouterOutlet,
         RouterLink,
+        BreadcrumbsComponent,
+        MatSidenav,
+        MatSidenavContainer,
+        MatSidenavContent,
+
     ],
     styleUrl: './community-store.component.scss'
 })

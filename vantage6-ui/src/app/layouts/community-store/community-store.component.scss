@@ -1,7 +1,50 @@
 @import "src/app/styles/config.scss";
 
-.logo {
-  width: 25%;
-  height: auto; /* maintains aspect ratio */
-  padding: 10px
+.layout-container {
+  margin: $spacing-px-4;
+}
+
+mat-toolbar {
+  .logo {
+    height: $spacing-px-12;
+  }
+}
+
+mat-sidenav {
+  max-width: 285px;
+
+  button {
+    width: calc(100% - ($spacing-px-4 * 2));
+    margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;
+    box-sizing: border-box;
+  }
+
+  mat-list-item {
+    padding: 0 $spacing-px-8;
+
+    mat-icon {
+      margin: 0 $spacing-px-4 0 0;
+    }
+  }
+}
+
+mat-sidenav-container {
+  min-height: calc(100% - 56px);
+
+  @media only screen and (min-width: 600px) {
+    min-height: calc(100% - 64px);
+  }
+}
+
+span {
+  color: map-get($vantage-primary, 50);
+  display: flex;
+  align-items: center;
+  &.low-importance {
+    color: map-get($vantage-primary, 200);
+  }
+}
+
+span.store-header{
+  padding-inline: 20px;
 }
