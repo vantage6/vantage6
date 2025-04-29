@@ -53,7 +53,8 @@ from vantage6.node.globals import (
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
     PROXY_SERVER_HOST,
-    PROXY_SERVER_PORT,
+    DEFAULT_PROXY_SERVER_PORT,
+    DEV_NODES_PREDEFINED_PORTS
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -152,7 +153,7 @@ class Node:
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", PROXY_SERVER_PORT))
+        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", DEFAULT_PROXY_SERVER_PORT))
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -181,6 +182,7 @@ class Node:
         # this is where we try to find a port for the proxyserver
 
         port_assigned = False
+                
 
         for try_number in range(5):
             self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
@@ -196,7 +198,21 @@ class Node:
                 self.log.info("Error during attempt %s", try_number)
                 self.log.info("%s: %s", type(e), e)
 
-                proxy_port = random.randint(2048, 16384)
+                # proxy_port = random.randint(2048, 16384)
+
+                # Using randomly generated ports won't work with the dev-environment of the k8s-based
+                # v6, as it runs multiple proxies (for each v6-node) on a single POD, and the
+                # port to access them through a service must be statically defined thrugh its
+                # corresponding helm chart.
+
+                # Provisional workaroud (to continue with the integration of the support for
+                # central functions): instead of random numbers, a sequence of predefined ports
+                # is used.
+                #
+                # Question: could the dev-environment be fixed to three nodes? Supporting an 
+                # undefined number of Nodes would be difficult 
+                proxy_port = DEV_NODES_PREDEFINED_PORTS[try_number % len(DEV_NODES_PREDEFINED_PORTS)]                                
+
                 self.log.warning("Retrying with a different port: %s", proxy_port)
                 os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
 

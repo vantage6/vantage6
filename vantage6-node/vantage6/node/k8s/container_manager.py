@@ -31,7 +31,7 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
     PROXY_SERVER_HOST,
-    PROXY_SERVER_PORT,
+    DEFAULT_PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
@@ -348,7 +348,7 @@ class ContainerManager:
             "PROXY_SERVER_HOST", PROXY_SERVER_HOST
         )
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
-            "PROXY_SERVER_PORT", str(PROXY_SERVER_PORT)
+            "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
         )
         env_vars[ContainerEnvNames.API_PATH.value] = ""
 
