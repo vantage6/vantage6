@@ -499,7 +499,7 @@ class Node:
                         "could not be retrieved!"
                     )
 
-                if self.ctx.config.get("share_logs", False):
+                if self.ctx.config.get("share_logs", True):
                     logs = results.logs
                 else:
                     logs = "Node does not allow sharing algorithm logs"

@@ -94,6 +94,8 @@ class DockerTaskManager(DockerBaseManager):
         requires_pull: bool
             If true, and the Docker image cannot be pulled, don't start the algorithm
             event if a local image is available
+        share_logs: bool
+            If true, share algorithm logs with the server
         """
         self.task_id = task_info["id"]
         self.log = logging.getLogger(f"task ({self.task_id})")

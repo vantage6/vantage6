@@ -178,7 +178,7 @@ class DockerManager(DockerBaseManager):
         # whether to share or not algorithm logs with the server
         # TODO: config loading could be centralized in a class, then validate,
         # set defaults, warn about dangers, etc
-        self.share_logs = config.get("share_logs", False)
+        self.share_logs = config.get("share_logs", True)
 
     def _set_database(self, databases: dict | list) -> None:
         """
