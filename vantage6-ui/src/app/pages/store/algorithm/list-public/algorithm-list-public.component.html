@@ -1,9 +1,7 @@
 <mat-card>
     <mat-card-content>
         <h1>{{ 'communitystore.welcome' | translate }}</h1>
-        <span>
-        {{ 'communitystore.introduction' | translate }}
-    </span>
+        <span [innerHTML]="'communitystore.introduction' | translate | safeHtml"> </span>
     </mat-card-content>
 </mat-card>
 

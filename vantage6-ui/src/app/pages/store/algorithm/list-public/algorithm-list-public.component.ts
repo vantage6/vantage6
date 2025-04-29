@@ -11,6 +11,7 @@ import {
 import {MatCard, MatCardContent} from '@angular/material/card';
 import {MatProgressSpinner} from '@angular/material/progress-spinner';
 import {TranslateModule} from '@ngx-translate/core';
+import {SafeHtmlPipe} from "../../../../pipes/safe-html.pipe";
 
 @Component({
   selector: 'app-algorithm-list',
@@ -23,7 +24,8 @@ import {TranslateModule} from '@ngx-translate/core';
     MatCard,
     MatCardContent,
     MatProgressSpinner,
-    TranslateModule
+    TranslateModule,
+    SafeHtmlPipe
   ]
 })
 export class AlgorithmListPublicComponent implements OnInit, OnDestroy {
@@ -32,7 +34,6 @@ export class AlgorithmListPublicComponent implements OnInit, OnDestroy {
   routePaths = routePaths;
   destroy$ = new Subject<void>();
   routes = routePaths;
-
   algorithms: Algorithm[] = [];
 
   constructor(
