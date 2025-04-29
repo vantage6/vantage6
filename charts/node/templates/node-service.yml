@@ -8,6 +8,16 @@ spec:
 {{ include "node.matchLabels" . | indent 4 }}
     component: node
   ports:
-  - protocol: TCP
-    port:  {{ .Values.node.proxyPort }}
-    targetPort:  {{ .Values.node.proxyPort }}
+    # These ports must match ones defined on DEV_NODES_PREDEFINED_PORTS
+    - name: node1
+      protocol: TCP
+      port:  7654
+      targetPort:  7654
+    - name: node2
+      protocol: TCP
+      port:  6171
+      targetPort:  6171
+    - name: node3
+      protocol: TCP
+      port:  3986
+      targetPort:  3986
