@@ -25,7 +25,8 @@ import traceback
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
-from flasgger import Swagger
+
+# from flasgger import Swagger
 from flask import (
     Flask,
     make_response,
@@ -126,7 +127,7 @@ class ServerApp:
         )
 
         # SWAGGER documentation
-        self.swagger = Swagger(self.app, template=swagger_template)
+        # self.swagger = Swagger(self.app, template=swagger_template)
 
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
@@ -311,13 +312,13 @@ class ServerApp:
             is_refresh=True,
         )
 
-        # Open Api Specification (f.k.a. swagger)
-        self.app.config["SWAGGER"] = {
-            "title": APPNAME,
-            "uiversion": "3",
-            "openapi": "3.0.0",
-            "version": __version__,
-        }
+        # # Open Api Specification (f.k.a. swagger)
+        # self.app.config["SWAGGER"] = {
+        #     "title": APPNAME,
+        #     "uiversion": "3",
+        #     "openapi": "3.0.0",
+        #     "version": __version__,
+        # }
 
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})

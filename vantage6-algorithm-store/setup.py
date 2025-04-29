@@ -32,7 +32,7 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "flasgger==0.9.5",
-        "flask==2.2.5",
+        "flask==3.1.0",
         "Flask-Cors==5.0.1",
         "Flask-Principal==0.4.0",
         "flask-marshmallow==0.15.0",

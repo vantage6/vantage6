@@ -43,7 +43,10 @@ class AlgorithmClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        jwt_payload = jwt.decode(token, options={"verify_signature": False})
+        jwt_payload = jwt.decode(
+            token,
+            options={"verify_signature": False},
+        )
 
         container_identity = jwt_payload["sub"]
 
