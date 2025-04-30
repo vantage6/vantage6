@@ -1,17 +1,17 @@
-import {Component, HostBinding, OnDestroy, OnInit} from '@angular/core';
-import {Subject} from 'rxjs';
-import {Algorithm} from 'src/app/models/api/algorithm.model';
-import {routePaths} from 'src/app/routes';
-import {AlgorithmService} from 'src/app/services/algorithm.service';
-import {PageHeaderComponent} from '../../../../components/page-header/page-header.component';
-import {NgIf} from '@angular/common';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Algorithm } from 'src/app/models/api/algorithm.model';
+import { routePaths } from 'src/app/routes';
+import { AlgorithmService } from 'src/app/services/algorithm.service';
+import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
+import { NgIf } from '@angular/common';
 import {
   DisplayAlgorithmsComponent
 } from '../../../../components/algorithm/display-algorithms/display-algorithms.component';
-import {MatCard, MatCardContent} from '@angular/material/card';
-import {MatProgressSpinner} from '@angular/material/progress-spinner';
-import {TranslateModule} from '@ngx-translate/core';
-import {SafeHtmlPipe} from "../../../../pipes/safe-html.pipe";
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { TranslateModule } from '@ngx-translate/core';
+import { SafeHtmlPipe } from "../../../../pipes/safe-html.pipe";
 
 @Component({
   selector: 'app-algorithm-list',

@@ -1,12 +1,11 @@
-import {Component, Input, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import {
   DisplayAlgorithmComponent
-} from "../../../../components/algorithm/display-algorithm/display-algorithm.component";
-import {AlgorithmLazyProperties} from "../../../../models/api/algorithm.model";
-import {AlgorithmService} from "../../../../services/algorithm.service";
-import {NgIf} from "@angular/common";
-import {MatProgressSpinner} from "@angular/material/progress-spinner";
-import {Algorithm} from "src/app/models/api/algorithm.model";
+} from "src/app/components/algorithm/display-algorithm/display-algorithm.component";
+import { AlgorithmService } from "src/app/services/algorithm.service";
+import { NgIf } from "@angular/common";
+import { MatProgressSpinner } from "@angular/material/progress-spinner";
+import { Algorithm } from "src/app/models/api/algorithm.model";
 
 @Component({
   selector: 'app-read-public',
