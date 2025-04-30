@@ -11,6 +11,7 @@ from threading import Thread
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
+import requests
 from vantage6.common.globals import (
     NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
     InstanceType,
@@ -236,6 +237,30 @@ class NodeClient(ClientBase):
                 )
 
             self.parent.log.debug("Sending algorithm run update to server")
+
+            if "result" in data:
+                headers = {
+                    "Authorization": f"Bearer {self.parent.token}",
+                    "Content-Type": "application/octet-stream",
+                }
+                
+                url = self.parent.generate_path_to("resultstream", False)
+                self.parent.log.debug(f"Making request: {url}")
+
+                response = requests.post(url, data=data["result"], headers=headers)
+
+                if response.status_code != 200:
+                    self.parent.log.error(
+                        f"Failed to upload result to server: {response.text}"
+                    )
+                    return
+
+                result_uuid_response = response.json()
+                result_uuid = result_uuid_response.get("uuid")
+                if not result_uuid:
+                    self.parent.log.error("Failed to upload result to server")
+                    return
+                data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     class AlgorithmStore(ClientBase.SubClient):

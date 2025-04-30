@@ -2,7 +2,8 @@ import logging
 from typing import Union
 import sqlalchemy as sa
 
-from flask import g, request
+from flask import g, request, Response, stream_with_context
+
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
@@ -30,9 +31,12 @@ from vantage6.server.resource.common.output_schema import (
 )
 from vantage6.server.model import Run as db_Run, Node, Task, Collaboration, Organization
 
+import uuid
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
+
 
 
 def setup(api: Api, api_base: str, services: dict) -> None:
@@ -78,6 +82,23 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Result,
         api_base + "/result/<int:id>",
         endpoint="result_with_id",
+        methods=("GET",),
+        resource_class_kwargs=services,
+    )
+
+    api.add_resource(
+        ResultStreams,
+        api_base + "/resultstream",
+        endpoint="result_stream_without_id",
+        methods=("POST",),
+        resource_class_kwargs=services,
+    )
+        
+
+    api.add_resource(
+        ResultStream,
+        api_base + "/resultstream/<int:id>",
+        endpoint="result_stream_with_id",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -743,3 +764,64 @@ class Result(SingleRunBase):
             return run
 
         return result_schema.dump(run, many=False), HTTPStatus.OK
+    
+class ResultStream(SingleRunBase):
+    """Resource for /api/resultstream/<id>"""
+
+    def __init__(self, socketio, mail, api, permissions, config, storage_adapter = None):
+      super().__init__(socketio, mail, api, permissions, config)
+      self.storage_adapter = storage_adapter
+
+    @only_for(("node", "user", "container"))
+    def get(self, id):
+        if not self.storage_adapter:
+            log.warning(
+                "The large result store is not set to azure blob storage, result streaming is not available."
+            )
+            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+        try:
+            log.debug(f"Streaming result for run id={id}")
+            blob_stream = self.storage_adapter.stream_blob(id)
+        except Exception as e:
+            log.error(f"Error streaming result: {e}")
+            return {"msg": "Error streaming result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        def generate():
+            for chunk in blob_stream.chunks():
+                yield chunk
+
+        return Response(
+            stream_with_context(generate()),
+            content_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f"attachment; filename=result_{id}.bin"
+            }
+        )
+  
+class ResultStreams(RunBase):
+  """Resource for /api/resultstream/<id>"""
+
+      
+  def __init__(self, socketio, mail, api, permissions, config, storage_adapter = None):
+    super().__init__(socketio, mail, api, permissions, config)
+    self.storage_adapter = storage_adapter
+
+  @only_for(("node", "user", "container"))
+  def post(self):
+      if not self.storage_adapter:
+            log.warning(
+                "The large result store is not set to azure blob storage, result streaming is not available."
+            )
+            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+      result_uuid = str(uuid.uuid4())
+
+      if not request.content_length:
+          return {"msg": "No content provided!"}, HTTPStatus.BAD_REQUEST
+
+      try:
+          self.storage_adapter.upload_blob(result_uuid, request.stream)
+      except Exception as e:
+          log.error(f"Error uploading result: {e}")
+          return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+      return {"uuid": result_uuid}, HTTPStatus.CREATED

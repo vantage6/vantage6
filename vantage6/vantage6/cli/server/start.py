@@ -146,6 +146,7 @@ def cli_server_start(
         f"uwsgi --http :{internal_port} --gevent 1000 --http-websockets "
         "--master --callable app --disable-logging "
         "--wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py "
+        "--touch-reload /tmp/reload-me " #TODO: Remove again, added for convenient hot reloading
         f"--pyargv {config_file}"
     )
     info(cmd)
@@ -167,6 +168,9 @@ def cli_server_start(
         auto_remove=not keep,
         tty=True,
         network=server_network_mgr.network_name,
+        extra_hosts={  #TODO: Remove again, added for WSL compatibility
+            "host.docker.internal": "host-gateway"
+        },
     )
 
     info(f"Success! container id = {container.id}")

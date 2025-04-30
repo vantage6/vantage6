@@ -73,9 +73,12 @@ from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
+
+from requests import Response as RequestsResponse
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -134,6 +137,18 @@ class ServerApp:
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
+        # Setup storage adapter
+        self.storage_adapter = None
+        if self.ctx.config.get("large_result_store") \
+            and self.ctx.config["large_result_store"].get("connection_string") \
+            and self.ctx.config["large_result_store"].get("type") == "azure_blob_storage":
+            log.info("Using Azure Blob Storage as large result store")
+            self.storage_adapter = AzureStorageService(
+                connection_string=self.ctx.config["large_result_store"]["connection_string"],
+                container_name=self.ctx.config["large_result_store"]["container_name"],
+            )
+        else:
+            log.info("Not using a large result store")
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -502,6 +517,10 @@ class ServerApp:
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
+            # Don't attempt json conversion if it's already a response. Should be done more elegantly
+            elif isinstance(data, RequestsResponse):
+                resp = make_response(data, code)
+                return resp
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
@@ -666,6 +685,7 @@ class ServerApp:
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
+            "storage_adapter": self.storage_adapter,            
             "config": self.ctx.config,
         }
 
