@@ -54,8 +54,7 @@ class PrometheusServer:
         }
         ports = {"9090/tcp": 9090}
 
-        container = self._get_container()
-        if container:
+        if self._is_container_running():
             info("Prometheus is already running!")
             return
 
@@ -129,16 +128,17 @@ class PrometheusServer:
             error(f"Failed to update Prometheus configuration: {e}")
             raise
 
-    def _get_container(self) -> docker.models.containers.Container | None:
+    def _is_container_running(self) -> bool:
         """
         Check if a Prometheus container is already running.
 
         Returns
         -------
-        docker.models.containers.Container or None
-            The Prometheus container object if it is running, or None if no such container exists.
+        bool
+            True if the Prometheus container is running, False otherwise.
         """
         try:
-            return self.docker.containers.get(self.ctx.docker_container_name)
+            container = self.docker.containers.get(self.ctx.prometheus_container_name)
+            return container.status == "running"
         except docker.errors.NotFound:
-            return None
+            return False
