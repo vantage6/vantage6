@@ -1,4 +1,5 @@
 global:
-  scrape_interval: 15s
+  # How frequently to scrape targets by default.
+  scrape_interval: 1m
 
 scrape_configs: []

@@ -210,13 +210,15 @@ class Node:
         """
         Periodically send system metadata to the server.
         """
+        report_interval = self.config.get("report_interval_seconds", 45)
+
         while True:
             try:
                 metadata = self.__gather_system_metadata()
                 self.socketIO.emit("node_metrics_update", metadata, namespace="/tasks")
             except Exception:
                 self.log.exception("Metadata thread had an exception")
-            time.sleep(PING_INTERVAL_SECONDS)
+            time.sleep(report_interval)
 
     def __gather_system_metadata(self) -> dict:
         """
