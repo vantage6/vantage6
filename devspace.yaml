@@ -125,7 +125,9 @@ deployments:
           adminPassword: admin
         service:
           type: ClusterIP
-        # Add any other Keycloak configuration you need
+        # extraEnvVars:
+        #   - name: KEYCLOAK_LOG_LEVEL
+        #     value: DEBUG
         postgresql:
           enabled: true  # Use built-in PostgreSQL
           auth:
