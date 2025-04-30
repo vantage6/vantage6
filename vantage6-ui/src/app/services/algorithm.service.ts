@@ -1,11 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import {
-  Algorithm,
-  AlgorithmForm,
-  AlgorithmLazyProperties,
-  ArgumentType
-} from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmForm, AlgorithmLazyProperties, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from './chosen-collaboration.service';
 import { AlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { Pagination } from 'src/app/models/api/pagination.model';
