@@ -115,25 +115,26 @@ deployments:
   vantage6-auth:
     helm:
       chart:
-        name: keycloak
-        repo: https://charts.bitnami.com/bitnami
-        # note that version must be specified. Available versions are available at https://artifacthub.io/api/v1/packages/helm/bitnami/keycloak/feed/rss
-        version: 24.6.1
+        name: ./charts/auth
       values:
-        auth:
-          adminUser: admin
-          adminPassword: admin
         service:
           type: ClusterIP
+        # existingConfigMap:
+        #   name: realm-configmap
+        # extraVolumes:
+        #   - name: realm-configmap
+        #     configMap:
+        #       name: realm-configmap
+        # extraVolumeMounts:
+        #   - name: realm-configmap
+        #     mountPath: /opt/bitnami/keycloak/data/import
+        #     subPath: realm.json
+        #     readOnly: true
+        # extraStartupArgs:
+        #   - --import-realm
         # extraEnvVars:
         #   - name: KEYCLOAK_LOG_LEVEL
         #     value: DEBUG
-        postgresql:
-          enabled: true  # Use built-in PostgreSQL
-          auth:
-            postgresPassword: postgres
-            password: keycloak
-            database: keycloak
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
@@ -231,6 +232,7 @@ dev:
       - port: 7602:7602
         # bindAddress: ${PORTS_BIND_ADDRESS}
 
+  # This starts keycloak in development mode.
   vantage6-auth:
     labelSelector:
       app.kubernetes.io/instance: vantage6-auth
