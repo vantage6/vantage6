@@ -54,7 +54,7 @@ from vantage6.node.globals import (
     TIME_LIMIT_RETRY_CONNECT_NODE,
     PROXY_SERVER_HOST,
     DEFAULT_PROXY_SERVER_PORT,
-    DEV_NODES_PREDEFINED_PORTS
+    DEV_NODES_PREDEFINED_PORTS,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -182,7 +182,6 @@ class Node:
         # this is where we try to find a port for the proxyserver
 
         port_assigned = False
-                
 
         for try_number in range(5):
             self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
@@ -209,9 +208,11 @@ class Node:
                 # central functions): instead of random numbers, a sequence of predefined ports
                 # is used.
                 #
-                # Question: could the dev-environment be fixed to three nodes? Supporting an 
-                # undefined number of Nodes would be difficult 
-                proxy_port = DEV_NODES_PREDEFINED_PORTS[try_number % len(DEV_NODES_PREDEFINED_PORTS)]                                
+                # Question: could the dev-environment be fixed to three nodes? Supporting an
+                # undefined number of Nodes would be difficult
+                proxy_port = DEV_NODES_PREDEFINED_PORTS[
+                    try_number % len(DEV_NODES_PREDEFINED_PORTS)
+                ]
 
                 self.log.warning("Retrying with a different port: %s", proxy_port)
                 os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
