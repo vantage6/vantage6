@@ -1,7 +1,8 @@
 <mat-card>
     <mat-card-content>
         <h1>{{ 'communitystore.welcome' | translate }}</h1>
-        <span [innerHTML]="'communitystore.introduction' | translate | safeHtml"> </span>
+        <span> {{ 'communitystore.introduction' | translate }}
+            <a href="https://vantage6.ai">vantage6.ai</a>.</span>
     </mat-card-content>
 </mat-card>
 

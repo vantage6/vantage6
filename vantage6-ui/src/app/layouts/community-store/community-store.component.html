@@ -1,9 +1,11 @@
 <mat-toolbar color="primary">
-    <a routerLink="{{routePaths.communityStore}}">
+    <a [routerLink]="routePaths.communityStore">
         <img src="/assets/images/logo.png" class="logo" alt="vantage6"/>
     </a>
     <span class="store-header">
-        <a routerLink="{{routePaths.communityStore}}">Community Store</a>
+        <a [routerLink]="routePaths.communityStore">
+            {{ 'communitystore.community-store' | translate }}
+        </a>
     </span>
 </mat-toolbar>
 <ng-container>

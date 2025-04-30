@@ -11,10 +11,9 @@ import {
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
-import { SafeHtmlPipe } from "../../../../pipes/safe-html.pipe";
 
 @Component({
-  selector: 'app-algorithm-list',
+  selector: 'app-algorithm-list-public',
   templateUrl: './algorithm-list-public.component.html',
   styleUrl: './algorithm-list-public.component.scss',
   imports: [
@@ -25,10 +24,9 @@ import { SafeHtmlPipe } from "../../../../pipes/safe-html.pipe";
     MatCardContent,
     MatProgressSpinner,
     TranslateModule,
-    SafeHtmlPipe
   ]
 })
-export class AlgorithmListPublicComponent implements OnInit, OnDestroy {
+export class AlgorithmListPublicComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
   isLoading = true;
   routePaths = routePaths;
@@ -43,11 +41,6 @@ export class AlgorithmListPublicComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.algorithms = await this.algorithmService.getAlgorithmsForCommunityStore();
-    console.log("algorithms", this.algorithms);
     this.isLoading = false;
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
   }
 }
