@@ -60,7 +60,7 @@ class PrometheusServer:
             return
 
         self.docker.containers.run(
-            name=self.ctx.docker_container_name,
+            name=self.ctx.prometheus_container_name,
             image=self.image,
             volumes=volumes,
             ports=ports,
@@ -92,7 +92,7 @@ class PrometheusServer:
             prometheus_exporter_port = self.ctx.config.get("prometheus", {}).get(
                 "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
             )
-            server_hostname = self.ctx.docker_container_name
+            server_hostname = self.ctx.prometheus_container_name
             server_address = f"{server_hostname}:{prometheus_exporter_port}"
 
             with open(self.config_file, "r") as f:
