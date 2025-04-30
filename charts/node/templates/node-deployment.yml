@@ -27,7 +27,7 @@ spec:
         image: {{ .Values.node.image }}
         env:
         - name: PROXY_SERVER_PORT
-          value: "{{ .Values.node.proxyPort }}"
+          value: "{{ (index .Values.node.proxyPorts 0).port}}"
         command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
         volumeMounts:
         - name: task-files-root

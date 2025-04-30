@@ -18,7 +18,23 @@ node:
   # Task directory on the host machine
   taskDirHost: /tmp/vantage6/tasks
 
-  proxyPort: 7654
+  
+  # Ports exposed by the Node POD (these can can be more than one when using the dev environment).
+  # These port numbers are used to add the corresponding targetPort on the Node service
+  # so that the Jobs can reach their node using K8S' naming service. The first element
+  # of the list is the default port.
+  # The number of ports must match the number of Nodes within the POD, and the port numbers
+  # must match the ones listed on DEV_NODES_PREDEFINED_PORTS (see notes on node/__init__)
+  proxyPorts:
+    - name: node1
+      port: 7654 #Default port
+    - name: node2
+      port: 6171
+    - name: node3
+      port: 3986
+
+
+
 
   # TODO the way databases are mounted and named can lead to possible naming conflicts
   databases:
