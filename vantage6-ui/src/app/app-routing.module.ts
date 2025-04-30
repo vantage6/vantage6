@@ -6,26 +6,46 @@ import { LayoutLoginComponent } from './layouts/layout-login/layout-login.compon
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { HomeComponent } from './pages/home/home.component';
 import { authenticationGuard } from './guards/authentication.guard';
-import { OrganizationReadComponent } from './pages/admin/organization/read/organization-read.component';
+import {
+  OrganizationReadComponent
+} from './pages/admin/organization/read/organization-read.component';
 import { TaskCreateComponent } from './pages/analyze/task/create/task-create.component';
-import { ChooseCollaborationComponent } from './pages/analyze/choose-collaboration/choose-collaboration';
+import {
+  ChooseCollaborationComponent
+} from './pages/analyze/choose-collaboration/choose-collaboration';
 import { TaskListComponent } from './pages/analyze/task/list/task-list.component';
 import { TaskReadComponent } from './pages/analyze/task/read/task-read.component';
-import { CollaborationReadComponent } from './pages/admin/collaboration/read/collaboration-read.component';
-import { CollaborationListComponent } from './pages/admin/collaboration/list/collaboration-list.component';
+import {
+  CollaborationReadComponent
+} from './pages/admin/collaboration/read/collaboration-read.component';
+import {
+  CollaborationListComponent
+} from './pages/admin/collaboration/list/collaboration-list.component';
 import { UserListComponent } from './pages/admin/user/list/user-list.component';
 import { UserReadComponent } from './pages/admin/user/read/user-read.component';
-import { OrganizationCreateComponent } from './pages/admin/organization/create/organization-create.component';
-import { CollaborationCreateComponent } from './pages/admin/collaboration/create/collaboration-create.component';
+import {
+  OrganizationCreateComponent
+} from './pages/admin/organization/create/organization-create.component';
+import {
+  CollaborationCreateComponent
+} from './pages/admin/collaboration/create/collaboration-create.component';
 import { UserCreateComponent } from './pages/admin/user/create/user-create.component';
-import { OrganizationListComponent } from './pages/admin/organization/list/organization-list.component';
+import {
+  OrganizationListComponent
+} from './pages/admin/organization/list/organization-list.component';
 import { NodeReadComponent } from './pages/admin/node/read/node-read.component';
-import { OrganizationEditComponent } from './pages/admin/organization/edit/organization-edit.component';
-import { CollaborationEditComponent } from './pages/admin/collaboration/edit/collaboration-edit.component';
+import {
+  OrganizationEditComponent
+} from './pages/admin/organization/edit/organization-edit.component';
+import {
+  CollaborationEditComponent
+} from './pages/admin/collaboration/edit/collaboration-edit.component';
 import { UserEditComponent } from './pages/admin/user/edit/user-edit.component';
 import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
-import { TemplateTaskCreateComponent } from './pages/analyze/template-task/create/template-task-create.component';
+import {
+  TemplateTaskCreateComponent
+} from './pages/analyze/template-task/create/template-task-create.component';
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
@@ -35,36 +55,68 @@ import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
 import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
 import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
 import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
-import { AddAlgoStoreComponent } from './pages/admin/collaboration/add-algo-store/add-algo-store.component';
+import {
+  AddAlgoStoreComponent
+} from './pages/admin/collaboration/add-algo-store/add-algo-store.component';
 import { StudyReadComponent } from './pages/admin/collaboration/study/read/study-read.component';
-import { StudyCreateComponent } from './pages/admin/collaboration/study/create/study-create.component';
+import {
+  StudyCreateComponent
+} from './pages/admin/collaboration/study/create/study-create.component';
 import { StudyEditComponent } from './pages/admin/collaboration/study/edit/study-edit.component';
-import { AlgorithmListReadOnlyComponent } from './pages/analyze/algorithm/list/algorithm-list-read-only.component';
-import { AlgorithmReadOnlyComponent } from './pages/analyze/algorithm/read-only/algorithm-read-only.component';
-import { AlgorithmStoreListComponent } from './pages/store/algorithm-stores/list/algorithm-store-list.component';
-import { AlgorithmStoreReadComponent } from './pages/store/algorithm-stores/read/algorithm-store-read.component';
+import {
+  AlgorithmListReadOnlyComponent
+} from './pages/analyze/algorithm/list/algorithm-list-read-only.component';
+import {
+  AlgorithmReadOnlyComponent
+} from './pages/analyze/algorithm/read-only/algorithm-read-only.component';
+import {
+  AlgorithmStoreListComponent
+} from './pages/store/algorithm-stores/list/algorithm-store-list.component';
+import {
+  AlgorithmStoreReadComponent
+} from './pages/store/algorithm-stores/read/algorithm-store-read.component';
 import { AlgorithmReadComponent } from './pages/store/algorithm/read/algorithm-read.component';
 import { chosenStoreGuard } from './guards/chosenStore.guard';
 import { AlgorithmListComponent } from './pages/store/algorithm/list/algorithm-list.component';
-import { AlgorithmCreateComponent } from './pages/store/algorithm/create/algorithm-create.component';
+import {
+  AlgorithmCreateComponent
+} from './pages/store/algorithm/create/algorithm-create.component';
 import { AlgorithmEditComponent } from './pages/store/algorithm/edit/algorithm-edit.component';
-import { UploadPrivateKeyComponent } from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
+import {
+  UploadPrivateKeyComponent
+} from './pages/analyze/choose-collaboration/upload-private-key/upload-private-key.component';
 import { StoreUserListComponent } from './pages/store/user/list/store-user-list.component';
 import { StoreUserReadComponent } from './pages/store/user/read/store-user-read.component';
 import { StoreUserCreateComponent } from './pages/store/user/create/store-user-create.component';
 import { StoreUserEditComponent } from './pages/store/user/edit/store-user-edit.component';
 import { StoreRoleListComponent } from './pages/store/role/list/store-role-list.component';
 import { StoreRoleReadComponent } from './pages/store/role/read/store-role-read.component';
-import { AlgorithmInReviewListComponent } from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
-import { AlgorithmAssignReviewComponent } from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
-import { ReviewReadComponent } from './pages/store/algorithms-in-review/review-read/review-read.component';
-import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review-submit/review-submit.component';
-import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
-import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
+import {
+  AlgorithmInReviewListComponent
+} from './pages/store/algorithms-in-review/algorithm-in-review-list/algorithm-in-review-list.component';
+import {
+  AlgorithmAssignReviewComponent
+} from './pages/store/algorithms-in-review/algorithm-assign-review/algorithm-assign-review.component';
+import {
+  ReviewReadComponent
+} from './pages/store/algorithms-in-review/review-read/review-read.component';
+import {
+  ReviewSubmitComponent
+} from './pages/store/algorithms-in-review/review-submit/review-submit.component';
+import {
+  MyPendingAlgorithmsComponent
+} from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
+import {
+  OldAlgorithmListComponent
+} from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 import { CommunityStoreComponent } from "./layouts/community-store/community-store.component";
-import { AlgorithmReadPublicComponent } from "./pages/store/algorithm/read-public/algorithm-read-public.component";
-import { AlgorithmListPublicComponent } from "./pages/store/algorithm/list-public/algorithm-list-public.component";
+import {
+  AlgorithmReadPublicComponent
+} from "./pages/store/algorithm/read-public/algorithm-read-public.component";
+import {
+  AlgorithmListPublicComponent
+} from "./pages/store/algorithm/list-public/algorithm-list-public.component";
 
 const routes: Routes = [
   {
@@ -123,7 +175,7 @@ const routes: Routes = [
   {
     path: '',
     component: LayoutDefaultComponent,
-    data: {crumb: ['home.title', routePaths.home]},
+    data: { crumb: ['home.title', routePaths.home] },
     children: [
       {
         path: routerConfig.home,
@@ -140,7 +192,7 @@ const routes: Routes = [
   {
     path: routerConfig.analyze,
     component: LayoutDefaultComponent,
-    data: {crumb: ['links.title', routePaths.analyzeHome]},
+    data: { crumb: ['links.title', routePaths.analyzeHome] },
     children: [
       {
         path: routerConfig.analyzeHome,
@@ -214,7 +266,7 @@ const routes: Routes = [
   {
     path: routerConfig.admin,
     component: LayoutDefaultComponent,
-    data: {crumb: ['home.title', routePaths.adminHome]},
+    data: { crumb: ['home.title', routePaths.adminHome] },
     children: [
       {
         path: routerConfig.adminHome,
@@ -392,7 +444,7 @@ const routes: Routes = [
   {
     path: routerConfig.storeBase,
     component: LayoutDefaultComponent,
-    data: {crumb: ['home.title', routePaths.storeHome]},
+    data: { crumb: ['home.title', routePaths.storeHome] },
     children: [
       {
         path: routerConfig.storeHome,
@@ -556,7 +608,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {bindToComponentInputs: true, useHash: true})],
+  imports: [RouterModule.forRoot(routes, { bindToComponentInputs: true, useHash: true })],
   exports: [RouterModule]
 })
 export class AppRoutingModule {
