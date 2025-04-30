@@ -214,4 +214,6 @@ dev:
   # Set to true to start the Prometheus server when starting the server
   start_with_server: false
   # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+  # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
+  # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
   exporter_port: 7603

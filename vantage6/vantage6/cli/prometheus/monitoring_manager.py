@@ -95,6 +95,11 @@ class PrometheusServer:
             server_hostname = self.ctx.prometheus_container_name
             server_address = f"{server_hostname}:{prometheus_exporter_port}"
 
+            info(
+                f"Using Docker container hostname '{server_hostname}' for Prometheus target. "
+                "Ensure Prometheus is in the same Docker network to resolve this address."
+            )
+
             with open(self.config_file, "r") as f:
                 config = yaml.safe_load(f)
 
