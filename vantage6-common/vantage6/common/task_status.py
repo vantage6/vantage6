@@ -3,7 +3,7 @@ import itertools
 import sys
 import time
 
-MAX_INTERVAL = 300
+from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL
 
 
 class TaskStatus(str, Enum):
@@ -85,8 +85,6 @@ def wait_for_task_completion(request_func, task_id: int, interval: float = 1) ->
         ID of the task to wait for.
     interval : float
         Initial interval in seconds between status checks.
-    max_interval : float
-        Maximum interval in seconds between status checks.
     """
     animation = itertools.cycle(["|", "/", "-", "\\"])
     t = time.time()
@@ -106,4 +104,4 @@ def wait_for_task_completion(request_func, task_id: int, interval: float = 1) ->
         sys.stdout.flush()
 
         time.sleep(interval)
-        interval = min(interval * 1.5, MAX_INTERVAL)
+        interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
