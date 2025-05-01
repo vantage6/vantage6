@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import List
 import jwt
 import pyfiglet
-import itertools
 import sys
 import traceback
 
