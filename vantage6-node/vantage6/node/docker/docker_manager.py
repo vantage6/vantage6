@@ -180,13 +180,7 @@ class DockerManager(DockerBaseManager):
         # set defaults, warn about dangers, etc
         self.share_logs = config.get("share_logs", True)
         if self.share_logs:
-            self.log.warning(
-                "Algorithm logs are shared with the server. "
-                "This may contain sensitive information."
-            )
-            self.log.warning(
-                "Setting 'share_logs' to False is advisable in a production scenario."
-            )
+            self.log.warning("Algorithm logs and errors will be shared with the server.")
 
     def _set_database(self, databases: dict | list) -> None:
         """
