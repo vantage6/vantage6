@@ -1,0 +1,41 @@
+keycloak:
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: postgres
+      password: keycloak
+      database: keycloak
+  auth:
+    adminUser: admin
+    adminPassword: admin
+  keycloakConfigCli:
+    enabled: true
+    configuration:
+      realm:
+        realm: vantage6
+        enabled: true
+        users:
+          - username: admin
+            enabled: true
+            emailVerified: true
+            credentials:
+              - type: password
+                value: admin
+            realmRoles:
+              - admin
+          - username: user2
+            enabled: true
+            emailVerified: true
+            credentials:
+              - type: password
+                value: user
+        clients:
+          - clientId: myclient
+            publicClient: true
+            redirectUris:
+              - "*"
+            directAccessGrantsEnabled: true
+        roles:
+          realm:
+            - name: admin
+            - name: user
