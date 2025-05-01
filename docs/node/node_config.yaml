@@ -293,4 +293,4 @@ share_config: true
 # Whether or not to share algorithm logs with the server. Otherwise they will
 # only be displayed as part of the node logs. Default is true.
 # NOTE: It's recommented to set this to false when using real data
-share_logs: false
+share_algorithm_logs: false
