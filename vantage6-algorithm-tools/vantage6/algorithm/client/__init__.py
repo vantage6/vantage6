@@ -2,7 +2,6 @@
 
 import jwt
 import json as json_lib
-import time
 
 from typing import Any
 
@@ -10,7 +9,6 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.task_status import wait_for_task_completion
 from vantage6.common.serialization import serialize
-from vantage6.algorithm.tools.util import info
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401

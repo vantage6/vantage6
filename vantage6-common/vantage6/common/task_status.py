@@ -1,9 +1,8 @@
 from enum import Enum
-import itertools
-import sys
 import time
 
 from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL
+from vantage6.algorithm.tools.util import info
 
 
 class TaskStatus(str, Enum):
@@ -86,7 +85,6 @@ def wait_for_task_completion(request_func, task_id: int, interval: float = 1) ->
     interval : float
         Initial interval in seconds between status checks.
     """
-    animation = itertools.cycle(["|", "/", "-", "\\"])
     t = time.time()
 
     while True:
@@ -94,14 +92,9 @@ def wait_for_task_completion(request_func, task_id: int, interval: float = 1) ->
         status = response.get("status")
 
         if has_task_finished(status):
-            sys.stdout.write("\rDone!                  ")
+            info(f"Task {task_id} completed in {int(time.time() - t)} seconds.")
             break
 
-        frame = next(animation)
-        sys.stdout.write(
-            f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
-        )
-        sys.stdout.flush()
-
+        info(f"Waiting for task {task_id}... ({int(time.time() - t)}s)", end="\r")
         time.sleep(interval)
         interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
