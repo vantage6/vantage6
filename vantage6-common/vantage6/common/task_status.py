@@ -1,6 +1,5 @@
 from enum import Enum
 import logging
-import sys
 import time
 
 from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL
