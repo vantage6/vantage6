@@ -21,5 +21,6 @@ export class HomeComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const result = await this.apiService.getForApi<Version>('/version');
     this.serverVersion = result.version;
+    console.log(result);
   }
 }

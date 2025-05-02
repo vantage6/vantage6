@@ -60,4 +60,8 @@ export class LoginComponent {
       this.router.navigate([routePaths.setupMFA]);
     }
   }
+
+  loginWithKeycloak() {
+    this.authService.loginWithKeycloak();
+  }
 }

@@ -83,6 +83,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     private translateService: TranslateService,
     private storePermissionService: StorePermissionService
   ) {
+    console.log('LayoutDefaultComponent');
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isAdministration = event.url.startsWith('/admin');
       this.isAnalyze = event.url.startsWith('/analyze');

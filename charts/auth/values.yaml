@@ -10,6 +10,7 @@ keycloak:
     adminPassword: admin
   keycloakConfigCli:
     enabled: true
+    # existingConfigMap: keycloak-realm-config
     configuration:
       realm:
         realm: vantage6
@@ -31,10 +32,12 @@ keycloak:
                 value: user
         clients:
           - clientId: myclient
+           # TODO change to confidential client
             publicClient: true
             redirectUris:
               - "*"
-            directAccessGrantsEnabled: true
+            # directAccessGrantsEnabled: false
+            # root_url: http://localhost:8080
         roles:
           realm:
             - name: admin
