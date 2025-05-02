@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from 'src/app/models/forms/login-form.model';
 import { ApiService } from './api.service';
 import {
@@ -15,6 +15,13 @@ import { TokenStorageService } from './token-storage.service';
 import { SocketioConnectService } from './socketio-connect.service';
 import { LoginErrorService } from './login-error.service';
 import { EncryptionService } from './encryption.service';
+import Keycloak from 'keycloak-js';
+import {
+  KEYCLOAK_EVENT_SIGNAL,
+  KeycloakEventType,
+  typeEventArgs,
+  ReadyArgs
+} from 'keycloak-angular';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +32,11 @@ export class AuthService {
   qr_uri = '';
   otp_code = '';
 
+  authenticated = false;
+  keycloakStatus: string | undefined;
+  private readonly keycloak = inject(Keycloak);
+  private readonly keycloakSignal = inject(KEYCLOAK_EVENT_SIGNAL);
+
   constructor(
     private apiService: ApiService,
     private permissionService: PermissionService,
@@ -32,8 +44,22 @@ export class AuthService {
     private socketConnectService: SocketioConnectService,
     private loginErrorService: LoginErrorService,
     private storePermissionService: PermissionService,
-    private encryptionService: EncryptionService
-  ) {}
+    private encryptionService: EncryptionService,
+  ) {
+    effect(() => {
+      const keycloakEvent = this.keycloakSignal();
+
+      this.keycloakStatus = keycloakEvent.type;
+
+      if (keycloakEvent.type === KeycloakEventType.Ready) {
+        this.authenticated = typeEventArgs<ReadyArgs>(keycloakEvent.args);
+      }
+
+      if (keycloakEvent.type === KeycloakEventType.AuthLogout) {
+        this.authenticated = false;
+      }
+    });
+  }
 
   async isAuthenticated(): Promise<AuthResult> {
     const authResult = await this.tokenStorageService.isAuthenticated();
@@ -41,6 +67,14 @@ export class AuthService {
       this.socketConnectService.connect();
     }
     return authResult;
+  }
+
+  async loginWithKeycloak(): Promise<void> {
+    this.keycloak.login();
+  }
+
+  async logoutWithKeycloak(): Promise<void> {
+    this.keycloak.logout();
   }
 
   async login(loginForm: LoginForm): Promise<AuthResult> {
@@ -76,6 +110,7 @@ export class AuthService {
     this.storePermissionService.clear();
     this.socketConnectService.disconnect();
     this.encryptionService.clear();
+    this.keycloak.logout();
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {

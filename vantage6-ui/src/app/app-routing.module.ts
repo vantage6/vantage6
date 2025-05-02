@@ -111,12 +111,12 @@ const routes: Routes = [
       {
         path: routerConfig.home,
         component: HomeComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       },
       {
         path: routerConfig.passwordChange,
         component: ChangePasswordComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       }
     ]
   },
@@ -132,17 +132,17 @@ const routes: Routes = [
       {
         path: routerConfig.chooseCollaboration,
         component: ChooseCollaborationComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       },
       {
         path: routerConfig.keyUpload,
         component: UploadPrivateKeyComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       },
       {
         path: routerConfig.dataframeCreate,
         component: DataframeCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['session.dataframes.add']]
         }
@@ -150,7 +150,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessions,
         component: SessionListComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title']]
         }
@@ -158,7 +158,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessionCreate,
         component: SessionCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['session-create.create-title']]
         }
@@ -166,7 +166,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessionEdit,
         component: SessionCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['session-create.edit-title']]
         }
@@ -174,7 +174,7 @@ const routes: Routes = [
       {
         path: routerConfig.session,
         component: SessionReadComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
         }
@@ -182,7 +182,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessionDataframe,
         component: DataframeReadComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
         }
@@ -190,7 +190,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessionDataframePreprocess,
         component: DataframePreprocessComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
         }
@@ -198,7 +198,7 @@ const routes: Routes = [
       {
         path: routerConfig.tasks,
         component: TaskListComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title']]
         }
@@ -206,7 +206,7 @@ const routes: Routes = [
       {
         path: routerConfig.taskCreate,
         component: TaskCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
         }
@@ -214,7 +214,7 @@ const routes: Routes = [
       {
         path: routerConfig.sessionTaskCreate,
         component: TaskCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['task-create.title']]
         }
@@ -222,7 +222,7 @@ const routes: Routes = [
       {
         path: routerConfig.taskCreateRepeat,
         component: TaskCreateComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-create.title']]
         }
@@ -230,7 +230,7 @@ const routes: Routes = [
       {
         path: routerConfig.task,
         component: TaskReadComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['task-list.title', routePaths.tasks], ['task-read.title']]
         }
@@ -238,7 +238,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithms,
         component: AlgorithmListReadOnlyComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['algorithm-list.title']]
         }
@@ -246,7 +246,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithm,
         component: AlgorithmReadOnlyComponent,
-        canActivate: [authenticationGuard(), chosenCollaborationGuard()],
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithms], ['algorithm-read.crumb-title']]
         }
@@ -261,12 +261,12 @@ const routes: Routes = [
       {
         path: routerConfig.adminHome,
         component: CollaborationListComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       },
       {
         path: routerConfig.organizations,
         component: OrganizationListComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['organization-list.title']]
         }
@@ -274,7 +274,7 @@ const routes: Routes = [
       {
         path: routerConfig.organizationCreate,
         component: OrganizationCreateComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['organization-list.title', routePaths.organizations], ['organization-create.title']]
         }
@@ -282,7 +282,7 @@ const routes: Routes = [
       {
         path: routerConfig.organizationEdit,
         component: OrganizationEditComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
         }
@@ -290,7 +290,7 @@ const routes: Routes = [
       {
         path: routerConfig.organization,
         component: OrganizationReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['organization-list.title', routePaths.organizations], ['organization-read.title']]
         }
@@ -298,7 +298,7 @@ const routes: Routes = [
       {
         path: routerConfig.collaborations,
         component: CollaborationListComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title']]
         }
@@ -306,7 +306,7 @@ const routes: Routes = [
       {
         path: routerConfig.collaborationCreate,
         component: CollaborationCreateComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-create.title']]
         }
@@ -314,7 +314,7 @@ const routes: Routes = [
       {
         path: routerConfig.collaborationEdit,
         component: CollaborationEditComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
@@ -322,7 +322,7 @@ const routes: Routes = [
       {
         path: routerConfig.collaboration,
         component: CollaborationReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
@@ -330,7 +330,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmStoreAdd,
         component: AddAlgoStoreComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [
             ['collaboration-list.title', routePaths.collaborations],
@@ -345,7 +345,7 @@ const routes: Routes = [
       {
         path: routerConfig.roles,
         component: RoleListComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['role-list.title']]
         }
@@ -353,7 +353,7 @@ const routes: Routes = [
       {
         path: routerConfig.roleCreate,
         component: RoleCreateComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['role-list.title', routePaths.roles], ['role-create.title']]
         }
@@ -361,7 +361,7 @@ const routes: Routes = [
       {
         path: routerConfig.role,
         component: RoleReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['role-list.title', routePaths.roles], ['role-read.title']]
         }
@@ -369,7 +369,7 @@ const routes: Routes = [
       {
         path: routerConfig.users,
         component: UserListComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['user-list.title']]
         }
@@ -377,7 +377,7 @@ const routes: Routes = [
       {
         path: routerConfig.userCreate,
         component: UserCreateComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['user-list.title', routePaths.users], ['user-create.title']]
         }
@@ -385,7 +385,7 @@ const routes: Routes = [
       {
         path: routerConfig.userEdit,
         component: UserEditComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
         }
@@ -393,7 +393,7 @@ const routes: Routes = [
       {
         path: routerConfig.user,
         component: UserReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['user-list.title', routePaths.users], ['user-read.title']]
         }
@@ -401,7 +401,7 @@ const routes: Routes = [
       {
         path: routerConfig.nodes,
         component: NodeReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['node-read.title']]
         }
@@ -409,7 +409,7 @@ const routes: Routes = [
       {
         path: routerConfig.study,
         component: StudyReadComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
@@ -417,7 +417,7 @@ const routes: Routes = [
       {
         path: routerConfig.studyCreate,
         component: StudyCreateComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
@@ -425,7 +425,7 @@ const routes: Routes = [
       {
         path: routerConfig.studyEdit,
         component: StudyEditComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['collaboration-list.title', routePaths.collaborations], ['collaboration-read.title']]
         }
@@ -440,12 +440,12 @@ const routes: Routes = [
       {
         path: routerConfig.storeHome,
         component: AlgorithmStoreListComponent,
-        canActivate: [authenticationGuard()]
+        canActivate: [authenticationGuard]
       },
       {
         path: routerConfig.stores,
         component: AlgorithmStoreListComponent,
-        canActivate: [authenticationGuard()],
+        canActivate: [authenticationGuard],
         data: {
           crumbs: [['algorithm-store-list.title']]
         }
@@ -453,7 +453,7 @@ const routes: Routes = [
       {
         path: routerConfig.store,
         component: AlgorithmStoreReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-store-read.title']]
         }
@@ -461,7 +461,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmsManage,
         component: AlgorithmListComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title']]
         }
@@ -469,7 +469,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmsOld,
         component: OldAlgorithmListComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title']]
         }
@@ -477,7 +477,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmCreate,
         component: AlgorithmCreateComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['algorithm-create.short-title']]
         }
@@ -485,7 +485,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmManage,
         component: AlgorithmReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
         }
@@ -493,7 +493,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmEdit,
         component: AlgorithmEditComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
         }
@@ -501,7 +501,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeUsers,
         component: StoreUserListComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['user-list.title']]
         }
@@ -509,7 +509,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeUserCreate,
         component: StoreUserCreateComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['user-list.title', routePaths.storeUsers], ['user-create.title']]
         }
@@ -517,7 +517,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeUserEdit,
         component: StoreUserEditComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
         }
@@ -525,7 +525,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeUser,
         component: StoreUserReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['user-list.title', routePaths.storeUsers], ['user-read.title']]
         }
@@ -533,7 +533,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeRoles,
         component: StoreRoleListComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title']]
         }
@@ -541,7 +541,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeRoleCreate,
         component: StoreRoleCreateComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title', routePaths.storeRoles], ['role-create.title']]
         }
@@ -549,7 +549,7 @@ const routes: Routes = [
       {
         path: routerConfig.storeRole,
         component: StoreRoleReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['role-list.title', routePaths.storeRoles], ['role-read.title']]
         }
@@ -557,7 +557,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmReviews,
         component: AlgorithmInReviewListComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title']]
         }
@@ -565,7 +565,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmReviewAssign,
         component: AlgorithmAssignReviewComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title', routePaths.algorithmReviews], ['algorithm-assign-review.title']]
         }
@@ -573,7 +573,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmReview,
         component: ReviewReadComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
@@ -581,7 +581,7 @@ const routes: Routes = [
       {
         path: routerConfig.algorithmReviewSubmit,
         component: ReviewSubmitComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title'], routePaths.algorithmReviews, ['algorithm-review.breadcrumb-title']]
         }
@@ -589,7 +589,7 @@ const routes: Routes = [
       {
         path: routerConfig.myPendingAlgorithms,
         component: MyPendingAlgorithmsComponent,
-        canActivate: [authenticationGuard(), chosenStoreGuard()],
+        canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-in-review.title']]
         }

@@ -38,6 +38,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppComponent } from './app/app.component';
 import { importProvidersFrom } from '@angular/core';
+import { provideKeycloakAngular } from './app/app.config';
 
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/localizations/');
@@ -86,6 +87,7 @@ bootstrapApplication(AppComponent, {
     { provide: MAT_DATE_LOCALE, useValue: enCA },
     provideHttpClient(withInterceptorsFromDi()),
     DatePipe,
-    provideAnimations()
+    provideAnimations(),
+    provideKeycloakAngular()
   ]
 }).catch((err) => console.error(err));

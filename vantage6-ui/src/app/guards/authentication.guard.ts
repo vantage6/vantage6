@@ -1,19 +1,23 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { AuthGuardData, createAuthGuard } from 'keycloak-angular';
 import { routePaths } from 'src/app/routes';
-import { AuthService } from 'src/app/services/auth.service';
-import { AuthResult } from 'src/app/models/api/auth.model';
 
-export function authenticationGuard(): CanActivateFn {
-  return async () => {
-    const router: Router = inject(Router);
-    const authService: AuthService = inject(AuthService);
+const isAccessAllowed = async (
+  route: ActivatedRouteSnapshot,
+  __: RouterStateSnapshot,
+  authData: AuthGuardData
+): Promise<boolean | UrlTree> => {
+  const { authenticated } = authData;
+  console.log(authenticated, authData);
 
-    const isAuthenticated = await authService.isAuthenticated();
-    if (isAuthenticated !== AuthResult.Success) {
-      router.navigate([routePaths.login]);
-      return false;
-    }
+  if (authenticated) {
     return true;
-  };
-}
+  } else {
+    const router: Router = inject(Router);
+    router.navigate([routePaths.login]);
+    return false;
+  }
+};
+
+export const authenticationGuard = createAuthGuard<CanActivateFn>(isAccessAllowed);
