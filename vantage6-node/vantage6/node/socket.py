@@ -4,6 +4,7 @@ from socketio import ClientNamespace
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
+from vantage6.node.util import delete_dataframe
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -178,3 +179,10 @@ class NodeTaskNamespace(ClientNamespace):
                 },
                 namespace="/tasks",
             )
+
+    def on_delete_dataframe(self, data: dict):
+        """
+        Action to be taken when a dataframe is instructed to be deleted.
+        """
+        self.log.info(f"Received instruction to delete dataframe: {data['df_name']}")
+        delete_dataframe(data["df_name"], data["session_id"])
