@@ -411,7 +411,7 @@ class ContainerManager:
         if secrets:
             secret = k8s_client.V1Secret(
                 metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
-                data=secrets,
+                string_data=secrets,
             )
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
@@ -426,7 +426,9 @@ class ContainerManager:
             env_from=(
                 [
                     k8s_client.V1EnvFromSource(
-                        secret_ref=k8s_client.V1SecretRef(name=run_io.container_name)
+                        secret_ref=k8s_client.V1SecretReference(
+                            name=run_io.container_name
+                        )
                     )
                 ]
                 if secrets
@@ -1268,6 +1270,30 @@ class ContainerManager:
         )
         for job_pod in job_pods_list.items:
             self.__delete_pod(job_pod.metadata.name, namespace)
+
+        self.__delete_secret(run_io.container_name, namespace)
+
+    def __delete_secret(self, secret_name: str, namespace: str) -> None:
+        """
+        Deletes a secret in a given namespace
+        Parameters
+        ----------
+        secret_name: str
+            Name of the secret
+        namespace: str
+            Namespace where the secret is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes Secret %s in namespace %s",
+            secret_name,
+            namespace,
+        )
+        try:
+            self.core_api.delete_namespaced_secret(
+                name=secret_name, namespace=namespace
+            )
+        except ApiException as exc:
+            self.log.error("Exception when deleting namespaced secret: %s", exc)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """
