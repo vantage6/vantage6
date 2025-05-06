@@ -1277,7 +1277,13 @@ class ContainerManager:
             secret_name,
             namespace,
         )
-        self.core_api.delete_namespaced_secret(name=secret_name, namespace=namespace)
+
+        try:
+            self.core_api.delete_namespaced_secret(
+                name=secret_name, namespace=namespace
+            )
+        except ApiException as exc:
+            self.log.error("Exception when deleting namespaced secret: %s", exc)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """
