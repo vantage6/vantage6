@@ -150,7 +150,7 @@ def clear_dev_folder(name):
 
 
 print("=> Removing old config files")
-for node_dir in dev_dir.iterdir():
+for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
     clear_dev_folder(node_dir.name)
 
 print("=> creating organizations")
