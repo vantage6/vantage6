@@ -17,9 +17,6 @@ for dir in $config_dir/*; do
         config=$(find "$dir" -maxdepth 1 -name "*.yaml" -type f)
         dotenv_file="$dir"/.env
 
-        echo "config: $config"
-        echo "dotenv_file: $dotenv_file"
-
         # Check if the config file exists
         if [ ! -f "$config" ]; then
             echo "No yaml config file found in $dir/*.yaml"
