@@ -44,7 +44,6 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 # the algorithm image contents. Maybe e.g. `/app/vantage6/task/input` etc?
 JOB_POD_INPUT_PATH = "/app/input"
 JOB_POD_OUTPUT_PATH = "/app/output"
-JOB_POD_TOKEN_PATH = "/app/token"
 JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 
 # The mount location of the tasks files, databases and kube config in the node

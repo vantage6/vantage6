@@ -9,11 +9,10 @@ from pathlib import Path
 import uuid
 
 from kubernetes import client as k8s_client, config, watch
-from kubernetes.client import V1EnvVar
 from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name, get_database_config
+from vantage6.common import logger_name
 from vantage6.common.globals import (
     DEFAULT_ALPINE_IMAGE,
     DEFAULT_DOCKER_REGISTRY,
@@ -36,7 +35,6 @@ from vantage6.node.globals import (
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
-    JOB_POD_TOKEN_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
     TASK_START_TIMEOUT_SECONDS,
@@ -384,6 +382,9 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
+        if action == AlgorithmStepType.FEDERATED_COMPUTE:
+            secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
+
         env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
             "PROXY_SERVER_HOST", PROXY_SERVER_HOST
         )
@@ -403,6 +404,7 @@ class ContainerManager:
             io_env_vars.append(k8s_client.V1EnvVar(name=key, value=value))
         try:
             self._validate_environment_variables(env_vars)
+            self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(e)
             return RunStatus.FAILED
@@ -410,7 +412,7 @@ class ContainerManager:
         if secrets:
             secret = k8s_client.V1Secret(
                 metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
-                data=secrets,
+                string_data=secrets,
             )
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
@@ -425,7 +427,9 @@ class ContainerManager:
             env_from=(
                 [
                     k8s_client.V1EnvFromSource(
-                        secret_ref=k8s_client.V1SecretRef(name=run_io.container_name)
+                        secret_ref=k8s_client.V1SecretReference(
+                            name=run_io.container_name
+                        )
                     )
                 ]
                 if secrets
@@ -1254,6 +1258,26 @@ class ContainerManager:
         )
         for job_pod in job_pods_list.items:
             self.__delete_pod(job_pod.metadata.name, namespace)
+
+        self.__delete_secret(run_io.container_name, namespace)
+
+    def __delete_secret(self, secret_name: str, namespace: str) -> None:
+        """
+        Deletes a secret in a given namespace
+
+        Parameters
+        ----------
+        secret_name: str
+            Name of the secret
+        namespace: str
+            Namespace where the secret is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes Secret %s in namespace %s",
+            secret_name,
+            namespace,
+        )
+        self.core_api.delete_namespaced_secret(name=secret_name, namespace=namespace)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """
