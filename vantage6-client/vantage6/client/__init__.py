@@ -216,7 +216,7 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-        self.wait_for_task_completion(self.request, task_id, interval)
+        self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)

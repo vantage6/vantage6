@@ -138,7 +138,7 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        self.wait_for_task_completion(self.request, task_id, interval)
+        self.wait_for_task_completion(self.request, task_id, interval, False)
         return self.result.from_task(task_id)
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:

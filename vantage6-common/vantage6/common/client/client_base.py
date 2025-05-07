@@ -1,3 +1,4 @@
+import itertools
 import logging
 import time
 import requests
@@ -582,6 +583,89 @@ class ClientBase(object):
                 return False
         return True
 
+    def wait_for_task_completion(
+        self,
+        request_func,
+        task_id: int,
+        interval: float = 1,
+        log_animation: bool = True,
+    ) -> None:
+        """
+        Utility function to wait for a task to complete.
+
+        Parameters
+        ----------
+        request_func : Callable
+            Function to make requests to the server.
+        task_id : int
+            ID of the task to wait for.
+        interval : float
+            Initial interval in seconds between status checks.
+        log_animation : bool
+            Whether to log an animation (default: True). If False, logs will be
+            written as separate lines.
+        """
+        start_time = time.time()
+        animation = itertools.cycle(["|", "/", "-", "\\"])
+
+        while True:
+            response = request_func(f"task/{task_id}/status")
+            status = response.get("status")
+
+            if has_task_finished(status):
+                self._log_completion(task_id, start_time, log_animation)
+                break
+
+            self._log_progress(task_id, start_time, log_animation, next(animation))
+            time.sleep(interval)
+            interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
+
+    def _log_completion(task_id: int, start_time: float, log_animation: bool) -> None:
+        """
+        Log the completion message for a task.
+
+        Parameters
+        ----------
+        task_id : int
+            ID of the completed task.
+        start_time : float
+            The time when the task started.
+        log_animation : bool
+            Whether to log the message as an animation or a regular log.
+        """
+        elapsed_time = int(time.time() - start_time)
+        message = f"Task {task_id} completed in {elapsed_time} seconds."
+
+        if log_animation:
+            print(f"\r{message}                     ")
+        else:
+            logging.info(message)
+
+    def _log_progress(
+        task_id: int, start_time: float, log_animation: bool, animation_frame: str
+    ) -> None:
+        """
+        Log the progress message for a task.
+
+        Parameters
+        ----------
+        task_id : int
+            ID of the task in progress.
+        start_time : float
+            The time when the task started.
+        log_animation : bool
+            Whether to log the message as an animation or a regular log.
+        animation_frame : str
+            The current frame of the animation.
+        """
+        elapsed_time = int(time.time() - start_time)
+        message = f"{animation_frame} Waiting for task {task_id}... ({elapsed_time}s)"
+
+        if log_animation:
+            print(f"\r{message}", end="")
+        else:
+            logging.info(message)
+
     class SubClient:
         """
         Create sub groups of commands using this SubClient
@@ -617,34 +701,3 @@ class ClientBase(object):
                 Input `data` but with the key-value pair where value is `None` removed
             """
             return {k: v for k, v in data.items() if v is not None}
-
-    def wait_for_task_completion(
-        request_func, task_id: int, interval: float = 1
-    ) -> None:
-        """
-        Utility function to wait for a task to complete.
-
-        Parameters
-        ----------
-        request_func : Callable
-            Function to make requests to the server.
-        task_id : int
-            ID of the task to wait for.
-        interval : float
-            Initial interval in seconds between status checks.
-        """
-        t = time.time()
-
-        while True:
-            response = request_func(f"task/{task_id}/status")
-            status = response.get("status")
-
-            if has_task_finished(status):
-                logging.info(
-                    f"Task {task_id} completed in {int(time.time() - t)} seconds."
-                )
-                break
-
-            logging.info(f"Waiting for task {task_id}... ({int(time.time() - t)}s)")
-            time.sleep(interval)
-            interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
