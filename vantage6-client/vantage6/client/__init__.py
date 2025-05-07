@@ -18,7 +18,6 @@ from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
-from vantage6.common.task_status import wait_for_task_completion
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
@@ -217,7 +216,7 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-        wait_for_task_completion(self.request, task_id, interval)
+        self.wait_for_task_completion(self.request, task_id, interval)
         self.log.setLevel(prev_level)
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)

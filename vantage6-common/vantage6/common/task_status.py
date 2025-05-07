@@ -1,8 +1,6 @@
 from enum import Enum
 import logging
-import time
 
-from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -72,31 +70,3 @@ def has_task_finished(status: TaskStatus) -> bool:
         True if task has finished or failed, False otherwise
     """
     return has_task_failed(status) or status == TaskStatus.COMPLETED
-
-
-def wait_for_task_completion(request_func, task_id: int, interval: float = 1) -> None:
-    """
-    Utility function to wait for a task to complete.
-
-    Parameters
-    ----------
-    request_func : Callable
-        Function to make requests to the server.
-    task_id : int
-        ID of the task to wait for.
-    interval : float
-        Initial interval in seconds between status checks.
-    """
-    t = time.time()
-
-    while True:
-        response = request_func(f"task/{task_id}/status")
-        status = response.get("status")
-
-        if has_task_finished(status):
-            logging.info(f"Task {task_id} completed in {int(time.time() - t)} seconds.")
-            break
-
-        logging.info(f"Waiting for task {task_id}... ({int(time.time() - t)}s)")
-        time.sleep(interval)
-        interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
