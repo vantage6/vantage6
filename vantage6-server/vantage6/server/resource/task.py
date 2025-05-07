@@ -1231,7 +1231,7 @@ class Task(TaskBase):
 class TaskStatusEndpoint(TaskBase):
     """Resource for /api/task/<id>/status"""
 
-    @only_for(("user", "node", "container"))
+    @only_for(("user", "container"))
     def get(self, task_id: int):
         """Get task status
         ---
