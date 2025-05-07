@@ -1,5 +1,36 @@
+<link rel="stylesheet" href="display-algorithms.component.scss">
 <div class="tile-grid">
-  <button mat-raised-button *ngFor="let algorithm of algorithms" (click)="handleAlgorithmClick(algorithm)">
-    {{ algorithm.name }}
-  </button>
+
+    <mat-card class="algorithm-card" *ngFor="let algorithm of algorithms"
+              (click)="handleAlgorithmClick(algorithm)">
+
+        <mat-card-header class="algorithm-header">
+            <mat-card-title-group>
+                <mat-card-title>
+                    {{ algorithm.name }}
+                </mat-card-title>
+            </mat-card-title-group>
+            <div class="status-badge {{getStatusClass(algorithm.status)}}">
+                {{ algorithm.status | titlecase }}
+            </div>
+        </mat-card-header>
+
+        <mat-card-content class="algorithm-content">
+
+
+            <div class="algorithm-description">
+                {{ algorithm.description }}
+            </div>
+
+        </mat-card-content>
+        <mat-card-footer class="algorithm-footer">
+            <mat-chip-set>
+                @for (keyword of getKeywords(algorithm); track keyword) {
+                    <mat-chip>{{ keyword }}</mat-chip>
+                }
+            </mat-chip-set>
+
+        </mat-card-footer>
+    </mat-card>
+
 </div>

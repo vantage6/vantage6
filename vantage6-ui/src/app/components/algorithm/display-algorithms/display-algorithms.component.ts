@@ -1,15 +1,16 @@
 import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { Algorithm } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmStatus } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
-import { NgFor } from '@angular/common';
-import { MatButton } from '@angular/material/button';
+import { NgFor, TitleCasePipe } from '@angular/common';
+import { MatCard, MatCardContent, MatCardFooter, MatCardHeader, MatCardTitle, MatCardTitleGroup } from "@angular/material/card";
+import { MatChip, MatChipSet } from "@angular/material/chips";
 
 @Component({
     selector: 'app-display-algorithms',
     templateUrl: './display-algorithms.component.html',
     styleUrl: './display-algorithms.component.scss',
-    imports: [NgFor, MatButton]
+  imports: [NgFor, MatCard, MatCardHeader, MatCardFooter, MatCardContent, MatChipSet, MatChip, MatCardTitle, MatCardTitleGroup, TitleCasePipe]
 })
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];
@@ -25,4 +26,27 @@ export class DisplayAlgorithmsComponent {
       this.router.navigate([this.routeOnClick, algorithm.id]);
     }
   }
+
+  getKeywords(algorithm: Algorithm): string[] {
+    const keywords = [];
+    keywords.push(algorithm.partitioning);
+    keywords.push(`v${algorithm.vantage6_version}`);
+
+    return keywords;
+  }
+
+  getStatusClass(status: AlgorithmStatus): string {
+    switch (status) {
+      case AlgorithmStatus.Approved:
+        return 'status-badge-approved';
+      case AlgorithmStatus.Rejected:
+        return 'status-badge-rejected';
+      case AlgorithmStatus.Removed:
+        return 'status-badge-removed';
+      default:
+        return 'status-badge-pending';
+    }
+
+  }
+
 }

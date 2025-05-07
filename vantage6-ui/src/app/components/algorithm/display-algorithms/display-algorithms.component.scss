@@ -1,3 +1,4 @@
+@use '@angular/material' as mat;
 @import "src/app/styles/config.scss";
 
 // TODO this is copied from choose collaboration component - we should not duplicate
@@ -10,8 +11,49 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
-  button {
-    font-size: 1.5rem;
-    padding: $spacing-px-16 0;
-  }
+}
+
+.algorithm-footer {
+  padding: $spacing-px-4;
+  vertical-align: bottom;
+}
+
+.algorithm-header {
+  font-size: large;
+  font-weight: bold;
+}
+
+.status-badge {
+  color: white;
+  padding: $spacing-px-2;
+  width: fit-content;
+  float: right;
+  border-radius: 2px;
+  font-size: smaller;
+  font-style: normal;
+  font-weight: normal;
+  height: fit-content;
+}
+
+.status-badge-approved {
+  background-color: #008C00;
+}
+
+.status-badge-rejected {
+  background-color: #8C0000;
+}
+
+.status-badge-removed {
+  background-color: #8C8C8C;
+}
+
+.status-badge-pending {
+  background-color: #caaa00;
+}
+
+.algorithm-card{
+  flex-direction: column;
+}
+.algorithm-content{
+  flex: 1;
 }
