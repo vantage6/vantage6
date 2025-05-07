@@ -57,7 +57,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
-from vantage6.node.util import get_parent_id, delete_dataframe
+from vantage6.node.util import get_parent_id
 from vantage6.node import proxy_server
 
 
@@ -761,21 +761,6 @@ class Node:
         queue_processing_thread = threading.Thread(target=self.__process_tasks_queue)
         results_polling_thread.start()
         queue_processing_thread.start()
-
-    def delete_dataframe(self, df_name: str, session_id: str) -> None:
-        """
-        Delete a dataframe from the node.
-
-        Parameters
-        ----------
-        df_name: str
-            Name of the dataframe to delete
-        session_id: str
-            ID of the session to delete the dataframe from
-        """
-        self.log.info(f"Deleting dataframe: {df_name}")
-        # TODO task dir not necessary?
-        delete_dataframe(df_name, session_id, self.config.get("task_dir"))
 
 
 # ------------------------------------------------------------------------------
