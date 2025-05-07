@@ -37,6 +37,7 @@ setup(
         "marshmallow==3.19.0",
         "marshmallow-sqlalchemy==0.29.0",
         "SQLAlchemy==1.4.46",
+        "prometheus-client==0.21.1",
         f'vantage6-common == {version_ns["__version__"]}',
     ],
     extras_require={"dev": ["coverage==6.4.4"]},

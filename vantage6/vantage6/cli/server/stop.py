@@ -117,3 +117,10 @@ def _stop_server_containers(
                 f"Stopped the {Fore.GREEN}{rabbit_container_name}"
                 f"{Style.RESET_ALL} container."
             )
+
+    if ctx.config.get("prometheus", {}).get("enabled"):
+        remove_container_if_exists(client, name=ctx.prometheus_container_name)
+        info(
+            f"Stopped the {Fore.GREEN}{ctx.prometheus_container_name}"
+            f"{Style.RESET_ALL} container."
+        )
