@@ -382,7 +382,7 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
-        if action == AlgorithmStepType.FEDERATED_COMPUTE:
+        if action == AlgorithmStepType.CENTRAL_COMPUTE:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
