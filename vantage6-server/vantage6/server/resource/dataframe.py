@@ -419,14 +419,16 @@ class SessionDataframe(SessionBase):
         self.socketio.emit(
             "delete_dataframe",
             {"df_name": df_name, "session_id": session_id},
+            namespace="/tasks",
+            room=f"collaboration_{dataframe.session.collaboration_id}",
         )
 
-        # # Delete alls that are part of this dataframe
-        # for column in dataframe.columns:
-        #     column.delete()
+        # Delete alls that are part of this dataframe
+        for column in dataframe.columns:
+            column.delete()
 
-        # # Delete the dataframe itself from the server
-        # dataframe.delete()
+        # Delete the dataframe itself from the server
+        dataframe.delete()
 
         # TODO instruct nodes to delete the dataframe, consider the traceability of the
         # dataframe. Simply deleting the dataframe is not good, we should track it in
