@@ -212,9 +212,9 @@ class ContainerManager:
         - is_file: whether the database is a file
         - is_dir: whether the database is a directory
         - type: the type of the database
-        - env: the environment variables to be passed to the container
+        - env: the environment variables to be passed to the algorithm container
 
-        It reads these from the environment variables that are passed to the container.
+        It reads these from the environment variables that are passed to the node.
 
         Returns
         -------
