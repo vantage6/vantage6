@@ -49,7 +49,7 @@ node:
     serviceBased:
     # Name is the LABEL in the DATABASE_LABELS variable
     - name: myPostgres
-      uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
+      uri: postgres://vantage6-vantage6-postgres:5432/vantage6
       type: other
 
       # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
