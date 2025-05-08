@@ -181,6 +181,8 @@ deployments:
               type: csv
             serviceBased: []
           taskDirHost: ${TASK_DIRECTORY}
+          logging:
+            level: DEBUG
 
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
