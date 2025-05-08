@@ -25,6 +25,8 @@ def source_database(func) -> callable:
         ----------
         mock_uri : str
             Mock URI to use instead of the regular URI
+        mock_type : str
+            Mock type to use, e.g. `csv`, `excel`, `other`, etc.
 
         Returns
         -------
