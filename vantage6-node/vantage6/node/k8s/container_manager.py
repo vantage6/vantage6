@@ -772,7 +772,7 @@ class ContainerManager:
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
             # additional environment variables for the database. These will be stored
-            # as {PREFIX}{KEY}=value in the container. These are red by the
+            # as {PREFIX}{KEY}=value in the container. These are read by the
             # `@source_database` decorator in the (data extraction) algorithm.
             if "env" in db:
                 for key in db["env"]:
