@@ -39,7 +39,6 @@ args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
-node_test_database_file = args.node_test_database_file
 task_namespace = args.task_namespace
 
 
