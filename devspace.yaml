@@ -60,7 +60,6 @@ pipelines:
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
-        --node-test-database-file $NODE_TEST_DATABASE_FILE \
         --task-namespace $TASK_NAMESPACE
       python dev/connect-store.py
       stop_dev --all
