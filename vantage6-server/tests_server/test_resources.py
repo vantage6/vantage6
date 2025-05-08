@@ -2727,7 +2727,11 @@ class TestResources(TestResourceBase):
         col.save()
         task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
-        res = Run(task=task, status=RunStatus.PENDING)
+        res = Run(
+            task=task,
+            status=RunStatus.PENDING,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        )
         res.save()
 
         headers = self.create_node_and_login(organization=org)
@@ -2848,7 +2852,12 @@ class TestResources(TestResourceBase):
 
         parent_task = Task(collaboration=col, image="some-image")
         parent_task.save()
-        parent_res = Run(organization=org, task=parent_task, status=RunStatus.PENDING)
+        parent_res = Run(
+            organization=org,
+            task=parent_task,
+            status=RunStatus.PENDING,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        )
         parent_res.save()
 
         headers = self.login_container(
@@ -2866,8 +2875,19 @@ class TestResources(TestResourceBase):
             "collaboration_id": col2.id,
             "image": "some-image",
             "session_id": session.id,
-            "action": AlgorithmStepType.FEDERATED_COMPUTE,
+            "action": AlgorithmStepType.CENTRAL_COMPUTE,
         }
+
+        # Test wrong collaboration_id
+        results = self.app.post(
+            "/api/task",
+            headers=headers,
+            json=task_json,
+        )
+        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # test wrong action
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE
         results = self.app.post(
             "/api/task",
             headers=headers,
@@ -2877,6 +2897,7 @@ class TestResources(TestResourceBase):
 
         # test with correct parameters
         task_json["collaboration_id"] = col.id
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE
         results = self.app.post(
             "/api/task",
             headers=headers,
@@ -3092,7 +3113,12 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org])
         task = Task(collaboration=col, image="some-image", init_org=org)
         task.save()
-        res = Run(task=task, organization=org, status=RunStatus.PENDING)
+        res = Run(
+            task=task,
+            organization=org,
+            status=RunStatus.PENDING,
+            action=AlgorithmStepType.CENTRAL_COMPUTE.value,
+        )
         res.save()
 
         headers = self.login_container(collaboration=col, organization=org, task=task)
