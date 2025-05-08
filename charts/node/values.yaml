@@ -37,9 +37,8 @@ node:
   # DATABASE_[LABEL]_SOME_OTHER_KEY: some_other_value
   #
   # It is recommended to do this through Kubernetes secrets. If you specify the
-  # details here, secrets will be used. In case you are dealing with a file-based
-  # database, the node will automatically mount the file to the /app/databases/
-  # directory.
+  # details here, secrets will be used. File-based databases are automatically made
+  # available to your node.
   databases:
     fileBased:
     - name: default
