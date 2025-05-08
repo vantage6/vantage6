@@ -1,7 +1,7 @@
 import { ApplicationConfig } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { enCA } from 'date-fns/locale';
-import { provideHttpClient, withInterceptorsFromDi, HttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HttpClient, withInterceptors } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -46,12 +46,16 @@ import {
   INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
   withAutoRefreshToken,
   AutoRefreshTokenService,
-  UserActivityService
+  UserActivityService,
+  includeBearerTokenInterceptor
 } from 'keycloak-angular';
+
+import { environment } from '../environments/environment';
 
 // TODO also intercept store api
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
-  urlPattern: /^(http:\/\/localhost:7601)(\/.*)?$/i
+  urlPattern: new RegExp(`^(${environment.server_url})(\/.*)?$`, 'i'),
+  bearerPrefix: 'Bearer '
 });
 
 export const provideKeycloakAngular = () =>
@@ -128,7 +132,7 @@ export const appConfig: ApplicationConfig = {
       OverlayModule
     ),
     { provide: MAT_DATE_LOCALE, useValue: enCA },
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withInterceptorsFromDi(), withInterceptors([includeBearerTokenInterceptor])),
     DatePipe,
     provideAnimations(),
     provideKeycloakAngular()
