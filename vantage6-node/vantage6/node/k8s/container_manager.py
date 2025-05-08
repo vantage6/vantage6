@@ -1282,6 +1282,7 @@ class ContainerManager:
     def __delete_secret(self, secret_name: str, namespace: str) -> None:
         """
         Deletes a secret in a given namespace
+
         Parameters
         ----------
         secret_name: str
