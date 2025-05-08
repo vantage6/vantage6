@@ -42,7 +42,7 @@ def source_database(func) -> callable:
         For example when the nodes reads the following environment for database A, and
         the user requests database `A`:
         ```bash
-        DATABASE_A_URI="postgresql://user:password@host:port/database"
+        DATABASE_A_URI="postgresql://host:port/database"
         DATABASE_A_USERNAME="postgresql"
         DATABASE_A_PASSWORD="password"
         DATABASE_A_OTHER_DETAILS="..."
@@ -51,7 +51,7 @@ def source_database(func) -> callable:
         Then the algorithm container will pass the following environment variables to
         the algorithm (note that the `A_` annotation is removed):
         ```bash
-        DATABASE_URI="postgresql://user:password@host:port/database"
+        DATABASE_URI="postgresql://host:port/database"
         DATABASE_USERNAME="postgresql"
         DATABASE_PASSWORD="password"
         DATABASE_SOME_OTHER_PARAMETER="..."
@@ -66,7 +66,7 @@ def source_database(func) -> callable:
         >>> def my_function(connection_details: str):
         >>>     print(connection_details)
         {
-            "uri": "postgresql://user:password@host:port/database",
+            "uri": "postgresql://host:port/database",
             "username": "postgresql",
             "password": "password",
             "some_other_parameter": "..."
