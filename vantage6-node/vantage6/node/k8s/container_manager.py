@@ -777,10 +777,7 @@ class ContainerManager:
             if "env" in db:
                 for key in db["env"]:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
-                    if key.lower() in ["password", "pass", "user", "username"]:
-                        secrets[env_key] = db["env"][key]
-                    else:
-                        environment_variables[env_key] = db["env"][key]
+                    secrets[env_key] = db["env"][key]
 
         else:
             # In the other cases (preprocessing, compute, ...) we are dealing with a
