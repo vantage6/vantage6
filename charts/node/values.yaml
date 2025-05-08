@@ -48,13 +48,13 @@ node:
 
     serviceBased:
     # Name is the LABEL in the DATABASE_LABELS variable
-    - name: postgres
+    - name: myPostgres
       uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
       type: other
 
       # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
-      # case, the node will set the DATABASE_POSTGRES_USER and
-      # DATABASE_POSTGRES_PASSWORD environment variables.
+      # case, the node will set the DATABASE_MYPOSTGRES_USER and
+      # DATABASE_MYPOSTGRES_PASSWORD environment variables.
       env:
         USER: vantage6
         PASSWORD: vantage6
