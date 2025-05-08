@@ -2,7 +2,7 @@
 <div class="tile-grid">
 
     <mat-card class="algorithm-card" *ngFor="let algorithm of algorithms"
-              (click)="handleAlgorithmClick(algorithm)">
+              (click)="handleAlgorithmClick(algorithm)" matRipple>
 
         <mat-card-header class="algorithm-header">
             <mat-card-title-group>
@@ -10,13 +10,12 @@
                     {{ algorithm.name }}
                 </mat-card-title>
             </mat-card-title-group>
-            <div class="status-badge {{getStatusClass(algorithm.status)}}">
+            <div class="status-badge {{getStatusClass(algorithm.status)}}" >
                 {{ algorithm.status | titlecase }}
             </div>
         </mat-card-header>
 
         <mat-card-content class="algorithm-content">
-
 
             <div class="algorithm-description">
                 {{ algorithm.description }}

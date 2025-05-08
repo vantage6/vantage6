@@ -5,12 +5,13 @@ import { routePaths } from 'src/app/routes';
 import { NgFor, TitleCasePipe } from '@angular/common';
 import { MatCard, MatCardContent, MatCardFooter, MatCardHeader, MatCardTitle, MatCardTitleGroup } from "@angular/material/card";
 import { MatChip, MatChipSet } from "@angular/material/chips";
+import { MatRipple } from "@angular/material/core";
 
 @Component({
     selector: 'app-display-algorithms',
     templateUrl: './display-algorithms.component.html',
     styleUrl: './display-algorithms.component.scss',
-  imports: [NgFor, MatCard, MatCardHeader, MatCardFooter, MatCardContent, MatChipSet, MatChip, MatCardTitle, MatCardTitleGroup, TitleCasePipe]
+  imports: [NgFor, MatCard, MatCardHeader, MatCardFooter, MatCardContent, MatChipSet, MatChip, MatCardTitle, MatCardTitleGroup, TitleCasePipe, MatRipple]
 })
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];
