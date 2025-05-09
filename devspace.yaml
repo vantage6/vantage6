@@ -15,7 +15,7 @@ vars:
     default: olympic_athletes_2016.csv
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
-    default: ${PWD}/.tasks
+    default: ${PWD}/dev/.tasks
   HOST_URI:
     question: "What is the ip address of your host machine?"
     default: host.docker.internal
@@ -29,10 +29,10 @@ vars:
   TASK_NAMESPACE: vantage6-tasks
   SERVER_DATABASE_MOUNT_PATH:
     question: "Where is your server database located on the host machine?"
-    default: ${PWD}/dev/data/db_pv_server
+    default: ${PWD}/dev/.db/db_pv_server
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
-    default: ${PWD}/dev/data/db_pv_store
+    default: ${PWD}/dev/.db/db_pv_store
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
