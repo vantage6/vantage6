@@ -115,6 +115,12 @@ pipelines:
       rm -rf "${TASK_DIRECTORY}"
       rm -rf "${SERVER_DATABASE_MOUNT_PATH}"
       rm -rf "${STORE_DATABASE_MOUNT_PATH}"
+    
+  stop-dev:
+    run: |-
+      stop_dev --all
+      purge_deployments --all
+      run_dependencies --all --pipeline purge
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -349,11 +355,10 @@ commands:
     description: "Start the development environment"
     command: devspace dev
 
-  # This will stop all components from the development mode. Note that the deployments
-  # are not deleted.
+  # This will remove all running k8s resources from the development mode. 
   stop-dev:
     description: "Stop the development environment"
-    command: devspace reset pods
+    command: devspace run-pipeline stop-dev
 
   # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
   # This is useful when you want to start from scratch.
