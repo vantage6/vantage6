@@ -333,12 +333,6 @@ dev:
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
-  # This command will spin up a server and store temporary to fill it with some
-  # basic data.
-  populate-server:
-    description: "Populate the server with fixtures for a given number of nodes"
-    command: devspace run-pipeline init
-
   # This will put all components in development mode. This is the main entrypoint
   # for development.
   start-dev:
