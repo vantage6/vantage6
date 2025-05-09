@@ -95,6 +95,24 @@ pipelines:
       start_dev \
         vantage6-node
 
+hooks:
+# Execute the hook in a golang shell (cross operating system compatible)
+- name: "create-tasks-folder"
+  command: |
+    echo "Creating tasks folder"
+    mkdir -p ${TASK_DIRECTORY}
+  events: ["before:deploy:vantage6-node"]
+- name: "create-server-database-folder"
+  command: |
+    echo "Creating server database folder"
+    mkdir -p ${SERVER_DATABASE_MOUNT_PATH}
+  events: ["before:deploy:vantage6-server"]
+- name: "create-store-database-folder"
+  command: |
+    echo "Creating algorithm store database folder"
+    mkdir -p ${STORE_DATABASE_MOUNT_PATH}
+  events: ["before:deploy:vantage6-store"]
+
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
 images:
