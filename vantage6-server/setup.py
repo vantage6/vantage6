@@ -47,6 +47,7 @@ setup(
         "names_generator==0.2.0",
         "PyJWT==2.6.0",
         "pyotp==2.8.0",
+        "python-keycloak==5.5.0",
         "requests==2.32.3",
         "requests-oauthlib==1.3.1",
         "schema==0.7.5",

@@ -31,13 +31,19 @@ keycloak:
               - type: password
                 value: user
         clients:
+           # TODO change to UI client
           - clientId: myclient
-           # TODO change to confidential client
             publicClient: true
             redirectUris:
               - "*"
             # directAccessGrantsEnabled: false
             # root_url: http://localhost:8080
+          - clientId: backend
+            publicClient: false
+            redirectUris:
+              - "*"
+            # TODO set dynamic secret, now just for testing
+            secret: mysecret
         roles:
           realm:
             - name: admin
