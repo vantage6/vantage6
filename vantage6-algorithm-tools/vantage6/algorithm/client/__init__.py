@@ -70,7 +70,6 @@ class AlgorithmClient(ClientBase):
         self.vpn = self.VPN(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
-        self.node = self.Node(self)
         self.study = self.Study(self)
 
         self._access_token = token
