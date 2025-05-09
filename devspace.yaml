@@ -105,6 +105,16 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
+    
+  purge:
+    run: |-
+      stop_dev --all
+      purge_deployments --all
+      run_dependencies --all --pipeline purge
+      rm -rf "${POPULATE_MARKER}"
+      rm -rf "${TASK_DIRECTORY}"
+      rm -rf "${SERVER_DATABASE_MOUNT_PATH}"
+      rm -rf "${STORE_DATABASE_MOUNT_PATH}"
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -345,8 +355,8 @@ commands:
     description: "Stop the development environment"
     command: devspace reset pods
 
-  # This will delete all deployments and services. This is useful when you want to
-  # start from scratch.
+  # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
+  # This is useful when you want to start from scratch.
   purge:
     description: "Purge the development environment"
     command: devspace purge
