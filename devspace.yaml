@@ -51,7 +51,7 @@ pipelines:
         mkdir -p .devspace
         touch "${POPULATE_MARKER}"
       else
-        echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}''."
+        echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."
       fi
 
       run_dependencies --all
