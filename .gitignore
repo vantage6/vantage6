@@ -29,4 +29,3 @@ dev/.data/
 
 # Helm
 charts/**/*.tgz
-charts/**/Chart.lock
