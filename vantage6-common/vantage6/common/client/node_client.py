@@ -246,10 +246,8 @@ class NodeClient(ClientBase):
                 
                 url = self.parent.generate_path_to("resultstream", False)
                 self.parent.log.debug(f"Making request: {url}")
-
                 response = requests.post(url, data=data["result"], headers=headers)
-
-                if response.status_code != 200:
+                if not (200 <= response.status_code < 300):
                     self.parent.log.error(
                         f"Failed to upload result to server: {response.text}"
                     )

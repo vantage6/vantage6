@@ -685,13 +685,20 @@ class ServerApp:
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
-            "storage_adapter": self.storage_adapter,            
             "config": self.ctx.config,
+        }
+
+        result_services = {
+            "storage_adapter": self.storage_adapter,
+            **services
         }
 
         for res in RESOURCES:
             module = importlib.import_module("vantage6.server.resource." + res)
-            module.setup(self.api, self.ctx.config["api_path"], services)
+            if res in ["result"]:
+                module.setup(self.api, self.ctx.config["api_path"], result_services)
+            else:
+                module.setup(self.api, self.ctx.config["api_path"], services)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see

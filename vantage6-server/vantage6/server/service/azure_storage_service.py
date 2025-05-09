@@ -36,3 +36,11 @@ class AzureStorageService:
         log.debug(f"Deleting blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
         blob_client.delete_blob()
+
+    def stream_blob(self, blob_name: str) -> bytes:
+        """
+        Stream a blob from Azure Blob Storage.
+        """
+        log.debug(f"Streaming blob: {blob_name} from container: {self.container_name}")
+        blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
+        return blob_client.download_blob()

@@ -15,6 +15,9 @@ from vantage6.algorithm.tools.util import info
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
 
+import requests
+import uuid
+
 
 class AlgorithmClient(ClientBase):
     """
@@ -142,14 +145,45 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        status = self.task.get(task_id).get("status")
-        while not has_task_finished(status):
-            info(f"Waiting for results of task {task_id}...")
+        while not has_task_finished(self.task.get(task_id).get("status")):
             time.sleep(interval)
-            status = self.task.get(task_id).get("status")
-        info("Done!")
 
-        return self.result.from_task(task_id)
+        result = self.request("result", params={"task_id": task_id})
+        self.log.info("Result from server: ")
+        self.log.info(result)
+        
+        for item in result["data"]:
+            url = f"{self.base_path}/resultstream/{str(uuid.UUID(item['result']))}"
+            headers = self.headers
+            timeout = 1200
+            try:
+                with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
+                    if response.status_code == 200:
+                        item['result'] = b""
+                        for chunk in response.iter_content(chunk_size=8192):
+                            item['result'] += chunk
+                    else:
+                        self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
+                        self.log.error(f"Response: {response.text}")
+            except requests.RequestException as e:
+                self.log.error(f"An error occurred while streaming result: {e}")
+        for item in result["data"]:
+            if isinstance(item['result'], bytes):
+                item['result'] = item['result'].decode('utf-8')
+        decoded_results = []
+        try:
+            decoded_results = [
+                json_lib.loads(base64s_to_bytes(result.get("result")).decode())
+                for result in result["data"]
+                if result.get("result")
+            ]
+        except Exception as e:
+            self.parent.log.error("Unable to load results")
+            self.parent.log.error(e)
+
+        
+
+        return decoded_results
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """

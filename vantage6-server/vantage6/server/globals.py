@@ -40,6 +40,7 @@ RESOURCES = [
     "organization",
     "task",
     "run",
+    "result",
     "token",
     "user",
     "version",
