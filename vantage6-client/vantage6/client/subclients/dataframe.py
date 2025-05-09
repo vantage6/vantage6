@@ -67,10 +67,13 @@ class DataFrameSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def create(
         self,
-        database: str,
+        label: str,
         image: str,
+        method: str,
         input_: dict,
-        session: int = None,
+        session: int | None = None,
+        store: int | None = None,
+        name: str | None = None,
         display=False,
     ) -> dict:
         """
@@ -78,18 +81,24 @@ class DataFrameSubClient(ClientBase.SubClient):
 
         Parameters
         ----------
-        database : str
-            The name of the database. This is the label of the source database at the
-            node.
+        label : str
+            Database label that is specified in the node configuration file.
         image : str
             The name of the image that will be used to retrieve the data from the
             source database.
+        method: str
+            The method from the algorithm's image to be used for creating the dataframe
         input_: dict
-            The input for the dataframe creation.
+            The input for the dataframe creation. It should include
+            the arguments of the given method (kwargs)
+        name: str
+            Name that can be used in within the session
         session : int, optional
             The session ID in which the dataframe is located. When not provided, the
             session ID of the client is used when it is set. In case the session ID is
             not set, an error is printed.
+        store: int, optional
+            The algorithm store where the algorithm image is registered
         display : bool, optional
             Whether to print the dataframe details. By default False.
 
@@ -124,7 +133,6 @@ class DataFrameSubClient(ClientBase.SubClient):
         orgs = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in orgs["data"]]
 
-        # Data will be serialized in JSON.
         serialized_input = serialize(input_)
 
         # Encrypt the input per organization using that organization's
@@ -140,16 +148,22 @@ class DataFrameSubClient(ClientBase.SubClient):
                 }
             )
 
-        df = self.parent.request(
-            f"session/{session_id}/dataframe",
-            method="POST",
-            json={
-                "label": database,
-                "task": {
-                    "image": image,
-                    "organizations": organization_json_list,
-                },
+        request_payload = {
+            "label": label,
+            "task": {
+                "method": method,
+                "image": image,
+                "organizations": organization_json_list,
             },
+        }
+
+        if name is not None:
+            request_payload["name"] = name
+        if store is not None:
+            request_payload["task"]["store_id"] = store
+
+        df = self.parent.request(
+            f"session/{session_id}/dataframe", method="POST", json=request_payload
         )
 
         if display:
@@ -158,7 +172,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(self, id_: int, image: str, input_: dict) -> dict:
+    def preprocess(self, id_: int, image: str, method: str, input_: dict) -> dict:
         """
         Modify a dataframe in a session.
 
@@ -176,6 +190,8 @@ class DataFrameSubClient(ClientBase.SubClient):
             The ID of the dataframe.
         image : str
             The name of the image that will be used to preprocess the dataframe.
+        method: str
+            Method on the algorithm image to be used to preprocess the dataframe
         input_: dict
             The input for the dataframe preprocessing.
 
@@ -191,19 +207,16 @@ class DataFrameSubClient(ClientBase.SubClient):
             self.parent.log.error(f"An error occurred while fetching dataframe {id_}")
             return
 
-        session = dataframe.get("session")
-        if not session:
+        if dataframe["study"]:
+            params = {"study": dataframe["study"]}
+        elif dataframe["collaboration"] and dataframe["collaboration"]["id"]:
+            collaboration_id = dataframe["collaboration"]["id"]
+            params = {"collaboration": collaboration_id}
+        else:
             self.parent.log.error(
-                f"Could not fetch session {dataframe['session_id']} from dataframe"
+                f"No study or collaboration id defined in dataframe {id_}"
             )
             return
-
-        if session.get("study"):
-            study_id = session["study"]["id"]
-            params = {"study": study_id}
-        else:
-            collaboration_id = session["collaboration"]["id"]
-            params = {"collaboration": collaboration_id}
 
         org = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in org["data"]]
@@ -227,7 +240,9 @@ class DataFrameSubClient(ClientBase.SubClient):
             f"session/dataframe/{id_}/preprocess",
             method="POST",
             json={
+                "dataframe_id": id_,
                 "task": {
+                    "method": method,
                     "image": image,
                     "organizations": organization_json_list,
                 },

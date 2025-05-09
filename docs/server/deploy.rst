@@ -63,7 +63,7 @@ The most basic setup is to have a single backend server.
             proxy_buffering off;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
-            proxy_pass http://127.0.0.1:7601/socket.io;
+            proxy_pass http://127.0.0.1:7601/socket.io/;
         }
     }
 
@@ -106,7 +106,7 @@ that are behind a load balancer. The load balancer is configured to use sticky s
            proxy_buffering off;
            proxy_set_header Upgrade $http_upgrade;
            proxy_set_header Connection "Upgrade";
-           proxy_pass http://backend/socket.io;
+           proxy_pass http://backend/socket.io/;
        }
    }
 
