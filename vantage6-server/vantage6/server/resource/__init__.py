@@ -161,6 +161,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
+
             # decode JWT-token
             identity = get_jwt_identity()
             claims = get_jwt()

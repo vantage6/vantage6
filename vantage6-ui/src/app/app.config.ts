@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { enCA } from 'date-fns/locale';
 import { provideHttpClient, withInterceptorsFromDi, HttpClient, withInterceptors } from '@angular/common/http';
@@ -37,7 +37,8 @@ import { MatTreeModule } from '@angular/material/tree';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { importProvidersFrom } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app-routing.module';
 
 import {
   provideKeycloak,
@@ -55,7 +56,7 @@ import { environment } from '../environments/environment';
 // TODO also intercept store api
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
   urlPattern: new RegExp(`^(${environment.server_url})(\/.*)?$`, 'i'),
-  bearerPrefix: 'Bearer '
+  bearerPrefix: 'Bearer'
 });
 
 export const provideKeycloakAngular = () =>
@@ -135,6 +136,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi(), withInterceptors([includeBearerTokenInterceptor])),
     DatePipe,
     provideAnimations(),
-    provideKeycloakAngular()
+    provideKeycloakAngular(),
+    provideRouter(routes),
+    provideZoneChangeDetection({ eventCoalescing: true })
   ]
 };

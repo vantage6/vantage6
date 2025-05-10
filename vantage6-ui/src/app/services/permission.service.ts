@@ -7,6 +7,7 @@ import { ApiService } from './api.service';
 import { USER_ID } from 'src/app/models/constants/sessionStorage';
 import { TokenStorageService } from './token-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { RuleService } from './rule.service';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
   [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
@@ -26,8 +27,10 @@ export class PermissionService {
 
   constructor(
     private apiService: ApiService,
-    private tokenStorageService: TokenStorageService
+    private tokenStorageService: TokenStorageService,
+    private rulesService: RuleService
   ) {
+    this.rulesService.getRules();
     this.tokenStorageService.loginObservable().subscribe((loggedIn: boolean) => {
       if (loggedIn) this.initData();
     });

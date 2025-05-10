@@ -68,7 +68,7 @@ import { DataframeReadComponent } from './pages/analyze/sessions/read/dataframe-
 import { DataframePreprocessComponent } from './pages/analyze/sessions/preprocessing/dataframe-preprocess.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   {
     path: 'auth',
     component: LayoutLoginComponent,
