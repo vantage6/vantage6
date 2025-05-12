@@ -20,7 +20,25 @@ node:
 
   proxyPort: 7654
 
-  # TODO the way databases are mounted and named can lead to possible naming conflicts
+  # It is also possible not to specify the details of the service-based databases
+  # here. The node will then automatically detect the databases in the environment
+  # variables. This allows parent charts to specify the databases in their own
+  # values.yaml file or define them runtime using the CLI.
+  #
+  # In this case, the node expects the following environment variables to be set:
+  #
+  # DATABASE_LABELS: comma-separated list of database labels
+  # DATABASE_[LABEL]_URI: URI of the database
+  # DATABASE_[LABEL]_TYPE: type of the database
+  #
+  # Optionally, you can also specify additional environment variables for each
+  # database by setting the DATABASE_[LABEL]_SOME_OTHER_KEY variable.
+  #
+  # DATABASE_[LABEL]_SOME_OTHER_KEY: some_other_value
+  #
+  # It is recommended to do this through Kubernetes secrets. If you specify the
+  # details here, secrets will be used. File-based databases are automatically made
+  # available to your node.
   databases:
     fileBased:
     - name: default
@@ -30,9 +48,17 @@ node:
       volumePath: /mnt/data
       originalName: olympic_athletes_2016.csv
     serviceBased:
-    - name: postgres
-      uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
+    # Name is the LABEL in the DATABASE_LABELS variable
+    - name: myPostgres
+      uri: postgres://vantage6-postgres:5432/vantage6
       type: other
+
+      # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
+      # case, the node will set the DATABASE_MYPOSTGRES_USER and
+      # DATABASE_MYPOSTGRES_PASSWORD environment variables.
+      env:
+        USER: vantage6
+        PASSWORD: vantage6
 
   # Kubernetes configuration
   taskNamespace: vantage6-tasks

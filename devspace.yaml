@@ -71,7 +71,6 @@ pipelines:
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
-        --node-test-database-file $NODE_TEST_DATABASE_MOUNT_PATH/$NODE_TEST_DATABASE_NAME \
         --task-namespace $TASK_NAMESPACE
       python dev/connect-store.py
       stop_dev --all
@@ -205,12 +204,10 @@ deployments:
     helm:
       chart:
         name: ./charts/node
+      # See the env section in the dev section where the database environment variables
+      # are set.
       values:
         node:
-          taskDirHost: ${TASK_DIRECTORY}
-          image: ${NODE_IMAGE}
-          logging:
-            level: DEBUG
           databases:
             fileBased:
             - name: default
@@ -218,11 +215,11 @@ deployments:
               type: csv
               volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
               originalName: ${NODE_TEST_DATABASE_NAME}
+            serviceBased: []
           k8sNodeName: ${K8S_NODE_NAME}
-            # serviceBased:
-            # - name: postgres
-            #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
-            #   type: other
+          taskDirHost: ${TASK_DIRECTORY}
+          logging:
+            level: DEBUG
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
@@ -312,6 +309,13 @@ dev:
   vantage6-node:
     labelSelector:
       component: node
+    env:
+      - name: "DATABASE_LABELS"
+        value: "default"
+      - name: "DATABASE_DEFAULT_URI"
+        value: ${NODE_TEST_DATABASE_FILE}
+      - name: "DATABASE_DEFAULT_TYPE"
+        value: "csv"
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true

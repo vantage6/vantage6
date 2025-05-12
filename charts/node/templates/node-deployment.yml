@@ -28,6 +28,9 @@ spec:
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-node-secrets
         command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
         volumeMounts:
         - name: task-files-root

@@ -723,11 +723,11 @@ class Node:
 
         # share node database labels and types to help people extract data from
         # databases in the UI
+
         labels = []
         types = {}
-        for db in self.config.get("databases", []):
-            label = db.get("label")
-            type_ = db.get("type")
+        for label, db_info in self.k8s_container_manager.databases.items():
+            type_ = db_info.get("type")
             labels.append(label)
             types[f"db_type_{label}"] = type_
 
