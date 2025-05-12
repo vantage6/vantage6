@@ -39,7 +39,7 @@ data:
       min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
       assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
     dev:
-      host_uri: host.docker.internal
+      host_uri: {{ .Values.store.dev.host_uri }}
       disable_review: {{ .Values.store.policies.dev.disable_review }}
       review_own_algorithm: {{ .Values.store.policies.dev.review_own_algorithm }}
     port: {{ .Values.store.internal.port }}

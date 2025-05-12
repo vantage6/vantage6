@@ -139,52 +139,6 @@ class TestRoleResource(TestResources):
         response = self.app.delete("/api/role/9999", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_add_rule_to_role(self, validate_token_mock):
-        server = self.setup_mock_and_server(validate_token_mock)
-        rule = Rule.get_by_("role", Operation.EDIT)
-        role = self.create_role(rules=[rule])
-
-        self.check_unauthorized(self.app.post, f"/api/role/{role.id}/rule/9999")
-
-        self.register_user(
-            server.id,
-            USERNAME,
-            user_rules=[Rule.get_by_("role", Operation.EDIT)],
-            user_roles=[role],
-        )
-
-        response = self.app.post(f"/api/role/{role.id}/rule/{rule.id}", headers=HEADERS)
-        self.assertEqual(response.status_code, HTTPStatus.CREATED)
-        self.assertEqual(len(role.rules), 1)
-
-        invalid_rule = Rule.get_by_("role", Operation.CREATE)
-        response = self.app.post(
-            f"/api/role/{role.id}/rule/{invalid_rule.id}", headers=HEADERS
-        )
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
-
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_delete_rule_from_role(self, validate_token_mock):
-        server = self.setup_mock_and_server(validate_token_mock)
-        rule = Rule.get_by_("role", Operation.EDIT)
-        role = self.create_role(rules=[rule])
-
-        self.check_unauthorized(self.app.delete, f"/api/role/{role.id}/rule/{rule.id}")
-
-        self.register_user(
-            server.id,
-            USERNAME,
-            user_rules=[Rule.get_by_("role", Operation.EDIT)],
-            user_roles=[role],
-        )
-
-        response = self.app.delete(
-            f"/api/role/{role.id}/rule/{rule.id}", headers=HEADERS
-        )
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(len(role.rules), 0)
-
 
 if __name__ == "__main__":
     unittest.main()

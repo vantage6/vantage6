@@ -27,9 +27,6 @@ parser.add_argument(
     "--task-directory", type=str, help="Directory to store tasks on the host"
 )
 parser.add_argument(
-    "--node-test-database-file", type=str, help="Path to the test database file"
-)
-parser.add_argument(
     "--number-of-nodes", type=int, default=3, help="Number of nodes to create"
 )
 parser.add_argument(
@@ -39,7 +36,6 @@ args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
-node_test_database_file = args.node_test_database_file
 task_namespace = args.task_namespace
 
 
@@ -108,7 +104,6 @@ def create_node(index, collaboration, organization, task_namespace):
         node_config = template.render(
             {
                 "api_key": node["api_key"],  # Use the API key from node creation
-                "databases": {"default": node_test_database_file},
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
                 "port": 80,
                 "server_url": "http://vantage6-server-vantage6-server-service",
