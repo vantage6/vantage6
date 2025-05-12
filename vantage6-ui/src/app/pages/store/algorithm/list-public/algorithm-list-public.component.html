@@ -9,8 +9,7 @@
 <app-page-header title="{{ 'communitystore.algorithms' | translate }}"></app-page-header>
 <ng-container *ngIf="!isLoading; else loading">
     <app-display-algorithms [algorithms]="algorithms"
-                            [routeOnClick]="routePaths.communityStoreAlgorithms"
-                            [showStatus]="true"></app-display-algorithms>
+                            [routeOnClick]="routePaths.communityStoreAlgorithms"></app-display-algorithms>
     <mat-card *ngIf="algorithms.length === 0">
         <mat-card-content>
             <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
