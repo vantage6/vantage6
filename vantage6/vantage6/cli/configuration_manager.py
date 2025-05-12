@@ -45,7 +45,6 @@ class NodeConfiguration(Configuration):
         "port": Or(Use(int), None),
         "task_dir": Use(str),
         # TODO: remove `dict` validation from databases
-        "databases": Or([Use(dict)], dict, None),
         "api_path": Use(str),
         "logging": LOGGING_VALIDATORS,
         "encryption": {"enabled": bool, Optional("private_key"): Use(str)},

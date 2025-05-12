@@ -37,3 +37,9 @@ rules:
 - apiGroups: [""]
   resources: ["namespaces"]
   verbs: ["create", "get", "list", "watch"]
+
+# The node needs to be able to create and manage secrets for storing sensitive data
+# that algorithms might need, such as credentials or configuration.
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "delete", "get", "list", "watch"]
