@@ -1,17 +1,66 @@
-@import "src/app/styles/config.scss";
+@use "src/app/styles/config.scss";
+@use '@angular/material' as mat;
 
 // TODO this is copied from choose collaboration component - we should not duplicate
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-px-4;
+  gap: config.$spacing-px-4;
 
   @media only screen and (min-width: 960px) {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  button {
-    font-size: 1.5rem;
-    padding: $spacing-px-16 0;
+}
+
+.algorithm-footer {
+  padding: config.$spacing-px-4;
+  vertical-align: bottom;
+}
+
+.algorithm-header {
+  font-size: large;
+  font-weight: bold;
+}
+
+.status-badge {
+  color: white;
+  padding: config.$spacing-px-2;
+  width: fit-content;
+  float: right;
+  border-radius: 2px;
+  font-size: smaller;
+  font-style: normal;
+  font-weight: normal;
+  height: fit-content;
+}
+
+.status-badge-approved {
+  background-color: config.$success-500;
+}
+
+.status-badge-rejected {
+  background-color: config.$error-500;
+}
+
+.status-badge-removed {
+  background-color: var(--mat-badge-disabled-state-background-color)
+}
+
+.status-badge-pending {
+  background-color: config.$warning-500;
+}
+
+.algorithm-card{
+  flex-direction: column;
+
+  @include mat.elevation(1);
+
+  &:hover {
+    @include mat.elevation(2);
   }
+
+}
+.algorithm-content{
+  flex: 1;
 }
