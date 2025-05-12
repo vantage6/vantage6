@@ -79,6 +79,12 @@ def create_user(index, organization):
 
 def create_node(index, collaboration, organization, task_namespace):
     name = f"node_{index}"
+
+    # Create a folder for all config files for a single node. This can be the test data,
+    # the node config and the environment variables.
+    node_dev_dir = dev_dir / name
+    node_dev_dir.mkdir(exist_ok=True)
+
     if next(iter(client.node.list(name=name)["data"]), None):
         print(f"==> node `{name}` already exists")
         return
@@ -103,7 +109,6 @@ def create_node(index, collaboration, organization, task_namespace):
 
         node_config = template.render(
             {
-                "api_key": node["api_key"],  # Use the API key from node creation
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
                 "port": 80,
                 "server_url": "http://vantage6-server-vantage6-server-service",
@@ -114,15 +119,35 @@ def create_node(index, collaboration, organization, task_namespace):
             }
         )
         config_file = (
-            dev_dir / f"node_org_{index}.yaml"
+            node_dev_dir / f"node_org_{index}.yaml"
         )  # Use index in config file name
         with open(config_file, "w") as f:
             f.write(node_config)
-
         print(f"===> Node configuration saved to `{config_file.name}`")
+
+        print("===> Creating .env file for the node")
+        env_file = node_dev_dir / ".env"
+        with open(env_file, "w") as f:
+            f.write(f"V6_API_KEY={node['api_key']}")
+
+        print(f"===> .env file saved to `{env_file.name}`")
+
     except Exception as e:
         print(f"Error creating node {name}: {str(e)}")
 
+
+def clear_dev_folder(name):
+    node_dev_dir = dev_dir / name
+    if node_dev_dir.exists():
+        for file_ in node_dev_dir.iterdir():
+            file_.unlink()
+        node_dev_dir.rmdir()
+        print(f"===> Dev folder for node `{name}` cleared")
+
+
+print("=> Removing old config files")
+for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
+    clear_dev_folder(node_dir.name)
 
 print("=> creating organizations")
 organizations = []
