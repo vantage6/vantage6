@@ -16,6 +16,7 @@ import { MatRipple } from "@angular/material/core";
 export class DisplayAlgorithmsComponent {
   @Input() algorithms: Algorithm[] = [];
   @Input() routeOnClick: string = '';
+  @Input() showStatus: boolean = false;
   routePaths = routePaths;
 
   constructor(private router: Router) {}
@@ -42,7 +43,7 @@ export class DisplayAlgorithmsComponent {
         return 'status-badge-approved';
       case AlgorithmStatus.Rejected:
         return 'status-badge-rejected';
-      case AlgorithmStatus.Removed:
+      case AlgorithmStatus.Removed || AlgorithmStatus.Replaced:
         return 'status-badge-removed';
       default:
         return 'status-badge-pending';
