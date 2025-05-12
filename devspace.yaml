@@ -336,7 +336,7 @@ dev:
       - name: "DATABASE_LABELS"
         value: "default"
       - name: "DATABASE_DEFAULT_URI"
-        value: ${NODE_TEST_DATABASE_FILE}
+        value: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
       - name: "DATABASE_DEFAULT_TYPE"
         value: "csv"
     sync:
