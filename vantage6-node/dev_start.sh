@@ -13,7 +13,8 @@ config_dir=${config_dir%/}
 
 for dir in $config_dir/*; do
     if [ -d "$dir" ]; then
-        echo "Starting node with config: $dir"
+        echo "Looking for node configurations in: $dir"
+
         config=$(find "$dir" -maxdepth 1 -name "*.yaml" -type f)
         dotenv_file="$dir"/.env
 
