@@ -46,6 +46,7 @@ setup(
         "marshmallow==3.19.0",
         "PyJWT==2.6.0",
         "pyotp==2.8.0",
+        "prometheus-client==0.21.1",
         "requests==2.32.3",
         "requests-oauthlib==1.3.1",
         "schema==0.7.5",

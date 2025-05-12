@@ -42,6 +42,10 @@ DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 # Address of community algorithm store
 COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
 
+DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
+PROMETHEUS_CONFIG = "prometheus.yml"
+PROMETHEUS_DIR = "prometheus"
+
 
 class ServerType(str, Enum):
     """Enum containing server types"""
