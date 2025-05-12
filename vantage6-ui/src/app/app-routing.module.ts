@@ -64,9 +64,9 @@ import { SessionListComponent } from './pages/analyze/sessions/list/session-list
 import { SessionCreateComponent } from './pages/analyze/sessions/create/session-create.component';
 import { SessionReadComponent } from './pages/analyze/sessions/read/session-read.component';
 import { DataframeCreateComponent } from './pages/analyze/sessions/create/dataframe-create.component';
-import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 import { DataframeReadComponent } from './pages/analyze/sessions/read/dataframe-read/dataframe-read.component';
 import { DataframePreprocessComponent } from './pages/analyze/sessions/preprocessing/dataframe-preprocess.component';
+import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
 const routes: Routes = [
   {
