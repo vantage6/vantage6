@@ -26,6 +26,8 @@ docs/function-docs/_autosummary
 # Ignore DevSpace cache and log folder
 .devspace/
 dev/.data/
+dev/.tasks/
+dev/.db/
 
 # Helm
 charts/**/*.tgz
