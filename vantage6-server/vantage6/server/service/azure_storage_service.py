@@ -1,4 +1,5 @@
 from azure.storage.blob import BlobServiceClient
+from azure.identity import ClientSecretCredential
 import logging
 from vantage6.common import logger_name
 
@@ -6,8 +7,16 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 class AzureStorageService:
-    def __init__(self, connection_string: str, container_name: str):
-        self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    def __init__(self, tenant_id: str, client_id: str, client_secret: str, storage_account_name: str, container_name: str):
+        credential = ClientSecretCredential(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
+        self.blob_service_client = BlobServiceClient(
+            account_url=f"https://{storage_account_name}.blob.core.windows.net/",
+            credential=credential,
+        )
         self.container_name = container_name
         self.container_client = self.blob_service_client.get_container_client(container_name)
 

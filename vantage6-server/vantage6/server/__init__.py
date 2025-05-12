@@ -140,11 +140,17 @@ class ServerApp:
         # Setup storage adapter
         self.storage_adapter = None
         if self.ctx.config.get("large_result_store") \
-            and self.ctx.config["large_result_store"].get("connection_string") \
+            and self.ctx.config["large_result_store"].get("tenant_id") \
+            and self.ctx.config["large_result_store"].get("client_id") \
+            and self.ctx.config["large_result_store"].get("client_secret") \
+            and self.ctx.config["large_result_store"].get("storage_account_name") \
             and self.ctx.config["large_result_store"].get("type") == "azure_blob_storage":
             log.info("Using Azure Blob Storage as large result store")
             self.storage_adapter = AzureStorageService(
-                connection_string=self.ctx.config["large_result_store"]["connection_string"],
+                tenant_id=self.ctx.config["large_result_store"]["tenant_id"],
+                client_id=self.ctx.config["large_result_store"]["client_id"],
+                client_secret=self.ctx.config["large_result_store"]["client_secret"],
+                storage_account_name=self.ctx.config["large_result_store"]["storage_account_name"],
                 container_name=self.ctx.config["large_result_store"]["container_name"],
             )
         else:
