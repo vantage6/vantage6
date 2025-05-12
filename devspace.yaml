@@ -78,8 +78,10 @@ pipelines:
         vantage6-store
       start_dev \
         vantage6-server \
+        vantage6-server-db \
         vantage6-ui \
-        vantage6-store
+        vantage6-store \
+        vantage6-store-db
 
   node:
     run: |-
@@ -240,7 +242,18 @@ dev:
       bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
-
+  
+  vantage6-server-db:
+    labelSelector:
+      app: vantage6-server
+      component: postgres
+    ports:
+      # expose the server database port
+      - port: 5432:5432
+        bindAddress: localhost
+      - port: 5432:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
+  
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
@@ -261,6 +274,16 @@ dev:
       startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
+  vantage6-store-db:
+    labelSelector:
+      app: store
+      component: postgres
+    ports:
+      # expose the store database port
+      - port: 5433:5432
+        bindAddress: localhost
+      - port: 5433:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the store container in development mode.
   vantage6-ui:
