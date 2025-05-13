@@ -59,7 +59,7 @@ This documentation space consists of the following main sections:
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
   vantage6*
-* :doc:`/function-docs/index` |rarr|
+* :doc:`/api-docs/index` |rarr|
   *Documentation of the vantage6 infrastructure code*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
 * :doc:`/release_notes` |rarr| *Log of what has been released and when*
@@ -118,7 +118,7 @@ Index
    algorithms/index
    features/index
    devops/index
-   function-docs/index
+   api-docs/index
    glossary
 
 .. toctree::

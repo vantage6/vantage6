@@ -1,7 +1,7 @@
 
 # documentation
 docs/_build
-docs/function-docs/_autosummary
+docs/api-docs/_autosummary
 
 # Python
 .ipynb_checkpoints

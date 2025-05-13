@@ -1,4 +1,4 @@
-.. _function-docs:
+.. _api-docs:
 
 Function documentation
 ======================
