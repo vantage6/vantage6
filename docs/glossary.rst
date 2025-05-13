@@ -17,6 +17,10 @@ The following is a list of definitions used in vantage6.
 
 **C**
 
+-  **Central function**: The orchestration part of an algorithm that coordinates and
+   aggregates results from partial functions.
+-  **Child container**: A container created by an algorithm container to perform
+   subtasks, typically a *federated function*
 -  **Client**: A vantage6 user or application that uses the vantage6-server to run
    algorithms.
 -  **Collaboration**: an agreement between two or more parties to participate in a study
@@ -26,6 +30,8 @@ The following is a list of definitions used in vantage6.
 
 **D**
 
+-  **DataFrame**: A standardized representation of data in a session that can be used
+   for computation tasks.
 -  **Data Station**: A vantage6 *node* that has access to the local data.
 -  **Distributed learning**: see *Federated Learning* and *Federated Analytics*
 -  **Docker:** a platform that uses operating system virtualization to deliver software
@@ -56,6 +62,8 @@ The following is a list of definitions used in vantage6.
    idea is that parties run computations on their local data, yielding
    aggregated parameters. These are then shared to generate a global (statistical)
    model.
+-  **Federated function**: A function that is executed on the local data of a party.
+   It is a part of a *federated Analytics* or *federated learning* algorithm.
 
 **H**
 
@@ -78,6 +86,11 @@ The following is a list of definitions used in vantage6.
 
 - **Image**: A blueprint for a *container*, which can be stored in a *Docker registry*.
 
+**J**
+
+-  **JWT Token**: A JSON Web Token used for authentication and authorization in the
+   system.
+
 **K**
 
 - **Kubernetes**: An open-source system for automating deployment, scaling, and
@@ -96,14 +109,25 @@ The following is a list of definitions used in vantage6.
 
 **P**
 
+-  **Partial function**: The federated part of an algorithm that runs on local data
+   at nodes.
 -  **Party**: an entity that takes part in one (or more) collaborations, in vantage6
    a party is an organization.
--  **Python**: a high-level general purpose programming language. It
-   aims to help programmers write clear, logical code. vantage6 is
-   `written in Python <https://github.com/vantage6/vantage6>`__.
+-  **Permission scope**: The level of access granted to users for viewing and modifying
+   dataframes (personal, organization, or collaboration level).
+-  **Pre-processing task**: A task that modifies dataframes by adding or removing
+   columns, or filtering rows.
 -  **Privacy-enhancing Technology (PET)**: Technologies that enable privacy-preserving
    analyses on federated data. This includes technologies such as differential
    privacy, secure multi-party computation, and federated analytics/learning.
+-  **Python**: a high-level general purpose programming language. It
+   aims to help programmers write clear, logical code. vantage6 is
+   `written in Python <https://github.com/vantage6/vantage6>`__.
+
+**R**
+
+-  **RSA keys**: Cryptographic keys used for encryption and decryption of data between
+   organizations.
 
 **S**
 
@@ -122,6 +146,8 @@ The following is a list of definitions used in vantage6.
 
 -  **Task**: A task is a request from a client to the vantage6-server to execute an
    algorithm. Is is the main unit of work in vantage6.
+-  **TOTP (Time-based One-Time Password)**: A form of two-factor authentication where
+   users generate time-based codes using an authenticator app.
 -  **Two-factor authentication**: A method of authentication that requires two
    forms of identification.
 
@@ -146,5 +172,7 @@ The following is a list of definitions used in vantage6.
 
 -  **Wrapper**: A library that simplifies and standardizes the interaction between the
    node and algorithm container, handling data reading and writing operations.
+-  **Whitelist**: A list of allowed domains, ports, and IP addresses that algorithms
+   can access.
 
 .. todo Add references to sections of the docs where to find info on them
