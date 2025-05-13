@@ -104,13 +104,13 @@ Index
 
    self
    introduction/introduction
-   introduction/architecture
    introduction/quickstart
 
 .. toctree::
    :numbered: 3
    :maxdepth: 4
 
+   technical_reference/index
    user/index
    node/index
    server/index
