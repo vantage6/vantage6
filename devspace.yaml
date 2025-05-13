@@ -138,6 +138,9 @@ images:
     context: .
 
 # This is a list of `deployments` that DevSpace can create for this project
+# By default, image tags are automatically updated/replaced in the deployments with the
+# image tags that are built by DevSpace (see `.devspace/cache.yaml`). To disable this,
+# set `updateImageTags: false` in the deployment.
 deployments:
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
@@ -149,7 +152,7 @@ deployments:
         name: ./charts/server
       values:
         server:
-          image: ${SERVER_IMAGE}
+          image: ${SERVER_IMAGE} # needed for automatic image tag update
           logging:
             level: DEBUG
           jwt:
@@ -210,6 +213,7 @@ deployments:
       # are set.
       values:
         node:
+          image: ${NODE_IMAGE}
           databases:
             fileBased:
             - name: default
