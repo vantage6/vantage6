@@ -47,14 +47,12 @@ This documentation space consists of the following main sections:
 
 * **Overview** |rarr| *You are here now*
 * :doc:`/introduction/introduction` |rarr| *Introduction to vantage6 concepts*
-* :doc:`/introduction/architecture` |rarr| *An more extensive explanation of vantage6
-  components*
+* :doc:`/introduction/quickstart` |rarr| *Quickstart guide*
+* :doc:`/technical_reference/index` |rarr| *Technical reference of vantage6*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
 * :doc:`/algorithm_store/index` |rarr| *How to configure and deploy vantage6 algorithm stores*
-* :doc:`/features/index` (Under construction) |rarr|
-  *Documentation of vantage6 features*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
