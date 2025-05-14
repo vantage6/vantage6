@@ -1,12 +1,14 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}-node-deployment
+  name: {{ .Release.Name }}-node-statefulset
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}
     component: node
 spec:
+  serviceName: {{ .Release.Name }}-headless-service
+  replicas: {{ .Values.node.replicas | default 1 }}
   selector:
     matchLabels:
 {{ include "node.matchLabels" . | indent 6 }}
@@ -17,14 +19,12 @@ spec:
 {{ include "node.labels" . | indent 8 }}
         component: node
     spec:
-    #   hostAliases:
-    #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
-    #     hostnames:
-    #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
       serviceAccountName: {{ .Release.Name }}-node-serviceaccount
       containers:
       - name: vantage6-node
         image: {{ .Values.node.image }}
+        ports:
+          - containerPort: 8080
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ (index .Values.node.proxyPorts 0).port}}"
