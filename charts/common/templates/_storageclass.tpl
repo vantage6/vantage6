@@ -1,0 +1,11 @@
+{{- define "common.localStorageClass" -}}
+{{- $existing := lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage" }}
+{{- if not $existing }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+{{- end }}
+{{- end }}

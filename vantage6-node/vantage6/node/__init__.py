@@ -497,8 +497,13 @@ class Node:
         file. If the server rejects for any reason -other than a wrong API key-
         serveral attempts are taken to retry.
         """
-
-        api_key = self.config.get("api_key")
+        api_key = os.environ.get("V6_API_KEY")
+        if not api_key:
+            self.log.critical(
+                "No API key found in environment variables. Make sure to set the "
+                "'V6_API_KEY' environment variable."
+            )
+            exit(1)
 
         success = False
         i = 0
@@ -740,11 +745,11 @@ class Node:
 
         # share node database labels and types to help people extract data from
         # databases in the UI
+
         labels = []
         types = {}
-        for db in self.config.get("databases", []):
-            label = db.get("label")
-            type_ = db.get("type")
+        for label, db_info in self.k8s_container_manager.databases.items():
+            type_ = db_info.get("type")
             labels.append(label)
             types[f"db_type_{label}"] = type_
 

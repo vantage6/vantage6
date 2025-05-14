@@ -7,12 +7,15 @@ vars:
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
-  NODE_TEST_DATABASE_FILE:
-    question: "Where is your test data for the node located?"
-    default: ${PWD}/dev/olympic_athletes_2016.csv
+  NODE_TEST_DATABASE_MOUNT_PATH:
+    question: "Where is the parent folder where the node test data is located on the host machine?"
+    default: ${PWD}/dev
+  NODE_TEST_DATABASE_NAME:
+    question: "What is the name of your node test data file?"
+    default: olympic_athletes_2016.csv
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
-    default: ${PWD}/.tasks
+    default: ${PWD}/dev/.tasks
   HOST_URI:
     question: "What is the ip address of your host machine?"
     default: host.docker.internal
@@ -26,10 +29,13 @@ vars:
   TASK_NAMESPACE: vantage6-tasks
   SERVER_DATABASE_MOUNT_PATH:
     question: "Where is your server database located on the host machine?"
-    default: ${PWD}/dev/data/db_pv_server
+    default: ${PWD}/dev/.db/db_pv_server
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
-    default: ${PWD}/dev/data/db_pv_store
+    default: ${PWD}/dev/.db/db_pv_store
+  K8S_NODE_NAME:
+    question: "What is the name of the k8s node where the databases are running?"
+    default: docker-desktop
 
 pipelines:
 
@@ -65,7 +71,6 @@ pipelines:
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
-        --node-test-database-file $NODE_TEST_DATABASE_FILE \
         --task-namespace $TASK_NAMESPACE
       python dev/connect-store.py
       stop_dev --all
@@ -79,8 +84,10 @@ pipelines:
         vantage6-store
       start_dev \
         vantage6-server \
+        vantage6-server-db \
         vantage6-ui \
-        vantage6-store
+        vantage6-store \
+        vantage6-store-db
 
   node:
     run: |-
@@ -88,6 +95,24 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
+
+hooks:
+# Execute the hook in a golang shell (cross operating system compatible)
+- name: "create-tasks-folder"
+  command: |
+    echo "Creating tasks folder"
+    mkdir -p ${TASK_DIRECTORY}
+  events: ["before:deploy:vantage6-node"]
+- name: "create-server-database-folder"
+  command: |
+    echo "Creating server database folder"
+    mkdir -p ${SERVER_DATABASE_MOUNT_PATH}
+  events: ["before:deploy:vantage6-server"]
+- name: "create-store-database-folder"
+  command: |
+    echo "Creating algorithm store database folder"
+    mkdir -p ${STORE_DATABASE_MOUNT_PATH}
+  events: ["before:deploy:vantage6-store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -113,6 +138,9 @@ images:
     context: .
 
 # This is a list of `deployments` that DevSpace can create for this project
+# By default, image tags are automatically updated/replaced in the deployments with the
+# image tags that are built by DevSpace (see `.devspace/cache.yaml`). To disable this,
+# set `updateImageTags: false` in the deployment.
 deployments:
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
@@ -124,7 +152,7 @@ deployments:
         name: ./charts/server
       values:
         server:
-          image: ${SERVER_IMAGE}
+          image: ${SERVER_IMAGE} # needed for automatic image tag update
           logging:
             level: DEBUG
           jwt:
@@ -136,6 +164,7 @@ deployments:
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
+          k8sNodeName: ${K8S_NODE_NAME}
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -167,6 +196,7 @@ deployments:
         # directory is emptied when the WSL2 instance is restarted.
         database:
           volumePath: ${STORE_DATABASE_MOUNT_PATH}
+          k8sNodeName: ${K8S_NODE_NAME}
 
   # The node deployment should not be 'deployed' only, it should only be deployed in
   # combination with the `dev` container (The node container that is started by the
@@ -179,22 +209,23 @@ deployments:
     helm:
       chart:
         name: ./charts/node
+      # See the env section in the dev section where the database environment variables
+      # are set.
       values:
         node:
-          taskDirHost: ${TASK_DIRECTORY}
           image: ${NODE_IMAGE}
-          logging:
-            level: DEBUG
           databases:
             fileBased:
             - name: default
-              uri: ${NODE_TEST_DATABASE_FILE}
+              uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
               type: csv
-            # serviceBased:
-            # - name: postgres
-            #   uri: postgres://vantage6:vantage6@vantage6-vantage6-postgres:5432/vantage6
-            #   type: other
-
+              volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
+              originalName: ${NODE_TEST_DATABASE_NAME}
+            serviceBased: []
+          k8sNodeName: ${K8S_NODE_NAME}
+          taskDirHost: ${TASK_DIRECTORY}
+          logging:
+            level: DEBUG
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
@@ -243,7 +274,18 @@ dev:
       bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
-
+  
+  vantage6-server-db:
+    labelSelector:
+      app: vantage6-server
+      component: postgres
+    ports:
+      # expose the server database port
+      - port: 5432:5432
+        bindAddress: localhost
+      - port: 5432:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
+  
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
@@ -264,6 +306,16 @@ dev:
       startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
+  vantage6-store-db:
+    labelSelector:
+      app: store
+      component: postgres
+    ports:
+      # expose the store database port
+      - port: 5433:5432
+        bindAddress: localhost
+      - port: 5433:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the store container in development mode.
   vantage6-ui:
@@ -284,6 +336,13 @@ dev:
   vantage6-node:
     labelSelector:
       component: node
+    env:
+      - name: "DATABASE_LABELS"
+        value: "default"
+      - name: "DATABASE_DEFAULT_URI"
+        value: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
+      - name: "DATABASE_DEFAULT_TYPE"
+        value: "csv"
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true

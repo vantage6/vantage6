@@ -83,7 +83,7 @@ class ContainerManager:
         self.local_data_dir = TASK_FILES_ROOT
         self.host_data_dir = self.ctx.config["task_dir"]
 
-        self.databases = self._set_database(self.ctx.config["databases"])
+        self.databases = self._get_database_metadata()
 
         # before a task is executed it gets exposed to these policies
         self._policies = self._setup_policies(self.ctx.config)
@@ -201,31 +201,68 @@ class ContainerManager:
             )
         return policies
 
-    def _set_database(self, config_databases: dict | list) -> dict:
+    def _get_database_metadata(self) -> dict:
         """
-        Set database location and whether or not it is a file
+        Collect information about the databases.
 
-        Parameters
-        ----------
-        databases: dict | list
-            databases as specified in the config file
+        This function will return a dictionary with contains a key for every data
+        source. Each key will have a dictionary with the following keys:
+        - uri: the URI of the database
+        - local_uri: the local URI of the database
+        - is_file: whether the database is a file
+        - is_dir: whether the database is a directory
+        - type: the type of the database
+        - env: the environment variables to be passed to the algorithm container
+
+        It reads these from the environment variables that are passed to the node.
 
         Returns
         -------
         dict
             Dictionary with the information about the databases
+
+        Examples
+        --------
+        When the environment variables are set as follows:
+        ```bash
+        DATABASE_LABELS="db1"
+        DATABASE_DB1_URI="postgresql://user:password@host:port/db"
+        DATABASE_DB1_TYPE="sql"
+        DATABASE_DB1_SOME_OTHER_KEY="some_other_value"
+        ```
+
+        The function will return the following dictionary:
+        ```python
+        >>> self._get_database_metadata()
+        {
+            "db1": {
+                "uri": "postgresql://user:password@host:port/db",
+                "local_uri": "/data/db1",
+                "is_file": false,
+                "is_dir": false,
+                "type": "sql",
+                "env": {
+                    "some_other_key": "some_other_value",
+                }
+            }
+        }
+        ```
         """
-        db_labels = [db["label"] for db in config_databases]
+        db_labels = os.environ.get("DATABASE_LABELS", "").split(",")
+        if not db_labels:
+            self.log.warning("No databases found in the environment variables")
+            return {}
 
         databases = {}
         for label in db_labels:
 
-            db_config = get_database_config(config_databases, label)
-
             # The URI on the host system. This can either be a path to a file or folder
             # or an address to a service.
-            uri = db_config["uri"]
+            uri_env_var = f"DATABASE_{label.upper()}_URI"
+            uri = os.environ.get(uri_env_var, "")
 
+            db_type_env_var = f"DATABASE_{label.upper()}_TYPE"
+            db_type = os.environ.get(db_type_env_var, "")
             # In case we are dealing with a file or directory and when running the node
             # instance in a POD, our internal path to that file or folder is different.
             # At this point we are not sure what the type of database is so we just
@@ -238,7 +275,7 @@ class ContainerManager:
             # so that we can be sure this file exists. From the type we could then
             # derive if it's a file or directory, and it may be entirely unneccesary in
             # that case to mount the database files/dirs into the node container.
-            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
+            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
             db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
@@ -246,13 +283,23 @@ class ContainerManager:
             if db_is_file or db_is_dir:
                 local_uri = str(tmp_uri)
 
+            # Get additional environment variables and remove the DATABASE_[LABEL]_
+            # prefix
+            env = {}
+            for key in os.environ:
+                if key.startswith(f"DATABASE_{label.upper()}_") and key not in [
+                    uri_env_var,
+                    db_type_env_var,
+                ]:
+                    env[key.replace(f"DATABASE_{label.upper()}_", "")] = os.environ[key]
+
             databases[label] = {
                 "uri": uri,
                 "local_uri": local_uri,
                 "is_file": db_is_file,
                 "is_dir": db_is_dir,
-                "type": db_config["type"],
-                "env": db_config.get("env", {}),
+                "type": db_type,
+                "env": env,
             }
 
         self.log.debug("Databases: %s", databases)
@@ -326,7 +373,7 @@ class ContainerManager:
         parent_task_id = get_parent_id(task_info)
 
         try:
-            _volumes, _volume_mounts, env_vars = self._create_volume_mounts(
+            _volumes, _volume_mounts, env_vars, secrets = self._create_volume_mounts(
                 run_io=run_io,
                 docker_input=docker_input,
                 token=token,
@@ -361,12 +408,20 @@ class ContainerManager:
         env_vars = self._encode_environment_variables(env_vars)
         for key, value in env_vars.items():
             io_env_vars.append(k8s_client.V1EnvVar(name=key, value=value))
-
         try:
             self._validate_environment_variables(env_vars)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(e)
             return RunStatus.FAILED
+
+        if secrets:
+            secret = k8s_client.V1Secret(
+                metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
+                string_data=secrets,
+            )
+            self.core_api.create_namespaced_secret(
+                namespace=self.task_namespace, body=secret
+            )
 
         container = k8s_client.V1Container(
             name=run_io.container_name,
@@ -374,6 +429,17 @@ class ContainerManager:
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
+            env_from=(
+                [
+                    k8s_client.V1EnvFromSource(
+                        secret_ref=k8s_client.V1SecretReference(
+                            name=run_io.container_name
+                        )
+                    )
+                ]
+                if secrets
+                else []
+            ),
         )
 
         job_metadata = k8s_client.V1ObjectMeta(
@@ -567,7 +633,10 @@ class ContainerManager:
         token: str,
         databases_to_use: list[str],
     ) -> Tuple[
-        list[k8s_client.V1Volume], list[k8s_client.V1VolumeMount], list[V1EnvVar]
+        list[k8s_client.V1Volume],
+        list[k8s_client.V1VolumeMount],
+        dict[str, str],
+        dict[str, str],
     ]:
         """
         Create all volumes and volume mounts required by the algorithm/job.
@@ -585,10 +654,10 @@ class ContainerManager:
 
         Returns
         -------
-        list[client.V1Volume], list[client.V1VolumeMount], list[V1EnvVar]
+        list[client.V1Volume], list[client.V1VolumeMount], dict[str, str], dict[str, str]
             a tuple with (1) the created volume names and (2) their corresponding volume
             mounts and (3) the list of the environment variables required by the
-            algorithms to use such mounts.
+            algorithms to use such mounts and (4) the secrets to be passed to the container.
 
         Notes
         -----
@@ -664,6 +733,10 @@ class ContainerManager:
             ),
         }
 
+        # Some environment variables should be passed as secrets because they are
+        # sensitive.
+        secrets = {}
+
         # Bind-mounting all the CSV files (read only) defined on the configuration file
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
@@ -699,11 +772,12 @@ class ContainerManager:
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
             # additional environment variables for the database. These will be stored
-            # as {PREFIX}{KEY}=value in the container
+            # as {PREFIX}{KEY}=value in the container. These are read by the
+            # `@source_database` decorator in the (data extraction) algorithm.
             if "env" in db:
                 for key in db["env"]:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
-                    environment_variables[env_key] = db["env"][key]
+                    secrets[env_key] = db["env"][key]
 
         else:
             # In the other cases (preprocessing, compute, ...) we are dealing with a
@@ -715,7 +789,7 @@ class ContainerManager:
                 ",".join([db["dataframe_name"] for db in databases_to_use])
             )
 
-        return volumes, vol_mounts, environment_variables
+        return volumes, vol_mounts, environment_variables, secrets
 
     def _validate_environment_variables(self, environment_variables: dict) -> None:
         """
@@ -1199,6 +1273,31 @@ class ContainerManager:
         )
         for job_pod in job_pods_list.items:
             self.__delete_pod(job_pod.metadata.name, namespace)
+
+        self.__delete_secret(run_io.container_name, namespace)
+
+    def __delete_secret(self, secret_name: str, namespace: str) -> None:
+        """
+        Deletes a secret in a given namespace
+
+        Parameters
+        ----------
+        secret_name: str
+            Name of the secret
+        namespace: str
+            Namespace where the secret is located
+        """
+        self.log.info(
+            "Cleaning up kubernetes Secret %s in namespace %s",
+            secret_name,
+            namespace,
+        )
+        try:
+            self.core_api.delete_namespaced_secret(
+                name=secret_name, namespace=namespace
+            )
+        except ApiException as exc:
+            self.log.error("Exception when deleting namespaced secret: %s", exc)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """
