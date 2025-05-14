@@ -107,17 +107,24 @@ pipelines:
         vantage6-node
     
   purge:
+    # Careful with destructive rm commands like `rm -rf ${p}/*`!! 
     run: |-
+      echo "Purging all deployments..."
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
-      rm -rf "${POPULATE_MARKER}"
-      rm -rf "${TASK_DIRECTORY}"
-      rm -rf "${SERVER_DATABASE_MOUNT_PATH}"
-      rm -rf "${STORE_DATABASE_MOUNT_PATH}"
+      echo "Deleting ${POPULATE_MARKER}"
+      sh -c 'rm -f  "${1:?}"'   -- ${POPULATE_MARKER}
+      echo "Deleting all data in ${TASK_DIRECTORY}"
+      sh -c 'rm -rf "${1:?}/"*' -- ${TASK_DIRECTORY}
+      echo "Deleting all data in ${SERVER_DATABASE_MOUNT_PATH}"
+      sh -c 'rm -rf "${1:?}/"*' -- ${SERVER_DATABASE_MOUNT_PATH}
+      echo "Deleting all data in ${STORE_DATABASE_MOUNT_PATH}"
+      sh -c 'rm -rf "${1:?}/"*' -- ${STORE_DATABASE_MOUNT_PATH}
     
   stop-dev:
     run: |-
+      echo "Purging all deployments..."
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
