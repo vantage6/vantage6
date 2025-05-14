@@ -27,8 +27,7 @@ spec:
         image: {{ .Values.node.image }}
         env:
         - name: PROXY_SERVER_PORT
-          value: "{{ (index .Values.node.proxyPorts 0).port}}"
-          #value: "{{ .Values.node.proxyPort }}"
+          value: "{{ .Values.node.proxyPort }}"
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
