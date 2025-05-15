@@ -497,10 +497,11 @@ class Node:
                     },
                     namespace="/tasks",
                 )
-            except Exception:
-                self.log.exception("Speaking thread had an exception")
+            except Exception as e:
+                self.log.exception(f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}")                
 
             time.sleep(1)
+
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
@@ -807,3 +808,4 @@ class Node:
 def run(ctx):
     """Start the node."""
     node = Node(ctx)
+    
