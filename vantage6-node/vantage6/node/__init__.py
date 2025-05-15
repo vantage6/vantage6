@@ -153,8 +153,6 @@ class Node:
         proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
         os.environ["PROXY_SERVER_HOST"] = proxy_host
 
-        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", DEFAULT_PROXY_SERVER_PORT))
-
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
         if debug_mode:
@@ -170,8 +168,6 @@ class Node:
             proxy_server.server_url,
         )
 
-        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
-
         # set up proxy server logging
         Path(self.ctx.proxy_log_file).parent.mkdir(parents=True, exist_ok=True)
         log_level = getattr(logging, self.config["logging"]["level"].upper())
@@ -180,16 +176,16 @@ class Node:
         )
 
         # proxy port set on the node configuration file
-        node_proxy_port = self.config.get("node_port")
+        node_proxy_port = self.config.get("node_proxy_port")
 
         self.log.info("Starting proxyserver at '%s:%s'", proxy_host, node_proxy_port)
         http_server = WSGIServer(
-            ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
+            ("0.0.0.0", node_proxy_port), proxy_server.app, log=self.proxy_log
         )
 
         try:
             http_server.serve_forever()
-            os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
+            os.environ["PROXY_SERVER_PORT"] = str(node_proxy_port)
         
         except OSError as e:
             self.log.info(f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}")
