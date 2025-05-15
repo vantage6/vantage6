@@ -47,7 +47,11 @@ from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    AuthStatus,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
@@ -61,7 +65,6 @@ from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,

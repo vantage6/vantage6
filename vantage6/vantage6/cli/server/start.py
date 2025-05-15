@@ -11,7 +11,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.common.globals import Ports
+from vantage6.common.globals import Ports, DEFAULT_PROMETHEUS_EXPORTER_PORT
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
@@ -25,7 +25,6 @@ from vantage6.cli.common.start import (
     mount_source,
     pull_infra_image,
 )
-from vantage6.server.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
 
 
 @click.command()
