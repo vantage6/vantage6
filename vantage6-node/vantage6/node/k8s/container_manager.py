@@ -397,6 +397,11 @@ class ContainerManager:
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
             "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
         )
+
+        self.log.debug(
+            f"Setting PROXY_SERVER_HOST={env_vars[ContainerEnvNames.HOST.value]} and PROXY_SERVER_PORT={env_vars[ContainerEnvNames.PORT.value]} env variables on the job POD"
+        )
+
         env_vars[ContainerEnvNames.API_PATH.value] = ""
 
         env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]

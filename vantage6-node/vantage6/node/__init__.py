@@ -184,8 +184,9 @@ class Node:
         )
 
         try:
-            http_server.serve_forever()
             os.environ["PROXY_SERVER_PORT"] = str(node_proxy_port)
+            http_server.serve_forever()
+            
         
         except OSError as e:
             self.log.info(f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}")
