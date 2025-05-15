@@ -8,6 +8,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 
+import concurrent.futures.thread  # Defensive import to avoid "can't register atexit after shutdown" runtime errors
+# Pyarrow lazily import concurrent.futures.thread during runtime,
+# which attempts to register an atexit handler.
+# Importing it upfront prevents late imports during Python interpreter shutdown.
+
 from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common import logger_name
@@ -211,8 +216,14 @@ class RunIO:
         ]:
             try:
                 table = pq.read_table(self.output_file)
-            except Exception:
-                self.log.exception("Error reading output file")
+            except Exception as e:
+                self.log.exception(
+                    "Error reading output file for run ID %s, session ID %s, action %s. Exception: %s",
+                    self.run_id,
+                    self.session_id,
+                    self.action,
+                    str(e),
+                )
                 return b"", RunStatus.UNEXPECTED_OUTPUT
 
             return b"", self._update_session(table)
