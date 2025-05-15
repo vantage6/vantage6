@@ -2,7 +2,6 @@ import click
 import docker
 from docker.client import DockerClient
 
-from vantage6.cli.prometheus.monitoring_manager import PrometheusServer
 from vantage6.common import info, warning, error
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
@@ -17,6 +16,7 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.prometheus.monitoring_manager import PrometheusServer
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
