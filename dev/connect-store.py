@@ -12,7 +12,7 @@ from vantage6.common.enum import AlgorithmStepType
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("root", "root")
+client.authenticate("admin", "admin")
 existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]
 

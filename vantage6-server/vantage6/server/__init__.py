@@ -22,6 +22,7 @@ import json
 import time
 import datetime as dt
 import traceback
+from keycloak import KeycloakOpenID
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -375,38 +376,6 @@ class ServerApp:
             # that the session is removed (and uncommited changes are rolled
             # back) at the end of every request.
             DatabaseSessionManager.new_session()
-
-            from keycloak import KeycloakOpenID
-
-            if "Authorization" in request.headers:
-                token = request.headers["Authorization"].split(" ")[1]
-                print(token)
-                keycloak_openid = KeycloakOpenID(
-                    server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
-                    client_id="backend",
-                    realm_name="vantage6",
-                    client_secret_key="mysecret",
-                )
-                try:
-                    decoded_token = keycloak_openid.decode_token(token)
-                    log.debug(f"Token contents: {decoded_token}")
-                    for key, value in decoded_token.items():
-                        log.debug(f"{key}: {value}")
-
-                    # Important stuff from the token
-                    # user_id = decoded_token["sub"]
-                    # user_email = decoded_token["email"]
-                    # user_name = decoded_token["name"]
-
-                    # Now verify the token properly
-                    verified_token = keycloak_openid.introspect(token)
-                    log.info("Token verified successfully")
-                    log.debug(f"Token verification result: {verified_token}")
-
-                except Exception as e:
-                    log.error(f"Token processing failed: {str(e)}")
-                    log.error(f"Full error details: {traceback.format_exc()}")
-                    raise
 
         @self.app.after_request
         def remove_db_session(response):
@@ -825,12 +794,25 @@ class ServerApp:
             roles=[root],
             organization=org,
             # TODO: should we use RFC6761's "invalid." here?
-            email="root@domain.ext",
+            email="admin@domain.ext",
             password=super_user_password,
             failed_login_attempts=0,
             last_login_attempt=None,
         )
         user.save()
+
+        # get keycloak ID for super user
+        keycloak_openid = KeycloakOpenID(
+            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            client_id="admin-client",
+            realm_name="vantage6",
+            client_secret_key="myadminsecret",
+        )
+        token = keycloak_openid.token("admin", "admin")
+        decoded_token = keycloak_openid.decode_token(token["access_token"])
+        super_user = db.User.get_by_username(SUPER_USER_INFO["username"])
+        super_user.keycloak_id = decoded_token["sub"]
+        super_user.save()
 
     def __node_status_worker(self) -> None:
         """

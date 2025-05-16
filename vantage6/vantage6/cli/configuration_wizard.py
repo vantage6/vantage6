@@ -494,7 +494,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     default_v6_server_uri = (
         f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"
     )
-    default_root_username = "root"
+    default_root_username = "admin"
 
     v6_server_uri = q.text(
         "What is the Vantage6 server linked to the algorithm store? "

@@ -57,12 +57,12 @@ pipelines:
         vantage6-store \
         vantage6-auth
       start_dev \
-        vantage6-server \
+        vantage6-server-init \
         vantage6-store-init \
         vantage6-auth
       # TODO replace this with a retry mechanism
       echo "Waiting for server to start..."
-      # python dev/delete-basic-fixtures.py
+      python dev/delete-basic-fixtures.py
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
@@ -225,6 +225,16 @@ deployments:
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
+
+  # we use this to populate the database with some basic data. We need a port to talk
+  # to as the ingress is not deployed yet.
+  vantage6-server-init:
+    imageSelector: ${SERVER_IMAGE}
+    ports:
+      - port: 7601:7601
+        bindAddress: localhost
+      - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # We use this to enable the server and the store to be coupled. We need a port to talk
   # to as the ingress is not deployed yet.

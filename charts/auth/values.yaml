@@ -19,6 +19,11 @@ keycloak:
           - username: admin
             enabled: true
             emailVerified: true
+            # Note that email, firstName and lastName are set to fully initialize the
+            # user in the database.
+            email: admin@vantage6.org
+            firstName: Admin
+            lastName: Admin
             credentials:
               - type: password
                 value: admin
@@ -44,6 +49,17 @@ keycloak:
               - "*"
             # TODO set dynamic secret, now just for testing
             secret: mysecret
+          - clientId: admin-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            # TODO set dynamic secret, now just for testing
+            secret: myadminsecret
+            directAccessGrantsEnabled: true
+            serviceAccountsEnabled: true
+            standardFlowEnabled: true
+            # roles:
+
         roles:
           realm:
             - name: admin

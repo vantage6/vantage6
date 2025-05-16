@@ -10,15 +10,27 @@ import argparse
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
+# from keycloak import KeycloakOpenID
+
 from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
 from vantage6.client import Client
 
+# keycloak_openid = KeycloakOpenID(
+#     server_url="http://localhost:8080",
+#     client_id="admin-client",
+#     realm_name="vantage6",
+#     client_secret_key="myadminsecret",
+# )
+# token = keycloak_openid.token("admin", "admin")
+# decoded_token = keycloak_openid.decode_token(token["access_token"])
+# for key, value in decoded_token.items():
+#     print(f"{key}: {value}")
 
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("root", "root")
+client.authenticate("admin", "admin")
 
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
