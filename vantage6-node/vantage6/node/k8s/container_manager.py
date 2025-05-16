@@ -343,7 +343,9 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        self.log.debug("Setting up algorithm run %s", run_id)
+        init_org_ref = task_info.get('init_org', {})
+        init_org_id = init_org_ref.get('id') if init_org_ref else None
+        self.log.debug(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Setting up algorithm run:{self.ctx}")
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
@@ -359,13 +361,13 @@ class ContainerManager:
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
-            self.log.critical(f"Docker image {image} is not allowed on this Node!")
+            self.log.critical(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Docker image {image} is not allowed on this Node!")
             return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                f"Task (run_id={run_id}) is already being executed, discarding task"
+                f"[Algorithm job run {run_id} -requested by org {init_org_id}] Task is already being executed, discarding task"
             )
             return RunStatus.ACTIVE
 
@@ -399,7 +401,7 @@ class ContainerManager:
         )
 
         self.log.debug(
-            f"Setting PROXY_SERVER_HOST={env_vars[ContainerEnvNames.HOST.value]} and PROXY_SERVER_PORT={env_vars[ContainerEnvNames.PORT.value]} env variables on the job POD"
+            f"[Algorithm job run {run_id}] Setting PROXY_SERVER_HOST={env_vars[ContainerEnvNames.HOST.value]} and PROXY_SERVER_PORT={env_vars[ContainerEnvNames.PORT.value]} env variables on the job POD"
         )
 
         env_vars[ContainerEnvNames.API_PATH.value] = ""
@@ -416,7 +418,7 @@ class ContainerManager:
         try:
             self._validate_environment_variables(env_vars)
         except PermanentAlgorithmStartFail as e:
-            self.log.warning(e)
+            self.log.warning(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Validation of environment variables failed: {e}")
             return RunStatus.FAILED
 
         if secrets:
@@ -483,7 +485,7 @@ class ContainerManager:
         )
 
         self.log.info(
-            "Creating namespaced K8S job for task_id=%s and run_id=%s.", task_id, run_id
+            f"[Algorithm job run {run_id} -requested by org {init_org_id}] Creating namespaced K8S job for task_id={task_id}."
         )
         self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
@@ -537,15 +539,14 @@ class ContainerManager:
                     label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    "Job POD (label %s) is now running!", run_io.container_name
+                    f"[Algorithm job run {run_id} -requested by org {init_org_id}] Job POD (label {run_io.container_name}) is now running!" 
                 )
 
                 return status
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "Time out waiting for Job POD (label %s) to start.",
-                    run_io.container_name,
+                    f"[Algorithm job run {run_id} -requested by org {init_org_id}] Time out waiting for Job POD (label {run_io.container_name}) to start."
                 )
                 return RunStatus.UNKNOWN_ERROR
 
