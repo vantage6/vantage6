@@ -53,8 +53,6 @@ from vantage6.node.globals import (
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
     PROXY_SERVER_HOST,
-    DEFAULT_PROXY_SERVER_PORT,
-    DEV_NODES_PREDEFINED_PORTS,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -196,55 +194,6 @@ class Node:
             exit(1)
 
         
-        # port_assigned = False
-
-        # for try_number in range(5):
-        #     self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
-        #     http_server = WSGIServer(
-        #         ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
-        #     )
-
-        #     try:
-        #         http_server.serve_forever()
-        #         port_assigned = True
-
-        #     except OSError as e:
-        #         self.log.info("Error during attempt %s", try_number)
-        #         self.log.info("%s: %s", type(e), e)
-
-        #         # proxy_port = random.randint(2048, 16384)
-
-        #         # Using randomly generated ports won't work with the dev-environment of the k8s-based
-        #         # v6, as it runs multiple proxies (for each v6-node) on a single POD, and the
-        #         # port to access them through a service must be statically defined thrugh its
-        #         # corresponding helm chart.
-
-        #         # Provisional workaroud (to continue with the integration of the support for
-        #         # central functions): instead of random numbers, a sequence of predefined ports
-        #         # is used.
-        #         #
-        #         # Question: could the dev-environment be fixed to three nodes? Supporting an
-        #         # undefined number of Nodes would be difficult
-        #         proxy_port = DEV_NODES_PREDEFINED_PORTS[
-        #             try_number % len(DEV_NODES_PREDEFINED_PORTS)
-        #         ]
-
-        #         self.log.warning("Retrying with a different port: %s", proxy_port)
-        #         os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
-
-        #     except Exception as e:
-        #         self.log.error(
-        #             "Proxyserver could not be started due to an unexpected error!"
-        #         )
-        #         self.log.exception(e)
-        #         # After a non-os related exception there shouldn't be more retries
-        #         exit(1)
-
-        # if not port_assigned:
-        #     self.log.error(
-        #         f"Unable to assing a port for the node proxy after {try_number} attempts"
-        #     )
-        #     exit(1)
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""

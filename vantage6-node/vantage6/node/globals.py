@@ -59,6 +59,3 @@ PROXY_SERVER_HOST = "http://vantage6-node-node-service.vantage6-dev.svc.cluster.
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
 DEFAULT_PROXY_SERVER_PORT = 7654
-
-# Alternative ports
-DEV_NODES_PREDEFINED_PORTS = [7654, 6171, 3986, 5623, 3425]
