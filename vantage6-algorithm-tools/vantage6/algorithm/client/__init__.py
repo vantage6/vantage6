@@ -339,6 +339,7 @@ class AlgorithmClient(ClientBase):
         def create(
             self,
             input_: dict,
+            session: int,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
@@ -389,6 +390,9 @@ class AlgorithmClient(ClientBase):
                 "description": description,
                 "organizations": organization_json_list,
                 "databases": self.parent.databases,
+                "session_id": session,
+                "method": input_['method'],
+                "action": "federated compute",
             }
             if self.parent.study_id:
                 json_body["study_id"] = self.parent.study_id
