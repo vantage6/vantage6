@@ -184,16 +184,17 @@ class Node:
         try:
             os.environ["PROXY_SERVER_PORT"] = str(node_proxy_port)
             http_server.serve_forever()
-            
-        
+
         except OSError as e:
-            self.log.info(f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}")
-            self.log.info(f"Check that port {node_proxy_port} is not being used by another process.")
+            self.log.info(
+                f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}"
+            )
+            self.log.info(
+                f"Check that port {node_proxy_port} is not being used by another process."
+            )
             self.log.info("%s: %s", type(e), e)
             self.log.info("Shutting down the node...")
             exit(1)
-
-        
 
     def sync_task_queue_with_server(self) -> None:
         """Get all unprocessed tasks from the server for this node."""
@@ -444,10 +445,11 @@ class Node:
                     namespace="/tasks",
                 )
             except Exception as e:
-                self.log.exception(f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}")                
+                self.log.exception(
+                    f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}"
+                )
 
             time.sleep(1)
-
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find the server"""
@@ -754,4 +756,3 @@ class Node:
 def run(ctx):
     """Start the node."""
     node = Node(ctx)
-    

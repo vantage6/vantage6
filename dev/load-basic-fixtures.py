@@ -33,7 +33,10 @@ parser.add_argument(
     "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
 )
 parser.add_argument(
-    "--starting-port-number", type=int, default=7654, help="The port number to be allocated for the first node. Additional nodes will use consecutive ports incremented by 1 from this value."
+    "--starting-port-number",
+    type=int,
+    default=7654,
+    help="The port number to be allocated for the first node. Additional nodes will use consecutive ports incremented by 1 from this value.",
 )
 
 args = parser.parse_args()
@@ -41,7 +44,8 @@ args = parser.parse_args()
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
 task_namespace = args.task_namespace
-node_starting_port_number =  args.starting_port_number
+node_starting_port_number = args.starting_port_number
+
 
 def create_organization(index):
     name = f"org_{index}"
@@ -181,4 +185,10 @@ else:
 
 print("=> Creating nodes")
 for i in range(1, number_of_nodes + 1):
-    create_node(i, col_1, organizations[i - 1], task_namespace, node_starting_port_number + (i-1))
+    create_node(
+        i,
+        col_1,
+        organizations[i - 1],
+        task_namespace,
+        node_starting_port_number + (i - 1),
+    )

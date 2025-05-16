@@ -9,6 +9,7 @@ import pyarrow.parquet as pq
 import pandas as pd
 
 import concurrent.futures.thread  # Defensive import to avoid "can't register atexit after shutdown" runtime errors
+
 # Pyarrow lazily import concurrent.futures.thread during runtime,
 # which attempts to register an atexit handler.
 # Importing it upfront prevents late imports during Python interpreter shutdown.

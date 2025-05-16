@@ -391,7 +391,7 @@ class AlgorithmClient(ClientBase):
                 "organizations": organization_json_list,
                 "databases": self.parent.databases,
                 "session_id": session,
-                "method": input_['method'],
+                "method": input_["method"],
                 "action": "federated compute",
             }
             if self.parent.study_id:

@@ -343,9 +343,11 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        init_org_ref = task_info.get('init_org', {})
-        init_org_id = init_org_ref.get('id') if init_org_ref else None
-        self.log.debug(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Setting up algorithm run:{self.ctx}")
+        init_org_ref = task_info.get("init_org", {})
+        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        self.log.debug(
+            f"[Algorithm job run {run_id} -requested by org {init_org_id}] Setting up algorithm run:{self.ctx}"
+        )
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
@@ -361,7 +363,9 @@ class ContainerManager:
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
-            self.log.critical(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Docker image {image} is not allowed on this Node!")
+            self.log.critical(
+                f"[Algorithm job run {run_id} -requested by org {init_org_id}] Docker image {image} is not allowed on this Node!"
+            )
             return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
@@ -418,7 +422,9 @@ class ContainerManager:
         try:
             self._validate_environment_variables(env_vars)
         except PermanentAlgorithmStartFail as e:
-            self.log.warning(f"[Algorithm job run {run_id} -requested by org {init_org_id}] Validation of environment variables failed: {e}")
+            self.log.warning(
+                f"[Algorithm job run {run_id} -requested by org {init_org_id}] Validation of environment variables failed: {e}"
+            )
             return RunStatus.FAILED
 
         if secrets:
@@ -539,7 +545,7 @@ class ContainerManager:
                     label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    f"[Algorithm job run {run_id} -requested by org {init_org_id}] Job POD (label {run_io.container_name}) is now running!" 
+                    f"[Algorithm job run {run_id} -requested by org {init_org_id}] Job POD (label {run_io.container_name}) is now running!"
                 )
 
                 return status
