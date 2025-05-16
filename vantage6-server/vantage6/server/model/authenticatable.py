@@ -1,8 +1,8 @@
 import bcrypt
 
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, String, DateTime, select
 
-from vantage6.server.model.base import Base
+from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
 class Authenticatable(Base):
@@ -41,3 +41,23 @@ class Authenticatable(Base):
             Hashed secret
         """
         return bcrypt.hashpw(secret.encode("utf8"), bcrypt.gensalt()).decode("utf8")
+
+    @staticmethod
+    def get_by_keycloak_id(keycloak_id: str) -> "Authenticatable":
+        """
+        Get an authenticatable entity by its keycloak ID.
+
+        Parameters
+        ----------
+        keycloak_id : str
+            The keycloak ID of the authenticatable entity
+
+        Returns
+        -------
+        Authenticatable
+            The authenticatable entity
+        """
+        session = DatabaseSessionManager.get_session()
+        return session.scalars(
+            select(Authenticatable).filter(Authenticatable.keycloak_id == keycloak_id)
+        ).one_or_none()

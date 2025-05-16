@@ -64,7 +64,7 @@ export const provideKeycloakAngular = () =>
     config: {
       realm: 'vantage6',
       url: 'http://localhost:8080',
-      clientId: 'test'
+      clientId: 'myclient'
     },
     initOptions: {
       onLoad: 'check-sso',

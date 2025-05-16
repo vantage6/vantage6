@@ -8,6 +8,7 @@ from flask_restful import Api
 from flask_mail import Mail
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_socketio import SocketIO
+from keycloak import KeycloakOpenID
 
 
 from vantage6.common import logger_name
@@ -162,12 +163,30 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         @wraps(fn)
         def decorator(*args, **kwargs):
 
+            keycloak_openid = KeycloakOpenID(
+                server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+                client_id="backend",
+                realm_name="vantage6",
+                client_secret_key="mysecret",
+            )
+
+            try:
+                token = request.headers["Authorization"].split(" ")[1]
+                decoded_token = keycloak_openid.decode_token(token)
+            except Exception as e:
+                log.error(f"Error decoding token: {e}")
+                raise e
+
+            for key, value in decoded_token.items():
+                log.debug(f"{key}: {value}")
+
             # decode JWT-token
-            identity = get_jwt_identity()
-            claims = get_jwt()
+            # identity = get_jwt_identity()
+            # claims = get_jwt()
+            identity = decoded_token["sub"]
 
             # check that identity has access to endpoint
-            g.type = claims["client_type"]
+            g.type = decoded_token["client_type"]
 
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to
@@ -183,7 +202,12 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
             g.user = g.container = g.node = None
 
             if g.type == "user":
-                user = get_and_update_authenticatable_info(identity)
+                try:
+                    user = get_and_update_authenticatable_info(identity)
+                except Exception as e:
+                    log.error("No user found for keycloak id %s", identity)
+                    raise e
+
                 g.user = user
                 assert g.user.type == g.type
                 log.debug(f"Received request from user {user.username} ({user.id})")
@@ -206,7 +230,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
 
             return fn(*args, **kwargs)
 
-        return jwt_required()(decorator)
+        return decorator
 
     return protection_decorator
 
@@ -225,7 +249,7 @@ def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
     db.Authenticatable
         User or node database model
     """
-    auth = db.Authenticatable.get(auth_id)
+    auth = db.Authenticatable.get_by_keycloak_id(auth_id)
     auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth

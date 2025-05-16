@@ -41,8 +41,24 @@ keycloak:
             publicClient: true
             redirectUris:
               - "*"
+            webOrigins:
+              - "*"
             # directAccessGrantsEnabled: false
             # root_url: http://localhost:8080
+            protocolMappers:
+              - name: client_type
+                protocol: openid-connect
+                protocolMapper: oidc-hardcoded-claim-mapper
+                consentRequired: false
+                config:
+                  claim.name: client_type
+                  claim.value: user
+                  # TODO check if all are required
+                  introspection.token.claim: true
+                  userinfo.token.claim: true
+                  id.token.claim: true
+                  access.token.claim: true
+
           - clientId: backend
             publicClient: false
             redirectUris:
