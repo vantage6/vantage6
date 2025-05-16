@@ -74,9 +74,31 @@ keycloak:
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
-            # roles:
 
         roles:
           realm:
             - name: admin
-            - name: user
+              clientRole: true
+              composite: true
+              composites:
+                client:
+                  # TODO check if all are required
+                  realm-management:
+                    - query-users
+                    - query-groups
+                    - impersonation
+                    - view-users
+                    - view-events
+                    - manage-clients
+                    - view-identity-providers
+                    - query-clients
+                    - view-realm
+                    - manage-users
+                    - query-realms
+                    - manage-identity-providers
+                    - view-authorization
+                    - create-client
+                    - view-clients
+                    - manage-realm
+                    - manage-events
+                    - manage-authorization

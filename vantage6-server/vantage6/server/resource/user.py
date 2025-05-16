@@ -6,6 +6,7 @@ from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
+from keycloak import KeycloakOpenIDConnection, KeycloakAdmin
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
@@ -469,11 +470,37 @@ class Users(UserBase):
             rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
             self.permissions.check_user_rules(rules)
 
-        # Ok, looks like we got most of the security hazards out of the way
+        # Ok, looks like we got most of the security hazards out of the way. Create
+        # the user in keycloak and database.
+        keycloak_openid = KeycloakOpenIDConnection(
+            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            username="admin",
+            password="admin",
+            client_id="admin-client",
+            realm_name="vantage6",
+            client_secret_key="myadminsecret",
+        )
+        keycloak_admin = KeycloakAdmin(connection=keycloak_openid)
+        try:
+            keycloak_id = keycloak_admin.create_user(
+                {
+                    "username": data["username"],
+                    "email": data["email"],
+                    "enabled": True,
+                    "firstName": data["firstname"],
+                    "lastName": data["lastname"],
+                }
+            )
+        except Exception as e:
+            log.exception(e)
+            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        # TODO remove password from input
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
             lastname=data["lastname"],
+            keycloak_id=keycloak_id,
             roles=roles,
             rules=rules,
             organization_id=organization_id,
