@@ -15,24 +15,24 @@ import { AlertComponent } from '../../../components/alerts/alert/alert.component
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.scss'],
-    imports: [
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatButton,
-        RouterLink,
-        NgIf,
-        AlertComponent,
-        TranslateModule
-    ]
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    RouterLink,
+    NgIf,
+    AlertComponent,
+    TranslateModule
+  ]
 })
 export class LoginComponent {
   loginForm = this.fb.nonNullable.group({
@@ -49,16 +49,15 @@ export class LoginComponent {
   ) {}
 
   async onSubmit(): Promise<void> {
-    if (!this.loginForm.valid) return;
-
-    const authStatus = await this.authService.login(this.loginForm.value as LoginForm);
-    if (authStatus == AuthResult.Success) {
-      this.router.navigate([routePaths.home]);
-    } else if (authStatus == AuthResult.MFACode) {
-      this.router.navigate([routePaths.mfaCode]);
-    } else if (authStatus == AuthResult.SetupMFA) {
-      this.router.navigate([routePaths.setupMFA]);
-    }
+    // if (!this.loginForm.valid) return;
+    // const authStatus = await this.authService.login(this.loginForm.value as LoginForm);
+    // if (authStatus == AuthResult.Success) {
+    //   this.router.navigate([routePaths.home]);
+    // } else if (authStatus == AuthResult.MFACode) {
+    //   this.router.navigate([routePaths.mfaCode]);
+    // } else if (authStatus == AuthResult.SetupMFA) {
+    //   this.router.navigate([routePaths.setupMFA]);
+    // }
   }
 
   loginWithKeycloak() {

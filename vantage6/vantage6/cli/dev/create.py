@@ -314,7 +314,6 @@ def create_vserver_config(
     server_config = template.render(
         port=port,
         host_uri=server_url,
-        jwt_secret_key=generate_apikey(),
         user_provided_config=extra_config,
         ui_port=ui_port,
         store_port=store_port,

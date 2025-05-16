@@ -99,7 +99,6 @@ class WizardTest(unittest.TestCase):
                 "api_path",
                 "uri",
                 "allow_drop_all",
-                "jwt_secret_key",
                 "logging",
                 "vpn_server",
                 "rabbitmq",

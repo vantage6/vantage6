@@ -177,12 +177,6 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
                 log.error(f"Error decoding token: {e}")
                 raise e
 
-            for key, value in decoded_token.items():
-                log.debug(f"{key}: {value}")
-
-            # decode JWT-token
-            # identity = get_jwt_identity()
-            # claims = get_jwt()
             identity = decoded_token["sub"]
 
             # check that identity has access to endpoint
@@ -230,7 +224,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
 
             return fn(*args, **kwargs)
 
-        return decorator
+        return jwt_required()(decorator)
 
     return protection_decorator
 

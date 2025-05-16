@@ -3,7 +3,6 @@ import { BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
-import { TokenStorageService } from './token-storage.service';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
 
 @Injectable({
@@ -16,11 +15,12 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  constructor(private tokenStorageService: TokenStorageService) {}
+  constructor() {}
 
   connect() {
     if (this.socket === null) {
-      const token = this.tokenStorageService.getToken();
+      // TODO get token
+      const token = '';
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.server_url}${namespace}`, {

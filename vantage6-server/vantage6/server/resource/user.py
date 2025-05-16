@@ -57,6 +57,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
     api.add_resource(
+        CurrentUser,
+        path + "/current",
+        endpoint="current_user",
+        methods=("GET",),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
         User,
         path + "/<int:id>",
         endpoint="user_with_id",
@@ -482,6 +489,34 @@ class Users(UserBase):
         user.save()
 
         return user_schema.dump(user), HTTPStatus.CREATED
+
+
+class CurrentUser(UserBase):
+    @with_user
+    def get(self):
+        """Get current user
+        ---
+        description: >-
+          The user that is currently authenticated is returned. This is always
+          allowed.
+
+        parameters:
+          - in: path
+            name: include_permissions
+            schema:
+              type: boolean
+            description: Whether or not to include extra permission info for
+              the user. By default false.
+
+        responses:
+          200:
+            description: Ok
+        """
+        schema = user_schema
+
+        if request.args.get("include_permissions", False):
+            schema = user_schema_with_permissions
+        return schema.dump(g.user), HTTPStatus.OK
 
 
 class User(UserBase):

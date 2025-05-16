@@ -23,17 +23,10 @@ import { NodeReadComponent } from './pages/admin/node/read/node-read.component';
 import { OrganizationEditComponent } from './pages/admin/organization/edit/organization-edit.component';
 import { CollaborationEditComponent } from './pages/admin/collaboration/edit/collaboration-edit.component';
 import { UserEditComponent } from './pages/admin/user/edit/user-edit.component';
-import { ChangePasswordComponent } from './pages/auth/change-password/change-password.component';
 import { chosenCollaborationGuard } from './guards/chosenCollaboration.guard';
 import { RoleListComponent } from './pages/admin/role/list/role-list.component';
 import { RoleReadComponent } from './pages/admin/role/read/role-read.component';
 import { RoleCreateComponent } from './pages/admin/role/create/role-create.component';
-import { SetupMfaComponent } from './pages/auth/setup-mfa/setup-mfa.component';
-import { MfaCodeComponent } from './pages/auth/mfa-code/mfa-code.component';
-import { MfaLostComponent } from './pages/auth/mfa-lost/mfa-lost.component';
-import { MfaRecoverComponent } from './pages/auth/mfa-recover/mfa-recover.component';
-import { PasswordLostComponent } from './pages/auth/password-lost/password-lost.component';
-import { PasswordRecoverComponent } from './pages/auth/password-recover/password-recover.component';
 import { AddAlgoStoreComponent } from './pages/admin/collaboration/add-algo-store/add-algo-store.component';
 import { StudyReadComponent } from './pages/admin/collaboration/study/read/study-read.component';
 import { StudyCreateComponent } from './pages/admin/collaboration/study/create/study-create.component';
@@ -76,30 +69,6 @@ export const routes: Routes = [
       {
         path: routerConfig.login,
         component: LoginComponent
-      },
-      {
-        path: routerConfig.passwordLost,
-        component: PasswordLostComponent
-      },
-      {
-        path: routerConfig.passwordRecover,
-        component: PasswordRecoverComponent
-      },
-      {
-        path: routerConfig.mfaCode,
-        component: MfaCodeComponent
-      },
-      {
-        path: routerConfig.setupMFA,
-        component: SetupMfaComponent
-      },
-      {
-        path: routerConfig.mfaLost,
-        component: MfaLostComponent
-      },
-      {
-        path: routerConfig.mfaRecover,
-        component: MfaRecoverComponent
       }
     ]
   },
@@ -111,11 +80,6 @@ export const routes: Routes = [
       {
         path: routerConfig.home,
         component: HomeComponent,
-        canActivate: [authenticationGuard]
-      },
-      {
-        path: routerConfig.passwordChange,
-        component: ChangePasswordComponent,
         canActivate: [authenticationGuard]
       }
     ]

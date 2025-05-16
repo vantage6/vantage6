@@ -6,10 +6,10 @@ import packageJson from 'package.json';
 import { MatCard, MatCardContent } from '@angular/material/card';
 
 @Component({
-    selector: 'app-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss'],
-    imports: [MatCard, MatCardContent]
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss'],
+  imports: [MatCard, MatCardContent]
 })
 export class HomeComponent implements OnInit {
   serverUrl = environment.server_url;
@@ -21,6 +21,5 @@ export class HomeComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const result = await this.apiService.getForApi<Version>('/version');
     this.serverVersion = result.version;
-    console.log(result);
   }
 }

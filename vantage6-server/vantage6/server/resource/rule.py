@@ -1,6 +1,7 @@
 import logging
 
 from http import HTTPStatus
+from flask import g
 from flask.globals import request
 from flask_restful import Api
 from sqlalchemy import or_, select
@@ -88,9 +89,14 @@ class Rules(ServicesResources):
             - in: query
               name: user_id
               schema:
-                type: integer
+                type: string
               description: Get rules for a specific user. This includes the
                 rules that are part of the user's roles.
+            - in: query
+              name: current_user
+              schema:
+                type: boolean
+              description: Get rules for the current user
             - in: query
               name: page
               schema:
@@ -152,8 +158,11 @@ class Rules(ServicesResources):
         # tables to find all rules originating from a user's roles. Then, we
         # do an outer join to find all rules that are directly assigned to the
         # user.
-        if "user_id" in args:
-            user = db.User.get(args["user_id"])
+        if "user_id" in args or args.get("current_user", False):
+            if "user_id" in args:
+                user = db.User.get(args["user_id"])
+            else:
+                user = db.User.get(g.user.id)
             if not user:
                 return {
                     "msg": f'User with id={args["user_id"]} does not exist!'
@@ -166,8 +175,8 @@ class Rules(ServicesResources):
                 .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
                 .filter(
                     or_(
-                        db.User.id == args["user_id"],
-                        db.UserPermission.c.user_id == args["user_id"],
+                        db.User.id == user.id,
+                        db.UserPermission.c.user_id == user.id,
                     )
                 )
             )

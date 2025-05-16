@@ -22,6 +22,7 @@ import json
 import time
 import datetime as dt
 import traceback
+import requests
 from keycloak import KeycloakOpenID
 
 from http import HTTPStatus
@@ -296,30 +297,18 @@ class ServerApp:
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
-        # patch where to obtain token
-        # TODO is this still used? It was set to /api/token for a long time and not
-        # noticed anything not working because it was not set properly
-        self.app.config["JWT_AUTH_URL_RULE"] = f"/{api_path}/token"
+        # set JWT algorithms that keycloak uses
+        self.app.config["JWT_ALGORITHM"] = "RS256"
+        self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
 
-        # If no secret is set in the config file, one is generated. This
-        # implies that all (even refresh) tokens will be invalidated on restart
-        self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
-            "jwt_secret_key", str(uuid.uuid1())
-        )
+        def _get_keycloak_public_key():
+            response = requests.get(
+                "http://vantage6-auth-keycloak.default.svc.cluster.local/realms/vantage6"
+            )
+            key = response.json()["public_key"]
+            return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
 
-        # Default expiration time
-        token_expiry_seconds = self._get_jwt_expiration_seconds(
-            config_key="token_expires_hours", default_hours=ACCESS_TOKEN_EXPIRES_HOURS
-        )
-        self.app.config["JWT_ACCESS_TOKEN_EXPIRES"] = token_expiry_seconds
-
-        # Set refresh token expiration time
-        self.app.config["JWT_REFRESH_TOKEN_EXPIRES"] = self._get_jwt_expiration_seconds(
-            config_key="refresh_token_expires_hours",
-            default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
-            longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
-            is_refresh=True,
-        )
+        self.app.config["JWT_PUBLIC_KEY"] = _get_keycloak_public_key()
 
         # Open Api Specification (f.k.a. swagger)
         self.app.config["SWAGGER"] = {
@@ -520,70 +509,6 @@ class ServerApp:
     def configure_jwt(self):
         """Configure JWT authentication."""
 
-        @self.jwt.additional_claims_loader
-        # pylint: disable=unused-argument
-        def additional_claims_loader(identity: db.Authenticatable | dict) -> dict:
-            """
-            Create additional claims for JWT tokens: set user type and for
-            users, set their roles.
-
-            Parameters
-            ----------
-            identity: db.Authenticatable | dict
-                The identity for which to create the claims
-
-            Returns
-            -------
-            dict:
-                The claims to be added to the JWT token
-            """
-            roles = []
-            if isinstance(identity, db.User):
-                type_ = "user"
-                roles = [role.name for role in identity.roles]
-
-            elif isinstance(identity, db.Node):
-                type_ = "node"
-            elif isinstance(identity, dict):
-                type_ = "container"
-            else:
-                log.error(f"could not create claims from {str(identity)}")
-                return
-
-            claims = {
-                "client_type": type_,
-                "roles": roles,
-            }
-
-            return claims
-
-        @self.jwt.user_identity_loader
-        # pylint: disable=unused-argument
-        def user_identity_loader(identity: db.Authenticatable | dict) -> str | dict:
-            """ "
-            JSON serializing identity to be used by ``create_access_token``.
-
-            Parameters
-            ----------
-            identity: db.Authenticatable | dict
-                The identity to be serialized
-
-            Returns
-            -------
-            str | dict:
-                The serialized identity. For a node or user, this is the id;
-                for a container, it is a dict.
-            """
-            if isinstance(identity, db.Authenticatable):
-                return identity.id
-            if isinstance(identity, dict):
-                return identity
-
-            log.error(
-                f"Could not create a JSON serializable identity \
-                        from '{str(identity)}'"
-            )
-
         @self.jwt.user_lookup_loader
         # pylint: disable=unused-argument
         def user_lookup_loader(
@@ -607,13 +532,13 @@ class ServerApp:
             """
             identity = jwt_headers["sub"]
             auth_identity = Identity(identity)
+            try:
+                auth = db.Authenticatable.get_by_keycloak_id(identity)
+            except Exception:
+                auth = None
 
-            # in case of a user or node an auth id is shared as identity
-            if isinstance(identity, int):
-                # auth_identity = Identity(identity)
-
-                auth = db.Authenticatable.get(identity)
-
+            # in case of a user or node, we find an authenticated entity
+            if auth:
                 if isinstance(auth, db.Node):
                     for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
                         auth_identity.provides.add(

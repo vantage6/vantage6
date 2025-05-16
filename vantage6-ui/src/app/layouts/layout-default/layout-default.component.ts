@@ -9,7 +9,6 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { TokenStorageService } from 'src/app/services/token-storage.service';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
@@ -79,7 +78,6 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public chosenCollaborationService: ChosenCollaborationService,
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
-    private tokenStorageService: TokenStorageService,
     private translateService: TranslateService,
     private storePermissionService: StorePermissionService
   ) {
@@ -104,7 +102,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
-    this.username = this.tokenStorageService.getUsername() || '';
+    // TODO get username
+    this.username = '';
   }
 
   ngAfterViewInit(): void {

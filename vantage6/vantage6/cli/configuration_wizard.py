@@ -378,10 +378,6 @@ def server_configuration_questionaire(instance_name: str) -> dict:
 
     config = _get_common_server_config(InstanceType.SERVER, instance_name)
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").unsafe_ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = generate_apikey()
-
     is_mfa = q.confirm("Do you want to enforce two-factor authentication?").unsafe_ask()
     if is_mfa:
         config["two_factor_auth"] = is_mfa
