@@ -1,7 +1,7 @@
 bcrypt==4.0.1
 flasgger==0.9.5
 flask==2.2.5
-Flask-Cors==5.0.0
+Flask-Cors==6.0.0
 Flask-JWT-Extended==4.4.4
 Flask-Principal==0.4.0
 flask-marshmallow==0.15.0
