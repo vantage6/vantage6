@@ -29,12 +29,6 @@ keycloak:
                 value: admin
             realmRoles:
               - admin
-          - username: user2
-            enabled: true
-            emailVerified: true
-            credentials:
-              - type: password
-                value: user
         clients:
            # TODO change to UI client
           - clientId: myclient
