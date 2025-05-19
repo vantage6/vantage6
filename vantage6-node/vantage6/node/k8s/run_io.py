@@ -8,11 +8,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 
-import concurrent.futures.thread  # Defensive import to avoid "can't register atexit after shutdown" runtime errors
-
-# Pyarrow lazily import concurrent.futures.thread during runtime,
-# which attempts to register an atexit handler.
-# Importing it upfront prevents late imports during Python interpreter shutdown.
+# This up-front import prevents the issue described on https://github.com/vantage6/vantage6/issues/1950
+# which happens when pyarrow is unable to lazy-loading concurrent.futures.thread 
+# TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
+import concurrent.futures.thread 
+# pylint: disable=unused-import
 
 from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.common.enum import RunStatus, AlgorithmStepType
