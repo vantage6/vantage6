@@ -340,6 +340,7 @@ class AlgorithmClient(ClientBase):
             self,
             input_: dict,
             session: int,
+            method: str,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
@@ -391,7 +392,7 @@ class AlgorithmClient(ClientBase):
                 "organizations": organization_json_list,
                 "databases": self.parent.databases,
                 "session_id": session,
-                "method": input_["method"],
+                "method": method,
                 "action": "federated compute",
             }
             if self.parent.study_id:
