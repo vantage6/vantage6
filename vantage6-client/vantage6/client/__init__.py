@@ -17,7 +17,6 @@ from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
-from vantage6.common.client.utils import print_qr_code
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
@@ -370,70 +369,6 @@ class UserClient(ClientBase):
             )
             msg = result.get("msg")
             self.parent.log.info(f"--> {msg}")
-            return result
-
-        def reset_two_factor_auth(
-            self, password: str, email: str = None, username: str = None
-        ) -> dict:
-            """Start reset procedure for two-factor authentication
-
-            The password and either username of email must be provided.
-
-            Parameters
-            ----------
-            password: str
-                Password of your account
-            email : str, optional
-                Email address of your account, by default None
-            username : str, optional
-                Username of your account, by default None
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            assert email or username, "You need to provide username or email!"
-            result = self.parent.request(
-                "recover/2fa/lost",
-                method="post",
-                json={"username": username, "email": email, "password": password},
-                retry=False,
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def set_two_factor_auth(self, token: str) -> dict:
-            """
-            Setup two-factor authentication using a recovery token after you
-            have lost access.
-
-            Token can be obtained through `.reset_two_factor_auth(...)`
-
-            Parameters
-            ----------
-            token : str
-                Token obtained from `reset_two_factor_auth`
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "recover/2fa/reset",
-                method="post",
-                json={
-                    "reset_token": token,
-                },
-                retry=False,
-            )
-            if "qr_uri" in result:
-                print_qr_code(result)
-            else:
-                msg = result.get("msg")
-                self.parent.log.info(f"--> {msg}")
             return result
 
         def generate_private_key(self, file_: str = None) -> None:

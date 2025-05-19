@@ -5,6 +5,7 @@ from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
+from keycloak import KeycloakAdmin
 from sqlalchemy import select
 
 from vantage6.common import logger_name
@@ -474,7 +475,6 @@ class Users(UserBase):
         # the user in keycloak and database.
         keycloak_id = self._create_user_in_keycloak(data)
 
-        # TODO remove password from input
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
@@ -484,20 +484,13 @@ class Users(UserBase):
             rules=rules,
             organization_id=organization_id,
             email=data["email"],
-            password=data["password"],
         )
-
-        # check if the password meets password criteria
-        msg = user.set_password(data["password"])
-        if msg:
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
-
         user.save()
 
         return user_schema.dump(user), HTTPStatus.CREATED
 
     def _create_user_in_keycloak(self, data):
-        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
         keycloak_id = keycloak_admin.create_user(
             {
                 "username": data["username"],
@@ -505,6 +498,9 @@ class Users(UserBase):
                 "enabled": True,
                 "firstName": data["firstname"],
                 "lastName": data["lastname"],
+                "credentials": [
+                    {"type": "password", "value": data["password"], "temporary": True}
+                ],
             }
         )
         return keycloak_id

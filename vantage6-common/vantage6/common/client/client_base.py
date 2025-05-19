@@ -8,7 +8,6 @@ from pathlib import Path
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.common.client.utils import print_qr_code
 
 module_name = __name__.split(".")[1]
 
@@ -410,24 +409,20 @@ class ClientBase(object):
             else:
                 raise Exception("Failed to authenticate")
 
-        if "qr_uri" in data:
-            print_qr_code(data)
-            return False
-        else:
-            # Check if there is an access token. If not, there is a problem
-            # with authenticating
-            if "access_token" not in data:
-                if "msg" in data:
-                    raise Exception(data["msg"])
-                else:
-                    raise Exception("No access token in authentication response!")
+        # Check if there is an access token. If not, there is a problem
+        # with authenticating
+        if "access_token" not in data:
+            if "msg" in data:
+                raise Exception(data["msg"])
+            else:
+                raise Exception("No access token in authentication response!")
 
-            # store tokens in object
-            self.log.info("Successfully authenticated")
-            self._access_token = data.get("access_token")
-            self.__refresh_token = data.get("refresh_token")
-            self.__refresh_url = data.get("refresh_url")
-            return True
+        # store tokens in object
+        self.log.info("Successfully authenticated")
+        self._access_token = data.get("access_token")
+        self.__refresh_token = data.get("refresh_token")
+        self.__refresh_url = data.get("refresh_url")
+        return True
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token

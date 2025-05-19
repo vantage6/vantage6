@@ -379,7 +379,6 @@ class AlgorithmStoreSchema(HATEOASModelSchema):
 class UserSchema(HATEOASModelSchema):
     class Meta:
         model = db.User
-        exclude = ("password", "failed_login_attempts", "last_login_attempt")
 
     roles = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="role", link_from="user_id")
@@ -387,7 +386,6 @@ class UserSchema(HATEOASModelSchema):
     rules = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="user_id")
     )
-
     organization = fields.Method("organization")
 
 

@@ -724,8 +724,6 @@ class ServerApp:
             # TODO: should we use RFC6761's "invalid." here?
             email="admin@domain.ext",
             password=super_user_password,
-            failed_login_attempts=0,
-            last_login_attempt=None,
         )
         user.save()
         return user

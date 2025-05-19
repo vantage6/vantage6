@@ -45,8 +45,6 @@ export class AuthService {
     effect(() => {
       const keycloakEvent = this.keycloakSignal();
 
-      console.log('keycloakEvent', keycloakEvent);
-
       this.keycloakStatus = keycloakEvent.type;
 
       if (keycloakEvent.type === KeycloakEventType.Ready) {

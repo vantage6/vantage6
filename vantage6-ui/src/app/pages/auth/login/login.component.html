@@ -13,7 +13,6 @@
         <input matInput type="password" formControlName="password" />
       </mat-form-field>
       <button mat-flat-button type="submit" color="primary" [disabled]="!loginForm.valid">Login</button>
-      <button mat-flat-button type="button" [routerLink]="routes.passwordLost">{{ "login.forgot-password" | translate }}</button>
       <!-- TODO change this -->
       <button mat-flat-button type="button" (click)="loginWithKeycloak()">Login with Keycloak</button>
     </form>
