@@ -186,7 +186,7 @@ class Node:
             http_server.serve_forever()
 
         except OSError as e:
-            self.log.info(
+            self.log.error(
                 f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}"
             )
             self.log.info(
