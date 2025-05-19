@@ -270,18 +270,18 @@ dev:
       bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
-  
+
   vantage6-server-db:
     labelSelector:
       app: vantage6-server
       component: postgres
     ports:
       # expose the server database port
-      - port: 5432:5432
+      - port: 7632:5432
         bindAddress: localhost
-      - port: 5432:5432
+      - port: 7632:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
-  
+
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
@@ -308,9 +308,9 @@ dev:
       component: postgres
     ports:
       # expose the store database port
-      - port: 5433:5432
+      - port: 7633:5432
         bindAddress: localhost
-      - port: 5433:5432
+      - port: 7633:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the store container in development mode.
