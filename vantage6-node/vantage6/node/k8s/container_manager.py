@@ -346,7 +346,7 @@ class ContainerManager:
         init_org_ref = task_info.get("init_org", {})
         init_org_id = init_org_ref.get("id") if init_org_ref else None
         self.log.debug(
-            f"[Algorithm job run {run_id} -requested by org {init_org_id}] Setting up algorithm run:{self.ctx}"
+            f"[Algorithm job run {run_id} - requested by org {init_org_id}] Setting up algorithm run:{self.ctx}"
         )
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
