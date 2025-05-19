@@ -187,10 +187,13 @@ class Node:
 
         except OSError as e:
             self.log.error(
-                f"Error while trying to start the proxy server at {proxy_host}:{node_proxy_port}"
+                "Error while trying to start the proxy server at %s:%s",
+                proxy_host,
+                node_proxy_port,
             )
             self.log.info(
-                f"Check that port {node_proxy_port} is not being used by another process."
+                "Check that port %s is not being used by another process.",
+                node_proxy_port,
             )
             self.log.info("%s: %s", type(e), e)
             self.log.info("Shutting down the node...")
