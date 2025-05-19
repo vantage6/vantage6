@@ -645,10 +645,13 @@ class ServerApp:
 
         # create root user if it is not in the DB yet
         try:
-            db.User.get_by_username(SUPER_USER_INFO["username"])
+            admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
             log.warning("No root user found! Is this the first run?")
-            self._create_super_user()
+            admin_user = self._create_super_user()
+
+        if not admin_user.keycloak_id:
+            self._add_keycloak_id_to_super_user(admin_user)
 
         return self
 
@@ -725,8 +728,9 @@ class ServerApp:
             last_login_attempt=None,
         )
         user.save()
+        return user
 
-        # get keycloak ID for super user
+    def _add_keycloak_id_to_super_user(self, user):
         keycloak_openid = KeycloakOpenID(
             server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
             client_id="admin-client",

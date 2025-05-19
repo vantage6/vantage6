@@ -23,7 +23,6 @@ from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
 from vantage6.server.resource import with_node, ServicesResources
-from vantage6.server.resource.common.auth_helper import user_login, create_qr_uri
 from vantage6.server.resource.common.input_schema import (
     TokenAlgorithmInputSchema,
     TokenNodeInputSchema,
@@ -50,14 +49,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     """
     path = "/".join([api_base, module_name])
     log.info('Setting up "{}" and subdirectories'.format(path))
-
-    api.add_resource(
-        UserToken,
-        path + "/user",
-        endpoint="user_token",
-        methods=("POST",),
-        resource_class_kwargs=services,
-    )
 
     api.add_resource(
         NodeToken,
@@ -100,113 +91,6 @@ algorithm_token_input_schema = TokenAlgorithmInputSchema()
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class UserToken(ServicesResources):
-    """resource for /token"""
-
-    def post(self):
-        """Login user
-        ---
-        description: >-
-          Allow user to sign in by supplying a username and password. When MFA
-          is enabled on the server, a code is also required
-
-        requestBody:
-          content:
-            application/json:
-              schema:
-                properties:
-                  username:
-                    type: string
-                    description: Username of user that is logging in
-                  password:
-                    type: string
-                    description: User password
-                  mfa_code:
-                    type: string
-                    description: Two-factor authentication code. Only required
-                      if two-factor authentication is mandatory.
-
-        responses:
-          200:
-            description: Ok, authenticated
-          400:
-            description: Username/password combination unknown, or missing from
-              request body.
-          401:
-            description: Password and/or two-factor authentication token
-              incorrect.
-
-        tags: ["Authentication"]
-        """
-        log.debug("Authenticate user using username and password")
-
-        body = request.get_json(silent=True)
-        # validate request body
-        try:
-            body = user_token_input_schema.load(body)
-        except ValidationError as e:
-            return {
-                "msg": "Request body is incorrect",
-                "errors": e.messages,
-            }, HTTPStatus.BAD_REQUEST
-
-        # Check JSON body
-        username = body.get("username")
-        password = body.get("password")
-
-        user, code = user_login(self.config, username, password, self.mail)
-        if code != HTTPStatus.OK:  # login failed
-            log.error(f"Failed to login for user='{username}'")
-            return user, code
-
-        is_mfa_enabled = self.config.get("two_factor_auth", False)
-        if is_mfa_enabled:
-            if user.otp_secret is None:
-                # server requires mfa but user hasn't set it up yet. Return
-                # an URI to generate a QR code
-                log.info(f"Redirecting user {username} to setup MFA")
-                server_name = self.config.get("server_name", MAIN_VERSION_NAME)
-                return create_qr_uri(user, server_name), HTTPStatus.OK
-            else:
-                # 2nd authentication factor: check the OTP secret of the user
-                mfa_code = body.get("mfa_code")
-                if not mfa_code:
-                    # note: this is not treated as error, but simply guide
-                    # user to also fill in second factor
-                    return {
-                        "msg": "Please include your two-factor authentication code"
-                    }, HTTPStatus.OK
-                elif not self.validate_2fa_token(user, mfa_code):
-                    return {
-                        "msg": "Your two-factor authentication code is " "incorrect!"
-                    }, HTTPStatus.UNAUTHORIZED
-
-        token = _get_token_dict(user, self.api)
-
-        log.info(f"Succesfull login from {username}")
-        return token, HTTPStatus.OK, {"jwt-token": token["access_token"]}
-
-    @staticmethod
-    def validate_2fa_token(user: User, mfa_code: int | str) -> bool:
-        """
-        Check whether the 6-digit two-factor authentication code is valid
-
-        Parameters
-        ----------
-        user: User
-            The SQLAlchemy model of the user who is authenticating
-        mfa_code: int | str
-            A six-digit TOTP code from an authenticator app
-
-        Returns
-        -------
-        bool
-          Whether six-digit code is valid or not
-        """
-        # the option `valid_window=1` means the code from 1 time window (30s)
-        # ago, is also valid. This prevents that users around the edge of
-        # the time window can still login successfully if server is a bit slow
-        return pyotp.TOTP(user.otp_secret).verify(str(mfa_code), valid_window=1)
 
 
 class NodeToken(ServicesResources):

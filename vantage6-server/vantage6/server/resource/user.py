@@ -6,7 +6,6 @@ from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
-from keycloak import KeycloakOpenIDConnection, KeycloakAdmin
 
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
@@ -22,6 +21,7 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources,
 )
+from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
@@ -472,28 +472,7 @@ class Users(UserBase):
 
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
-        keycloak_openid = KeycloakOpenIDConnection(
-            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
-            username="admin",
-            password="admin",
-            client_id="admin-client",
-            realm_name="vantage6",
-            client_secret_key="myadminsecret",
-        )
-        keycloak_admin = KeycloakAdmin(connection=keycloak_openid)
-        try:
-            keycloak_id = keycloak_admin.create_user(
-                {
-                    "username": data["username"],
-                    "email": data["email"],
-                    "enabled": True,
-                    "firstName": data["firstname"],
-                    "lastName": data["lastname"],
-                }
-            )
-        except Exception as e:
-            log.exception(e)
-            return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+        keycloak_id = self._create_user_in_keycloak(data)
 
         # TODO remove password from input
         user = db.User(
@@ -516,6 +495,19 @@ class Users(UserBase):
         user.save()
 
         return user_schema.dump(user), HTTPStatus.CREATED
+
+    def _create_user_in_keycloak(self, data):
+        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_id = keycloak_admin.create_user(
+            {
+                "username": data["username"],
+                "email": data["email"],
+                "enabled": True,
+                "firstName": data["firstname"],
+                "lastName": data["lastname"],
+            }
+        )
+        return keycloak_id
 
 
 class CurrentUser(UserBase):
@@ -813,6 +805,7 @@ class User(UserBase):
         return user_schema.dump(user), HTTPStatus.OK
 
     @with_user
+    @handle_exceptions
     def delete(self, id):
         """Remove user.
         ---
@@ -888,6 +881,12 @@ class User(UserBase):
                 for task in user.created_tasks:
                     task.delete()
 
+        self._delete_user_in_keycloak(user)
+
         user.delete()
         log.info(f"user id={id} is removed from the database")
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK
+
+    def _delete_user_in_keycloak(self, user):
+        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_admin.delete_user(user.keycloak_id)
