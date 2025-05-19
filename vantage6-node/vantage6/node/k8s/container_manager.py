@@ -366,19 +366,19 @@ class ContainerManager:
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
             self.log.critical(
-            "[Algorithm job run %s -requested by org %s] Docker image %s is not allowed on this Node!",
-            run_id,
-            init_org_id,
-            image,
+                "[Algorithm job run %s -requested by org %s] Docker image %s is not allowed on this Node!",
+                run_id,
+                init_org_id,
+                image,
             )
             return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-            "[Algorithm job run %s -requested by org %s] Task is already being executed, discarding task",
-            run_id,
-            init_org_id,
+                "[Algorithm job run %s -requested by org %s] Task is already being executed, discarding task",
+                run_id,
+                init_org_id,
             )
             return RunStatus.ACTIVE
 

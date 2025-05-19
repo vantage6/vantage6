@@ -9,9 +9,10 @@ import pyarrow.parquet as pq
 import pandas as pd
 
 # This up-front import prevents the issue described on https://github.com/vantage6/vantage6/issues/1950
-# which happens when pyarrow is unable to lazy-loading concurrent.futures.thread 
+# which happens when pyarrow is unable to lazy-loading concurrent.futures.thread
 # TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
-import concurrent.futures.thread 
+import concurrent.futures.thread
+
 # pylint: disable=unused-import
 
 from vantage6.node.globals import TASK_FILES_ROOT
