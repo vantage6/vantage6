@@ -358,7 +358,7 @@ class AlgorithmClient(ClientBase):
                 Input to the task. This dictionary usually contains the algorithm method
                 to call and the arguments to pass to the method.
             session: the id of the session the task will run on
-            method: the name of the method (from the algorithm's image) to be executed 
+            method: the name of the method (from the algorithm's image) to be executed
             organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
