@@ -326,9 +326,6 @@ dev:
     # would require image rebuild but it's not transparent.
     - path: ./vantage6-ui/src/:/app/src/
       disableDownload: true
-    ports:
-      - port: 7600:4200
-        bindAddress: localhost
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
