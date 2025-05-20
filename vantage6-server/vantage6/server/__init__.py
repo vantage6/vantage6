@@ -8,7 +8,6 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
-from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -48,10 +47,15 @@ from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    AuthStatus,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -61,7 +65,6 @@ from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,

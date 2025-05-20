@@ -46,6 +46,8 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 # default API path (for server and algorithm store)
 DEFAULT_API_PATH = "/api"
 
+DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""
