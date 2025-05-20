@@ -5,9 +5,8 @@ Overview
 
 What is vantage6?
 -----------------
-Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
-federa\ **t**\ ed le\ **a**\ rnin\ **g** infrastructur\ **e** for
-\ **s**\ ecure \ **i**\ nsight e\ **x**\ change.
+Vantage6 is a Privacy Enhancing Technology (PET) platform that allows organizations to
+collaborate on data analysis tasks.
 
 .. raw:: html
 
@@ -112,7 +111,6 @@ Index
    user/index
    node/index
    server/index
-   algorithm_store/index
    algorithms/index
    features/index
    devops/index
