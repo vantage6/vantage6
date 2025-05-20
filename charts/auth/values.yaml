@@ -65,10 +65,19 @@ keycloak:
               - "*"
             # TODO set dynamic secret, now just for testing
             secret: myadminsecret
+            # TODO I think directAccessGrantsEnabled should be false - but then we need
+            # another flow
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
-
+          - clientId: node-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            # TODO set dynamic secret, now just for testing
+            secret: mynodeclientsecret
+            serviceAccountsEnabled: true
+            standardFlowEnabled: false
         roles:
           realm:
             - name: admin
