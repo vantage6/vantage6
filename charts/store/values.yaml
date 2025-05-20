@@ -56,3 +56,6 @@ database:
 
   #hostpath of the database mount
   volumePath: /mnt/data_store
+
+  # The name of the k8s node where the database is running
+  k8sNodeName: docker-desktop

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-vantage6-postgres-pvc
+  name: {{ .Release.Name }}-vantage6-node-task-pvc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   accessModes:
@@ -12,4 +12,4 @@ spec:
   storageClassName: local-storage
   selector:
     matchLabels:
-      type: local
+      type: local-tasks

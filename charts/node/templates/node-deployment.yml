@@ -40,18 +40,17 @@ spec:
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
+          subPath: {{ .originalName }}
         {{- end }}
-      volumes:
       {{- range .Values.node.databases.fileBased }}
+      volumes:
       - name: database-volume-{{ .name }}
-        hostPath:
-          path: {{ .uri }}
-          type: File
       {{- end }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-database-pvc
       - name: task-files-root
-        hostPath:
-          path: {{ .Values.node.taskDirHost }}
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-task-pvc
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
