@@ -723,7 +723,6 @@ class ServerApp:
             organization=org,
             # TODO: should we use RFC6761's "invalid." here?
             email="admin@domain.ext",
-            password=super_user_password,
         )
         user.save()
         return user
