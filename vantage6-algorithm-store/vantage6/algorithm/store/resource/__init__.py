@@ -13,7 +13,6 @@ from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from vantage6.algorithm.store.model.user import User
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources

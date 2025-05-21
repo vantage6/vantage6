@@ -11,8 +11,7 @@ from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewS
 from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.rule import Rule, Operation
 
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
+HEADERS = {"Authorization": "Mock"}
 USERNAME = "test_user"
 REVIEWER_USERNAME_1 = "reviewer_user_1"
 REVIEWER_USERNAME_2 = "reviewer_user_2"

@@ -16,9 +16,7 @@ from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
-from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import (
     with_permission,
     AlgorithmStoreResources,
@@ -307,16 +305,6 @@ class Users(AlgorithmStoreResources):
         # check unique constraints
         if db.User.get_by_keycloak_id(keycloak_id=user_id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
-
-        # check whether users of this server are allowed to get any permissions
-        # TODO: check if user from right server? Or do we just enable one keycloak
-        # server (for now)?
-        # allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
-        # if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
-        #     return {
-        #         "msg": f"Users from the server {server.url} are not allowed to be "
-        #         "registered in this algorithm store by the store administrator."
-        #     }, HTTPStatus.FORBIDDEN
 
         # Check if the user exists in the relevant vantage6 server. Note that this only
         # works if:

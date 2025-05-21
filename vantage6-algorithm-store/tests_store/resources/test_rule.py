@@ -7,8 +7,7 @@ from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
+HEADERS = {"Authorization": "Mock"}
 USERNAME = "test_user"
 
 
@@ -18,8 +17,6 @@ class TestRuleResource(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_rules_view_multi(self, validate_token_mock):
         """Test the rules view."""
-
-        server = self.register_server(SERVER_URL)
 
         # check that getting rules without authentication fails
         validate_token_mock.return_value = (
@@ -43,10 +40,10 @@ class TestRuleResource(TestResources):
         # check that we can get the rules for a particular user
         random_rule = Rule.get()[0]
         random_role = Role(name="random_role", rules=[random_rule])
-        user = self.register_user(server.id, USERNAME, user_roles=[random_role])
+        user = self.register_user(USERNAME, user_roles=[random_role])
         response = self.app.get(
             "/api/rule",
-            query_string={"username": user.username, "server_url": server.url},
+            query_string={"user_id": user.id},
             headers=HEADERS,
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)

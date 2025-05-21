@@ -469,7 +469,6 @@ class Reviews(ReviewBase):
             "dev_username": review.algorithm.developer.username,
             "assigner_username": review_assigner_username,
             "store_url": get_server_url(config, store_url),
-            "server_url": review.reviewer.server.url,
             "support_email": support_email,
         }
         with app.app_context():

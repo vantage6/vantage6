@@ -381,7 +381,6 @@ class TaskInputSchema(_NameValidationSchema):
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
-    server_url = fields.Url()
     depends_on_ids = fields.List(
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
@@ -567,9 +566,7 @@ class AlgorithmStoreInputSchema(Schema):
 
     name = fields.String(required=True)
     algorithm_store_url = fields.Url(required=True)
-    server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
-    force = fields.Boolean()
 
 
 class StudyInputSchema(_NameValidationSchema):

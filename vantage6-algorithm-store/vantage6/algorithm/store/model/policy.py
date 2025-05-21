@@ -37,59 +37,6 @@ class Policy(Base):
         return {r.key: r.value for r in result}
 
     @classmethod
-    def get_servers_allowed_to_be_whitelisted(cls) -> list[str]:
-        """
-        Get the servers that are allowed to be whitelisted.
-
-        Returns
-        -------
-        list[str]
-            List of servers that are allowed to be whitelisted
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS)
-        ).all()
-        session.commit()
-        return [r.value for r in result]
-
-    @classmethod
-    def is_localhost_allowed_to_be_whitelisted(cls) -> bool:
-        """
-        Check if localhost is allowed to be whitelisted.
-
-        Returns
-        -------
-        bool
-            True if localhost is allowed to be whitelisted, False otherwise
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.ALLOW_LOCALHOST)
-        ).one_or_none()
-        session.commit()
-        if result is None:
-            return False
-        return result.value.lower() == "true" or result.value == "1"
-
-    @classmethod
-    def get_servers_with_edit_permission(cls) -> list[str]:
-        """
-        Get the servers that have edit permission.
-
-        Returns
-        -------
-        list[str]
-            List of servers that have edit permission
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS)
-        ).all()
-        session.commit()
-        return [r.value for r in result]
-
-    @classmethod
     def get_minimum_reviewers(cls) -> int:
         """
         Get the minimum number of reviewers for approving the algorithms.
@@ -151,7 +98,7 @@ class Policy(Base):
     def search_user_in_policy(cls, user: User, policy: str) -> bool:
         """
         Search a user in a policy where specific users are indicated.
-        The users have to be saved in the policy as "username|server_url".
+        The users have to be saved in the policy with their username.
 
         Parameters
         ----------
@@ -177,7 +124,7 @@ class Policy(Base):
             if not isinstance(result, list):
                 result = [result]
             result = next(
-                (r for r in result if r.value == f"{user.username}|{user.server.url}"),
+                (r for r in result if r.value == user.username),
                 None,
             )
 

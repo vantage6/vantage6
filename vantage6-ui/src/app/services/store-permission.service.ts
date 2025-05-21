@@ -46,7 +46,7 @@ export class StorePermissionService {
   }
 
   private async getStoreRules(): Promise<StoreRule[]> {
-    if (!this.store || !this.isServerAllowedToBeWhitelisted) {
+    if (!this.store) {
       this.isUserRegistered = false;
       return [];
     }
@@ -60,18 +60,6 @@ export class StorePermissionService {
       this.isUserRegistered = false;
       return [];
     }
-  }
-
-  private isServerAllowedToBeWhitelisted(): boolean {
-    // Determine if the server is potentialy whitelisted at the store. This is the
-    // case if A) all stores are allowed to be whitelisted or B) the store is in the
-    // list of explicitly allowed servers
-    if (!this.publicPolicies) return false;
-    const allowedServersPolicy = this.publicPolicies[AvailableStorePolicies.ALLOWED_SERVERS];
-    return (
-      allowedServersPolicy === POLICY_ALLOW_ALL_SERVERS ||
-      (Array.isArray(allowedServersPolicy) && allowedServersPolicy.includes(`${environment.server_url}${environment.api_path}`))
-    );
   }
 
   private async determineViewAlgorithms(): Promise<boolean> {

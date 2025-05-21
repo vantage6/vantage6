@@ -10,8 +10,7 @@ from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.common.enum import StorePolicies
 
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
+HEADERS = {"Authorization": "Mock"}
 USERNAME = "test_user"
 
 
@@ -26,16 +25,12 @@ class TestUserResource(TestResources):
             HTTPStatus.OK,
         )
 
-        server = self.register_server(SERVER_URL)
-
         # check that getting users without authentication fails
         response = self.app.get("/api/user", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # register user with appropriate permission
-        self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("user", Operation.VIEW)]
-        )
+        self.register_user(USERNAME, user_rules=[Rule.get_by_("user", Operation.VIEW)])
 
         # check that getting users with authentication works
         response = self.app.get("/api/user", headers=HEADERS)
@@ -46,7 +41,7 @@ class TestUserResource(TestResources):
             name="test_role", rules=[Rule.get_by_("review", Operation.EDIT)]
         )
         reviewer_role.save()
-        self.register_user(server.id, "other-username", user_roles=[reviewer_role])
+        self.register_user("other-username", user_roles=[reviewer_role])
         # test filter by users with review permission
         response = self.app.get("/api/user?can_review=1", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -66,7 +61,6 @@ class TestUserResource(TestResources):
             HTTPStatus.OK,
         )
 
-        server = self.register_server(SERVER_URL)
         user = User(username="test_user")
         user.save()
 
@@ -75,9 +69,7 @@ class TestUserResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # register user with appropriate permission
-        self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("user", Operation.VIEW)]
-        )
+        self.register_user(USERNAME, user_rules=[Rule.get_by_("user", Operation.VIEW)])
 
         # check that getting users with authentication works
         response = self.app.get(f"/api/user/{user.id}", headers=HEADERS)
@@ -109,8 +101,6 @@ class TestUserResource(TestResources):
             HTTPStatus.OK,
         )
 
-        server = self.register_server(SERVER_URL)
-
         # test without authentication
         body_ = {"username": "new_user", "roles": []}
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
@@ -118,7 +108,7 @@ class TestUserResource(TestResources):
 
         # register user with appropriate permission and try again
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("user", Operation.CREATE)]
+            USERNAME, user_rules=[Rule.get_by_("user", Operation.CREATE)]
         )
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -138,24 +128,6 @@ class TestUserResource(TestResources):
         response = self.app.post("/api/user", headers=HEADERS, json=body_)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # if there are policies precluding users from certain server to be created, user
-        # from that server should not be created. Note that before, no policies were
-        # set, and therefore when setting just one allowed server, only users from that
-        # server should be allowed to be created.
-        body_["roles"] = []
-        policy = Policy(
-            key=StorePolicies.ALLOWED_SERVERS.value, value="http://another_server.com"
-        )
-        policy.save()
-        response = self.app.post("/api/user", headers=HEADERS, json=body_)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-
-        # check that we can still create users from the allowed server
-        policy.value = SERVER_URL
-        policy.save()
-        response = self.app.post("/api/user", headers=HEADERS, json=body_)
-        self.assertEqual(response.status_code, HTTPStatus.CREATED)
-
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_user_update(self, validate_token_mock):
         """Test the user update."""
@@ -164,7 +136,6 @@ class TestUserResource(TestResources):
             HTTPStatus.OK,
         )
 
-        server = self.register_server(SERVER_URL)
         user = User(username="test_user")
         user.save()
 
@@ -174,7 +145,7 @@ class TestUserResource(TestResources):
 
         # register user with appropriate permission
         auth_user = self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("user", Operation.EDIT)]
+            USERNAME, user_rules=[Rule.get_by_("user", Operation.EDIT)]
         )
 
         # check that updating users with authentication works
@@ -219,7 +190,6 @@ class TestUserResource(TestResources):
             HTTPStatus.OK,
         )
 
-        server = self.register_server(SERVER_URL)
         user = User(username="test_user")
         user.save()
 
@@ -229,7 +199,7 @@ class TestUserResource(TestResources):
 
         # register user with appropriate permission
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("user", Operation.DELETE)]
+            USERNAME, user_rules=[Rule.get_by_("user", Operation.DELETE)]
         )
 
         # check that deleting users with authentication works

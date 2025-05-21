@@ -3,7 +3,6 @@ import datetime
 import unittest
 from unittest.mock import patch
 
-from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
@@ -23,8 +22,7 @@ from vantage6.common.enum import AlgorithmStepType, StorePolicies, AlgorithmView
 
 from ..base.unittest_base import MockResponse, TestResources
 
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
+HEADERS = {"Authorization": "Mock"}
 USERNAME = "test_user"
 
 
@@ -63,8 +61,7 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         policy.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_view_algorithm_decorator_whitelisted(self, validate_token_mock):
+    def test_view_algorithm_decorator_whitelisted(self):
         """
         Test the @with_permission_to_view_algorithms decorator when the policy is set to
         whitelisted.
@@ -81,7 +78,6 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
         # test without required authorization header
-        headers = {"server_url": SERVER_URL}
         rv = self.app.get("/api/algorithm", headers=headers)
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -108,8 +104,7 @@ class TestAlgorithmResources(TestResources):
         policy.delete()
         whitelisted_server.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_view_algorithm_decorator_private(self, validate_token_mock):
+    def test_view_algorithm_decorator_private(self):
         """
         Test the @with_permission_to_view_algorithms decorator when the policy is set to
         private.
@@ -120,27 +115,18 @@ class TestAlgorithmResources(TestResources):
             value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION,
         )
         policy.save()
-        whitelisted_server = self.register_server()
 
         # test if the endpoint is protected if user is not authenticated
-        validate_token_mock.return_value = (
-            MockResponse(),
-            HTTPStatus.UNAUTHORIZED,
-        )
         rv = self.app.get("/api/algorithm", headers=HEADERS)
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test if the endpoint is protected if user authenticated but not whitelisted
-        validate_token_mock.return_value = (
-            MockResponse(json_data={"username": USERNAME}, status_code=HTTPStatus.OK),
-            HTTPStatus.OK,
-        )
         rv = self.app.get("/api/algorithm", headers=HEADERS)
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test if the endpoint is accessible if user is whitelisted but does not have
         # explicit permission to view algorithms
-        user = self.register_user(whitelisted_server.id)
+        user = self.register_user()
         rv = self.app.get("/api/algorithm", headers=HEADERS)
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -156,13 +142,8 @@ class TestAlgorithmResources(TestResources):
         whitelisted_server.delete()
         user.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_view_multi(self, validate_token_mock):
+    def test_algorithm_view_multi(self):
         """Test GET /api/algorithm"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Create an algorithm
         algorithm = Algorithm(
@@ -206,7 +187,7 @@ class TestAlgorithmResources(TestResources):
         # algorithms
         algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
         algorithm.save()
-        user, server = self.register_user_and_server(
+        user = self.register_user(
             username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.VIEW)]
         )
         result = self.app.get(
@@ -218,7 +199,6 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         algorithm.delete()
         policy.delete()
-        server.delete()
         user.delete()
 
     def test_algorithm_view_single(self):
@@ -264,16 +244,11 @@ class TestAlgorithmResources(TestResources):
         # Cleanup
         algorithm.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(
         "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
     )
-    def test_algorithm_create(self, get_image_digest_mock, validate_token_mock):
+    def test_algorithm_create(self, get_image_digest_mock):
         """Test POST /api/algorithm"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
         get_image_digest_mock.return_value = "some-image", "some-digest"
 
         # test if the endpoint is accessible
@@ -285,7 +260,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.status_code, 403)
 
         # create user allowed to create algorithms
-        user, _ = self.register_user_and_server(
+        user = self.register_user(
             username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.CREATE)]
         )
 
@@ -461,16 +436,11 @@ class TestAlgorithmResources(TestResources):
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
         self.assertEqual(rv.status_code, 400)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     @patch(
         "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
     )
-    def test_algorithm_update(self, get_image_digest_mock, validate_token_mock):
+    def test_algorithm_update(self, get_image_digest_mock):
         """Test PATCH /api/algorithm/<id>"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
         get_image_digest_mock.return_value = "some-image", "some-digest"
 
         # check that not allowed to patch if server is not whitelisted
@@ -558,13 +528,8 @@ class TestAlgorithmResources(TestResources):
         )
         self.assertEqual(response.status_code, 403)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_delete(self, validate_token_mock):
+    def test_algorithm_delete(self):
         """Test DELETE /api/algorithm/<id>"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Test if endpoint is accessible without user
         response = self.app.delete("/api/algorithm/9999", headers=HEADERS)
@@ -625,13 +590,8 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(Argument.get(arg_id), None)
         self.assertEqual(UIVisualization.get(vis_id), None)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_invalidate(self, validate_token_mock):
+    def test_algorithm_invalidate(self):
         """Test PATCH /api/algorithm/<id>/invalidate"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Test if endpoint is accessible without user
         response = self.app.post("/api/algorithm/9999/invalidate", headers=HEADERS)

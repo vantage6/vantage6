@@ -11,7 +11,6 @@ from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 
 
 class TestResources(unittest.TestCase):
@@ -42,7 +41,6 @@ class TestResources(unittest.TestCase):
         # delete resources from database
         # pylint: disable=expression-not-assigned
         [p.delete() for p in Policy.get()]
-        [s.delete() for s in Vantage6Server.get()]
         [u.delete() for u in User.get()]
         [r.delete() for r in Role.get()]
         [r.delete() for r in Review.get()]
@@ -50,42 +48,20 @@ class TestResources(unittest.TestCase):
         # unset session.session
         DatabaseSessionManager.clear_session()
 
-    def register_server(
-        self, server_url: str = f"http://localhost:{Ports.DEV_SERVER.value}"
-    ) -> Vantage6Server:
-        server = Vantage6Server(url=server_url)
-        server.save()
-        return server
-
     def register_user(
         self,
-        server_id: int,
         username: str = "test_user",
         user_roles: list[Role] = None,
         user_rules: list[Rule] = None,
         organization_id: int = 1,
     ) -> User:
-        user = User(
-            username=username, v6_server_id=server_id, organization_id=organization_id
-        )
+        user = User(username=username, organization_id=organization_id)
         if user_roles and len(user_roles) > 0:
             user.roles = user_roles
         if user_rules and len(user_rules) > 0:
             user.rules = user_rules
         user.save()
         return user
-
-    def register_user_and_server(
-        self,
-        username: str = "test_user",
-        server_url: str = f"http://localhost:{Ports.DEV_SERVER.value}",
-        user_roles: list[Role] = None,
-        user_rules: list[Rule] = None,
-    ) -> tuple[User, Vantage6Server]:
-        server = self.register_server(server_url)
-        user = self.register_user(server.id, username, user_roles, user_rules)
-
-        return user, server
 
     def create_role(self, rules: list[Rule], name: str = "test_role") -> Role:
         role = Role(name=name, rules=rules)

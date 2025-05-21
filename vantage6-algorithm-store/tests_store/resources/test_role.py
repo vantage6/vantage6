@@ -8,21 +8,12 @@ from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.algorithm.store.model.role import Role
 
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
+HEADERS = {"Authorization": "Mock"}
 USERNAME = "test_user"
 
 
 class TestRoleResource(TestResources):
     """Test the role resource."""
-
-    def setup_mock_and_server(self, validate_token_mock):
-        """Helper method to setup mock and register server."""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
-        return self.register_server(SERVER_URL)
 
     def check_unauthorized(self, method, url):
         """Helper method to test unauthorized access."""
@@ -32,11 +23,8 @@ class TestRoleResource(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_roles_view_multi(self, validate_token_mock):
         """Test the roles view."""
-        server = self.setup_mock_and_server(validate_token_mock)
         self.check_unauthorized(self.app.get, "/api/role")
-        self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)]
-        )
+        self.register_user(USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)])
         response = self.app.get("/api/role", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.json["data"]), len(Role.get()))
@@ -44,13 +32,10 @@ class TestRoleResource(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_roles_view_single(self, validate_token_mock):
         """Test the roles view."""
-        server = self.setup_mock_and_server(validate_token_mock)
         role = Role(name="test_role")
         role.save()
         self.check_unauthorized(self.app.get, f"/api/role/{role.id}")
-        self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)]
-        )
+        self.register_user(USERNAME, user_rules=[Rule.get_by_("role", Operation.VIEW)])
         response = self.app.get(f"/api/role/{role.id}", headers=HEADERS)
         self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.app.get("/api/role/9999", headers=HEADERS)
@@ -59,12 +44,11 @@ class TestRoleResource(TestResources):
     @patch("vantage6.algorithm.store.resource.request_validate_server_token")
     def test_roles_create(self, validate_token_mock):
         """Test the roles create."""
-        server = self.setup_mock_and_server(validate_token_mock)
 
         self.check_unauthorized(self.app.post, "/api/role")
 
         self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.CREATE)]
+            USERNAME, user_rules=[Rule.get_by_("role", Operation.CREATE)]
         )
 
         valid_data = {"name": "test_role", "description": "A test role", "rules": []}
@@ -83,17 +67,13 @@ class TestRoleResource(TestResources):
         response = self.app.post("/api/role", headers=HEADERS, json=invalid_rule)
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_role_patch(self, validate_token_mock):
-        server = self.setup_mock_and_server(validate_token_mock)
+    def test_role_patch(self):
         role = Role(name="test_role")
         role.save()
 
         self.check_unauthorized(self.app.patch, f"/api/role/{role.id}")
 
-        self.register_user(
-            server.id, USERNAME, user_rules=[Rule.get_by_("role", Operation.EDIT)]
-        )
+        self.register_user(USERNAME, user_rules=[Rule.get_by_("role", Operation.EDIT)])
 
         valid_data = {"name": "test_role_updated", "description": "A test role"}
         response = self.app.patch(

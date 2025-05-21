@@ -23,7 +23,6 @@ export class ApiService {
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
     return await this.handleResult(
       this.http.get<T>(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         params: { ...params }
       })
     );
@@ -32,7 +31,6 @@ export class ApiService {
   async getForApiWithPagination<T>(path: string, currentPage: number, parameters: object | null = null): Promise<Pagination<T>> {
     return await this.handleResultForPagination(
       this.http.get<Pagination<T>>(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         observe: 'response',
         params: {
           ...parameters,
@@ -45,27 +43,18 @@ export class ApiService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async postForApi<T>(path: string, body: any): Promise<T> {
-    return await this.handleResult(
-      this.http.post<T>(this.getApiPath(path), body, {
-        headers: this.getApiAuthenticationHeaders()
-      })
-    );
+    return await this.handleResult(this.http.post<T>(this.getApiPath(path), body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async patchForApi<T>(path: string, body: any): Promise<T> {
-    return await this.handleResult(
-      this.http.patch<T>(this.getApiPath(path), body, {
-        headers: this.getApiAuthenticationHeaders()
-      })
-    );
+    return await this.handleResult(this.http.patch<T>(this.getApiPath(path), body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForApi(path: string, params: object = {}): Promise<any> {
     return await this.handleResult(
       this.http.delete(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         params: { ...params }
       })
     );
@@ -86,7 +75,6 @@ export class ApiService {
   ): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     const request = this.http.get<T>(algo_store_url + path, {
-      headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
       params: { ...parameters }
     });
     if (showAuthError) {
@@ -105,7 +93,6 @@ export class ApiService {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResultForPagination(
       this.http.get<Pagination<T>>(algo_store_url + path, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
         observe: 'response',
         params: {
           ...parameters,
@@ -118,43 +105,18 @@ export class ApiService {
 
   async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.post<T>(algo_store_url + path, body, {
-        headers: {
-          server_url: `${environment.server_url}${environment.api_path}`,
-          store_url: algo_store_url,
-          ...this.getApiAuthenticationHeaders()
-        }
-      })
-    );
+    return await this.handleResult(this.http.post<T>(algo_store_url + path, body));
   }
 
   async patchForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.patch<T>(algo_store_url + path, body, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
-      })
-    );
+    return await this.handleResult(this.http.patch<T>(algo_store_url + path, body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.delete(algo_store_url + path, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
-      })
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getApiAuthenticationHeaders(): any {
-    const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
-
-    if (!accessToken) return {};
-
-    return { Authorization: `Bearer ${accessToken}` };
+    return await this.handleResult(this.http.delete(algo_store_url + path));
   }
 
   private async handleResult<T = null>(request: Observable<T>): Promise<T> {

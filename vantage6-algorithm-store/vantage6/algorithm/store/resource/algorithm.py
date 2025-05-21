@@ -687,7 +687,6 @@ class Algorithms(AlgorithmBaseResource):
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
                 "store_url": get_server_url(config, store_url),
-                "server_url": algo_manager.server.url,
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
                 "support_email": support_email,

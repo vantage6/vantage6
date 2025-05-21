@@ -8,15 +8,11 @@ from marshmallow import ValidationError
 
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.backend.common import get_server_url
 from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
 from vantage6.server.permission import RuleCollection, Operation as P
 from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
 from vantage6.server.resource import with_user, with_user_or_node, ServicesResources
-from vantage6.server.algo_store_communication import (
-    post_algorithm_store,
-    request_algo_store,
-)
+from vantage6.server.algo_store_communication import add_algorithm_store_to_database
 
 
 module_name = __name__.split(".")[-1]
@@ -250,22 +246,11 @@ class AlgorithmStores(AlgorithmStoreBase):
                   algorithm_store_url:
                     type: string
                     description: URL to the algorithm store, including the API path
-                  server_url:
-                    type: string
-                    description: URL to this vantage6 server. This is used to
-                      whitelist this server at the algorithm store. Note that
-                      this is ignored if the server configuration contains
-                      the 'server_url' key.
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
                       will be added. If not given, the algorithm store will be
                       available to all collaborations.
-                  force:
-                    type: boolean
-                    description: Force adding the algorithm store to the
-                      collaboration. This will overwrite warnings if insecure
-                      addresses (e.g. localhost) are added.
 
         responses:
           200:
@@ -312,11 +297,7 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        response, status = post_algorithm_store(
-            request.get_json(),
-            self.config,
-            headers=self.get_authorization_headers_from_request(),
-        )
+        response, status = add_algorithm_store_to_database(request.get_json())
         if status != HTTPStatus.CREATED:
             return response, status
         else:
@@ -535,14 +516,6 @@ class AlgorithmStore(AlgorithmStoreBase):
               type: integer
             description: Algorithm store id
             required: true
-          - in: query
-            name: server_url
-            schema:
-              type: string
-            description: URL to this vantage6 server. This is used to delete
-              the whitelisting of this server at the algorithm store. Note that
-              this is ignored if the server configuration contains the
-              'server_url' key.
 
         responses:
           200:
@@ -586,60 +559,6 @@ class AlgorithmStore(AlgorithmStoreBase):
                     "msg": "This algorithm store is used by other collaborations. "
                     "You lack the permission to delete it!"
                 }, HTTPStatus.UNAUTHORIZED
-
-        # only this algorithm store uses this url, so delete the
-        # whitelisting
-        server_url = get_server_url(self.config, request.args.get("server_url"))
-        if not server_url:
-            return {
-                "msg": "The 'server_url' query parameter is required"
-            }, HTTPStatus.BAD_REQUEST
-
-        # get the ID of the whitelisted server, then delete it
-        response, status = request_algo_store(
-            algorithm_store.url,
-            server_url,
-            endpoint="vantage6-server",
-            method="get",
-            headers=self.get_authorization_headers_from_request(),
-        )
-        if status == HTTPStatus.FORBIDDEN:
-            log.info(
-                "Server with url=%s was not whitelisted at the algorithm store. "
-                "Proceeding to remove algorithm store store from server...",
-                server_url,
-            )
-            # initialize empty list of servers to delete at store
-            result = []
-        elif status != HTTPStatus.OK:
-            return response, status
-        else:
-            result = response.json()
-            if len(result) > 1:
-                msg = (
-                    "More than one whitelisted server found with url "
-                    f"{server_url}. This should not happen! All will be "
-                    "removed."
-                )
-                log.warning(msg)
-            elif len(result) == 0:
-                msg = (
-                    "No whitelisted server found with url "
-                    f"{server_url}. This should not happen!"
-                )
-                log.warning(msg)
-        # remove all linked servers with the given url
-        for server in result:
-            server_id = server["id"]
-            response, status = request_algo_store(
-                algorithm_store.url,
-                server_url,
-                endpoint=f"vantage6-server/{server_id}",
-                method="delete",
-                headers=self.get_authorization_headers_from_request(),
-            )
-            if status != HTTPStatus.OK:
-                return response, status
 
         # remove the store link from all tasks linked to this store
         for task in algorithm_store.tasks:

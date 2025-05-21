@@ -291,7 +291,6 @@ class SessionDataframes(SessionBase):
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
                 store_id=extraction_details.get("store_id"),
-                server_url=extraction_details.get("server_url"),
             )
         except Exception as e:
             dataframe.delete()
@@ -558,7 +557,6 @@ class DataframePreprocessing(SessionBase):
             organizations=preprocessing_task["organizations"],
             dataframe=dataframe,
             store_id=preprocessing_task.get("store_id"),
-            server_url=preprocessing_task.get("server_url"),
         )
         # In case the task is not created we do not want to modify the chain of tasks.
         # The user can try again.

@@ -19,10 +19,6 @@ class User(Base):
         Email address
     organization_id : int
         Id of the organization to which the user belongs
-    v6_server_id : int
-        Id of the whitelisted server through which the user is authenticated
-    server : :class:`~.model.vantage6_server.Vantage6Server`
-        Server through which the user is authenticated
     roles : list[:class:`~.model.role.Role`]
         List of roles that the user has
     algorithms : list[:class:`~.model.algorithm.Algorithm`]
@@ -36,11 +32,9 @@ class User(Base):
     username = Column(String)
     email = Column(String)
     organization_id = Column(Integer)
-    v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
     keycloak_id = Column(String)
 
     # relationships
-    server = relationship("Vantage6Server", back_populates="users")
     roles = relationship("Role", back_populates="users", secondary="Permission")
     rules = relationship("Rule", back_populates="users", secondary="UserPermission")
 

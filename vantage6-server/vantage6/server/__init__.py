@@ -151,6 +151,7 @@ class ServerApp:
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
+        # TODO reactivate this option - and then remove it in dev setup script
         # self.couple_algorithm_stores()
 
         # TODO v5+ clean this up (simply delete community store URL update). This
@@ -751,9 +752,7 @@ class ServerApp:
             # simple for now: check every hour
             time.sleep(3600)
 
-    # TODO this functionality is temporarily disabled since it requires a user token
-    # to couple the algorithm stores. It may be nice to find a way later to offer this
-    # functionality again.
+    # TODO Enable this functionality again
     # def couple_algorithm_stores(self) -> None:
     #     """Couple algorithm stores to the server.
 
@@ -785,12 +784,11 @@ class ServerApp:
     #                 continue
     #             store = db.AlgorithmStore.get_by_url(url)
     #             if not store:
-    #                 response, status = post_algorithm_store(
+    #                 response, status = add_algorithm_store_to_database(
     #                     {
     #                         "name": name,
     #                         "algorithm_store_url": url,
     #                         "server_url": server_url,
-    #                         "force": True,
     #                     },
     #                     self.ctx.config,
     #                 )

@@ -25,9 +25,7 @@ export interface AlgorithmStoreForm {
 export interface AddAlgorithmStore {
   name: string;
   algorithm_store_url: string;
-  server_url: string;
   collaboration_id?: string;
-  force?: boolean;
 }
 
 export interface EditAlgorithmStore {
