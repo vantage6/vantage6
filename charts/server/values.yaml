@@ -94,11 +94,12 @@ database:
   #hostpath of the database mount
   volumePath: /mnt/data_server
 
+  # The name of the k8s node where the database is running
+  k8sNodeName: docker-desktop
+
 ui:
 
   # The image of the UI
   image: harbor2.vantage6.ai/infrastructure/ui:latest
-
-
-
-
+  # Service port for the UI
+  port: 7600

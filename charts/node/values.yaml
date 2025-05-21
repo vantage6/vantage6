@@ -42,14 +42,15 @@ node:
   databases:
     fileBased:
     - name: default
-      uri: /mnt/data/default.csv
+      # /run/desktop/
+      uri: /mnt/data/olympic_athletes_2016.csv
       type: csv
-
-
+      volumePath: /mnt/data
+      originalName: olympic_athletes_2016.csv
     serviceBased:
     # Name is the LABEL in the DATABASE_LABELS variable
     - name: myPostgres
-      uri: postgres://vantage6-vantage6-postgres:5432/vantage6
+      uri: postgres://vantage6-postgres:5432/vantage6
       type: other
 
       # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
@@ -61,4 +62,7 @@ node:
 
   # Kubernetes configuration
   taskNamespace: vantage6-tasks
+
+  # Kubernetes node name, used for local persistent volumes
+  k8sNodeName: docker-desktop
 

@@ -145,6 +145,7 @@ class TestResourceBase(unittest.TestCase):
 
     def login_node(self, api_key):
         tokens = self.app.post("/api/token/node", json={"api_key": api_key}).json
+        headers = None
         if "access_token" in tokens:
             headers = {"Authorization": "Bearer {}".format(tokens["access_token"])}
         else:
@@ -242,5 +243,9 @@ class TestResourceBase(unittest.TestCase):
     def get_user_auth_header(self, organization=None, rules=None):
         if rules is None:
             rules = []
+        user = self.create_user(organization, rules)
+        return self.login(user.username)
+
+    def create_user_and_login(self, organization=None, rules=None):
         user = self.create_user(organization, rules)
         return self.login(user.username)

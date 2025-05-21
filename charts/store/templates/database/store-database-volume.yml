@@ -10,7 +10,15 @@ spec:
     storage: 10Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: local-storage
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  hostPath:
+  local:
     path: {{ .Values.database.volumePath }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName }}

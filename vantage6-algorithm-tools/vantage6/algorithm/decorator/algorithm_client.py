@@ -21,6 +21,9 @@ def _algorithm_client() -> callable:
     MockAlgorithmClient to the front of the argument list instead of the
     regular AlgorithmClient.
 
+    This function expect the ``CONTAINER_TOKEN`` environment variable to be set.
+    If this is not the case, the function will exit with an error message.
+
     Parameters
     ----------
     func : callable
