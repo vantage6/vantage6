@@ -19,7 +19,6 @@ export enum StoreUserSortProperties {
 export interface StoreUser {
   id: number;
   username: string;
-  server: StoreServerRegistration;
   roles: StoreRole[];
 }
 

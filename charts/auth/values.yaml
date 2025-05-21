@@ -96,6 +96,7 @@ keycloak:
             serviceAccountsEnabled: true
             standardFlowEnabled: false
         roles:
+          # TODO I think this role is now assigned to each client? That should not be the case.
           realm:
             - name: admin
               clientRole: true

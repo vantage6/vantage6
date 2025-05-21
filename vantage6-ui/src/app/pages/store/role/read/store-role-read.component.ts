@@ -159,15 +159,11 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   private setUpUserTable(): void {
     if (!this.role || !this.role.users) return;
     this.userTable = {
-      columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'serverurl', label: this.translateService.instant('store-user.server') }
-      ],
+      columns: [{ id: 'username', label: this.translateService.instant('user.username') }],
       rows: this.role?.users?.map((user) => ({
         id: user.id.toString(),
         columnData: {
-          username: user.username,
-          serverurl: user.server.url
+          username: user.username
         }
       }))
     };

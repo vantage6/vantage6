@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRuleService } from './store-rule.service';
 import { AlgorithmStore, AlgorithmViewPolicies, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
-import { PermissionService } from './permission.service';
 import { environment } from 'src/environments/environment';
 import { AlgorithmStoreService } from './algorithm-store.service';
 import { POLICY_ALLOW_ALL_SERVERS } from '../models/constants/policies';
@@ -22,7 +21,6 @@ export class StorePermissionService {
 
   constructor(
     private storeRuleService: StoreRuleService,
-    private permissionService: PermissionService,
     private algorithmStoreService: AlgorithmStoreService
   ) {}
 
@@ -54,14 +52,8 @@ export class StorePermissionService {
     }
 
     // get the rules
-    const username = this.permissionService.activeUser?.username;
-    const serverUrl = `${environment.server_url}${environment.api_path}`;
     try {
-      const result = await this.storeRuleService.getRules(
-        this.store.url,
-        { no_pagination: 1, username: username, server_url: serverUrl },
-        false
-      );
+      const result = await this.storeRuleService.getRules(this.store.url, { no_pagination: 1, current_user: true }, false);
       this.isUserRegistered = true;
       return result;
     } catch (error) {

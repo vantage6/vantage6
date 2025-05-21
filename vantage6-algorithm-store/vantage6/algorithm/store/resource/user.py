@@ -3,6 +3,7 @@ import logging
 
 from http import HTTPStatus
 
+from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from flask import request, g
@@ -283,10 +284,8 @@ class Users(AlgorithmStoreResources):
 
         tags: ["User"]
         """
-        data = request.get_json(silent=True)
-        # the assumption is that it is possible to create only users linked to your own server
-        server = Vantage6Server.get_by_url(request.headers["Server-Url"])
         # validate request body
+        data = request.get_json(silent=True)
         try:
             data = user_input_schema.load(data)
         except ValidationError as e:
@@ -295,17 +294,29 @@ class Users(AlgorithmStoreResources):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
+        # check if the user already exists in keycloak
+        keycloak_admin_client = self._get_keycloak_admin_client()
+        try:
+            user_id = keycloak_admin_client.get_user_id(request.json["username"])
+        except Exception:
+            return {
+                "msg": f"User {request.json['username']} not found: cannot register "
+                "user in algorithm store"
+            }, HTTPStatus.BAD_REQUEST
+
         # check unique constraints
-        if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
+        if db.User.get_by_keycloak_id(keycloak_id=user_id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
         # check whether users of this server are allowed to get any permissions
-        allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
-        if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
-            return {
-                "msg": f"Users from the server {server.url} are not allowed to be "
-                "registered in this algorithm store by the store administrator."
-            }, HTTPStatus.FORBIDDEN
+        # TODO: check if user from right server? Or do we just enable one keycloak
+        # server (for now)?
+        # allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
+        # if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
+        #     return {
+        #         "msg": f"Users from the server {server.url} are not allowed to be "
+        #         "registered in this algorithm store by the store administrator."
+        #     }, HTTPStatus.FORBIDDEN
 
         # Check if the user exists in the relevant vantage6 server. Note that this only
         # works if:
@@ -343,13 +354,27 @@ class Users(AlgorithmStoreResources):
             username=data["username"],
             # email=user_email,
             # organization_id=user_org,
-            v6_server_id=server.id,
+            # v6_server_id=server.id,
+            keycloak_id=user_id,
             roles=roles,
         )
 
         user.save()
 
         return user_output_schema.dump(user), HTTPStatus.CREATED
+
+    @staticmethod
+    def _get_keycloak_admin_client():
+        """Get the keycloak admin client"""
+        keycloak_openid = KeycloakOpenIDConnection(
+            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            username="admin",
+            password="admin",
+            client_id="vantage6-store-admin-client",
+            realm_name="vantage6",
+            client_secret_key="mystoreclientsecret",
+        )
+        return KeycloakAdmin(connection=keycloak_openid)
 
 
 class User(AlgorithmStoreResources):

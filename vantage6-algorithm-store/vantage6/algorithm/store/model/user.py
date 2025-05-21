@@ -83,12 +83,24 @@ class User(Base):
         return any(rule in role.rules for role in self.roles) or rule in self.rules
 
     @classmethod
-    def get_by_keycloak_id(cls, keycloak_id: str) -> User:
+    def get_by_keycloak_id(cls, keycloak_id: str) -> User | None:
         """
         Get a user by their keycloak id
+
+        Parameters
+        ----------
+        keycloak_id: str
+            The keycloak id of the user
+
+        Returns
+        -------
+        User | None
+            The user with the given keycloak id, or None if the user does not exist
         """
         session = DatabaseSessionManager.get_session()
-        return session.scalars(select(cls).filter_by(keycloak_id=keycloak_id)).one()
+        return session.scalars(
+            select(cls).filter_by(keycloak_id=keycloak_id)
+        ).one_or_none()
 
     @classmethod
     def get_by_permission(cls, resource: str, operation: Operation) -> list[User]:

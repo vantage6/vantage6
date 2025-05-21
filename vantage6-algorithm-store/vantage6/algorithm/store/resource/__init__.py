@@ -57,7 +57,6 @@ def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
         Tuple containing a user object or a dict with an error message, and a status
         code.
     """
-    print(request.headers)
     msg = "Missing Authorization header"
     if not request.headers.get("Authorization"):
         log.warning(msg)
@@ -79,11 +78,10 @@ def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
 
     identity = decoded_token["sub"]
 
-    try:
-        user = User.get_by_keycloak_id(keycloak_id=identity)
-    except Exception as e:
-        log.exception("Error getting user: %s", e)
+    if not (user := User.get_by_keycloak_id(keycloak_id=identity)):
         return {"msg": "User not registered at store"}, HTTPStatus.UNAUTHORIZED
+
+    g.user = user
 
     return user, HTTPStatus.OK
 

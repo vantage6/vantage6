@@ -70,6 +70,6 @@ export interface GetRuleParameters extends BaseGetRuleParameters {
 }
 
 export interface GetStoreRuleParameters extends BaseGetRuleParameters {
-  username?: string;
-  server_url?: string;
+  user_id?: number;
+  current_user?: boolean;
 }

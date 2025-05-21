@@ -74,14 +74,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
 
-    api.add_resource(
-        ValidateToken,
-        path + "/user/validate",
-        endpoint="validate_user_token",
-        methods=("POST",),
-        resource_class_kwargs=services,
-    )
-
 
 user_token_input_schema = TokenUserInputSchema()
 node_token_input_schema = TokenNodeInputSchema()
@@ -280,41 +272,6 @@ class RefreshToken(ServicesResources):
         user_or_node = db.Authenticatable.get(user_or_node_id)
 
         return _get_token_dict(user_or_node, self.api), HTTPStatus.OK
-
-
-class ValidateToken(ServicesResources):
-    """Resource for /token/user/validate"""
-
-    @with_user
-    def post(self):
-        """Validate a user token
-        ---
-        description: >-
-          Validate that a user token is valid. This is used by external
-          services such as an algorithm store to validate that a user token is
-          valid.
-
-        responses:
-          200:
-            description: Token is valid
-          401:
-            description: Token is invalid
-
-        tags: ["Authentication"]
-        """
-        # TODO we should check the origin of the request. Only allow requests
-        #  from whitelisted algorithm stores and only for users that are in
-        # the right collaboration(s).
-
-        # Note: if the token is invalid, the with_user decorator will return
-        # an error response. So if we get here, the token is valid.
-        return {
-            "msg": "Token is valid",
-            "user_id": g.user.id,
-            "username": g.user.username,
-            "email": g.user.email,
-            "organization_id": g.user.organization_id,
-        }, HTTPStatus.OK
 
 
 def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
