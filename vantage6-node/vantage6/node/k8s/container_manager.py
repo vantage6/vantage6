@@ -9,11 +9,10 @@ from pathlib import Path
 import uuid
 
 from kubernetes import client as k8s_client, config, watch
-from kubernetes.client import V1EnvVar
 from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name, get_database_config
+from vantage6.common import logger_name
 from vantage6.common.globals import (
     DEFAULT_ALPINE_IMAGE,
     DEFAULT_DOCKER_REGISTRY,
@@ -36,7 +35,6 @@ from vantage6.node.globals import (
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
-    JOB_POD_TOKEN_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
     TASK_START_TIMEOUT_SECONDS,
@@ -376,7 +374,6 @@ class ContainerManager:
             _volumes, _volume_mounts, env_vars, secrets = self._create_volume_mounts(
                 run_io=run_io,
                 docker_input=docker_input,
-                token=token,
                 databases_to_use=databases_to_use,
             )
         except PermanentAlgorithmStartFail as e:
@@ -391,6 +388,9 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
+        if action == AlgorithmStepType.CENTRAL_COMPUTE:
+            secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
+
         env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
             "PROXY_SERVER_HOST", PROXY_SERVER_HOST
         )
@@ -410,6 +410,7 @@ class ContainerManager:
             io_env_vars.append(k8s_client.V1EnvVar(name=key, value=value))
         try:
             self._validate_environment_variables(env_vars)
+            self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(e)
             return RunStatus.FAILED
@@ -630,7 +631,6 @@ class ContainerManager:
         self,
         run_io: RunIO,
         docker_input: bytes,
-        token: str,
         databases_to_use: list[str],
     ) -> Tuple[
         list[k8s_client.V1Volume],
@@ -647,8 +647,6 @@ class ContainerManager:
             RunIO object that contains information about the run
         docker_input: bytes
             Input that can be read by the algorithm container
-        token: str
-            Bearer token that the container can use to communicate with the server
         databases_to_use: list[str]
             Labels of the databases to use
 
@@ -680,14 +678,12 @@ class ContainerManager:
         volumes: list[k8s_client.V1Volume] = []
         vol_mounts: list[k8s_client.V1VolumeMount] = []
 
-        # Create algorithm's input and token files before creating volume mounts with
+        # Create algorithm's input and output files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
-        input_file_path, output_file_path, token_file_path = run_io.create_files(
-            docker_input, b"", token.encode("ascii")
-        )
+        input_file_path, output_file_path = run_io.create_files(docker_input, b"")
 
-        # Create the volumes and corresponding volume mounts for the input, output and
-        # token files.
+        # Create the volumes and corresponding volume mounts for the input and output
+        # files.
         output_volume, output_mount = self._create_run_mount(
             volume_name=run_io.output_volume_name,
             host_path=Path(self.host_data_dir) / output_file_path,
@@ -703,13 +699,6 @@ class ContainerManager:
             mount_path=JOB_POD_INPUT_PATH,
         )
 
-        token_volume, token_mount = self._create_run_mount(
-            volume_name=run_io.token_volume_name,
-            host_path=Path(self.host_data_dir) / token_file_path,
-            type_="File",
-            mount_path=JOB_POD_TOKEN_PATH,
-        )
-
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
             host_path=Path(self.host_data_dir) / run_io.session_folder,
@@ -717,15 +706,14 @@ class ContainerManager:
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
-        volumes.extend([output_volume, input_volume, token_volume, session_volume])
-        vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
+        volumes.extend([output_volume, input_volume, session_volume])
+        vol_mounts.extend([output_mount, input_mount, session_mount])
 
         # The environment variables are expected by the algorithm containers in order
-        # to access the input, output and token files.
+        # to access the input and output files.
         environment_variables = {
             ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
-            ContainerEnvNames.TOKEN_FILE.value: JOB_POD_TOKEN_PATH,
             # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(

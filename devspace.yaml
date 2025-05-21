@@ -104,17 +104,17 @@ hooks:
 - name: "create-tasks-folder"
   command: |
     echo "Creating tasks folder"
-    mkdir -p ${TASK_DIRECTORY}
+    python dev/create_mount_directory.py ${TASK_DIRECTORY}
   events: ["before:deploy:vantage6-node"]
 - name: "create-server-database-folder"
   command: |
     echo "Creating server database folder"
-    mkdir -p ${SERVER_DATABASE_MOUNT_PATH}
+    python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
   events: ["before:deploy:vantage6-server"]
 - name: "create-store-database-folder"
   command: |
     echo "Creating algorithm store database folder"
-    mkdir -p ${STORE_DATABASE_MOUNT_PATH}
+    python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
   events: ["before:deploy:vantage6-store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
