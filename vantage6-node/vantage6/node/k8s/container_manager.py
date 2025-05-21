@@ -1275,17 +1275,22 @@ class ContainerManager:
         namespace: str
             Namespace where the secret is located
         """
-        self.log.info(
-            "Cleaning up kubernetes Secret %s in namespace %s",
-            secret_name,
-            namespace,
-        )
         try:
             self.core_api.delete_namespaced_secret(
                 name=secret_name, namespace=namespace
             )
+            self.log.info(
+                "Removed kubernetes Secret %s in namespace %s",
+                secret_name,
+                namespace,
+            )
         except ApiException as exc:
-            self.log.error("Exception when deleting namespaced secret: %s", exc)
+            if exc.status == 404:
+                self.log.debug(
+                    "No secret %s to remove in namespace %s", secret_name, namespace
+                )
+            else:
+                self.log.error("Exception when deleting namespaced secret: %s", exc)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """
