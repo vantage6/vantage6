@@ -1,17 +1,24 @@
 """Python client for user to communicate with the vantage6 server"""
 
 from __future__ import annotations
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import sys
+import itertools
+from pathlib import Path
+import threading
+import traceback
+import os
+import subprocess
+import webbrowser
+import urllib.parse as urlparse
 
 import logging
 import time
 from typing import List
 import jwt
+from keycloak import KeycloakOpenID
 import pyfiglet
-import itertools
-import sys
-import traceback
 
-from pathlib import Path
 
 from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
@@ -136,50 +143,134 @@ class UserClient(ClientBase):
         mfa_code: str | int
             Six-digit two-factor authentication code
         """
-        auth_json = {
-            "username": username,
-            "password": password,
-        }
-        if mfa_code:
-            auth_json["mfa_code"] = mfa_code
-        auth = super(UserClient, self).authenticate(auth_json, path="token/user")
-        if not auth:
-            # user is not authenticated. The super function is responsible for
-            # printing useful output
+        keycloak_openid = KeycloakOpenID(
+            server_url="http://localhost:8080",
+            client_id="myclient",
+            realm_name="vantage6",
+            client_secret_key=None,  # Public client
+        )
+        auth_url = keycloak_openid.auth_url(
+            redirect_uri="http://localhost:8081/callback",
+            scope="openid",
+            state="state",
+        )
+        print(auth_url)
+
+        # Create a class to store the token
+        class TokenStore:
+            def __init__(self):
+                self.token = None
+
+        token_store = TokenStore()
+
+        # Start local server to receive callback
+        class CallbackHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                # Parse the callback URL
+                query = urlparse.urlparse(self.path).query
+                params = urlparse.parse_qs(query)
+
+                if "code" in params:
+                    # Exchange code for token
+                    token = keycloak_openid.token(
+                        grant_type="authorization_code",
+                        code=params["code"][0],
+                        redirect_uri="http://localhost:8081/callback",
+                    )
+
+                    # Store the token
+                    token_store.token = token
+
+                    # Send success response
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"Login successful! You can close this window.")
+
+                    # Store the token
+                    self.server.token = token
+                else:
+                    # Send error response
+                    self.send_response(400)
+                    self.send_header("Content-type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"Login failed! Please try again.")
+
+                # Stop the server
+                threading.Thread(target=self.server.shutdown).start()
+
+        # Start server in a separate thread
+        server = HTTPServer(("localhost", 8081), CallbackHandler)
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+
+        # Open browser for login
+        print("opening browser for login")
+        # Try to open browser with different methods
+        try:
+            # Check if we're in WSL
+            if (
+                os.path.exists("/proc/version")
+                and "microsoft" in open("/proc/version").read().lower()
+            ):
+                # We're in WSL, try to use Windows browser
+                try:
+                    # Try to use wslview (WSL2)
+                    subprocess.run(["wslview", auth_url], check=True)
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    # Fallback to webbrowser module
+                    webbrowser.open(auth_url)
+            else:
+                # Not in WSL, use regular webbrowser
+                webbrowser.open(auth_url)
+        except Exception as e:
+            self.log.error("Error opening browser: %s", e)
+            print(f"Please open this URL in your browser: {auth_url}")
+
+        print("waiting for callback")
+        # Wait for callback
+        server_thread.join()
+
+        if not token_store.token:
+            print("Login failed or was cancelled")
             return
 
-        # identify the user and the organization to which this user
-        # belongs. This is usefull for some client side checks
-        try:
-            type_ = "user"
-            id_ = jwt.decode(self.token, options={"verify_signature": False})["sub"]
+        print(token_store.token)
+        self._access_token = token_store.token["access_token"]
+        # TODO: Implement refresh token
+        # self.__refresh_token = token_store.token["refresh_token"]
+        # self.__refresh_url = "ToBeImplemented"
 
-            user = self.request(f"user/{id_}")
-            name = user.get("firstname")
-            organization_id = user.get("organization").get("id")
-            organization = self.request(f"organization/{organization_id}")
-            organization_name = organization.get("name")
+        decoded_token = keycloak_openid.decode_token(self.token)
+        for key, value in decoded_token.items():
+            print(f"{key}: {value}")
 
-            self.whoami = WhoAmI(
-                type_=type_,
-                id_=id_,
-                name=name,
-                organization_id=organization_id,
-                organization_name=organization_name,
-            )
+        user = self.request("user/current")
+        print(user)
+        user_id = user.get("id")
+        user_name = user.get("firstname")
+        type_ = "user"
+        organization_id = user.get("organization").get("id")
+        organization = self.request(f"organization/{organization_id}")
+        organization_name = organization.get("name")
 
-            self.log.info(" --> Succesfully authenticated")
-            self.log.info(f" --> Name: {name} (id={id_})")
-            self.log.info(
-                f" --> Organization: {organization_name} " f"(id={organization_id})"
-            )
+        self.whoami = WhoAmI(
+            type_=type_,
+            id_=user_id,
+            name=user_name,
+            organization_id=organization_id,
+            organization_name=organization_name,
+        )
+        self.log.info(" --> Succesfully authenticated")
+        self.log.info(f" --> Name: {user_name} (id={user_id})")
+        self.log.info(
+            f" --> Organization: {organization_name} " f"(id={organization_id})"
+        )
 
-            # setup default encryption so user doesn't have to do this unless encryption
-            # is enabled
-            self.cryptor = DummyCryptor()
-        except Exception:
-            self.log.info("--> Retrieving additional user info failed!")
-            self.log.error(traceback.format_exc())
+        # setup default encryption so user doesn't have to do this unless encryption
+        # is enabled
+        self.cryptor = DummyCryptor()
 
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.

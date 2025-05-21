@@ -52,7 +52,6 @@ keycloak:
                   userinfo.token.claim: true
                   id.token.claim: true
                   access.token.claim: true
-
           - clientId: backend
             publicClient: false
             redirectUris:
