@@ -12,7 +12,6 @@ def create_mount_directory(dir_path: Path):
     """
     Create a directory on the host that will be mounted into one of the
     development containers.
-
     """
     # If the directory contains /run/desktop/mnt/host/wsl, this will be replaced
     # by /mnt/wsl: this is an idiosyncrasy of WSL (for more details, see
