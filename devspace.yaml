@@ -98,14 +98,11 @@ pipelines:
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
-      echo "Deleting ${POPULATE_MARKER}"
-      sh -c 'rm -f  "${1:?}"'   -- ${POPULATE_MARKER}
-      echo "Deleting all data in ${TASK_DIRECTORY}"
-      sh -c 'rm -rf "${1:?}/"*' -- ${TASK_DIRECTORY}
-      echo "Deleting all data in ${SERVER_DATABASE_MOUNT_PATH}"
-      sh -c 'rm -rf "${1:?}/"*' -- ${SERVER_DATABASE_MOUNT_PATH}
-      echo "Deleting all data in ${STORE_DATABASE_MOUNT_PATH}"
-      sh -c 'rm -rf "${1:?}/"*' -- ${STORE_DATABASE_MOUNT_PATH}
+      dev/purge_data.sh \
+        ${POPULATE_MARKER} \
+        ${TASK_DIRECTORY} \
+        ${SERVER_DATABASE_MOUNT_PATH} \
+        ${STORE_DATABASE_MOUNT_PATH}
     
   stop-dev:
     run: |-
