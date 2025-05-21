@@ -24,4 +24,4 @@ jobs:
 
     - name: Run client script test
       run: |
-        v6 test client-script --create-dev-network -n test
+        v6 test client-script --create-dev-network -n test --server-url http://172.17.0.1
