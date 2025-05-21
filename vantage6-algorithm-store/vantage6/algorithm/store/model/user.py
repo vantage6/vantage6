@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, ForeignKey, select
+from sqlalchemy import Column, String, Integer, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -19,6 +19,8 @@ class User(Base):
         Email address
     organization_id : int
         Id of the organization to which the user belongs
+    keycloak_id : str
+        Id of the keycloak user
     roles : list[:class:`~.model.role.Role`]
         List of roles that the user has
     algorithms : list[:class:`~.model.algorithm.Algorithm`]

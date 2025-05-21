@@ -27,6 +27,7 @@ def _check_algorithm_store_online(algorithm_store_url: str) -> bool:
     bool
         True if the algorithm store is online and reachable, False otherwise
     """
+    log.debug("Checking if algorithm store is online at %s", algorithm_store_url)
     try:
         _, status_code = request_algo_store(
             algo_store_url=algorithm_store_url,
@@ -128,6 +129,7 @@ def request_algo_store(
         returned instead of the response.
     """
     is_localhost_algo_store = _contains_localhost(algo_store_url)
+    log.debug("Calling algorithm store at %s/%s", algo_store_url, endpoint)
     try:
         response = _execute_algo_store_request(algo_store_url, endpoint, method, params)
     except requests.exceptions.ConnectionError as exc:
