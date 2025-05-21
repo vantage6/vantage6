@@ -38,22 +38,7 @@ pipelines:
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
-      if [ ! -f "${POPULATE_MARKER}" ]; then
-        echo "Do you want to populate vantage6 server with some example data? (y/n)"
-        read -r answer
-        if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-          echo "Starting to populate vantage6 server..."
-          run_pipelines init
-          echo "Populating vantage6 server done."
-        else
-          echo "Skipping populating vantage6 server."
-        fi
-        mkdir -p .devspace
-        touch "${POPULATE_MARKER}"
-      else
-        echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."
-      fi
-
+      dev/populate_server.sh ${POPULATE_MARKER}
       run_dependencies --all
       run_pipelines \
         server \
