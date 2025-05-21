@@ -197,7 +197,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
 
             if g.type == "user":
                 try:
-                    user = get_and_update_authenticatable_info(identity)
+                    user = _get_and_update_authenticatable_info(identity)
                 except Exception as e:
                     log.error("No user found for keycloak id %s", identity)
                     raise e
@@ -207,7 +207,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
                 log.debug(f"Received request from user {user.username} ({user.id})")
 
             elif g.type == "node":
-                node = get_and_update_authenticatable_info(identity)
+                node = _get_and_update_authenticatable_info(identity)
                 g.node = node
                 assert g.node.type == g.type
                 log.debug(f"Received request from node {node.name} ({node.id})")
@@ -229,21 +229,21 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     return protection_decorator
 
 
-def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
+def _get_and_update_authenticatable_info(keycloak_id: int) -> db.Authenticatable:
     """
     Get user or node from ID and update last time seen online.
 
     Parameters
     ----------
-    auth_id : int
-        ID of the user or node
+    keycloak_id : int
+        KeycloakID of the user or node
 
     Returns
     -------
     db.Authenticatable
         User or node database model
     """
-    auth = db.Authenticatable.get_by_keycloak_id(auth_id)
+    auth = db.Authenticatable.get_by_keycloak_id(keycloak_id)
     auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth

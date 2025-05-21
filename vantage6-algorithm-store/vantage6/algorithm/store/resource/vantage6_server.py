@@ -22,7 +22,6 @@ from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import (
-    request_validate_server_token,
     with_authentication,
     with_permission,
 )
@@ -216,12 +215,13 @@ class Vantage6Servers(AlgorithmStoreResources):
             )
 
         # users can only whitelist their own server. Check if this is the case
-        user_validate_response, status_code = request_validate_server_token(data["url"])
-        if user_validate_response is None or status_code != HTTPStatus.OK:
-            return {
-                "msg": "You can only whitelist your own vantage6 server! It could not "
-                "be verified that you are from the server you are trying to whitelist."
-            }, HTTPStatus.FORBIDDEN
+        # TODO remove or make alternative
+        # user_validate_response, status_code = request_validate_server_token(data["url"])
+        # if user_validate_response is None or status_code != HTTPStatus.OK:
+        #     return {
+        #         "msg": "You can only whitelist your own vantage6 server! It could not "
+        #         "be verified that you are from the server you are trying to whitelist."
+        #     }, HTTPStatus.FORBIDDEN
 
         # only create a new server if previous didn't exist yet
         existing_server = db_Vantage6Server.get_by_url(data["url"])

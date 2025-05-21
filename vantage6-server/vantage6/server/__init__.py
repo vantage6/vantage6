@@ -676,46 +676,11 @@ class ServerApp:
         # TODO use constant instead of 'Root' literal
         root = db.Role.get_by_name("Root")
 
-        super_user_password = None
-
-        # Note: server admin is supposed to set these env vars via docker
-        # compose for instance
-        if "V6_INIT_SUPER_PASS_HASHED_FILE" in os.environ:
-            log.info("Using initial hashed super user password from file")
-
-            with open(os.environ["V6_INIT_SUPER_PASS_HASHED_FILE"], "r") as f:
-                super_user_password = HashedPassword(f.read().strip())
-
-            if "V6_INIT_SUPER_PASS_HASHED" in os.environ:
-                log.warn(
-                    "Both V6_INIT_SUPER_PASS_HASHED_FILE and"
-                    " V6_INIT_SUPER_PASS_HASHED are set. Using the value from"
-                    " V6_INIT_SUPER_PASS_HASHED_FILE"
-                )
-        elif "V6_INIT_SUPER_PASS_HASHED" in os.environ:
-            log.info(
-                "Using initial hashed super user password provided via"
-                " environemnt variable"
-            )
-            super_user_password = HashedPassword(
-                os.environ["V6_INIT_SUPER_PASS_HASHED"]
-            )
-        else:
-            # FIXME / TODO v5+: for backwards compatibility we still set this
-            # as default but we might want to remove this soon!
-            super_user_password = SUPER_USER_INFO["password"]
-            log.warn(
-                f"Creating super user ({SUPER_USER_INFO['username']})"
-                " with default password!"
-            )
-            log.warn(
-                "Please change it or set an initial password using the"
-                " V6_INIT_SUPER_PASS_HASHED/_FILE environment variable"
-            )
-
-        # sanity check
-        if not super_user_password:
-            raise ValueError("No initial password assigned to root user!")
+        # TODO no longer use any default root username / password
+        log.warning(
+            f"Creating super user ({SUPER_USER_INFO['username']})"
+            " with default password!"
+        )
 
         user = db.User(
             username=SUPER_USER_INFO["username"],

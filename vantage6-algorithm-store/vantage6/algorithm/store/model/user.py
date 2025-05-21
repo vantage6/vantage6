@@ -37,6 +37,7 @@ class User(Base):
     email = Column(String)
     organization_id = Column(Integer)
     v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
+    keycloak_id = Column(String)
 
     # relationships
     server = relationship("Vantage6Server", back_populates="users")
@@ -80,6 +81,14 @@ class User(Base):
         """
         rule = Rule.get_by_(resource, operation)
         return any(rule in role.rules for role in self.roles) or rule in self.rules
+
+    @classmethod
+    def get_by_keycloak_id(cls, keycloak_id: str) -> User:
+        """
+        Get a user by their keycloak id
+        """
+        session = DatabaseSessionManager.get_session()
+        return session.scalars(select(cls).filter_by(keycloak_id=keycloak_id)).one()
 
     @classmethod
     def get_by_permission(cls, resource: str, operation: Operation) -> list[User]:

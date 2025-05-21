@@ -161,12 +161,12 @@ class Rules(ServicesResources):
         if "user_id" in args or args.get("current_user", False):
             if "user_id" in args:
                 user = db.User.get(args["user_id"])
+                if not user:
+                    return {
+                        "msg": f'User with id={args["user_id"]} does not exist!'
+                    }, HTTPStatus.BAD_REQUEST
             else:
-                user = db.User.get(g.user.id)
-            if not user:
-                return {
-                    "msg": f'User with id={args["user_id"]} does not exist!'
-                }, HTTPStatus.BAD_REQUEST
+                user = g.user
             q = (
                 q.join(db.role_rule_association)
                 .join(db.Role)

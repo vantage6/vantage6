@@ -205,22 +205,17 @@ def request_algo_store(
         response = None
 
     if not response and is_localhost_algo_store:
-        # try again with the docker host ip
-        host_uri = os.environ.get(HOST_URI_ENV, None)
-        if not host_uri:
-            msg = (
-                "You are trying to connect to a localhost algorithm store, but this "
-                "refers to the container itself. Please set the configuration option "
-                "'host_uri' in the 'dev' section  of the config file to the host's IP "
-                "address."
-            )
-            log.warning(msg)
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
-        algo_store_url = algo_store_url.replace("localhost", host_uri).replace(
-            "127.0.0.1", host_uri
+        port_number = algo_store_url.split(":")[2].split("/")[0]
+        print(algo_store_url)
+        algo_store_url = algo_store_url.replace(
+            f"localhost:{port_number}",
+            "vantage6-store-store-service.default.svc.cluster.local:80",
         )
+        print(algo_store_url)
+        # api_path = algo_store_url.split("/api")[0]
+        # host_uri = "http://vantage6-store-store-service.default.svc.cluster.local:80"
         # replace double http:// with single
-        algo_store_url = algo_store_url.replace("http://http://", "http://")
+        # algo_store_url = algo_store_url.replace("http://http://", "http://")
         try:
             response = _execute_algo_store_request(
                 algo_store_url, server_url, endpoint, method, force, headers, params

@@ -19,7 +19,6 @@ from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import (
-    request_from_store_to_v6_server,
     with_permission,
     AlgorithmStoreResources,
 )
@@ -312,19 +311,21 @@ class Users(AlgorithmStoreResources):
         # works if:
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
-        server_response, status_code = request_from_store_to_v6_server(
-            url=f"{server.url}/user",
-            params={"username": data["username"]},
-        )
-        if (
-            status_code != HTTPStatus.OK
-            or len(server_response.json().get("data", [])) != 1
-        ):
-            return {
-                "msg": f"User '{data['username']}' not found in the Vantage6 server."
-            }, HTTPStatus.BAD_REQUEST
-        user_email = server_response.json()["data"][0].get("email")
-        user_org = server_response.json()["data"][0]["organization"]["id"]
+
+        # TODO find email and organization id from keycloak
+        # server_response, status_code = request_from_store_to_v6_server(
+        #     url=f"{server.url}/user",
+        #     params={"username": data["username"]},
+        # )
+        # if (
+        #     status_code != HTTPStatus.OK
+        #     or len(server_response.json().get("data", [])) != 1
+        # ):
+        #     return {
+        #         "msg": f"User '{data['username']}' not found in the Vantage6 server."
+        #     }, HTTPStatus.BAD_REQUEST
+        # user_email = server_response.json()["data"][0].get("email")
+        # user_org = server_response.json()["data"][0]["organization"]["id"]
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -340,8 +341,8 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            email=user_email,
-            organization_id=user_org,
+            # email=user_email,
+            # organization_id=user_org,
             v6_server_id=server.id,
             roles=roles,
         )
@@ -410,14 +411,6 @@ class User(AlgorithmStoreResources):
                     type: string
                     description: User's email address. Do not combine this option with
                       the update_email option.
-                  update_email:
-                    type: boolean
-                    description: Whether to update the email address by using the value
-                      from the vantage6 server. Do not combine this option with the
-                      email option to manually set the email address.
-                  organization_id:
-                    type: integer
-                    description: User's organization id. Can be written only if empty.
 
         parameters:
           - in: path
@@ -457,29 +450,9 @@ class User(AlgorithmStoreResources):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
+        # TODO should email be updated? And should we update organization_id?
         if email := data.get("email"):
             user.email = email
-        elif "update_email" in data and data["update_email"]:
-            server = Vantage6Server.get_by_url(request.headers["Server-Url"])
-            server_response, status_code = request_from_store_to_v6_server(
-                url=f"{server.url}/user",
-                params={"username": user.username},
-            )
-            if (
-                status_code != HTTPStatus.OK
-                or len(server_response.json().get("data", [])) != 1
-            ):
-                return {
-                    "msg": f"User '{user.username}' not found in the Vantage6 server."
-                }, HTTPStatus.BAD_REQUEST
-            user.email = server_response.json()["data"][0].get("email")
-            if not user.email:
-                log.warning(
-                    "No email address found for user '%s' in the Vantage6 server.",
-                    user.username,
-                )
-        if organization_id := data.get("organization_id") and not user.organization_id:
-            user.organization_id = organization_id
 
         if "roles" in data:
             # validate that these roles exist

@@ -70,6 +70,23 @@ keycloak:
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
+          - clientId: vantage6-store-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            # TODO set dynamic secret, now just for testing
+            secret: mystoreregularclientsecret
+          - clientId: vantage6-store-admin-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            # TODO set dynamic secret, now just for testing
+            secret: mystoreclientsecret
+            # TODO I think directAccessGrantsEnabled should be false - but then we need
+            # another flow
+            directAccessGrantsEnabled: true
+            serviceAccountsEnabled: true
+            standardFlowEnabled: true
           - clientId: node-client
             publicClient: false
             redirectUris:

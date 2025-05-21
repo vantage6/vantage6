@@ -53,9 +53,12 @@ import {
 
 import { environment } from '../environments/environment';
 
-// TODO also intercept store api
+// TODO Now we intercept all requests to send the Keycloak token to all backend
+// endpoints. We should consider only sending the token to the server and the registered
+// algorithm stores.
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
-  urlPattern: new RegExp(`^(${environment.server_url})(\/.*)?$`, 'i'),
+  urlPattern: new RegExp(`.*`, 'i'),
+  // urlPattern: new RegExp(`^(${environment.server_url})(\/.*)?$`, 'i'),
   bearerPrefix: 'Bearer'
 });
 

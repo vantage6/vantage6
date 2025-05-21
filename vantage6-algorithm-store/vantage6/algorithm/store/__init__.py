@@ -31,6 +31,7 @@ from flask_restful import Api
 from flask_principal import Principal
 from flasgger import Swagger
 from pathlib import Path
+from keycloak import KeycloakOpenID
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME, DEFAULT_API_PATH
@@ -474,6 +475,10 @@ class AlgorithmStoreApp:
                         " no action taken."
                     )
 
+                if not root_user.keycloak_id:
+                    log.info("Adding keycloak id to root user")
+                    self._add_keycloak_id_to_super_user(root_user)
+
             else:
                 default_msg = (
                     "The 'root_user' section of the configuration file is "
@@ -494,6 +499,22 @@ class AlgorithmStoreApp:
                 " the database. This means no-one can alter resources on this server."
             )
         return self
+
+    # TODO v5+ refactor with duplicate code in server
+    def _add_keycloak_id_to_super_user(self, user: db.User) -> None:
+        """
+        Add a keycloak id to the super user.
+        """
+        keycloak_openid = KeycloakOpenID(
+            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            client_id="vantage6-store-admin-client",
+            realm_name="vantage6",
+            client_secret_key="mystoreclientsecret",
+        )
+        token = keycloak_openid.token("admin", "admin")
+        decoded_token = keycloak_openid.decode_token(token["access_token"])
+        user.keycloak_id = decoded_token["sub"]
+        user.save()
 
 
 def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
