@@ -3,6 +3,7 @@ name: vantage6git
 
 # TODO using tags isnt safe with the devspace build stuff
 vars:
+  POPULATE_MARKER: ".devspace/vantage6_populate_done"
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
@@ -44,6 +45,7 @@ pipelines:
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
+      dev/populate_server.sh ${POPULATE_MARKER}
       run_dependencies --all
       run_pipelines \
         server \
@@ -97,23 +99,43 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
+    
+  purge:
+    # Careful with destructive rm commands like `rm -rf ${p}/*`!! 
+    run: |-
+      echo "Purging all deployments..."
+      stop_dev --all
+      purge_deployments --all
+      run_dependencies --all --pipeline purge
+      dev/purge_data.sh \
+        ${POPULATE_MARKER} \
+        ${TASK_DIRECTORY} \
+        ${SERVER_DATABASE_MOUNT_PATH} \
+        ${STORE_DATABASE_MOUNT_PATH}
+    
+  stop-dev:
+    run: |-
+      echo "Purging all deployments..."
+      stop_dev --all
+      purge_deployments --all
+      run_dependencies --all --pipeline purge
 
 hooks:
 # Execute the hook in a golang shell (cross operating system compatible)
 - name: "create-tasks-folder"
   command: |
     echo "Creating tasks folder"
-    mkdir -p ${TASK_DIRECTORY}
+    python dev/create_mount_directory.py ${TASK_DIRECTORY}
   events: ["before:deploy:vantage6-node"]
 - name: "create-server-database-folder"
   command: |
     echo "Creating server database folder"
-    mkdir -p ${SERVER_DATABASE_MOUNT_PATH}
+    python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
   events: ["before:deploy:vantage6-server"]
 - name: "create-store-database-folder"
   command: |
     echo "Creating algorithm store database folder"
-    mkdir -p ${STORE_DATABASE_MOUNT_PATH}
+    python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
   events: ["before:deploy:vantage6-store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
@@ -278,18 +300,18 @@ dev:
       bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
-  
+
   vantage6-server-db:
     labelSelector:
       app: vantage6-server
       component: postgres
     ports:
       # expose the server database port
-      - port: 5432:5432
+      - port: 7632:5432
         bindAddress: localhost
-      - port: 5432:5432
+      - port: 7632:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
-  
+
   vantage6-store:
     imageSelector: ${STORE_IMAGE}
     ports:
@@ -316,9 +338,9 @@ dev:
       component: postgres
     ports:
       # expose the store database port
-      - port: 5433:5432
+      - port: 7633:5432
         bindAddress: localhost
-      - port: 5433:5432
+      - port: 7633:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the store container in development mode.
@@ -330,9 +352,6 @@ dev:
     # would require image rebuild but it's not transparent.
     - path: ./vantage6-ui/src/:/app/src/
       disableDownload: true
-    ports:
-      - port: 7600:4200
-        bindAddress: localhost
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
@@ -379,26 +398,19 @@ dev:
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
-  # This command will spin up a server and store temporary to fill it with some
-  # basic data.
-  populate-server:
-    description: "Populate the server with fixtures for a given number of nodes"
-    command: devspace run-pipeline init
-
   # This will put all components in development mode. This is the main entrypoint
   # for development.
   start-dev:
     description: "Start the development environment"
     command: devspace dev
 
-  # This will stop all components from the development mode. Note that the deployments
-  # are not deleted.
+  # This will remove all running k8s resources from the development mode. 
   stop-dev:
     description: "Stop the development environment"
-    command: devspace reset pods
+    command: devspace run-pipeline stop-dev
 
-  # This will delete all deployments and services. This is useful when you want to
-  # start from scratch.
+  # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
+  # This is useful when you want to start from scratch.
   purge:
     description: "Purge the development environment"
     command: devspace purge

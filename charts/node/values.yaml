@@ -62,7 +62,7 @@ node:
 
   # Kubernetes configuration
   taskNamespace: vantage6-tasks
-  
+
   # Kubernetes node name, used for local persistent volumes
-  k8sNodeName: docker-desktop 
+  k8sNodeName: docker-desktop
 

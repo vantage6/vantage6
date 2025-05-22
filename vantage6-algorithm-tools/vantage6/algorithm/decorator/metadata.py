@@ -60,10 +60,7 @@ def metadata(func: callable) -> callable:
         >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
         >>>     pass
         """
-        token_file = os.environ[ContainerEnvNames.TOKEN_FILE.value]
-        info("Reading token")
-        with open(token_file) as fp:
-            token = fp.read().strip()
+        token = os.environ[ContainerEnvNames.CONTAINER_TOKEN.value]
 
         info("Extracting payload from token")
         payload = _extract_token_payload(token)
@@ -78,7 +75,7 @@ def metadata(func: callable) -> callable:
             ),
             output_file=Path(os.environ[ContainerEnvNames.OUTPUT_FILE.value]),
             input_file=Path(os.environ[ContainerEnvNames.INPUT_FILE.value]),
-            token_file=Path(os.environ[ContainerEnvNames.TOKEN_FILE.value]),
+            token=token,
         )
         return func(metadata, *args, **kwargs)
 

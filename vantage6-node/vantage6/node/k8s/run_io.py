@@ -125,9 +125,9 @@ class RunIO:
     def output_file(self) -> str:
         return os.path.join(self.run_folder, "output")
 
-    def create_files(self, input_, output, token) -> tuple[str, str, str]:
+    def create_files(self, input_, output_) -> tuple[str, str]:
         """
-        Create the input, output and token files for the run.
+        Create the input and output files for the run.
 
         Parameters
         ----------
@@ -135,8 +135,6 @@ class RunIO:
             Content of the input file
         output: bytes
             Content of the output file
-        token: bytes
-            Content of the token file
 
         Returns
         -------
@@ -145,8 +143,7 @@ class RunIO:
         """
         return (
             self._create_run_io_file("input", input_),
-            self._create_run_io_file("output", output),
-            self._create_run_io_file("token", token),
+            self._create_run_io_file("output", output_),
         )
 
     def _create_run_io_file(self, filename: str, content: bytes) -> str:

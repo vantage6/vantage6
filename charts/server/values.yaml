@@ -101,7 +101,5 @@ ui:
 
   # The image of the UI
   image: harbor2.vantage6.ai/infrastructure/ui:latest
-
-
-
-
+  # Service port for the UI
+  port: 7600
