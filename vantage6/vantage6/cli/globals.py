@@ -25,7 +25,7 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 # one appears not to be used
 # TODO Check and remove
 # HCR: This constants is indeed not used, as well as the other defined in node/globals.py
-#NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
