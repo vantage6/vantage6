@@ -366,7 +366,7 @@ class ContainerManager:
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
             self.log.critical(
-                "[Algorithm job run %s -requested by org %s] Docker image %s is not allowed on this Node!",
+                "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
                 run_id,
                 init_org_id,
                 image,
@@ -376,7 +376,7 @@ class ContainerManager:
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                "[Algorithm job run %s -requested by org %s] Task is already being executed, discarding task",
+                "[Algorithm job run %s requested by org %s] Task is already being executed, discarding task",
                 run_id,
                 init_org_id,
             )
@@ -433,7 +433,7 @@ class ContainerManager:
             self._validate_environment_variables(env_vars)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(
-                "[Algorithm job run %s -requested by org %s] Validation of environment variables failed: %s",
+                "[Algorithm job run %s requested by org %s] Validation of environment variables failed: %s",
                 run_id,
                 init_org_id,
                 e,
@@ -504,7 +504,7 @@ class ContainerManager:
         )
 
         self.log.info(
-            "[Algorithm job run %s -requested by org %s] Creating namespaced K8S job for task_id=%s.",
+            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for task_id=%s.",
             run_id,
             init_org_id,
             task_id,
@@ -561,7 +561,7 @@ class ContainerManager:
                     label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    "[Algorithm job run %s -requested by org %s] Job POD (label %s) is now running!",
+                    "[Algorithm job run %s requested by org %s] Job POD (label %s) is now running!",
                     run_id,
                     init_org_id,
                     run_io.container_name,
@@ -571,7 +571,7 @@ class ContainerManager:
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "[Algorithm job run %s -requested by org %s] Time out waiting for Job POD (label %s) to start.",
+                    "[Algorithm job run %s requested by org %s] Time out waiting for Job POD (label %s) to start.",
                     run_id,
                     init_org_id,
                     run_io.container_name,
