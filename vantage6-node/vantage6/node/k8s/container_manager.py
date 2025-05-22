@@ -30,7 +30,6 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    PROXY_SERVER_HOST,
     DEFAULT_PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
@@ -404,8 +403,11 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
+        # The PROXY_SERVER_HOST env. variable is assumed to be set at this
+        # point (no need to check here again), as its presence is validated when the 
+        # node is initialized (node/__init__.py)
         env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
-            "PROXY_SERVER_HOST", PROXY_SERVER_HOST
+            "PROXY_SERVER_HOST"
         )
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
             "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)

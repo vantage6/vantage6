@@ -52,7 +52,6 @@ from vantage6.node.globals import (
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
-    PROXY_SERVER_HOST,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace

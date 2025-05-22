@@ -54,10 +54,6 @@ JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
 
-# Must be consistent with node pod configuration
-# http://vantage6-node-node-service.vantage6-dev.svc.cluster.local:7654
-PROXY_SERVER_HOST = "http://vantage6-node-node-service.vantage6-dev.svc.cluster.local"
-
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
 DEFAULT_PROXY_SERVER_PORT = 7654
