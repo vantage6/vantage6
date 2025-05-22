@@ -144,13 +144,19 @@ class Node:
         A proxy for communication between algorithms and central
         server.
         """
-        default_proxy_host = PROXY_SERVER_HOST
 
-        # If PROXY_SERVER_HOST was set in the environment, it overrides our
-        # value.
-        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
-        os.environ["PROXY_SERVER_HOST"] = proxy_host
-
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
+        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        if "PROXY_SERVER_HOST" in os.environ:
+            proxy_host = os.environ.get("PROXY_SERVER_HOST")    
+            os.environ["PROXY_SERVER_HOST"] = proxy_host        
+        else:
+            self.log.error(
+                "The environment variable PROXY_SERVER_HOST, required to start the Node's proxy-server is not set"
+            )
+            self.log.info("Shutting down the node...")
+            exit(1)
+    
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
         if debug_mode:
