@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is used to purge data related to the vantage6 development environment.
+# This script is used to purge data for devspace.
 # It deletes the populate marker file, task directory, server database, and store database.
 
 # Arguments:
