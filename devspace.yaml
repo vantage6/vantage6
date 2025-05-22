@@ -217,7 +217,7 @@ deployments:
         node:
           image: ${NODE_IMAGE}
           numberOfNodes: ${NUMBER_OF_NODES}
-          nodesStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
+          nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
             - name: default
