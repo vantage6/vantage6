@@ -12,7 +12,9 @@ DEFAULT_NODE_SYSTEM_FOLDERS = False
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# TODO Check and remove
+# HCR: This constants is not being used, as well as the other defined in cli/globals.py
+#NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
