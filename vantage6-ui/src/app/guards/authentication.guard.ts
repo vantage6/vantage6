@@ -1,7 +1,8 @@
 import { inject } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateFn, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AuthGuardData, createAuthGuard } from 'keycloak-angular';
-import { routePaths } from 'src/app/routes';
+import { AuthService } from '../services/auth.service';
+import { firstValueFrom } from 'rxjs';
 
 const isAccessAllowed = async (
   route: ActivatedRouteSnapshot,
@@ -13,9 +14,9 @@ const isAccessAllowed = async (
   if (authenticated) {
     return true;
   } else {
-    const router: Router = inject(Router);
-    router.navigate([routePaths.login]);
-    return false;
+    const authService = inject(AuthService);
+    await authService.login();
+    return firstValueFrom(authService.authenticatedObservable());
   }
 };
 

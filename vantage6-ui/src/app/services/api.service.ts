@@ -6,7 +6,6 @@ import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { Router } from '@angular/router';
-import { LoginErrorService } from './login-error.service';
 import { isNested } from 'src/app/helpers/utils.helper';
 
 @Injectable({
@@ -16,8 +15,7 @@ export class ApiService {
   constructor(
     private router: Router,
     private http: HttpClient,
-    private snackBarService: SnackbarService,
-    private loginErrorService: LoginErrorService
+    private snackBarService: SnackbarService
   ) {}
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
@@ -127,15 +125,7 @@ export class ApiService {
         },
         (error) => {
           const errorMsg = this.getErrorMsg(error);
-          // TODO it would be nicer to find another way to check if we are on the login page. Difficulty is to
-          // prevent circular dependencies, that's why we can't import authService here
-          if (this.router.url.startsWith('/auth')) {
-            // when not logged in, use loginErrorService to show messages clearly on login page
-            this.loginErrorService.setError(errorMsg);
-          } else {
-            // when logged in, show messages in snackbar
-            this.snackBarService.showMessage(errorMsg);
-          }
+          this.snackBarService.showMessage(errorMsg);
           reject(error);
         }
       );

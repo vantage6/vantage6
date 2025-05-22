@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { routePaths, routerConfig } from './routes';
-import { LoginComponent } from './pages/auth/login/login.component';
 import { LayoutLoginComponent } from './layouts/layout-login/layout-login.component';
 import { LayoutDefaultComponent } from './layouts/layout-default/layout-default.component';
 import { HomeComponent } from './pages/home/home.component';
@@ -62,16 +61,6 @@ import { DataframePreprocessComponent } from './pages/analyze/sessions/preproces
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
 
 export const routes: Routes = [
-  {
-    path: 'auth',
-    component: LayoutLoginComponent,
-    children: [
-      {
-        path: routerConfig.login,
-        component: LoginComponent
-      }
-    ]
-  },
   {
     path: '',
     component: LayoutDefaultComponent,
