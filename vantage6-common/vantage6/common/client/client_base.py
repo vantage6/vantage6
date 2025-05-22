@@ -42,8 +42,8 @@ class ClientBase(object):
 
         # tokens
         self._access_token = None
-        self.__refresh_token = None
-        self.__refresh_url = None
+        self._refresh_token = None
+        self._refresh_url = None
 
         self.cryptor = None
         self.whoami = None
@@ -353,6 +353,7 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
+    # TODO this function might have to be removed - depends on how nodes vs users log in
     def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
         """Authenticate to the vantage6-server
 
@@ -420,8 +421,8 @@ class ClientBase(object):
         # store tokens in object
         self.log.info("Successfully authenticated")
         self._access_token = data.get("access_token")
-        self.__refresh_token = data.get("refresh_token")
-        self.__refresh_url = data.get("refresh_url")
+        self._refresh_token = data.get("refresh_token")
+        self._refresh_url = data.get("refresh_url")
         return True
 
     def refresh_token(self) -> None:
@@ -435,19 +436,19 @@ class ClientBase(object):
             Refresh URL not found
         """
         self.log.info("Refreshing token")
-        assert self.__refresh_url, "Refresh URL not found, did you authenticate?"
+        assert self._refresh_url, "Refresh URL not found, did you authenticate?"
 
         # if no port is specified explicit, then it should be omit the
         # colon : in the path. Similar (but different) to the property
         # base_path
         if self.__port:
-            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
+            url = f"{self.__host}:{self.__port}{self._refresh_url}"
         else:
-            url = f"{self.__host}{self.__refresh_url}"
+            url = f"{self.__host}{self._refresh_url}"
 
         # send request to server
         response = requests.post(
-            url, headers={"Authorization": "Bearer " + self.__refresh_token}
+            url, headers={"Authorization": "Bearer " + self._refresh_token}
         )
 
         # server says no!
@@ -456,7 +457,7 @@ class ClientBase(object):
             raise Exception("Authentication Error!")
 
         self._access_token = response.json()["access_token"]
-        self.__refresh_token = response.json()["refresh_token"]
+        self._refresh_token = response.json()["refresh_token"]
 
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run

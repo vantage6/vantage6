@@ -6,7 +6,6 @@ import sys
 import itertools
 from pathlib import Path
 import threading
-import traceback
 import os
 import subprocess
 import webbrowser
@@ -15,8 +14,7 @@ import urllib.parse as urlparse
 import logging
 import time
 from typing import List
-import jwt
-from keycloak import KeycloakOpenID
+from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 import pyfiglet
 
 
@@ -78,6 +76,13 @@ class UserClient(ClientBase):
 
         self.collaboration_id = None
         self.session_id = None
+
+        self.kc_openid = KeycloakOpenID(
+            server_url="http://localhost:8080",
+            client_id="myclient",
+            realm_name="vantage6",
+            client_secret_key=None,  # Public client
+        )
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -143,18 +148,11 @@ class UserClient(ClientBase):
         mfa_code: str | int
             Six-digit two-factor authentication code
         """
-        keycloak_openid = KeycloakOpenID(
-            server_url="http://localhost:8080",
-            client_id="myclient",
-            realm_name="vantage6",
-            client_secret_key=None,  # Public client
-        )
-        auth_url = keycloak_openid.auth_url(
+        auth_url = self.kc_openid.auth_url(
             redirect_uri="http://localhost:8081/callback",
             scope="openid",
             state="state",
         )
-        print(auth_url)
 
         # Create a class to store the token
         class TokenStore:
@@ -172,7 +170,7 @@ class UserClient(ClientBase):
 
                 if "code" in params:
                     # Exchange code for token
-                    token = keycloak_openid.token(
+                    token = self.server.kc_openid.token(
                         grant_type="authorization_code",
                         code=params["code"][0],
                         redirect_uri="http://localhost:8081/callback",
@@ -201,6 +199,7 @@ class UserClient(ClientBase):
 
         # Start server in a separate thread
         server = HTTPServer(("localhost", 8081), CallbackHandler)
+        server.kc_openid = self.kc_openid
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
@@ -228,26 +227,17 @@ class UserClient(ClientBase):
             self.log.error("Error opening browser: %s", e)
             print(f"Please open this URL in your browser: {auth_url}")
 
-        print("waiting for callback")
         # Wait for callback
         server_thread.join()
 
         if not token_store.token:
-            print("Login failed or was cancelled")
+            self.log.error("Login failed or was cancelled")
             return
 
-        print(token_store.token)
         self._access_token = token_store.token["access_token"]
-        # TODO: Implement refresh token
-        # self.__refresh_token = token_store.token["refresh_token"]
-        # self.__refresh_url = "ToBeImplemented"
-
-        decoded_token = keycloak_openid.decode_token(self.token)
-        for key, value in decoded_token.items():
-            print(f"{key}: {value}")
+        self._refresh_token = token_store.token["refresh_token"]
 
         user = self.request("user/current")
-        print(user)
         user_id = user.get("id")
         user_name = user.get("firstname")
         type_ = "user"
@@ -263,14 +253,34 @@ class UserClient(ClientBase):
             organization_name=organization_name,
         )
         self.log.info(" --> Succesfully authenticated")
-        self.log.info(f" --> Name: {user_name} (id={user_id})")
+        self.log.info(" --> Name: %s (id=%s)", user_name, user_id)
         self.log.info(
-            f" --> Organization: {organization_name} " f"(id={organization_id})"
+            " --> Organization: %s (id=%s)", organization_name, organization_id
         )
 
         # setup default encryption so user doesn't have to do this unless encryption
         # is enabled
         self.cryptor = DummyCryptor()
+
+    def refresh_token(self):
+        """Refresh the token"""
+        self.log.info("Refreshing token")
+
+        assert self._refresh_token, "Refresh URL not found, did you authenticate?"
+
+        try:
+            new_token = self.kc_openid.refresh_token(self._refresh_token)
+        except KeycloakAuthenticationError as e:
+            self.log.error("Could not authenticate token. Please re-authenticate!")
+            self.log.exception(e)
+            return
+        except Exception as e:
+            self.log.error("Error in refreshing token. Please re-authenticate!")
+            self.log.exception(e)
+            return
+
+        self._access_token = new_token["access_token"]
+        self._refresh_token = new_token["refresh_token"]
 
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.

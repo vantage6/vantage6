@@ -3114,7 +3114,6 @@ class TestResources(TestResourceBase):
         record = {
             "name": "test",
             "algorithm_store_url": "http://test.com",
-            "server_url": "http://test2.com",
             "collaboration_id": col.id,
         }
 
@@ -3311,12 +3310,11 @@ class TestResources(TestResourceBase):
             collaboration_id=col.id,
         )
         algo_store.save()
-        params = {"server_url": "http://test.com"}
 
         # test deleting without any permissions
         headers = self.get_user_auth_header()
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -3324,13 +3322,13 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT)
         headers = self.get_user_auth_header(organization=org, rules=[rule])
         results = self.app.delete(
-            "/api/algorithmstore/9999", headers=headers, query_string=params
+            "/api/algorithmstore/9999", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test deleting with collaboration permissions
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -3344,7 +3342,7 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.get_user_auth_header(rules=[rule])
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
