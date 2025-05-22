@@ -12,6 +12,7 @@ import pandas as pd
 # which happens when pyarrow is unable to lazy-loading concurrent.futures.thread
 # Ignoring F401: “module imported but unused”
 # TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
+# pylint: disable=unused-import
 import concurrent.futures.thread  # noqa: F401
 
 from vantage6.node.globals import TASK_FILES_ROOT
