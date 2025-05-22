@@ -346,17 +346,6 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def _get_server_url_header(self) -> dict:
-            """
-            Get the server url for request header to algorithm store
-
-            Returns
-            -------
-            dict
-                The server url in a dictionary so it can be used as header
-            """
-            return {"server_url": self.parent.base_path}
-
         def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
             Parameters
@@ -382,95 +371,6 @@ class UserClient(ClientBase):
                 Containing the server health information
             """
             return self.parent.request("health")
-
-        def change_my_password(self, current_password: str, new_password: str) -> dict:
-            """Change your own password by providing your current password
-
-            Parameters
-            ----------
-            current_password : str
-                Your current password
-            new_password : str
-                Your new password
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "password/change",
-                method="patch",
-                json={
-                    "current_password": current_password,
-                    "new_password": new_password,
-                },
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def reset_my_password(self, email: str = None, username: str = None) -> dict:
-            """Start reset password procedure
-
-            Either a username of email needs to be provided.
-
-            Parameters
-            ----------
-            email : str, optional
-                Email address of your account, by default None
-            username : str, optional
-                Username of your account, by default None
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            if not (email or username):
-                self.parent.log.error("--> You need to provide username or email")
-                return
-
-            data = {}
-            if email:
-                data["email"] = email
-            if username:
-                data["username"] = username
-
-            result = self.parent.request(
-                "recover/lost",
-                method="post",
-                json=data,
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def set_my_password(self, token: str, password: str) -> dict:
-            """Set a new password using a recovery token
-
-            Token can be obtained through `.reset_password(...)`
-
-            Parameters
-            ----------
-            token : str
-                Token obtained from `reset_password`
-            password : str
-                New password
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "recover/reset",
-                method="post",
-                json={"reset_token": token, "password": password},
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
 
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
@@ -1349,6 +1249,23 @@ class UserClient(ClientBase):
             return self.parent.request(f"user/{id_}")
 
         @post_filtering(iterable=False)
+        def get_own_user(self, include_permissions: bool = False) -> dict:
+            """Get own user information
+
+            Parameters
+            ----------
+            include_permissions : bool, optional
+                Include permissions in the response. Default is False.
+
+            Returns
+            -------
+            dict
+                Containing user information
+            """
+            params = {"include_permissions": include_permissions}
+            return self.parent.request("user/current", params=params)
+
+        @post_filtering(iterable=False)
         def update(
             self,
             id_: int = None,
@@ -1845,7 +1762,6 @@ class UserClient(ClientBase):
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
-            server_url: str | None = None,
             databases: list[dict] | None = None,
             action: AlgorithmStepType | None = None,
         ) -> dict:
@@ -1877,11 +1793,6 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
-            server_url: str, optional
-                URL of the server on which the task is created. This should be given if
-                the algorithm is retrieved from an algorithm store, and the server does
-                not contain its own URL in the configuration (you will be alerted of
-                this in an error message).
             databases: list[dict], optional
                 Databases to be used at the node. Each dict should contain
                 at least a 'label' key. Additional keys are 'query' (if using
@@ -1974,8 +1885,6 @@ class UserClient(ClientBase):
                 params["study_id"] = study
             if store:
                 params["store_id"] = store
-            if server_url:
-                params["server_url"] = server_url
             if action:
                 params["action"] = action
 
