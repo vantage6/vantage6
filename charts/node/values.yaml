@@ -20,7 +20,6 @@ node:
 
   proxyPort: 7654
 
-
   # It is also possible not to specify the details of the service-based databases
   # here. The node will then automatically detect the databases in the environment
   # variables. This allows parent charts to specify the databases in their own
