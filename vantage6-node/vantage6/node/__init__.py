@@ -174,7 +174,7 @@ class Node:
         )
 
         # proxy port set on the node configuration file
-        node_proxy_port = self.config.get("node_proxy_port")
+        node_proxy_port = int(self.config.get("node_proxy_port"))
 
         self.log.info("Starting proxyserver at '%s:%s'", proxy_host, node_proxy_port)
         http_server = WSGIServer(
