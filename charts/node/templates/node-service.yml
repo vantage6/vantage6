@@ -8,10 +8,10 @@ spec:
 {{ include "node.matchLabels" . | indent 4 }}
     component: node
   ports:
-  # If numberOfNodes and and nodesStartingPortNumber, a dev environment (devspace) 
+  # If numberOfNodes and and nodeProxyStartingPortNumber, a dev environment (devspace) 
   # and multiple ports must be enabled
-{{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodesStartingPortNumber") }}
-  {{- $start := int .Values.node.nodesStartingPortNumber }}
+{{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodeProxyStartingPortNumber") }}
+  {{- $start := int .Values.node.nodeProxyStartingPortNumber }}
   {{- $count := int .Values.node.numberOfNodes }}
   {{- range $i, $ := until $count }}
     - name: {{ printf "node%d" (add1 $i) }}
