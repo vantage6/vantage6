@@ -238,13 +238,13 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
-    def __get_store_id(self, id_: int = None) -> int:
+    def __get_store_id(self, id_: int | None = None) -> int:
         """
         Get the algorithm store id.
 
         Parameters
         ----------
-        id_ : int
+        id_ : int | None
             The id of the algorithm store. If not given, the algorithm store must be
             set with client.store.set().
 

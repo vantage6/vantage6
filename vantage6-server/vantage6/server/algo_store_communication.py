@@ -1,11 +1,8 @@
-import os
 import logging
 import requests
 from flask import Response, request
 from http import HTTPStatus
 
-from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.server import db
 
 

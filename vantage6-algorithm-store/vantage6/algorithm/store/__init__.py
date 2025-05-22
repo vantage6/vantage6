@@ -432,13 +432,13 @@ class AlgorithmStoreApp:
 
                     root = db.Role.get_by_name("Root")
 
-                    user = db.User(
+                    root_user = db.User(
                         username=root_username,
                         email=root_email,
                         organization_id=root_organization,
                         roles=[root],
                     )
-                    user.save()
+                    root_user.save()
                 elif len(root_user.rules) != len(db.Rule.get()):
                     log.warning("Existing root user has outdated rules, updating them.")
                     root_user.rules = db.Rule.get()

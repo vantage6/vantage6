@@ -147,7 +147,7 @@ class User(Base):
         return result
 
     @classmethod
-    def get_by_username(cls, username: str) -> User:
+    def get_by_username(cls, username: str) -> User | None:
         """
         Get a user by their username
 
@@ -158,8 +158,8 @@ class User(Base):
 
         Returns
         -------
-        User
-            User with the given username
+        User | None
+            User with the given username, or None if the user does not exist
 
         Raises
         ------
@@ -167,7 +167,7 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.scalars(select(cls).filter_by(username=username)).one()
+        result = session.scalars(select(cls).filter_by(username=username)).one_or_none()
         session.commit()
         return result
 
