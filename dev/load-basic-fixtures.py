@@ -32,11 +32,19 @@ parser.add_argument(
 parser.add_argument(
     "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
 )
+parser.add_argument(
+    "--starting-port-number",
+    type=int,
+    default=7654,
+    help="The port number to be allocated to the proxy server of the first node. Additional nodes will use consecutive ports incremented by 1 from this value.",
+)
+
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
 task_namespace = args.task_namespace
+node_starting_port_number = args.starting_port_number
 
 
 def create_organization(index):
@@ -77,7 +85,7 @@ def create_user(index, organization):
         return user
 
 
-def create_node(index, collaboration, organization, task_namespace):
+def create_node(index, collaboration, organization, task_namespace, node_port):
     name = f"node_{index}"
 
     # Create a folder for all config files for a single node. This can be the test data,
@@ -115,6 +123,7 @@ def create_node(index, collaboration, organization, task_namespace):
                 "task_dir": task_directory,
                 "api_path": "/server",
                 "task_namespace": task_namespace,
+                "node_proxy_port": node_port,
                 # TODO user defined config
             }
         )
@@ -176,4 +185,10 @@ else:
 
 print("=> Creating nodes")
 for i in range(1, number_of_nodes + 1):
-    create_node(i, col_1, organizations[i - 1], task_namespace)
+    create_node(
+        i,
+        col_1,
+        organizations[i - 1],
+        task_namespace,
+        node_starting_port_number + (i - 1),
+    )

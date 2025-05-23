@@ -52,8 +52,6 @@ from vantage6.node.globals import (
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
     TIME_LIMIT_RETRY_CONNECT_NODE,
-    PROXY_SERVER_HOST,
-    PROXY_SERVER_PORT,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
@@ -145,14 +143,18 @@ class Node:
         A proxy for communication between algorithms and central
         server.
         """
-        default_proxy_host = PROXY_SERVER_HOST
 
-        # If PROXY_SERVER_HOST was set in the environment, it overrides our
-        # value.
-        proxy_host = os.environ.get("PROXY_SERVER_HOST", default_proxy_host)
-        os.environ["PROXY_SERVER_HOST"] = proxy_host
-
-        proxy_port = int(os.environ.get("PROXY_SERVER_PORT", PROXY_SERVER_PORT))
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
+        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        if "PROXY_SERVER_HOST" in os.environ:
+            proxy_host = os.environ.get("PROXY_SERVER_HOST")
+            os.environ["PROXY_SERVER_HOST"] = proxy_host
+        else:
+            self.log.error(
+                "The environment variable PROXY_SERVER_HOST, required to start the Node's proxy-server is not set"
+            )
+            self.log.info("Shutting down the node...")
+            exit(1)
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -169,8 +171,6 @@ class Node:
             proxy_server.server_url,
         )
 
-        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
-
         # set up proxy server logging
         Path(self.ctx.proxy_log_file).parent.mkdir(parents=True, exist_ok=True)
         log_level = getattr(logging, self.config["logging"]["level"].upper())
@@ -178,40 +178,30 @@ class Node:
             "proxy_server", self.ctx.proxy_log_file, log_level_file=log_level
         )
 
-        # this is where we try to find a port for the proxyserver
+        # proxy port set on the node configuration file
+        node_proxy_port = int(self.config.get("node_proxy_port"))
 
-        port_assigned = False
+        self.log.info("Starting proxyserver at '%s:%s'", proxy_host, node_proxy_port)
+        http_server = WSGIServer(
+            ("0.0.0.0", node_proxy_port), proxy_server.app, log=self.proxy_log
+        )
 
-        for try_number in range(5):
-            self.log.info("Starting proxyserver at '%s:%s'", proxy_host, proxy_port)
-            http_server = WSGIServer(
-                ("0.0.0.0", proxy_port), proxy_server.app, log=self.proxy_log
-            )
+        try:
+            os.environ["PROXY_SERVER_PORT"] = str(node_proxy_port)
+            http_server.serve_forever()
 
-            try:
-                http_server.serve_forever()
-                port_assigned = True
-
-            except OSError as e:
-                self.log.info("Error during attempt %s", try_number)
-                self.log.info("%s: %s", type(e), e)
-
-                proxy_port = random.randint(2048, 16384)
-                self.log.warning("Retrying with a different port: %s", proxy_port)
-                os.environ["PROXY_SERVER_PORT"] = str(proxy_port)
-
-            except Exception as e:
-                self.log.error(
-                    "Proxyserver could not be started due to an unexpected error!"
-                )
-                self.log.exception(e)
-                # After a non-os related exception there shouldn't be more retries
-                exit(1)
-
-        if not port_assigned:
+        except OSError as e:
             self.log.error(
-                f"Unable to assing a port for the node proxy after {try_number} attempts"
+                "Error while trying to start the proxy server at %s:%s",
+                proxy_host,
+                node_proxy_port,
             )
+            self.log.info(
+                "Check that port %s is not being used by another process.",
+                node_proxy_port,
+            )
+            self.log.info("%s: %s", type(e), e)
+            self.log.info("Shutting down the node...")
             exit(1)
 
     def sync_task_queue_with_server(self) -> None:
@@ -462,8 +452,10 @@ class Node:
                     },
                     namespace="/tasks",
                 )
-            except Exception:
-                self.log.exception("Speaking thread had an exception")
+            except Exception as e:
+                self.log.exception(
+                    f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}"
+                )
 
             time.sleep(1)
 

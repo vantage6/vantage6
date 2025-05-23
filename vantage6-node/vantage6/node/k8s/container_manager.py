@@ -29,8 +29,7 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    PROXY_SERVER_HOST,
-    PROXY_SERVER_PORT,
+    DEFAULT_PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
@@ -341,7 +340,13 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        self.log.debug("Setting up algorithm run %s", run_id)
+        init_org_ref = task_info.get("init_org", {})
+        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        self.log.debug(
+            "[Algorithm job run %s - requested by org %s] Setting up algorithm run",
+            run_id,
+            init_org_id,
+        )
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
@@ -357,13 +362,20 @@ class ContainerManager:
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
-            self.log.critical(f"Docker image {image} is not allowed on this Node!")
+            self.log.critical(
+                "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
+                run_id,
+                init_org_id,
+                image,
+            )
             return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                f"Task (run_id={run_id}) is already being executed, discarding task"
+                "[Algorithm job run %s requested by org %s] Task is already being executed, discarding task",
+                run_id,
+                init_org_id,
             )
             return RunStatus.ACTIVE
 
@@ -388,15 +400,24 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
+        # The PROXY_SERVER_HOST env. variable is assumed to be set at this
+        # point (no need to check here again), as its presence is validated when the
+        # node is initialized (node/__init__.py)
+        env_vars[ContainerEnvNames.HOST.value] = os.environ.get("PROXY_SERVER_HOST")
+        env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
+            "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
+        )
+
         if action == AlgorithmStepType.CENTRAL_COMPUTE:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
-        env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
-            "PROXY_SERVER_HOST", PROXY_SERVER_HOST
+        self.log.debug(
+            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and PROXY_SERVER_PORT=%s env variables on the job POD",
+            run_id,
+            env_vars[ContainerEnvNames.HOST.value],
+            env_vars[ContainerEnvNames.PORT.value],
         )
-        env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
-            "PROXY_SERVER_PORT", str(PROXY_SERVER_PORT)
-        )
+
         env_vars[ContainerEnvNames.API_PATH.value] = ""
 
         env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]
@@ -412,7 +433,12 @@ class ContainerManager:
             self._validate_environment_variables(env_vars)
             self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
-            self.log.warning(e)
+            self.log.warning(
+                "[Algorithm job run %s requested by org %s] Validation of environment variables failed: %s",
+                run_id,
+                init_org_id,
+                e,
+            )
             return RunStatus.FAILED
 
         if secrets:
@@ -479,7 +505,10 @@ class ContainerManager:
         )
 
         self.log.info(
-            "Creating namespaced K8S job for task_id=%s and run_id=%s.", task_id, run_id
+            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for task_id=%s.",
+            run_id,
+            init_org_id,
+            task_id,
         )
         self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
@@ -533,14 +562,19 @@ class ContainerManager:
                     label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    "Job POD (label %s) is now running!", run_io.container_name
+                    "[Algorithm job run %s requested by org %s] Job POD (label %s) is now running!",
+                    run_id,
+                    init_org_id,
+                    run_io.container_name,
                 )
 
                 return status
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "Time out waiting for Job POD (label %s) to start.",
+                    "[Algorithm job run %s requested by org %s] Time out waiting for Job POD (label %s) to start.",
+                    run_id,
+                    init_org_id,
                     run_io.container_name,
                 )
                 return RunStatus.UNKNOWN_ERROR
