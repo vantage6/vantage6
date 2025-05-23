@@ -12,7 +12,10 @@ import { Router } from '@angular/router';
 export class AppComponent {
   private readonly keycloakSignal = inject(KEYCLOAK_EVENT_SIGNAL);
 
-  constructor(translate: TranslateService, private router: Router) {
+  constructor(
+    translate: TranslateService,
+    private router: Router
+  ) {
     translate.setDefaultLang('en');
     translate.use('en');
 
@@ -23,5 +26,3 @@ export class AppComponent {
     });
   }
 }
-
-

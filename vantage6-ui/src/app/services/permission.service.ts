@@ -4,7 +4,6 @@ import { Pagination } from 'src/app/models/api/pagination.model';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseUser } from 'src/app/models/api/user.model';
 import { ApiService } from './api.service';
-import { USER_ID } from 'src/app/models/constants/sessionStorage';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { RuleService } from './rule.service';
 import { AuthService } from './auth.service';
@@ -123,7 +122,6 @@ export class PermissionService {
   }
 
   private async getUser() {
-    const userId = sessionStorage.getItem(USER_ID);
     return await this.apiService.getForApi<BaseUser>(`/user/current`, {
       include_permissions: true
     });

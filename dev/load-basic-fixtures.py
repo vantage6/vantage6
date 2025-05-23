@@ -140,7 +140,8 @@ def create_node(index, collaboration, organization, task_namespace):
         print("===> Creating .env file for the node")
         env_file = node_dev_dir / ".env"
         with open(env_file, "w") as f:
-            f.write(f"V6_API_KEY={node['api_key']}")
+            f.write(f"V6_API_KEY={node['api_key']}\n")
+            f.write(f"V6_NODE_NAME={name}\n")
 
         print(f"===> .env file saved to `{env_file.name}`")
 

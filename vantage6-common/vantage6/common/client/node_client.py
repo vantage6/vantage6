@@ -3,16 +3,16 @@ This module provides a client interface for the node to communicate with the
 central server.
 """
 
-import jwt
 import datetime
 import time
-
 from threading import Thread
+
+import jwt
+from keycloak import KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
-    NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
     InstanceType,
 )
 
@@ -20,8 +20,11 @@ from vantage6.common.globals import (
 class NodeClient(ClientBase):
     """Node interface to the central server."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, node_account_name: str, api_key: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.node_account_name = node_account_name
+        self.api_key = api_key
 
         # self.name = None
         self.collaboration_id = None
@@ -30,7 +33,15 @@ class NodeClient(ClientBase):
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
 
-    def authenticate(self, api_key: str) -> None:
+        self.kc_openid = KeycloakOpenID(
+            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            realm_name="vantage6",
+            client_id="node-client",
+            client_secret_key="mynodeclientsecret",
+        )
+        self.token_validity_period = None
+
+    def authenticate(self) -> None:
         """
         Nodes authentication at the central server.
 
@@ -40,16 +51,22 @@ class NodeClient(ClientBase):
 
         Parameters
         ----------
+        node_account_name : str
+            The name of the node account.
         api_key : str
             The api key of the node.
         """
-        super().authenticate({"api_key": api_key}, path="token/node")
+        # authenticate with keycloak
 
-        # obtain the server authenticatable id
-        id_ = jwt.decode(self.token, options={"verify_signature": False})["sub"]
+        # get token using service account
+        try:
+            self.refresh_token()
+        except Exception as e:
+            self.log.exception("Getting token failed: %s", e)
+            raise e
 
-        # get info on how the server sees me
-        node = self.request(f"node/{id_}")
+        # get info on how the server sees this node
+        node = self.request("node/current")
 
         name = node.get("name")
         self.collaboration_id = node.get("collaboration").get("id")
@@ -60,11 +77,25 @@ class NodeClient(ClientBase):
 
         self.whoami = WhoAmI(
             type_=InstanceType.NODE.value,
-            id_=id_,
+            id_=node["id"],
             name=name,
             organization_id=organization_id,
             organization_name=organization_name,
         )
+
+    def refresh_token(self) -> None:
+        """Renew the token."""
+        self.log.debug("Refreshing token")
+        token = self.kc_openid.token(
+            grant_type="password",
+            username=self.node_account_name,
+            password=self.api_key,
+            client_id="node-client",
+            client_secret_key="mynodeclientsecret",
+        )
+        self._access_token = token["access_token"]
+        decoded_token = self.kc_openid.decode_token(self._access_token)
+        self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]
 
     def auto_refresh_token(self) -> None:
         """Start a thread that refreshes token before it expires."""
@@ -74,34 +105,37 @@ class NodeClient(ClientBase):
 
     def __refresh_token_worker(self) -> None:
         """Keep refreshing token to prevent it from expiring."""
+        # set variable to start trying to refresh the token 3/4 of the time before
+        # it expires
+        period_start_refresh = self.token_validity_period / 4
+        # set variable to sleep between refreshes - so that we have about 20 attempts
+        # before the token expires
+        interval_between_refreshes = period_start_refresh / 20
+        # maximum time to keep attempting to refresh the token
+        # TODO make this configurable
+        max_time_to_keep_attempting_refresh = 3600
         while True:
             # get the time until the token expires
-            expiry_time = jwt.decode(self.token, options={"verify_signature": False})[
-                "exp"
-            ]
+            expiry_time = self.kc_openid.decode_token(self.token)["exp"]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < 0:
-                self.log.error(
-                    "Token and refresh token have expired. Please restart the node!"
-                )
-                return
-            elif time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < period_start_refresh:
+                if time_until_expiry < 0:
+                    self.log.error("Token has expired. Some requests may have failed!")
+                    if time_until_expiry < -max_time_to_keep_attempting_refresh:
+                        self.log.critical("Giving up on refreshing token - exiting!")
+                        break
                 try:
+                    # For service accounts, we need to get a new token instead of
+                    # refreshing
                     self.refresh_token()
                 except Exception as e:
-                    self.log.error("Refreshing token failed: %s", e)
+                    self.log.error("Getting new token failed: %s", e)
                     # sleep for a bit and then try again. The server might be
                     # unreachable or internet connection down. We sleep so long that
                     # we should have about 20 attempts before the token expires.
-                    time.sleep(NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS / 20)
+                    time.sleep(interval_between_refreshes)
             else:
-                time.sleep(
-                    int(
-                        time_until_expiry
-                        - NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
-                        + 1
-                    )
-                )
+                time.sleep(int(time_until_expiry - period_start_refresh + 1))
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
         """Request a container-token at the central server.

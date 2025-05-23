@@ -37,8 +37,6 @@ keycloak:
               - "*"
             webOrigins:
               - "*"
-            # directAccessGrantsEnabled: false
-            # root_url: http://localhost:8080
             protocolMappers:
               - name: client_type
                 protocol: openid-connect
@@ -92,8 +90,21 @@ keycloak:
               - "*"
             # TODO set dynamic secret, now just for testing
             secret: mynodeclientsecret
-            serviceAccountsEnabled: true
+            directAccessGrantsEnabled: true
             standardFlowEnabled: false
+            protocolMappers:
+              - name: client_type
+                protocol: openid-connect
+                protocolMapper: oidc-hardcoded-claim-mapper
+                consentRequired: false
+                config:
+                  claim.name: client_type
+                  claim.value: node
+                  # TODO check if all are required
+                  introspection.token.claim: true
+                  userinfo.token.claim: true
+                  id.token.claim: true
+                  access.token.claim: true
         roles:
           # TODO I think this role is now assigned to each client? That should not be the case.
           realm:

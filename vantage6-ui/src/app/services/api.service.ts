@@ -1,11 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
-import { ACCESS_TOKEN_KEY } from 'src/app/models/constants/sessionStorage';
 import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
-import { Router } from '@angular/router';
 import { isNested } from 'src/app/helpers/utils.helper';
 
 @Injectable({
@@ -13,7 +11,6 @@ import { isNested } from 'src/app/helpers/utils.helper';
 })
 export class ApiService {
   constructor(
-    private router: Router,
     private http: HttpClient,
     private snackBarService: SnackbarService
   ) {}

@@ -129,6 +129,9 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
             collaboration.organizations.append(organization)
             log.debug(f"added {org_name} to the collaboration")
 
+            # TODO v5+ this currently won't work in v5 because the nodes are not
+            # registered in keycloak. If keeping this and using it (outside of unit
+            # tests), improve it
             node = db.Node(
                 organization=organization,
                 collaboration=collaboration,

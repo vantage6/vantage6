@@ -3,12 +3,13 @@ import logging
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
+from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 from sqlalchemy import select
 
 from vantage6.common import generate_apikey
 from vantage6.common.globals import AuthStatus
-from vantage6.server.resource import with_user_or_node, with_user
+from vantage6.server.resource import with_user_or_node, with_user, with_node
 from vantage6.server.resource import ServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.permission import (
@@ -18,6 +19,7 @@ from vantage6.server.permission import (
     PermissionManager,
 )
 from vantage6.server import db
+from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
@@ -47,6 +49,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path,
         endpoint="node_without_id",
         methods=("GET", "POST"),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        NodeCurrent,
+        path + "/current",
+        endpoint="node_current",
+        methods=("GET",),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -459,8 +468,10 @@ class Nodes(NodeBase):
         name = (
             data["name"]
             if "name" in data
-            else f"{organization.name} - {collaboration.name} Node"
+            else f"{organization.name}-{collaboration.name}-node"
         )
+        if " " in name:
+            return {"msg": "Node name cannot contain spaces!"}, HTTPStatus.BAD_REQUEST
         if db.Node.exists("name", name):
             return {
                 "msg": f"Node with name '{name}' already exists!"
@@ -475,6 +486,17 @@ class Nodes(NodeBase):
             api_key=api_key,
             status=AuthStatus.OFFLINE.value,
         )
+
+        # Create a keycloak account for the node
+        try:
+            keycloak_id = self._create_node_in_keycloak(name, api_key)
+            node.keycloak_id = keycloak_id
+        except Exception as e:
+            msg = f"Error creating keycloak account for node {name}: {e}"
+            log.error(msg)
+            return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        # save the node in the database now that keycloak account is setup
         node.save()
 
         # Return the node information to the user. Manually return the api_key
@@ -482,6 +504,44 @@ class Nodes(NodeBase):
         node_json = node_schema.dump(node)
         node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
+
+    def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_id = keycloak_admin.create_user(
+            {
+                "username": name,
+                "email": f"dummy-node-account-{name}@vantage6.ai".replace(" ", ""),
+                "enabled": True,
+                "firstName": name,
+                "lastName": "Node",
+                "credentials": [
+                    {"type": "password", "value": api_key, "temporary": False}
+                ],
+            }
+        )
+        return keycloak_id
+
+
+class NodeCurrent(NodeBase):
+    @with_node
+    def get(self):
+        """Get node details from the authenticated node
+        ---
+        description: >-
+          Returns the node details for the authenticated node.
+
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Node"]
+        """
+        return node_schema.dump(g.node), HTTPStatus.OK
 
 
 class Node(NodeBase):
@@ -592,8 +652,14 @@ class Node(NodeBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        self._delete_node_in_keycloak(node)
+
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
+
+    def _delete_node_in_keycloak(self, node: db.Node) -> None:
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_admin.delete_user(node.keycloak_id)
 
     @with_user_or_node
     def patch(self, id):

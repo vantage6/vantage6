@@ -17,9 +17,7 @@ def run_function(config):
     name = Path(config).stem
     ctx = DockerNodeContext(name, True, config, logger_prefix=f"{name} | ")
 
-    # TODO reactivate node!
-    log.critical("Node is disabled in dev_start.py!")
-    # run(ctx)
+    run(ctx)
 
 
 if __name__ == "__main__":

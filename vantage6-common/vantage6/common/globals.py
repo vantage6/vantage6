@@ -35,10 +35,6 @@ DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
 
-# start trying to refresh the JWT token of the node 10 minutes before it
-# expires.
-NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
-
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
