@@ -1,4 +1,8 @@
 from enum import Enum
+import logging
+
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 class TaskStatus(str, Enum):
