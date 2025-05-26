@@ -41,7 +41,6 @@ Below, we explain how to install and deploy these components.
 .. toctree::
     :maxdepth: 3
 
-    introduction
     requirements
     components/index
     services/index
@@ -49,8 +48,9 @@ Below, we explain how to install and deploy these components.
     deploy
     logging
 
-    .. install
-    .. optional
-    .. use
-    .. configure
-    .. permissions
+.. introduction
+.. install
+.. optional
+.. use
+.. configure
+.. permissions

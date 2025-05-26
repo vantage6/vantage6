@@ -112,7 +112,6 @@ Index
    node/index
    server/index
    algorithms/index
-   features/index
    devops/index
    api-docs/index
    glossary

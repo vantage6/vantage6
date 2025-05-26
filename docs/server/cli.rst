@@ -11,7 +11,7 @@ also explains how to set up a test server locally and how to manage resources
 via an IPython shell.
 
 Quick start
-"""""""""""
+^^^^^^^^^^^
 
 To create a new server, run the command below. A menu will be started
 that allows you to set up a server configuration file.
@@ -44,7 +44,7 @@ Finally, a server can be stopped again with:
    v6 server stop --name <your_server>
 
 Available commands
-""""""""""""""""""
+^^^^^^^^^^^^^^^^^^
 
 The following commands are available in your environment. To see all the
 options that are available per command use the ``--help`` flag,
@@ -84,7 +84,7 @@ e.g. ``v6 server start --help``.
 .. _use-server-local:
 
 Local test setup
-""""""""""""""""
+^^^^^^^^^^^^^^^^
 
 If the nodes and the server run at the same machine, you have to make
 sure that the node can reach the server.
@@ -111,14 +111,14 @@ the default docker network settings.
 .. _server-import:
 
 Batch import
-""""""""""""
+^^^^^^^^^^^^
 
 You can easily create a set of test users, organizations and collaborations by
 using a batch import. To do this, use the
 ``v6 server import /path/to/file.yaml`` command. An example ``yaml`` file is
 provided below.
 
-You can download this file :download:`here <yaml/batch_import.yaml>`.
+You can download this file :download:`here <components/yaml/batch_import.yaml>`.
 
 
 .. raw:: html
@@ -126,7 +126,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
    <details>
    <summary><a>Example batch import</a></summary>
 
-.. literalinclude :: yaml/batch_import.yaml
+.. literalinclude :: components/yaml/batch_import.yaml
     :language: yaml
 
 .. raw:: html
@@ -142,7 +142,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 .. _local-test:
 
 Testing
-"""""""
+^^^^^^^
 
 You can test the infrastructure via the ``v6 dev`` and ``v6 test`` commands. The purpose of
 ``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes locally

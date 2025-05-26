@@ -9,3 +9,4 @@ This section describes the services that are available in the vantage6 server.
     image-registry
     rabbitmq
     database
+    smtp-server
