@@ -127,8 +127,7 @@ class Node:
 
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
-        # TODO re-enable websocket connection!
-        # self.connect_to_socket()
+        self.connect_to_socket()
 
         self.start_processing_threads()
 
