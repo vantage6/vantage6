@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # This script is used to purge data for devspace.
-# It deletes the populate marker file, task directory, server database, and store database.
+# It deletes the populate marker file, task directory, server database, store database, and keycloak database.
 
 # Arguments:
 #   $1 - Path to the populate marker file
 #   $2 - Path to the task directory
 #   $3 - Path to the server database mount directory
 #   $4 - Path to the store database mount directory
+#   $5 - Path to the keycloak database mount directory
 
 # Functions
 usage() {
-  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <SERVER_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH>"
+  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <SERVER_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH> <KEYCLOAK_DATABASE_MOUNT_PATH>"
   echo "Options:"
   echo "  --help      Display this help message"
   exit 1
@@ -26,6 +27,7 @@ replace_wsl_path() {
   if [[ "$path" == $WSL_REFERENCE_PATH* ]]; then
     path="${WSL_REGULAR_PATH}${path#${WSL_REFERENCE_PATH}}"
   fi
+  echo "$path"
 }
 
 if [[ "$1" == "--help" ]]; then
@@ -36,15 +38,16 @@ POPULATE_MARKER=$(replace_wsl_path "$1")
 TASK_DIRECTORY=$(replace_wsl_path "$2")
 SERVER_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
 STORE_DATABASE_MOUNT_PATH=$(replace_wsl_path "$4")
+KEYCLOAK_DATABASE_MOUNT_PATH=$(replace_wsl_path "$5")
 
 # Validate that all required arguments are provided
-if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ]; then
+if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ] || [ -z "${KEYCLOAK_DATABASE_MOUNT_PATH}" ]; then
   echo "Error: Missing arguments."
   usage
 fi
 
 # Validate the paths
-for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH"; do
+for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH" "$KEYCLOAK_DATABASE_MOUNT_PATH"; do
   # validate that the path is not empty or root
   if [[ "$path" == "/" || -z "$path" ]]; then
     echo "Error: Invalid path provided: $path"
@@ -68,5 +71,8 @@ rm -rf "${SERVER_DATABASE_MOUNT_PATH}/"* || { echo "Failed to delete data in $SE
 
 echo "Deleting all data in ${STORE_DATABASE_MOUNT_PATH}"
 rm -rf "${STORE_DATABASE_MOUNT_PATH}/"* || { echo "Failed to delete data in $STORE_DATABASE_MOUNT_PATH"; }
+
+echo "Deleting all data in ${KEYCLOAK_DATABASE_MOUNT_PATH}"
+rm -rf "${KEYCLOAK_DATABASE_MOUNT_PATH}/"* || { echo "Failed to delete data in $KEYCLOAK_DATABASE_MOUNT_PATH"; }
 
 echo "Purge completed successfully."
