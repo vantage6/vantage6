@@ -26,6 +26,7 @@ replace_wsl_path() {
   if [[ "$path" == $WSL_REFERENCE_PATH* ]]; then
     path="${WSL_REGULAR_PATH}${path#${WSL_REFERENCE_PATH}}"
   fi
+  echo "$path"
 }
 
 if [[ "$1" == "--help" ]]; then
