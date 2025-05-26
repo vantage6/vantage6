@@ -459,7 +459,7 @@ def _get_manifest(
     return response
 
 
-def _get_digest_via_manifest(
+def get_digest(
     full_image: str,
     registry_username: str | None = None,
     registry_password: str | None = None,
@@ -495,33 +495,6 @@ def _get_digest_via_manifest(
         return manifest_response.headers["Docker-Content-Digest"]
     else:
         return __calculate_digest(manifest_response.json())
-
-
-def get_digest(
-    full_image: str,
-    registry_username: str | None = None,
-    registry_password: str | None = None,
-) -> str:
-    """
-    Get digest of a Docker image
-
-    Parameters
-    ----------
-    full_image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
-    registry_username: str | None
-        Registry username to authenticate with at the registry. Required if the image is
-        private
-    registry_password: str | None
-        Registry password to authenticate with at the registry. Required if the image is
-        private
-
-    Returns
-    -------
-    str | None
-        Digest of the image or `None` if the digest could not be found
-    """
-    return _get_digest_via_manifest(full_image, registry_username, registry_password)
 
 
 def __calculate_digest(manifest: str) -> str:

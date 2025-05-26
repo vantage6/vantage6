@@ -941,22 +941,22 @@ class ContainerManager:
 
     def is_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
-        Checks the docker image name.
+        Checks that the (container) image name is allowed.
 
-        Against a list of regular expressions as defined in the configuration
-        file. If no expressions are defined, all docker images are accepted.
+        Against a list of regular expressions as defined in the configuration file. If
+        no expressions are defined, all container images are accepted.
 
         Parameters
         ----------
         evaluated_img: str
-            URI of the docker image of which we are checking if it is allowed
+            URI of the image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
 
         Returns
         -------
         bool
-            Whether docker image is allowed or not
+            Whether the image is allowed or not
         """
         # check if algorithm matches any of the regex cases
         allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
