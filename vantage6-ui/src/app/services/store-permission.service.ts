@@ -36,7 +36,7 @@ export class StorePermissionService {
     this.initialized$.next(true);
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.activeRules = null;
   }
 

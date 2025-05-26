@@ -34,7 +34,7 @@ export class SocketioConnectService {
     }
   }
 
-  disconnect() {
+  async disconnect(): Promise<void> {
     if (this.socket) {
       this.socket.disconnect();
     }

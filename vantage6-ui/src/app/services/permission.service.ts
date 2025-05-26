@@ -52,7 +52,7 @@ export class PermissionService {
     return this.initialized$.asObservable();
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.activeRules = null;
     this.activeUser = null;
   }

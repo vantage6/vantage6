@@ -9,9 +9,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class OnLoginStatusChangeService {
-  authenticationComplete$ = new BehaviorSubject<boolean>(false);
-
+export class LoginLogoutService {
   constructor(
     private authService: AuthService,
     private socketConnectService: SocketioConnectService,
@@ -22,26 +20,19 @@ export class OnLoginStatusChangeService {
     this.authService.authenticatedObservable().subscribe((loggedIn: boolean) => {
       if (loggedIn) {
         this.onLogin();
-      } else {
-        this.onLogout();
       }
     });
   }
 
-  authenticateCompleteObservable(): Observable<boolean> {
-    return this.authenticationComplete$.asObservable();
-  }
-
   onLogin() {
     this.socketConnectService.connect();
-    this.authenticationComplete$.next(true);
   }
 
-  onLogout() {
-    this.permissionService.clear();
-    this.storePermissionService.clear();
-    this.encryptionService.clear();
-    this.socketConnectService.disconnect();
-    this.authenticationComplete$.next(false);
+  async logout() {
+    await this.permissionService.clear();
+    await this.storePermissionService.clear();
+    await this.encryptionService.clear();
+    await this.socketConnectService.disconnect();
+    this.authService.logout();
   }
 }
