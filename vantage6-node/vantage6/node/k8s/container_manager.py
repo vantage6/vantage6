@@ -361,7 +361,7 @@ class ContainerManager:
         )
 
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(image, task_info):
+        if not self.is_image_allowed(image, task_info):
             self.log.critical(
                 "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
                 run_id,
@@ -939,7 +939,7 @@ class ContainerManager:
         if not ok:
             raise PermanentAlgorithmStartFail()
 
-    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
+    def is_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
         Checks the docker image name.
 
@@ -1024,18 +1024,13 @@ class ContainerManager:
                         # Note that by comparing the digests, we also take into account
                         # the situation where e.g. the allowed image has a tag, but the
                         # evaluated image has a sha256.
-                        # TODO fix v5+, the self.docker is no longer available
-                        digest_evaluated_image = get_digest(
-                            evaluated_img, client=self.docker
-                        )
+                        digest_evaluated_image = get_digest(evaluated_img)
                         if not digest_evaluated_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s",
                                 evaluated_img,
                             )
-                        digest_policy_image = get_digest(
-                            allowed_algo, client=self.docker
-                        )
+                        digest_policy_image = get_digest(allowed_algo)
                         if not digest_policy_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s", allowed_algo
