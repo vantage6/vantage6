@@ -8,6 +8,7 @@ vars:
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
+  NODE_PROXY_STARTING_PORT_NUMBER: 7654
   NODE_TEST_DATABASE_MOUNT_PATH:
     question: "Where is the parent folder where the node test data is located on the host machine?"
     default: ${PWD}/dev
@@ -74,7 +75,8 @@ pipelines:
       python dev/load-basic-fixtures.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
-        --task-namespace $TASK_NAMESPACE
+        --task-namespace $TASK_NAMESPACE \
+        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
       python dev/connect-store.py
       stop_dev --all
 
@@ -264,6 +266,8 @@ deployments:
       values:
         node:
           image: ${NODE_IMAGE}
+          numberOfNodes: ${NUMBER_OF_NODES}
+          nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
             - name: default

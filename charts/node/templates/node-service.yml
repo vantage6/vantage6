@@ -8,6 +8,22 @@ spec:
 {{ include "node.matchLabels" . | indent 4 }}
     component: node
   ports:
-  - protocol: TCP
-    port:  {{ .Values.node.proxyPort }}
-    targetPort:  {{ .Values.node.proxyPort }}
+  # If numberOfNodes and and nodeProxyStartingPortNumber, a dev environment (devspace) 
+  # and multiple ports must be enabled
+{{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodeProxyStartingPortNumber") }}
+  {{- $start := int .Values.node.nodeProxyStartingPortNumber }}
+  {{- $count := int .Values.node.numberOfNodes }}
+  {{- range $i, $ := until $count }}
+    - name: {{ printf "node%d" (add1 $i) }}
+      protocol: TCP
+      port: {{ add $start $i }}
+      targetPort: {{ add $start $i }}
+  {{- end }}
+  # Otherwise, use the standard proxyPort helm Chart variable
+{{- else }}
+    - name: node
+      protocol: TCP
+      port: {{ .Values.node.proxyPort }}
+      targetPort: {{ .Values.node.proxyPort }}
+{{- end }}
+

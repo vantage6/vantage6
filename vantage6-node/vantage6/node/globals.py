@@ -12,7 +12,9 @@ DEFAULT_NODE_SYSTEM_FOLDERS = False
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# TODO Check and remove
+# HCR: This constants is not being used, as well as the other defined in cli/globals.py
+# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
@@ -51,6 +53,6 @@ JOB_POD_SESSION_FOLDER_PATH = "/app/session"
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
 
-# Must be consistent with node pod configuration
-PROXY_SERVER_HOST = "http://v6proxy-subdomain.vantage6-node.svc.cluster.local"
-PROXY_SERVER_PORT = 4567
+# Default proxy server port. It may be changed when starting the proxy if
+# the port is already in use
+DEFAULT_PROXY_SERVER_PORT = 7654

@@ -28,6 +28,8 @@ spec:
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"
+        - name: PROXY_SERVER_HOST
+          value: http://{{ .Release.Name }}-node-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
