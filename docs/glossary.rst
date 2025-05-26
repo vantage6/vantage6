@@ -21,10 +21,11 @@ The following is a list of definitions used in vantage6.
    aggregates results from partial functions.
 -  **Child container**: A container created by an algorithm container to perform
    subtasks, typically a *federated function*
--  **Client**: A vantage6 user or application that uses the vantage6-server to run
-   algorithms.
+-  **Client**: A vantage6 user or application that communicates with the
+   vantage6-server.
 -  **Collaboration**: an agreement between two or more parties to participate in a study
    (i.e., to answer a research question).
+-  **Computation task**: A (vantage6) task that performs a computation on a DataFrame.
 -  **Container**: A lightweight, standalone, executable package of software that
    includes everything needed to run it.
 
@@ -32,6 +33,9 @@ The following is a list of definitions used in vantage6.
 
 -  **DataFrame**: A standardized representation of data in a session that can be used
    for computation tasks.
+-  **Data extraction task**: A (vantage6) task that extracts data from a database.
+   This data can be used for computation tasks (e.g., a pre-processing task or a
+   computation task).
 -  **Data Station**: A vantage6 *node* that has access to the local data.
 -  **Distributed learning**: see *Federated Learning* and *Federated Analytics*
 -  **Docker:** a platform that uses operating system virtualization to deliver software
@@ -41,12 +45,12 @@ The following is a list of definitions used in vantage6.
    the infrastructure itself are stored as *images* in the *Docker registry*. Images
    are used to create *containers*.
 
+
 **E**
 
 -  **End-to-end encryption**: A method of encoding data so that it can only be decoded
    by the intended recipient. In vantage6, end-to-end encryption is used to encrypt
-   data in transit between the vantage6-server and the vantage6-node and between
-   the vantage6-server and the client.
+   data in transit between two nodes or between a node and a client.
 
 **F**
 
@@ -68,9 +72,9 @@ The following is a list of definitions used in vantage6.
 **H**
 
 -  **Heterogeneity**: the condition in which in a federated learning scenario, parties
-   are allowed to have differences in hardware and software (i.e., operating systems).
+   are allowed to have differences in hardware and software (e.g., operating systems).
 -  **Horizontally-partitioned data**: data spread across different parties where the
-   latter have the same features of different instances (i.e., patients). See also
+   latter have the same features of different instances (e.g., patients). See also
    vertically-partitioned data.
 
 .. figure:: /images/horizontal_partition.png
@@ -94,8 +98,9 @@ The following is a list of definitions used in vantage6.
 **K**
 
 - **Kubernetes**: An open-source system for automating deployment, scaling, and
-   operations of application containers across clusters of hosts. In vantage6 it is the
-   fundamental technology that is used to run the vantage6-server and nodes.
+   operations of application containers across clusters of hosts. Vantage6 is
+   built on top of Kubernetes to run the vantage6-server, nodes and algorithm
+   containers.
 
 **N**
 
@@ -111,7 +116,7 @@ The following is a list of definitions used in vantage6.
 
 -  **Partial function**: The federated part of an algorithm that runs on local data
    at nodes.
--  **Party**: an entity that takes part in one (or more) collaborations, in vantage6
+-  **Party**: an entity that takes part in one (or more) collaborations. In vantage6
    a party is an organization.
 -  **Permission scope**: The level of access granted to users for viewing and modifying
    dataframes (personal, organization, or collaboration level).
@@ -138,9 +143,9 @@ The following is a list of definitions used in vantage6.
    space we try to be explicit when we talk about *server* and
    *vantage6 server*, however you might encounter *server* where
    *vantage6 server* should have been.
--  **Session**: A way to prepare a dataset that can be re-used in many computation
+-  **Session**: A way to prepare a dataset that can be reused in many computation
    tasks, especially useful for large datasets and flexible pre-processing.
--  **Study**: A study is a sub-group of organizations within a collaboration.
+-  **Study**: A study is a subgroup of organizations within a collaboration.
 
 **T**
 
