@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,12 +16,12 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  constructor() {}
+  constructor(private authService: AuthService) {}
 
   connect() {
     if (this.socket === null) {
       // TODO get token
-      const token = '';
+      const token = this.authService.getToken();
       // connect to tasks namespace
       const namespace = '/tasks';
       this.socket = io(`${environment.server_url}${namespace}`, {

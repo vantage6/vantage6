@@ -3,31 +3,17 @@ import Keycloak from 'keycloak-js';
 import { KEYCLOAK_EVENT_SIGNAL, KeycloakEventType, typeEventArgs, ReadyArgs } from 'keycloak-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-// import { PermissionService } from './permission.service';
-import { SocketioConnectService } from './socketio-connect.service';
-// import { EncryptionService } from './encryption.service';
-
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  username = '';
-  password = '';
-  qr_uri = '';
-  otp_code = '';
-
   authenticated = false;
   authenticated$ = new BehaviorSubject<boolean>(false);
   keycloakStatus: string | undefined;
   private readonly keycloak = inject(Keycloak);
   private readonly keycloakSignal = inject(KEYCLOAK_EVENT_SIGNAL);
 
-  constructor(
-    // private permissionService: PermissionService,
-    private socketConnectService: SocketioConnectService
-    // private storePermissionService: PermissionService,
-    // private encryptionService: EncryptionService
-  ) {
+  constructor() {
     effect(() => {
       const keycloakEvent = this.keycloakSignal();
 
@@ -45,13 +31,9 @@ export class AuthService {
     });
   }
 
-  // TODO connect socket
-  // async isAuthenticated(): Promise<AuthResult> {
-  //   if (authResult === AuthResult.Success) {
-  //     this.socketConnectService.connect();
-  //   }
-  //   return authResult;
-  // }
+  getToken(): string | undefined {
+    return this.keycloak.token;
+  }
 
   authenticatedObservable(): Observable<boolean> {
     return this.authenticated$.asObservable();
@@ -62,10 +44,6 @@ export class AuthService {
   }
 
   logout(): void {
-    // this.permissionService.clear();
-    // this.storePermissionService.clear();
-    this.socketConnectService.disconnect();
-    // this.encryptionService.clear();
     this.keycloak.logout();
   }
 }
