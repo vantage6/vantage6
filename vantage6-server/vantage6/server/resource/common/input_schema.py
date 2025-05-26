@@ -1,4 +1,3 @@
-import uuid
 import ipaddress
 import re
 
@@ -454,55 +453,6 @@ class TaskInputSchema(_NameValidationSchema):
                 raise ValidationError(
                     f"Database of type '{database['type']}' must have a 'label' key"
                 )
-
-
-class TokenUserInputSchema(BasicAuthInputSchema):
-    """Schema for validating input for creating a token for a user."""
-
-    mfa_code = fields.String(validate=Length(max=10))
-
-    @validates("username")
-    def validate_username(self, username: str):
-        """
-        Check if the username is appropriate
-
-        Parameters
-        ----------
-        username : str
-            Username to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the username is too short, too long or numeric.
-        """
-        _validate_username(username)
-
-
-class TokenNodeInputSchema(Schema):
-    """Schema for validating input for creating a token for a node."""
-
-    api_key = fields.String(required=True)
-
-    @validates("api_key")
-    def validate_api_key(self, api_key: str):
-        """
-        Validate the API key in the input. The API key should be a valid UUID
-
-        Parameters
-        ----------
-        api_key : str
-            API key to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the API key is not valid.
-        """
-        try:
-            uuid.UUID(api_key)
-        except ValueError:
-            raise ValidationError("API key is not a valid UUID")
 
 
 class TokenAlgorithmInputSchema(Schema):

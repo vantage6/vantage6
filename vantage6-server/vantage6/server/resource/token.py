@@ -3,32 +3,19 @@ Resources below '/<api_base>/token'
 """
 
 import logging
-import pyotp
-import json
+from http import HTTPStatus
 
 from flask import request, g
 from flask_jwt_extended import (
-    jwt_required,
     create_access_token,
-    create_refresh_token,
-    get_jwt_identity,
 )
 from flask_restful import Api
 from marshmallow import ValidationError
-from http import HTTPStatus
 
-from vantage6 import server
 from vantage6.common.enum import TaskStatus
-from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
-from vantage6.server.model.user import User
 from vantage6.server.resource import with_node, ServicesResources
-from vantage6.server.resource.common.input_schema import (
-    TokenAlgorithmInputSchema,
-    TokenNodeInputSchema,
-    TokenUserInputSchema,
-)
-from vantage6.server.resource import with_user
+from vantage6.server.resource.common.input_schema import TokenAlgorithmInputSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -51,14 +38,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     log.info('Setting up "{}" and subdirectories'.format(path))
 
     api.add_resource(
-        NodeToken,
-        path + "/node",
-        endpoint="node_token",
-        methods=("POST",),
-        resource_class_kwargs=services,
-    )
-
-    api.add_resource(
         ContainerToken,
         path + "/container",
         endpoint="container_token",
@@ -66,73 +45,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
 
-    api.add_resource(
-        RefreshToken,
-        path + "/refresh",
-        endpoint="refresh_token",
-        methods=("POST",),
-        resource_class_kwargs=services,
-    )
 
-
-user_token_input_schema = TokenUserInputSchema()
-node_token_input_schema = TokenNodeInputSchema()
 algorithm_token_input_schema = TokenAlgorithmInputSchema()
 
 
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-
-
-class NodeToken(ServicesResources):
-    def post(self):
-        """Login node
-        ---
-        description: >-
-          Allows node to sign in using a unique API key. If the login is
-          successful this returns a dictionary with access and refresh tokens
-          for the node as well as a node_url and a refresh_url.
-
-        requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Node'
-
-        responses:
-          200:
-            description: Ok, authenticated
-          400:
-            description: No API key provided in request body.
-          401:
-            description: Invalid API key
-
-        tags: ["Authentication"]
-        """
-        log.debug("Authenticate Node using api key")
-
-        body = request.get_json(silent=True)
-        # validate request body
-        try:
-            body = node_token_input_schema.load(body)
-        except ValidationError as e:
-            return {
-                "msg": "Request body is incorrect",
-                "errors": e.messages,
-            }, HTTPStatus.BAD_REQUEST
-
-        # Check JSON body
-        api_key = request.json.get("api_key")
-        node = db.Node.get_by_api_key(api_key)
-        if not node:  # login failed
-            log.error("Api key is not recognized")
-            return {"msg": "Api key is not recognized!"}, HTTPStatus.UNAUTHORIZED
-
-        token = _get_token_dict(node, self.api)
-
-        log.info(f"Succesfull login as node '{node.id}' ({node.name})")
-        return token, HTTPStatus.OK, {"jwt-token": token["access_token"]}
 
 
 class ContainerToken(ServicesResources):
@@ -245,57 +164,3 @@ class ContainerToken(ServicesResources):
         token = create_access_token(container, expires_delta=False)
 
         return {"container_token": token}, HTTPStatus.OK
-
-
-class RefreshToken(ServicesResources):
-    @jwt_required(refresh=True)
-    def post(self):
-        """Refresh token
-        ---
-        description: >-
-          Refresh access token if the previous one is expired.\n
-
-          Your refresh token must be present in the request headers to use
-          this endpoint.
-
-        responses:
-          200:
-            description: Token refreshed
-
-        security:
-          - bearerAuth: []
-
-        tags: ["Authentication"]
-        """
-        user_or_node_id = get_jwt_identity()
-        log.info(f'Refreshing token for user or node "{user_or_node_id}"')
-        user_or_node = db.Authenticatable.get(user_or_node_id)
-
-        return _get_token_dict(user_or_node, self.api), HTTPStatus.OK
-
-
-def _get_token_dict(user_or_node: db.Authenticatable, api: Api) -> dict:
-    """
-    Create a dictionary with the tokens and urls for the user or node.
-
-    Parameters
-    ----------
-    user_or_node : db.Authenticatable
-        The user or node to create the tokens for.
-    api : Api
-        The api to create the urls for.
-    """
-    token_dict = {
-        "access_token": create_access_token(user_or_node),
-        "refresh_token": create_refresh_token(user_or_node),
-        "refresh_url": api.url_for(RefreshToken),
-    }
-    if isinstance(user_or_node, db.User):
-        token_dict["user_url"] = api.url_for(
-            server.resource.user.User, id=user_or_node.id
-        )
-    else:
-        token_dict["node_url"] = api.url_for(
-            server.resource.node.Node, id=user_or_node.id
-        )
-    return token_dict
