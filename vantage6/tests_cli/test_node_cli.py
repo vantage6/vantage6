@@ -437,17 +437,3 @@ class NodeCLITest(unittest.TestCase):
         client.side_effect = Exception("Boom!")
         with self.assertRaises(Exception):
             create_client_and_authenticate(ctx)
-
-    # TODO this function has been moved to the common package. A test should
-    # be added there instead of here
-    # @patch("vantage6.cli.node.error")
-    # def test_check_docker(self, error):
-    #     docker = MagicMock()
-    #     try:
-    #         check_docker_running()
-    #     except Exception:
-    #         self.fail("Exception raised!")
-
-    #     docker.ping.side_effect = Exception("Boom!")
-    #     with self.assertRaises(SystemExit):
-    #         check_docker_running()

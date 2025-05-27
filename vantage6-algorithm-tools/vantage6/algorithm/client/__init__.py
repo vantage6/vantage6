@@ -231,9 +231,6 @@ class AlgorithmClient(ClientBase):
                 List of algorithm run data. The type of the results depends on
                 the algorithm.
             """
-            # TODO do we need this function? It may be used to collect data
-            # on subtasks but usually only the results are accessed, which is
-            # done with the function below.
             return self.parent._multi_page_request("run", params={"task_id": task_id})
 
     class Result(ClientBase.SubClient):

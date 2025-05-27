@@ -167,7 +167,6 @@ class Task(Base):
             .scalar_subquery()
         )
 
-    # TODO update in v4+, with renaming to 'run'
     @hybrid_property
     def finished_at(self) -> datetime.datetime | None:
         """

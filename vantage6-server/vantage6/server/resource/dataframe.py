@@ -285,7 +285,6 @@ class SessionDataframes(SessionBase):
                 image=extraction_details["image"],
                 method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
-                # TODO FM 10-7-2024: we should make a custom type for this
                 databases=[{"label": source_db_label, "type": "source"}],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
@@ -421,11 +420,6 @@ class SessionDataframe(SessionBase):
 
         # Delete the dataframe itself from the server
         dataframe.delete()
-
-        # TODO instruct nodes to delete the dataframe, consider the traceability of the
-        # dataframe. Simply deleting the dataframe is not good, we should track it in
-        # the session log or something.
-        # https://github.com/vantage6/vantage6/issues/1567
 
         return {
             "msg": f"Successfully deleted dataframe {df_name} from session {session_id}"

@@ -106,10 +106,6 @@ class DeserializationError(InputError):
     """Raised when result deserialization fails."""
 
 
-# TODO v5+ remove this alias, which is there for backwards compatibility
-DeserializationException = DeserializationError
-
-
 class EnvironmentVariableError(InputError):
     """
     Error raised when environment variable handling fails.

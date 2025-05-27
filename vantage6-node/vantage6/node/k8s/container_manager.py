@@ -730,7 +730,6 @@ class ContainerManager:
         environment_variables = {
             ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
-            # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
                 JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
@@ -741,10 +740,8 @@ class ContainerManager:
         # sensitive.
         secrets = {}
 
-        # Bind-mounting all the CSV files (read only) defined on the configuration file
-        # TODO bind other input data types
-        # TODO include only the ones given in the 'databases_to_use parameter
-        # TODO distinguish between the different actions
+        # Bind-mounting all the fi les and directories (read only) defined on the
+        # configuration file
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
                 ",".join([db["label"] for db in databases_to_use]),
@@ -755,8 +752,6 @@ class ContainerManager:
             self._validate_source_database(databases_to_use)
             # A always has 1 source database to use in the extraction step. This
             # is validated in the previous method.
-            # TODO v5+ if the validate function above raises error, this is somehow
-            # still reached?!
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:

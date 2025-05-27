@@ -551,8 +551,7 @@ class Node:
             raise Exception("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
-            self.log.warning("Enabling encryption!")
-            # TODO (HC) check that encryption works with k8s-based node
+            self.log.info("Enabling encryption!")
             private_key_file = self.private_key_filename()
             self.client.setup_encryption(private_key_file)
 
@@ -624,8 +623,6 @@ class Node:
 
     def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        # TODO check if this listener is used anywhere else, before removing it
-
         # kill_listener = ContainerKillListener()
         try:
             while True:
@@ -678,9 +675,8 @@ class Node:
         #         id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
         #     )
         # return killed_algos
-        # TODO (HC) Implement using k8s container manager
         print(
-            f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}"
+            f">>>>>>>Here I'm supposed to kill a running job pod given this info: {json.dumps(kill_info, indent = 4)}"
         )
         return []
 
@@ -735,12 +731,9 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
-        # TODO add try/catch for all cleanups so that if one fails, the others are
-        # still executed
         if hasattr(self, "socketIO") and self.socketIO:
             self.socketIO.disconnect()
 
-        # TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
         # if hasattr(self, "_Node__docker") and self.__docker:
         #    self.__docker.cleanup()
 

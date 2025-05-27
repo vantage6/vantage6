@@ -43,7 +43,6 @@ class NodeConfiguration(Configuration):
         "server_url": Use(str),
         "port": Or(Use(int), None),
         "task_dir": Use(str),
-        # TODO: remove `dict` validation from databases
         "api_path": Use(str),
         "logging": LOGGING_VALIDATORS,
         "encryption": {"enabled": bool, Optional("private_key"): Use(str)},

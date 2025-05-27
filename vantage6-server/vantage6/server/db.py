@@ -1,4 +1,3 @@
-# TODO this file is awkward...
 from vantage6.server.model import (
     Base,
     AlgorithmPort,

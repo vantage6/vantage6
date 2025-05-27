@@ -296,8 +296,6 @@ class ServerApp:
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
         # patch where to obtain token
-        # TODO is this still used? It was set to /api/token for a long time and not
-        # noticed anything not working because it was not set properly
         self.app.config["JWT_AUTH_URL_RULE"] = f"/{api_path}/token"
 
         # If no secret is set in the config file, one is generated. This
@@ -744,9 +742,7 @@ class ServerApp:
         if not (org := db.Organization.get_by_name("root")):
             org = db.Organization(name="root")
 
-        # TODO use constant instead of 'Root' literal
         root = db.Role.get_by_name("Root")
-
         super_user_password = None
 
         # Note: server admin is supposed to set these env vars via docker
@@ -772,8 +768,6 @@ class ServerApp:
                 os.environ["V6_INIT_SUPER_PASS_HASHED"]
             )
         else:
-            # FIXME / TODO v5+: for backwards compatibility we still set this
-            # as default but we might want to remove this soon!
             super_user_password = SUPER_USER_INFO["password"]
             log.warn(
                 f"Creating super user ({SUPER_USER_INFO['username']})"
@@ -792,8 +786,7 @@ class ServerApp:
             username=SUPER_USER_INFO["username"],
             roles=[root],
             organization=org,
-            # TODO: should we use RFC6761's "invalid." here?
-            email="root@domain.ext",
+            email="root@example.com",
             password=super_user_password,
             failed_login_attempts=0,
             last_login_attempt=None,

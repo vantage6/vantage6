@@ -1,8 +1,5 @@
 ARG TAG=latest
 ARG BASE=4.0
-# TODO FM 17-10-2023: We should pin the python OHDSI package versions.
-# We could do this by supplying an environment var or store a requirements.txt
-# file in the repo.however for now lets always use the latest in a build.
 # ARG OHDSI_VERSION=0.3.2
 FROM harbor2.vantage6.ai/infrastructure/algorithm-base:${BASE}
 
@@ -31,7 +28,6 @@ RUN apt-get install -y openjdk-17-jdk
 
 RUN R CMD javareconf
 
-# TODO FM 17-10-2023: We should pin the package versions.
 RUN Rscript -e "install.packages('DatabaseConnector')"
 RUN Rscript -e "install.packages('drat')"
 RUN Rscript -e "drat::addRepo('OHDSI'); install.packages('FeatureExtraction')"

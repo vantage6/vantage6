@@ -110,7 +110,6 @@ class Organization(Base):
             set.
         """
         if self._public_key:
-            # TODO this should be fixed properly
             try:
                 return base64.b64decode(self._public_key).decode(STRING_ENCODING)
             except Exception:

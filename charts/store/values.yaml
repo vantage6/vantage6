@@ -14,14 +14,10 @@ store:
     minReviewingOrganizations: 2
     assignReviewOwnAlgorithm: false
 
-    # TODO v5+ change these unsafe policies to false - but I couldn't get them to work
-    # from devspace then
     dev:
       disable_review: true
       review_own_algorithm: true
 
-    # TODO v5+ implement the following list policies to be default all allowed unless
-    # specified otherwise
     # allowed_servers: []
     # allowedReviewers: []
     # allowedReviewAssigners: []
@@ -34,8 +30,7 @@ store:
 
   logging:
     level: INFO
-  
-  # TODO: merge the dev section with policies.dev?
+
   dev:
     host_uri: host.docker.internal
 
