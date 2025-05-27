@@ -13,23 +13,66 @@ spec:
 
 
 ---
-# The job pods can only reach the node proxy on its corresponding namespace
-# TODO check if only egress rules are requried
+
+# DEFAULT policies for the 'tasks' namespace (inboud/outbound traffic blocked)
+# DO NOT CHANGE
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-egress-isolation
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector: {}  # Selects all pods in the namespace
+  policyTypes:
+  - Ingress
+  - Egress
+---
+
+# Network policies for federated_compute step/jobs
+# This kind of jobs may require database access
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-alg-runner-policy
+  name: {{ .Release.Name }}-federated-compute-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      role: federated_compute
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+  # # Example of how to 'whitelist' an external PostgreSQL database
+  # # (outside the k8s cluster)
+  # egress:  
+  # - to:
+  #   # Kubernetes NetworkPolicies do not support domain names or DNS-based rules directly
+  #   - ipBlock:
+  #       cidr: 203.0.113.25/32  # Replace with your actual Postgres server IP
+  #   ports:
+  #   - protocol: TCP
+  #     port: 5432
+
+---
+# Network policies for central_compute step/jobs
+# These jobs require access to the server proxy provided by the node
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-central-compute-policy
   namespace: {{ .Values.node.taskNamespace }}
 spec:
   podSelector:
     matchLabels:
       # The job pods must be created with this label
-      role: v6_alg_runner
+      role: central_compute
   policyTypes:
   - Egress
   egress:
   - to:
-    # Can only talk to PODs on the node namespace
+    # Allows outbound traffic only to PODs on the node namespace
     - namespaceSelector: 
         matchLabels:
           kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}

@@ -41,10 +41,10 @@ class AlgorithmStepType(EnumBase):
     does not require access to the original data source.
     """
 
-    DATA_EXTRACTION = "data extraction"
+    DATA_EXTRACTION = "data_extraction"
     PREPROCESSING = "preprocessing"
-    FEDERATED_COMPUTE = "federated compute"
-    CENTRAL_COMPUTE = "central compute"
+    FEDERATED_COMPUTE = "federated_compute"
+    CENTRAL_COMPUTE = "central_compute"
     POST_PROCESSING = "postprocessing"
 
     @classmethod
