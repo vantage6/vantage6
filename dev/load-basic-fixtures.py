@@ -145,6 +145,28 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
         print(f"Error creating node {name}: {str(e)}")
 
 
+def create_sessions(collaboration_id, users):
+    for user in users:
+        user_client = Client("http://localhost", 7601, "/server", log_level="error")
+        user_client.authenticate(user["username"], "Password123!")
+        user_client.session.create(
+            collaboration=collaboration_id,
+            name=f"session {user['username']} (own scope)",
+            scope="own",
+        )
+        user_client.session.create(
+            collaboration=collaboration_id,
+            name=f"session {user['username']} (organization scope)",
+            scope="organization",
+        )
+    user_client.session.create(
+        collaboration=collaboration_id,
+        name=f"session (collaboration scope)",
+        scope="collaboration",
+    )
+    print("==> Sessions created")
+
+
 def clear_dev_folder(name):
     node_dev_dir = dev_dir / name
     if node_dev_dir.exists():
@@ -164,11 +186,6 @@ for i in range(1, number_of_nodes + 1):
     organizations.append(create_organization(i))
 
 
-print("=> Creating users")
-users = []
-for i in range(1, number_of_nodes + 1):
-    users.append(create_user(i, organizations[i - 1]))
-
 print("=> Creating collaboration")
 
 if col_1 := next(
@@ -182,6 +199,14 @@ else:
         organizations=[org["id"] for org in organizations],
         encrypted=False,
     )
+
+print("=> Creating users")
+users = []
+for i in range(1, number_of_nodes + 1):
+    users.append(create_user(i, organizations[i - 1]))
+
+print("=> Creating sessions")
+create_sessions(col_1["id"], users)
 
 print("=> Creating nodes")
 for i in range(1, number_of_nodes + 1):
