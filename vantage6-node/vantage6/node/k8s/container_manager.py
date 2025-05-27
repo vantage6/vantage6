@@ -109,9 +109,6 @@ class ContainerManager:
             True if the namespace exists or was created and is writeable, False
             otherwise
         """
-        # TODO consider using hierarchical namespaces, it may be easier to create
-        # those in a large cluster environment
-        # https://kubernetes.io/blog/2020/08/14/introducing-hierarchical-namespaces/
         task_namespace_exists = False
         try:
             self.core_api.read_namespace(self.task_namespace)
@@ -268,10 +265,6 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
-            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
-            # so that we can be sure this file exists. From the type we could then
-            # derive if it's a file or directory, and it may be entirely unneccesary in
-            # that case to mount the database files/dirs into the node container.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -529,14 +522,6 @@ class ContainerManager:
 
         # Wait until the POD is running. This method is blocking until the POD is
         # running or a timeout is reached.
-        # TODO even though the timeout is reached, the POD could still be running
-        # TODO we could make this non-blocking by keeping track of the started jobs
-        #     and checking their status in a separate thread
-        # TODO in the previous `DockerTaskManager` a few checks where performed to
-        #      tackle any issues with the prerequisites. For example it checked wether
-        #      the dataframe requested by the user was available. We should re-implement
-        #      these checks here.
-
         # stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
         # kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
         # policy
@@ -603,13 +588,10 @@ class ContainerManager:
             func=self.core_api.list_namespaced_pod,
             namespace=self.task_namespace,
             label_selector=label,
-            # TODO v5+ this timeout should be as a global. Is 120 seconds a good value?
             timeout_seconds=120,
         ):
             pod_phase = event["object"].status.phase
 
-            # TODO we need to also check for the 'Failed' status, we could have
-            # missed that event.
             if pod_phase == "Running":
                 w.stop()
                 return RunStatus.ACTIVE

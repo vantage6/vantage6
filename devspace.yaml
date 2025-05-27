@@ -1,7 +1,6 @@
 version: v2beta1
 name: vantage6git
 
-# TODO using tags isnt safe with the devspace build stuff
 vars:
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
@@ -56,7 +55,6 @@ pipelines:
   # entities at the server (e.g. organizations, nodes, etc.), generate the node
   # configuration files (stores these in the `dev/.data` directory) and finally
   # connects the local store to the server.
-  # TODO register the diagnostics image in the algorithm store
   init:
     run: |-
       run_dependencies --all
@@ -68,7 +66,6 @@ pipelines:
       start_dev \
         vantage6-server-init \
         vantage6-store-init
-      # TODO replace this with a retry mechanism
       echo "Waiting for server to start..."
       python dev/delete-basic-fixtures.py
       python dev/load-basic-fixtures.py \
@@ -99,9 +96,9 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
-    
+
   purge:
-    # Careful with destructive rm commands like `rm -rf ${p}/*`!! 
+    # Careful with destructive rm commands like `rm -rf ${p}/*`!!
     run: |-
       echo "Purging all deployments..."
       stop_dev --all
@@ -112,7 +109,7 @@ pipelines:
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH}
-    
+
   stop-dev:
     run: |-
       echo "Purging all deployments..."
@@ -404,12 +401,12 @@ commands:
     description: "Start the development environment"
     command: devspace dev
 
-  # This will remove all running k8s resources from the development mode. 
+  # This will remove all running k8s resources from the development mode.
   stop-dev:
     description: "Stop the development environment"
     command: devspace run-pipeline stop-dev
 
-  # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
+  # This will delete all running k8s resources and local data (e.g. tasks data, database data).
   # This is useful when you want to start from scratch.
   purge:
     description: "Purge the development environment"
