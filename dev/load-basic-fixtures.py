@@ -161,7 +161,7 @@ def create_sessions(collaboration_id, users):
         )
     user_client.session.create(
         collaboration=collaboration_id,
-        name=f"session (collaboration scope)",
+        name="session (collaboration scope)",
         scope="collaboration",
     )
     print("==> Sessions created")
