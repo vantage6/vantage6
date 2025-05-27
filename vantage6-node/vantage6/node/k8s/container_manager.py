@@ -492,7 +492,7 @@ class ContainerManager:
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
-                        labels={"app": run_io.container_name}
+                        labels={"app": run_io.container_name, "role": "v6_alg_runner" }
                     ),
                     spec=k8s_client.V1PodSpec(
                         containers=[container],

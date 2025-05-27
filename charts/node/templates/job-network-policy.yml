@@ -1,4 +1,4 @@
-# Policy to disable job's networking, except with the Node
+# All the PODs on the node namespace have access to Internet
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -10,3 +10,51 @@ spec:
   - Egress
   egress:
   - {}
+
+
+---
+# The job pods can only reach the node proxy on its corresponding namespace
+# TODO check if only egress rules are requried
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-alg-runner-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # The job pods must be created with this label
+      role: v6_alg_runner
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    # Can only talk to PODs on the node namespace
+    - namespaceSelector: 
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}
+    ports:
+    # If numberOfNodes and and nodeProxyStartingPortNumber exist, this chart template is being
+    # used within a dev environment (devspace), where multiple ports must be enabled
+  {{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodeProxyStartingPortNumber") }}
+    {{- $start := int .Values.node.nodeProxyStartingPortNumber }}
+    {{- $count := int .Values.node.numberOfNodes }}
+    {{- range $i, $ := until $count }}
+      - protocol: TCP
+        port:  {{ add $start $i }}
+    {{- end }}
+    # Otherwise, use the standard proxyPort helm Chart variable
+  {{- else }}
+      - protocol: TCP
+        port:  {{ .Values.node.proxyPort }}
+  {{- end }}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
