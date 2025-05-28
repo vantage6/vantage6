@@ -1,4 +1,6 @@
-# The node-proxy requires access to Internet to reach the v6-server
+# Policy for the POD where the Node and its server-proxy are running.
+# It ensures that only the POD running the server-proxy is able to 
+# reach the outside world (in this case, to get access to the v6-server).
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -7,26 +9,29 @@ metadata:
 spec:
   podSelector: # Allow outbound traffic only to the node-proxy
     matchLabels:
+      # must match the 'app' label defined on node/templates/node-deployment
       app: v6-node-server-proxy
   policyTypes:
   - Egress
   egress:
   - {}
-  # # This policy could be further refined to allow traffic to the v6-server only
+  # # This policy could be further refined to allow outbound traffic ONLY to an
+  # # specific v6-server.
   # egress:  
   # - to:
   #   # Kubernetes NetworkPolicies do not support domain names or DNS-based rules directly
   #   - ipBlock:
-  #       cidr: 203.0.113.25/32  # Replace with your actual Postgres server IP
+  #       cidr: 203.0.113.25/32  # v6-server IP address
   #   ports:
   #   - protocol: TCP
-  #     port: 9876
+  #     port: 9876 # v6-server port
 
 
 ---
 
-# DEFAULT policies for the 'tasks' namespace (inboud/outbound traffic blocked)
-# DO NOT CHANGE
+# DEFAULT policy for the 'tasks' namespace (inboud/outbound traffic blocked)
+# It defines the policies of the algorith steps with no custom rules defined, 
+# and to any other POD running in this namespace.
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -52,7 +57,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      # The job pods must be created with this label
+      # Must match the corresponding AlgorithmStepType enum value
       role: central_compute
   policyTypes:
   - Egress
@@ -100,6 +105,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
       role: data_extraction
   policyTypes:
   - Ingress
@@ -131,6 +137,7 @@ spec:
 # spec:
 #   podSelector:
 #     matchLabels:
+#       # Must match the corresponding AlgorithmStepType enum value
 #       role: federated_compute
 #   policyTypes:
 #   - Ingress
