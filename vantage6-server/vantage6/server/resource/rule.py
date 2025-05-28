@@ -167,19 +167,24 @@ class Rules(ServicesResources):
                     }, HTTPStatus.BAD_REQUEST
             else:
                 user = g.user
-            q = (
+
+            # Create two subqueries - one for role-based permissions and one for direct
+            # user permissions
+            role_based_rules = (
                 q.join(db.role_rule_association)
                 .join(db.Role)
                 .join(db.Permission)
                 .join(db.User)
-                .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
-                .filter(
-                    or_(
-                        db.User.id == user.id,
-                        db.UserPermission.c.user_id == user.id,
-                    )
-                )
+                .filter(db.User.id == user.id)
             )
+
+            direct_user_rules = q.join(
+                db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id
+            ).filter(db.UserPermission.c.user_id == user.id)
+
+            # Combine both queries
+            union_query = role_based_rules.union(direct_user_rules).subquery()
+            q = select(db.Rule).join(union_query, db.Rule.id == union_query.c.id)
 
         # check if pagination is disabled
         paginate = True

@@ -302,14 +302,7 @@ class ServerApp:
         self.app.config["JWT_ALGORITHM"] = "RS256"
         self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
 
-        def _get_keycloak_public_key():
-            response = requests.get(
-                "http://vantage6-auth-keycloak.default.svc.cluster.local/realms/vantage6"
-            )
-            key = response.json()["public_key"]
-            return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
-
-        self.app.config["JWT_PUBLIC_KEY"] = _get_keycloak_public_key()
+        self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
 
         # Open Api Specification (f.k.a. swagger)
         self.app.config["SWAGGER"] = {
@@ -408,6 +401,14 @@ class ServerApp:
         @self.app.route("/robots.txt")
         def static_from_root():
             return send_from_directory(self.app.static_folder, request.path[1:])
+
+    @staticmethod
+    def _get_keycloak_public_key():
+        response = requests.get(
+            "http://vantage6-auth-keycloak.default.svc.cluster.local/realms/vantage6"
+        )
+        key = response.json()["public_key"]
+        return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
 
     def _get_jwt_expiration_seconds(
         self,

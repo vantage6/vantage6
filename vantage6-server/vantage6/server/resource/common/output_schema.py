@@ -211,7 +211,7 @@ class RunTaskIncludedSchema(RunSchema):
 class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
-        exclude = ("type", "api_key", "collaboration", "organization", "last_seen")
+        exclude = ("type", "collaboration", "organization", "last_seen")
 
 
 class PortSchema(HATEOASModelSchema):
@@ -341,7 +341,6 @@ class NodeSchema(HATEOASModelSchema):
 
     class Meta:
         model = db.Node
-        exclude = ("api_key",)
 
 
 class NodeConfigSchema(HATEOASModelSchema):
@@ -356,7 +355,6 @@ class NodeSchemaSimple(HATEOASModelSchema):
         model = db.Node
         exclude = (
             "collaboration",
-            "api_key",
             "type",
         )
 

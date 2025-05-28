@@ -104,11 +104,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
         # append organizations to the collaboration
 
         for participant in col.get("participants", {}):
-            if (
-                not isinstance(participant, dict)
-                or not participant.get("name")
-                or not participant.get("api_key")
-            ):
+            if not isinstance(participant, dict) or not participant.get("name"):
                 log.error(
                     "Collaboration participants should contain the "
                     "fields 'name' and 'api_key'. This is not the case "
@@ -118,12 +114,6 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 exit(1)
 
             org_name = participant.get("name")
-            node_api_key = participant.get("api_key")
-
-            # check if api key is valid uuid
-            if not _is_valid_uuid(node_api_key):
-                log.error(f"API key '{node_api_key}' is not a valid UUID!")
-                exit(1)
 
             organization = db.Organization.get_by_name(org_name)
             collaboration.organizations.append(organization)
@@ -136,7 +126,6 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                 organization=organization,
                 collaboration=collaboration,
                 name=f"{organization.name} - {collaboration.name} Node",
-                api_key=node_api_key,
             )
             node.save()
             log.debug(f"added node {node.name} to {collaboration.name}")

@@ -3,12 +3,12 @@ import logging
 
 from functools import wraps
 
-from flask import g, request
+from flask import g, request, current_app
 from flask_restful import Api
 from flask_mail import Mail
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from flask_socketio import SocketIO
-from keycloak import KeycloakOpenID
+from jwt import decode
 
 
 from vantage6.common import logger_name
@@ -163,24 +163,17 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         @wraps(fn)
         def decorator(*args, **kwargs):
 
-            keycloak_openid = KeycloakOpenID(
-                server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
-                client_id="backend",
-                realm_name="vantage6",
-                client_secret_key="mysecret",
-            )
-
-            try:
-                token = request.headers["Authorization"].split(" ")[1]
-                decoded_token = keycloak_openid.decode_token(token)
-            except Exception as e:
-                log.error(f"Error decoding token: {e}")
-                raise e
-
-            identity = decoded_token["sub"]
+            identity = get_jwt_identity()
+            claims = get_jwt()
 
             # check that identity has access to endpoint
-            g.type = decoded_token["client_type"]
+            # TODO simplify this: from keycloak we now get client_type but container
+            # token still gives us sub.client_type
+            g.type = (
+                claims["client_type"]
+                if "client_type" in claims
+                else claims["sub"]["client_type"]
+            )
 
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to

@@ -1,7 +1,7 @@
 import logging
 
 from http import HTTPStatus
-from flask import request, g
+from flask import request
 from flask_restful import Api
 from sqlalchemy import or_, select
 from marshmallow import ValidationError
@@ -64,21 +64,6 @@ class AlgorithmStoreBase(ServicesResources):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
-
-    @staticmethod
-    def get_authorization_headers_from_request() -> dict:
-        """
-        Get the authorization headers from the request.
-
-        Returns
-        -------
-        dict
-            The authorization headers
-        """
-        current_headers = request.headers
-        if "Authorization" in current_headers:
-            return {"Authorization": current_headers["Authorization"]}
-        return {}
 
 
 class AlgorithmStores(AlgorithmStoreBase):
@@ -297,7 +282,7 @@ class AlgorithmStores(AlgorithmStoreBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        response, status = add_algorithm_store_to_database(request.get_json())
+        response, status = add_algorithm_store_to_database(data)
         if status != HTTPStatus.CREATED:
             return response, status
         else:

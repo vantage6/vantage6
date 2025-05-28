@@ -483,7 +483,6 @@ class Nodes(NodeBase):
             name=name,
             collaboration=collaboration,
             organization=organization,
-            api_key=api_key,
             status=AuthStatus.OFFLINE.value,
         )
 

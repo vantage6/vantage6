@@ -1,38 +1,15 @@
 import logging
-import datetime as dt
 from http import HTTPStatus
 
-import gevent
-from flask import request, render_template, g, current_app, Flask
-from flask_jwt_extended import create_access_token, decode_token
+from flask import request
 from flask_restful import Api
-from flask_mail import Mail
 from marshmallow import ValidationError
-from jwt.exceptions import DecodeError
-from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, generate_apikey
-from vantage6.common.globals import APPNAME, MAIN_VERSION_NAME
-from vantage6.backend.common.globals import (
-    DEFAULT_EMAIL_FROM_ADDRESS,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-)
 from vantage6.server import db
-from vantage6.server.globals import (
-    DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES,
-    DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
-)
 from vantage6.server.model.rule import Operation
 from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.input_schema import (
-    ChangePasswordInputSchema,
-    RecoverPasswordInputSchema,
-    ResetPasswordInputSchema,
-    Recover2FAInputSchema,
-    Reset2FAInputSchema,
-    ResetAPIKeyInputSchema,
-)
-from vantage6.server.model.user import User
+from vantage6.server.resource.common.input_schema import ResetAPIKeyInputSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
