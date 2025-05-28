@@ -20,7 +20,7 @@ class Function(Base):
     description : str
         Description of the function
     step_type : str
-        Type of step (data extraction, preprocessing, federated compute, central
+        Type of step (data_extraction, preprocessing, federated_compute, central
         compute, postprocessing)
     standalone : bool
         Whether this function produces useful results when running it by itself

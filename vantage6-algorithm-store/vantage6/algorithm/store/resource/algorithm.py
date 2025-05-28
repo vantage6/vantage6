@@ -409,8 +409,8 @@ class Algorithms(AlgorithmBaseResource):
                         step_type:
                           type: string
                           description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                            extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -848,9 +848,9 @@ class Algorithm(AlgorithmBaseResource):
                           description: Description of the function
                         step_type:
                           type: string
-                          description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                          description: Step type of the function. Can be 
+                            'data_extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results

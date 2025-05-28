@@ -162,8 +162,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             - description: str, optional
                 Description of the function
             - step_type: string
-                Step type of the function (data extraction, preprocessing,
-                federated compute, central compute, or postprocessing)
+                Step type of the function (data_extraction, preprocessing,
+                federated_compute, central_compute, or postprocessing)
             - standalone: bool
                 Whether this function produces useful results when running it by itself
             - databases: list[dict]
@@ -344,8 +344,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             - description: str, optional
                 Description of the function
             - step_type: string
-                Step type of the function (data extraction, preprocessing,
-                federated compute, central compute, or postprocessing)
+                Step type of the function (data_extraction, preprocessing,
+                federated_compute, central_compute, or postprocessing)
             - standalone: bool
                 Whether this function produces useful results when running it by itself
             - databases: list[dict]
