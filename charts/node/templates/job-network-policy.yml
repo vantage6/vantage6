@@ -12,15 +12,16 @@ spec:
   - Egress
   egress:
   - {}
-  # # This policy could be further refined to 
-  # # (outside the k8s cluster)
-  # egress:
-  # - toFQDNs:
-  #   - matchName: aaa.bb.cc.com
-  #   toPorts:
-  #   - ports:
-  #     - port: "2332"
-  #       protocol: TCP
+  # # This policy could be further refined to allow traffic to the v6-server only
+  # egress:  
+  # - to:
+  #   # Kubernetes NetworkPolicies do not support domain names or DNS-based rules directly
+  #   - ipBlock:
+  #       cidr: 203.0.113.25/32  # Replace with your actual Postgres server IP
+  #   ports:
+  #   - protocol: TCP
+  #     port: 9876
+
 
 ---
 
