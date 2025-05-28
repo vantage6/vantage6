@@ -848,7 +848,7 @@ class Algorithm(AlgorithmBaseResource):
                           description: Description of the function
                         step_type:
                           type: string
-                          description: Step type of the function. Can be 
+                          description: Step type of the function. Can be
                             'data_extraction', 'preprocessing', 'federated_compute',
                             'central_compute', or 'postprocessing'
                         standalone:
