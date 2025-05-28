@@ -26,27 +26,11 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-
----
-
-# Network policies for federated_compute step/jobs
-# This kind of jobs may require database access
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ .Release.Name }}-federated-compute-policy
-  namespace: {{ .Values.node.taskNamespace }}
-spec:
-  podSelector:
-    matchLabels:
-      role: federated_compute
-  policyTypes:
-  - Ingress
-  - Egress
   ingress: []
   egress: []
 
 ---
+
 # Network policies for central_compute step/jobs
 # These jobs require access to the server proxy provided by the node
 apiVersion: networking.k8s.io/v1
@@ -93,7 +77,6 @@ spec:
       port: 53
 
 
-
 ---
 
 # Network policies for data_extraction jobs
@@ -122,3 +105,24 @@ spec:
   #   ports:
   #   - protocol: TCP
   #     port: 5432
+
+
+# ---
+# Uncomment and customize for federate_compute actions
+
+# Network policies for federated_compute step/jobs
+# This kind of jobs may require database access
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: {{ .Release.Name }}-federated-compute-policy
+#   namespace: {{ .Values.node.taskNamespace }}
+# spec:
+#   podSelector:
+#     matchLabels:
+#       role: federated_compute
+#   policyTypes:
+#   - Ingress
+#   - Egress
+#   ingress: []
+#   egress: []
