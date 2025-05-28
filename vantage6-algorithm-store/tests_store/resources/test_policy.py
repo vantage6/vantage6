@@ -2,20 +2,11 @@ from http import HTTPStatus
 import unittest
 from unittest.mock import patch
 
-from tests_store.base.unittest_base import MockResponse, TestResources
-from vantage6.common.globals import Ports, DEFAULT_API_PATH
-from vantage6.algorithm.store.model.common.enums import (
-    BooleanPolicies,
-    ListPolicies,
-    PublicPolicies,
-)
+from tests_store.base.unittest_base import TestResources
+from vantage6.algorithm.store.model.common.enums import PublicPolicies
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource.policy import PoliciesBase
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-
-ALLOWED_SERVER = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"Authorization": "Mock"}
-USERNAME = "test_user"
 
 
 class TestPolicyResources(TestResources):
@@ -35,32 +26,20 @@ class TestPolicyResources(TestResources):
         [p.save() for p in policies]
 
     # note that the policies are already deleted in super().tearDown()
-
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_private_policies_view(self, mock_validate):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_private_policies_view(self, authenticate_mock):
         """Test /api/policy"""
         self.create_policies()
 
-        # check that getting policies without authentication fails with forbidden if
-        # server is not whitelisted
-        response = self.app.get("/api/policy", headers=HEADERS)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
 
-        # check 401 if server is whitelisted but no authentication is provided
-        mock_validate.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.UNAUTHORIZED,
-        )
-        response = self.app.get("/api/policy", headers=HEADERS)
+        # check 401 if no authentication is provided
+        response = self.app.get("/api/policy")
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # check that getting policies with authentication succeeds
-        mock_validate.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
-        self.register_user()
-        response = self.app.get("/api/policy", headers=HEADERS)
+        self.register_user(authenticate_mock=authenticate_mock)
+        response = self.app.get("/api/policy")
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # Check that the policies are present and correct
@@ -74,7 +53,7 @@ class TestPolicyResources(TestResources):
         self.create_policies()
         # Get the policies
         response = self.app.get("/api/policy/public")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # Check that the public policies are present and correct
         policies = response.json

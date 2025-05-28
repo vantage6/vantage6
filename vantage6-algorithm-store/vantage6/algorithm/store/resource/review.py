@@ -121,8 +121,8 @@ class ReviewBase(AlgorithmStoreResources):
     @staticmethod
     def _is_reviewers_assignment_finished(reviews: list[db.Review]) -> bool:
         """
-        Check if the reviewers assignment is finished for the given algorithm, according to the
-        policies set. This is the case if:
+        Check if the reviewers assignment is finished for the given algorithm, according
+        to the policies set. This is the case if:
         1. the minimum number of reviewers has been reached
         2. the minimum number of different organizations has been involved
 
@@ -137,12 +137,7 @@ class ReviewBase(AlgorithmStoreResources):
             True if the reviewers assignment is finished, False otherwise
         """
         # get the number of unique organizations assigned to review the algorithm.
-        # A unique organization is defined by the combination of organization id and server
-        current_orgs = len(
-            set(
-                [(rev.reviewer.organization_id, rev.reviewer.server) for rev in reviews]
-            )
-        )
+        current_orgs = len(set([(rev.reviewer.organization_id) for rev in reviews]))
 
         return (
             current_orgs >= Policy.get_minimum_reviewing_orgs()

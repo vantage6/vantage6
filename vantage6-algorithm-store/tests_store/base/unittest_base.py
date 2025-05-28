@@ -1,9 +1,11 @@
 import unittest
+from unittest.mock import Mock
+from http import HTTPStatus
+
+from vantage6.common.globals import InstanceType
+from vantage6.backend.common import test_context
 from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.model.review import Review
-
-from vantage6.common.globals import InstanceType, Ports
-from vantage6.backend.common import test_context
 from vantage6.algorithm.store.model.base import DatabaseSessionManager, Database
 from vantage6.algorithm.store import AlgorithmStoreApp
 from vantage6.algorithm.store.globals import PACKAGE_FOLDER
@@ -54,6 +56,8 @@ class TestResources(unittest.TestCase):
         user_roles: list[Role] = None,
         user_rules: list[Rule] = None,
         organization_id: int = 1,
+        authenticate_mock: Mock = None,
+        auth: bool = True,
     ) -> User:
         user = User(username=username, organization_id=organization_id)
         if user_roles and len(user_roles) > 0:
@@ -61,7 +65,16 @@ class TestResources(unittest.TestCase):
         if user_rules and len(user_rules) > 0:
             user.rules = user_rules
         user.save()
+        if authenticate_mock:
+            self._mock_auth(user, authenticate_mock, auth)
         return user
+
+    def _mock_auth(self, user: User, authenticate_mock: Mock, auth: bool):
+        authenticate_mock.return_value = (
+            (user, HTTPStatus.OK)
+            if auth
+            else ({"msg": "Unauthorized"}, HTTPStatus.UNAUTHORIZED)
+        )
 
     def create_role(self, rules: list[Rule], name: str = "test_role") -> Role:
         role = Role(name=name, rules=rules)
@@ -80,14 +93,3 @@ class TestResources(unittest.TestCase):
                 rules=role["rules"],
             )
             new_role.save()
-
-
-class MockResponse:
-    def __init__(self, json_data=None, status_code=200):
-        if json_data is None:
-            json_data = {}
-        self.json_data = json_data
-        self.status_code = status_code
-
-    def json(self):
-        return self.json_data

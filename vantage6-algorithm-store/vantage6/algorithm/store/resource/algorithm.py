@@ -539,7 +539,7 @@ class Algorithms(AlgorithmBaseResource):
             code_url=data["code_url"],
             documentation_url=data.get("documentation_url", None),
             digest=digest,
-            developer=g.user,
+            developer_id=g.user.id,
             submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()

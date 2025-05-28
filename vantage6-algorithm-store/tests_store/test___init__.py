@@ -45,7 +45,8 @@ class TestAlgorithmStoreApp(TestResources):
         )
 
     @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_default_roles")
-    def test_server_startup(self, mock_add_default_roles):
+    @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_keycloak_id_to_super_user")
+    def test_server_startup(self, mock_add_keycloak_id, mock_add_default_roles):
         """Test that the server is started correctly"""
 
         # ensure root role is present - this role will be assigned to the root user
@@ -60,8 +61,9 @@ class TestAlgorithmStoreApp(TestResources):
         self.server.start()
 
         mock_add_default_roles.assert_called_once()
+        mock_add_keycloak_id.assert_called_once()
 
-        root_user = User.get_by_server(username="superuser")
+        root_user = User.get_by_username("superuser")
         self.assertIsNotNone(root_user)
         self.assertEqual(len(root_user.roles), 1)
         self.assertEqual(root_user.roles[0].name, DefaultRole.ROOT)

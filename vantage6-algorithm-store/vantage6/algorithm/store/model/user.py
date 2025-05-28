@@ -118,35 +118,6 @@ class User(Base):
         return [user for user in cls.get() if user.can(resource, operation)]
 
     @classmethod
-    def get_by_server(cls, username: str, v6_server_id: int) -> User:
-        """
-        Get a user by their v6 server id
-
-        Parameters
-        ----------
-        username: str
-             username of the user on v6 server
-        v6_server_id: int
-             id whitelisted v6 server
-
-        Returns
-        -------
-        User
-            User with the given username
-
-        Raises
-        ------
-        NoResultFound
-            If no user with the given username exists
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(
-            select(cls).filter_by(username=username, v6_server_id=v6_server_id)
-        ).one_or_none()
-        session.commit()
-        return result
-
-    @classmethod
     def get_by_username(cls, username: str) -> User | None:
         """
         Get a user by their username

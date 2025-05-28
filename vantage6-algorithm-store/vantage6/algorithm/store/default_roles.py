@@ -12,7 +12,6 @@ class DefaultRole(str, Enum):
     STORE_MANAGER = "Store Manager"
     ALGORITHM_MANAGER = "Algorithm Manager"
     VIEWER = "Viewer"
-    SERVER_MANAGER = "Server Manager"
 
     @classmethod
     def list(cls):

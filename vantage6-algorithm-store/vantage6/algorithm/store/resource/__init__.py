@@ -106,15 +106,18 @@ def _authorize_user(
         Tuple containing an error message and status code if the user is not
         authorized, None otherwise.
     """
+    # TODO v5+ ensure this block is necessary - seems to be replace by custom user.can()
     # if the user is registered, load the rules
     auth_identity = Identity(user.id)
-
+    for rule in user.rules:
+        auth_identity.provides.add(
+            RuleNeed(name=rule.name, operation=rule.operation, scope=None)
+        )
     for role in user.roles:
         for rule in role.rules:
             auth_identity.provides.add(
                 RuleNeed(name=rule.name, operation=rule.operation, scope=None)
             )
-
     identity_changed.send(current_app._get_current_object(), identity=auth_identity)
 
     g.user = user
