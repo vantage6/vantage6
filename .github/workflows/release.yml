@@ -339,10 +339,6 @@ jobs:
           docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
           docker pull harbor2.vantage6.ai/infrastructure/ui:${version}
           docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-client:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-configurator:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/squid:${version}
 
       - name: Tag docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}
@@ -379,18 +375,6 @@ jobs:
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/alpine:${version} harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
           docker push harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-client:${version} harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-configurator:${version} harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version} harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/squid:${version} harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
 
 
   # Build an release all the vantage6 infrastructure packages. For all

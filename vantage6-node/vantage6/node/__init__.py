@@ -69,7 +69,7 @@ class Node:
 
     Parameters
     ----------
-    ctx: NodeContext | DockerNodeContext
+    ctx: NodeContext
         Application context object.
 
     """
