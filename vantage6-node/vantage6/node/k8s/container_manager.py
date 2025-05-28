@@ -109,9 +109,6 @@ class ContainerManager:
             True if the namespace exists or was created and is writeable, False
             otherwise
         """
-        # TODO consider using hierarchical namespaces, it may be easier to create
-        # those in a large cluster environment
-        # https://kubernetes.io/blog/2020/08/14/introducing-hierarchical-namespaces/
         task_namespace_exists = False
         try:
             self.core_api.read_namespace(self.task_namespace)
@@ -268,10 +265,6 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
-            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
-            # so that we can be sure this file exists. From the type we could then
-            # derive if it's a file or directory, and it may be entirely unneccesary in
-            # that case to mount the database files/dirs into the node container.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -529,14 +522,6 @@ class ContainerManager:
 
         # Wait until the POD is running. This method is blocking until the POD is
         # running or a timeout is reached.
-        # TODO even though the timeout is reached, the POD could still be running
-        # TODO we could make this non-blocking by keeping track of the started jobs
-        #     and checking their status in a separate thread
-        # TODO in the previous `DockerTaskManager` a few checks where performed to
-        #      tackle any issues with the prerequisites. For example it checked wether
-        #      the dataframe requested by the user was available. We should re-implement
-        #      these checks here.
-
         # stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
         # kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
         # policy
@@ -603,13 +588,10 @@ class ContainerManager:
             func=self.core_api.list_namespaced_pod,
             namespace=self.task_namespace,
             label_selector=label,
-            # TODO v5+ this timeout should be as a global. Is 120 seconds a good value?
             timeout_seconds=120,
         ):
             pod_phase = event["object"].status.phase
 
-            # TODO we need to also check for the 'Failed' status, we could have
-            # missed that event.
             if pod_phase == "Running":
                 w.stop()
                 return RunStatus.ACTIVE
@@ -748,7 +730,6 @@ class ContainerManager:
         environment_variables = {
             ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
-            # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
                 JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
@@ -759,10 +740,8 @@ class ContainerManager:
         # sensitive.
         secrets = {}
 
-        # Bind-mounting all the CSV files (read only) defined on the configuration file
-        # TODO bind other input data types
-        # TODO include only the ones given in the 'databases_to_use parameter
-        # TODO distinguish between the different actions
+        # Bind-mounting all the fi les and directories (read only) defined on the
+        # configuration file
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
                 ",".join([db["label"] for db in databases_to_use]),
@@ -773,8 +752,6 @@ class ContainerManager:
             self._validate_source_database(databases_to_use)
             # A always has 1 source database to use in the extraction step. This
             # is validated in the previous method.
-            # TODO v5+ if the validate function above raises error, this is somehow
-            # still reached?!
             source_database = databases_to_use[0]
             db = self.databases[source_database["label"]]
             if db["is_file"] or db["is_dir"]:

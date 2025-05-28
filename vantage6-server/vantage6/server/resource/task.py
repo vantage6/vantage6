@@ -587,7 +587,6 @@ class Tasks(TaskBase):
             self.config,
         )
 
-    # TODO this function should be refactored to make it more readable
     @staticmethod
     def post_task(
         data: dict,
@@ -1025,7 +1024,6 @@ class Tasks(TaskBase):
         for config_option in node_configs:
             if config_option.key == NodePolicy.ALLOWED_USERS:
                 has_limitations = True
-                # TODO expand when we allow also usernames, like orgs below
                 if g.user.id == int(config_option.value):
                     return False
             elif config_option.key == "allowed_orgs":

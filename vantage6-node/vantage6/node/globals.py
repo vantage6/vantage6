@@ -12,10 +12,6 @@ DEFAULT_NODE_SYSTEM_FOLDERS = False
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-# TODO Check and remove
-# HCR: This constants is not being used, as well as the other defined in cli/globals.py
-# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
-
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
 # constants for retrying node login
@@ -42,8 +38,6 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
 # Mount paths within the algorithm containers. Algorithms containers are run as
 # jobs in the Kubernetes cluster.
-# TODO v5+ we might consider using different paths for this to avoid conflicts with
-# the algorithm image contents. Maybe e.g. `/app/vantage6/task/input` etc?
 JOB_POD_INPUT_PATH = "/app/input"
 JOB_POD_OUTPUT_PATH = "/app/output"
 JOB_POD_SESSION_FOLDER_PATH = "/app/session"

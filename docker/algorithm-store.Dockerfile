@@ -22,7 +22,6 @@ RUN pip install psycopg2-binary
 COPY . /vantage6
 
 # install individual packages
-# TODO check which dependencies are needed - remove at least server
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6

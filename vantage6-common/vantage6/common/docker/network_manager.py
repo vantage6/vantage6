@@ -7,7 +7,6 @@ from vantage6.common.docker.addons import delete_network
 from vantage6.common import logger_name
 
 
-# TODO maybe move following to utils?
 def remove_subnet_mask(ip: str) -> str:
     """
     Remove the subnet mask of an ip address, e.g. 172.1.0.0/16 -> 172.1.0.0

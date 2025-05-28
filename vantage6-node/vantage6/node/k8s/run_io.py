@@ -10,8 +10,8 @@ import pandas as pd
 
 # This up-front import prevents the issue described on https://github.com/vantage6/vantage6/issues/1950
 # which happens when pyarrow is unable to lazy-loading concurrent.futures.thread
-# Ignoring F401: “module imported but unused”
-# TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
+# Ignoring F401: “module imported but unused” This is a provisional solution, as this
+# (random, difficult to reproduce) error requires further exploration
 # pylint: disable=unused-import
 import concurrent.futures.thread  # noqa: F401
 
@@ -86,8 +86,6 @@ class RunIO:
     def from_dict(
         cls, data: dict, client: NodeClient, host_data_dir: str = TASK_FILES_ROOT
     ):
-        # TODO validate that the keys are present
-        # TODO the host_data_dir should be passed as an argument
         return cls(
             run_id=int(data["run_id"]),
             session_id=int(data["session_id"]),

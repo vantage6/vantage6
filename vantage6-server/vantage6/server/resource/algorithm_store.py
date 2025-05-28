@@ -164,9 +164,6 @@ class AlgorithmStores(AlgorithmStoreBase):
 
         tags: ["Collaboration"]
         """
-        # TODO make an option to GET algorithm stores that are available to all
-        # collaborations
-
         # obtain organization from authenticated
         auth_org = self.obtain_auth_organization()
         q = select(db.AlgorithmStore)
@@ -181,8 +178,6 @@ class AlgorithmStores(AlgorithmStoreBase):
             collab = db.Collaboration.get(args["collaboration_id"])
             if not collab:
                 return {"msg": "Collaboration not found"}, HTTPStatus.NOT_FOUND
-            # TODO generalize this check (make it available as part of the
-            # permission class)
             if not self.r_col.v_glo.can():
                 orgs_in_collab = [org.id for org in collab.organizations]
                 if not (self.r_col.v_org.can() and auth_org.id in orgs_in_collab):
@@ -572,7 +567,6 @@ class AlgorithmStore(AlgorithmStoreBase):
 
         # Check if algostore is used by other collaborations. If it is, user needs
         # to have global permissions to delete all those links.
-        # TODO require extra --force parameter to do this?
         all_stores_with_url = db.AlgorithmStore.get_by_url(algorithm_store.url)
         if len(all_stores_with_url) > 1:
             if self.r_col.e_glo.can():

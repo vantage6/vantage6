@@ -68,10 +68,6 @@ setup(
     entry_points={
         "console_scripts": [
             "v6=vantage6.cli.cli:cli_complete",
-            # TODO v5+ remove vnode/vserver/vdev aliases (?)
-            "vnode=vantage6.cli.cli:cli_node",
-            "vserver=vantage6.cli.cli:cli_server",
-            "vdev=vantage6.cli.cli:cli_dev",
         ]
     },
 )

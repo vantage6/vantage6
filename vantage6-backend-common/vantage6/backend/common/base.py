@@ -1,4 +1,3 @@
-# TODO this is almost a copy of the same file in the server package. Refactor
 import logging
 import os
 import inspect as class_inspect

@@ -96,14 +96,10 @@ def data_extraction(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
         _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION)
-
-        # TODO: should we add the data in here??
         result = func(*args, **kwargs)
-
         return _convert_to_parquet(result)
 
     return wrapper

@@ -252,7 +252,6 @@ def request_algo_store(
     return response, response.status_code
 
 
-# TODO move this to a utility module - it is also in algo store code
 def _contains_localhost(url: str) -> bool:
     """Check if the url refers to localhost address"""
     return url.startswith("http://localhost") or url.startswith("http://127.0.0.1")

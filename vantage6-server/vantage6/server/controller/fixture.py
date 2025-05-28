@@ -45,8 +45,6 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
     drop_all : bool
         If `True` all tables in the database will be dropped before loading
     """
-    # TODO we are not sure the DB is connected here....
-
     if drop_all:
         Database().drop_all()
 

@@ -79,7 +79,7 @@ def create_user(index, organization):
             password="Password123!",
             email=f"user_{index}@one.org",
             organization=organization["id"],
-            roles=[1],  # TODO assign proper roles
+            roles=[1],
         )
         print(f"===> Password for `{username}` is `Password123!`")
         return user
@@ -124,7 +124,6 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
                 "api_path": "/server",
                 "task_namespace": task_namespace,
                 "node_proxy_port": node_port,
-                # TODO user defined config
             }
         )
         config_file = (

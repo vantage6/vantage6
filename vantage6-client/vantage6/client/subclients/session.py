@@ -301,9 +301,6 @@ class SessionSubClient(ClientBase.SubClient):
 
     def task_tree(self, session: int | None = None) -> None:
 
-        # TODO FM 02-08-2024: Maybe move this to the task subclient?
-        # TODO FM 02-08-2024: This needs to be cleaned
-
         def color(status):
             color = "green" if status == "completed" else "yellow"
             return f"[{color}]{status}[/{color}]"
