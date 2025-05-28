@@ -634,10 +634,10 @@ class Node(NodeBase):
                     description: Node name
                   ip:
                     type: string
-                    description: The node's VPN IP address
+                    description: The node's internal IP address
                   clear_ip:
                     type: boolean
-                    description: Clear the node's VPN IP address
+                    description: Clear the node's internal IP address
 
         responses:
           200:

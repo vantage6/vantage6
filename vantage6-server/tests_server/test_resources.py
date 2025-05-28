@@ -2537,7 +2537,7 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
-        # try to patch the node's VPN IP address
+        # try to patch the node's internal network IP address
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
         headers = self.get_user_auth_header(org2, rules=[rule])
         results = self.app.patch(
@@ -2546,7 +2546,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
         self.assertEqual(results.json["ip"], "0.0.0.0")
 
-        # try to clear the node's VPN IP address - this should work
+        # try to clear the node's internal network IP address - this should work
         results = self.app.patch(
             f"/api/node/{node.id}", headers=headers, json={"clear_ip": True}
         )

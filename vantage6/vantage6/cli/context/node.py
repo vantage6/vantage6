@@ -189,20 +189,6 @@ class NodeContext(AppContext):
         return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
 
     @property
-    def docker_vpn_volume_name(self) -> str:
-        """
-        Docker volume in which the VPN configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "VPN_VOLUME_NAME", f"{self.docker_container_name}-vpn-vol"
-        )
-
-    @property
     def docker_ssh_volume_name(self) -> str:
         """
         Docker volume in which the SSH configuration is stored.

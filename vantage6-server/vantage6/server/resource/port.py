@@ -46,9 +46,9 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
     api.add_resource(
-        VPNAddress,
-        api_base + "/vpn/algorithm/addresses",
-        endpoint="vpn_address",
+        InternalAddress,
+        api_base + "/internal/algorithm/addresses",
+        endpoint="internal_address",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -101,7 +101,7 @@ class Ports(PortBase):
         """Create a list of port description
         ---
         description: >-
-          Creates a description of a port that is available for VPN
+          Creates a description of a port that is available for internal
           communication for a certain algorithm. Only the node on which the
           algorithm is running is allowed to create this.\n
 
@@ -115,7 +115,7 @@ class Ports(PortBase):
                 properties:
                   port:
                     type: integer
-                    description: Port number that receives container's VPN
+                    description: Port number that receives container's internal
                       traffic
                   run_id:
                     type: integer
@@ -134,7 +134,7 @@ class Ports(PortBase):
         security:
             - bearerAuth: []
 
-        tags: ["VPN"]
+        tags: ["Internal Network"]
         """
         data = request.get_json(silent=True)
         # validate request body
@@ -169,7 +169,7 @@ class Ports(PortBase):
         """Delete ports by run_id
         ---
         description: >-
-          Deletes descriptions of a port that is available for VPN
+          Deletes descriptions of a port that is available for internal
           communication for a certain algorithm. The ports are deleted based
           on run_id. Only the node on which the algorithm is running is
           allowed to delete this. This happens on task completion.\n
@@ -197,7 +197,7 @@ class Ports(PortBase):
         security:
           - bearerAuth: []
 
-        tags: ["VPN"]
+        tags: ["Internal Network"]
         """
         args = request.args
         if "run_id" not in args:
@@ -221,7 +221,7 @@ class Ports(PortBase):
         return {"msg": "Ports removed from the database."}, HTTPStatus.OK
 
 
-class VPNAddress(ServicesResources):
+class InternalAddress(ServicesResources):
     @with_container
     def get(self):
         """
@@ -299,7 +299,7 @@ class VPNAddress(ServicesResources):
         security:
         - bearerAuth: []
 
-        tags: ["VPN"]
+        tags: ["Internal Network"]
         """
         task_id = g.container["task_id"]
         task_ids = [task_id]

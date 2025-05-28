@@ -65,7 +65,7 @@ class AlgorithmClient(ClientBase):
         self.run = self.Run(self)
         self.result = self.Result(self)
         self.task = self.Task(self)
-        self.vpn = self.VPN(self)
+        self.network = self.Network(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.study = self.Study(self)
@@ -408,9 +408,9 @@ class AlgorithmClient(ClientBase):
                 json=json_body,
             )
 
-    class VPN(ClientBase.SubClient):
+    class Network(ClientBase.SubClient):
         """
-        A VPN client for the algorithm container.
+        A network client for the algorithm container.
 
         It provides functions to obtain the IP addresses of other containers.
         """
@@ -426,9 +426,9 @@ class AlgorithmClient(ClientBase):
             label: str = None,
         ) -> list[dict]:
             """
-            Get information about the VPN IP addresses and ports of other
-            algorithm containers involved in the current task. These addresses
-            can be used to send VPN communication to.
+            Get information about the internal network IP addresses and ports of
+            other algorithm containers involved in the current task. These
+            addresses can be used to send internal network communication to.
 
             Multiple ports may be exposed for a single algorithm run, so it
             is possible that multiple ports are returned for a single IP.
@@ -468,8 +468,8 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of dictionaries with algorithm addresses. Each dictionary
                 contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
+                'task_id', and 'parent_id'. If obtaining the internal network
+                addresses from the server fails, a dictionary with a 'message' key is returned
                 instead.
             """
             # Only pass the parameters if they are not the default value - this
@@ -494,7 +494,7 @@ class AlgorithmClient(ClientBase):
             results = self.parent.request("vpn/algorithm/addresses", params=params)
 
             if "addresses" not in results:
-                return {"message": "Obtaining VPN addresses failed!"}
+                return {"message": "Obtaining internal network addresses failed!"}
 
             return results["addresses"]
 
@@ -511,8 +511,8 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of dictionaries with algorithm addresses. Each dictionary
                 contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
+                'task_id', and 'parent_id'. If obtaining the internal network addresses
+                from the server fails, a dictionary with a 'message' key is returned
                 instead.
             """
             return self.get_addresses(only_parent=True)
@@ -530,8 +530,8 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of dictionaries with algorithm addresses. Each dictionary
                 contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
+                'task_id', and 'parent_id'. If obtaining the internal network
+                addresses from the server fails, a dictionary with a 'message' key is returned
                 instead.
             """
             return self.get_addresses(only_children=True)
@@ -549,8 +549,8 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of dictionaries with algorithm addresses. Each dictionary
                 contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
+                'task_id', and 'parent_id'. If obtaining the internal network
+                addresses from the server fails, a dictionary with a 'message' key is returned
                 instead.
             """
             return self.get_addresses(only_siblings=True)
@@ -567,8 +567,8 @@ class AlgorithmClient(ClientBase):
             list[dict]
                 List of dictionaries with algorithm addresses. Each dictionary
                 contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
+                'task_id', and 'parent_id'. If obtaining the internal network
+                addresses from the server fails, a dictionary with a 'message' key is returned
                 instead.
             """
             return self.get_addresses(only_self=True)
