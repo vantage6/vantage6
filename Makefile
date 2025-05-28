@@ -241,8 +241,13 @@ publish:
 	cd vantage6-server && make publish
 	cd vantage6-algorithm-store && make publish
 
+# Default test subpackages if none specified
+TEST_SUBPACKAGES ?= common,cli,algorithm-store,server
+
 test:
-	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+	$(eval TEST_ARGS := $(shell echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g'))
+	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
+
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.
