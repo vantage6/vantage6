@@ -624,9 +624,6 @@ class Node:
 
     def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        # TODO check if this listener is used anywhere else, before removing it
-
-        # kill_listener = ContainerKillListener()
         try:
             while True:
                 self.log.info("Waiting for new tasks....")
