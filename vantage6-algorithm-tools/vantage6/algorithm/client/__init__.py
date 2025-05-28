@@ -491,7 +491,7 @@ class AlgorithmClient(ClientBase):
             if label:
                 params["label"] = label
 
-            results = self.parent.request("vpn/algorithm/addresses", params=params)
+            results = self.parent.request("internal/algorithm/addresses", params=params)
 
             if "addresses" not in results:
                 return {"message": "Obtaining internal network addresses failed!"}

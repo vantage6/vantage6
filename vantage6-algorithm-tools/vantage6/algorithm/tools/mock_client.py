@@ -545,9 +545,9 @@ class MockAlgorithmClient:
             }
 
     # TODO implement the get_addresses method before using this part
-    # class VPN(SubClient):
+    # class Network(SubClient):
     #     """
-    #     VPN subclient for the MockAlgorithmClient
+    #     Network subclient for the MockAlgorithmClient
     #     """
     #     def get_addresses(
     #         self, only_children: bool = False, only_parent: bool = False,
@@ -555,7 +555,7 @@ class MockAlgorithmClient:
     #         label: str = None
     #     ) -> list[dict] | dict:
     #         """
-    #         Mock VPN IP addresses and ports of other algorithm containers in
+    #         Mock internal network IP addresses and ports of other algorithm containers in
     #         the current task.
 
     #         Parameters
@@ -584,8 +584,8 @@ class MockAlgorithmClient:
     #         list[dict] | dict
     #             List of dictionaries containing the IP address and port number,
     #             and other information to identify the containers. If obtaining
-    #             the VPN addresses from the server fails, a dictionary with a
-    #             'message' key is returned instead.
+    #             the internal network addresses from the server fails, a dictionary
+    #             with a 'message' key is returned instead.
     #         """
     #         pass
 
@@ -598,9 +598,9 @@ class MockAlgorithmClient:
     #         -------
     #         dict
     #             Dictionary containing the IP address and port number, and other
-    #             information to identify the containers. If obtaining the VPN
-    #             addresses from the server fails, a dictionary with a 'message'
-    #             key is returned instead.
+    #             information to identify the containers. If obtaining the internal
+    #             network addresses from the server fails, a dictionary with a
+    #             'message' key is returned instead.
     #         """
     #         return self.get_addresses(only_parent=True)
 
@@ -614,7 +614,7 @@ class MockAlgorithmClient:
     #         List[dict]
     #             List of dictionaries containing the IP address and port number,
     #             and other information to identify the containers. If obtaining
-    #             the VPN addresses from the server fails, a dictionary with a
-    #             'message' key is returned instead.
+    #             the internal network addresses from the server fails, a
+    #             dictionary with a 'message' key is returned instead.
     #         """
     #         return self.get_addresses(only_children=True)

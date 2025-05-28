@@ -47,7 +47,6 @@ RESOURCES = [
     "role",
     "rule",
     "health",
-    "vpn",
     "port",
     "event",
     "algorithm_store",
