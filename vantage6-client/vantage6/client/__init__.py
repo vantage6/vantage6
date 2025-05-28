@@ -29,6 +29,7 @@ from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubCl
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401
 
+import requests
 
 module_name = __name__.split(".")[1]
 
@@ -234,8 +235,27 @@ class UserClient(ClientBase):
 
         # Re-enable logging
         self.log.setLevel(prev_level)
-
         result = self.request("result", params={"task_id": task_id})
+        for item in result["data"]:
+            url = f"{self.base_path}/resultstream/{item['result']}"
+            headers = self.headers
+            timeout = 300
+        
+
+            try:
+                with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
+                    if response.status_code == 200:
+                        item['result'] = b""
+                        for chunk in response.iter_content(chunk_size=8192):
+                            item['result'] += chunk
+                    else:
+                        self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
+                        self.log.error(f"Response: {response.text}")
+            except requests.RequestException as e:
+                self.log.error(f"An error occurred while streaming result: {e}")
+        for item in result["data"]:
+            if isinstance(item['result'], bytes):
+                item['result'] = item['result'].decode('utf-8')
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
 
@@ -2224,7 +2244,28 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             results = self.parent.request("result", params={"task_id": task_id})
-            results = self._decrypt_result(results, False)
+            for item in results["data"]:
+                url = f"{self.parent.base_path}/resultstream/{item['result']}"
+                headers = self.parent.headers
+                timeout = 300
+            
+                try:
+                    with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
+                        if response.status_code == 200:
+                            item['result'] = b""
+                            for chunk in response.iter_content(chunk_size=8192):
+                                item['result'] += chunk
+                        else:
+                            self.parent.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
+                            self.parent.log.error(f"Response: {response.text}")
+                except requests.RequestException as e:
+                    self.parent.log.error(f"An error occurred while streaming result: {e}")
+            for item in results["data"]:
+                if isinstance(item['result'], bytes):
+                    item['result'] = item['result'].decode('utf-8')
+            results = self._decrypt_result(results, is_single_result=False)
+            print("Decrypted result: ")
+            print(results)
             return results
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:

@@ -3,6 +3,8 @@ This module provides a client interface for the node to communicate with the
 central server.
 """
 
+import traceback
+import uuid
 import jwt
 import datetime
 import time
@@ -188,6 +190,15 @@ class NodeClient(ClientBase):
                 run["input"] = self.parent._decrypt_input(run["input"])
 
             return run_data
+        
+        def is_uuid(self, value):
+            try:
+                if isinstance(value, bytes):
+                    value = value.decode("utf-8")
+                uuid.UUID(value)
+                return True
+            except (ValueError, TypeError, AttributeError):
+                return False
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
@@ -236,8 +247,7 @@ class NodeClient(ClientBase):
                     data["result"], public_key
                 )
 
-            self.parent.log.debug("Sending algorithm run update to server")
-
+            self.parent.log.debug(f"Sending algorithm run update to server")
             if "result" in data:
                 headers = {
                     "Authorization": f"Bearer {self.parent.token}",
@@ -246,7 +256,12 @@ class NodeClient(ClientBase):
                 
                 url = self.parent.generate_path_to("resultstream", False)
                 self.parent.log.debug(f"Making request: {url}")
-                response = requests.post(url, data=data["result"], headers=headers)
+
+                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
+                    for i in range(0, len(result), chunk_size):
+                        yield result[i:i + chunk_size]
+
+                response = requests.post(url, data=chunked_result_stream(data["result"]), headers=headers)
                 if not (200 <= response.status_code < 300):
                     self.parent.log.error(
                         f"Failed to upload result to server: {response.text}"
@@ -259,6 +274,9 @@ class NodeClient(ClientBase):
                     self.parent.log.error("Failed to upload result to server")
                     return
                 data["result"] = result_uuid
+                self.parent.log.info(
+                    f"Result uploaded to server with UUID: {result_uuid}"
+                )
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     class AlgorithmStore(ClientBase.SubClient):

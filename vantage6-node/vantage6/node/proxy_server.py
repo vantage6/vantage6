@@ -15,7 +15,7 @@ from time import sleep
 from http import HTTPStatus
 from requests import Response
 
-from flask import Flask, request
+from flask import Flask, request, stream_with_context, Response as FlaskResponse
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
@@ -385,6 +385,48 @@ def proxy_results(id_: int) -> Response:
     result = decrypt_result(result)
 
     return result, response.status_code
+
+
+@app.route("/resultstream/<string:id>", methods=["GET"])
+def stream_handler(id: str) -> FlaskResponse:
+    log.info("Proxy stream handler called with id: %s", id)
+    present = "Authorization" in request.headers
+    headers = {"Authorization": request.headers["Authorization"]} if present else None
+
+    method = get_method(request.method)
+    url = f"{server_url}/resultstream/{id}"
+    log.info("Making proxied request to %s", url)
+
+    backend_response = method(url, stream=True, params=request.args, headers=headers)
+
+    log.info("Received response with status code %s", backend_response.status_code)
+
+    if backend_response.status_code > 210:
+        log.warning("Proxy server received status code %s", backend_response.status_code)
+        log.warning("Error messages: %s", backend_response.json())
+        log.debug(
+            "method: %s, url: %s, params: %s, headers: %s",
+            request.method,
+            url,
+            request.args,
+            headers,
+        )
+        return backend_response.content, backend_response.status_code, backend_response.headers.items()
+
+    def generate():
+        try:
+            for chunk in backend_response.iter_content(chunk_size=8192):
+                if chunk:
+                    yield chunk
+        finally:
+            backend_response.close()
+
+    return FlaskResponse(
+        stream_with_context(generate()),
+        status=backend_response.status_code,
+        headers=dict(backend_response.headers),
+        content_type=backend_response.headers.get("Content-Type")
+    )
 
 
 @app.route(

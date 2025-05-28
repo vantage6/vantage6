@@ -148,13 +148,13 @@ class AlgorithmClient(ClientBase):
             time.sleep(interval)
 
         result = self.request("result", params={"task_id": task_id})
-        self.log.info("Result from server: ")
-        self.log.info(result)
-        
+        self.log.info(f"Result from server: {result}")
+        base_url = super().generate_path_to("resultstream", False)
         for item in result["data"]:
-            url = f"{self.base_path}/resultstream/{str(uuid.UUID(item['result']))}"
+            url = f"{base_url}/{str(uuid.UUID(item['result']))}"
+            self.log.info(f"retrieving data for url: {url}")
             headers = self.headers
-            timeout = 1200
+            timeout = 300
             try:
                 with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                     if response.status_code == 200:
@@ -177,8 +177,8 @@ class AlgorithmClient(ClientBase):
                 if result.get("result")
             ]
         except Exception as e:
-            self.parent.log.error("Unable to load results")
-            self.parent.log.error(e)
+            self.log.error("Unable to load results")
+            self.log.error(e)
 
         
 
