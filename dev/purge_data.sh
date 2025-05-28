@@ -42,7 +42,6 @@ for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "
   # validate that the path exists
   if [[ ! -e "$path" ]]; then
     echo "Error: Path does not exist: $path"
-    exit 1
   fi
 done
 
