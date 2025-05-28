@@ -17,14 +17,26 @@ usage() {
   exit 1
 }
 
+# Function to replace WSL paths
+replace_wsl_path() {
+  WSL_REFERENCE_PATH="/run/desktop/mnt/host/wsl"
+  WSL_REGULAR_PATH="/mnt/wsl"
+  local path=$1
+  # If the path contains /run/desktop/mnt/host/wsl, replace it with /mnt/wsl
+  if [[ "$path" == $WSL_REFERENCE_PATH* ]]; then
+    path="${WSL_REGULAR_PATH}${path#${WSL_REFERENCE_PATH}}"
+  fi
+  echo "$path"
+}
+
 if [[ "$1" == "--help" ]]; then
   usage
 fi
 
-POPULATE_MARKER=$1
-TASK_DIRECTORY=$2
-SERVER_DATABASE_MOUNT_PATH=$3
-STORE_DATABASE_MOUNT_PATH=$4
+POPULATE_MARKER=$(replace_wsl_path "$1")
+TASK_DIRECTORY=$(replace_wsl_path "$2")
+SERVER_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
+STORE_DATABASE_MOUNT_PATH=$(replace_wsl_path "$4")
 
 # Validate that all required arguments are provided
 if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ]; then
