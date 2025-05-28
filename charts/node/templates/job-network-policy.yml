@@ -19,13 +19,14 @@ spec:
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-egress-isolation
+  name: {{ .Release.Name }}-tasks-namespace-default-policy
   namespace: {{ .Values.node.taskNamespace }}
 spec:
   podSelector: {}  # Selects all pods in the namespace
   policyTypes:
   - Ingress
   - Egress
+
 ---
 
 # Network policies for federated_compute step/jobs
@@ -44,16 +45,6 @@ spec:
   - Egress
   ingress: []
   egress: []
-  # # Example of how to 'whitelist' an external PostgreSQL database
-  # # (outside the k8s cluster)
-  # egress:  
-  # - to:
-  #   # Kubernetes NetworkPolicies do not support domain names or DNS-based rules directly
-  #   - ipBlock:
-  #       cidr: 203.0.113.25/32  # Replace with your actual Postgres server IP
-  #   ports:
-  #   - protocol: TCP
-  #     port: 5432
 
 ---
 # Network policies for central_compute step/jobs
@@ -101,3 +92,33 @@ spec:
     - protocol: TCP
       port: 53
 
+
+
+---
+
+# Network policies for data_extraction jobs
+# This kind of jobs may require access to external databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-data-extraction-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      role: data_extraction
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+  # # Example of how to 'whitelist' an external PostgreSQL database
+  # # (outside the k8s cluster)
+  # egress:  
+  # - to:
+  #   # Kubernetes NetworkPolicies do not support domain names or DNS-based rules directly
+  #   - ipBlock:
+  #       cidr: 203.0.113.25/32  # Replace with your actual Postgres server IP
+  #   ports:
+  #   - protocol: TCP
+  #     port: 5432
