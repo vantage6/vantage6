@@ -3,12 +3,11 @@ import logging
 
 from functools import wraps
 
-from flask import g, request, current_app
+from flask import g, request
 from flask_restful import Api
 from flask_mail import Mail
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from flask_socketio import SocketIO
-from jwt import decode
 
 
 from vantage6.common import logger_name

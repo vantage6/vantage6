@@ -51,14 +51,9 @@ import {
   includeBearerTokenInterceptor
 } from 'keycloak-angular';
 
-import { environment } from '../environments/environment';
-
-// TODO Now we intercept all requests to send the Keycloak token to all backend
-// endpoints. We should consider only sending the token to the server and the registered
-// algorithm stores.
+// Send the Keycloak token along with all requests when the user is authenticated.
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
   urlPattern: new RegExp(`.*`, 'i'),
-  // urlPattern: new RegExp(`^(${environment.server_url})(\/.*)?$`, 'i'),
   bearerPrefix: 'Bearer'
 });
 

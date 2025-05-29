@@ -4,7 +4,6 @@ import { SocketioConnectService } from './socketio-connect.service';
 import { PermissionService } from './permission.service';
 import { EncryptionService } from './encryption.service';
 import { StorePermissionService } from './store-permission.service';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'

@@ -1,8 +1,6 @@
 from unittest import TestCase
 
 from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.model.organization import Organization
-from vantage6.server.model.user import User
 
 
 class TestModelBase(TestCase):

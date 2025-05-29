@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { RouterOutlet } from '@angular/router';
 import { KEYCLOAK_EVENT_SIGNAL, KeycloakEventType } from 'keycloak-angular';
 import { Router } from '@angular/router';
-import { LoginLogoutService } from './services/logout.service';
 
 @Component({
   selector: 'app-root',
