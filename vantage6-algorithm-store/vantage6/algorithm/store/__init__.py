@@ -453,9 +453,7 @@ class AlgorithmStoreApp:
                         "Creating root user. Please note that it cannot be verified at "
                         "this point that the user exists at the given vantage6 server."
                     )
-
-                    root = db.Role.get_by_name("Root")
-
+                    root = db.Role.get_by_name(DefaultRole.ROOT)
                     user = db.User(
                         v6_server_id=v6_server.id,
                         username=root_username,
