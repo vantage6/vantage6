@@ -33,7 +33,6 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "pyfiglet==0.8.post1",
-        "PyJWT==2.6.0",
         "python-keycloak==5.5.0",
         "rich==13.5.2",
         f'vantage6-common=={version_ns["__version__"]}',

@@ -1,9 +1,4 @@
 export const routePaths = {
-  login: '/auth/login',
-  setupMFA: '/auth/mfa/setup',
-  mfaCode: '/auth/mfa/code',
-  mfaLost: '/auth/mfa/lost',
-  mfaRecover: '/auth/mfa/recover',
   home: '/',
   passwordChange: '/password/change',
   adminHome: '/admin',
@@ -68,11 +63,6 @@ export const routePaths = {
 };
 
 export const routerConfig = {
-  login: 'login',
-  setupMFA: 'mfa/setup',
-  mfaCode: 'mfa/code',
-  mfaLost: 'mfa/lost',
-  mfaRecover: 'mfa/recover',
   chooseCollaboration: 'collaboration/choose',
   keyUpload: 'key/upload',
   home: '',

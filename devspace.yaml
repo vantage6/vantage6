@@ -201,12 +201,6 @@ deployments:
             existingClaim: ""
             volumePath: ${KEYCLOAK_DATABASE_MOUNT_PATH}
             k8sNodeName: ${K8S_NODE_NAME}
-        # auth:
-        #   adminUser: admin
-        #   adminPassword: admin
-        # extraEnvVars:
-        #   - name: KEYCLOAK_LOG_LEVEL
-        #     value: DEBUG
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the

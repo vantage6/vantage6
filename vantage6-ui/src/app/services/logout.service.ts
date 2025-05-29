@@ -27,6 +27,7 @@ export class LoginLogoutService {
     this.socketConnectService.connect();
   }
 
+  // TODO v5+ this should be more efficient - not sure asyncs are needed
   async logout() {
     await this.permissionService.clear();
     await this.storePermissionService.clear();
