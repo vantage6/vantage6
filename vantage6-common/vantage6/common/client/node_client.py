@@ -7,7 +7,6 @@ import datetime
 import time
 from threading import Thread
 
-import jwt
 from keycloak import KeycloakOpenID
 
 from vantage6.common import WhoAmI
@@ -21,6 +20,16 @@ class NodeClient(ClientBase):
     """Node interface to the central server."""
 
     def __init__(self, node_account_name: str, api_key: str, *args, **kwargs):
+        """
+        Initialize the node client.
+
+        Parameters
+        ----------
+        node_account_name : str
+            The name of the node account.
+        api_key : str
+            The api key of the node.
+        """
         super().__init__(*args, **kwargs)
 
         self.node_account_name = node_account_name
@@ -43,22 +52,9 @@ class NodeClient(ClientBase):
 
     def authenticate(self) -> None:
         """
-        Nodes authentication at the central server.
-
-        It also identifies itself by retrieving the collaboration
-        and organization to which this node belongs. The server
-        returns a JWT-token that is used in all succeeding requests.
-
-        Parameters
-        ----------
-        node_account_name : str
-            The name of the node account.
-        api_key : str
-            The api key of the node.
+        Nodes authentication by using keycloak.
         """
-        # authenticate with keycloak
-
-        # get token using service account
+        # get token from keycloak
         try:
             self.refresh_token()
         except Exception as e:

@@ -168,9 +168,15 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     }
 
     # Check if we can login to the server to retrieve collaboration settings
-    client = NodeClient(config["server_url"], config["port"], config["api_path"])
+    client = NodeClient(
+        instance_name,
+        config["api_key"],
+        config["server_url"],
+        config["port"],
+        config["api_path"],
+    )
     try:
-        client.authenticate(config["api_key"])
+        client.authenticate()
     except Exception as e:
         error(f"Could not authenticate with server: {e}")
         error("Please check (1) your API key and (2) if your server is online")
