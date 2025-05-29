@@ -355,46 +355,13 @@ class ClientBase(object):
 
     @abc.abstractmethod
     def authenticate(self) -> None:
-        """Authenticate to vantage6 via keycloak.
-
-        This is an abstract method that must be implemented by subclasses, for
-        specific logins of users, nodes and containers.
-        """
+        """Authenticate to vantage6 via keycloak."""
         return
 
+    @abc.abstractmethod
     def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token
-
-        Raises
-        ------
-        Exception
-            Authentication Error!
-        AssertionError
-            Refresh URL not found
-        """
-        self.log.info("Refreshing token")
-        assert self._refresh_url, "Refresh URL not found, did you authenticate?"
-
-        # if no port is specified explicit, then it should be omit the
-        # colon : in the path. Similar (but different) to the property
-        # base_path
-        if self.__port:
-            url = f"{self.__host}:{self.__port}{self._refresh_url}"
-        else:
-            url = f"{self.__host}{self._refresh_url}"
-
-        # send request to server
-        response = requests.post(
-            url, headers={"Authorization": "Bearer " + self._refresh_token}
-        )
-
-        # server says no!
-        if response.status_code != 200:
-            self.log.critical("Could not refresh token")
-            raise Exception("Authentication Error!")
-
-        self._access_token = response.json()["access_token"]
-        self._refresh_token = response.json()["refresh_token"]
+        """Refresh an expired token using the refresh token"""
+        return
 
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run
