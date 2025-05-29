@@ -128,15 +128,34 @@ def request_algo_store(
         request to the algorithm store is unsuccessful, a dict with an error message is
         returned instead of the response.
     """
+    is_localhost_algo_store = _contains_localhost(algo_store_url)
     log.debug("Calling algorithm store at %s/%s", algo_store_url, endpoint)
     try:
         response = _execute_algo_store_request(
             algo_store_url, endpoint, method, params, headers
         )
     except requests.exceptions.ConnectionError as exc:
-        log.warning("Request to algorithm store failed")
-        log.exception(exc)
+        if not is_localhost_algo_store:
+            log.warning("Request to algorithm store failed")
+            log.exception(exc)
         response = None
+
+    # if the algorithm store is on localhost, we need to look for the local kubernetes
+    # service and use that instead
+    if not response and is_localhost_algo_store:
+        port_number = algo_store_url.split(":")[2].split("/")[0]
+        algo_store_url = algo_store_url.replace(
+            f"localhost:{port_number}",
+            "vantage6-store-store-service.default.svc.cluster.local:80",
+        )
+        try:
+            response = _execute_algo_store_request(
+                algo_store_url, endpoint, method, params, headers
+            )
+        except requests.exceptions.ConnectionError as exc:
+            log.warning("Request to algorithm store failed")
+            log.exception(exc)
+            response = None
 
     if response is None:
         return {
@@ -158,6 +177,11 @@ def request_algo_store(
         return {"msg": msg}, response.status_code
     # else: server has been registered at algorithm store, proceed
     return response, response.status_code
+
+
+def _contains_localhost(url: str) -> bool:
+    """Check if the url refers to localhost address"""
+    return url.startswith("http://localhost") or url.startswith("http://127.0.0.1")
 
 
 def _execute_algo_store_request(
