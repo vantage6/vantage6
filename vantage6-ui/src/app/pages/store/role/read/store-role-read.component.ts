@@ -142,14 +142,11 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   public handleChangedSelection(rules: Rule_[]): void {
-    console.log('handleChangedSelection called with rules:', rules);
     this.changedRules = rules as StoreRule[];
-    console.log('changedRules updated to:', this.changedRules);
   }
 
   public async handleSubmitEdit(): Promise<void> {
     if (!this.role || !this.changedRules) return;
-    console.log('handleSubmitEdit called with role:', this.role, 'and changedRules:', this.changedRules);
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
     this.isLoading = true;
@@ -162,15 +159,11 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   private setUpUserTable(): void {
     if (!this.role || !this.role.users) return;
     this.userTable = {
-      columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'serverurl', label: this.translateService.instant('store-user.server') }
-      ],
+      columns: [{ id: 'username', label: this.translateService.instant('user.username') }],
       rows: this.role?.users?.map((user) => ({
         id: user.id.toString(),
         columnData: {
-          username: user.username,
-          serverurl: user.server.url
+          username: user.username
         }
       }))
     };

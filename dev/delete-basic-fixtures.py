@@ -13,7 +13,7 @@ dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("root", "root")
+client.authenticate()
 
 print("=> Deleting sessions & dataframes")
 for session in (sessions := client.session.list(per_page=999)["data"]):
@@ -37,7 +37,7 @@ print("==> Deleted", len(collabs), "collaborations")
 
 print("=> Deleting users")
 for user in (users := client.user.list(per_page=999)["data"]):
-    if user["username"] == "root":
+    if user["username"] == "admin":
         continue
     client.user.delete(user["id"])
 print("==> Deleted", len(users) - 1, "users")

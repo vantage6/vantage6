@@ -16,7 +16,6 @@ SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
 RESOURCES = [
     "version",
     "algorithm",
-    "vantage6_server",
     "role",
     "rule",
     "user",

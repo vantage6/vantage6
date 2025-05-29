@@ -15,7 +15,7 @@ dev_data_dir = dev_dir / ".data"
 dev_data_dir.mkdir(exist_ok=True)
 
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("root", "root")
+client.authenticate()
 existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]
 
@@ -30,7 +30,6 @@ if local_store_url not in existing_urls:
         algorithm_store_url=local_store_url,
         name="Local store",
         all_collaborations=True,
-        force=True,  # required to link localhost store
     )
 else:
     store_response = client.store.list(name="Local store")["data"][0]
@@ -39,7 +38,7 @@ else:
 users_in_store = client.store.user.list()["data"]
 all_users = client.user.list()["data"]
 for user in all_users:
-    if user["username"] not in [u["username"] for u in users_in_store]:
+    if user["keycloak_id"] not in [u["keycloak_id"] for u in users_in_store]:
         print(f"Registering user {user['username']} in local store")
         client.store.user.register(username=user["username"], roles=[1])
 

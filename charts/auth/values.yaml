@@ -1,0 +1,120 @@
+keycloak:
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: postgres
+      password: keycloak
+      database: keycloak
+  auth:
+    adminUser: admin
+    adminPassword: admin
+  keycloakConfigCli:
+    enabled: true
+    configuration:
+      realm:
+        realm: vantage6
+        enabled: true
+        users:
+          - username: admin
+            enabled: true
+            emailVerified: true
+            # Note that email, firstName and lastName are set to fully initialize the
+            # user in the database.
+            email: admin@vantage6.org
+            firstName: Admin
+            lastName: Admin
+            credentials:
+              - type: password
+                value: admin
+            realmRoles:
+              - admin
+        clients:
+          - clientId: myclient
+            publicClient: true
+            redirectUris:
+              - "*"
+            webOrigins:
+              - "*"
+            protocolMappers:
+              - name: client_type
+                protocol: openid-connect
+                protocolMapper: oidc-hardcoded-claim-mapper
+                consentRequired: false
+                config:
+                  claim.name: client_type
+                  claim.value: user
+                  introspection.token.claim: true
+                  userinfo.token.claim: true
+                  id.token.claim: true
+                  access.token.claim: true
+          - clientId: backend
+            publicClient: false
+            redirectUris:
+              - "*"
+            secret: mysecret
+          - clientId: admin-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            secret: myadminsecret
+            directAccessGrantsEnabled: true
+            serviceAccountsEnabled: true
+            standardFlowEnabled: true
+          - clientId: vantage6-store-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            secret: mystoreregularclientsecret
+          - clientId: vantage6-store-admin-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            secret: mystoreclientsecret
+            directAccessGrantsEnabled: true
+            serviceAccountsEnabled: true
+            standardFlowEnabled: true
+          - clientId: node-client
+            publicClient: false
+            redirectUris:
+              - "*"
+            secret: mynodeclientsecret
+            directAccessGrantsEnabled: true
+            standardFlowEnabled: false
+            protocolMappers:
+              - name: client_type
+                protocol: openid-connect
+                protocolMapper: oidc-hardcoded-claim-mapper
+                consentRequired: false
+                config:
+                  claim.name: client_type
+                  claim.value: node
+                  introspection.token.claim: true
+                  userinfo.token.claim: true
+                  id.token.claim: true
+                  access.token.claim: true
+        roles:
+          realm:
+            - name: admin
+              clientRole: true
+              composite: true
+              composites:
+                client:
+                  realm-management:
+                    - query-users
+                    - query-groups
+                    - impersonation
+                    - view-users
+                    - view-events
+                    - manage-clients
+                    - view-identity-providers
+                    - query-clients
+                    - view-realm
+                    - manage-users
+                    - query-realms
+                    - manage-identity-providers
+                    - view-authorization
+                    - create-client
+                    - view-clients
+                    - manage-realm
+                    - manage-events
+                    - manage-authorization

@@ -1,9 +1,3 @@
-# API key used to authenticate the node at the server. The API key is generated when
-# the node is registered at the server. If you lost the API key you can generate a new
-# one (if you have sufficient permissions), in the UI under Administration -> Node
-# -> Reset API key, or by using the API endpoint POST /recover/node.
-api_key: ***
-
 # URL of the vantage6 server
 server_url: https://cotopaxi.vantage6.ai
 

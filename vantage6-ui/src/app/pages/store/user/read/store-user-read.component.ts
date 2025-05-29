@@ -78,7 +78,7 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
     this.user = await this.storeUserService.getUser(store?.url, this.id, [StoreUserLazyProperties.Roles]);
 
     this.setPermissions();
-    this.allUserRules = await this.storeRuleService.getRules(store.url, { username: this.user.username, server_url: this.user.server.url });
+    this.allUserRules = await this.storeRuleService.getRules(store.url, { user_id: this.user.id });
 
     this.isLoading = false;
   }

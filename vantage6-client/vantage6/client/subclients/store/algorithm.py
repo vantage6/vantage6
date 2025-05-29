@@ -30,7 +30,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             f"algorithm/{id_}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=True)
@@ -119,7 +118,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             "algorithm",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )
 
@@ -248,7 +246,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             "algorithm",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )
 
@@ -265,7 +262,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}",
             method="delete",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
@@ -296,7 +292,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}/invalidate",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=False)
@@ -435,6 +430,5 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}",
             method="PATCH",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )

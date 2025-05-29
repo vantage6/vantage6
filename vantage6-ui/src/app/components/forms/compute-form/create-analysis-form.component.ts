@@ -448,7 +448,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,
-      server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),

@@ -1,5 +1,6 @@
 import logging
 import datetime
+import uuid
 
 from sqlalchemy.exc import IntegrityError
 
@@ -26,19 +27,26 @@ logging.basicConfig(level=logging.CRITICAL)
 
 class TestUserModel(TestModelBase):
     def test_relations(self):
-        organization = self.entities.get("organizations")[0]
-        user = organization.get("users")[0]
+        org = Organization()
+        org.save()
+        user = User(organization=org)
+        user.save()
+
         db_user = User.get_by_username(user.get("username"))
-        self.assertEqual(db_user.organization.name, organization["name"])
+        self.assertEqual(db_user.organization.name, org.name)
 
     def test_read(self):
-        for org in self.entities.get("organizations"):
-            for user in org.get("users"):
-                db_user = User.get_by_username(user["username"])
-                self.assertEqual(db_user.username, user["username"])
-                self.assertEqual(db_user.firstname, user["firstname"])
-                self.assertEqual(db_user.lastname, user["lastname"])
-                self.assertTrue(db_user.check_password(user["password"]))
+        user = User(
+            username="test_user",
+            firstname="Test",
+            lastname="User",
+            email="test@user.com",
+        )
+        user.save()
+        db_user = User.get_by_username(user.username)
+        self.assertEqual(db_user.username, user.username)
+        self.assertEqual(db_user.firstname, user.firstname)
+        self.assertEqual(db_user.lastname, user.lastname)
 
     def test_insert(self):
         db_organization = Organization.get(1)
@@ -48,7 +56,6 @@ class TestUserModel(TestModelBase):
             lastname="it",
             organization=db_organization,
             email="unit@org.org",
-            password="unit_pass",
         )
         user.save()
         db_user = User.get_by_username("unit")
@@ -56,11 +63,11 @@ class TestUserModel(TestModelBase):
 
     def test_methods(self):
         """ "Test model methods."""
-        user = self.entities.get("organizations")[0].get("users")[0]
-        # print(user)
-        # print(User.get())
-        assert User.get_by_username(user.get("username"))
-        assert User.username_exists(user.get("username"))
+        username = str(uuid.uuid4())
+        user = User(username=username)
+        user.save()
+        assert User.get_by_username(username)
+        assert User.username_exists(username)
 
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""
@@ -76,9 +83,10 @@ class TestUserModel(TestModelBase):
 
 class TestCollaborationModel(TestModelBase):
     def test_read(self):
-        for col in self.entities.get("collaborations"):
-            db_collaboration = Collaboration.find_by_name(col.get("name"))
-            self.assertEqual(db_collaboration.name, col.get("name"))
+        col = Collaboration(name=str(uuid.uuid4()))
+        col.save()
+        db_collaboration = Collaboration.find_by_name(col.name)
+        self.assertEqual(db_collaboration.name, col.name)
 
     def test_insert(self):
         col = Collaboration(name="unit_collaboration")
@@ -106,34 +114,36 @@ class TestNodeModel(TestModelBase):
     def test_read(self):
         for node in Node.get():
             self.assertIsInstance(node.name, str)
-            self.assertIsInstance(node.api_key, str)
 
     def test_insert(self):
-        collaboration = Collaboration.get(1)
-        organization = collaboration.organizations[0]
+        org = Organization(name=str(uuid.uuid4()))
+        collaboration = Collaboration(name=str(uuid.uuid4()), organizations=[org])
+        collaboration.save()
         node = Node(
             name="unit_node",
-            api_key="that-we-never-use",
             collaboration=collaboration,
-            organization=organization,
+            organization=org,
+            keycloak_id="1234567890111",
         )
         node.save()
 
-        node = Node.get_by_api_key("that-we-never-use")
+        node = Node.get_by_keycloak_id("1234567890111")
         self.assertIsNotNone(node)
         self.assertIsInstance(node, Node)
         self.assertEqual(node.name, "unit_node")
-        self.assertTrue(node.check_key("that-we-never-use"))
         self.assertEqual(node.collaboration, collaboration)
-        self.assertEqual(node.organization, organization)
+        self.assertEqual(node.organization, org)
 
     def test_methods(self):
-        node = Node(name="la chuck", api_key="some-secret-monkeys")
+        node = Node(name="la chuck", keycloak_id="1234567890")
         node.save()
-        self.assertIsInstance(Node.get_by_api_key("some-secret-monkeys"), Node)
+        self.assertIsInstance(Node.get_by_keycloak_id("1234567890"), Node)
 
     def test_relations(self):
-        node = Node.get()[0]
+        org = Organization(name=str(uuid.uuid4()))
+        col = Collaboration(name=str(uuid.uuid4()), organizations=[org])
+        node = Node(collaboration=col, organization=org)
+        node.save()
         self.assertIsNotNone(node)
         self.assertIsInstance(node.organization, Organization)
         self.assertIsInstance(node.collaboration, Collaboration)
@@ -145,19 +155,31 @@ class TestNodeModel(TestModelBase):
 
 class TestOrganizationModel(TestModelBase):
     def test_read(self):
-        for organization in self.entities.get("organizations"):
-            org = Organization.get_by_name(organization.get("name"))
-            self.assertEqual(org.name, organization.get("name"))
-            self.assertEqual(org.domain, organization.get("domain"))
-            self.assertEqual(org.address1, organization.get("address1"))
-            self.assertEqual(org.address2, organization.get("address2"))
-            self.assertEqual(org.zipcode, str(organization.get("zipcode")))
-            self.assertEqual(org.country, organization.get("country"))
+        org = Organization(
+            name=str(uuid.uuid4()),
+            domain=str(uuid.uuid4()),
+            address1=str(uuid.uuid4()),
+            address2=str(uuid.uuid4()),
+            zipcode=str(uuid.uuid4()),
+        )
+        org.save()
+        username = str(uuid.uuid4())
+        user = User(organization=org, username=username)
+        user.save()
 
-            for user in organization.get("users"):
-                db_user = User.get_by_username(user.get("username"))
-                self.assertIsNotNone(db_user)
-                self.assertEqual(db_user.organization.name, organization.get("name"))
+        db_org = Organization.get_by_name(org.name)
+
+        self.assertEqual(db_org.name, org.name)
+        self.assertEqual(db_org.domain, org.domain)
+        self.assertEqual(db_org.address1, org.address1)
+        self.assertEqual(db_org.address2, org.address2)
+        self.assertEqual(db_org.zipcode, org.zipcode)
+        self.assertEqual(db_org.country, org.country)
+
+        for user in db_org.users:
+            db_user = User.get_by_username(username)
+            self.assertIsNotNone(db_user)
+            self.assertEqual(db_user.organization.name, org.name)
 
     def test_insert(self):
         col = Collaboration.get()
@@ -175,7 +197,9 @@ class TestOrganizationModel(TestModelBase):
         self.assertEqual(db_org, org)
 
     def test_methods(self):
-        name = self.entities.get("organizations")[0].get("name")
+        org = Organization(name=str(uuid.uuid4()))
+        org.save()
+        name = org.name
         self.assertIsNotNone(Organization.get_by_name(name))
 
     def test_relations(self):
@@ -200,8 +224,10 @@ class TestRunModel(TestModelBase):
             self.assertIsNone(run.finished_at)
 
     def test_insert(self):
+        org = Organization(name=str(uuid.uuid4()))
+        org.save()
         task = Task(name="unit_task")
-        run = Run(task=task, organization=Organization.get()[0], input="something")
+        run = Run(task=task, organization=org, input="something")
         run.save()
         self.assertEqual(run, run)
 
@@ -210,7 +236,11 @@ class TestRunModel(TestModelBase):
     #         self.assertFalse(result.complete)
 
     def test_relations(self):
-        run = Run.get()[0]
+        org = Organization(name=str(uuid.uuid4()))
+        col = Collaboration(name=str(uuid.uuid4()), organizations=[org])
+        task = Task(name="unit_task", collaboration=col)
+        run = Run(task=task, organization=org)
+        run.save()
         self.assertIsInstance(run.organization, Organization)
         for user in run.organization.users:
             self.assertIsInstance(user, User)
@@ -232,10 +262,12 @@ class TestTaskModel(TestModelBase):
                 self.assertIsInstance(run, Run)
 
     def test_insert(self):
+        col = Collaboration(name=str(uuid.uuid4()))
+        col.save()
         task = Task(
             name="unit_task",
             image="some-image",
-            collaboration=Collaboration.get()[0],
+            collaboration=col,
             job_id=1,
         )
         task.save()
@@ -253,14 +285,21 @@ class TestTaskModel(TestModelBase):
                 highest_id = task.id
 
     def test_relations(self):
+        org = Organization(name=str(uuid.uuid4()))
+        col = Collaboration(name=str(uuid.uuid4()), organizations=[org])
+        col.save()
+        task = Task(
+            name="unit_task",
+            collaboration=col,
+            runs=[Run(organization=org)],
+        )
+        task.save()
         db_task = Task.get()
         for task in db_task:
             self.assertIsInstance(task, Task)
             self.assertIsInstance(task.collaboration, Collaboration)
             for run in task.runs:
                 self.assertIsInstance(run, Run)
-            for user in task.collaboration.organizations[0].users:
-                self.assertIsInstance(user, User)
 
 
 class TestRuleModel(TestModelBase):

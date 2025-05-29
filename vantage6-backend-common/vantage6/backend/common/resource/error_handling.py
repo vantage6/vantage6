@@ -1,5 +1,11 @@
+import logging
 from functools import wraps
 from http import HTTPStatus
+
+from vantage6.common import logger_name
+
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
 
 
 class UnauthorizedError(Exception):
@@ -56,6 +62,7 @@ def handle_exceptions(func):
         except BadRequestError as e:
             return {"msg": e.message}, e.status_code
         except Exception as e:
+            log.exception(e)
             return {
                 "msg": "An unexpected error occurred: " + str(e)
             }, HTTPStatus.INTERNAL_SERVER_ERROR

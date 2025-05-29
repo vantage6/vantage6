@@ -168,9 +168,15 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     }
 
     # Check if we can login to the server to retrieve collaboration settings
-    client = NodeClient(config["server_url"], config["port"], config["api_path"])
+    client = NodeClient(
+        instance_name,
+        config["api_key"],
+        config["server_url"],
+        config["port"],
+        config["api_path"],
+    )
     try:
-        client.authenticate(config["api_key"])
+        client.authenticate()
     except Exception as e:
         error(f"Could not authenticate with server: {e}")
         error("Please check (1) your API key and (2) if your server is online")
@@ -378,10 +384,6 @@ def server_configuration_questionaire(instance_name: str) -> dict:
 
     config = _get_common_server_config(InstanceType.SERVER, instance_name)
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").unsafe_ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = generate_apikey()
-
     is_mfa = q.confirm("Do you want to enforce two-factor authentication?").unsafe_ask()
     if is_mfa:
         config["two_factor_auth"] = is_mfa
@@ -494,7 +496,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     default_v6_server_uri = (
         f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"
     )
-    default_root_username = "root"
+    default_root_username = "admin"
 
     v6_server_uri = q.text(
         "What is the Vantage6 server linked to the algorithm store? "

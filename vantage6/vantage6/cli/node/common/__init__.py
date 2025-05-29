@@ -38,9 +38,7 @@ def create_client(ctx: NodeContext) -> UserClient:
     return UserClient(host, port, api_path, log_level="warn")
 
 
-def create_client_and_authenticate(
-    ctx: NodeContext, ask_mfa: bool = False
-) -> UserClient:
+def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     """
     Generate a client and authenticate with the server.
 
@@ -48,8 +46,6 @@ def create_client_and_authenticate(
     ----------
     ctx : NodeContext
         Context of the node loaded from the configuration file
-    ask_mfa : bool, optional
-        Whether to ask for MFA code, by default False
 
     Returns
     -------
@@ -59,35 +55,13 @@ def create_client_and_authenticate(
     client = create_client(ctx)
 
     try:
-        username, password, mfa_code = _get_auth_data()
-    except KeyboardInterrupt:
-        error("Authentication aborted.")
-        exit(1)
-
-    try:
-        client.authenticate(username, password, mfa_code=mfa_code)
-
+        client.authenticate()
     except Exception as exc:
         error("Could not authenticate with server!")
         debug(exc)
         exit(1)
 
     return client
-
-
-def _get_auth_data() -> tuple[str, str, str]:
-    """
-    Get authentication data from the user.
-
-    Returns
-    -------
-    tuple[str, str, str]
-        Tuple containing username, password and MFA code
-    """
-    username = q.text("Username:").unsafe_ask()
-    password = q.password("Password:").unsafe_ask()
-    mfa_code = q.text("MFA code:").unsafe_ask()
-    return username, password, mfa_code
 
 
 def select_node(name: str, system_folders: bool) -> tuple[str, str]:

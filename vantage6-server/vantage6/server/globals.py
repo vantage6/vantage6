@@ -58,7 +58,7 @@ RESOURCES = [
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.
-SUPER_USER_INFO = {"username": "root", "password": "root"}
+SUPER_USER_INFO = {"username": "admin", "password": "admin"}
 
 # default time that token is valid in minutes
 DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES = 60

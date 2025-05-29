@@ -43,7 +43,7 @@ export class AlgorithmStoreService {
   }
 
   async delete(id: string): Promise<void> {
-    return await this.apiService.deleteForApi(`/algorithmstore/${id}`, { server_url: `${environment.server_url}${environment.api_path}` });
+    return await this.apiService.deleteForApi(`/algorithmstore/${id}`);
   }
 
   async getAlgorithmStorePolicies(store_url: string, public_: boolean = false): Promise<StorePolicies> {

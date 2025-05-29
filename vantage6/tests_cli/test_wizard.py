@@ -29,8 +29,10 @@ class WizardTest(unittest.TestCase):
                     result[name] = None
         return result
 
-    def test_node_wizard(self):
+    @patch("vantage6.cli.configuration_wizard.NodeClient.authenticate")
+    def test_node_wizard(self, authenticate):
         """An error is printed when docker is not running"""
+        authenticate.return_value = None
 
         with patch(f"{module_path}.q") as q:
             q.unsafe_prompt.side_effect = self.prompts
@@ -99,7 +101,6 @@ class WizardTest(unittest.TestCase):
                 "api_path",
                 "uri",
                 "allow_drop_all",
-                "jwt_secret_key",
                 "logging",
                 "vpn_server",
                 "rabbitmq",

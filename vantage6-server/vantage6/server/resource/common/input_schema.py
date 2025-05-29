@@ -1,4 +1,3 @@
-import uuid
 import ipaddress
 import re
 
@@ -381,7 +380,6 @@ class TaskInputSchema(_NameValidationSchema):
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
-    server_url = fields.Url()
     depends_on_ids = fields.List(
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
@@ -457,55 +455,6 @@ class TaskInputSchema(_NameValidationSchema):
                 )
 
 
-class TokenUserInputSchema(BasicAuthInputSchema):
-    """Schema for validating input for creating a token for a user."""
-
-    mfa_code = fields.String(validate=Length(max=10))
-
-    @validates("username")
-    def validate_username(self, username: str):
-        """
-        Check if the username is appropriate
-
-        Parameters
-        ----------
-        username : str
-            Username to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the username is too short, too long or numeric.
-        """
-        _validate_username(username)
-
-
-class TokenNodeInputSchema(Schema):
-    """Schema for validating input for creating a token for a node."""
-
-    api_key = fields.String(required=True)
-
-    @validates("api_key")
-    def validate_api_key(self, api_key: str):
-        """
-        Validate the API key in the input. The API key should be a valid UUID
-
-        Parameters
-        ----------
-        api_key : str
-            API key to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the API key is not valid.
-        """
-        try:
-            uuid.UUID(api_key)
-        except ValueError:
-            raise ValidationError("API key is not a valid UUID")
-
-
 class TokenAlgorithmInputSchema(Schema):
     """Schema for validating input for creating a token for an algorithm."""
 
@@ -567,9 +516,7 @@ class AlgorithmStoreInputSchema(Schema):
 
     name = fields.String(required=True)
     algorithm_store_url = fields.Url(required=True)
-    server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
-    force = fields.Boolean()
 
 
 class StudyInputSchema(_NameValidationSchema):

@@ -40,6 +40,7 @@ setup(
         "gevent==23.9.1",
         "jsonschema==4.21.1",
         "marshmallow==3.19.0",
+        "python-keycloak==5.5.0",
         "requests==2.32.3",
         "schema==0.7.5",
         "sqlalchemy==2.0.37",

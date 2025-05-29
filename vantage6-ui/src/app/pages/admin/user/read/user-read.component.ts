@@ -22,28 +22,28 @@ import { PermissionsMatrixServerComponent } from '../../../../components/permiss
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-user-read',
-    styleUrls: ['./user-read.component.scss'],
-    templateUrl: './user-read.component.html',
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ChipComponent,
-        NgFor,
-        PermissionsMatrixServerComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-user-read',
+  styleUrls: ['./user-read.component.scss'],
+  templateUrl: './user-read.component.html',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ChipComponent,
+    NgFor,
+    PermissionsMatrixServerComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class UserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   showUserSpecificRulesOnly: boolean = false;

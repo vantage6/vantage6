@@ -6,7 +6,7 @@ from functools import wraps
 from flask import g, request
 from flask_restful import Api
 from flask_mail import Mail
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from flask_socketio import SocketIO
 
 
@@ -161,12 +161,18 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            # decode JWT-token
+
             identity = get_jwt_identity()
             claims = get_jwt()
 
             # check that identity has access to endpoint
-            g.type = claims["client_type"]
+            # TODO v5+ simplify this: from keycloak we now get client_type but container
+            # token still gives us sub.client_type
+            g.type = (
+                claims["client_type"]
+                if "client_type" in claims
+                else claims["sub"]["client_type"]
+            )
 
             if g.type not in types:
                 # FIXME BvB 23-10-19: user gets a 500 error, would be better to
@@ -182,13 +188,18 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
             g.user = g.container = g.node = None
 
             if g.type == "user":
-                user = get_and_update_authenticatable_info(identity)
+                try:
+                    user = _get_and_update_authenticatable_info(identity)
+                except Exception as e:
+                    log.error("No user found for keycloak id %s", identity)
+                    raise e
+
                 g.user = user
                 assert g.user.type == g.type
                 log.debug(f"Received request from user {user.username} ({user.id})")
 
             elif g.type == "node":
-                node = get_and_update_authenticatable_info(identity)
+                node = _get_and_update_authenticatable_info(identity)
                 g.node = node
                 assert g.node.type == g.type
                 log.debug(f"Received request from node {node.name} ({node.id})")
@@ -210,21 +221,21 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     return protection_decorator
 
 
-def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
+def _get_and_update_authenticatable_info(keycloak_id: int) -> db.Authenticatable:
     """
     Get user or node from ID and update last time seen online.
 
     Parameters
     ----------
-    auth_id : int
-        ID of the user or node
+    keycloak_id : int
+        KeycloakID of the user or node
 
     Returns
     -------
     db.Authenticatable
         User or node database model
     """
-    auth = db.Authenticatable.get(auth_id)
+    auth = db.Authenticatable.get_by_keycloak_id(keycloak_id)
     auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, ForeignKey, select
+from sqlalchemy import Column, String, Integer, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -19,10 +19,8 @@ class User(Base):
         Email address
     organization_id : int
         Id of the organization to which the user belongs
-    v6_server_id : int
-        Id of the whitelisted server through which the user is authenticated
-    server : :class:`~.model.vantage6_server.Vantage6Server`
-        Server through which the user is authenticated
+    keycloak_id : str
+        Id of the keycloak user
     roles : list[:class:`~.model.role.Role`]
         List of roles that the user has
     algorithms : list[:class:`~.model.algorithm.Algorithm`]
@@ -36,10 +34,9 @@ class User(Base):
     username = Column(String)
     email = Column(String)
     organization_id = Column(Integer)
-    v6_server_id = Column(Integer, ForeignKey("vantage6server.id"))
+    keycloak_id = Column(String)
 
     # relationships
-    server = relationship("Vantage6Server", back_populates="users")
     roles = relationship("Role", back_populates="users", secondary="Permission")
     rules = relationship("Rule", back_populates="users", secondary="UserPermission")
 
@@ -82,6 +79,26 @@ class User(Base):
         return any(rule in role.rules for role in self.roles) or rule in self.rules
 
     @classmethod
+    def get_by_keycloak_id(cls, keycloak_id: str) -> User | None:
+        """
+        Get a user by their keycloak id
+
+        Parameters
+        ----------
+        keycloak_id: str
+            The keycloak id of the user
+
+        Returns
+        -------
+        User | None
+            The user with the given keycloak id, or None if the user does not exist
+        """
+        session = DatabaseSessionManager.get_session()
+        return session.scalars(
+            select(cls).filter_by(keycloak_id=keycloak_id)
+        ).one_or_none()
+
+    @classmethod
     def get_by_permission(cls, resource: str, operation: Operation) -> list[User]:
         """
         Get all users that have a certain permission
@@ -101,36 +118,7 @@ class User(Base):
         return [user for user in cls.get() if user.can(resource, operation)]
 
     @classmethod
-    def get_by_server(cls, username: str, v6_server_id: int) -> User:
-        """
-        Get a user by their v6 server id
-
-        Parameters
-        ----------
-        username: str
-             username of the user on v6 server
-        v6_server_id: int
-             id whitelisted v6 server
-
-        Returns
-        -------
-        User
-            User with the given username
-
-        Raises
-        ------
-        NoResultFound
-            If no user with the given username exists
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(
-            select(cls).filter_by(username=username, v6_server_id=v6_server_id)
-        ).one_or_none()
-        session.commit()
-        return result
-
-    @classmethod
-    def get_by_username(cls, username: str) -> User:
+    def get_by_username(cls, username: str) -> User | None:
         """
         Get a user by their username
 
@@ -141,8 +129,8 @@ class User(Base):
 
         Returns
         -------
-        User
-            User with the given username
+        User | None
+            User with the given username, or None if the user does not exist
 
         Raises
         ------
@@ -150,7 +138,7 @@ class User(Base):
             If no user with the given username exists
         """
         session = DatabaseSessionManager.get_session()
-        result = session.scalars(select(cls).filter_by(username=username)).one()
+        result = session.scalars(select(cls).filter_by(username=username)).one_or_none()
         session.commit()
         return result
 

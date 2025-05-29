@@ -22,24 +22,24 @@ import { DisplayAlgorithmsComponent } from '../../../../components/algorithm/dis
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-algorithm-store-read',
-    templateUrl: './algorithm-store-read.component.html',
-    styleUrl: './algorithm-store-read.component.scss',
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        TableComponent,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        DisplayAlgorithmsComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-store-read',
+  templateUrl: './algorithm-store-read.component.html',
+  styleUrl: './algorithm-store-read.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    TableComponent,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    DisplayAlgorithmsComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -149,7 +149,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   private translatePolicyValue(key: string, value: string | string[] | boolean): string {
     if (key === AvailableStorePolicies.ALGORITHM_VIEW) {
       return this.translateService.instant(`store-policies.${key}-values.${value}`);
-    } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST || key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
+    } else if (key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
       return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
     } else if (key === AvailableStorePolicies.ALLOWED_REVIEWERS || key === AvailableStorePolicies.ALLOWED_REVIEW_ASSIGNERS) {
       return value === null ? this.translateService.instant('store-policies.not-defined') : value;

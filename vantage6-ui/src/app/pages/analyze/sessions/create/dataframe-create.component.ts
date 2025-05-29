@@ -85,7 +85,6 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
     //   session_id: Number(this.sessionId) || -1,
     //   collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
     //   store_id: formCreateOutput.store_id || -1,
-    //   server_url: formCreateOutput.server_url || '',
     //   databases: formCreateOutput.databases || [],
     //   organizations: formCreateOutput.organizations || []
     //   //TODO: Add preprocessing and filtering when backend is ready

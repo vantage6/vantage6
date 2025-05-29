@@ -13,7 +13,6 @@ from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
@@ -91,19 +90,6 @@ class UIVisualizationOutputSchema(HATEOASModelSchema):
     type_ = fields.String(data_key="type")
 
 
-class Vantage6ServerOutputSchema(HATEOASModelSchema):
-    """Marshmallow output schema to serialize the Vantage6Server model"""
-
-    class Meta:
-        model = Vantage6Server
-
-    users = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="user", link_from="v6_server_id"
-        )
-    )
-
-
 class RoleOutputSchema(HATEOASModelSchema):
     rules = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="role_id")
@@ -134,7 +120,6 @@ class UserOutputSchema(HATEOASModelSchema):
             obj, link_to="algorithm", link_from="user_id"
         )
     )
-    server = fields.Nested("Vantage6ServerOutputSchema", exclude=["users"])
 
 
 class ReviewOutputSchema(HATEOASModelSchema):
