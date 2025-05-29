@@ -132,21 +132,10 @@ class UserClient(ClientBase):
             logger.setLevel(level)
         return logger
 
-    def authenticate(
-        self, username: str, password: str, mfa_code: int | str = None
-    ) -> None:
+    def authenticate(self) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
-
-        Parameters
-        ----------
-        username : str
-            Username used to authenticate
-        password : str
-            Password used to authenticate
-        mfa_code: str | int
-            Six-digit two-factor authentication code
         """
         auth_url = self.kc_openid.auth_url(
             redirect_uri="http://localhost:8081/callback",

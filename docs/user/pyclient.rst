@@ -140,9 +140,6 @@ submitting particular tasks) that you might want to share publicly.
    server_port = 443 # This is specified when you first created the server
    server_api = "" # This is specified when you first created the server
 
-   username = "MY USERNAME"
-   password = "MY PASSWORD"
-
    organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
 
 Note that the ``organization_key`` should be a filepath that points to
@@ -163,7 +160,7 @@ object, and authenticating
    # Initialize the client object, and run the authentication
    client = Client(config.server_url, config.server_port, config.server_api,
                    log_level='debug')
-   client.authenticate(config.username, config.password)
+   client.authenticate()
 
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)

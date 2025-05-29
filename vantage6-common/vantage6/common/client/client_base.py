@@ -1,11 +1,11 @@
+import abc
 import logging
+from pathlib import Path
 import time
-import requests
 import json as json_lib
 
-from pathlib import Path
+import requests
 
-from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import STRING_ENCODING
 
@@ -353,77 +353,14 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
-    # TODO this function might have to be removed - depends on how nodes vs users log in
-    def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
-        """Authenticate to the vantage6-server
+    @abc.abstractmethod
+    def authenticate(self) -> None:
+        """Authenticate to vantage6 via keycloak.
 
-        It allows users, nodes and containers to sign in. Credentials can
-        either be a username/password combination or a JWT authorization
-        token.
-
-        Parameters
-        ----------
-        credentials : dict
-            Credentials used to authenticate
-        path : str, optional
-            Endpoint used for authentication. This differs for users, nodes and
-            containers, by default "token/user"
-
-        Raises
-        ------
-        Exception
-            Failed to authenticate
-
-        Returns
-        -------
-        Bool
-            Whether or not user is authenticated. Alternative is that user is
-            redirected to set up two-factor authentication
+        This is an abstract method that must be implemented by subclasses, for
+        specific logins of users, nodes and containers.
         """
-        if "username" in credentials:
-            self.log.debug(f"Authenticating user {credentials['username']}...")
-        elif "api_key" in credentials:
-            self.log.debug("Authenticating node...")
-
-        # authenticate to the central server
-        url = self.generate_path_to(path, is_for_algorithm_store=False)
-        response = requests.post(url, json=credentials)
-        if response.status_code == 404:
-            self.log.error(
-                "Server not found at %s. Please check the address and whether the "
-                "server is running!",
-                url,
-            )
-            self.log.info(
-                "If the server is running and reachable, %s/health should give a "
-                "response.",
-                self.base_path,
-            )
-            return False
-
-        # handle negative responses
-        data = response.json()
-        if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
-            if response.status_code == 401:
-                raise AuthenticationException("Failed to authenticate")
-            else:
-                raise Exception("Failed to authenticate")
-
-        # Check if there is an access token. If not, there is a problem
-        # with authenticating
-        if "access_token" not in data:
-            if "msg" in data:
-                raise Exception(data["msg"])
-            else:
-                raise Exception("No access token in authentication response!")
-
-        # store tokens in object
-        self.log.info("Successfully authenticated")
-        self._access_token = data.get("access_token")
-        self._refresh_token = data.get("refresh_token")
-        self._refresh_url = data.get("refresh_url")
-        return True
+        return
 
     def refresh_token(self) -> None:
         """Refresh an expired token using the refresh token

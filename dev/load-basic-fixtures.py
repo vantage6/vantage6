@@ -30,7 +30,7 @@ dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("admin", "admin")
+client.authenticate()
 
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"

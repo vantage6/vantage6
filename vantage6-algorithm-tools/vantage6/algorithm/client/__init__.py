@@ -89,26 +89,16 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
-    def authenticate(self, credentials: dict = None, path: str = None) -> None:
+    def authenticate(self) -> None:
         """
         Overwrite base authenticate function to prevent algorithm containers
         from trying to authenticate, which they would be unable to do (they are
         already provided with a token on container startup).
 
-        Function parameters have only been included to make the interface
-        identical to the parent class. They are not used.
-
-        Parameters
-        ----------
-        credentials: dict
-            Credentials to authenticate with.
-        path: str
-            Path to the credentials file.
-
         Raises
         ------
         NotImplementedError
-            Always.
+            This function is not implemented for algorithm containers.
         """
         return NotImplementedError("Algorithm containers cannot authenticate!")
 

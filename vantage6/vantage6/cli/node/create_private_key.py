@@ -59,21 +59,13 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     default=False,
     help="Overwrite existing private key if present",
 )
-@click.option(
-    "--mfa",
-    "ask_mfa",
-    flag_value=True,
-    default=False,
-    help="Ask for multi-factor authentication code. Use this if MFA is enabled on the server.",
-)
 def cli_node_create_private_key(
     name: str,
     config: str,
     system_folders: bool,
     upload: bool,
-    organization_name: str,
+    organization_name: str | None,
     overwrite: bool,
-    ask_mfa: bool,
 ) -> None:
     """
     Create and upload a new private key
@@ -97,7 +89,7 @@ def cli_node_create_private_key(
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
     if organization_name is None:
-        client = create_client_and_authenticate(ctx, ask_mfa)
+        client = create_client_and_authenticate(ctx)
         organization_name = client.whoami.organization_name
 
     # create directory where private key goes if it doesn't exist yet
