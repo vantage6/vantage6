@@ -10,7 +10,6 @@ keycloak:
     adminPassword: admin
   keycloakConfigCli:
     enabled: true
-    # existingConfigMap: keycloak-realm-config
     configuration:
       realm:
         realm: vantage6
@@ -30,7 +29,6 @@ keycloak:
             realmRoles:
               - admin
         clients:
-           # TODO change to UI client
           - clientId: myclient
             publicClient: true
             redirectUris:
@@ -45,7 +43,6 @@ keycloak:
                 config:
                   claim.name: client_type
                   claim.value: user
-                  # TODO check if all are required
                   introspection.token.claim: true
                   userinfo.token.claim: true
                   id.token.claim: true
@@ -54,16 +51,12 @@ keycloak:
             publicClient: false
             redirectUris:
               - "*"
-            # TODO set dynamic secret, now just for testing
             secret: mysecret
           - clientId: admin-client
             publicClient: false
             redirectUris:
               - "*"
-            # TODO set dynamic secret, now just for testing
             secret: myadminsecret
-            # TODO I think directAccessGrantsEnabled should be false - but then we need
-            # another flow
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
@@ -71,16 +64,12 @@ keycloak:
             publicClient: false
             redirectUris:
               - "*"
-            # TODO set dynamic secret, now just for testing
             secret: mystoreregularclientsecret
           - clientId: vantage6-store-admin-client
             publicClient: false
             redirectUris:
               - "*"
-            # TODO set dynamic secret, now just for testing
             secret: mystoreclientsecret
-            # TODO I think directAccessGrantsEnabled should be false - but then we need
-            # another flow
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
@@ -88,7 +77,6 @@ keycloak:
             publicClient: false
             redirectUris:
               - "*"
-            # TODO set dynamic secret, now just for testing
             secret: mynodeclientsecret
             directAccessGrantsEnabled: true
             standardFlowEnabled: false
@@ -100,20 +88,17 @@ keycloak:
                 config:
                   claim.name: client_type
                   claim.value: node
-                  # TODO check if all are required
                   introspection.token.claim: true
                   userinfo.token.claim: true
                   id.token.claim: true
                   access.token.claim: true
         roles:
-          # TODO I think this role is now assigned to each client? That should not be the case.
           realm:
             - name: admin
               clientRole: true
               composite: true
               composites:
                 client:
-                  # TODO check if all are required
                   realm-management:
                     - query-users
                     - query-groups

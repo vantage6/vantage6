@@ -124,7 +124,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
         entities = yaml.safe_load(f.read())
 
     info("Adding entities to database.")
-    # TODO this will probably no longer work since API keys are no longer in here
+    # TODO v5+ this will probably no longer work since API keys are no longer in here
     # Should we get rid of this command or make something new? Also delete load()
     # function if we remove it
     fixture.load(entities, drop_all=drop_all)

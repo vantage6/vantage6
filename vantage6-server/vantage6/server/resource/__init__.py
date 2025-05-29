@@ -166,7 +166,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
             claims = get_jwt()
 
             # check that identity has access to endpoint
-            # TODO simplify this: from keycloak we now get client_type but container
+            # TODO v5+ simplify this: from keycloak we now get client_type but container
             # token still gives us sub.client_type
             g.type = (
                 claims["client_type"]

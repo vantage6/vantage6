@@ -108,7 +108,6 @@ class NodeClient(ClientBase):
         # before the token expires
         interval_between_refreshes = period_start_refresh / 20
         # maximum time to keep attempting to refresh the token
-        # TODO make this configurable
         max_time_to_keep_attempting_refresh = 3600
         while True:
             # get the time until the token expires

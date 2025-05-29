@@ -102,7 +102,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
-    // TODO get username
+    // TODO get username - issue #1990
     this.username = '';
   }
 

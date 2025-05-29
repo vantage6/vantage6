@@ -58,8 +58,6 @@ RESOURCES = [
 
 # Super user information. This user is only created if it is not in the
 # database yet at startup time.
-# TODO this data is now also used outside of the server (in keycloak) so it should be
-# removed here and stored in the configuration object.
 SUPER_USER_INFO = {"username": "admin", "password": "admin"}
 
 # default time that token is valid in minutes

@@ -103,6 +103,7 @@ def request_algo_store(
     endpoint: str,
     method: str,
     params: dict = None,
+    headers: dict = None,
 ) -> tuple[dict | Response, HTTPStatus]:
     """
     Whitelist this vantage6 server url for the algorithm store.
@@ -117,6 +118,8 @@ def request_algo_store(
         HTTP method to use.
     params : dict
         Parameters to be included in the request
+    headers : dict, optional
+        Headers to be included in the request
 
     Returns
     -------
@@ -128,7 +131,9 @@ def request_algo_store(
     is_localhost_algo_store = _contains_localhost(algo_store_url)
     log.debug("Calling algorithm store at %s/%s", algo_store_url, endpoint)
     try:
-        response = _execute_algo_store_request(algo_store_url, endpoint, method, params)
+        response = _execute_algo_store_request(
+            algo_store_url, endpoint, method, params, headers
+        )
     except requests.exceptions.ConnectionError as exc:
         if not is_localhost_algo_store:
             log.warning("Request to algorithm store failed")
@@ -147,7 +152,7 @@ def request_algo_store(
         # algo_store_url = algo_store_url.replace("http://http://", "http://")
         try:
             response = _execute_algo_store_request(
-                algo_store_url, endpoint, method, params
+                algo_store_url, endpoint, method, params, headers
             )
         except requests.exceptions.ConnectionError as exc:
             log.warning("Request to algorithm store failed")
@@ -187,6 +192,7 @@ def _execute_algo_store_request(
     endpoint: str,
     method: str,
     param_dict: dict = None,
+    headers: dict = None,
 ) -> requests.Response:
     """
     Send a request to the algorithm store to whitelist this vantage6 server
@@ -203,6 +209,8 @@ def _execute_algo_store_request(
         "delete" for removing it.
     params : dict, optional
         Parameters to be included in the request
+    headers : dict, optional
+        Headers to be included in the request
 
     Returns
     -------
@@ -214,11 +222,7 @@ def _execute_algo_store_request(
         algo_store_url = algo_store_url[:-1]
 
     param_dict = param_dict if param_dict is not None else {}
-
-    # TODO should authorization header be included ever?
-    headers = {}
-    if "Authorization" in request.headers:
-        headers["Authorization"] = request.headers["Authorization"]
+    headers = headers if headers is not None else {}
 
     params = None
     json = None

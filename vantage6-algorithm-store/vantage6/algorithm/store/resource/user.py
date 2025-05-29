@@ -311,7 +311,7 @@ class Users(AlgorithmStoreResources):
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
 
-        # TODO find email and organization id from keycloak
+        # TODO find email and organization id from keycloak - issue #1994 and #1995
         # server_response, status_code = request_from_store_to_v6_server(
         #     url=f"{server.url}/user",
         #     params={"username": data["username"]},
@@ -463,7 +463,6 @@ class User(AlgorithmStoreResources):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        # TODO should email be updated? And should we update organization_id?
         if email := data.get("email"):
             user.email = email
 

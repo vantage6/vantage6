@@ -20,7 +20,6 @@ export class SocketioConnectService {
 
   connect() {
     if (this.socket === null) {
-      // TODO get token
       const token = this.authService.getToken();
       // connect to tasks namespace
       const namespace = '/tasks';

@@ -1118,6 +1118,7 @@ class Tasks(TaskBase):
             endpoint="algorithm",
             method="GET",
             params={"image": image},
+            headers={"Authorization": request.headers["Authorization"]},
         )
         if status_code != HTTPStatus.OK:
             raise Exception(
