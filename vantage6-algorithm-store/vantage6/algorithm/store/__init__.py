@@ -430,7 +430,7 @@ class AlgorithmStoreApp:
                         "this point that the user exists at the given vantage6 server."
                     )
 
-                    root = db.Role.get_by_name("Root")
+                    root = db.Role.get_by_name(DefaultRole.ROOT)
 
                     root_user = db.User(
                         username=root_username,

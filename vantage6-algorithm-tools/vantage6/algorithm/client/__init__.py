@@ -54,6 +54,7 @@ class AlgorithmClient(ClientBase):
         self.study_id = container_identity.get("study_id")
         self.store_id = container_identity.get("store_id")
         self.organization_id = container_identity.get("organization_id")
+        self.session_id = container_identity.get("session_id")
         self.log.info(
             f"Container in collaboration_id={self.collaboration_id} \n"
             f"Key created by node_id {self.node_id} \n"
@@ -329,7 +330,6 @@ class AlgorithmClient(ClientBase):
         def create(
             self,
             input_: dict,
-            session: int,
             method: str,
             organizations: list[int] = None,
             name: str = "subtask",
@@ -347,8 +347,8 @@ class AlgorithmClient(ClientBase):
             input_ : dict
                 Input to the task. This dictionary usually contains the algorithm method
                 to call and the arguments to pass to the method.
-            session: the id of the session the task will run on
-            method: the name of the method (from the algorithm's image) to be executed
+            method: str
+                The name of the method (from the algorithm's image) to be executed
             organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
@@ -383,9 +383,9 @@ class AlgorithmClient(ClientBase):
                 "description": description,
                 "organizations": organization_json_list,
                 "databases": self.parent.databases,
-                "session_id": session,
+                "session_id": self.parent.session_id,
                 "method": method,
-                "action": AlgorithmStepType.FEDERATED_COMPUTE,
+                "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
             }
             if self.parent.study_id:
                 json_body["study_id"] = self.parent.study_id

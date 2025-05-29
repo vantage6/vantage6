@@ -676,7 +676,7 @@ class ServerApp:
             org = db.Organization(name="root")
 
         # TODO use constant instead of 'Root' literal
-        root = db.Role.get_by_name("Root")
+        root = db.Role.get_by_name(DefaultRole.ROOT)
 
         # TODO no longer use any default root username / password
         log.warning(
