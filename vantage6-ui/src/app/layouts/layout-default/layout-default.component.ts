@@ -173,7 +173,6 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
 
   handleLogout() {
     this.loginLogoutService.logout();
-    this.router.navigate([routePaths.login]);
   }
 
   private getAnalyzeLink(): NavigationLink {
