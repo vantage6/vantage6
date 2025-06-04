@@ -81,7 +81,7 @@ def _algorithm_client() -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_client: MockAlgorithmClient = None, **kwargs
+            *args, mock_client: MockAlgorithmClient | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the client object
@@ -157,7 +157,7 @@ def data(number_of_databases: int = 1) -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_data: list[pd.DataFrame] = None, **kwargs
+            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the data
@@ -423,7 +423,7 @@ def _create_omop_database_connection(label: str) -> callable:
     # check that the OHDSI package is available in this container
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
-        error("Did you use 'algorithm-ohdsi-base' image to build this " "algorithm?")
+        error("Did you use 'algorithm-ohdsi-base' image to build this algorithm?")
         exit(1)
 
     # environment vars are always uppercase
