@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "bcrypt==4.0.1",
         "flask==3.1.0",
-        "Flask-Cors==5.0.1",
+        "flask-cors==6.0.0",
         "Flask-JWT-Extended==4.7.1",
         "Flask-Principal==0.4.0",
         "Flask-RESTful==0.3.10",

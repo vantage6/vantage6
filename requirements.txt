@@ -14,7 +14,7 @@ cryptography==44.0.1
 decorator==5.1.1
 docker==7.1.0
 flask==3.1.0
-Flask-Cors==5.0.1
+flask-cors==6.0.0
 Flask-JWT-Extended==4.7.1
 Flask-Mail==0.9.1
 flask-marshmallow==0.15.0
