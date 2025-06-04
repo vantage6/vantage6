@@ -32,7 +32,6 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "bcrypt==4.0.1",
-        "flasgger==0.9.5",
         "flask==3.1.0",
         "Flask-Cors==5.0.1",
         "Flask-JWT-Extended==4.7.1",

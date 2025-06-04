@@ -31,7 +31,6 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "flasgger==0.9.5",
         "flask==3.1.0",
         "Flask-Cors==5.0.1",
         "Flask-Principal==0.4.0",
