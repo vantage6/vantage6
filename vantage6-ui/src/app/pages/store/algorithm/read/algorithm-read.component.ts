@@ -24,29 +24,29 @@ import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/m
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-algorithm-read',
-    templateUrl: './algorithm-read.component.html',
-    styleUrl: './algorithm-read.component.scss',
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        AlertWithButtonComponent,
-        AlertComponent,
-        DisplayAlgorithmComponent,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-read',
+  templateUrl: './algorithm-read.component.html',
+  styleUrl: './algorithm-read.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    AlertWithButtonComponent,
+    AlertComponent,
+    DisplayAlgorithmComponent,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -99,12 +99,17 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, [AlgorithmLazyProperties.Reviews]);
-
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
     this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
     this.canViewReviews = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW);
+
+    const propertiesToLoad = [];
+    if (this.canViewReviews) {
+      propertiesToLoad.push(AlgorithmLazyProperties.Reviews);
+    }
+
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, propertiesToLoad);
 
     this.isLoading = false;
   }
