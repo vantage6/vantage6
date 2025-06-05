@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import List
 import jwt
 import pyfiglet
-import itertools
 import sys
 import traceback
 
@@ -20,7 +18,6 @@ from vantage6.common.serialization import serialize
 from vantage6.client.filter import post_filtering
 from vantage6.common.client.utils import print_qr_code
 from vantage6.client.utils import LogLevel
-from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
@@ -219,22 +216,8 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-
-        animation = itertools.cycle(["|", "/", "-", "\\"])
-        t = time.time()
-
-        while not has_task_finished(self.task.get(task_id).get("status")):
-            frame = next(animation)
-            sys.stdout.write(
-                f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
-            )
-            sys.stdout.flush()
-            time.sleep(interval)
-        sys.stdout.write("\rDone!                  ")
-
-        # Re-enable logging
+        self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
         return result

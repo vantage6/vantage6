@@ -8,6 +8,7 @@ import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
 import { getLazyProperties } from '../helpers/api.helper';
 import { AllowedArgumentValue } from '../models/api/allowed-argument-value.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -26,16 +27,37 @@ export class AlgorithmService {
         return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
       })
     );
-    
-    for(const algorithms of results) {
+
+    for (const algorithms of results) {
       algorithms.forEach((algorithm) => {
         this.parseAllowedValues(algorithm);
       });
     }
-    
+
     return results.reduce((accumulator, val) => accumulator.concat(val), []);
   }
 
+  async getAlgorithmsForCommunityStore(params: object = {}): Promise<Algorithm[]> {
+    const algorithmStore = this.getCommunityStore();
+
+    return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
+  }
+
+  async getAlgorithmForCommunityStore(id: string, lazyProperties: AlgorithmLazyProperties[] = []) {
+    const algorithmStore = this.getCommunityStore();
+
+    return await this.getAlgorithm(algorithmStore.url, id, lazyProperties);
+  }
+
+  getCommunityStore(): AlgorithmStore {
+    return {
+      id: -1,
+      name: 'community store',
+      url: environment.community_store_url,
+      collaborations: [],
+      all_collaborations: true
+    };
+  }
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
     const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
       per_page: 9999,
@@ -71,7 +93,7 @@ export class AlgorithmService {
 
   async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
     const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
-    
+
     if (result.length === 0) {
       return null;
     }

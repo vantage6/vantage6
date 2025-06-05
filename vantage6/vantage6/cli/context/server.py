@@ -1,9 +1,11 @@
 from __future__ import annotations
+from pathlib import Path
 
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.configuration_manager import ServerConfigurationManager
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
+    PROMETHEUS_DIR,
     ServerType,
     ServerGlobals,
 )
@@ -56,6 +58,30 @@ class ServerContext(BaseServerContext):
             Server's docker container name
         """
         return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER}"
+
+    @property
+    def prometheus_container_name(self) -> str:
+        """
+        Get the name of the Prometheus Docker container for this server.
+
+        Returns
+        -------
+        str
+            Prometheus container name, unique to this server instance.
+        """
+        return f"{APPNAME}-prometheus"
+
+    @property
+    def prometheus_dir(self) -> Path:
+        """
+        Get the Prometheus directory path.
+
+        Returns
+        -------
+        Path
+            Path to the Prometheus directory
+        """
+        return self.data_dir / PROMETHEUS_DIR
 
     @classmethod
     def from_external_config_file(

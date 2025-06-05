@@ -555,6 +555,9 @@
   "study-create": {
     "title": "Create study"
   },
+  "store-role-create": {
+    "title":"Add a new role to the algorithm store"
+  },
   "algorithm-store-add": {
     "title": "Add algorithm store to your collaboration",
     "name": "Name",
@@ -832,5 +835,11 @@
       "length": "Password must be at least 8 characters long",
       "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
     }
+  },
+  "communitystore": {
+    "algorithms": "Algorithms",
+    "welcome": "Welcome",
+    "introduction": "The community store is a place where you can find algorithms that are shared by members of the vantage6 community. More information about vantage6 can be found on ",
+    "community-store": "Community Store"
   }
 }

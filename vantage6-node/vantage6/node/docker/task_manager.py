@@ -2,6 +2,8 @@
 # to be cleaned at some point.
 import logging
 import os
+from socket import SocketIO
+import threading
 import docker.errors
 import json
 import base64
@@ -51,10 +53,13 @@ class DockerTaskManager(DockerBaseManager):
         isolated_network_mgr: NetworkManager,
         databases: dict,
         docker_volume_name: str,
+        socketIO: SocketIO,
+        collaboration_id: int,
         alpine_image: str | None = None,
         proxy: Squid | None = None,
         device_requests: list | None = None,
         requires_pull: bool = False,
+        share_algorithm_logs: bool = False,
     ):
         """
         Initialization creates DockerTaskManager instance
@@ -89,6 +94,8 @@ class DockerTaskManager(DockerBaseManager):
         requires_pull: bool
             If true, and the Docker image cannot be pulled, don't start the algorithm
             event if a local image is available
+        share_algorithm_logs: bool
+            If true, share algorithm logs with the server
         """
         self.task_id = task_info["id"]
         self.log = logging.getLogger(f"task ({self.task_id})")
@@ -106,7 +113,7 @@ class DockerTaskManager(DockerBaseManager):
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
-
+        self.share_algorithm_logs = share_algorithm_logs
         self.container = None
         self.status_code = None
         self.docker_input = None
@@ -131,6 +138,9 @@ class DockerTaskManager(DockerBaseManager):
         self.device_requests = []
         if device_requests:
             self.device_requests = device_requests
+
+        self.socket = socketIO
+        self.collaboration_id = collaboration_id
 
     def is_finished(self) -> bool:
         """
@@ -169,7 +179,6 @@ class DockerTaskManager(DockerBaseManager):
         if self.status_code:
             self.log.error(f"Received non-zero exitcode: {self.status_code}")
             self.log.error(f"  Container id: {self.container.id}")
-            self.log.info(logs)
             self.status = TaskStatus.CRASHED
         else:
             self.status = TaskStatus.COMPLETED
@@ -356,6 +365,13 @@ class DockerTaskManager(DockerBaseManager):
                 name=container_name,
                 labels=self.labels,
                 device_requests=self.device_requests,
+            )
+            self._stream_logs(
+                share_algorithm_logs=self.share_algorithm_logs,
+                socketIO=self.socket,
+                run_id=self.run_id,
+                task_id=self.task_id,
+                collaboration_id=self.collaboration_id,
             )
 
         except Exception as e:
@@ -693,3 +709,35 @@ class DockerTaskManager(DockerBaseManager):
         for key, val in environment_variables.items():
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
+
+    def _stream_logs(
+        self, share_algorithm_logs, socketIO, run_id, task_id, collaboration_id
+    ):
+        """
+        Stream logs from the running container to node logs and optionally to
+        the server
+        """
+        if not self.container:
+            self.log.error("No container to stream logs from.")
+            return
+
+        def log_stream():
+            for log in self.container.logs(stream=True):
+                decoded_log = log.decode("utf-8")
+                # print algorithm logs to node logs
+                self.log.info("[Task %s]: %s", run_id, decoded_log.rstrip())
+                # send logs to server
+                if share_algorithm_logs:
+                    socketIO.emit(
+                        "algorithm_log",
+                        data={
+                            "collaboration_id": collaboration_id,
+                            "run_id": run_id,
+                            "task_id": task_id,
+                            "log": decoded_log,
+                        },
+                        namespace="/tasks",
+                    )
+
+        log_thread = threading.Thread(target=log_stream)
+        log_thread.start()

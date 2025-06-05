@@ -6,7 +6,7 @@ import { Organization } from './organization.model';
 import { ReviewForm } from './review.model';
 import { GetRoleParameters, Role, RoleForm } from './role.model';
 import { StoreRule } from './rule.model';
-import { GetStoreRoleParameters } from './store-role.model';
+import { GetStoreRoleParameters, StoreRoleForm } from './store-role.model';
 import { StoreUser, StoreUserForm, GetStoreUserParameters } from './store-user.model';
 import { Study } from './study.model';
 import { Task, TaskResult, TaskRun } from './task.models';
@@ -27,6 +27,6 @@ export type Resource =
   | StoreUser
   | StoreRule;
 
-export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm | ReviewForm;
+export type ResourceForm = UserForm | CollaborationForm | RoleForm | AlgorithmForm | AlgorithmStoreForm | StoreUserForm | ReviewForm | StoreRoleForm;
 
 export type ResourceGetParameters = GetRoleParameters | GetUserParameters | GetStoreUserParameters | GetStoreRoleParameters;

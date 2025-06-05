@@ -53,11 +53,14 @@ export const routePaths = {
   storeUserEdit: '/store/users/edit',
   storeRoles: '/store/roles',
   storeRole: '/store/roles',
+  storeRoleCreate: '/store/roles/create',
   algorithmReviews: '/store/review',
   algorithmReviewAssign: '/store/review/assign',
   algorithmReview: '/store/review',
   algorithmReviewSubmit: '/store/review/submit',
-  myPendingAlgorithms: '/store/pending/algorithms'
+  myPendingAlgorithms: '/store/pending/algorithms',
+  communityStore: '/communitystore',
+  communityStoreAlgorithms: '/communitystore/algorithm',
 };
 
 export const routerConfig = {
@@ -117,10 +120,13 @@ export const routerConfig = {
   storeUserCreate: 'users/create',
   storeUserEdit: 'users/edit/:id',
   storeRoles: 'roles',
+  storeRoleCreate: 'roles/create',
   storeRole: 'roles/:id',
   algorithmReviews: 'review',
   algorithmReviewAssign: 'review/assign/:algoID',
   algorithmReview: 'review/:algoID',
   algorithmReviewSubmit: 'review/submit/:id',
-  myPendingAlgorithms: 'pending/algorithms'
+  myPendingAlgorithms: 'pending/algorithms',
+  communityStoreAlgorithm: 'algorithm/:id',
+  communityStoreAlgorithms: 'algorithm'
 };

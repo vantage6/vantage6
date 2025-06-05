@@ -47,10 +47,15 @@ from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    AuthStatus,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -131,6 +136,7 @@ class ServerApp:
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
 
+        self.metrics = Metrics(labels=["node_id", "platform", "os"])
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
@@ -183,6 +189,12 @@ class ServerApp:
         log.debug("Starting thread to set node status")
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
+
+        start_prometheus_exporter(
+            port=self.ctx.config.get(
+                "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+            )
+        )
 
         log.info("Initialization done")
 
@@ -276,9 +288,8 @@ class ServerApp:
                 always_connect=True,
             )
 
-        # FIXME: temporary fix to get socket object into the namespace class
-        DefaultSocketNamespace.socketio = socketio
-        socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+        namespace = DefaultSocketNamespace("/tasks", socketio, self.metrics)
+        socketio.on_namespace(namespace)
 
         return socketio
 
@@ -685,7 +696,7 @@ class ServerApp:
                     name=role["name"],
                     description=role["description"],
                     rules=role["rules"],
-                    is_default_role=role["is_default_role"],
+                    is_default_role=True,
                 )
                 new_role.save()
             else:

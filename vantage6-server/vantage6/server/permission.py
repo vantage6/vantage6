@@ -1,14 +1,52 @@
 import logging
 
+from flask import g
+from vantage6.server import db
+
 from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
+from vantage6.backend.common.resource.error_handling import UnauthorizedError
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
 from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.server.utils import obtain_auth_collaborations, obtain_auth_organization
 from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
+
+
+def obtain_auth_collaborations() -> list[db.Collaboration]:
+    """
+    Obtain the collaborations that the auth is part of.
+
+    Returns
+    -------
+    list[db.Collaboration]
+        List of collaborations
+    """
+    if g.user:
+        return g.user.organization.collaborations
+    elif g.node:
+        return g.node.organization.collaborations
+    else:
+        return [db.Collaboration.get(g.container["collaboration_id"])]
+
+
+def obtain_auth_organization() -> db.Organization:
+    """
+    Obtain the organization model from the auth that is logged in.
+
+    Returns
+    -------
+    db.Organization
+        Organization model
+    """
+    if g.user:
+        org_id = g.user.organization.id
+    elif g.node:
+        org_id = g.node.organization.id
+    else:
+        org_id = g.container["organization_id"]
+    return db.Organization.get(org_id)
 
 
 class RuleCollection(RuleCollectionBase):
@@ -17,7 +55,7 @@ class RuleCollection(RuleCollectionBase):
     permissions of the vantage6 server.
     """
 
-    def can_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
+    def allowed_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
         """
         Check if an operation is allowed on a certain organization
 
@@ -345,7 +383,7 @@ class PermissionManager(PermissionManagerBase):
 
         self.collection(resource).add(rule.operation, rule.scope)
 
-    def check_user_rules(self, rules: list[Rule]) -> dict | None:
+    def check_user_rules(self, rules: list[Rule]) -> None:
         """
         Check if a user, node or container has all the `rules` in a list
 
@@ -354,18 +392,16 @@ class PermissionManager(PermissionManagerBase):
         rules: list[:class:`~vantage6.server.model.rule.Rule`]
             List of rules that user is checked to have
 
-        Returns
-        -------
-        dict | None
-            Dict with a message which rule is missing, else None
+        Raises
+        ---------
+        UnauthorizedError
         """
         for rule in rules:
             if not self.collections[rule.name].has_at_least_scope(
                 rule.scope, rule.operation
             ):
-                return {
-                    "msg": f"You don't have the rule ({rule.name}, "
+                raise UnauthorizedError(
+                    f"You don't have the rule ({rule.name}, "
                     f"{rule.scope.name.lower()}, "
                     f"{rule.operation.name.lower()})"
-                }
-        return None
+                )

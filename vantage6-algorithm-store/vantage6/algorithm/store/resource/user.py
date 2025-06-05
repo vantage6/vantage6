@@ -9,6 +9,7 @@ from flask_restful import Api
 
 
 from vantage6.common import logger_name
+from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
@@ -248,6 +249,7 @@ class Users(AlgorithmStoreResources):
         return self.response(page, user_output_schema)
 
     @with_permission(module_name, Operation.CREATE)
+    @handle_exceptions
     def post(self):
         """Create user
         ---
@@ -331,9 +333,7 @@ class Users(AlgorithmStoreResources):
             for role in potential_roles:
                 role_ = db.Role.get(role)
                 if role_:
-                    denied = self.permissions.check_user_rules(role_.rules)
-                    if denied:
-                        return denied, HTTPStatus.UNAUTHORIZED
+                    self.permissions.check_user_rules(role_.rules)
                     roles.append(role_)
 
         user = db.User(
@@ -386,6 +386,7 @@ class User(AlgorithmStoreResources):
         return user_output_schema.dump(user, many=False), HTTPStatus.OK
 
     @with_permission(module_name, Operation.EDIT)
+    @handle_exceptions
     def patch(self, id):
         """Update user
         ---
@@ -496,23 +497,12 @@ class User(AlgorithmStoreResources):
 
             # validate that user can assign these
             for role in roles:
-                denied = self.permissions.check_user_rules(role.rules)
-                if denied:
-                    return denied, HTTPStatus.UNAUTHORIZED
+                self.permissions.check_user_rules(role.rules)
 
             # validate that user is not deleting roles they cannot assign
             deleted_roles = [r for r in user.roles if r not in roles]
             for role in deleted_roles:
-                denied = self.permissions.check_user_rules(role.rules)
-                if denied:
-                    return {
-                        "msg": (
-                            f"You are trying to delete the role {role.name} from "
-                            "this user but that is not allowed because they have "
-                            f"permissions you don't have: {denied['msg']} (and "
-                            "they do!)"
-                        )
-                    }, HTTPStatus.UNAUTHORIZED
+                self.permissions.check_user_rules(role.rules)
 
             user.roles = roles
 

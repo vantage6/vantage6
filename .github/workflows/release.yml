@@ -62,7 +62,7 @@ jobs:
         id: branchname
         run: |
           # get the branch on which the tag is based
-          raw=$(git branch -r --contains ${{ github.ref }})
+          raw=$(git branch -r --points-at ${{ github.ref }})
           # delete the name of the branch up to and including 'origin/'
           branch=$(echo $raw | sed 's/.*origin\///')
           echo "branch=${branch}" >> $GITHUB_OUTPUT
@@ -169,7 +169,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push support images
-        if: ${{ env.stage == '' || env.patch == 0 }}
         run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
 
   infrastructure-images:

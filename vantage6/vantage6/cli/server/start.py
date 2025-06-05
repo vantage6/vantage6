@@ -11,11 +11,12 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.common.globals import Ports
+from vantage6.common.globals import Ports, DEFAULT_PROMETHEUS_EXPORTER_PORT
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.prometheus.monitoring_manager import PrometheusServer
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
@@ -50,6 +51,14 @@ from vantage6.cli.common.start import (
 )
 @click.option("--rabbitmq-image", default=None, help="RabbitMQ docker image to use")
 @click.option(
+    "--with-prometheus",
+    "start_prometheus",
+    flag_value=True,
+    default=False,
+    help="Start Prometheus monitoring as a local container",
+)
+@click.option("--prometheus-image", default=None, help="Prometheus docker image to use")
+@click.option(
     "--keep/--auto-remove",
     default=False,
     help="Keep image after server has stopped. Useful for debugging",
@@ -75,6 +84,8 @@ def cli_server_start(
     ui_port: int,
     start_rabbitmq: bool,
     rabbitmq_image: str,
+    start_prometheus: bool,
+    prometheus_image: str,
     keep: bool,
     mount_src: str,
     attach: bool,
@@ -83,7 +94,7 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    docker_client = check_for_start(ctx, InstanceType.SERVER)
+    docker_client = check_for_start(ctx, InstanceType.SERVER.value)
 
     image = get_image(image, ctx, "server", DEFAULT_SERVER_IMAGE)
 
@@ -135,6 +146,24 @@ def cli_server_start(
             "cannot be scaled horizontally!"
         )
 
+    if (
+        start_prometheus
+        or ctx.config.get("prometheus")
+        and ctx.config["prometheus"].get("start_with_server", False)
+    ):
+        info("Starting Prometheus container")
+        _start_prometheus(ctx, prometheus_image, server_network_mgr)
+    elif ctx.config.get("prometheus"):
+        info(
+            "Prometheus is provided in the config file as external service."
+            "Assuming this service is up and running."
+        )
+    else:
+        warning(
+            "Monitoring is not set up! This means that the vantage6 server "
+            "cannot be monitored with Prometheus!"
+        )
+
     # start the UI if requested
     if start_ui or ctx.config.get("ui") and ctx.config["ui"].get("enabled"):
         _start_ui(docker_client, ctx, ui_port)
@@ -152,14 +181,23 @@ def cli_server_start(
 
     info("Run Docker container")
     port_ = str(port or ctx.config["port"] or Ports.DEV_SERVER.value)
+    prometheus_exporter_port = ctx.config.get("prometheus", {}).get(
+        "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+    )
     container = docker_client.containers.run(
         image,
         command=cmd,
         mounts=mounts,
         detach=True,
-        labels={f"{APPNAME}-type": InstanceType.SERVER, "name": ctx.config_file_name},
+        labels={
+            f"{APPNAME}-type": InstanceType.SERVER.value,
+            "name": ctx.config_file_name,
+        },
         environment=environment_vars,
-        ports={f"{internal_port}/tcp": (ip, port_)},
+        ports={
+            f"{internal_port}/tcp": (ip, port_),  # API port
+            f"{prometheus_exporter_port}/tcp": prometheus_exporter_port,
+        },
         name=ctx.docker_container_name,
         auto_remove=not keep,
         tty=True,
@@ -197,6 +235,27 @@ def _start_rabbitmq(
     # kick off RabbitMQ container
     rabbit_mgr = RabbitMQManager(ctx=ctx, network_mgr=network_mgr, image=rabbitmq_image)
     rabbit_mgr.start()
+
+
+def _start_prometheus(
+    ctx: ServerContext, prometheus_image: str, network_mgr: NetworkManager
+) -> None:
+    """
+    Start the Prometheus container if it is not already running.
+
+    Parameters
+    ----------
+    ctx : ServerContext
+        Server context object
+    prometheus_image : str
+        Prometheus image to use
+    network_mgr : NetworkManager
+        Network manager object
+    """
+    prometheus_server = PrometheusServer(
+        ctx=ctx, network_mgr=network_mgr, image=prometheus_image
+    )
+    prometheus_server.start()
 
 
 def _start_ui(client: DockerClient, ctx: ServerContext, ui_port: int) -> None:
