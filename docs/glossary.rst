@@ -5,48 +5,77 @@ The following is a list of definitions used in vantage6.
 
 **A**
 
--  **Autonomy:** the ability of a party to be in charge of the control
-   and management of its own data.
+-  **Algorithm**: a piece of code that performs a specific task.
+-  **Algorithm store**: A repository of algorithms, which can be coupled to specific
+   collaborations or all collaborations on a server.
+-  **API**: Application Programming Interface, a set of routines, protocols, and tools
+   for building software applications.
+-  **Authentication**: the process of verifying the identity of a user.
+-  **Authorization**: the process of verifying the permissions of a user.
+-  **Autonomy:** the ability of a party to be in charge of the control and management of
+   its own data.
 
 **C**
 
--  **Collaboration**: an agreement between two or more parties to
-   participate in a study (i.e., to answer a research question).
+-  **Central function**: The orchestration part of an algorithm that coordinates and
+   aggregates results from partial functions.
+-  **Child container**: A container created by an algorithm container to perform
+   subtasks, typically a *federated function*
+-  **Client**: A vantage6 user or application that communicates with the
+   vantage6-server.
+-  **Collaboration**: an agreement between two or more parties to participate in a study
+   (i.e., to answer a research question).
+-  **Computation task**: A (vantage6) task that performs a computation on a DataFrame.
+-  **Container**: A lightweight, standalone, executable package of software that
+   includes everything needed to run it.
 
 **D**
 
--  **Distributed learning**: see *Federated Learning*
--  **Docker:** a platform that uses operating system virtualization to
-   deliver software in packages called containers. It is worth noting
-   that although they are often confused, `Docker containers are not virtual machines <https://www.docker.com/blog/containers-are-not-vms/>`__.
-- **Data Station**: Virtual Machine containing the vantage6-node application
-  and a database.
+-  **DataFrame**: A standardized representation of data in a session that can be used
+   for computation tasks.
+-  **Data extraction task**: A (vantage6) task that extracts data from a database.
+   This data can be used for computation tasks (e.g., a pre-processing task or a
+   computation task).
+-  **Data Station**: A vantage6 *node* that has access to the local data.
+-  **Distributed learning**: see *Federated Learning* and *Federated Analytics*
+-  **Docker:** a platform that uses operating system virtualization to deliver software
+   in packages called *containers*. It is worth noting that although they are often
+   confused, `Docker containers are not virtual machines <https://www.docker.com/blog/containers-are-not-vms/>`__.
+-  **Docker registry**: A repository of *images*. In vantage6, both algorithms and
+   the infrastructure itself are stored as *images* in the *Docker registry*. Images
+   are used to create *containers*.
+
+
+**E**
+
+-  **End-to-end encryption**: A method of encoding data so that it can only be decoded
+   by the intended recipient. In vantage6, end-to-end encryption is used to encrypt
+   data in transit between two nodes or between a node and a client.
 
 **F**
 
 -  **FAIR data**: data that are Findable, Accessible, Interoperable, and
    Reusable. For more information, see `the original
    paper <https://www.nature.com/articles/sdata201618.pdf?origin=ppub>`__.
+-  **Federated Analytics**: an approach for analyzing data that are
+   spread across different parties using traditional statistical methods. The main
+   idea is that parties run computations on their local data, yielding aggregated
+   parameters. These are then shared to generate a global (statistical) model.
 -  **Federated learning**: an approach for analyzing data that are
-   spread across different parties. Its main idea is that parties run
-   computations on their local data, yielding either aggregated
-   parameters or encrypted values. These are then shared to generate a
-   global (statistical) model. In other words, instead of bringing the
-   data to the algorithms, federated learning brings the algorithms to
-   the data. This way, patient-sensitive information is not disclosed.
-   Federated learning is some times known as *distributed learning*.
-   However, we try to avoid this term, since it can be confused with
-   distributed computing, where different computers share their
-   processing power to solve very complex calculations.
+   spread across different parties using machine learning methods. The main
+   idea is that parties run computations on their local data, yielding
+   aggregated parameters. These are then shared to generate a global (statistical)
+   model.
+-  **Federated function**: A function that is executed on the local data of a party.
+   It is a part of a *federated Analytics* or *federated learning* algorithm.
 
 **H**
 
--  **Heterogeneity**: the condition in which in a federated learning
-   scenario, parties are allowed to have differences in hardware and
-   software (i.e., operating systems).
--  **Horizontally-partitioned data**: data spread across different
-   parties where the latter have the same features of different
-   instances (i.e., patients). See also vertically-partitioned data.
+-  **Heterogeneity**: the condition in which in a federated learning scenario, parties
+   are allowed to have differences in hardware and software (e.g., operating systems).
+-  **Horizontally-partitioned data**: data spread across different parties where the
+   latter have the same features of different instances (e.g., patients). See also
+   vertically-partitioned data.
 
 .. figure:: /images/horizontal_partition.png
    :alt: Horizontally partitioned data
@@ -54,10 +83,29 @@ The following is a list of definitions used in vantage6.
 
    Horizontally-partitioned data
 
+-  **Horizontal scaling**: the ability of a system to handle an increasing amount of
+   requests by creating more instances of itself.
+
+**I**
+
+- **Image**: A blueprint for a *container*, which can be stored in a *Docker registry*.
+
+**J**
+
+-  **JWT Token**: A JSON Web Token used for authentication and authorization in the
+   system.
+
+**K**
+
+- **Kubernetes**: An open-source system for automating deployment, scaling, and
+   operations of application containers across clusters of hosts. Vantage6 is
+   built on top of Kubernetes to run the vantage6-server, nodes and algorithm
+   containers.
+
 **N**
 
--  **Node**: vantage6 node application that runs at a **Data Station** which
-   has access to the local data.
+-  **Node**: vantage6 node application that runs at a **Data Station** which has access
+   to the local data.
 
 **M**
 
@@ -66,10 +114,25 @@ The following is a list of definitions used in vantage6.
 
 **P**
 
--  **Party**: an entity that takes part in one (or more) collaborations
+-  **Partial function**: The federated part of an algorithm that runs on local data
+   at nodes.
+-  **Party**: an entity that takes part in one (or more) collaborations. In vantage6
+   a party is an organization.
+-  **Permission scope**: The level of access granted to users for viewing and modifying
+   dataframes (personal, organization, or collaboration level).
+-  **Pre-processing task**: A task that modifies dataframes by adding or removing
+   columns, or filtering rows.
+-  **Privacy-enhancing Technology (PET)**: Technologies that enable privacy-preserving
+   analyses on federated data. This includes technologies such as differential
+   privacy, secure multi-party computation, and federated analytics/learning.
 -  **Python**: a high-level general purpose programming language. It
    aims to help programmers write clear, logical code. vantage6 is
    `written in Python <https://github.com/vantage6/vantage6>`__.
+
+**R**
+
+-  **RSA keys**: Cryptographic keys used for encryption and decryption of data between
+   organizations.
 
 **S**
 
@@ -80,6 +143,19 @@ The following is a list of definitions used in vantage6.
    space we try to be explicit when we talk about *server* and
    *vantage6 server*, however you might encounter *server* where
    *vantage6 server* should have been.
+-  **Session**: A way to prepare a dataset that can be reused in many computation
+   tasks, especially useful for large datasets and flexible pre-processing.
+-  **Study**: A study is a subgroup of organizations within a collaboration.
+
+**T**
+
+-  **Task**: A task is a request from a client to the vantage6-server to execute an
+   algorithm. Is is the main unit of work in vantage6.
+-  **TOTP (Time-based One-Time Password)**: A form of two-factor authentication where
+   users generate time-based codes using an authenticator app.
+-  **Two-factor authentication**: A method of authentication that requires two
+   forms of identification.
+
 
 **V**
 
@@ -96,5 +172,12 @@ The following is a list of definitions used in vantage6.
    :align: center
 
    Vertically partitioned data
+
+**W**
+
+-  **Wrapper**: A library that simplifies and standardizes the interaction between the
+   node and algorithm container, handling data reading and writing operations.
+-  **Whitelist**: A list of allowed domains, ports, and IP addresses that algorithms
+   can access.
 
 .. todo Add references to sections of the docs where to find info on them

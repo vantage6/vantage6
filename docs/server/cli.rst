@@ -1,14 +1,17 @@
+Command line interface
+======================
+
 .. _use-server:
 
-Use
----
+Core
+----
 
 This section explains which commands are available to manage your server. It
 also explains how to set up a test server locally and how to manage resources
 via an IPython shell.
 
 Quick start
-"""""""""""
+^^^^^^^^^^^
 
 To create a new server, run the command below. A menu will be started
 that allows you to set up a server configuration file.
@@ -41,7 +44,7 @@ Finally, a server can be stopped again with:
    v6 server stop --name <your_server>
 
 Available commands
-""""""""""""""""""
+^^^^^^^^^^^^^^^^^^
 
 The following commands are available in your environment. To see all the
 options that are available per command use the ``--help`` flag,
@@ -81,7 +84,7 @@ e.g. ``v6 server start --help``.
 .. _use-server-local:
 
 Local test setup
-""""""""""""""""
+^^^^^^^^^^^^^^^^
 
 If the nodes and the server run at the same machine, you have to make
 sure that the node can reach the server.
@@ -108,14 +111,14 @@ the default docker network settings.
 .. _server-import:
 
 Batch import
-""""""""""""
+^^^^^^^^^^^^
 
 You can easily create a set of test users, organizations and collaborations by
 using a batch import. To do this, use the
 ``v6 server import /path/to/file.yaml`` command. An example ``yaml`` file is
 provided below.
 
-You can download this file :download:`here <yaml/batch_import.yaml>`.
+You can download this file :download:`here <components/yaml/batch_import.yaml>`.
 
 
 .. raw:: html
@@ -123,7 +126,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
    <details>
    <summary><a>Example batch import</a></summary>
 
-.. literalinclude :: yaml/batch_import.yaml
+.. literalinclude :: components/yaml/batch_import.yaml
     :language: yaml
 
 .. raw:: html
@@ -139,7 +142,7 @@ You can download this file :download:`here <yaml/batch_import.yaml>`.
 .. _local-test:
 
 Testing
-"""""""
+^^^^^^^
 
 You can test the infrastructure via the ``v6 dev`` and ``v6 test`` commands. The purpose of
 ``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes locally
@@ -222,3 +225,66 @@ runs is given below.
   algorithm containers on other nodes *and* on the same node over the VPN network.
   This test will not succeed if the VPN connection is not set up - it can also be disabled
   with ``v6 test feature-test --no-vpn``.
+
+.. _use-algorithm-store:
+
+Store
+-----
+
+This section explains which commands are available to manage your algorithm
+store. These can be used to set up a test server locally. To deploy a server,
+see the :ref:`deployment <algorithm-store-deployment>` section.
+
+
+Quick start
+^^^^^^^^^^^
+
+To create a new algorithm store, run the command below. A menu will be started
+that allows you to set up an algorithm store configuration file.
+
+.. code-block:: bash
+
+   v6 algorithm-store new
+
+For more details, check out the :ref:`algorithm-store-configure` section.
+
+To run an algorithm store, execute the command below. The ``--attach`` flag will
+copy log output to the console.
+
+.. code-block:: bash
+
+   v6 algorithm-store start --name <your_store> --attach
+
+Finally, a server can be stopped again with:
+
+.. code-block:: bash
+
+   v6 algorithm-store stop --name <your_store>
+
+
+Available commands
+^^^^^^^^^^^^^^^^^^
+
+The following commands are available in your environment. To see all the
+options that are available per command use the ``--help`` flag,
+e.g. ``v6 server start --help``.
+
+.. list-table:: Available commands
+   :name: algorithm-store-commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - ``v6 algorithm-store new``
+     - Create a new algorithm store configuration file
+   * - ``v6 algorithm-store start``
+     - Start an algorithm store
+   * - ``v6 algorithm-store stop``
+     - Stop an algorithm store
+   * - ``v6 algorithm-store files``
+     - List the files that an algorithm store is using
+   * - ``v6 algorithm-store attach``
+     - Show an algorithm store's logs in the current terminal
+   * - ``v6 algorithm-store list``
+     - List the available algorithm store instances
