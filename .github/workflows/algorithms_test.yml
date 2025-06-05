@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-client-script:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
@@ -24,4 +24,4 @@ jobs:
 
     - name: Run client script test
       run: |
-        v6 test client-script --create-dev-network -n test --server-url http://172.17.0.1
+        v6 test client-script --create-dev-network -n test --server-url http://host.docker.internal

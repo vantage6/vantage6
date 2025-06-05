@@ -33,4 +33,6 @@ logging:
 port: {{ port }}
 server_url: {{ server_url }}
 task_dir: {{ task_dir}}
+node_extra_hosts:
+  host.docker.internal: host-gateway
 {{- user_provided_config -}}
