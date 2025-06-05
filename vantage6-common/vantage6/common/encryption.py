@@ -338,6 +338,8 @@ class RSACryptor(CryptorBase):
         # encrypt bytes directly in javascript) - so if this key was encrypted in the
         # UI, we need to decode it here as extra step. If it fails, ignore it as it is
         # apparently not needed.
+        # TODO v5+ add additional encoding step in Python so that we always have the
+        # same process
         try:
             shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
         except UnicodeDecodeError:
@@ -353,6 +355,7 @@ class RSACryptor(CryptorBase):
         # In the UI, the result has an extra base64 encoding step also for the
         # symmetrical part of the encryption. If it fails, ignore it as it is
         # apparently not needed.
+        # TODO v5+ adapt as stated above in decrypting shared key
         try:
             json.loads(result.decode("utf-8"))
         except json.decoder.JSONDecodeError:

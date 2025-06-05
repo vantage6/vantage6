@@ -344,9 +344,6 @@ dev:
   vantage6-ui:
     imageSelector: ${UI_IMAGE}
     sync:
-    # TODO ideally we'd include the entire dir vantage6-ui/ but that leads to issues
-    # with the node_modules dir, as well as with the JSON files. Usually changing these
-    # would require image rebuild but it's not transparent.
     - path: ./vantage6-ui/src/:/app/src/
       disableDownload: true
 

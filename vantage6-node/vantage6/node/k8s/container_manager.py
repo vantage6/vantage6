@@ -265,6 +265,10 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
+            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
+            # so that we can be sure this file exists. From the type we could then
+            # derive if it's a file or directory, and it may be entirely unneccesary in
+            # that case to mount the database files/dirs into the node container.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
