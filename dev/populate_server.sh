@@ -35,6 +35,8 @@ if [ ! -f "${POPULATE_MARKER}" ]; then
       exit $INIT_STATUS
     fi
   else
+    # Create the marker file so that we do not bother the user again
+    touch "${POPULATE_MARKER}"
     echo "Skipping populating vantage6 server."
   fi
 else
