@@ -240,6 +240,8 @@
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
+        "allowed_values": "Allowed values",
+        "allowed_values_placeholder": "New value...",
         "has_default": "Has default value:",
         "default_value_null": "Default value is empty (null/none):",
         "default_value": "Default value",

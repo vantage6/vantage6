@@ -133,7 +133,14 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
-                        <mat-radio-group formControlName="has_default_value">
+                        <div *ngIf="isArgumentWithAllowedValues(parameterFormGroup.controls['type'].value)">
+                          <app-mat-chip-form 
+                            [label]="'algorithm.function.argument.allowed_values' | translate"
+                            [placeholder]="'algorithm.function.argument.allowed_values_placeholder' | translate"
+                            [formcontrol]="parameterFormGroup.controls.allowed_values"
+                            [initialValues]="parameterFormGroup.controls.allowed_values.value"></app-mat-chip-form>
+                        </div>
+                        <mat-radio-group (change)="hasDefaultValueChanges($event.value, parameterFormGroup.controls['default_value'])" formControlName="has_default_value">
                           <mat-label>{{ "algorithm.function.argument.has_default" | translate }}</mat-label>
                           <mat-radio-button [value]="true" color="primary">{{ "general.yes" | translate }}</mat-radio-button>
                           <mat-radio-button [value]="false" color="primary">{{ "general.no" | translate }}</mat-radio-button>
@@ -158,8 +165,21 @@
                               <mat-radio-button [value]="true" color="primary">{{ "general.true" | translate }}</mat-radio-button>
                               <mat-radio-button [value]="false" color="primary">{{ "general.false" | translate }}</mat-radio-button>
                             </mat-radio-group>
+
                             <mat-form-field
-                              *ngIf="parameterFormGroup.controls['type'].value !== argumentType.Boolean"
+                            *ngIf="parameterFormGroup.controls['type'].value !== argumentType.Boolean && isArgumentWithAllowedValues(parameterFormGroup.controls['type'].value)"
+                            subscriptSizing="dynamic"
+                          >
+                            <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>
+                            <mat-select formControlName="default_value">
+                              <mat-option *ngFor="let arg of parameterFormGroup.controls.allowed_values.value" [value]="arg">
+                                {{ arg }}
+                              </mat-option>
+                            </mat-select>
+                          </mat-form-field>
+
+                            <mat-form-field
+                              *ngIf="parameterFormGroup.controls['type'].value !== argumentType.Boolean && !isArgumentWithAllowedValues(parameterFormGroup.controls['type'].value)"
                               subscriptSizing="dynamic"
                             >
                               <mat-label>{{ "algorithm.function.argument.default_value" | translate }}</mat-label>

@@ -7,7 +7,8 @@ import { Pagination } from 'src/app/models/api/pagination.model';
 import { ChosenStoreService } from './chosen-store.service';
 import { isListTypeArgument } from '../helpers/algorithm.helper';
 import { getLazyProperties } from '../helpers/api.helper';
-import { environment } from "../../environments/environment";
+import { AllowedArgumentValue } from '../models/api/allowed-argument-value.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -26,29 +27,36 @@ export class AlgorithmService {
         return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
       })
     );
-    // combine the list of lists of algorithms
+
+    for (const algorithms of results) {
+      algorithms.forEach((algorithm) => {
+        this.parseAllowedValues(algorithm);
+      });
+    }
+
     return results.reduce((accumulator, val) => accumulator.concat(val), []);
   }
 
   async getAlgorithmsForCommunityStore(params: object = {}): Promise<Algorithm[]> {
     const algorithmStore = this.getCommunityStore();
 
-    return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params)
+    return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
   }
 
-  async getAlgorithmForCommunityStore(id: string,  lazyProperties: AlgorithmLazyProperties[] = []){
-    const algorithmStore = this.getCommunityStore()
+  async getAlgorithmForCommunityStore(id: string, lazyProperties: AlgorithmLazyProperties[] = []) {
+    const algorithmStore = this.getCommunityStore();
 
-    return await this.getAlgorithm(algorithmStore.url, id, lazyProperties)
+    return await this.getAlgorithm(algorithmStore.url, id, lazyProperties);
   }
 
   getCommunityStore(): AlgorithmStore {
     return {
-      id: -1, name: "community store",
+      id: -1,
+      name: 'community store',
       url: environment.community_store_url,
       collaborations: [],
       all_collaborations: true
-    }
+    };
   }
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
     const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
@@ -74,7 +82,8 @@ export class AlgorithmService {
   }
 
   async getAlgorithm(algorithm_store_url: string, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
-    const result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+    result = this.parseAllowedValues(result);
 
     const algorithm: Algorithm = { ...result, reviews: [] };
     await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algorithm_store_url);
@@ -84,7 +93,7 @@ export class AlgorithmService {
 
   async getAlgorithmByUrl(imageUrl: string, store: AlgorithmStore): Promise<Algorithm | null> {
     const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
-    // const result = await this.getAlgorithmsForAlgorithmStore(store, { image: imageUrl });
+
     if (result.length === 0) {
       return null;
     }
@@ -178,5 +187,16 @@ export class AlgorithmService {
       });
     });
     return algorithmForm;
+  }
+
+  private parseAllowedValues(algorithm: Algorithm): Algorithm {
+    algorithm.functions.forEach((func) => {
+      func.arguments.forEach((arg) => {
+        arg.allowed_values = arg.allowed_values?.map((value) => {
+          return (value as unknown as AllowedArgumentValue).value;
+        });
+      });
+    });
+    return algorithm;
   }
 }

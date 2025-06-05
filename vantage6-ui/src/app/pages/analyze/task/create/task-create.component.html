@@ -194,6 +194,12 @@
                         {{ organization.name }}
                       </mat-option>
                     </mat-select>
+                    <mat-select
+                      *ngIf="shouldShowAllowedValuesDropdown(argument)"
+                      [formControlName]="argument.name"
+                    >
+                      <mat-option *ngFor="let allowed_value of argument.allowed_values" [value]="allowed_value">{{ allowed_value }}</mat-option>
+                    </mat-select>
                     <input
                       *ngIf="shouldShowParameterSimpleInput(argument)"
                       matInput
