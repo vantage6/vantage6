@@ -2888,6 +2888,7 @@ class TestResources(TestResourceBase):
 
         # test wrong action
         task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE
+        task_json["collaboration_id"] = col.id
         results = self.app.post(
             "/api/task",
             headers=headers,
@@ -2896,7 +2897,6 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with correct parameters
-        task_json["collaboration_id"] = col.id
         task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE
         results = self.app.post(
             "/api/task",
