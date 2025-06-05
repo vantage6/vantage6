@@ -12,6 +12,7 @@ import os
 import sys
 import questionary as q
 import errno
+import debugpy
 from vantage6.common.globals import InstanceType
 
 import vantage6.node.globals as constants
@@ -103,6 +104,8 @@ def cli_node_start(
 
         # create dummy node context
         ctx = ContextClass(name, system_folders)
+
+    debugpy.listen(("0.0.0.0", 5678))
 
     # run the node application
     node.run(ctx)

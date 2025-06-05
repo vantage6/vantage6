@@ -312,6 +312,9 @@ def cli_node_start(
         },
         environment=env,
         name=ctx.docker_container_name,
+        ports={
+            "5678/tcp": "5678"
+        },
         auto_remove=not keep,
         tty=True,
         extra_hosts=extra_hosts,

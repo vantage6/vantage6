@@ -390,9 +390,10 @@ def proxy_results(id_: int) -> Response:
 @app.route("/resultstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
     log.info("Proxy stream handler called with id: %s", id)
-    present = "Authorization" in request.headers
-    headers = {"Authorization": request.headers["Authorization"]} if present else None
-
+    headers = {}
+    for h in ["Authorization", "Content-Type", "Content-Length"]:
+            if h in request.headers:
+                headers[h] = request.headers[h]
     method = get_method(request.method)
     url = f"{server_url}/resultstream/{id}"
     log.info("Making proxied request to %s", url)
@@ -404,6 +405,58 @@ def stream_handler(id: str) -> FlaskResponse:
     if backend_response.status_code > 210:
         log.warning("Proxy server received status code %s", backend_response.status_code)
         log.warning("Error messages: %s", backend_response.json())
+        log.debug(
+            "method: %s, url: %s, params: %s, headers: %s",
+            request.method,
+            url,
+            request.args,
+            headers,
+        )
+        return backend_response.content, backend_response.status_code, backend_response.headers.items()
+
+    def generate():
+        try:
+            for chunk in backend_response.iter_content(chunk_size=8192):
+                if chunk:
+                    yield chunk
+        finally:
+            backend_response.close()
+
+    return FlaskResponse(
+        stream_with_context(generate()),
+        status=backend_response.status_code,
+        headers=dict(backend_response.headers),
+        content_type=backend_response.headers.get("Content-Type")
+    )
+
+@app.route("/resultstream", methods=["POST"])
+def stream_handler_post() -> FlaskResponse:
+    log.info("Proxy stream POST handler called")
+    headers = {}
+    for h in ["Authorization", "Content-Type", "Content-Length"]:
+            if h in request.headers:
+                headers[h] = request.headers[h]
+
+    method = get_method(request.method)
+    url = f"{server_url}/resultstream"
+    log.info("Making proxied POST request to %s", url)
+
+    backend_response = method(
+        url,
+        stream=True,
+        params=request.args,
+        headers=headers,
+        data=request.stream
+    )
+
+    log.info("Received response with status code %s", backend_response.status_code)
+
+    if backend_response.status_code > 210:
+        log.warning("Proxy server received status code %s", backend_response.status_code)
+        try:
+            log.warning("Error messages: %s", backend_response.json())
+        except Exception:
+            log.warning("Could not decode error response as JSON.")
         log.debug(
             "method: %s, url: %s, params: %s, headers: %s",
             request.method,

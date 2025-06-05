@@ -753,11 +753,6 @@ class Tasks(TaskBase):
         # to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
         # send encrypted input.
-        is_valid_input, error_msg = Tasks._check_input_encryption(
-            organizations_json_list, collaboration
-        )
-        if not is_valid_input:
-            return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
 
         # permissions ok, create task record and TaskDatabase records
         task = db.Task(
