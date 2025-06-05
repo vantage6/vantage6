@@ -450,9 +450,11 @@ class Algorithms(AlgorithmBaseResource):
                                   'column_list', 'organization' or 'organization_list'
                               allowed_values:
                                 type: array
-                                description: An optional list of allowed values for the argument
+                                description: An optional list of allowed values for the
+                                  argument. If type of the argument is 'string',
+                                  the allowed values should be a list of strings, etc.
                                 items:
-                                  type: string
+                                  type: string | int | float
                               has_default_value:
                                 type: boolean
                                 description: Whether the argument has a default
@@ -593,7 +595,7 @@ class Algorithms(AlgorithmBaseResource):
                 if argument.get("allowed_values", []):
                     for value in argument["allowed_values"]:
                         allowed_value = AllowedArgumentValue(
-                            value=value, argument_id=arg.id
+                            value=str(value), argument_id=arg.id
                         )
                         allowed_value.save()
             # create the databases
@@ -1079,7 +1081,7 @@ class Algorithm(AlgorithmBaseResource):
                     if argument.get("allowed_values", []):
                         for value in argument["allowed_values"]:
                             allowed_value = AllowedArgumentValue(
-                                value=value, argument_id=arg.id
+                                value=str(value), argument_id=arg.id
                             )
                             allowed_value.save()
                 # Create databases and visualizations
