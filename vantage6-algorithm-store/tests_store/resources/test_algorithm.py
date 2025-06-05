@@ -715,7 +715,9 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(digest, expected_digest)
         get_digest_mock.assert_any_call(image_name)
         get_digest_mock.assert_any_call(
-            full_image=image_name, docker_username=username, docker_password=password
+            full_image=image_name,
+            registry_username=username,
+            registry_password=password,
         )
 
         # Test case 3: Image with digest not found, and no proper authentication details
