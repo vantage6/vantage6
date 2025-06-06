@@ -183,9 +183,6 @@ deployments:
     helm:
       chart:
         name: ./charts/auth
-        # name: keycloak
-        # version: 24.6.1
-        # repo: https://charts.bitnami.com/bitnami
       values:
         service:
           type: ClusterIP

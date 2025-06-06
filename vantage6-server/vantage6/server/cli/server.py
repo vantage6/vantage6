@@ -126,7 +126,7 @@ def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
     info("Adding entities to database.")
     # TODO v5+ this will probably no longer work since API keys are no longer in here
     # Should we get rid of this command or make something new? Also delete load()
-    # function if we remove it
+    # function if we remove it. See issue #2023
     fixture.load(entities, drop_all=drop_all)
 
 

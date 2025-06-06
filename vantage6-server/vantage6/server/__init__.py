@@ -151,7 +151,7 @@ class ServerApp:
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
-        # TODO reactivate this option - and then remove it in dev setup script
+        # TODO reactivate this option - and then remove it in dev setup script - #1983
         # self.couple_algorithm_stores()
 
         # TODO v5+ clean this up (simply delete community store URL update). This
@@ -753,7 +753,7 @@ class ServerApp:
             # simple for now: check every hour
             time.sleep(3600)
 
-    # TODO Enable this functionality again
+    # TODO Enable this functionality again - see issue #1983
     # def couple_algorithm_stores(self) -> None:
     #     """Couple algorithm stores to the server.
 

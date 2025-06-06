@@ -91,7 +91,8 @@ class Rules(ServicesResources):
               schema:
                 type: string
               description: Get rules for a specific user. This includes the
-                rules that are part of the user's roles.
+                rules that are part of the user's roles. If provided together with
+                current_user, the current user will be used and user_id will be ignored.
             - in: query
               name: current_user
               schema:
@@ -159,14 +160,14 @@ class Rules(ServicesResources):
         # do an outer join to find all rules that are directly assigned to the
         # user.
         if "user_id" in args or args.get("current_user", False):
-            if "user_id" in args:
+            if args.get("current_user", False):
+                user = g.user
+            else:
                 user = db.User.get(args["user_id"])
                 if not user:
                     return {
                         "msg": f'User with id={args["user_id"]} does not exist!'
                     }, HTTPStatus.BAD_REQUEST
-            else:
-                user = g.user
 
             # Create two subqueries - one for role-based permissions and one for direct
             # user permissions

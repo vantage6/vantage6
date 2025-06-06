@@ -62,7 +62,7 @@ class NodeClient(ClientBase):
             raise e
 
         # get info on how the server sees this node
-        node = self.request("node/current")
+        node = self.request("node/me")
 
         name = node.get("name")
         self.collaboration_id = node.get("collaboration").get("id")

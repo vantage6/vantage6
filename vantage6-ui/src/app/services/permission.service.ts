@@ -122,7 +122,7 @@ export class PermissionService {
   }
 
   private async getUser() {
-    return await this.apiService.getForApi<BaseUser>(`/user/current`, {
+    return await this.apiService.getForApi<BaseUser>(`/user/me`, {
       include_permissions: true
     });
   }

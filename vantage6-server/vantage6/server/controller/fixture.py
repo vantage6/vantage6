@@ -121,7 +121,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
 
             # TODO v5+ this currently won't work in v5 because the nodes are not
             # registered in keycloak. If keeping this and using it (outside of unit
-            # tests), improve it
+            # tests), improve it. See issue #2023
             node = db.Node(
                 organization=organization,
                 collaboration=collaboration,

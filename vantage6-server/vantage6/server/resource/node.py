@@ -53,8 +53,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
     api.add_resource(
         NodeCurrent,
-        path + "/current",
-        endpoint="node_current",
+        path + "/me",
+        endpoint="node_me",
         methods=("GET",),
         resource_class_kwargs=services,
     )

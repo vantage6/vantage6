@@ -58,7 +58,6 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         policy.delete()
 
-    # TODO reinstate on whitelist policy reinstate
     # @patch("vantage6.algorithm.store.resource._authenticate")
     # def test_view_algorithm_decorator_whitelisted(self, authenticate_mock):
     #     """

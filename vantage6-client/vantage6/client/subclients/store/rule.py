@@ -29,9 +29,10 @@ class StoreRuleSubClient(ClientBase.SubClient):
         role : int, optional
             Filter by role id.
         user_id : int, optional
-            Filter by user using the user id.
+            Filter by user using the user id. If provided together with current_user,
+            the current user will be used and user_id will be ignored.
         current_user : bool, optional
-            Filter rules for the current user. Default is False.
+            Filter rules for the current user.
         field : str, optional
             Which data field to keep in the result. For instance, "field='name'"
             will only return the name of the rules. Default is None.

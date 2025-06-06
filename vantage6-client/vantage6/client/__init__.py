@@ -1,22 +1,22 @@
 """Python client for user to communicate with the vantage6 server"""
 
 from __future__ import annotations
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import sys
 import itertools
-from pathlib import Path
 import threading
 import os
 import subprocess
 import webbrowser
 import urllib.parse as urlparse
-
 import logging
 import time
-from typing import List
-from keycloak import KeycloakAuthenticationError, KeycloakOpenID
-import pyfiglet
 
+from typing import List
+from pathlib import Path
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import pyfiglet
+from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
 from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
@@ -226,7 +226,7 @@ class UserClient(ClientBase):
         self._access_token = token_store.token["access_token"]
         self._refresh_token = token_store.token["refresh_token"]
 
-        user = self.request("user/current")
+        user = self.request("user/me")
         user_id = user.get("id")
         user_name = user.get("firstname")
         type_ = "user"
@@ -1252,7 +1252,7 @@ class UserClient(ClientBase):
                 Containing user information
             """
             params = {"include_permissions": include_permissions}
-            return self.parent.request("user/current", params=params)
+            return self.parent.request("user/me", params=params)
 
         @post_filtering(iterable=False)
         def update(

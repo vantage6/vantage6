@@ -167,7 +167,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
 
             # check that identity has access to endpoint
             # TODO v5+ simplify this: from keycloak we now get client_type but container
-            # token still gives us sub.client_type
+            # token still gives us sub.client_type - see issue #2024
             g.type = (
                 claims["client_type"]
                 if "client_type" in claims

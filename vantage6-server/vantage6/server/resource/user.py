@@ -60,8 +60,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
     api.add_resource(
         CurrentUser,
-        path + "/current",
-        endpoint="current_user",
+        path + "/me",
+        endpoint="user_me",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -509,7 +509,7 @@ class Users(UserBase):
 class CurrentUser(UserBase):
     @with_user
     def get(self):
-        """Get current user
+        """Get your own user
         ---
         description: >-
           The user that is currently authenticated is returned. This is always
