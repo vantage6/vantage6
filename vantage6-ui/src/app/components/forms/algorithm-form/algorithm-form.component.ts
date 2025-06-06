@@ -1,5 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ValidationErrors,
+  Validators,
+  ReactiveFormsModule,
+  FormControl
+} from '@angular/forms';
 import {
   MatExpansionPanel,
   MatAccordion,
@@ -257,6 +266,10 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     if (!hasDefaultValue) {
       defaultValueControl.setValue('');
     }
+  }
+
+  hasAllowedValues(type: string, allowedValues: string[] | undefined): boolean {
+    return this.isArgumentWithAllowedValues(type) && allowedValues !== undefined && allowedValues.length > 0;
   }
 
   addDatabase(functionFormGroup: FormGroup): void {
