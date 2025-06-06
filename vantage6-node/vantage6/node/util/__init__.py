@@ -1,13 +1,6 @@
 import logging
-from pathlib import Path
-import datetime
-
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 from vantage6.common import logger_name
-from vantage6.node.globals import TASK_FILES_ROOT
 
 log = logging.getLogger(logger_name(__name__))
 
