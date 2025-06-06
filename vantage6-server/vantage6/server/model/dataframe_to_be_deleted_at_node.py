@@ -29,7 +29,7 @@ class DataframeToBeDeletedAtNode(Base):
     @classmethod
     def get_by_multiple_keys(
         cls, dataframe_name: str, session_id: int, node_id: int
-    ) -> "DataframeToBeDeletedAtNode" | None:
+    ) -> "DataframeToBeDeletedAtNode":
         """
         Get a dataframe to be deleted at a node by multiple keys.
 
