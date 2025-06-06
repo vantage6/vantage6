@@ -22,3 +22,6 @@ from vantage6.server.model.session import Session  # noqa: F401
 from vantage6.server.model.dataframe import Dataframe  # noqa: F401
 from vantage6.server.model.column import Column  # noqa: F401
 from vantage6.server.model.task_depends_on import task_depends_on  # noqa: F401
+from vantage6.server.model.dataframe_to_be_deleted_at_node import (  # noqa: F401
+    DataframeToBeDeletedAtNode,
+)

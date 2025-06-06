@@ -184,6 +184,17 @@ class NodeTaskNamespace(ClientNamespace):
         """
         Action to be taken when a dataframe is instructed to be deleted.
         """
-        self.log.info(f"Received instruction to delete dataframe: {data['df_name']}")
+        self.log.info("Received instruction to delete dataframe: %s", data["df_name"])
         session_file_manager = SessionFileManager(data["session_id"])
         session_file_manager.delete_dataframe_file(data["df_name"])
+        # send back a socket event to the server to indicate that the dataframe has been
+        # deleted
+        self.emit(
+            "dataframe_deleted",
+            {
+                "df_name": data["df_name"],
+                "session_id": data["session_id"],
+                "node_id": self.node_worker_ref.client.whoami.id_,
+            },
+            namespace="/tasks",
+        )
