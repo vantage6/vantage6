@@ -8,9 +8,32 @@ if [ -z "$config_dir" ]; then
     exit 1
 fi
 
-for config in $config_dir/*.yaml; do
-    echo "Starting node with config: $config"
-    python /vantage6/vantage6-node/vantage6/dev_start.py "$config" &
+# Remove trailing slashes from config_dir
+config_dir=${config_dir%/}
+
+for dir in $config_dir/*; do
+    if [ -d "$dir" ]; then
+        echo "Looking for node configurations in: $dir"
+
+        config=$(find "$dir" -maxdepth 1 -name "*.yaml" -type f)
+        dotenv_file="$dir"/.env
+
+        # Check if the config file exists
+        if [ ! -f "$config" ]; then
+            echo "No yaml config file found in $dir/*.yaml"
+            continue
+        fi
+
+        # Check if the .env file exists
+        if [ ! -f "$dotenv_file" ]; then
+            echo "No .env file found in $dir/.env"
+            continue
+        fi
+
+        # Source the .env file to set environment variables in their own shell as we
+        # start a new shell for each node
+        bash -c "source \"$dotenv_file\" && python /vantage6/vantage6-node/vantage6/dev_start.py \"$config\" &"
+    fi
 done
 
 # For development purposes, we put infinite sleep here. This has the advantage that

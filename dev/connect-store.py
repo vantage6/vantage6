@@ -5,12 +5,15 @@ The `devspace` commands use this script to connect the server to the local
 store.
 """
 
+import json
 from vantage6.client import Client
 from pathlib import Path
 from vantage6.common.enum import AlgorithmStepType
 
-dev_dir = Path("dev") / ".data"
-dev_dir.mkdir(exist_ok=True)
+dev_dir = Path("dev")
+dev_data_dir = dev_dir / ".data"
+dev_data_dir.mkdir(exist_ok=True)
+
 client = Client("http://localhost", 7601, "/server", log_level="error")
 client.authenticate("root", "root")
 existing_stores = client.store.list().get("data", [])
@@ -49,6 +52,10 @@ if len(algorithms) > 0:
     print(f"Removing existing algorithm {algorithms[0]['name']}")
     client.algorithm.delete(id_=algorithms[0]["id"])
 
+with open(dev_dir / "v6-session-basic-algorithm-store.json", "r") as f:
+    algorithm_store = json.load(f)
+    function_metadata = algorithm_store["functions"]
+
 client.algorithm.create(
     name="Session Basics",
     description="A set of basic algorithms for a session management",
@@ -56,65 +63,5 @@ client.algorithm.create(
     vantage6_version="5.0.0",
     code_url="https://github.com/vantage6-ai/v6-session-basics",
     partitioning="horizontal",
-    functions=[
-        {
-            "name": "read_csv",
-            "display_name": "Read CSV file",
-            "standalone": True,
-            "description": "Read a CSV file to the local session storage",
-            "ui_visualizations": [],
-            "step_type": AlgorithmStepType.DATA_EXTRACTION.value,
-            "arguments": [],
-            "databases": [{"description": "", "name": "Database"}],
-        },
-        {
-            "name": "pre_process",
-            "display_name": "Change column dtype",
-            "standalone": True,
-            "description": "Change data type of particular column (e.g. string to int)",
-            "ui_visualizations": [],
-            "step_type": AlgorithmStepType.PREPROCESSING.value,
-            "arguments": [
-                {
-                    "has_default_value": False,
-                    "name": "column",
-                    "display_name": "Column ",
-                    "description": "Column to change data type of ",
-                    "type": "column",
-                    "default_value": "",
-                    "is_frontend_only": False,
-                },
-                {
-                    "has_default_value": False,
-                    "name": "dtype",
-                    "display_name": "New data type",
-                    "description": "",
-                    "type": "string",
-                    "default_value": "",
-                    "is_frontend_only": False,
-                },
-            ],
-            "databases": [],
-        },
-        {
-            "name": "sum",
-            "display_name": "Sum",
-            "standalone": True,
-            "description": "Sum the values of a column",
-            "ui_visualizations": [],
-            "step_type": AlgorithmStepType.FEDERATED_COMPUTE.value,
-            "arguments": [
-                {
-                    "has_default_value": False,
-                    "name": "column",
-                    "display_name": "Column to sum",
-                    "description": "",
-                    "type": "column",
-                    "default_value": "",
-                    "is_frontend_only": False,
-                }
-            ],
-            "databases": [],
-        },
-    ],
+    functions=function_metadata,
 )

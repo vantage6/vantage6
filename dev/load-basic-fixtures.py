@@ -27,20 +27,24 @@ parser.add_argument(
     "--task-directory", type=str, help="Directory to store tasks on the host"
 )
 parser.add_argument(
-    "--node-test-database-file", type=str, help="Path to the test database file"
-)
-parser.add_argument(
     "--number-of-nodes", type=int, default=3, help="Number of nodes to create"
 )
 parser.add_argument(
     "--task-namespace", type=str, default="vantage6-tasks", help="Task namespace"
 )
+parser.add_argument(
+    "--starting-port-number",
+    type=int,
+    default=7654,
+    help="The port number to be allocated to the proxy server of the first node. Additional nodes will use consecutive ports incremented by 1 from this value.",
+)
+
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
-node_test_database_file = args.node_test_database_file
 task_namespace = args.task_namespace
+node_starting_port_number = args.starting_port_number
 
 
 def create_organization(index):
@@ -81,8 +85,14 @@ def create_user(index, organization):
         return user
 
 
-def create_node(index, collaboration, organization, task_namespace):
+def create_node(index, collaboration, organization, task_namespace, node_port):
     name = f"node_{index}"
+
+    # Create a folder for all config files for a single node. This can be the test data,
+    # the node config and the environment variables.
+    node_dev_dir = dev_dir / name
+    node_dev_dir.mkdir(exist_ok=True)
+
     if next(iter(client.node.list(name=name)["data"]), None):
         print(f"==> node `{name}` already exists")
         return
@@ -107,38 +117,74 @@ def create_node(index, collaboration, organization, task_namespace):
 
         node_config = template.render(
             {
-                "api_key": node["api_key"],  # Use the API key from node creation
-                "databases": {"default": node_test_database_file},
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
                 "port": 80,
                 "server_url": "http://vantage6-server-vantage6-server-service",
                 "task_dir": task_directory,
                 "api_path": "/server",
                 "task_namespace": task_namespace,
+                "node_proxy_port": node_port,
                 # TODO user defined config
             }
         )
         config_file = (
-            dev_dir / f"node_org_{index}.yaml"
+            node_dev_dir / f"node_org_{index}.yaml"
         )  # Use index in config file name
         with open(config_file, "w") as f:
             f.write(node_config)
-
         print(f"===> Node configuration saved to `{config_file.name}`")
+
+        print("===> Creating .env file for the node")
+        env_file = node_dev_dir / ".env"
+        with open(env_file, "w") as f:
+            f.write(f"V6_API_KEY={node['api_key']}")
+
+        print(f"===> .env file saved to `{env_file.name}`")
+
     except Exception as e:
         print(f"Error creating node {name}: {str(e)}")
 
+
+def create_sessions(collaboration_id, users):
+    for user in users:
+        user_client = Client("http://localhost", 7601, "/server", log_level="error")
+        user_client.authenticate(user["username"], "Password123!")
+        user_client.session.create(
+            collaboration=collaboration_id,
+            name=f"session {user['username']} (own scope)",
+            scope="own",
+        )
+        user_client.session.create(
+            collaboration=collaboration_id,
+            name=f"session {user['username']} (organization scope)",
+            scope="organization",
+        )
+    user_client.session.create(
+        collaboration=collaboration_id,
+        name="session (collaboration scope)",
+        scope="collaboration",
+    )
+    print("==> Sessions created")
+
+
+def clear_dev_folder(name):
+    node_dev_dir = dev_dir / name
+    if node_dev_dir.exists():
+        for file_ in node_dev_dir.iterdir():
+            file_.unlink()
+        node_dev_dir.rmdir()
+        print(f"===> Dev folder for node `{name}` cleared")
+
+
+print("=> Removing old config files")
+for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
+    clear_dev_folder(node_dir.name)
 
 print("=> creating organizations")
 organizations = []
 for i in range(1, number_of_nodes + 1):
     organizations.append(create_organization(i))
 
-
-print("=> Creating users")
-users = []
-for i in range(1, number_of_nodes + 1):
-    users.append(create_user(i, organizations[i - 1]))
 
 print("=> Creating collaboration")
 
@@ -154,6 +200,20 @@ else:
         encrypted=False,
     )
 
+print("=> Creating users")
+users = []
+for i in range(1, number_of_nodes + 1):
+    users.append(create_user(i, organizations[i - 1]))
+
+print("=> Creating sessions")
+create_sessions(col_1["id"], users)
+
 print("=> Creating nodes")
 for i in range(1, number_of_nodes + 1):
-    create_node(i, col_1, organizations[i - 1], task_namespace)
+    create_node(
+        i,
+        col_1,
+        organizations[i - 1],
+        task_namespace,
+        node_starting_port_number + (i - 1),
+    )

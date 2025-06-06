@@ -1,11 +1,4 @@
-api_key: {{ api_key }}
 api_path: {{ api_path }}
-databases:
-  {% for label, path in databases.items() %}
-  - label: {{ label }}
-    uri: {{ path }}
-    type: csv
-  {% endfor %}
 encryption:
   enabled: false
   private_key: null
@@ -30,6 +23,7 @@ logging:
     name: docker.auth
   - level: warning
     name: kubernetes.client.rest
+node_proxy_port: {{ node_proxy_port }}
 port: {{ port }}
 server_url: {{ server_url }}
 task_dir: {{ task_dir}}

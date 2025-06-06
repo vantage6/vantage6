@@ -9,11 +9,10 @@ from pathlib import Path
 import uuid
 
 from kubernetes import client as k8s_client, config, watch
-from kubernetes.client import V1EnvVar
 from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name, get_database_config
+from vantage6.common import logger_name
 from vantage6.common.globals import (
     DEFAULT_ALPINE_IMAGE,
     DEFAULT_DOCKER_REGISTRY,
@@ -30,13 +29,11 @@ from vantage6.common.docker.addons import (
 from vantage6.common.client.node_client import NodeClient
 from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    PROXY_SERVER_HOST,
-    PROXY_SERVER_PORT,
+    DEFAULT_PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
     TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
-    JOB_POD_TOKEN_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
     TASK_START_TIMEOUT_SECONDS,
@@ -79,7 +76,7 @@ class ContainerManager:
         # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
 
-        self.databases = self._set_database(self.ctx.config["databases"])
+        self.databases = self._get_database_metadata()
 
         # before a task is executed it gets exposed to these policies
         self._policies = self._setup_policies(self.ctx.config)
@@ -197,31 +194,68 @@ class ContainerManager:
             )
         return policies
 
-    def _set_database(self, config_databases: dict | list) -> dict:
+    def _get_database_metadata(self) -> dict:
         """
-        Set database location and whether or not it is a file
+        Collect information about the databases.
 
-        Parameters
-        ----------
-        databases: dict | list
-            databases as specified in the config file
+        This function will return a dictionary with contains a key for every data
+        source. Each key will have a dictionary with the following keys:
+        - uri: the URI of the database
+        - local_uri: the local URI of the database
+        - is_file: whether the database is a file
+        - is_dir: whether the database is a directory
+        - type: the type of the database
+        - env: the environment variables to be passed to the algorithm container
+
+        It reads these from the environment variables that are passed to the node.
 
         Returns
         -------
         dict
             Dictionary with the information about the databases
+
+        Examples
+        --------
+        When the environment variables are set as follows:
+        ```bash
+        DATABASE_LABELS="db1"
+        DATABASE_DB1_URI="postgresql://user:password@host:port/db"
+        DATABASE_DB1_TYPE="sql"
+        DATABASE_DB1_SOME_OTHER_KEY="some_other_value"
+        ```
+
+        The function will return the following dictionary:
+        ```python
+        >>> self._get_database_metadata()
+        {
+            "db1": {
+                "uri": "postgresql://user:password@host:port/db",
+                "local_uri": "/data/db1",
+                "is_file": false,
+                "is_dir": false,
+                "type": "sql",
+                "env": {
+                    "some_other_key": "some_other_value",
+                }
+            }
+        }
+        ```
         """
-        db_labels = [db["label"] for db in config_databases]
+        db_labels = os.environ.get("DATABASE_LABELS", "").split(",")
+        if not db_labels:
+            self.log.warning("No databases found in the environment variables")
+            return {}
 
         databases = {}
         for label in db_labels:
 
-            db_config = get_database_config(config_databases, label)
-
             # The URI on the host system. This can either be a path to a file or folder
             # or an address to a service.
-            uri = db_config["uri"]
+            uri_env_var = f"DATABASE_{label.upper()}_URI"
+            uri = os.environ.get(uri_env_var, "")
 
+            db_type_env_var = f"DATABASE_{label.upper()}_TYPE"
+            db_type = os.environ.get(db_type_env_var, "")
             # In case we are dealing with a file or directory and when running the node
             # instance in a POD, our internal path to that file or folder is different.
             # At this point we are not sure what the type of database is so we just
@@ -234,7 +268,7 @@ class ContainerManager:
             # so that we can be sure this file exists. From the type we could then
             # derive if it's a file or directory, and it may be entirely unneccesary in
             # that case to mount the database files/dirs into the node container.
-            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_config['type']}"
+            tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
             db_is_dir = tmp_uri.exists() and tmp_uri.is_dir()
@@ -242,13 +276,23 @@ class ContainerManager:
             if db_is_file or db_is_dir:
                 local_uri = str(tmp_uri)
 
+            # Get additional environment variables and remove the DATABASE_[LABEL]_
+            # prefix
+            env = {}
+            for key in os.environ:
+                if key.startswith(f"DATABASE_{label.upper()}_") and key not in [
+                    uri_env_var,
+                    db_type_env_var,
+                ]:
+                    env[key.replace(f"DATABASE_{label.upper()}_", "")] = os.environ[key]
+
             databases[label] = {
                 "uri": uri,
                 "local_uri": local_uri,
                 "is_file": db_is_file,
                 "is_dir": db_is_dir,
-                "type": db_config["type"],
-                "env": db_config.get("env", {}),
+                "type": db_type,
+                "env": env,
             }
 
         self.log.debug("Databases: %s", databases)
@@ -292,7 +336,13 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        self.log.debug("Setting up algorithm run %s", run_id)
+        init_org_ref = task_info.get("init_org", {})
+        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        self.log.debug(
+            "[Algorithm job run %s - requested by org %s] Setting up algorithm run",
+            run_id,
+            init_org_id,
+        )
         # In case we are dealing with a data-extraction or prediction task, we need to
         # know the dataframe that is being created or modified by the algorithm.
         df_details = task_info.get("dataframe", {})
@@ -307,13 +357,20 @@ class ContainerManager:
 
         # Verify that an allowed image is used
         if not self.is_docker_image_allowed(image, task_info):
-            self.log.critical(f"Docker image {image} is not allowed on this Node!")
+            self.log.critical(
+                "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
+                run_id,
+                init_org_id,
+                image,
+            )
             return RunStatus.NOT_ALLOWED
 
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                f"Task (run_id={run_id}) is already being executed, discarding task"
+                "[Algorithm job run %s requested by org %s] Task is already being executed, discarding task",
+                run_id,
+                init_org_id,
             )
             return RunStatus.ACTIVE
 
@@ -321,10 +378,9 @@ class ContainerManager:
         parent_task_id = get_parent_id(task_info)
 
         try:
-            _volumes, _volume_mounts, env_vars = self._create_volume_mounts(
+            _volumes, _volume_mounts, env_vars, secrets = self._create_volume_mounts(
                 run_io=run_io,
                 docker_input=docker_input,
-                token=token,
                 databases_to_use=databases_to_use,
             )
         except PermanentAlgorithmStartFail as e:
@@ -339,12 +395,24 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
-        env_vars[ContainerEnvNames.HOST.value] = os.environ.get(
-            "PROXY_SERVER_HOST", PROXY_SERVER_HOST
-        )
+        # The PROXY_SERVER_HOST env. variable is assumed to be set at this
+        # point (no need to check here again), as its presence is validated when the
+        # node is initialized (node/__init__.py)
+        env_vars[ContainerEnvNames.HOST.value] = os.environ.get("PROXY_SERVER_HOST")
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
-            "PROXY_SERVER_PORT", str(PROXY_SERVER_PORT)
+            "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
         )
+
+        if action == AlgorithmStepType.CENTRAL_COMPUTE:
+            secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
+
+        self.log.debug(
+            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and PROXY_SERVER_PORT=%s env variables on the job POD",
+            run_id,
+            env_vars[ContainerEnvNames.HOST.value],
+            env_vars[ContainerEnvNames.PORT.value],
+        )
+
         env_vars[ContainerEnvNames.API_PATH.value] = ""
 
         env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]
@@ -356,12 +424,26 @@ class ContainerManager:
         env_vars = self._encode_environment_variables(env_vars)
         for key, value in env_vars.items():
             io_env_vars.append(k8s_client.V1EnvVar(name=key, value=value))
-
         try:
             self._validate_environment_variables(env_vars)
+            self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
-            self.log.warning(e)
+            self.log.warning(
+                "[Algorithm job run %s requested by org %s] Validation of environment variables failed: %s",
+                run_id,
+                init_org_id,
+                e,
+            )
             return RunStatus.FAILED
+
+        if secrets:
+            secret = k8s_client.V1Secret(
+                metadata=k8s_client.V1ObjectMeta(name=run_io.container_name),
+                string_data=secrets,
+            )
+            self.core_api.create_namespaced_secret(
+                namespace=self.task_namespace, body=secret
+            )
 
         container = k8s_client.V1Container(
             name=run_io.container_name,
@@ -369,6 +451,17 @@ class ContainerManager:
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
+            env_from=(
+                [
+                    k8s_client.V1EnvFromSource(
+                        secret_ref=k8s_client.V1SecretReference(
+                            name=run_io.container_name
+                        )
+                    )
+                ]
+                if secrets
+                else []
+            ),
         )
 
         job_metadata = k8s_client.V1ObjectMeta(
@@ -407,7 +500,10 @@ class ContainerManager:
         )
 
         self.log.info(
-            "Creating namespaced K8S job for task_id=%s and run_id=%s.", task_id, run_id
+            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for task_id=%s.",
+            run_id,
+            init_org_id,
+            task_id,
         )
         self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
@@ -461,14 +557,19 @@ class ContainerManager:
                     label=f"app={run_io.container_name}"
                 )
                 self.log.info(
-                    "Job POD (label %s) is now running!", run_io.container_name
+                    "[Algorithm job run %s requested by org %s] Job POD (label %s) is now running!",
+                    run_id,
+                    init_org_id,
+                    run_io.container_name,
                 )
 
                 return status
 
             elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
                 self.log.error(
-                    "Time out waiting for Job POD (label %s) to start.",
+                    "[Algorithm job run %s requested by org %s] Time out waiting for Job POD (label %s) to start.",
+                    run_id,
+                    init_org_id,
                     run_io.container_name,
                 )
                 return RunStatus.UNKNOWN_ERROR
@@ -559,10 +660,12 @@ class ContainerManager:
         self,
         run_io: RunIO,
         docker_input: bytes,
-        token: str,
         databases_to_use: list[str],
     ) -> Tuple[
-        list[k8s_client.V1Volume], list[k8s_client.V1VolumeMount], list[V1EnvVar]
+        list[k8s_client.V1Volume],
+        list[k8s_client.V1VolumeMount],
+        dict[str, str],
+        dict[str, str],
     ]:
         """
         Create all volumes and volume mounts required by the algorithm/job.
@@ -573,17 +676,15 @@ class ContainerManager:
             RunIO object that contains information about the run
         docker_input: bytes
             Input that can be read by the algorithm container
-        token: str
-            Bearer token that the container can use to communicate with the server
         databases_to_use: list[str]
             Labels of the databases to use
 
         Returns
         -------
-        list[client.V1Volume], list[client.V1VolumeMount], list[V1EnvVar]
+        list[client.V1Volume], list[client.V1VolumeMount], dict[str, str], dict[str, str]
             a tuple with (1) the created volume names and (2) their corresponding volume
             mounts and (3) the list of the environment variables required by the
-            algorithms to use such mounts.
+            algorithms to use such mounts and (4) the secrets to be passed to the container.
 
         Notes
         -----
@@ -606,14 +707,12 @@ class ContainerManager:
         volumes: list[k8s_client.V1Volume] = []
         vol_mounts: list[k8s_client.V1VolumeMount] = []
 
-        # Create algorithm's input and token files before creating volume mounts with
+        # Create algorithm's input and output files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
-        input_file_path, output_file_path, token_file_path = run_io.create_files(
-            docker_input, b"", token.encode("ascii")
-        )
+        input_file_path, output_file_path = run_io.create_files(docker_input, b"")
 
-        # Create the volumes and corresponding volume mounts for the input, output and
-        # token files.
+        # Create the volumes and corresponding volume mounts for the input and output
+        # files.
         output_volume, output_mount = self._create_run_mount(
             volume_name=run_io.output_volume_name,
             host_path=Path(self.host_data_dir) / output_file_path,
@@ -629,13 +728,6 @@ class ContainerManager:
             mount_path=JOB_POD_INPUT_PATH,
         )
 
-        token_volume, token_mount = self._create_run_mount(
-            volume_name=run_io.token_volume_name,
-            host_path=Path(self.host_data_dir) / token_file_path,
-            type_="File",
-            mount_path=JOB_POD_TOKEN_PATH,
-        )
-
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
             host_path=Path(self.host_data_dir)
@@ -644,15 +736,14 @@ class ContainerManager:
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
 
-        volumes.extend([output_volume, input_volume, token_volume, session_volume])
-        vol_mounts.extend([output_mount, input_mount, token_mount, session_mount])
+        volumes.extend([output_volume, input_volume, session_volume])
+        vol_mounts.extend([output_mount, input_mount, session_mount])
 
         # The environment variables are expected by the algorithm containers in order
-        # to access the input, output and token files.
+        # to access the input and output files.
         environment_variables = {
             ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
             ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
-            ContainerEnvNames.TOKEN_FILE.value: JOB_POD_TOKEN_PATH,
             # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
@@ -660,6 +751,10 @@ class ContainerManager:
                 run_io.session_file_manager.session_state_file_name,
             ),
         }
+
+        # Some environment variables should be passed as secrets because they are
+        # sensitive.
+        secrets = {}
 
         # Bind-mounting all the CSV files (read only) defined on the configuration file
         # TODO bind other input data types
@@ -696,11 +791,12 @@ class ContainerManager:
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
 
             # additional environment variables for the database. These will be stored
-            # as {PREFIX}{KEY}=value in the container
+            # as {PREFIX}{KEY}=value in the container. These are read by the
+            # `@source_database` decorator in the (data extraction) algorithm.
             if "env" in db:
                 for key in db["env"]:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
-                    environment_variables[env_key] = db["env"][key]
+                    secrets[env_key] = db["env"][key]
 
         else:
             # In the other cases (preprocessing, compute, ...) we are dealing with a
@@ -712,7 +808,7 @@ class ContainerManager:
                 ",".join([db["dataframe_name"] for db in databases_to_use])
             )
 
-        return volumes, vol_mounts, environment_variables
+        return volumes, vol_mounts, environment_variables, secrets
 
     def _validate_environment_variables(self, environment_variables: dict) -> None:
         """
@@ -1198,6 +1294,36 @@ class ContainerManager:
         )
         for job_pod in job_pods_list.items:
             self.__delete_pod(job_pod.metadata.name, namespace)
+
+        self.__delete_secret(run_io.container_name, namespace)
+
+    def __delete_secret(self, secret_name: str, namespace: str) -> None:
+        """
+        Deletes a secret in a given namespace
+
+        Parameters
+        ----------
+        secret_name: str
+            Name of the secret
+        namespace: str
+            Namespace where the secret is located
+        """
+        try:
+            self.core_api.delete_namespaced_secret(
+                name=secret_name, namespace=namespace
+            )
+            self.log.info(
+                "Removed kubernetes Secret %s in namespace %s",
+                secret_name,
+                namespace,
+            )
+        except ApiException as exc:
+            if exc.status == 404:
+                self.log.debug(
+                    "No secret %s to remove in namespace %s", secret_name, namespace
+                )
+            else:
+                self.log.error("Exception when deleting namespaced secret: %s", exc)
 
     def __delete_job(self, job_name: str, namespace: str) -> None:
         """

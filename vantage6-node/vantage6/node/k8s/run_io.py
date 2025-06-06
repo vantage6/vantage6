@@ -8,6 +8,13 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
 
+# This up-front import prevents the issue described on https://github.com/vantage6/vantage6/issues/1950
+# which happens when pyarrow is unable to lazy-loading concurrent.futures.thread
+# Ignoring F401: “module imported but unused”
+# TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
+# pylint: disable=unused-import
+import concurrent.futures.thread  # noqa: F401
+
 from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common import logger_name
@@ -92,9 +99,9 @@ class RunIO:
     def output_file(self) -> str:
         return os.path.join(self.run_folder, "output")
 
-    def create_files(self, input_, output, token) -> tuple[str, str, str]:
+    def create_files(self, input_, output_) -> tuple[str, str]:
         """
-        Create the input, output and token files for the run.
+        Create the input and output files for the run.
 
         Parameters
         ----------
@@ -102,8 +109,6 @@ class RunIO:
             Content of the input file
         output: bytes
             Content of the output file
-        token: bytes
-            Content of the token file
 
         Returns
         -------
@@ -112,8 +117,7 @@ class RunIO:
         """
         return (
             self._create_run_io_file("input", input_),
-            self._create_run_io_file("output", output),
-            self._create_run_io_file("token", token),
+            self._create_run_io_file("output", output_),
         )
 
     def _create_run_io_file(self, filename: str, content: bytes) -> str:
@@ -159,8 +163,14 @@ class RunIO:
         ]:
             try:
                 table = pq.read_table(self.output_file)
-            except Exception:
-                self.log.exception("Error reading output file")
+            except Exception as e:
+                self.log.exception(
+                    "Error reading output file for run ID %s, session ID %s, action %s. Exception: %s",
+                    self.run_id,
+                    self.session_id,
+                    self.action,
+                    str(e),
+                )
                 return b"", RunStatus.UNEXPECTED_OUTPUT
 
             # no algorithm result, but update the session files

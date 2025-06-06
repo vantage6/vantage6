@@ -9,17 +9,7 @@ data:
     server_url: {{ .Values.node.server.url }}
     api_path: {{ .Values.node.server.path }}
     port: {{ .Values.node.server.port }}
-    {{- range .Values.node.databases.fileBased -}}
-    databases:
-    - label: {{ .name }}
-      uri: {{ .uri }}
-      type: {{ .type }}
-    {{- end }}
-    {{- range .Values.node.databases.serviceBased -}}
-    - label: {{ .name }}
-      uri: {{ .uri }}
-      type: {{ .type }}
-    {{- end -}}
+    node_proxy_port: {{ .Values.node.proxyPort }}
     encryption:
       enabled: false
       private_key: null

@@ -12,7 +12,9 @@ DEFAULT_NODE_SYSTEM_FOLDERS = False
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# TODO Check and remove
+# HCR: This constants is not being used, as well as the other defined in cli/globals.py
+# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
@@ -40,18 +42,15 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
 # Mount paths within the algorithm containers. Algorithms containers are run as
 # jobs in the Kubernetes cluster.
-# TODO v5+ we might consider using different paths for this to avoid conflicts with
-# the algorithm image contents. Maybe e.g. `/app/vantage6/task/input` etc?
-JOB_POD_INPUT_PATH = "/app/input"
-JOB_POD_OUTPUT_PATH = "/app/output"
-JOB_POD_TOKEN_PATH = "/app/token"
-JOB_POD_SESSION_FOLDER_PATH = "/app/session"
+JOB_POD_INPUT_PATH = "/app/vantage6/task/input"
+JOB_POD_OUTPUT_PATH = "/app/vantage6/task/output"
+JOB_POD_SESSION_FOLDER_PATH = "/app/vantage6/task/session"
 
 # The mount location of the tasks files, databases and kube config in the node
 # container.
 TASK_FILES_ROOT = "/app/tasks"
 DATABASE_BASE_PATH = "/app/databases/"
 
-# Must be consistent with node pod configuration
-PROXY_SERVER_HOST = "http://v6proxy-subdomain.vantage6-node.svc.cluster.local"
-PROXY_SERVER_PORT = 4567
+# Default proxy server port. It may be changed when starting the proxy if
+# the port is already in use
+DEFAULT_PROXY_SERVER_PORT = 7654

@@ -52,7 +52,10 @@ database:
   password: vantage6
 
   # The name of the database
-  name: store
+  name: vantage6
 
   #hostpath of the database mount
   volumePath: /mnt/data_store
+
+  # The name of the k8s node where the database is running
+  k8sNodeName: docker-desktop

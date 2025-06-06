@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-vantage6-postgres-pv
+  name: {{ .Release.Name }}-vantage6-node-task-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
-    type: local
+    type: local-tasks
 spec:
   capacity:
     storage: 10Gi
@@ -13,7 +13,7 @@ spec:
   storageClassName: local-storage
   persistentVolumeReclaimPolicy: Retain
   local:
-    path: {{ .Values.database.volumePath }}
+    path: {{ .Values.node.taskDirHost }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -21,4 +21,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ .Values.database.k8sNodeName }}
+                - {{ .Values.node.k8sNodeName }}

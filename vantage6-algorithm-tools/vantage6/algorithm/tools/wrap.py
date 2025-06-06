@@ -26,7 +26,6 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
       encoded in JSON format.
     - ``OUTPUT_FILE``: location where the results of the algorithm should
       be stored
-    - ``TOKEN_FILE``: access token for the vantage6 server REST api
     - ``DATABASE_URI``: uri of the database that the user requested
 
     The wrapper expects the input file to be a json file. Any other file
