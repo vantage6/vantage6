@@ -782,6 +782,7 @@ class ContainerManager:
             for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
                 "*.parquet"
             )
+            if not file_.stem == "session_state"
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
