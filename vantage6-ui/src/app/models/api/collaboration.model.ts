@@ -27,6 +27,7 @@ export interface BaseCollaboration {
   id: number;
   name: string;
   encrypted: boolean;
+  session_restrict_to_same_image: boolean;
   organizations: string;
   nodes: string;
   tasks: string;
@@ -37,6 +38,7 @@ export interface Collaboration {
   id: number;
   name: string;
   encrypted: boolean;
+  session_restrict_to_same_image: boolean;
   organizations: BaseOrganization[];
   nodes: BaseNode[];
   tasks: BaseTask[];
@@ -47,6 +49,7 @@ export interface Collaboration {
 export interface CollaborationForm {
   name: string;
   encrypted: boolean;
+  session_restrict_to_same_image: boolean;
   organizations: BaseOrganization[];
   registerNodes: boolean;
 }
@@ -54,5 +57,6 @@ export interface CollaborationForm {
 export type CollaborationCreate = {
   name: string;
   encrypted: boolean;
+  session_restrict_to_same_image: boolean;
   organization_ids: number[];
 };
