@@ -207,7 +207,7 @@
         "df-name": "Provide a suitable name for the dataframe created by this task",
         "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
-        "organization-partial": "Select the organizations that will carry out a partial function"
+        "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations."
       }
     },
     "step-database": {

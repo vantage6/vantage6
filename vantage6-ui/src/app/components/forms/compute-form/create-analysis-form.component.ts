@@ -835,6 +835,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (selectedFunction) {
       // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
+
+      // If it's a federated step, select all organizations
+      if (this.isFederatedStep(selectedFunction.step_type)) {
+        this.functionForm.patchValue({
+          organizationIDs: this.organizations.map((org) => org.id.toString())
+        });
+      }
     }
 
     // Delay setting function, so that form controls are added
