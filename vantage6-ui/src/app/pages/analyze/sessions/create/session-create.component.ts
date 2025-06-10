@@ -21,6 +21,7 @@ import { StudyService } from 'src/app/services/study.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatInput } from '@angular/material/input';
 import { getEnumKeyByValue } from 'src/app/helpers/utils.helper';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-session-create',
@@ -39,6 +40,7 @@ import { getEnumKeyByValue } from 'src/app/helpers/utils.helper';
     MatCardContent,
     MatInput,
     MatSelect,
+    MatProgressSpinner,
     TranslateModule
   ]
 })
@@ -46,6 +48,7 @@ export class SessionCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
 
   destroy$ = new Subject();
+  isLoading = false;
 
   public title: string = '';
   public session?: Session;
@@ -73,9 +76,11 @@ export class SessionCreateComponent implements OnInit {
       const curSessionId = params['id'];
       if (curSessionId) {
         this.title = this.translateService.instant('session-create.edit-title');
+        this.isLoading = true;
         this.session = await this.sessionService.getSession(curSessionId);
         this.form.controls['name'].setValue(this.session.name);
         this.form.controls['scope'].setValue(getEnumKeyByValue(SessionScope, this.session.scope));
+        this.isLoading = false;
       } else {
         this.title = this.translateService.instant('session-create.create-title');
       }

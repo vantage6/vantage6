@@ -9,6 +9,6 @@ export function isTruthy(value: string | boolean | unknown): boolean {
   return !!value;
 }
 
-export function getEnumKeyByValue(enum_class: any, value: string): string {
-  return Object.entries(enum_class).find(([_, val]) => val === value)?.[0] || '';
+export function getEnumKeyByValue<T extends { [key: string]: string | number }>(enum_class: T, value: string): string {
+  return Object.entries(enum_class).find(([, val]) => val === value)?.[0] || '';
 }
