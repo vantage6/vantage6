@@ -702,22 +702,15 @@ class Run(SingleRunBase):
         # we should mark the dependent tasks as failed as well.
         if RunStatus.has_failed(run.status):
             dependent_tasks = run.task.required_by
-            while dependent_tasks:
-                dependent_task: db.Task = dependent_tasks.pop()
+            # add dependent tasks recursively
+            if dependent_tasks:
+                dependent_tasks = self._add_dependent_tasks(dependent_tasks)
 
-                # Skip the mark as failed for tasks that are compute tasks, as these
-                # might still be able to run.
-                if AlgorithmStepType.is_compute(dependent_task.action):
-                    continue
-
+            for dependent_task in dependent_tasks:
                 log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")
-
-                # Also mark all decentant runs as failed
-                if dependent_task.required_by:
-                    dependent_tasks.extend(dependent_task.required_by)
-
+                # Also mark all dependent runs as failed
                 for dependent_run in dependent_task.runs:
-                    dependent_run.status = RunStatus.FAILED
+                    dependent_run.status = RunStatus.DEPENDED_ON_FAILED_TASK
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 
@@ -746,6 +739,22 @@ class Run(SingleRunBase):
         )
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
+
+    def _add_dependent_tasks(self, dependent_tasks: list[db.Task]) -> list[db.Task]:
+        """Recursively add all dependent tasks to the list of dependent tasks"""
+        for dependent_task in dependent_tasks:
+            if dependent_task.required_by:
+                for deeper_dependent_task in dependent_task.required_by:
+                    if deeper_dependent_task not in dependent_tasks:
+
+                        # Skip the mark as failed for tasks that are compute tasks, as
+                        # these might still be able to run.
+                        if AlgorithmStepType.is_compute(deeper_dependent_task.action):
+                            continue
+
+                        dependent_tasks.append(deeper_dependent_task)
+                        dependent_tasks = self._add_dependent_tasks(dependent_tasks)
+        return dependent_tasks
 
 
 class Result(SingleRunBase):
