@@ -48,10 +48,14 @@ After an algorithm is submitted, it needs to undergo a review process. At this p
 store manager will assign reviewers for this particular algorithm.
 Reviewers are recommended to assess the algorithm using the
 :ref:`algorithm-review-checklist`. The reviewers can then view the algorithm and
-provide feedback. If the algorithm is approved, it will be shown as approved in the
-UI and can be by researchers. While the algorithm is under review, it is not yet
-available for running tasks in the UI.  If any of the reviewers rejects the algorithm,
+provide feedback. If the algorithm is approved, it will be easily runnable by 
+researchers using the UI. While the algorithm is under review, it is not yet
+available for running tasks via the UI. If any of the reviewers rejects the algorithm,
 or the store manager does not assign reviewers, the algorithm will not become available.
+Note that an algorithm may still be run via the
+Python client, but a node configured to allow only algorithms from a certain algorithm 
+store will not accept algorithms that are not yet approved in that store.
+
 The reviewer can provide comments to the developer when rejecting an algorithm. If
 the algorithm is rejected, the process is repeated as soon as the developer
 submits an improved version of the algorithm.
