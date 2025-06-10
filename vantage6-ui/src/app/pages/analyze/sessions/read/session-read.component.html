@@ -34,8 +34,16 @@
             <span>{{ session.name || "-" }}</span>
           </div>
           <div class="data-list__item">
+            <b>{{ "session.scope" | translate }}</b>
+            <span>{{ translateScope(session.scope) }}</span>
+          </div>
+          <div class="data-list__item">
             <b>{{ "session.user" | translate }}</b>
             <span>{{ owner?.username || "-" }}</span>
+          </div>
+          <div class="data-list__item" *ngIf="session.scope === sessionScope.Organization">
+            <b>{{ "resources.organization" | translate }}</b>
+            <span>{{ owner?.organization?.name || "-" }}</span>
           </div>
           <div class="data-list__item">
             <b>{{ "session.created-at" | translate }}</b>
@@ -44,6 +52,10 @@
           <div class="data-list__item" *ngIf="study">
             <b>{{ "resources.study" | translate }}</b>
             <span>{{ study.name }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.ready" | translate }}</b>
+            <span>{{ session.ready ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
           </div>
         </div>
       </mat-card-content>

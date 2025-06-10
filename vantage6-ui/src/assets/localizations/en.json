@@ -108,6 +108,8 @@
     "delete-content": "This operation cannot be undone.",
     "name": "Name",
     "user": "Initiating user",
+    "scope": "Scope",
+    "ready": "Ready to use?",
     "created-at": "Created",
     "dataframes": {
       "title": "Dataframes",
@@ -739,6 +741,7 @@
       "event": "Event",
       "port": "Port",
       "study": "Study",
+      "session": "Session",
       "algorithm": "Algorithm",
       "vantage6_server": "Whitelisted server",
       "review": "Review"

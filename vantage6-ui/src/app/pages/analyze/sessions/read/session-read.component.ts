@@ -3,7 +3,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { routePaths } from 'src/app/routes';
 import { MatDialog } from '@angular/material/dialog';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -11,9 +11,9 @@ import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
-import { GetDataframeParameters, Session, SessionLazyProperties } from 'src/app/models/api/session.models';
+import { GetDataframeParameters, Session, SessionLazyProperties, SessionScope } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
-import { User } from 'src/app/models/api/user.model';
+import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { UserService } from 'src/app/services/user.service';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { PageHeaderComponent } from 'src/app/components/page-header/page-header.component';
@@ -56,6 +56,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
   printDate = printDate;
+  sessionScope = SessionScope;
 
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();
@@ -113,7 +114,8 @@ export class SessionReadComponent implements OnInit, OnDestroy {
     if (!this.session) {
       this.session = await this.getSession();
       if (this.session.study) this.study = await this.studyService.getStudy(this.session.study.id.toString());
-      if (this.session.owner) this.owner = await this.userService.getUser(this.session.owner.id.toString());
+      if (this.session.owner)
+        this.owner = await this.userService.getUser(this.session.owner.id.toString(), [UserLazyProperties.Organization]);
       await this.getDataframes();
     }
     this.isLoading = false;
@@ -151,6 +153,19 @@ export class SessionReadComponent implements OnInit, OnDestroy {
 
   hasDataframes(): boolean {
     return this.dataframeTable !== undefined && this.dataframeTable.rows.length > 0;
+  }
+
+  translateScope(scope: SessionScope): string {
+    switch (scope) {
+      case SessionScope.Collaboration:
+        return this.translateService.instant('rule.scope.collaboration');
+      case SessionScope.Organization:
+        return this.translateService.instant('rule.scope.organization');
+      case SessionScope.Own:
+        return this.translateService.instant('rule.scope.own');
+      default:
+        return scope;
+    }
   }
 
   public handleSearchChanged(searchRequests: SearchRequest[]): void {
