@@ -107,8 +107,11 @@ class SessionFileManager:
             self.log.warning("Dataframe file '%s' does not exist", df_path)
             return
 
-        df_path.unlink()
-        self.log.info("Dataframe file '%s' deleted", df_path)
+        try:
+            df_path.unlink()
+            self.log.info("Dataframe file '%s' deleted", df_path)
+        except Exception:
+            self.log.exception("Error deleting dataframe file '%s'", df_path)
 
         # update session state to include the deletion
         self.update_state_file(
