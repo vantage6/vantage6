@@ -2892,7 +2892,7 @@ class TestResources(TestResourceBase):
         # has been merged, the unittest should be fixable. This TODO has been logged in
         # https://github.com/vantage6/vantage6/issues/1495
         # task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE
-        # task_json["collaboration_id"] = col.id
+        task_json["collaboration_id"] = col.id
         # results = self.app.post(
         #     "/api/task",
         #     headers=headers,
