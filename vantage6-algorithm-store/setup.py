@@ -39,7 +39,7 @@ setup(
         "gevent==25.4.2",
         "jsonschema==4.21.1",
         "marshmallow==3.19.0",
-        "requests==2.32.3",
+        "requests==2.32.4",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
         "werkzeug==3.1.3",

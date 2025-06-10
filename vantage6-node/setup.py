@@ -36,7 +36,7 @@ setup(
         "gevent==25.4.2",
         "jinja2==3.1.6",
         "python-socketio==5.7.2",
-        "requests==2.32.3",
+        "requests==2.32.4",
         "psutil==5.9.0",
         "nvidia-ml-py==12.535.133",
         f'vantage6 == {version_ns["__version__"]}',

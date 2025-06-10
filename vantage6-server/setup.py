@@ -46,7 +46,7 @@ setup(
         "pyjwt==2.9.0",
         "pyotp==2.8.0",
         "prometheus-client==0.21.1",
-        "requests==2.32.3",
+        "requests==2.32.4",
         "requests-oauthlib==1.3.1",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
