@@ -20,6 +20,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { StudyService } from 'src/app/services/study.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatInput } from '@angular/material/input';
+import { getEnumKeyByValue } from 'src/app/helpers/utils.helper';
 
 @Component({
   selector: 'app-session-create',
@@ -74,7 +75,7 @@ export class SessionCreateComponent implements OnInit {
         this.title = this.translateService.instant('session-create.edit-title');
         this.session = await this.sessionService.getSession(curSessionId);
         this.form.controls['name'].setValue(this.session.name);
-        //TODO(BART/RIAN) RIAN: You also need to be able to edit the scope (and the study)
+        this.form.controls['scope'].setValue(getEnumKeyByValue(SessionScope, this.session.scope));
       } else {
         this.title = this.translateService.instant('session-create.create-title');
       }
