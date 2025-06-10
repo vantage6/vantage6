@@ -567,6 +567,7 @@
     "name": "Name",
     "encrypted": "Encrypted",
     "organizations": "Organizations",
+    "session-restrict-to-same-image": "Restrict session to single image?",
     "algorithm-store": {
       "url": "Web address",
       "actions": {
