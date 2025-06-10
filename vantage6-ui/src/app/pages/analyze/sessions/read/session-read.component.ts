@@ -179,8 +179,6 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   }
 
   async deleteDataframe(dfID: number) {
-    // TODO (BART/RIAN) RIAN: Implement deleteDataframe dialog to confirm deletion
-    // TODO (BART/RIAN) RIAN: update view when deleting DF
     this.sessionService.deleteDataframe(dfID);
     this.getDataframes();
   }
