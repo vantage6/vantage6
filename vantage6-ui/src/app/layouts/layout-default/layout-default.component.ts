@@ -192,8 +192,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       submenus.push({
         route: routePaths.sessions,
         label: this.translateService.instant('resources.sessions'),
-        icon: 'history_toggle_off',
-        //TODO(BART) RIAN: Choose which icon fits the subject. (maybe history_toggle_off or donut_large)
+        icon: 'fitness_center',
         linkType: NavigationLinkType.Analyze
       });
     }
@@ -209,7 +208,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       submenus.push({
         route: routePaths.tasks,
         label: this.translateService.instant('links.history'),
-        icon: 'science',
+        icon: 'fingerprint',
         linkType: NavigationLinkType.Analyze
       });
     }

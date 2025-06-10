@@ -337,7 +337,7 @@ const routes: Routes = [
             // TODO this crumb is not complete: it should include the collaboration for which
             // the algorithm store is being added, but not sure how to get its ID here
             // ['collaboration-read.title', Router().url.split('/').pop() || ''],
-            // TODO(BART/RIAN) RIAN: It would be great to work together on this. Maybe we can implement (url)searchparams
+            // Maybe we can implement (url)searchparams
             ['algorithm-store-add.title']
           ]
         }
