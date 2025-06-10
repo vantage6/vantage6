@@ -25,7 +25,7 @@ import traceback
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
-from flasgger import Swagger
+
 from flask import (
     Flask,
     make_response,
@@ -73,7 +73,6 @@ from vantage6.server.globals import (
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
 )
-from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
@@ -129,9 +128,6 @@ class ServerApp:
             self.app,
             resources={r"/*": {"origins": cors_allowed_origins}},
         )
-
-        # SWAGGER documentation
-        self.swagger = Swagger(self.app, template=swagger_template)
 
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
@@ -322,13 +318,13 @@ class ServerApp:
             is_refresh=True,
         )
 
-        # Open Api Specification (f.k.a. swagger)
-        self.app.config["SWAGGER"] = {
-            "title": APPNAME,
-            "uiversion": "3",
-            "openapi": "3.0.0",
-            "version": __version__,
-        }
+        # # Open Api Specification (f.k.a. swagger)
+        # self.app.config["SWAGGER"] = {
+        #     "title": APPNAME,
+        #     "uiversion": "3",
+        #     "openapi": "3.0.0",
+        #     "version": __version__,
+        # }
 
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})

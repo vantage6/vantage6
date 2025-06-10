@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "click==8.1.3",
         "docker==7.1.0",
-        "gevent==23.9.1",
+        "gevent==25.4.2",
         "jinja2==3.1.6",
         "python-socketio==5.7.2",
         "requests==2.32.3",
@@ -50,7 +50,7 @@ setup(
             "SQLAlchemy==1.4.46",
             "schema==0.7.5",
             "appdirs==1.4.4",
-            "flask==2.2.5",
+            "flask==3.1.0",
             "black",
             "pre-commit",
         ]
