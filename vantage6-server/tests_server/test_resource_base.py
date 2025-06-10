@@ -17,7 +17,7 @@ from vantage6.server.globals import PACKAGE_FOLDER
 
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.server.controller.fixture import load
 from vantage6.server import ServerApp
 from vantage6.server.model import (
@@ -154,7 +154,13 @@ class TestResourceBase(unittest.TestCase):
         return headers
 
     def login_container(
-        self, collaboration=None, organization=None, node=None, task=None, api_key=None
+        self,
+        collaboration=None,
+        organization=None,
+        node=None,
+        task=None,
+        api_key=None,
+        action: AlgorithmStepType = AlgorithmStepType.CENTRAL_COMPUTE,
     ):
         if not node:
             if not collaboration:
@@ -174,7 +180,7 @@ class TestResourceBase(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
-                runs=[Run(status=RunStatus.PENDING)],
+                runs=[Run(status=RunStatus.PENDING, action=action)],
             )
             task.save()
 
