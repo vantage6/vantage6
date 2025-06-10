@@ -57,11 +57,13 @@
       </mat-card-header>
       <mat-card-content>
         <app-table
+          *ngIf="hasDataframes()"
           [data]="dataframeTable"
           (rowClick)="handleDataframeTableClick($event)"
           [isLoading]="isLoading"
           (searchChanged)="handleSearchChanged($event)"
         ></app-table>
+        <p *ngIf="!hasDataframes()">{{ "session.dataframes.no-dataframes" | translate }}</p>
         <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
       </mat-card-content>
     </mat-card>

@@ -114,13 +114,12 @@ export class SessionReadComponent implements OnInit, OnDestroy {
       this.session = await this.getSession();
       if (this.session.study) this.study = await this.studyService.getStudy(this.session.study.id.toString());
       if (this.session.owner) this.owner = await this.userService.getUser(this.session.owner.id.toString());
-      this.getDataframes();
+      await this.getDataframes();
     }
     this.isLoading = false;
   }
 
   async getDataframes(): Promise<void> {
-    this.isLoading = true;
     const dataframeResponse = await this.sessionService.getPaginatedDataframes(
       Number.parseInt(this.id),
       this.currentPage,
@@ -144,11 +143,14 @@ export class SessionReadComponent implements OnInit, OnDestroy {
         }
       }))
     };
-    this.isLoading = false;
   }
 
   handleDataframeTableClick(id: string): void {
     this.router.navigate([routePaths.sessionDataframe.replace(':sessionId', this.id), id]);
+  }
+
+  hasDataframes(): boolean {
+    return this.dataframeTable !== undefined && this.dataframeTable.rows.length > 0;
   }
 
   public handleSearchChanged(searchRequests: SearchRequest[]): void {

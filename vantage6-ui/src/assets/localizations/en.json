@@ -116,7 +116,8 @@
       "db-label": "Database used to create this dataframe",
       "ready": "Ready to use?",
       "last_session_task": "Last task executed on this dataframe",
-      "columns": "Columns"
+      "columns": "Columns",
+      "no-dataframes": "No dataframes created yet for this session."
     }
   },
   "dataframe-read": {
