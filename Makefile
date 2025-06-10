@@ -245,7 +245,7 @@ publish:
 TEST_SUBPACKAGES ?= common,cli,algorithm-store,server
 
 test:
-	$(eval TEST_ARGS := $(shell echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g'))
+	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
 	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
 
 
