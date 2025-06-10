@@ -584,6 +584,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }
 
+  isDataExtractionStep(): boolean {
+    return this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction) || false;
+  }
+
   private getNewControlForInputList(argument: Argument): AbstractControl {
     if (argument.type === this.argumentType.IntegerList) {
       return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);

@@ -125,16 +125,25 @@
                 </ng-template>
                 <!-- End ugly if-else -->
               </mat-form-field>
-              <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
+              <div class="field-description" *ngIf="isDataExtractionStep()">
+                {{ "task-create.step-function.description.df-name" | translate }}
+              </div>
+              <div class="field-description" *ngIf="!isDataExtractionStep()">
+                {{ "task-create.step-function.description.name" | translate }}
+              </div>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task.name" | translate }}</mat-label>
                 <input matInput type="text" formControlName="taskName" />
               </mat-form-field>
-              <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ "task.description" | translate }}</mat-label>
-                <input matInput type="text" formControlName="description" />
-              </mat-form-field>
+              <div *ngIf="!isDataExtractionStep()">
+                <div class="field-description">
+                  {{ "task-create.step-function.description.description" | translate }}
+                </div>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "task.description" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="description" />
+                </mat-form-field>
+              </div>
             </div>
             <app-alert
               class="node-alert"
