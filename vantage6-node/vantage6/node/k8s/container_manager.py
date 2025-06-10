@@ -73,11 +73,7 @@ class ContainerManager:
             self.log.exception("Error loading Kubernetes configuration")
             raise e
 
-        # The `local_data_dir` refers to the location where this node can write files
-        # to. When this node instance needs to create a volume mount for a container,
-        # it needs to refer to the location where the file is stored on the host system,
-        # for this we use the `host_data_dir`.
-        self.local_data_dir = TASK_FILES_ROOT
+        # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
 
         self.databases = self._get_database_metadata()
@@ -357,7 +353,6 @@ class ContainerManager:
             action,
             self.client,
             df_details,
-            self.local_data_dir,
         )
 
         # Verify that an allowed image is used
@@ -735,7 +730,8 @@ class ContainerManager:
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
-            host_path=Path(self.host_data_dir) / run_io.session_folder,
+            host_path=Path(self.host_data_dir)
+            / run_io.session_file_manager.session_folder,
             type_="Directory",
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
@@ -751,7 +747,8 @@ class ContainerManager:
             # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
-                JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
+                JOB_POD_SESSION_FOLDER_PATH,
+                run_io.session_file_manager.session_state_file_name,
             ),
         }
 
@@ -877,7 +874,11 @@ class ContainerManager:
         # we are about to start the task.
         requested_dataframes = {db["dataframe_name"] for db in databases_to_use}
         available_dataframes = {
-            file_.stem for file_ in Path(run_io.local_session_folder).glob("*.parquet")
+            file_.stem
+            for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
+                "*.parquet"
+            )
+            if not file_.stem == "session_state"
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
@@ -1193,9 +1194,7 @@ class ContainerManager:
             for job in finished_jobs:
 
                 # Create helper object to process the output of the job
-                run_io = RunIO.from_dict(
-                    job.metadata.annotations, self.client, self.local_data_dir
-                )
+                run_io = RunIO.from_dict(job.metadata.annotations, self.client)
                 results, status = (
                     run_io.process_output()
                     if job.status.succeeded

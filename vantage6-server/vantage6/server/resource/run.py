@@ -722,6 +722,7 @@ class Run(SingleRunBase):
                     dependent_run.save()
 
         # notify collaboration nodes/users that the task has an update
+        # TODO refactor it shouldn't be necessary to send two events.
         self.socketio.emit(
             "status_update",
             {"run_id": id},
