@@ -45,7 +45,7 @@ import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
 import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
-import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
+import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
@@ -103,13 +103,13 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
+  availableStepsEnum = AvailableStepsEnum;
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframe?: Dataframe | null = null;
 
-  // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
     session: false,
     study: false,
@@ -595,6 +595,32 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       return this.fb.control('', [Validators.required, Validators.pattern(floatRegex)]);
     } else {
       return this.fb.control('', Validators.required);
+    }
+  }
+
+  isFirstStep(step: AvailableStepsEnum): boolean {
+    if (step === AvailableStepsEnum.Study) {
+      return !this.availableSteps.session;
+    } else if (step === AvailableStepsEnum.Function) {
+      return !this.availableSteps.study && !this.availableSteps.session;
+    } else if (step === AvailableStepsEnum.Session) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  isLastStep(step: AvailableStepsEnum): boolean {
+    if (step === AvailableStepsEnum.Dataframe) {
+      return !this.availableSteps.parameter;
+    } else if (step === AvailableStepsEnum.Database) {
+      return !this.availableSteps.parameter && !this.availableSteps.dataframe;
+    } else if (step === AvailableStepsEnum.Function) {
+      return !this.availableSteps.parameter && !this.availableSteps.dataframe && !this.availableSteps.database;
+    } else if (step === AvailableStepsEnum.Parameter) {
+      return true;
+    } else {
+      return false;
     }
   }
 

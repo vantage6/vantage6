@@ -51,7 +51,7 @@
             <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
                 Also check other steps -->
             <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Study)">{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </form>
@@ -151,8 +151,12 @@
               label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
             ></app-alert>
             <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+              <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
+                {{ "general.back" | translate }}
+              </button>
+              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
+                {{ "general.next" | translate }}
+              </button>
             </div>
           </form>
         </mat-step>
@@ -174,7 +178,9 @@
           </form>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
+              {{ "general.next" | translate }}
+            </button>
           </div>
         </mat-step>
         <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
@@ -190,7 +196,9 @@
             </mat-form-field>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
+                {{ "general.next" | translate }}
+              </button>
             </div>
           </form>
         </mat-step>

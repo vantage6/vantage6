@@ -23,3 +23,12 @@ export interface AvailableSteps {
   dataframe: boolean;
   parameter: boolean;
 }
+
+export enum AvailableStepsEnum {
+  Session = 'session',
+  Study = 'study',
+  Function = 'function',
+  Database = 'database',
+  Dataframe = 'dataframe',
+  Parameter = 'parameter'
+}
