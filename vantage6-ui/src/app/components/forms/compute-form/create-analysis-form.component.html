@@ -194,6 +194,12 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <div *ngIf="dataframes.length === 0">
+              <app-alert class="node-alert" label="{{ 'task-create.alert-no-dataframes' | translate }}"></app-alert>
+              <button mat-flat-button color="primary" [routerLink]="[routes.dataframeCreate, session?.id]">
+                <mat-icon>add</mat-icon>{{ "task-create.step-dataframe.create-new-df" | translate }}
+              </button>
+            </div>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
