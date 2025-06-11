@@ -1248,13 +1248,27 @@ class TestResources(unittest.TestCase):
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
+        # Check that collaboration permission still works if the organization is not
+        # actually in a collaboration.
+        org4 = Organization()
+        org4.save()
+        user_org_4 = User(organization=org4)
+        user_org_4.save()
+        rule = Rule.get_by_("user", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(organization=org4, rules=[rule])
+        result = self.app.get("/api/user", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json["data"]), len(org4.users))
+
         # cleanup
         org.delete()
         org2.delete()
         org3.delete()
+        org4.delete()
         org_outside_col.delete()
         col.delete()
         user.delete()
+        user_org_4.delete()
 
     def test_bounce_existing_username_and_email(self):
         headers = self.create_user_and_login()
