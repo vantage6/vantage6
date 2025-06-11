@@ -11,6 +11,7 @@ from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
 from vantage6.cli.dev.start import start_demo_network
 from vantage6.cli.dev.stop import stop_demo_network
+from vantage6.cli.utils import prompt_config_name
 from vantage6.common.globals import Ports
 
 TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script.py"
@@ -69,8 +70,8 @@ TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script
 @click.pass_context
 def cli_test_client_script(
     click_ctx: click.Context,
-    script: Path,
-    task_arguments: str,
+    script: Path | None,
+    task_arguments: str | None,
     name: str,
     server_url: str,
     create_dev_network: bool,
@@ -94,6 +95,8 @@ def cli_test_client_script(
             json.loads(task_arguments.replace("'", '"'))
         except json.JSONDecodeError:
             raise click.UsageError("task-arguments must be a valid JSON string.")
+
+    name = prompt_config_name(name)
 
     # create the network
     if create_dev_network:

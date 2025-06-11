@@ -71,10 +71,9 @@ def run_test(custom_args: dict | None = None):
 
     else:
         # Run the task for each algorithm in the arguments file
-        for algo in arguments.args:
-            logging.info(f"Running task for {algo}")
-
-            task_args = arguments.args[algo]
+        for algo, task_args in arguments.args.items():
+            logging.info("Running task for %s", algo)
+            logging.info("Task arguments: %s", task_args)
             create_and_run_task(client, task_args, algo)
 
 
