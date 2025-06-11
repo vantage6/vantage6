@@ -155,7 +155,7 @@ def cli_server_start(
         _start_prometheus(ctx, prometheus_image, server_network_mgr)
     elif ctx.config.get("prometheus"):
         info(
-            "Prometheus is provided in the config file as external service."
+            "Prometheus is provided in the config file as external service. "
             "Assuming this service is up and running."
         )
     else:

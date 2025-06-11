@@ -135,9 +135,13 @@ def cli_test_client_script(
     console = Console()
     console.print(msg)
 
-    # clean up the test resources
+    # clean up the test resources. Keep the network if --keep is set, or if the network
+    # was created for this test. If the network was started for this test, stop it but
+    # do not remove it.
     if not keep:
-        click_ctx.invoke(stop_demo_network, name=name)
-        click_ctx.invoke(remove_demo_network, name=name)
+        if create_dev_network or start_dev_network:
+            click_ctx.invoke(stop_demo_network, name=name)
+        if create_dev_network:
+            click_ctx.invoke(remove_demo_network, name=name)
 
     return result.returncode
