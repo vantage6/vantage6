@@ -138,7 +138,7 @@ client.algorithm.create(
             "arguments": [
                 {
                     "has_default_value": True,
-                    "name": "delay",
+                    "name": "sleep_time",
                     "display_name": "Delay ",
                     "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the POD running and access it to perform further tests) ",
                     "type": "integer",
@@ -158,7 +158,7 @@ client.algorithm.create(
             "arguments": [
                 {
                     "has_default_value": True,
-                    "name": "delay",
+                    "name": "sleep_time",
                     "display_name": "Delay ",
                     "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the PODs running on all the nodes to access them and perform further inspections) ",
                     "type": "integer",
