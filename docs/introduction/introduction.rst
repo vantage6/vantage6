@@ -92,7 +92,7 @@ their relationships.
    to a user.
 -  A **session** can contain several **dataframes**. A dataframe is a collection of
    data retrieved from the original source database. A dataframe can be modified by
-   additional user defined pre-processing steps and can be used as input for **tasks**.
+   additional user defined preprocessing steps and can be used as input for **tasks**.
 -  Users can create **tasks** for one or more organizations within a collaboration and
    session. Tasks lead to the execution of the algorithms.
 -  A task should produce an algorithm **run** for each organization involved in the

@@ -34,7 +34,7 @@ The following is a list of definitions used in vantage6.
 -  **DataFrame**: A standardized representation of data in a session that can be used
    for computation tasks.
 -  **Data extraction task**: A (vantage6) task that extracts data from a database.
-   This data can be used for computation tasks (e.g., a pre-processing task or a
+   This data can be used for computation tasks (e.g., a preprocessing task or a
    computation task).
 -  **Data Station**: A vantage6 *node* that has access to the local data.
 -  **Distributed learning**: see *Federated Learning* and *Federated Analytics*
@@ -144,7 +144,7 @@ The following is a list of definitions used in vantage6.
    *vantage6 server*, however you might encounter *server* where
    *vantage6 server* should have been.
 -  **Session**: A way to prepare a dataset that can be reused in many computation
-   tasks, especially useful for large datasets and flexible pre-processing.
+   tasks, especially useful for large datasets and flexible preprocessing.
 -  **Study**: A study is a subgroup of organizations within a collaboration.
 
 **T**
