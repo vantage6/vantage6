@@ -101,24 +101,3 @@ spec:
   - Egress
   ingress: []
   egress: []
-
-# ---
-# Uncomment and customize for federate_compute actions
-
-# Network policies for federated_compute step/jobs
-# This kind of jobs may require database access
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: {{ .Release.Name }}-federated-compute-policy
-#   namespace: {{ .Values.node.taskNamespace }}
-# spec:
-#   podSelector:
-#     matchLabels:
-#       # Must match the corresponding AlgorithmStepType enum value
-#       role: federated_compute
-#   policyTypes:
-#   - Ingress
-#   - Egress
-#   ingress: []
-#   egress: []
