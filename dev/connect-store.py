@@ -143,7 +143,7 @@ client.algorithm.create(
                     "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the POD running and access it to perform further tests) ",
                     "type": "integer",
                     "default_value": "1",
-                    "is_frontend_only": False,                    
+                    "is_frontend_only": False,
                 }
             ],
             "databases": [],
@@ -163,10 +163,10 @@ client.algorithm.create(
                     "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the PODs running on all the nodes to access them and perform further inspections) ",
                     "type": "integer",
                     "default_value": "1",
-                    "is_frontend_only": False,                    
+                    "is_frontend_only": False,
                 }
             ],
             "databases": [],
-        }
+        },
     ],
 )
