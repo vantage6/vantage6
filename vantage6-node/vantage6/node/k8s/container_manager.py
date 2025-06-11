@@ -148,8 +148,6 @@ class ContainerManager:
                     spec=k8s_client.V1PodSpec(
                         containers=[
                             k8s_client.V1Container(
-                                # TODO ensure image is an image that can always be
-                                # pulled by the node
                                 name="test-container",
                                 image=(
                                     f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
