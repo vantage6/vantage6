@@ -1,21 +1,24 @@
-<mat-card>
+<div class="page-container">
+  <mat-card>
     <mat-card-content>
-        <h1>{{ 'communitystore.welcome' | translate }}</h1>
-        <span> {{ 'communitystore.introduction' | translate }}
-            <a href="https://vantage6.ai">vantage6.ai</a>.</span>
+      <h1>{{ "communitystore.welcome" | translate }}</h1>
+      <span> {{ "communitystore.introduction" | translate }} <a href="https://vantage6.ai">vantage6.ai</a>.</span>
     </mat-card-content>
-</mat-card>
+  </mat-card>
+</div>
 
-<app-page-header title="{{ 'communitystore.algorithms' | translate }}"></app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
-    <app-display-algorithms [algorithms]="algorithms"
-                            [routeOnClick]="routePaths.communityStoreAlgorithms"></app-display-algorithms>
+<div class="page-container">
+  <app-page-header title="{{ 'communitystore.algorithms' | translate }}"></app-page-header>
+  <br />
+  <ng-container *ngIf="!isLoading; else loading">
+    <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.communityStoreAlgorithms"></app-display-algorithms>
     <mat-card *ngIf="algorithms.length === 0">
-        <mat-card-content>
-            <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
-        </mat-card-content>
+      <mat-card-content>
+        <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
+      </mat-card-content>
     </mat-card>
-</ng-container>
-<ng-template #loading>
+  </ng-container>
+  <ng-template #loading>
     <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+  </ng-template>
+</div>
