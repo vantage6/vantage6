@@ -232,7 +232,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !this.session || (!!this.dataframes && this.dataframes.length > 0);
+    return !this.session || (!!this.function?.databases && this.function.databases.length > 0);
   }
 
   get shouldShowDatabaseStep(): boolean {
