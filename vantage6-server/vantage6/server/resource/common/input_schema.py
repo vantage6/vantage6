@@ -542,12 +542,6 @@ class UserInputSchema(_PasswordValidationSchema):
         _validate_username(username)
 
 
-class VPNConfigUpdateInputSchema(Schema):
-    """Schema for validating input for updating a VPN configuration."""
-
-    vpn_config = fields.String(required=True)
-
-
 class ColumnNameInputSchema(Schema):
     """Schema for validating input for collecting database column names."""
 

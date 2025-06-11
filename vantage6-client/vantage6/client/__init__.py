@@ -808,7 +808,7 @@ class UserClient(ClientBase):
             is_online: bool, optional
                 Filter on whether nodes are online or not
             ip: str, optional
-                Filter by node VPN IP address
+                Filter by node internal IP address
             last_seen_from: str, optional
                 Filter if node has been online since date (format: yyyy-mm-dd)
             last_seen_till: str, optional
@@ -921,7 +921,7 @@ class UserClient(ClientBase):
             name : str, optional
                 New node name, by default None
             clear_ip : bool, optional
-                Clear the VPN IP address of the node, by default None
+                Clear the internal IP address of the node, by default None
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the node. Default is None.

@@ -8,7 +8,7 @@ class AlgorithmPort(Base):
     """
     Table that describes which algorithms are reachable via which ports
 
-    Each algorithm with a VPN connection can claim multiple ports via the
+    Each algorithm with an internal IP address can claim multiple ports via the
     Dockerfile ``EXPOSE`` and ``LABEL`` commands. These claims are saved in
     this table. Each algorithm container belongs to a single
     :class:`~vantage6.server.model.result.Result`.
