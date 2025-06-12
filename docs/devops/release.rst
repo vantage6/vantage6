@@ -203,7 +203,7 @@ the latest version of their major release when they are restarted. This
 happens by pulling the newly released docker image. Note that the major
 release is never automatically updated: for example, a node running version
 2.1.0 will update to 2.1.1 or 2.2.0, but never to 3.0.0. Depending on the
-version of Vantage6 that is being used, there is a reserved Docker image tag
+version of vantage6 that is being used, there is a reserved Docker image tag
 for distributing the upgrades. These are the following:
 
 +---------------+------------------------+

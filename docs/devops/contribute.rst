@@ -59,7 +59,7 @@ you let us know you what are working on so we prevent duplicate work.
 Security vulnerabilities
 ------------------------
 
-If you are a member of the Vantage6 Github organization, you can create an
+If you are a member of the vantage6 Github organization, you can create an
 security advisory in the `Security <https://github.com/vantage6/vantage6/security/
 advisories>`_ tab. See :numref:`advisory` on what to fill in.
 
