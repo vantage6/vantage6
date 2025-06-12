@@ -5,6 +5,8 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}
+    name: {{ .Values.namespace | default .Release.Namespace }}
+    app: v6-node-server-proxy
     component: node
 spec:
   selector:

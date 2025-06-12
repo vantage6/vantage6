@@ -24,9 +24,9 @@ export enum TaskDatabaseType {
 
 export enum AlgorithmStepType {
   Preprocessing = 'preprocessing',
-  DataExtraction = 'data extraction',
-  FederatedCompute = 'federated compute',
-  CentralCompute = 'central compute',
+  DataExtraction = 'data_extraction',
+  FederatedCompute = 'federated_compute',
+  CentralCompute = 'central_compute',
   Postprocessing = 'postprocessing'
 }
 
