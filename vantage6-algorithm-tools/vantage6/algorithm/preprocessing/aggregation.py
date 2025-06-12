@@ -18,7 +18,7 @@ def collapse(
     df: pd.DataFrame,
     group_columns: str | list[str],
     aggregation: str | Callable | dict[str, str | Callable | list[str | Callable]],
-    default_aggregation: str | Callable = None,
+    default_aggregation: str | Callable | None = None,
     strict_mode: bool = True,
 ) -> pd.DataFrame:
     """
