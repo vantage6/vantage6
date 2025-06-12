@@ -12,8 +12,8 @@ export enum SessionSortProperties {
 }
 
 export enum SessionScope {
-  Collaboration = 'collaboration',
-  Organization = 'organization',
+  Collaboration = 'col',
+  Organization = 'org',
   Own = 'own'
 }
 
@@ -65,8 +65,6 @@ export interface Session {
   dataframes: string[];
   tasks: string[];
 }
-// TODO(BART/RIAN) RIAN: Only the user who initiated the session will be displayed. Consider including more information and looking at the scope of
-// what should be displayed. For example: scope = organization, then show the initiating organization.
 
 export interface CreateSession {
   name: string;

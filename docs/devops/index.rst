@@ -1,7 +1,7 @@
 .. _dev-docs:
 
-Developer community
-===================
+Community
+=========
 
 As an open-source platform, we welcome anyone who would like to contribute to the
 vantage6 code and/or documentation. The following sections are meant to clarify our

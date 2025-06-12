@@ -1,4 +1,5 @@
 import logging
+from socket import SocketIO
 import jwt
 import datetime as dt
 
@@ -11,6 +12,9 @@ from vantage6.common.enum import RunStatus
 from vantage6.common.globals import AuthStatus
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.dataframe_to_be_deleted_at_node import (
+    DataframeToBeDeletedAtNode,
+)
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
 
@@ -102,6 +106,8 @@ class DefaultSocketNamespace(Namespace):
             # Add node to rooms and alert other clients of that
             self._add_node_to_rooms(auth)
             self.__alert_node_status(online=True, node=auth)
+            # send dataframe deletion instructions to node
+            self._send_dataframe_deletion_instructions(auth)
         elif session.type == "user":
             self._add_user_to_rooms(auth)
 
@@ -158,6 +164,18 @@ class DefaultSocketNamespace(Namespace):
                 session.rooms.append(
                     f"collaboration_{collab.id}_organization_" f"{user.organization.id}"
                 )
+
+    def _send_dataframe_deletion_instructions(self, node: Authenticatable) -> None:
+        """
+        Send dataframe deletion instructions to a node.
+        """
+        for dataframe_to_delete in DataframeToBeDeletedAtNode.get_by_node_id(node.id):
+            send_delete_dataframe_event(
+                self.socketio,
+                dataframe_to_delete.dataframe_name,
+                dataframe_to_delete.session_id,
+                node.collaboration_id,
+            )
 
     def on_disconnect(self) -> None:
         """
@@ -367,6 +385,20 @@ class DefaultSocketNamespace(Namespace):
         auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
 
+    def on_dataframe_deleted(self, data: dict) -> None:
+        """
+        A dataframe has been deleted at a node.
+        """
+        self.log.info(
+            "Instruction to delete dataframe %s was executed by node %s",
+            data["df_name"],
+            data["node_id"],
+        )
+        df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
+            data["df_name"], data["session_id"], data["node_id"]
+        )
+        df_to_be_deleted.delete()
+
     def __join_room_and_notify(self, room: str) -> None:
         """
         Joins room and notify other clients in this room.
@@ -505,3 +537,28 @@ class DefaultSocketNamespace(Namespace):
     def __cleanup() -> None:
         """Cleanup database connections"""
         DatabaseSessionManager.clear_session()
+
+
+def send_delete_dataframe_event(
+    socketio: SocketIO, dataframe_name: str, session_id: int, collaboration_id: int
+) -> None:
+    """
+    Send a socket event to the nodes to delete a dataframe.
+
+    Parameters
+    ----------
+    socketio: SocketIO
+        SocketIO instance
+    dataframe_name: str
+        Name of the dataframe to delete
+    session_id: int
+        ID of the session that contains the dataframe
+    collaboration_id: int
+        ID of the collaboration that contains the dataframe
+    """
+    socketio.emit(
+        "delete_dataframe",
+        {"df_name": dataframe_name, "session_id": session_id},
+        namespace="/tasks",
+        room=f"collaboration_{collaboration_id}",
+    )

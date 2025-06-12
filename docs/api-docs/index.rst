@@ -1,7 +1,7 @@
-.. _function-docs:
+.. _api-docs:
 
-Function documentation
-======================
+API documentation
+==================
 
 This part of the documentation documents the code of the vantage6
 infrastructure. It lists all the functions and classes and describes what they

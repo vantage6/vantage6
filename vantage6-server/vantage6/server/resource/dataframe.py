@@ -21,7 +21,8 @@ from vantage6.server.resource.common.output_schema import (
     DataframeSchema,
 )
 from vantage6.server.resource.session import SessionBase
-
+from vantage6.server.model import DataframeToBeDeletedAtNode
+from vantage6.server.websockets import send_delete_dataframe_event
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -412,8 +413,7 @@ class SessionDataframe(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        df_name = dataframe.name
-        session_id = dataframe.session_id
+        self._delete_dataframe_at_nodes(dataframe)
 
         # Delete alls that are part of this dataframe
         for column in dataframe.columns:
@@ -428,8 +428,34 @@ class SessionDataframe(SessionBase):
         # https://github.com/vantage6/vantage6/issues/1567
 
         return {
-            "msg": f"Successfully deleted dataframe {df_name} from session {session_id}"
+            "msg": f"Successfully deleted dataframe {dataframe.name} from session "
+            f"{dataframe.session_id}"
         }, HTTPStatus.OK
+
+    def _delete_dataframe_at_nodes(self, dataframe: db.Dataframe) -> None:
+        """
+        Delete the dataframe at all nodes.
+        """
+        # store that node dataframes are to be deleted
+        for node in dataframe.session.collaboration.nodes:
+            df_to_be_deleted = DataframeToBeDeletedAtNode(
+                dataframe_name=dataframe.name,
+                session_id=dataframe.session_id,
+                node_id=node.id,
+            )
+            df_to_be_deleted.save()
+
+        # send socket event to nodes to delete the dataframe. Nodes that are online
+        # will delete the dataframe from their local storage and respond with a socket
+        # event to the server. The server will then delete the record created above
+        # from the database. Other records will be deleted when the node comes online
+        # again.
+        send_delete_dataframe_event(
+            self.socketio,
+            dataframe.name,
+            dataframe.session_id,
+            dataframe.session.collaboration_id,
+        )
 
 
 class DataframePreprocessing(SessionBase):

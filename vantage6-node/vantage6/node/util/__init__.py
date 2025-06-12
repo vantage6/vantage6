@@ -1,3 +1,10 @@
+import logging
+
+from vantage6.common import logger_name
+
+log = logging.getLogger(logger_name(__name__))
+
+
 def get_parent_id(task_dict: dict) -> int | None:
     """
     Get a task's parent id from a JSON task dictionary

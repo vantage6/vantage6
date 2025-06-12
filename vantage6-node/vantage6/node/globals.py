@@ -42,11 +42,9 @@ DEFAULT_REQUIRE_ALGO_IMAGE_PULL = True
 
 # Mount paths within the algorithm containers. Algorithms containers are run as
 # jobs in the Kubernetes cluster.
-# TODO v5+ we might consider using different paths for this to avoid conflicts with
-# the algorithm image contents. Maybe e.g. `/app/vantage6/task/input` etc?
-JOB_POD_INPUT_PATH = "/app/input"
-JOB_POD_OUTPUT_PATH = "/app/output"
-JOB_POD_SESSION_FOLDER_PATH = "/app/session"
+JOB_POD_INPUT_PATH = "/app/vantage6/task/input"
+JOB_POD_OUTPUT_PATH = "/app/vantage6/task/output"
+JOB_POD_SESSION_FOLDER_PATH = "/app/vantage6/task/session"
 
 # The mount location of the tasks files, databases and kube config in the node
 # container.

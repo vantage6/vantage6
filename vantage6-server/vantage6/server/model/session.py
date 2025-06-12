@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.rule import Scope
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.server.model.base import Base
 
 if TYPE_CHECKING:
     from vantage6.server.model.collaboration import Collaboration

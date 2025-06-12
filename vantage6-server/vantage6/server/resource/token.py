@@ -18,7 +18,7 @@ from marshmallow import ValidationError
 from http import HTTPStatus
 
 from vantage6 import server
-from vantage6.common.enum import TaskStatus
+from vantage6.common.enum import TaskStatus, AlgorithmStepType
 from vantage6.common.globals import MAIN_VERSION_NAME
 from vantage6.server import db
 from vantage6.server.model.user import User
@@ -307,6 +307,19 @@ class ContainerToken(ServicesResources):
                 f"{task_id} that does not exist"
             )
             return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
+
+        # Check wether the action of the task is of type 'central_compute' as only
+        # the central task requires to communicate with the server.
+        if db_task.action != AlgorithmStepType.CENTRAL_COMPUTE.value:
+            log.warning(
+                "Node %s attempts to generate key for task %s which is not a "
+                "central compute task.",
+                g.node.id,
+                task_id,
+            )
+            return {
+                "msg": "Task is not a central compute task"
+            }, HTTPStatus.UNAUTHORIZED
 
         # check if the node is in the collaboration to which the task is
         # enlisted

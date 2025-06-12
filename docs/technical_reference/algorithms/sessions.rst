@@ -5,13 +5,14 @@ Sessions have been added to vantage6 to provide a way to prepare a dataset that 
 re-used in many computation tasks. They are important to ensure that vantage6 can
 interact with the data in a flexible and reproducible way.
 Sessions are especially useful when the data is large and
-querying it from the nodes is slow. Also, it allows for flexible pre-processing of the
-data and storing the final result reliably and reusable.
+querying it from the nodes is slow. Also, it allows for flexible preprocessing of the
+data and storing the final result reliably so that it can be easily reused.
 
-A session is started by extracting data from one or more of the node's databases, and
-can be submitted to as many pre-processing steps as required. When the data is ready,
-the session can be used to perform as many computations on the data as you wish. It is
-also possible to pre-process the data further after computation tasks have been executed.
+A session is started by extracting data from one or more of the node's databases to a
+dataframe. Subsequently, as many preprocessing steps as necessary can be performed on 
+the dataframe. When the data is preprocessed and ready to be used,
+as many computations can be done on the data as you wish. It is
+also possible to preprocess the data further after computation tasks have been executed.
 
 Data that is extracted from a node database is added to the session as a dataframe. Each
 session contains one or more dataframes. These dataframes can be used for computation
@@ -39,32 +40,32 @@ Sessions are related to the other entities in the following way:
     Study "0" - "n" Session
     Session "1" - "n" DataFrame: \t
     DataFrame "1" - "n" Column: \t
-    Column "1" - "n" Node: \t
+    Column "n" - "1" Node: \t
     Task "n" -- "1" Session
     Task "0" - "1" DataFrame
 
 Dataframes are the representation of the data that will eventually be used in the most
-important tasks - computation tasks that produces the research results. Dataframes
+important tasks: computation tasks that produces the research results. Dataframes
 provide the following features:
 
 - The data is loaded in the dataframes once and can then be used multiple times. This
   saves the time of having to load the data from the source every time a new task
   is executed. This is especially useful when the database is large and retrieving the
   data is slow.
-- Dataframes can be modified using pre-processing tasks. These can, for example, add or
+- Dataframes can be modified using preprocessing tasks. These can, for example, add or
   remove columns, or filter rows. The latest version of the dataframe is used in the
   computation tasks. The dataframe keeps track of the last task that modified it.
 - Dataframes can have different permission scopes. You can create dataframes that are
-  scoped to you, but you can also share them with other users in your organization or
-  with the entire collaboration. Users with the organization or collaboration permission
-  scope can also see, modify and delete dataframes that are scoped to you within the
-  organization or collaboration. In other words, scoping a dataframe to yourself is
-  not a way to keep the dataframe private. If you scoped a dataframe to your
-  organization or collaboration, any user in the organization or collaboration can see
-  the dataframe.
+  for your own use, but you can also share them with other users in your 
+  organization or with the entire collaboration. Users with the permission to share 
+  sessions with the organization or collaboration may also be able see, modify and 
+  delete your own dataframes. In other words, scoping a dataframe to yourself is
+  not a way to keep the dataframe private, but it is only shared with users with higher
+  permissions. Dataframes with an organization or collaboration scope are shared with
+  all users in the organization or collaboration.
 - Dataframes provide a standardized way to store data. This makes it easier to write
   algorithms that can be used across different collaborations.
-- Data extraction, pre-processing and computation on the data are separated processes.
+- Data extraction, preprocessing and computation on the data are separated processes.
   This makes it easier to share algorithms with other projects. It even allows for the
   different steps to be written in different programming languages. Finally, it is also
   more secure, as the compute tasks no longer have access to the source data.
@@ -80,35 +81,24 @@ following actions:
 
 - ``data-extraction``: function to retrieve the data from the source, and store it in
   a dataframe.
-- ``pre-processing``: function to modify the dataframe.
+- ``preprocessing``: function to modify the dataframe.
 - ``compute``: function to use the dataframe to answer a research question. This can be
   a machine learning model, a statistical analysis, or any other type of computation.
 
-These actions are managed by the infrastructure. For example, the infrastructure ensures
-that data extraction functions are the only functions that are allowed to access the
-source data.
-
-The ``compute`` action can be triggered by the user when the ``/task`` endpoint is used.
-In the Python client this is done by calling the ``client.task.create()`` method. The
-``data extraction`` and ``pre-processing`` actions are triggered when the ``/session``
-endpoints are used. In the Python client this is done by calling the
-``client.dataframe.create()`` methods and ``client.dataframe.preprocess()`` methods.
-
-
-
 .. uml::
     :caption: An illustration of how the actions are related to each other. In this
-        example, there are ``n`` pre-processing steps and ``m`` compute steps. First,
-        the data is extracted. Then, the data is pre-processed. Finally, the data is
-        used to compute the research results. Note that in this schema, the first
-        compute task is done after the first pre-processing step - not after ``n``
-        steps. At any point in the pre-processing steps, it is possible to send a task
-        to the current dataframe. It is thus also possible to execute a compute task
-        directly after data extraction.
+      example, there are ``n`` preprocessing steps and ``m`` compute steps. First,
+      the data is extracted. Then, the data is pre-processed. Finally, the data is
+      used to compute the research results. Note that in this schema, the first
+      compute task is done after the first preprocessing step - not after ``n``
+      steps. At any point in the preprocessing steps, it is possible to send a task
+      to the current dataframe. It is thus also possible to execute a compute task
+      directly after data extraction. Finally, the results of each compute task are
+      sent to the central vantage6 server, where the researcher can access them.
+
     !theme superhero-outline
     skinparam linetype ortho
     left to right direction
-
 
     package "Modify Session" {
         package "Data extraction" {
@@ -127,6 +117,7 @@ endpoints are used. In the Python client this is done by calling the
     }
 
     rectangle Server as server
+    rectangle Researcher as user
 
     A --> C
     C --> D
@@ -136,12 +127,27 @@ endpoints are used. In the Python client this is done by calling the
     E --> server
     F --> server
     M --> server
+    server --> user
+
+These actions are managed by the infrastructure. For example, the infrastructure ensures
+that data extraction functions are the only functions that are allowed to access the
+source data.
+
+.. note::
+
+  The user interface does not require you to know how these actions are triggered, but 
+  the API endpoints used are as follows: ``compute`` tasks can be triggered ``/task`` 
+  endpoint, and ``data extraction`` and ``preprocessing`` actions are triggered with the 
+  ``/session`` endpoints. In the Python client, the three actions are represented by 
+  ``client.task.create()``, ``client.dataframe.create()`` and 
+  ``client.dataframe.preprocess()``, respectively.
+
 
 Dependent tasks
 ^^^^^^^^^^^^^^^
 
 As described above, there are tasks that modify the dataframe (``data extraction`` and
-``pre-processing``) and tasks that compute on the dataframe (``compute``). In order to
+``preprocessing``) and tasks that compute on the dataframe (``compute``). In order to
 ensure that the dataframe is not modified while another task is using it to compute
 analysis results, the infrastructure ensures that such tasks are executed in the
 proper order. This is done by making the tasks dependent on each other.
@@ -149,10 +155,10 @@ proper order. This is done by making the tasks dependent on each other.
 There are three senarions:
 
 - A ``data-extraction`` task is not dependent on any other task.
-- A ``pre-processing`` task is *always* dependent on the previous ``pre-processing`` or,
+- A ``preprocessing`` task is *always* dependent on the previous ``preprocessing`` or,
   in case there is none, the ``data-extraction`` task. But it is also dependent on all
-  ``compute`` tasks that have been requested prior to the new ``pre-processing`` task.
-- A ``compute`` task is *always* dependent on the last ``pre-processing`` task or, in
+  ``compute`` tasks that have been requested prior to the new ``preprocessing`` task.
+- A ``compute`` task is *always* dependent on the last ``preprocessing`` task or, in
   case there is none, the ``data-extraction`` task.
 
 .. uml::

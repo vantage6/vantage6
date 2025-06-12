@@ -1,25 +1,22 @@
-.. _feature-docs:
+.. include:: <isonum.txt>
 
-Feature descriptions
-====================
+.. _technical-reference:
 
-**Under construction**
+Technical reference
+===================
 
-The vantage6 platform contains many features - some of which are optional, some
-which are always active. This section aims to give an overview of the features
-and how they may be used.
+This section contains technical reference information about the vantage6 project.
 
-Each component has its own set of features. The features are described in the
-following sections, as well as a section on inter-component features.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 3
 
-   server/index
-   node/index
-   algorithms/index
-   inter-component/index
+    architecture
+    server/index
+    node/index
+    algorithms/index
+    inter-component/index
+
 
 .. todo add the following features. Not sure if they all go here, or in the
    component specific sections.
@@ -59,4 +56,3 @@ following sections, as well as a section on inter-component features.
 .. - Database model
 .. - How configuration is managed
 .. -
-
