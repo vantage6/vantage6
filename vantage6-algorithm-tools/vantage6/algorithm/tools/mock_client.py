@@ -10,7 +10,6 @@ import pandas as pd
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
-from vantage6.algorithm.preprocessing import preprocess_data
 
 module_name = __name__.split(".")[1]
 
@@ -114,7 +113,6 @@ class MockAlgorithmClient:
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )
-                df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
@@ -132,7 +130,6 @@ class MockAlgorithmClient:
         self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
-        self.node = self.Node(self)
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
