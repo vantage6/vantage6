@@ -69,7 +69,7 @@ class ServerContext(BaseServerContext):
         str
             Prometheus container name, unique to this server instance.
         """
-        return f"{APPNAME}-prometheus"
+        return f"{APPNAME}-{self.name}-{self.scope}-prometheus"
 
     @property
     def prometheus_dir(self) -> Path:

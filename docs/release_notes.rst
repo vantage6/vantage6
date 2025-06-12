@@ -4,7 +4,7 @@ Release notes
 4.11.0
 -----
 
-*11 June 2025*
+*12 June 2025*
 
 - **Security**
 
