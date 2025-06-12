@@ -12,4 +12,4 @@ spec:
       port: {{ .Values.ui.port }}   # External port for the UI
       targetPort: 4200    # Container port for the UI
       name: vantage6-server-frontend
-  type: LoadBalancer
+  type: ClusterIP
