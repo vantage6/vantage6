@@ -21,3 +21,4 @@ start your algorithm store.
     use
     permissions
     configure
+    policies

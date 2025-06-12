@@ -1,3 +1,5 @@
+.. _algorithm-store-processes:
+
 Store processes
 ---------------
 
@@ -37,21 +39,41 @@ following fields:
   For instance, for a line graph, the algorithm developer can set the x-axis and y-axis
   columns that should be visualized.
 
+.. _algorithm-store-review-process:
+
 Algorithm review
 ^^^^^^^^^^^^^^^^
 
-After an algorithm is submitted, it needs to undergo a review process. First, one or
-more reviewers have to be assigned. Depending on their permissions, the algorithm
-developer can do this themselves or a store manager can assign reviewers. The reviewers
-can then view the algorithm and provide feedback. If the algorithm is approved, it will
-be shown as approved in the UI and can be used to run tasks. While the algorithm is
-under review, it is not yet available for running tasks in the UI. If your algorithm
-store has been configured with an email server, emails will be sent to alert users that,
-for instance, their review is requested.
+After an algorithm is submitted, it needs to undergo a review process. At this point, a
+store manager will assign reviewers for this particular algorithm.
+Reviewers are recommended to assess the algorithm using the
+:ref:`algorithm-review-checklist`. The reviewers can then view the algorithm and
+provide feedback. If the algorithm is approved, it will be easily runnable by 
+researchers using the UI. While the algorithm is under review, it is not yet
+available for running tasks via the UI. If any of the reviewers rejects the algorithm,
+or the store manager does not assign reviewers, the algorithm will not become available.
+Note that an algorithm may still be run via the
+Python client, but a node configured to allow only algorithms from a certain algorithm 
+store will not accept algorithms that are not yet approved in that store.
+
+The reviewer can provide comments to the developer when rejecting an algorithm. If
+the algorithm is rejected, the process is repeated as soon as the developer
+submits an improved version of the algorithm.
+
+If your algorithm store has been configured with an email server, emails will be sent
+all along the process to alert users that, for instance, their review is requested.
 
 Regularly, a developer has submitted an update to an algorithm that was already
 approved. In such cases, when the changes are approved, the algorithm store will
 invalidate the previous version of the algorithm. This means that the previous version
-can then no longer be used to run tasks. It is also possible to invalidate an algorithm
-without superseding it with a new version. This can be useful if an algorithm is found
-to be faulty or if it is no longer needed.
+can then no longer be used to run tasks.
+
+At any point, the store manager can also invalidate an approved algorithm without
+replacing it with a new version. This is a safeguard to
+ascertain that algorithms can quickly be removed from the store if necessary.
+
+Everyone involved in the process (developers, store manager, reviewers, and
+researchers) can only execute their actions after logging into vantage6. Note that one
+user may fulfill several roles: a store
+manager may also be an algorithm reviewer. There are however some restrictions,
+that can be set up in the :ref:`algorithm store policies <algorithm-store-policies>`.
