@@ -8,11 +8,14 @@ import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.tools.exceptions import UserInputError
 
 
 @preprocessing
 @data(1)
-def rename_columns(df: pd.DataFrame, new_names: dict[str, str]) -> pd.DataFrame:
+def rename_columns(
+    df: pd.DataFrame, new_names: dict[str, str], strict: bool = False
+) -> pd.DataFrame:
     """
     Rename DataFrame columns.
 
@@ -22,6 +25,9 @@ def rename_columns(df: pd.DataFrame, new_names: dict[str, str]) -> pd.DataFrame:
         The DataFrame whose columns you want to rename.
     new_names : dict[str, str]
         A mapping from current column names to new names.
+    strict : bool
+        If True, raise an error if a column is not found in the DataFrame. Default is
+        False.
 
     Returns
     -------
@@ -39,8 +45,7 @@ def rename_columns(df: pd.DataFrame, new_names: dict[str, str]) -> pd.DataFrame:
     0  1  3
     1  2  4
     """
-
-    return df.rename(columns=new_names)
+    return df.rename(columns=new_names, errors="raise" if strict else "ignore")
 
 
 @preprocessing
@@ -78,11 +83,10 @@ def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.Dat
     1  2  4  6
     """
     if column_name in df.columns:
-        raise ValueError(f"Column '{column_name}' already exists.")
+        raise UserInputError(f"Column '{column_name}' already exists.")
 
-    new_df = df.copy()
-    new_df[column_name] = new_df.eval(expression)
-    return new_df
+    df[column_name] = df.eval(expression)
+    return df
 
 
 @preprocessing
@@ -123,11 +127,10 @@ def redefine_column(
     1  2  4  8
     """
     if column_name not in df.columns:
-        raise ValueError(f"Column '{column_name}' does not exist.")
+        raise UserInputError(f"Column '{column_name}' does not exist.")
 
-    new_df = df.copy()
-    new_df[column_name] = new_df.eval(expression)
-    return new_df
+    df[column_name] = df.eval(expression)
+    return df
 
 
 @preprocessing
@@ -173,10 +176,9 @@ def change_column_type(
     >>> print("After conversion:", df3['category_column'].dtype)
     After conversion: object
     """
-    df = df.copy()
     for col in columns:
         if col not in df.columns:
-            raise KeyError(f"Column {col} not found in the DataFrame")
+            raise UserInputError(f"Column {col} not found in the DataFrame")
         df[col] = df[col].astype(target_type)
 
     return df

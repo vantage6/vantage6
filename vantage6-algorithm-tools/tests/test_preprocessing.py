@@ -4,6 +4,7 @@ Test the preprocessing functionality of the vantage6-algorithm-tools package.
 To run only this test, from the vantage6 root directory run:
 python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
+
 import unittest
 from datetime import datetime, timedelta
 
@@ -11,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
-from vantage6.algorithm.tools.preprocessing.filtering import select_rows
+from vantage6.algorithm.preprocessing.filtering import select_rows
 
 
 def random_date(
@@ -136,20 +137,14 @@ def generate_treatment_example_df(
         education_levels.extend([education] * count)
         if np.random.choice([True, False], p=[0.75, 0.25]):
             weight = np.random.uniform(50, 100)
-            weights.extend(
-                np.random.randint(weight - 5, weight + 5, size=count)
-            )
+            weights.extend(np.random.randint(weight - 5, weight + 5, size=count))
         else:
             weights.extend([np.nan] * count)
 
     # Treatment data
-    all_treatments = [
-        "Treatment " + str(i) for i in range(1, 51)
-    ]  # 50 treatments
+    all_treatments = ["Treatment " + str(i) for i in range(1, 51)]  # 50 treatments
     treatment_names = np.random.choice(all_treatments, sum(rows_per_patient))
-    all_diseases = [
-        "Disease A" + str(i).zfill(2) for i in range(10)
-    ]  # 10 diseases
+    all_diseases = ["Disease A" + str(i).zfill(2) for i in range(10)]  # 10 diseases
     diagnosis_desc = np.random.choice(all_diseases, sum(rows_per_patient))
 
     start_dates = pd.to_datetime(
@@ -157,24 +152,22 @@ def generate_treatment_example_df(
     )
 
     end_dates = [
-        date + pd.Timedelta(days=np.random.randint(1, 60))
-        if np.random.random() < 0.8
-        else pd.NaT
+        (
+            date + pd.Timedelta(days=np.random.randint(1, 60))
+            if np.random.random() < 0.8
+            else pd.NaT
+        )
         for date in start_dates
     ]
 
     # Generate blood pressures and heart rates based on disease diagnosis
     # integer value
-    disease_numbers = [
-        int(disease.split("A")[-1]) for disease in diagnosis_desc
-    ]
+    disease_numbers = [int(disease.split("A")[-1]) for disease in diagnosis_desc]
     blood_pressures = [
-        120 + 5 * (number - 5) + np.random.randint(4)
-        for number in disease_numbers
+        120 + 5 * (number - 5) + np.random.randint(4) for number in disease_numbers
     ]
     heart_rates = [
-        70 + 5 * (number - 5) + np.random.randint(4)
-        for number in disease_numbers
+        70 + 5 * (number - 5) + np.random.randint(4) for number in disease_numbers
     ]
 
     # Convert dates to string if specified
@@ -192,15 +185,12 @@ def generate_treatment_example_df(
     medications = ["MedA", "MedB", "MedC", "MedD", "MedE"]
     med_choice = np.random.choice(medications + [None], sum(rows_per_patient))
     dosages = [
-        np.random.randint(10, 500) if med is not None else None
-        for med in med_choice
+        np.random.randint(10, 500) if med is not None else None for med in med_choice
     ]
 
     # Convert birthdates to string if specified
     if date_as_str:
-        birthdates = [
-            birthdate.strftime("%Y-%m-%d") for birthdate in birthdates
-        ]
+        birthdates = [birthdate.strftime("%Y-%m-%d") for birthdate in birthdates]
 
     # Create DataFrame
     df = pd.DataFrame(
@@ -266,9 +256,7 @@ class TestPreprocessing(unittest.TestCase):
                 for dataset in datasets
             ]
         ]
-        mockclient = MockAlgorithmClient(
-            datasets=datasets, module="mock_package"
-        )
+        mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
 
         org_ids = [org["id"] for org in mockclient.organization.list()]
 
@@ -432,9 +420,7 @@ class TestPreprocessing(unittest.TestCase):
             ]
         ]
 
-        mockclient = MockAlgorithmClient(
-            datasets=datasets, module="mock_package"
-        )
+        mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
         input_ = {"method": "execute", "kwargs": {}}
         child_task = mockclient.task.create(
@@ -514,9 +500,7 @@ class TestPreprocessing(unittest.TestCase):
                         },
                         {
                             "function": "rename_columns",
-                            "parameters": {
-                                "new_names": {"income": "inc_norm"}
-                            },
+                            "parameters": {"new_names": {"income": "inc_norm"}},
                         },
                         {
                             "function": "select_rows",
@@ -527,9 +511,7 @@ class TestPreprocessing(unittest.TestCase):
                 for dataset in datasets
             ]
         ]
-        mockclient = MockAlgorithmClient(
-            datasets=datasets, module="mock_package"
-        )
+        mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
         input_ = {"method": "execute", "kwargs": {}}
         child_task = mockclient.task.create(
@@ -639,18 +621,14 @@ class TestPreprocessing(unittest.TestCase):
                         },
                         {
                             "function": "select_rows",
-                            "parameters": {
-                                "query": "age==23 & education=='Master'"
-                            },
+                            "parameters": {"query": "age==23 & education=='Master'"},
                         },
                     ],
                 }
                 for dataset in datasets
             ]
         ]
-        mockclient = MockAlgorithmClient(
-            datasets=datasets, module="mock_package"
-        )
+        mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
         input_ = {"method": "execute", "kwargs": {}}
         child_task = mockclient.task.create(

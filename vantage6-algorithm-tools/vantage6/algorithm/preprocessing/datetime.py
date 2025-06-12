@@ -11,13 +11,14 @@ import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.tools.exceptions import UserInputError
 
 
 @preprocessing
 @data(1)
 def to_datetime(
     df: pd.DataFrame,
-    column: str,
+    columns: list[str],
     fmt: str | None = None,
     errors: str = "raise",
     output_column: str | None = None,
@@ -29,11 +30,11 @@ def to_datetime(
     ----------
     df : pd.DataFrame
         Input DataFrame.
-    column : str
-        The name of the column to convert.
+    columns : list[str]
+        The names of the columns to convert.
     fmt : str | None, optional
-        String to use as date format. See the following link for more
-        information: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+        String to use as date format. For more information, see:
+        https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
     errors : str, default 'raise'
         Errors handling if a string cannot be converted:
         * If 'raise', then invalid parsing will raise an exception.
@@ -72,13 +73,11 @@ def to_datetime(
     2        NaT
     """
 
-    new_df = df.copy()
-    conversion_column = output_column if output_column else column
-    new_df[conversion_column] = pd.to_datetime(
-        new_df[column], format=fmt, errors=errors
-    )
+    for column in columns:
+        conversion_column = output_column if output_column else column
+        df[conversion_column] = pd.to_datetime(df[column], format=fmt, errors=errors)
 
-    return new_df
+    return df
 
 
 @preprocessing
@@ -153,37 +152,35 @@ def to_timedelta(
     2   3 days   2 days
     """
     if input_column is not None and duration is not None:
-        raise ValueError(
+        raise UserInputError(
             "Either `input_column` or `duration` must be specified, not both."
         )
 
-    new_df = df.copy()
-
     if input_column is not None:
         if output_column is None:
-            raise ValueError(
+            raise UserInputError(
                 "The `output_column` must be specified when using `column`."
             )
-        if pd.api.types.is_numeric_dtype(new_df[input_column]):
-            new_df[output_column] = pd.to_timedelta(
-                new_df[input_column].astype(str) + " " + unit, errors=errors
+        if pd.api.types.is_numeric_dtype(df[input_column]):
+            df[output_column] = pd.to_timedelta(
+                df[input_column].astype(str) + " " + unit, errors=errors
             )
 
         else:
-            new_df[output_column] = pd.to_timedelta(new_df[input_column], errors=errors)
+            df[output_column] = pd.to_timedelta(df[input_column], errors=errors)
     elif duration is not None:
         if output_column is None:
-            raise ValueError(
+            raise UserInputError(
                 "The `output_column` must be specified when using `duration`."
             )
         if isinstance(duration, int):
             duration = f"{duration} {unit}"
-        new_df[output_column] = pd.to_timedelta(duration, errors=errors)
+        df[output_column] = pd.to_timedelta(duration, errors=errors)
 
     if input_column is None and duration is None:
-        raise ValueError("Either `column` or `duration` must be specified.")
+        raise UserInputError("Either `column` or `duration` must be specified.")
 
-    return new_df
+    return df
 
 
 @preprocessing

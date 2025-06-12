@@ -10,6 +10,7 @@ import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.tools.exceptions import UserInputError
 
 
 @preprocessing
@@ -96,6 +97,11 @@ def collapse(
         "all": all,
     }
 
+    # Assert conditions for default_aggregation
+    assert default_aggregation is None or isinstance(
+        aggregation, dict
+    ), "If default_aggregation is not None, aggregation must be a dictionary."
+
     # Helper function to apply mapping
     def map_aggregation(agg):
         if isinstance(agg, str) and agg in aggregation_mapping:
@@ -111,11 +117,6 @@ def collapse(
     elif isinstance(aggregation, dict):
         aggregation = {col: map_aggregation(agg) for col, agg in aggregation.items()}
 
-    # Assert conditions for default_aggregation
-    assert default_aggregation is None or isinstance(
-        aggregation, dict
-    ), "If default_aggregation is not None, aggregation must be a dictionary."
-
     if strict_mode and isinstance(aggregation, dict) and default_aggregation is None:
         all_columns = set(df.columns)
         groupby_set = set(
@@ -125,7 +126,7 @@ def collapse(
 
         undefined_columns = all_columns - (groupby_set | aggregation_set)
         if undefined_columns:
-            raise ValueError(
+            raise UserInputError(
                 "Strict mode is enabled, and the following columns are missing"
                 f" from the aggregation definition: {undefined_columns}"
             )
