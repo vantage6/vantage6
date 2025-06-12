@@ -5,7 +5,8 @@ const env: EnvironmentConfig = {
   // server_url: 'https://cotopaxi.vantage6.ai',
   // api_path: ''
   server_url: 'http://localhost:7601',
-  api_path: '/api'
+  api_path: '/api',
+  community_store_url: 'https://store.cotopaxi.vantage6.ai/api'
 };
 
 export const environment = env;

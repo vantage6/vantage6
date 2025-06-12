@@ -184,6 +184,10 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - allowed_values: list[str | int | float], optional
+                    An optional list of allowed values for the argument. The type of
+                    the values should match the 'type' field, e.g. if 'type' is
+                    'integer', the allowed values should be a list of integers.
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
                 - default_value: str | int | float | boolean | list, optional
@@ -365,6 +369,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - allowed_values: list[str], optional
+                    An optional list of allowed values for the argument
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
                 - default_value: str | int | float | boolean | list, optional

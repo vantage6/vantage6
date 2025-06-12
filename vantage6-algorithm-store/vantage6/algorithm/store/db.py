@@ -18,4 +18,5 @@ from vantage6.algorithm.store.model import (
     Policy,
     UserPermission,
     role_rule_association,
+    AllowedArgumentValue,
 )

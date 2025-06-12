@@ -334,9 +334,6 @@ Consider which documentation you need to update:
 * **Technical documentation.**
   Update it if you added new functionality. Check if your function docstrings
   have also been added (see last bullet below).
-* **OAS (Open API Specification).**
-  If you changed input/output for any of the API endpoints, make sure to add
-  it to the docstrings. See :ref:`oas3` for more details.
 * **Function docstrings**
   These should always be documented using the
   `numpy format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.

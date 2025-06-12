@@ -8,7 +8,6 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
-from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -26,7 +25,7 @@ import traceback
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
-from flasgger import Swagger
+
 from flask import (
     Flask,
     make_response,
@@ -48,10 +47,15 @@ from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    AuthStatus,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -61,7 +65,6 @@ from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
     ACCESS_TOKEN_EXPIRES_HOURS,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
@@ -70,7 +73,6 @@ from vantage6.server.globals import (
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
 )
-from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
@@ -126,9 +128,6 @@ class ServerApp:
             self.app,
             resources={r"/*": {"origins": cors_allowed_origins}},
         )
-
-        # SWAGGER documentation
-        self.swagger = Swagger(self.app, template=swagger_template)
 
         # Setup the Flask-Mail client
         self.mail = MailService(self.app)
@@ -302,7 +301,7 @@ class ServerApp:
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
         self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
-            "jwt_secret_key", str(uuid.uuid1())
+            "jwt_secret_key", str(uuid.uuid4())
         )
 
         # Default expiration time
@@ -319,13 +318,13 @@ class ServerApp:
             is_refresh=True,
         )
 
-        # Open Api Specification (f.k.a. swagger)
-        self.app.config["SWAGGER"] = {
-            "title": APPNAME,
-            "uiversion": "3",
-            "openapi": "3.0.0",
-            "version": __version__,
-        }
+        # # Open Api Specification (f.k.a. swagger)
+        # self.app.config["SWAGGER"] = {
+        #     "title": APPNAME,
+        #     "uiversion": "3",
+        #     "openapi": "3.0.0",
+        #     "version": __version__,
+        # }
 
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})

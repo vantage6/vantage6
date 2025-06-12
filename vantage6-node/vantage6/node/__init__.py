@@ -590,11 +590,16 @@ class Node:
                         "could not be retrieved!"
                     )
 
+                if self.ctx.config.get("share_algorithm_logs", True):
+                    logs = results.logs
+                else:
+                    logs = "Node does not allow sharing algorithm logs"
+
                 self.client.run.patch(
                     id_=results.run_id,
                     data={
                         "result": results.data,
-                        "log": results.logs,
+                        "log": logs,
                         "status": results.status,
                         "finished_at": datetime.datetime.now(
                             datetime.timezone.utc

@@ -142,7 +142,10 @@ def _handle_password_recovery(
         "between_user_emails_minutes",
         DEFAULT_BETWEEN_USER_EMAILS_MINUTES,
     )
-    smtp_settings = config.get("smtp", {})
+    smtp_settings = config.get("smtp")
+    if not smtp_settings:
+        log.warning("No SMTP settings found in config - cannot send email!")
+        return
     minutes_token_valid = smtp_settings.get(
         "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
     )
@@ -264,7 +267,7 @@ class ResetPassword(ServicesResources):
         if msg:
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.info(f"Successfull password reset for '{user.username}'")
+        log.info("Successful password reset for '%s'", user.username)
         return {"msg": "The password has successfully been reset!"}, HTTPStatus.OK
 
 
@@ -384,7 +387,7 @@ class ResetTwoFactorSecret(ServicesResources):
         user = db.User.get(user_id)
         server_name = self.config.get("server_name", MAIN_VERSION_NAME)
 
-        log.info(f"Resetting two-factor authentication for {user.username}")
+        log.info("Resetting two-factor authentication for %s", user.username)
         return create_qr_uri(user, server_name), HTTPStatus.OK
 
 
@@ -435,15 +438,21 @@ class RecoverTwoFactorSecret(ServicesResources):
         # check credentials
         user, login_status = user_login(self.config, username, password, self.mail)
         if login_status != HTTPStatus.OK:
-            log.error(f"Failed attempt to reset 2FA for submitted user '%s'", username)
+            log.error("Failed attempt to reset 2FA for submitted user '%s'", username)
             # Note: user_login() returns a dict with an error message if login
             #       failed as first returned element ('user')
             return user, login_status
 
-        log.info(f"2FA reset requested for '{user.username}'")
+        log.info("2FA reset requested for '%s'", user.username)
 
         # generate a token that can reset their password
-        smtp_settings = self.config.get("smtp", {})
+        smtp_settings = self.config.get("smtp")
+        if not smtp_settings:
+            log.warning("No SMTP settings found in config - cannot send email!")
+            return {
+                "msg": "No mailserver settings found in server configuration - cannot "
+                "send you an email to reset your 2FA! Contact your administrator."
+            }, HTTPStatus.BAD_REQUEST
         minutes_token_valid = smtp_settings.get(
             "email_token_validity_minutes", DEFAULT_EMAILED_TOKEN_VALIDITY_MINUTES
         )
@@ -476,7 +485,8 @@ class RecoverTwoFactorSecret(ServicesResources):
         log.info("2FA reset request email sent for '%s'", user.username)
 
         return {
-            "msg": "You should have received an email that will allow you to reset your 2FA."
+            "msg": "You should have received an email that will allow you to reset your"
+            " 2FA."
         }, login_status
 
 
@@ -529,15 +539,15 @@ class ChangePassword(ServicesResources):
         old_password = body.get("current_password")
         new_password = body.get("new_password")
 
-        user = g.user
-        log.info(f"Changing password for user {user.id}")
+        user: User = g.user
+        log.info("Changing password for user %s", user.id)
 
         # check if the old password is correct
-        pw_correct = user.check_password(old_password)
-        if not pw_correct:
-            return {
-                "msg": "Your current password is not correct!"
-            }, HTTPStatus.UNAUTHORIZED
+        user_or_error, code = user_login(
+            self.config, user.username, old_password, self.mail
+        )
+        if code != HTTPStatus.OK:
+            return user_or_error, code
 
         if old_password == new_password:
             return {
@@ -549,7 +559,7 @@ class ChangePassword(ServicesResources):
         if msg:
             return {"msg": msg}, HTTPStatus.BAD_REQUEST
 
-        log.info(f"Successful password change for '{user.username}'")
+        log.info("Successful password change for '%s'", user.username)
         return {"msg": "The password has been changed successfully!"}, HTTPStatus.OK
 
 
@@ -626,7 +636,7 @@ class ResetAPIKey(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
-        log.info(f"Successful API key reset for node {id}")
+        log.info("Successful API key reset for node %s", id_)
         api_key = generate_apikey()
         node.api_key = api_key
         node.save()

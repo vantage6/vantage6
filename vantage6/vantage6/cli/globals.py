@@ -47,6 +47,14 @@ PROMETHEUS_CONFIG = "prometheus.yml"
 PROMETHEUS_DIR = "prometheus"
 
 
+# datasets included in the nodes of the dev network
+class DefaultDatasets(str, Enum):
+    """Enum containing default datasets"""
+
+    OLYMPIC_ATHLETES = "olympic_athletes_2016.csv"
+    KAPLAN_MEIER_TEST = "km_dataset.csv"
+
+
 class ServerType(str, Enum):
     """Enum containing server types"""
 

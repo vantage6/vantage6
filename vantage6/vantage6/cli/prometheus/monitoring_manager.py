@@ -1,14 +1,15 @@
-from vantage6.cli.context.server import ServerContext
-from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.server.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
 import yaml
 import docker
 from pathlib import Path
+
+from vantage6.common import info, error
+from vantage6.common.docker.network_manager import NetworkManager
+from vantage6.common.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
+from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import (
     DEFAULT_PROMETHEUS_IMAGE,
     PROMETHEUS_CONFIG,
 )
-from vantage6.common import info, error
 
 
 class PrometheusServer:
@@ -36,7 +37,7 @@ class PrometheusServer:
         self.network_mgr = network_mgr
         self.docker = docker.from_env()
         self.image = image if image else DEFAULT_PROMETHEUS_IMAGE
-        self.config_file = Path(self.ctx.data_dir / PROMETHEUS_CONFIG)
+        self.config_file = Path(__file__).parent / PROMETHEUS_CONFIG
         self.data_dir = self.ctx.prometheus_dir
 
     def start(self):
@@ -95,8 +96,9 @@ class PrometheusServer:
             server_address = f"{server_hostname}:{prometheus_exporter_port}"
 
             info(
-                f"Using Docker container hostname '{server_hostname}' for Prometheus target. "
-                "Ensure Prometheus is in the same Docker network to resolve this address."
+                f"Using Docker container hostname '{server_hostname}' for Prometheus "
+                "target. Ensure Prometheus is in the same Docker network to resolve "
+                "this address."
             )
 
             with open(self.config_file, "r") as f:
