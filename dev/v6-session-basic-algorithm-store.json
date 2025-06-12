@@ -57,7 +57,7 @@
       ]
     },
     {
-      "name": "pre_process",
+      "name": "preprocess",
       "display_name": "Change column dtype",
       "standalone": true,
       "description": "Change data type of particular column (e.g. string to int)",

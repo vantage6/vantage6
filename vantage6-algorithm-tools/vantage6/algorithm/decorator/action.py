@@ -109,7 +109,7 @@ def data_extraction(func: callable) -> callable:
     return wrapper
 
 
-def pre_processing(func: callable) -> callable:
+def preprocessing(func: callable) -> callable:
     """Decorator for pre-processing functions."""
 
     @wraps(func)

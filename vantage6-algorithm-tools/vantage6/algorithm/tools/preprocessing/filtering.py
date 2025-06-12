@@ -4,8 +4,12 @@ pandas DataFrames, such as selecting and filtering rows and columns.
 """
 
 import pandas as pd
+from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.decorator.data import data
 
 
+@preprocessing
+@data(1)
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
     Select rows from the data based on a query. It uses the
@@ -309,9 +313,7 @@ def filter_by_date(
     3  2021-01-04      4
     """
     if start_date is None and end_date is None:
-        raise ValueError(
-            "At least one of start_date or end_date must be provided."
-        )
+        raise ValueError("At least one of start_date or end_date must be provided.")
 
     # Convert the column to datetime type
     datetimes = pd.to_datetime(df[column], format=fmt)
