@@ -9,7 +9,12 @@ from datetime import date
 
 import pandas as pd
 
+from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.decorator.data import data
 
+
+@preprocessing
+@data(1)
 def to_datetime(
     df: pd.DataFrame,
     column: str,
@@ -76,6 +81,8 @@ def to_datetime(
     return new_df
 
 
+@preprocessing
+@data(1)
 def to_timedelta(
     df: pd.DataFrame,
     input_column: str | None = None,
@@ -163,9 +170,7 @@ def to_timedelta(
             )
 
         else:
-            new_df[output_column] = pd.to_timedelta(
-                new_df[input_column], errors=errors
-            )
+            new_df[output_column] = pd.to_timedelta(new_df[input_column], errors=errors)
     elif duration is not None:
         if output_column is None:
             raise ValueError(
@@ -181,6 +186,8 @@ def to_timedelta(
     return new_df
 
 
+@preprocessing
+@data(1)
 def timedelta(
     df: pd.DataFrame,
     column: str,
@@ -243,9 +250,7 @@ def timedelta(
     dates = pd.to_datetime(df[column], format=fmt)
 
     if to_date_column:
-        duration_col = (
-            pd.to_datetime(df[to_date_column], format=fmt) - dates
-        ).dt.days
+        duration_col = (pd.to_datetime(df[to_date_column], format=fmt) - dates).dt.days
     elif to_date:
         to_date = pd.Timestamp(to_date)
         duration_col = (to_date - dates).dt.days
@@ -258,6 +263,8 @@ def timedelta(
     return df
 
 
+@preprocessing
+@data(1)
 def calculate_age(
     df: pd.DataFrame,
     column: str,

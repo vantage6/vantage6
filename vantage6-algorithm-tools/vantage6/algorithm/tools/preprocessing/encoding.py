@@ -10,7 +10,12 @@ standard deviations for scaling operations.
 import numpy as np
 import pandas as pd
 
+from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.decorator.data import data
 
+
+@preprocessing
+@data(1)
 def min_max_scale(
     df: pd.DataFrame,
     min_vals: list[float],
@@ -82,6 +87,8 @@ def min_max_scale(
     return df_scaled
 
 
+@preprocessing
+@data(1)
 def standard_scale(
     df: pd.DataFrame,
     means: list[float],
@@ -143,8 +150,7 @@ def standard_scale(
     else:
         if len(means) != len(stds) or len(means) != len(columns):
             raise ValueError(
-                "Length of means and stds must match the number of specified"
-                "columns"
+                "Length of means and stds must match the number of specified" "columns"
             )
 
     df_scaled = df.copy()
@@ -154,6 +160,8 @@ def standard_scale(
     return df_scaled
 
 
+@preprocessing
+@data(1)
 def one_hot_encode(
     df: pd.DataFrame,
     column: str,
@@ -239,6 +247,8 @@ def one_hot_encode(
     return df_out
 
 
+@preprocessing
+@data(1)
 def encode(
     df: pd.DataFrame,
     columns: list[str],
@@ -302,16 +312,15 @@ def encode(
         unique_vals = set(encoded_df[col].unique()) - set(mapping.keys())
         if raise_on_unknown and unique_vals:
             raise ValueError(
-                f"Unknown categories {unique_vals} encountered in column"
-                f"{col}."
+                f"Unknown categories {unique_vals} encountered in column" f"{col}."
             )
-        encoded_df[col] = encoded_df[col].apply(
-            lambda x: mapping.get(x, unknown_value)
-        )
+        encoded_df[col] = encoded_df[col].apply(lambda x: mapping.get(x, unknown_value))
 
     return encoded_df
 
 
+@preprocessing
+@data(1)
 def discretize_column(
     df: pd.DataFrame,
     column_name: str,
@@ -383,6 +392,8 @@ def discretize_column(
     return new_df
 
 
+@preprocessing
+@data(1)
 def extract_from_string(
     df: pd.DataFrame,
     column: str,
@@ -428,9 +439,7 @@ def extract_from_string(
     1  banana_456     456
     2      cherry       0
     """
-    extracted_data = (
-        df[column].str.extract(pattern, expand=False).fillna(not_found)
-    )
+    extracted_data = df[column].str.extract(pattern, expand=False).fillna(not_found)
     df[output_column] = extracted_data
 
     if not keep_original:
@@ -439,6 +448,8 @@ def extract_from_string(
     return df
 
 
+@preprocessing
+@data(1)
 def impute(
     df: pd.DataFrame,
     columns: list[str] | None = None,

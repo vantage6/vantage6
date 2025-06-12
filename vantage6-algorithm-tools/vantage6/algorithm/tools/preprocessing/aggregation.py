@@ -6,16 +6,18 @@ DataFrame with statistical information based on a given grouping.
 """
 
 from typing import Callable
-
 import pandas as pd
 
+from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.decorator.data import data
 
+
+@preprocessing
+@data(1)
 def collapse(
     df: pd.DataFrame,
     group_columns: str | list[str],
-    aggregation: str
-    | Callable
-    | dict[str, str | Callable | list[str | Callable]],
+    aggregation: str | Callable | dict[str, str | Callable | list[str | Callable]],
     default_aggregation: str | Callable = None,
     strict_mode: bool = True,
 ) -> pd.DataFrame:
@@ -107,25 +109,17 @@ def collapse(
     if isinstance(aggregation, str):
         aggregation = map_aggregation(aggregation)
     elif isinstance(aggregation, dict):
-        aggregation = {
-            col: map_aggregation(agg) for col, agg in aggregation.items()
-        }
+        aggregation = {col: map_aggregation(agg) for col, agg in aggregation.items()}
 
     # Assert conditions for default_aggregation
     assert default_aggregation is None or isinstance(
         aggregation, dict
     ), "If default_aggregation is not None, aggregation must be a dictionary."
 
-    if (
-        strict_mode
-        and isinstance(aggregation, dict)
-        and default_aggregation is None
-    ):
+    if strict_mode and isinstance(aggregation, dict) and default_aggregation is None:
         all_columns = set(df.columns)
         groupby_set = set(
-            group_columns
-            if isinstance(group_columns, list)
-            else [group_columns]
+            group_columns if isinstance(group_columns, list) else [group_columns]
         )
         aggregation_set = set(aggregation.keys())
 
@@ -151,13 +145,13 @@ def collapse(
 
     # Flatten multi-level column index if present
     if isinstance(agg_df.columns, pd.MultiIndex):
-        agg_df.columns = [
-            "_".join(col).strip() for col in agg_df.columns.values
-        ]
+        agg_df.columns = ["_".join(col).strip() for col in agg_df.columns.values]
 
     return agg_df.reset_index()
 
 
+@preprocessing
+@data(1)
 def group_statistics(
     df: pd.DataFrame,
     group_columns: str | list[str],

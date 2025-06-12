@@ -6,10 +6,13 @@ expressions.
 
 import pandas as pd
 
+from vantage6.algorithm.decorator.action import preprocessing
+from vantage6.algorithm.decorator.data import data
 
-def rename_columns(
-    df: pd.DataFrame, new_names: dict[str, str]
-) -> pd.DataFrame:
+
+@preprocessing
+@data(1)
+def rename_columns(df: pd.DataFrame, new_names: dict[str, str]) -> pd.DataFrame:
     """
     Rename DataFrame columns.
 
@@ -40,9 +43,9 @@ def rename_columns(
     return df.rename(columns=new_names)
 
 
-def assign_column(
-    df: pd.DataFrame, column_name: str, expression: str
-) -> pd.DataFrame:
+@preprocessing
+@data(1)
+def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.DataFrame:
     """
     Create a new column in a DataFrame based on the given expression.
 
@@ -82,6 +85,8 @@ def assign_column(
     return new_df
 
 
+@preprocessing
+@data(1)
 def redefine_column(
     df: pd.DataFrame, column_name: str, expression: str
 ) -> pd.DataFrame:
@@ -125,6 +130,8 @@ def redefine_column(
     return new_df
 
 
+@preprocessing
+@data(1)
 def change_column_type(
     df: pd.DataFrame, columns: list[str], target_type: str | type
 ) -> pd.DataFrame:

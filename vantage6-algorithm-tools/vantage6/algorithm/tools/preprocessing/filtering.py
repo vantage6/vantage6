@@ -75,6 +75,8 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     return df.query(query)
 
 
+@preprocessing
+@data(1)
 def filter_range(
     df: pd.DataFrame,
     column: str,
@@ -90,7 +92,7 @@ def filter_range(
     ----------
     df : pd.DataFrame
         The data to filter.
-    column : str
+    column : str, optional
         The column to filter on.
     min_value : float, optional
         The minimum value to filter on, by default None. If None, no lower
@@ -157,6 +159,8 @@ def filter_range(
     return df
 
 
+@preprocessing
+@data(1)
 def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Select specific columns from a DataFrame.
@@ -211,6 +215,8 @@ def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df[columns]
 
 
+@preprocessing
+@data(1)
 def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Drop specified columns from the DataFrame.
@@ -258,6 +264,8 @@ def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df.drop(columns, axis=1)
 
 
+@preprocessing
+@data(1)
 def filter_by_date(
     df: pd.DataFrame,
     column: str,
