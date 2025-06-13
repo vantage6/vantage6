@@ -7,12 +7,17 @@ from __future__ import annotations
 import re
 import docker
 import os
+import time
+import socket
 import questionary as q
+import logging
 
 from pathlib import Path
 
-from vantage6.common import error, warning, info
+from vantage6.common import error, logger_name, warning, info
 
+module_name = logger_name(__name__)
+log = logging.getLogger(module_name)
 
 def check_config_name_allowed(name: str) -> None:
     """
@@ -99,3 +104,48 @@ def prompt_config_name(name: str | None) -> None:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
     return name
+
+def wait_debug_dap_ready(host: str, port: int, timeout: int = 20) -> bool:
+    """
+    Keeps attempting to connect to the specified host and port, waiting for the
+    response to begin with 'Content-Length:'. This serves as a simple and
+    (far-from-perfect) indication that the Debug Adapter Protocol (DAP) adapter
+    is ready to accept client connections.
+    See: https://microsoft.github.io/debug-adapter-protocol/
+
+    Parameters
+    ----------
+    host : str
+        Host where the DAP adapter is excepected to be running.
+    port : int
+        Port where the DAP adapter is excepected to be running.
+    timeout : int
+        Maximum time to wait (in seconds) before timing out.
+
+    Returns
+    -------
+    bool
+        True if DAP adapter sems to be ready, False otherwise.
+    """
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            # open new TCP connection
+            with socket.create_connection((host, port), timeout=1) as sock:
+                log.debug("Connected to %s:%s, checking response...", host, port)
+
+                # read the first response from the connection
+                response = sock.recv(128).decode()
+                if response.startswith("Content-Length:"):
+                    log.debug("Content-Length found!")
+                    return True
+                # TODO: check for other responses and error?
+        except (ConnectionRefusedError, socket.timeout, OSError) as e:
+            log.debug("Connection attempt failed: %s", e)
+
+        # wait before retry
+        time.sleep(1)
+
+    log.debug("Timeout reached without receiving 'Content-Length' from %s:%s.", host, port)
+    return False
+

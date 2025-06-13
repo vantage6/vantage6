@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from threading import Thread
 import time
 import docker
@@ -12,6 +13,7 @@ from vantage6.common import error, info, warning
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     DEFAULT_ALGO_STORE_IMAGE,
+    DEFAULT_DEV_DEBUGGER_DIR,
     DEFAULT_NODE_IMAGE,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
@@ -304,3 +306,92 @@ def attach_logs(container: Container, type_: InstanceType) -> None:
                 f"with {Fore.RED}v6 {type_} stop{Style.RESET_ALL}"
             )
             exit(0)
+
+def setup_debugger(ctx: AppContext,
+    mounts: list,
+    ports: dict,
+    cmd: str,
+    working_dir: str,
+    use_mount_object: bool = False
+) -> tuple:
+    """
+    Will return modified mounts, ports, cmd and working_dir if a debugger is configured.
+
+    Parameters
+    ----------
+    ctx : AppContext
+        The debugger configuration
+    mounts : list
+        The mounts to use
+    ports : dict
+        The ports to use
+    cmd : str
+        The command to use
+    working_dir : str
+        The working directory to use
+    use_mount_object : bool
+        Whether to treat `mounts` as a list of docker.types.Mount (True) or a
+        list of tuples (False)
+    """
+    debugger_config = ctx.config.get("debugger", None)
+
+    if not debugger_config:
+        return mounts, ports, cmd, working_dir
+
+    info("Setting up debugger...")
+
+    # mount dir where debugger is installed
+    debugger_dir = debugger_config.get("dir", None)
+    if not debugger_dir:
+        error(
+            "Debugger directory not found in the configuration file! Please add"
+            "a 'dir' key to the 'debugger' section of the configuration."
+        )
+        exit(1)
+    # if it's a relative path, make it absolute for docker engine
+    # Note: in a docker-compose world, we won't have to worry about this
+    debugger_dir = Path(debugger_dir)
+    if not debugger_dir.is_absolute():
+        debugger_dir = ctx.config_dir / debugger_dir
+
+    # check path exists
+    if not debugger_dir.exists():
+        error(
+            f"Debugger directory '{debugger_dir}' not found! Please check the path.\n"
+            "You are supposed to mount the directory where the debugger like debugpy is installed."
+        )
+        exit(1)
+
+    # TODO: either refactor to always use docker.types.Mount or always use tuple (node & server)
+    if use_mount_object:
+        mounts.append(
+            docker.types.Mount(
+                target=str(DEFAULT_DEV_DEBUGGER_DIR), source=str(debugger_dir), type="bind"
+            )
+        )
+    else:
+        mounts.append(
+            (str(DEFAULT_DEV_DEBUGGER_DIR), str(debugger_dir))
+        )
+
+    # set up command for debugger
+    debugger_cmd = debugger_config.get("cmd", None)
+    if not debugger_cmd:
+        error(
+            "Debugger command not found in the configuration file! Please add"
+            "a 'cmd' key to the 'debugger' section of the configuration."
+        )
+        exit(1)
+
+    cmd = debugger_cmd
+    working_dir = str(DEFAULT_DEV_DEBUGGER_DIR)
+
+    # set up host/port listening for debugger
+    debugger_port_container = debugger_config.get("port_container", "5678")
+    debugger_port_host = debugger_config.get("port_host", "5678")
+    debugger_host = debugger_config.get("host", "0.0.0.0")
+
+    # add a mapping for ports with host
+    ports[f"{debugger_port_container}/tcp"] = (debugger_host, debugger_port_host)
+
+    return mounts, ports, cmd, working_dir
