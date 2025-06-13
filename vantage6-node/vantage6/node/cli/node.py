@@ -66,8 +66,16 @@ def cli_node() -> None:
     default=False,
     help=("Whether to use DockerNodeContext or regular NodeContext " "(default)"),
 )
+@click.option(
+    "--debug-port",
+    "debug_port",
+    default=None,
+    help="Port for debugpy to listen on",
+    type=int,
+    show_default=True,
+)
 def cli_node_start(
-    name: str, config: str, system_folders: bool, dockerized: bool
+    name: str, config: str, system_folders: bool, dockerized: bool, debug_port: int
 ) -> None:
     """Start the node instance.
 
@@ -104,8 +112,8 @@ def cli_node_start(
 
         # create dummy node context
         ctx = ContextClass(name, system_folders)
-
-    debugpy.listen(("0.0.0.0", 5678))
+    if debug_port:
+        debugpy.listen(("0.0.0.0", debug_port))
 
     # run the node application
     node.run(ctx)

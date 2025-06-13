@@ -437,13 +437,15 @@ def stream_handler_post() -> FlaskResponse:
             if h in request.headers:
                 headers[h] = request.headers[h]
 
-    method = get_method(request.method)
+
+    def chunked_result_stream(result: bytes, chunk_size: int = 8192):
+        for i in range(0, len(result), chunk_size):
+            yield result[i:i + chunk_size]
+        
     url = f"{server_url}/resultstream"
     log.info("Making proxied POST request to %s", url)
-
-    backend_response = method(
+    backend_response = requests.post(
         url,
-        stream=True,
         params=request.args,
         headers=headers,
         data=request.stream
@@ -465,21 +467,7 @@ def stream_handler_post() -> FlaskResponse:
             headers,
         )
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
-
-    def generate():
-        try:
-            for chunk in backend_response.iter_content(chunk_size=8192):
-                if chunk:
-                    yield chunk
-        finally:
-            backend_response.close()
-
-    return FlaskResponse(
-        stream_with_context(generate()),
-        status=backend_response.status_code,
-        headers=dict(backend_response.headers),
-        content_type=backend_response.headers.get("Content-Type")
-    )
+    return FlaskResponse(backend_response.content, status=backend_response.status_code, headers=dict(backend_response.headers))
 
 
 @app.route(

@@ -1,5 +1,6 @@
 azure-identity==1.22.0
 azure-storage-blob==12.25.1
+uwsgi==2.0.30
 bcrypt==4.0.1
 flasgger==0.9.5
 flask==2.2.5

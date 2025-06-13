@@ -24,6 +24,7 @@ RUN pip install psycopg2-binary
 COPY . /vantage6
 
 RUN pip install --upgrade pip
+RUN pip install debugpy
 
 # Install requirements. We cannot rely on setup.py because of the way
 # python resolves package versions. To control all dependencies we install

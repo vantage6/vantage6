@@ -1,5 +1,5 @@
 import logging
-
+import uwsgi
 from flask import request, Response, stream_with_context
 
 from flask_restful import Api
@@ -147,11 +147,19 @@ class ResultStreams(ResultStreamBase):
             return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
       result_uuid = str(uuid.uuid4())
 
-      if not request.content_length:
-          return {"msg": "No content provided!"}, HTTPStatus.BAD_REQUEST
+      def process_stream(stream):
+            chunk_size = 4096
+            total_bytes = b""
+            while True:
+                chunk = uwsgi.chunked_read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+            return total_bytes
+
 
       try:
-          self.storage_adapter.store_blob(result_uuid, request.stream)
+          self.storage_adapter.store_blob(result_uuid, process_stream(request.stream))
       except Exception as e:
           log.error(f"Error uploading result: {e}")
           return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR

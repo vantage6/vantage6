@@ -440,9 +440,10 @@ class AlgorithmClient(ClientBase):
                     f"Input uploaded to resultstream with UUID: {result_uuid}"
                 )
                 input_ = result_uuid
+                serialized_input = bytes_to_base64s(serialize(input_))
                 organization_json_list = []
                 for org_id in organizations:
-                    organization_json_list.append({"id": org_id, "input": input_})
+                    organization_json_list.append({"id": org_id, "input": serialized_input})
 
             json_body = {
                 "name": name,

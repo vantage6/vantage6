@@ -32,6 +32,19 @@ import queue
 import json
 import shutil
 import requests.exceptions
+import uuid
+import json as json_lib
+from vantage6.common import base64s_to_bytes
+import re
+
+UUID_REGEX = re.compile(
+    r"^[a-fA-F0-9]{8}-"
+    r"[a-fA-F0-9]{4}-"
+    r"[a-fA-F0-9]{4}-"
+    r"[a-fA-F0-9]{4}-"
+    r"[a-fA-F0-9]{12}$"
+)
+
 
 from pathlib import Path
 from threading import Thread
@@ -356,21 +369,28 @@ class Node:
         self.__docker.create_volume(vol_name)
         input_value = task_incl_run["input"]
         self.log.info(f"Parsing uuid from input: {input_value}")
-        if isinstance(input_value, str):
+
+        if isinstance(input_value, bytes):
+            input_value = input_value.decode('utf-8')
+        input_value = input_value.strip('\'"')
+        self.log.info(f"stripped uuid: {input_value}")
+        
+        if UUID_REGEX.match(input_value):
             try:
                 self.log.info(f"Parsing uuid from input: {input_value}")
+
                 uuid_obj = uuid.UUID(input_value)
-                base_url = self.client.parent.generate_path_to("resultstream", False)
+                base_url = self.client.generate_path_to("resultstream", False)
                 url = f"{base_url}/{str(uuid_obj)}"
                 self.log.info(f"Retrieving input data for url: {url}")
                 headers = self.client.headers
                 timeout = 300
-                result_bytes = b""
+                result_bytes = ""
                 try:
                     with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                         if response.status_code == 200:
                             for chunk in response.iter_content(chunk_size=8192):
-                                result_bytes += chunk
+                                result_bytes += chunk.decode('utf-8')
                         else:
                             self.log.error(f"Failed to stream input for task_id {task_incl_run['id']}. Status code: {response.status_code}")
                             self.log.error(f"Response: {response.text}")
@@ -381,13 +401,14 @@ class Node:
 
                 # Try to decode as base64 and then JSON
                 try:
-                    decoded = json.loads(base64s_to_bytes(result_bytes).decode())
+                    base64_decoded_bytes = base64s_to_bytes(result_bytes)
+                    decoded = json.loads(base64_decoded_bytes.decode())
                     task_incl_run["input"] = decoded
                 except Exception as e:
                     self.log.error("Unable to decode streamed input")
                     self.log.error(e)
                     return
-            except Exception:
+            except Exception as e:
                     self.log.warning("Unable to get input from uuid")
                     self.log.warning(e)
                     pass
