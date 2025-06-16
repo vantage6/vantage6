@@ -5,7 +5,6 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yml: |
-    api_key: {{ .Values.node.apiKey }}
     server_url: {{ .Values.node.server.url }}
     api_path: {{ .Values.node.server.path }}
     port: {{ .Values.node.server.port }}
