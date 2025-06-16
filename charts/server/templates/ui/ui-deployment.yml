@@ -22,7 +22,7 @@ spec:
       - name: vantage6-server-frontend
         image: {{ .Values.ui.image }}
         ports:
-        - containerPort: 4200
+        - containerPort: 80
         env:
         - name: SERVER_URL
           value: {{ .Values.server.baseUrl | quote }}
