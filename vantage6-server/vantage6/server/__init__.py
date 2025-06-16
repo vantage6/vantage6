@@ -50,9 +50,14 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
-from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.backend.common.globals import (
+    HOST_URI_ENV,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    RequiredServerEnvVars,
+)
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -61,11 +66,9 @@ from vantage6.server import db
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
-    ACCESS_TOKEN_EXPIRES_HOURS,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE_HOURS,
     MIN_TOKEN_VALIDITY_SECONDS,
     MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
@@ -73,7 +76,6 @@ from vantage6.server.globals import (
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
-from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 
 # make sure the version is available
@@ -83,7 +85,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class ServerApp:
+class ServerApp(Vantage6App):
     """
     Vantage6 server instance.
 
@@ -97,6 +99,9 @@ class ServerApp:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
+
+        # validate that the required environment variables are set
+        self.validate_required_env_vars()
 
         # initialize, configure Flask
         self.app = Flask(
@@ -405,7 +410,8 @@ class ServerApp:
     @staticmethod
     def _get_keycloak_public_key():
         response = requests.get(
-            "http://vantage6-auth-keycloak.default.svc.cluster.local/realms/vantage6"
+            f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
+            "/vantage6"
         )
         key = response.json()["public_key"]
         return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
@@ -694,16 +700,15 @@ class ServerApp:
         user.save()
         return user
 
-    def _add_keycloak_id_to_super_user(self, user):
+    def _add_keycloak_id_to_super_user(self, super_user: db.User) -> None:
         keycloak_openid = KeycloakOpenID(
-            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
             client_id="admin-client",
             realm_name="vantage6",
             client_secret_key="myadminsecret",
         )
         token = keycloak_openid.token("admin", "admin")
         decoded_token = keycloak_openid.decode_token(token["access_token"])
-        super_user = db.User.get_by_username(SUPER_USER_INFO["username"])
         super_user.keycloak_id = decoded_token["sub"]
         super_user.save()
 

@@ -1,4 +1,5 @@
 import logging
+import os
 import requests
 from flask import Response, request
 from http import HTTPStatus
@@ -142,11 +143,12 @@ def request_algo_store(
 
     # if the algorithm store is on localhost, we need to look for the local kubernetes
     # service and use that instead
-    if not response and is_localhost_algo_store:
+    local_store_url = os.environ.get("LOCAL_STORE_URL")
+    if not response and is_localhost_algo_store and local_store_url:
         port_number = algo_store_url.split(":")[2].split("/")[0]
         algo_store_url = algo_store_url.replace(
-            f"localhost:{port_number}",
-            "vantage6-store-store-service.default.svc.cluster.local:80",
+            f"http://localhost:{port_number}",
+            f"{local_store_url}:80",
         )
         try:
             response = _execute_algo_store_request(

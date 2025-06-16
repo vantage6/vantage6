@@ -4,6 +4,7 @@ central server.
 """
 
 import datetime
+import os
 import time
 from threading import Thread
 
@@ -13,6 +14,7 @@ from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
     InstanceType,
+    RequiredNodeEnvVars,
 )
 
 
@@ -43,7 +45,7 @@ class NodeClient(ClientBase):
         self.algorithm_store = self.AlgorithmStore(self)
 
         self.kc_openid = KeycloakOpenID(
-            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            server_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             realm_name="vantage6",
             client_id="node-client",
             client_secret_key="mynodeclientsecret",

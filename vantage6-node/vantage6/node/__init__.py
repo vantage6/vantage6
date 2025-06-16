@@ -27,7 +27,6 @@ import json
 import logging
 import os
 import queue
-import random
 import sys
 import time
 import threading
@@ -40,11 +39,14 @@ from gevent.pywsgi import WSGIServer
 from socketio import Client as SocketIO
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name
+from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    NodePolicy,
+    RequiredNodeEnvVars,
+)
 from vantage6.common.log import get_file_logger
 
 # make sure the version is available
@@ -78,6 +80,9 @@ class Node:
     def __init__(self, ctx: NodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
+
+        # validate that the required environment variables are set
+        validate_required_env_vars(RequiredNodeEnvVars)
 
         # Initialize the node. If it crashes, shut down the parts that started
         # already
@@ -134,28 +139,12 @@ class Node:
         self.log.info("Init complete")
 
     def _setup_node_client(self, config: dict) -> NodeClient:
-        api_key = os.environ.get("V6_API_KEY")
-        if not api_key:
-            self.log.critical(
-                "No API key found in environment variables. Make sure to set the "
-                "'V6_API_KEY' environment variable."
-            )
-            exit(1)
-
-        node_name = os.environ.get("V6_NODE_NAME")
-        if not node_name:
-            self.log.critical(
-                "No node name found in environment variables. Make sure to set the "
-                "'V6_NODE_NAME' environment variable."
-            )
-            exit(1)
-
         return NodeClient(
             host=config.get("server_url"),
             port=config.get("port"),
             path=config.get("api_path"),
-            node_account_name=node_name,
-            api_key=api_key,
+            node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
+            api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
         )
 
     def __proxy_server_worker(self) -> None:

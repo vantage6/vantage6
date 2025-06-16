@@ -37,9 +37,11 @@ from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME, DEFAULT_API_PATH
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.globals import (
     HOST_URI_ENV,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    RequiredServerEnvVars,
 )
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
@@ -65,7 +67,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class AlgorithmStoreApp:
+class AlgorithmStoreApp(Vantage6App):
     """
     Vantage6 server instance.
 
@@ -79,6 +81,9 @@ class AlgorithmStoreApp:
         """Create a vantage6 algorithm store application."""
 
         self.ctx = ctx
+
+        # validate that the required environment variables are set
+        self.validate_required_env_vars()
 
         # initialize, configure Flask
         self.app = Flask(
@@ -479,7 +484,7 @@ class AlgorithmStoreApp:
         Add a keycloak id to the super user.
         """
         keycloak_openid = KeycloakOpenID(
-            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
             client_id="vantage6-store-admin-client",
             realm_name="vantage6",
             client_secret_key="mystoreclientsecret",

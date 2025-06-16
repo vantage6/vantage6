@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+import os
 from http import HTTPStatus
 
 from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
@@ -13,6 +14,7 @@ from marshmallow import ValidationError
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.globals import RequiredServerEnvVars
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
@@ -355,7 +357,7 @@ class Users(AlgorithmStoreResources):
     def _get_keycloak_admin_client():
         """Get the keycloak admin client"""
         keycloak_openid = KeycloakOpenIDConnection(
-            server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
             username="admin",
             password="admin",
             client_id="vantage6-store-admin-client",

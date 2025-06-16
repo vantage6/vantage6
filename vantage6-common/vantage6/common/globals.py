@@ -91,6 +91,14 @@ class ContainerEnvNames(str, Enum):
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
 
 
+class RequiredNodeEnvVars(str, Enum):
+    """Enum containing the required node environment variables"""
+
+    KEYCLOAK_URL = "KEYCLOAK_URL"
+    V6_API_KEY = "V6_API_KEY"
+    V6_NODE_NAME = "V6_NODE_NAME"
+
+
 class AuthStatus(str, Enum):
     """Enum containing the different statuses of the authenticable (node/user)"""
 

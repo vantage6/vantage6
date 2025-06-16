@@ -1,9 +1,12 @@
+import os
 from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
+
+from vantage6.backend.common.globals import RequiredServerEnvVars
 
 
 def getKeyCloakAdminClient():
     keycloak_openid = KeycloakOpenIDConnection(
-        server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+        server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
         username="admin",
         password="admin",
         client_id="admin-client",

@@ -15,6 +15,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.algorithm.store.model.user import User
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.globals import RequiredServerEnvVars
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
@@ -62,7 +63,7 @@ def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
         return {"msg": msg}, HTTPStatus.UNAUTHORIZED
 
     keycloak_openid = KeycloakOpenID(
-        server_url="http://vantage6-auth-keycloak.default.svc.cluster.local",
+        server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
         client_id="vantage6-store-client",
         realm_name="vantage6",
         client_secret_key="mystoreregularclientsecret",
