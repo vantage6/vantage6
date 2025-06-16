@@ -35,9 +35,6 @@ vars:
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
     default: ${PWD}/dev/.db/db_pv_store
-  KEYCLOAK_DATABASE_MOUNT_PATH:
-    question: "Where is your keycloak database located on the host machine?"
-    default: ${PWD}/dev/.db/db_pv_keycloak
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
@@ -113,12 +110,12 @@ pipelines:
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
+      dev/purge_keycloak_storage.sh
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
-        ${STORE_DATABASE_MOUNT_PATH} \
-        ${KEYCLOAK_DATABASE_MOUNT_PATH}
+        ${STORE_DATABASE_MOUNT_PATH}
 
   stop-dev:
     run: |-
@@ -144,11 +141,6 @@ hooks:
     echo "Creating algorithm store database folder"
     python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
   events: ["before:deploy:vantage6-store"]
-- name: "create-keycloak-database-folder"
-  command: |
-    echo "Creating keycloak database folder"
-    python dev/create_mount_directory.py ${KEYCLOAK_DATABASE_MOUNT_PATH}
-  events: ["before:deploy:vantage6-auth"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -192,12 +184,6 @@ deployments:
             postgresPassword: postgres
             password: keycloak
             database: keycloak
-          persistence:
-            enabled: true
-            mountPath: /bitnami/postgresql
-            existingClaim: ""
-            volumePath: ${KEYCLOAK_DATABASE_MOUNT_PATH}
-            k8sNodeName: ${K8S_NODE_NAME}
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
