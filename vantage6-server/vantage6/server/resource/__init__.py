@@ -1,5 +1,4 @@
 import datetime as dt
-from http import HTTPStatus
 import logging
 
 from functools import wraps
@@ -8,7 +7,6 @@ from flask import current_app, g, request
 from flask_restful import Api
 from flask_mail import Mail
 from flask_jwt_extended import (
-    jwt_required,
     get_jwt,
     get_jwt_identity,
     verify_jwt_in_request,

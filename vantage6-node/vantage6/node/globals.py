@@ -1,5 +1,4 @@
 from pathlib import Path
-from enum import Enum
 
 from vantage6.common.globals import APPNAME
 

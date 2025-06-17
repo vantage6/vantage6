@@ -7,7 +7,6 @@ from http import HTTPStatus
 
 import jwt
 from flask import request, g
-from flask_jwt_extended import create_access_token
 from flask_restful import Api
 from marshmallow import ValidationError
 
