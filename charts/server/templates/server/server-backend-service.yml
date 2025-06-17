@@ -9,7 +9,7 @@ spec:
     component: vantage6-server
   ports:
     - protocol: TCP
-      port: 80
+      port: {{ .Values.server.port }}
       targetPort: {{ .Values.server.internal.port }}
       name: vantage6-server-backend
   type: ClusterIP

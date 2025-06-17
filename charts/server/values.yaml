@@ -13,6 +13,8 @@ server:
   internal:
     port: 7601
 
+  port: 7601
+
   # The number of replicas of the server
   replications: 1
 

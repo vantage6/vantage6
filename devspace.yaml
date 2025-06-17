@@ -99,9 +99,9 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
-    
+
   purge:
-    # Careful with destructive rm commands like `rm -rf ${p}/*`!! 
+    # Careful with destructive rm commands like `rm -rf ${p}/*`!!
     run: |-
       echo "Purging all deployments..."
       stop_dev --all
@@ -112,7 +112,7 @@ pipelines:
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH}
-    
+
   stop-dev:
     run: |-
       echo "Purging all deployments..."
@@ -352,6 +352,11 @@ dev:
     # would require image rebuild but it's not transparent.
     - path: ./vantage6-ui/src/:/app/src/
       disableDownload: true
+    ports:
+      - port: 7600:80
+        bindAddress: localhost
+      - port: 7600:80
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
@@ -404,12 +409,12 @@ commands:
     description: "Start the development environment"
     command: devspace dev
 
-  # This will remove all running k8s resources from the development mode. 
+  # This will remove all running k8s resources from the development mode.
   stop-dev:
     description: "Stop the development environment"
     command: devspace run-pipeline stop-dev
 
-  # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
+  # This will delete all running k8s resources and local data (e.g. tasks data, database data).
   # This is useful when you want to start from scratch.
   purge:
     description: "Purge the development environment"
