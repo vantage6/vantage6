@@ -1,3 +1,4 @@
+{{- if .Values.node.databases.fileBased }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -13,3 +14,4 @@ spec:
   selector:
     matchLabels:
       type: local-database
+{{- end }}

@@ -1,3 +1,4 @@
+{{- if .Values.node.databases.fileBased }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -24,3 +25,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.node.k8sNodeName }}
+{{- end }}
