@@ -5,6 +5,7 @@ Resources below '/<api_base>/token'
 import logging
 from http import HTTPStatus
 
+import jwt
 from flask import request, g
 from flask_jwt_extended import create_access_token
 from flask_restful import Api
@@ -160,6 +161,9 @@ class ContainerToken(ServicesResources):
                 for db_entry in db_task.databases
             ],
         }
-        token = create_access_token(container, expires_delta=False)
+
+        token = jwt.encode(
+            {"sub": container}, self.config["jwt_secret_key"], algorithm="HS256"
+        )
 
         return {"container_token": token}, HTTPStatus.OK

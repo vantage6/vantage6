@@ -309,6 +309,11 @@ class ServerApp(Vantage6App):
 
         self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
 
+        # set JWT secret key
+        self.app.config["jwt_secret_key"] = self.ctx.config.get(
+            "jwt_secret_key", str(uuid.uuid4())
+        )
+
         # Open Api Specification (f.k.a. swagger)
         self.app.config["SWAGGER"] = {
             "title": APPNAME,
@@ -543,61 +548,46 @@ class ServerApp(Vantage6App):
             try:
                 auth = db.Authenticatable.get_by_keycloak_id(identity)
             except Exception:
-                auth = None
+                raise Exception("No user or node found for keycloak id %s", identity)
 
             # in case of a user or node, we find an authenticated entity
-            if auth:
-                if isinstance(auth, db.Node):
-                    for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
-                        auth_identity.provides.add(
-                            RuleNeed(
-                                name=rule.name,
-                                scope=rule.scope,
-                                operation=rule.operation,
-                            )
-                        )
-
-                if isinstance(auth, db.User):
-                    # add role permissions
-                    for role in auth.roles:
-                        for rule in role.rules:
-                            auth_identity.provides.add(
-                                RuleNeed(
-                                    name=rule.name,
-                                    scope=rule.scope,
-                                    operation=rule.operation,
-                                )
-                            )
-
-                    # add 'extra' permissions
-                    for rule in auth.rules:
-                        auth_identity.provides.add(
-                            RuleNeed(
-                                name=rule.name,
-                                scope=rule.scope,
-                                operation=rule.operation,
-                            )
-                        )
-
-                identity_changed.send(
-                    current_app._get_current_object(), identity=auth_identity
-                )
-
-                return auth
-            else:
-                # container identity
-
-                for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
+            if isinstance(auth, db.Node):
+                for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
                     auth_identity.provides.add(
                         RuleNeed(
-                            name=rule.name, scope=rule.scope, operation=rule.operation
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation,
                         )
                     )
-                identity_changed.send(
-                    current_app._get_current_object(), identity=auth_identity
-                )
-                log.debug("identity %s", identity)
-                return identity
+
+            elif isinstance(auth, db.User):
+                # add role permissions
+                for role in auth.roles:
+                    for rule in role.rules:
+                        auth_identity.provides.add(
+                            RuleNeed(
+                                name=rule.name,
+                                scope=rule.scope,
+                                operation=rule.operation,
+                            )
+                        )
+
+                # add 'extra' permissions
+                for rule in auth.rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation,
+                        )
+                    )
+
+            identity_changed.send(
+                current_app._get_current_object(), identity=auth_identity
+            )
+
+            return auth
 
     def load_resources(self) -> None:
         """Import the modules containing API resources."""

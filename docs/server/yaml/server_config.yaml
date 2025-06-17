@@ -40,6 +40,14 @@ allow_drop_all: true
 # presented with a QR-code to scan with their phone the first time they log in.
 two_factor_auth: true
 
+# The secret key used to generate JWT authorization tokens. This should
+# be kept secret as others are able to generate access tokens if they
+# know this secret. This parameter is optional. In case it is not
+# provided in the configuration it is generated each time the server
+# starts, thereby invalidating all previous distributed keys. Recommended only in
+# non-production environments
+jwt_secret_key: super-secret-key!
+
 # Settings for the logger
 logging:
   # Controls the logging output level. Could be one of the following
