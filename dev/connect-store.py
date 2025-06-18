@@ -64,3 +64,55 @@ client.algorithm.create(
     partitioning="horizontal",
     functions=function_metadata,
 )
+
+
+client.algorithm.create(
+    name="Network Diagnostics",
+    description="Functions to diagnose network policies, that is, to what extent the jobs running on a V6 Node could have access to the internal k8s network or to the outside world.",
+    image="ghcr.io/hcadavid/v6-sessions-k8s-diagnostics:latest",
+    vantage6_version="5.0.0",
+    code_url="https://github.com/hcadavid/v6-sessions-k8s-diagnostics",
+    partitioning="horizontal",
+    functions=[
+        {
+            "name": "network_status",
+            "display_name": "Get the network diagnostics performed on a given node",
+            "standalone": True,
+            "description": "Get the network diagnostics performed on a given node",
+            "ui_visualizations": [],
+            "step_type": AlgorithmStepType.FEDERATED_COMPUTE.value,
+            "arguments": [
+                {
+                    "has_default_value": True,
+                    "name": "sleep_time",
+                    "display_name": "Delay ",
+                    "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the POD running and access it to perform further tests) ",
+                    "type": "integer",
+                    "default_value": "1",
+                    "is_frontend_only": False,
+                }
+            ],
+            "databases": [],
+        },
+        {
+            "name": "central_network_diagnostics",
+            "display_name": "Get the network diagnostics performed on all the nodes",
+            "standalone": True,
+            "description": "Get the network diagnostics performed on all the nodes within a collaboration",
+            "ui_visualizations": [],
+            "step_type": AlgorithmStepType.CENTRAL_COMPUTE.value,
+            "arguments": [
+                {
+                    "has_default_value": True,
+                    "name": "sleep_time",
+                    "display_name": "Delay ",
+                    "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the PODs running on all the nodes to access them and perform further inspections) ",
+                    "type": "integer",
+                    "default_value": "1",
+                    "is_frontend_only": False,
+                }
+            ],
+            "databases": [],
+        },
+    ],
+)
