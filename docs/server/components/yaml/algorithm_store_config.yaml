@@ -68,18 +68,6 @@ policies:
   #   algorithms
   algorithm_view: "public"
 
-  # List of servers for which users are allowed to modify algorithms or other resources
-  # in the algorithm store. If used together with "whitelisted" algorithm_view policy,
-  # any user from these servers will be able to use the algorithms from the store.
-  allowed_servers:
-    - "https://cotopaxi.vantage6.ai"
-    - "http://localhost:7601/api"
-
-  # Localhost servers are by default never allowed to connect to the algorithm store,
-  # even if no allowed servers lists are given. This setting can be used to allow
-  # localhost servers to connect.
-  allow_localhost: false
-
   # Set the minimum number of reviewers that need to approve an algorithm before it
   # is available in the store. In case this number is lower than min_reviewing_organizations,
   # the min_reviewing_organizations still has to be met to proceed with the review process.
@@ -91,19 +79,19 @@ policies:
   # Define the minimum amount of organizations that must be involved in the review process.
   min_reviewing_organizations: 2
 
-  # Specify the users that are allowed to review algorithms. This is a list of usernames and servers
-  # that identify unique users. This works in combination with the permission system. If this policy
-  # is not set, all users with the right permissions are allowed to review algorithms.
+  # Specify the users that are allowed to review algorithms. This is a list of usernames
+  # that identify unique users. This policy works in combination with the permission
+  # system. If this policy is not set, all users with the right permissions are allowed
+  # to review algorithms.
   allowed_reviewers:
-    - username: "username"
-      server: "http://localhost:7601/api"
+    - some_username
 
-  # Specify the users that are allowed to assign reviews. This is a list of usernames and servers
-  # that identify unique users. This works in combination with the permission system. If this policy
-  # is not set, all users with the right permissions are allowed to assign reviews.
+  # Specify the users that are allowed to assign reviews. This is a list of usernames
+  # that identify unique users. This policy works in combination with the permission
+  # system. If this policy is not set, all users with the right permissions are allowed
+  # to assign reviews.
   allowed_review_assigners:
-    - username: "username"
-      server: "http://localhost:7601/api"
+    - some_username
 
 # Credentials used to login to private Docker registries. These credentials are used
 # to e.g. find the digests of the algorithm.
@@ -134,13 +122,11 @@ dev:
 # Provide an initial root user for the algorithm store. This user will be created
 # when the store is started for the first time. The root user has full access to
 # the store and can create other users. The root user should be a reference to an
-# existing user in a vantage6 server.
+# existing user in keycloak.
 root_user:
-  # URI to the vantage6 server
-  v6_server_uri: http://localhost:7601/api
-  # username of the vantage6 server's user you want to make root in the algorithm store
-  username: root
-  # email of the vantage6 server's user you want to make root in the algorithm store
+  # username of the vantage6 user you want to make root in the algorithm store
+  username: admin
+  # email of the vantage6 user you want to make root in the algorithm store
   email: root@organization.com
   # id of the organization the user belongs to
   organization_id: 1

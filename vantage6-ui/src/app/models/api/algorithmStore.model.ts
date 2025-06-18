@@ -25,9 +25,7 @@ export interface AlgorithmStoreForm {
 export interface AddAlgorithmStore {
   name: string;
   algorithm_store_url: string;
-  server_url: string;
   collaboration_id?: string;
-  force?: boolean;
 }
 
 export interface EditAlgorithmStore {
@@ -40,8 +38,6 @@ export enum AlgorithmStoreLazyProperties {
 
 export enum AvailableStorePolicies {
   ALGORITHM_VIEW = 'algorithm_view',
-  ALLOWED_SERVERS = 'allowed_servers',
-  ALLOW_LOCALHOST = 'allow_localhost',
   MIN_REVIEWERS = 'min_reviewers',
   ASSIGN_REVIEW_OWN_ALGORITHM = 'assign_review_own_algorithm',
   MIN_REVIEWING_ORGANIZATIONS = 'min_reviewing_organizations',

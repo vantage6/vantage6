@@ -639,17 +639,11 @@
     "title": "Add algorithm store to your collaboration",
     "name": "Name",
     "url": "Algorithm store URL",
-    "server_url": "Vantage6 server URL",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
       "url-hint": "The web address of the algorithm store, including the API path (often '/api') at the end.",
       "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
       "all-collaborations": "Make this algorithm store available to all collaborations"
-    },
-    "localhost-dialog": {
-      "title": "Adding localhost algorithm store",
-      "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
-      "confirm": "I understand, proceed."
     }
   },
   "algorithm-store-list": {
@@ -679,8 +673,6 @@
     "policy": "Policy",
     "not-defined": "No extra limitations",
     "algorithm_view": "Who can view algorithms?",
-    "allowed_servers": "Which servers are responsible for managing this algorithm store?",
-    "allow_localhost": "Are localhost servers allowed to access the store?",
     "min_reviewers": "Minimum number of reviewers",
     "min_reviewing_organizations": "Minimum number of organizations providing reviewers",
     "assign_review_own_algorithm": "Are developers allowed to assign reviewers for their own algorithms?",

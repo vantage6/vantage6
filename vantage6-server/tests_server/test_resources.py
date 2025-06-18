@@ -40,12 +40,6 @@ class TestResources(TestResourceBase):
         self.assertIn("version", r)
         self.assertEqual(r["version"], __version__)
 
-    def test_token_different_users(self):
-        for type_ in ["root", "admin", "user"]:
-            tokens = self.app.post("/api/token/user", json=self.credentials[type_]).json
-            self.assertIn("access_token", tokens)
-            self.assertIn("refresh_token", tokens)
-
     def test_organization(self):
         rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
@@ -114,7 +108,10 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_node_without_id(self):
+    @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
+    def test_node_without_id(self, mock_create_node_in_keycloak):
+        mock_create_node_in_keycloak.return_value = str(uuid.uuid1())
+
         # GET
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
@@ -160,9 +157,10 @@ class TestResources(TestResourceBase):
 
     def test_node_with_id(self):
         # root user can access all nodes
+        node = self.create_node()
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
-        node = self.app.get("/api/node/8", headers=headers).json
+        result = self.app.get(f"/api/node/{node.id}", headers=headers).json
         expected_fields = [
             "name",
             "collaboration",
@@ -174,11 +172,11 @@ class TestResources(TestResourceBase):
             "ip",
         ]
         for key in expected_fields:
-            self.assertIn(key, node)
+            self.assertIn(key, result)
 
         # user cannot access all
         headers = self.get_user_auth_header()
-        node = self.app.get("/api/node/8", headers=headers)
+        node = self.app.get(f"/api/node/{node.id}", headers=headers)
         self.assertEqual(node.status_code, HTTPStatus.UNAUTHORIZED)
 
         # some nodes just don't exist
@@ -186,16 +184,16 @@ class TestResources(TestResourceBase):
         self.assertEqual(node.status_code, 404)
 
     def test_result_with_id(self):
-        # TODO improve this unit test to create its own task and run
-        headers = self.login("root")
-        run = self.app.get("/api/run/1", headers=headers)
-        self.assertEqual(run.status_code, 200)
+        headers = self.login_as_root()
+        run = self.create_run()
+        result = self.app.get(f"/api/run/{run.id}", headers=headers)
+        self.assertEqual(result.status_code, 200)
 
-        run = self.app.get("/api/run/1?include=task", headers=headers)
-        self.assertEqual(run.status_code, 200)
+        result = self.app.get(f"/api/run/{run.id}?include=task", headers=headers)
+        self.assertEqual(result.status_code, 200)
 
     def test_run_without_id(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result1 = self.app.get("/api/run", headers=headers)
         self.assertEqual(result1.status_code, 200)
 
@@ -206,28 +204,29 @@ class TestResources(TestResourceBase):
         self.assertEqual(result3.status_code, 200)
 
     def test_task_with_id(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/task/1", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_witout_id(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/task", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_including_runs(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/task?include=runs", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_unknown(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/task/9999", headers=headers)
         self.assertEqual(result.status_code, 404)
 
     def test_user_with_id(self):
-        headers = self.login("admin")
-        result = self.app.get("/api/user/1", headers=headers)
+        headers = self.login_as_root()
+        user = self.create_user()
+        result = self.app.get(f"/api/user/{user.id}", headers=headers)
         self.assertEqual(result.status_code, 200)
         user = result.json
 
@@ -236,64 +235,61 @@ class TestResources(TestResourceBase):
             self.assertIn(field, user)
 
     def test_user_unknown(self):
-        headers = self.login("admin")
+        headers = self.login_as_root()
         result = self.app.get("/api/user/9999", headers=headers)
         self.assertEqual(result.status_code, 404)
 
-    def test_user_without_id(self):
-        for role in ["user", "admin", "root"]:
-            headers = self.login(role)
-            result = self.app.get("/api/user", headers=headers)
-            self.assertEqual(result.status_code, 200)
+    @patch("vantage6.server.resource.user.Users._create_user_in_keycloak")
+    def test_user_post(self, mock_create_user_in_keycloak):
+        mock_create_user_in_keycloak.return_value = str(uuid.uuid1())
 
-    def test_user_post(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         new_user = {
             "username": "unittest",
             "firstname": "unit",
             "lastname": "test",
             "email": "unit@test.org",
+            "password": "Super-secret1!",
         }
-        # with a bad password, user should not be created
-        new_user["password"] = "1234"
-        result = self.app.post("/api/user", headers=headers, json=new_user)
-        self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
-
-        new_user["password"] = "Welkom01!"
         result = self.app.post("/api/user", headers=headers, json=new_user)
         self.assertEqual(result.status_code, 201)
 
         result = self.app.post("/api/user", headers=headers, json=new_user)
         self.assertEqual(result.status_code, 400)
 
-    def test_user_delete(self):
-        headers = self.login("root")
-        result = self.app.delete("/api/user/5", headers=headers)
+    @patch("vantage6.server.resource.user.User._delete_user_in_keycloak")
+    def test_user_delete(self, mock_delete_user_in_keycloak):
+        mock_delete_user_in_keycloak.return_value = None
+
+        headers = self.login_as_root()
+        user = self.create_user()
+        result = self.app.delete(f"/api/user/{user.id}", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_user_delete_unknown(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.delete("/api/user/99999", headers=headers)
         self.assertEqual(result.status_code, 404)
 
     def test_user_patch(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
+        user = self.create_user()
         result = self.app.patch(
-            "/api/user/2",
+            f"/api/user/{user.id}",
             headers=headers,
             json={"firstname": "Henk", "lastname": "Martin"},
         )
         self.assertEqual(result.status_code, 200)
 
     def test_user_patch_unknown(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.patch(
             "/api/user/9999", headers=headers, json={"username": "root2"}
         )
         self.assertEqual(result.status_code, 404)
 
     def test_root_role_forbidden(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         new_user = {
             "username": "some",
             "firstname": "guy",
@@ -304,89 +300,13 @@ class TestResources(TestResourceBase):
         result = self.app.post("/api/user", headers=headers, json=new_user)
         self.assertEqual(result.status_code, 400)
 
-    @patch("vantage6.backend.common.mail_service.MailService.send_email")
-    def test_reset_password(self, send_email):
-        user_ = {"username": "root"}
-        result = self.app.post("/api/recover/lost", json=user_)
-        self.assertEqual(result.status_code, 200)
-
-    @patch("vantage6.backend.common.mail_service.MailService.send_email")
-    def test_reset_password_missing_error(self, send_email):
-        result = self.app.post("/api/recover/lost", json={})
-        self.assertEqual(result.status_code, 400)
-
-    @patch("vantage6.server.resource.recover.decode_token")
-    def test_recover_password(self, decode_token):
-        decode_token.return_value = {"sub": {"id": 1}}
-        new_password = {"password": "$Ecret88!", "reset_token": "token"}
-        result = self.app.post("/api/recover/reset", json=new_password)
-        self.assertEqual(result.status_code, 200)
-
-        # verify that the new password works
-        result = self.app.post(
-            "/api/token/user", json={"username": "root", "password": "$Ecret88!"}
-        )
-        self.assertIn("access_token", result.json)
-        self.credentials["root"]["password"] = "$Ecret88!"
-
-    def test_fail_recover_password(self):
-        result = self.app.post("/api/recover/reset", json={})
-        self.assertEqual(result.status_code, 400)
-
-    def test_change_password(self):
-        user = self.create_user(password="Password1!")
-        headers = self.login(user.username)
-
-        # test if fails when not providing correct data
-        result = self.app.patch(
-            "/api/password/change",
-            headers=headers,
-            json={"current_password": "Password1!"},
-        )
-        self.assertEqual(result.status_code, 400)
-        result = self.app.patch(
-            "/api/password/change",
-            headers=headers,
-            json={"new_password": "a_new_password"},
-        )
-        self.assertEqual(result.status_code, 400)
-
-        # test if fails when wrong password is provided
-        result = self.app.patch(
-            "/api/password/change",
-            headers=headers,
-            json={
-                "current_password": "Wrong_password1!",
-                "new_password": "A_new_password1!",
-            },
-        )
-        self.assertEqual(result.status_code, 401)
-
-        # test if fails when new password is the same
-        result = self.app.patch(
-            "/api/password/change",
-            headers=headers,
-            json={"current_password": "Password1!", "new_password": "Password1!"},
-        )
-        self.assertEqual(result.status_code, 400)
-
-        # test if it works when used as intended
-        result = self.app.patch(
-            "/api/password/change",
-            headers=headers,
-            json={"current_password": "Password1!", "new_password": "A_new_password1"},
-        )
-        self.assertEqual(result.status_code, 200)
-        db_session.session.refresh(user)
-        self.assertTrue(user.check_password("A_new_password1"))
-
     def test_view_rules(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/rule", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_view_roles(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/role", headers=headers)
         self.assertEqual(result.status_code, 200)
 
@@ -406,7 +326,7 @@ class TestResources(TestResourceBase):
         org_outside_collab.save()
 
         # non-existing role
-        headers = self.login("root")
+        headers = self.login_as_root()
         result = self.app.get("/api/role/9999", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
 
@@ -449,7 +369,7 @@ class TestResources(TestResourceBase):
 
         # user can view their own roles. This should always be possible
         user = self.create_user(rules=[])
-        headers = self.login(user.username)
+        headers = self.login(user)
         result = self.app.get(
             "/api/role", headers=headers, query_string={"user_id": user.id}
         )
@@ -491,7 +411,7 @@ class TestResources(TestResourceBase):
         user.delete()
 
     def test_create_role_as_root(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
 
         # obtain available rules
         rules = self.app.get(
@@ -529,7 +449,7 @@ class TestResources(TestResourceBase):
                 resource.delete()
 
     def test_create_role_as_root_for_different_organization(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
 
         # obtain available rules
         rules = self.app.get(
@@ -602,7 +522,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # check a non-existing organization
-        headers = self.login("root")
+        headers = self.login_as_root()
         body["organization_id"] = 9999
         result = self.app.post("/api/role", headers=headers, json=body)
         self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
@@ -642,7 +562,7 @@ class TestResources(TestResourceBase):
                 resource.delete()
 
     def test_edit_role(self):
-        headers = self.login("root")
+        headers = self.login_as_root()
 
         # create testing entities
         org = Organization(name="some-organization-name")
@@ -798,7 +718,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # root user can view all users
-        headers = self.login("root")
+        headers = self.login_as_root()
         result, json_data = self.paginated_list("/api/user", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(json_data), len(User.get()))
@@ -819,7 +739,7 @@ class TestResources(TestResourceBase):
 
         # user can view their own data. This should always be possible
         user = self.create_user(rules=[])
-        headers = self.login(user.username)
+        headers = self.login(user)
         result = self.app.get(f"/api/user/{user.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
 
@@ -880,7 +800,10 @@ class TestResources(TestResourceBase):
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
 
-    def test_new_permission_user(self):
+    @patch("vantage6.server.resource.user.Users._create_user_in_keycloak")
+    def test_new_permission_user(self, mock_create_user_in_keycloak):
+        mock_create_user_in_keycloak.return_value = str(uuid.uuid1())
+
         userdata = {
             "username": "smarty",
             "firstname": "Smart",
@@ -891,8 +814,12 @@ class TestResources(TestResourceBase):
 
         # Creating users for other organizations can only be by global scope
         org = Organization()
+        org.save()
+        other_org = Organization()
+        other_org.save()
+
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.CREATE)
-        userdata["organization_id"] = 1
+        userdata["organization_id"] = other_org.id
         headers = self.get_user_auth_header(org, rules=[rule])
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -968,15 +895,11 @@ class TestResources(TestResourceBase):
             firstname="Firstname",
             lastname="Lastname",
             username="Username-unique-1",
-            password="Password",
+            keycloak_id=str(uuid.uuid1()),
             email="a@b.c2",
             organization=org,
         )
         user.save()
-        self.credentials[user.username] = {
-            "username": user.username,
-            "password": "Password",
-        }
 
         # check non-existing user
         headers = self.get_user_auth_header()
@@ -1019,7 +942,7 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
         user.rules.append(rule)
         user.save()
-        headers = self.login(user.username)
+        headers = self.login(user)
         result = self.app.patch(
             f"/api/user/{user.id}", headers=headers, json={"firstname": "yeah"}
         )
@@ -1217,21 +1140,19 @@ class TestResources(TestResourceBase):
         org3.delete()
         col.delete()
 
-    def test_delete_user_permissions(self):
+    @patch("vantage6.server.resource.user.User._delete_user_in_keycloak")
+    def test_delete_user_permissions(self, mock_delete_user_in_keycloak):
+        mock_delete_user_in_keycloak.return_value = None
         org = Organization()
         user = User(
             firstname="Firstname",
             lastname="Lastname",
             username="Username",
-            password="Password",
             email="a@b.c",
             organization=org,
+            keycloak_id=str(uuid.uuid4()),
         )
         user.save()
-        self.credentials[user.username] = {
-            "username": user.username,
-            "password": "Password",
-        }
 
         # check non-exsitsing user
         headers = self.get_user_auth_header()
@@ -1261,7 +1182,7 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("user", Scope.OWN, Operation.DELETE)
         user.rules.append(rule)
         user.save()
-        headers = self.login(user.username)
+        headers = self.login(user)
         result = self.app.delete(f"/api/user/{user.id}", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
         # User is deleted by the endpoint! user.delete()
@@ -1271,7 +1192,6 @@ class TestResources(TestResourceBase):
             firstname="Firstname",
             lastname="Lastname",
             username="Username",
-            password="Password",
             email="a@b.c",
             organization=Organization(),
         )
@@ -1289,7 +1209,6 @@ class TestResources(TestResourceBase):
             firstname="Firstname",
             lastname="Lastname",
             username="Username",
-            password="Password",
             email="a@b.c",
             organization=Organization(),
         )
@@ -1305,7 +1224,6 @@ class TestResources(TestResourceBase):
             firstname="Firstname",
             lastname="Lastname",
             username="Username",
-            password="Password",
             email="a@b.c",
             organization=org,
         )
@@ -1341,7 +1259,7 @@ class TestResources(TestResourceBase):
         # view your own organization
         rule = Rule.get_by_("organization", Scope.ORGANIZATION, Operation.VIEW)
         user = self.create_user(rules=[rule])
-        headers = self.login(user.username)
+        headers = self.login(user)
         result = self.app.get(
             f"/api/organization/{user.organization.id}", headers=headers
         )
@@ -1389,8 +1307,8 @@ class TestResources(TestResourceBase):
         col.delete()
 
     def test_view_organization_as_node_permission(self):
-        node, api_key = self.create_node()
-        headers = self.login_node(api_key)
+        node = self.create_node()
+        headers = self.login_node(node)
 
         # test list organization with only your organization
         result = self.app.get("/api/organization", headers=headers)
@@ -1406,8 +1324,8 @@ class TestResources(TestResourceBase):
         node.delete()
 
     def test_view_organization_as_container_permission(self):
-        node, api_key = self.create_node()
-        headers = self.login_container(node=node, api_key=api_key)
+        node = self.create_node()
+        headers = self.login_container(node=node)
 
         # try to get organization where he runs
         result = self.app.get(
@@ -2291,9 +2209,9 @@ class TestResources(TestResourceBase):
     def test_view_node_permissions_as_node(self):
         org = Organization()
         col = Collaboration(organizations=[org])
-        node, api_key = self.create_node(org, col)
+        node = self.create_node(org, col)
 
-        headers = self.login_node(api_key)
+        headers = self.login_node(node)
 
         # global permissions
         results = self.app.get(f"/api/node/{node.id}", headers=headers)
@@ -2307,7 +2225,10 @@ class TestResources(TestResourceBase):
         # cleanup
         node.delete()
 
-    def test_create_node_permissions(self):
+    @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
+    def test_create_node_permissions(self, mock_create_node_in_keycloak):
+        mock_create_node_in_keycloak.return_value = str(uuid.uuid1())
+
         org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
         col.save()
@@ -2422,7 +2343,10 @@ class TestResources(TestResourceBase):
         for resource in Node.get()[::-1][:3]:
             resource.delete()
 
-    def test_delete_node_permissions(self):
+    @patch("vantage6.server.resource.node.Node._delete_node_in_keycloak")
+    def test_delete_node_permissions(self, mock_delete_node_in_keycloak):
+        mock_delete_node_in_keycloak.return_value = None
+
         org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
         node = Node(organization=org, collaboration=col)
@@ -2689,7 +2613,7 @@ class TestResources(TestResourceBase):
         # list own user's task permissions - same user without id
         rule = Rule.get_by_("task", Scope.OWN, Operation.VIEW)
         user = self.create_user(rules=[rule], organization=org)
-        headers = self.login(user.username)
+        headers = self.login(user)
         task2 = Task(name="unit", collaboration=col, init_org=org, init_user=user)
         task2.save()
         results = self.app.get("/api/task", headers=headers)
@@ -2753,7 +2677,7 @@ class TestResources(TestResourceBase):
 
     def test_create_task_permission_as_user(self):
         user = self.create_user()
-        headers = self.login(user.username)
+        headers = self.login(user)
 
         org = Organization()
         org.save()
@@ -3003,7 +2927,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test permission to delete own tasks with same user
-        headers = self.login(user.username)
+        headers = self.login(user)
         results = self.app.delete(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -3084,7 +3008,7 @@ class TestResources(TestResourceBase):
         # test with permission to view own runs
         rule = Rule.get_by_("run", Scope.OWN, Operation.VIEW)
         user = self.create_user(rules=[rule], organization=org)
-        headers = self.login(user.username)
+        headers = self.login(user)
         task2 = Task(collaboration=col, init_org=org, init_user=user)
         task2.save()
         res2 = Run(task=task2, organization=org)
@@ -3129,11 +3053,10 @@ class TestResources(TestResourceBase):
         results = self.app.get(f"/api/run?task_id={task.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
-    @patch(
-        "vantage6.server.algo_store_communication.request_algo_store",
-        return_value=("success", HTTPStatus.CREATED),
-    )
-    def test_create_algorithm_store_record(self, _request_algo_store):
+    @patch("vantage6.server.algo_store_communication._check_algorithm_store_online")
+    def test_create_algorithm_store_record(self, mock_check_algorithm_store_online):
+        mock_check_algorithm_store_online.return_value = True
+
         """Test creating an algorithm store record"""
         # initialize resources
         org = Organization()
@@ -3144,7 +3067,6 @@ class TestResources(TestResourceBase):
         record = {
             "name": "test",
             "algorithm_store_url": "http://test.com",
-            "server_url": "http://test2.com",
             "collaboration_id": col.id,
         }
 
@@ -3180,20 +3102,6 @@ class TestResources(TestResourceBase):
         # all collaborations, so it should succeed
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.get_user_auth_header(rules=[rule])
-        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
-        self.assertEqual(results.status_code, HTTPStatus.CREATED)
-
-        # test that creating a record for a localhost algorithm store fails
-        record["algorithm_store_url"] = "http://localhost:5000"
-        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
-        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
-        record["algorithm_store_url"] = "http://127.0.0.1:5000"
-        results = self.app.post("/api/algorithmstore", headers=headers, json=record)
-        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
-
-        # by using force we should be able to create a record for a localhost
-        # algorithm store
-        record["force"] = True
         results = self.app.post("/api/algorithmstore", headers=headers, json=record)
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
@@ -3322,15 +3230,8 @@ class TestResources(TestResourceBase):
         col.delete()
         algo_store.delete()
 
-    @patch(
-        "vantage6.server.resource.algorithm_store.request_algo_store",
-    )
-    def test_delete_algorithm_store(self, request_algo_store):
+    def test_delete_algorithm_store(self):
         """Test deleting algorithm store records"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = [{"id": "1"}]
-        request_algo_store.return_value = (mock_response, HTTPStatus.OK)
-
         # initialize resources
         org = Organization()
         col = Collaboration(organizations=[org])
@@ -3341,26 +3242,23 @@ class TestResources(TestResourceBase):
             collaboration_id=col.id,
         )
         algo_store.save()
-        params = {"server_url": "http://test.com"}
 
         # test deleting without any permissions
         headers = self.get_user_auth_header()
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test deleting non-existing record
         rule = Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT)
         headers = self.get_user_auth_header(organization=org, rules=[rule])
-        results = self.app.delete(
-            "/api/algorithmstore/9999", headers=headers, query_string=params
-        )
+        results = self.app.delete("/api/algorithmstore/9999", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
         # test deleting with collaboration permissions
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -3374,7 +3272,7 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.EDIT)
         headers = self.get_user_auth_header(rules=[rule])
         results = self.app.delete(
-            f"/api/algorithmstore/{algo_store.id}", headers=headers, query_string=params
+            f"/api/algorithmstore/{algo_store.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
@@ -3972,7 +3870,7 @@ class TestResources(TestResourceBase):
     def test_reset_api_key(self):
         org = Organization(name="Test Organization")
         org.save()
-        node, api_key = self.create_node(organization=org)
+        node = self.create_node(organization=org)
 
         rule = Rule.get_by_("node", Scope.ORGANIZATION, Operation.EDIT)
         headers = self.create_user_and_login(organization=org, rules=[rule])

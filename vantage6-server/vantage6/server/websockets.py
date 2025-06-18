@@ -83,7 +83,7 @@ class DefaultSocketNamespace(Namespace):
 
         # get identity from token.
         session.auth_id = get_jwt_identity()
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 
@@ -96,7 +96,7 @@ class DefaultSocketNamespace(Namespace):
         # define socket-session variables.
         session.type = auth.type
         session.name = auth.username if session.type == "user" else auth.name
-        self.log.info(f"Client identified as <{session.type}>: <{session.name}>")
+        self.log.info("Client identified as <%s>: <%s>", session.type, session.name)
 
         # join appropiate rooms
         session.rooms = []
@@ -146,7 +146,7 @@ class DefaultSocketNamespace(Namespace):
             User that is to be added to the rooms
         """
         # check for which collab rooms the user has permission to enter
-        session.user = db.User.get(session.auth_id)
+        session.user = db.User.get_by_keycloak_id(session.auth_id)
         if session.user.can("event", Scope.GLOBAL, Operation.RECEIVE):
             # user joins all collaboration rooms
             collabs = db.Collaboration.get()
@@ -193,7 +193,7 @@ class DefaultSocketNamespace(Namespace):
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
 
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.OFFLINE.value
         auth.save()
 
@@ -337,7 +337,7 @@ class DefaultSocketNamespace(Namespace):
             )
             return
 
-        node = db.Node.get(session.auth_id)
+        node = db.Node.get_by_keycloak_id(session.auth_id)
 
         # delete any old data that may be present (if cleanup on disconnect
         # failed)
@@ -380,7 +380,7 @@ class DefaultSocketNamespace(Namespace):
         A client sends a ping to the server. The server detects who sent the
         ping and sets them as online.
         """
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()

@@ -31,14 +31,17 @@ from flask_restful import Api
 from flask_principal import Principal
 from flasgger import Swagger
 from pathlib import Path
+from keycloak import KeycloakOpenID
 
 from vantage6.common import logger_name
 from vantage6.common.globals import APPNAME, DEFAULT_API_PATH
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.globals import (
     HOST_URI_ENV,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    RequiredServerEnvVars,
 )
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
@@ -64,7 +67,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class AlgorithmStoreApp:
+class AlgorithmStoreApp(Vantage6App):
     """
     Vantage6 server instance.
 
@@ -75,9 +78,12 @@ class AlgorithmStoreApp:
     """
 
     def __init__(self, ctx: AlgorithmStoreContext) -> None:
-        """Create a vantage6-server application."""
+        """Create a vantage6 algorithm store application."""
 
         self.ctx = ctx
+
+        # validate that the required environment variables are set
+        self.validate_required_env_vars()
 
         # initialize, configure Flask
         self.app = Flask(
@@ -361,18 +367,7 @@ class AlgorithmStoreApp:
                     log.warning("Policy '%s' should be a list, skipping", policy)
                     continue
                 for value in policy_value:
-                    # get server
-                    server = db.Vantage6Server.get_by_url(value["server"])
-                    if not server:
-                        log.warning(
-                            "Server '%s' does not exist, skipping policy",
-                            value["server"],
-                        )
-                        continue
-                    # store the policy
-                    db.Policy(
-                        key=policy, value=f"{value['username']}|{server.url}"
-                    ).save()
+                    db.Policy(key=policy, value=value).save()
             elif policy not in [p.value for p in StorePolicies]:
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
@@ -384,13 +379,6 @@ class AlgorithmStoreApp:
             else:
                 log.debug("Setting policy %s to %s", policy, policy_value)
                 db.Policy(key=policy, value=policy_value).save()
-
-        # if the 'allow_localhost' policy is set to false, remove any whitelisted
-        # localhost servers
-        if not policies.get("allow_localhost", False):
-            localhost_servers = db.Vantage6Server.get_localhost_servers()
-            for server in localhost_servers:
-                server.delete()
 
         # If multiple instances of the algorithm store are running and are started
         # simultaneously, it is possible that this function is run at the same time as
@@ -434,34 +422,28 @@ class AlgorithmStoreApp:
 
         # add whitelisted server and root user from config file if they do not exist
         if root_user := self.ctx.config.get("root_user", {}):
-            whitelisted_uri = root_user.get("v6_server_uri")
             root_username = root_user.get("username")
             root_email = root_user.get("email")
             root_organization = root_user.get("organization_id")
-            if whitelisted_uri and root_username:
-                if not (v6_server := db.Vantage6Server.get_by_url(whitelisted_uri)):
-                    log.info("This server will be whitelisted: %s", whitelisted_uri)
-                    v6_server = db.Vantage6Server(url=whitelisted_uri)
-                    v6_server.save()
+            if root_username:
 
                 # if the user does not exist already, add it
-                root_user = db.User.get_by_server(
-                    username=root_username, v6_server_id=v6_server.id
-                )
+                root_user = db.User.get_by_username(root_username)
                 if not root_user:
                     log.warning(
                         "Creating root user. Please note that it cannot be verified at "
                         "this point that the user exists at the given vantage6 server."
                     )
+
                     root = db.Role.get_by_name(DefaultRole.ROOT)
-                    user = db.User(
-                        v6_server_id=v6_server.id,
+
+                    root_user = db.User(
                         username=root_username,
                         email=root_email,
                         organization_id=root_organization,
                         roles=[root],
                     )
-                    user.save()
+                    root_user.save()
                 elif len(root_user.rules) != len(db.Rule.get()):
                     log.warning("Existing root user has outdated rules, updating them.")
                     root_user.rules = db.Rule.get()
@@ -472,11 +454,14 @@ class AlgorithmStoreApp:
                         " no action taken."
                     )
 
+                if not root_user.keycloak_id:
+                    log.info("Adding keycloak id to root user")
+                    self._add_keycloak_id_to_super_user(root_user)
+
             else:
                 default_msg = (
                     "The 'root_user' section of the configuration file is "
-                    "incomplete! Please include a 'v6_server_uri' and 'username' "
-                    "to add this root user."
+                    "incomplete! Please set a 'username' to add a root user."
                 )
                 if len(db.User.get()) == 0:
                     log.warning(
@@ -492,6 +477,22 @@ class AlgorithmStoreApp:
                 " the database. This means no-one can alter resources on this server."
             )
         return self
+
+    # TODO v5+ refactor with duplicate code in server
+    def _add_keycloak_id_to_super_user(self, user: db.User) -> None:
+        """
+        Add a keycloak id to the super user.
+        """
+        keycloak_openid = KeycloakOpenID(
+            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
+            client_id="vantage6-store-admin-client",
+            realm_name="vantage6",
+            client_secret_key="mystoreclientsecret",
+        )
+        token = keycloak_openid.token("admin", "admin")
+        decoded_token = keycloak_openid.decode_token(token["access_token"])
+        user.keycloak_id = decoded_token["sub"]
+        user.save()
 
 
 def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:

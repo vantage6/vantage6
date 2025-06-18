@@ -15,7 +15,7 @@ import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { BaseSession, GetSessionParameters, SessionSortProperties } from 'src/app/models/api/session.models';
 import { TableData } from 'src/app/models/application/table.model';
-import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
+import { CHOSEN_COLLABORATION } from 'src/app/models/constants/sessionStorage';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -109,7 +109,7 @@ export class SessionListComponent implements OnInit, OnDestroy {
 
   private async getSessions(page: number, parameters: GetSessionParameters) {
     const collaborationID = sessionStorage.getItem(CHOSEN_COLLABORATION);
-    const userID = sessionStorage.getItem(USER_ID);
+    const userID = this.permissionService.activeUser?.id;
     if (!collaborationID || !userID) return;
 
     parameters = { ...parameters, collaboration_id: collaborationID };

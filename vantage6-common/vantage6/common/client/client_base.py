@@ -1,14 +1,13 @@
+import abc
 import logging
 import time
-import requests
 import json as json_lib
-
 from pathlib import Path
 
-from vantage6.common.exceptions import AuthenticationException
+import requests
+
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.common.client.utils import print_qr_code
 
 module_name = __name__.split(".")[1]
 
@@ -43,8 +42,8 @@ class ClientBase(object):
 
         # tokens
         self._access_token = None
-        self.__refresh_token = None
-        self.__refresh_url = None
+        self._refresh_token = None
+        self._refresh_url = None
 
         self.cryptor = None
         self.whoami = None
@@ -269,7 +268,7 @@ class ClientBase(object):
 
             if retry:
                 if first_try:
-                    self.refresh_token()
+                    self.obtain_new_token()
                     return self.request(
                         endpoint,
                         json,
@@ -354,114 +353,18 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
-        """Authenticate to the vantage6-server
+    @abc.abstractmethod
+    def authenticate(self) -> None:
+        """Authenticate to vantage6 via keycloak."""
+        return
 
-        It allows users, nodes and containers to sign in. Credentials can
-        either be a username/password combination or a JWT authorization
-        token.
+    @abc.abstractmethod
+    def obtain_new_token(self) -> None:
+        """Obtain a new token.
 
-        Parameters
-        ----------
-        credentials : dict
-            Credentials used to authenticate
-        path : str, optional
-            Endpoint used for authentication. This differs for users, nodes and
-            containers, by default "token/user"
-
-        Raises
-        ------
-        Exception
-            Failed to authenticate
-
-        Returns
-        -------
-        Bool
-            Whether or not user is authenticated. Alternative is that user is
-            redirected to set up two-factor authentication
+        Depending on the type of entity authenticating, this may use a refresh token
         """
-        if "username" in credentials:
-            self.log.debug(f"Authenticating user {credentials['username']}...")
-        elif "api_key" in credentials:
-            self.log.debug("Authenticating node...")
-
-        # authenticate to the central server
-        url = self.generate_path_to(path, is_for_algorithm_store=False)
-        response = requests.post(url, json=credentials)
-        if response.status_code == 404:
-            self.log.error(
-                "Server not found at %s. Please check the address and whether the "
-                "server is running!",
-                url,
-            )
-            self.log.info(
-                "If the server is running and reachable, %s/health should give a "
-                "response.",
-                self.base_path,
-            )
-            return False
-
-        # handle negative responses
-        data = response.json()
-        if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
-            if response.status_code == 401:
-                raise AuthenticationException("Failed to authenticate")
-            else:
-                raise Exception("Failed to authenticate")
-
-        if "qr_uri" in data:
-            print_qr_code(data)
-            return False
-        else:
-            # Check if there is an access token. If not, there is a problem
-            # with authenticating
-            if "access_token" not in data:
-                if "msg" in data:
-                    raise Exception(data["msg"])
-                else:
-                    raise Exception("No access token in authentication response!")
-
-            # store tokens in object
-            self.log.info("Successfully authenticated")
-            self._access_token = data.get("access_token")
-            self.__refresh_token = data.get("refresh_token")
-            self.__refresh_url = data.get("refresh_url")
-            return True
-
-    def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token
-
-        Raises
-        ------
-        Exception
-            Authentication Error!
-        AssertionError
-            Refresh URL not found
-        """
-        self.log.info("Refreshing token")
-        assert self.__refresh_url, "Refresh URL not found, did you authenticate?"
-
-        # if no port is specified explicit, then it should be omit the
-        # colon : in the path. Similar (but different) to the property
-        # base_path
-        if self.__port:
-            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
-        else:
-            url = f"{self.__host}{self.__refresh_url}"
-
-        # send request to server
-        response = requests.post(
-            url, headers={"Authorization": "Bearer " + self.__refresh_token}
-        )
-
-        # server says no!
-        if response.status_code != 200:
-            self.log.critical("Could not refresh token")
-            raise Exception("Authentication Error!")
-
-        self._access_token = response.json()["access_token"]
-        self.__refresh_token = response.json()["refresh_token"]
+        return
 
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run

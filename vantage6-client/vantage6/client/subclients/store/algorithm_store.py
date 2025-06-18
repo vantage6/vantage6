@@ -124,7 +124,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         name: str,
         collaboration: int | None = None,
         all_collaborations: bool = False,
-        force: bool = False,
     ) -> dict:
         """
         Link an algorithm store to one or more collaborations.
@@ -143,10 +142,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         all_collaborations : bool, optional
             If True, the algorithm store is linked to all collaborations. If False,
             the collaboration_id must be given.
-        force : bool, optional
-            If True, the algorithm store will be linked to the collaboration even for
-            localhost urls - which is not recommended in production scenarios for
-            security reasons.
         field : str, optional
             Which data field to keep in the returned dict. For instance, "field='name'"
             will only return the name of the algorithm store. Default is None.
@@ -175,8 +170,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         data = {
             "algorithm_store_url": algorithm_store_url,
             "name": name,
-            "force": force,
-            "server_url": self.parent.base_path,
         }
         if collaboration is not None:
             data["collaboration_id"] = (collaboration,)
@@ -242,19 +235,16 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         res = self.parent.request(
             f"algorithmstore/{id_}",
             method="delete",
-            params={
-                "server_url": self.parent.base_path,
-            },
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
-    def __get_store_id(self, id_: int = None) -> int:
+    def __get_store_id(self, id_: int | None = None) -> int:
         """
         Get the algorithm store id.
 
         Parameters
         ----------
-        id_ : int
+        id_ : int | None
             The id of the algorithm store. If not given, the algorithm store must be
             set with client.store.set().
 

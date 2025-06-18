@@ -124,7 +124,7 @@ class TestClient(TestCase):
     @staticmethod
     def setup_client() -> UserClient:
         client = UserClient(HOST, PORT)
-        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+        client.authenticate()
         client.setup_encryption(None)
         return client
 

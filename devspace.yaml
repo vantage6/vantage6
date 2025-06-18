@@ -62,12 +62,13 @@ pipelines:
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-server
-      create_deployments \
-        vantage6-store
+        vantage6-server \
+        vantage6-store \
+        vantage6-auth
       start_dev \
-        vantage6-server-init \
-        vantage6-store-init
+        vantage6-server \
+        vantage6-store \
+        vantage6-auth
       # TODO replace this with a retry mechanism
       echo "Waiting for server to start..."
       python dev/delete-basic-fixtures.py
@@ -85,13 +86,15 @@ pipelines:
       ensure_pull_secrets --all
       create_deployments \
         vantage6-server \
-        vantage6-store
+        vantage6-store \
+        vantage6-auth
       start_dev \
         vantage6-server \
         vantage6-server-db \
         vantage6-ui \
         vantage6-store \
-        vantage6-store-db
+        vantage6-store-db \
+        vantage6-auth
 
   node:
     run: |-
@@ -107,6 +110,7 @@ pipelines:
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
+      dev/purge_keycloak_storage.sh
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
@@ -166,6 +170,20 @@ images:
 # image tags that are built by DevSpace (see `.devspace/cache.yaml`). To disable this,
 # set `updateImageTags: false` in the deployment.
 deployments:
+
+  vantage6-auth:
+    helm:
+      chart:
+        name: ./charts/auth
+      values:
+        service:
+          type: ClusterIP
+        postgresql:
+          enabled: true
+          auth:
+            postgresPassword: postgres
+            password: keycloak
+            database: keycloak
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
@@ -255,26 +273,12 @@ deployments:
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
-
-  # we use this to populate the database with some basic data. We need a port to talk
-  # to as the ingress is not deployed yet.
-  vantage6-server-init:
-    imageSelector: ${SERVER_IMAGE}
+  # This starts keycloak in development mode.
+  vantage6-auth:
+    labelSelector:
+      app.kubernetes.io/instance: vantage6-auth
     ports:
-      - port: 7601:7601
-        bindAddress: localhost
-      - port: 7601:7601
-        bindAddress: ${PORTS_BIND_ADDRESS}
-
-  # We use this to enable the server and the store to be coupled. We need a port to talk
-  # to as the ingress is not deployed yet.
-  vantage6-store-init:
-    imageSelector: ${STORE_IMAGE}
-    ports:
-      - port: 7602:7602
-        bindAddress: localhost
-      - port: 7602:7602
-        bindAddress: ${PORTS_BIND_ADDRESS}
+      - port: 8080:8080
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be

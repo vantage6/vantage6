@@ -211,7 +211,7 @@ class RunTaskIncludedSchema(RunSchema):
 class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
-        exclude = ("type", "api_key", "collaboration", "organization", "last_seen")
+        exclude = ("type", "collaboration", "organization", "last_seen")
 
 
 class PortSchema(HATEOASModelSchema):
@@ -341,7 +341,6 @@ class NodeSchema(HATEOASModelSchema):
 
     class Meta:
         model = db.Node
-        exclude = ("api_key",)
 
 
 class NodeConfigSchema(HATEOASModelSchema):
@@ -356,7 +355,6 @@ class NodeSchemaSimple(HATEOASModelSchema):
         model = db.Node
         exclude = (
             "collaboration",
-            "api_key",
             "type",
         )
 
@@ -379,7 +377,6 @@ class AlgorithmStoreSchema(HATEOASModelSchema):
 class UserSchema(HATEOASModelSchema):
     class Meta:
         model = db.User
-        exclude = ("password", "failed_login_attempts", "last_login_attempt")
 
     roles = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="role", link_from="user_id")
@@ -387,7 +384,6 @@ class UserSchema(HATEOASModelSchema):
     rules = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="user_id")
     )
-
     organization = fields.Method("organization")
 
 

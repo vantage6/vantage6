@@ -3,7 +3,6 @@ import datetime
 import unittest
 from unittest.mock import patch
 
-from vantage6.common.globals import Ports
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
@@ -21,11 +20,7 @@ from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.rule import Rule, Operation
 from vantage6.common.enum import AlgorithmStepType, StorePolicies, AlgorithmViewPolicies
 
-from ..base.unittest_base import MockResponse, TestResources
-
-SERVER_URL = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": SERVER_URL, "Authorization": "Mock"}
-USERNAME = "test_user"
+from ..base.unittest_base import TestResources
 
 
 class TestAlgorithmResources(TestResources):
@@ -36,8 +31,8 @@ class TestAlgorithmResources(TestResources):
         """
         # test if the endpoint is protected if no policies are defined and required
         # headers are included
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
-        self.assertEqual(rv.status_code, HTTPStatus.FORBIDDEN)
+        rv = self.app.get("/api/algorithm")
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Create a policy that allows viewing algorithms for everyone
         policy = Policy(
@@ -46,7 +41,7 @@ class TestAlgorithmResources(TestResources):
         policy.save()
 
         # test if the endpoint is accessible now
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
+        rv = self.app.get("/api/algorithm")
         self.assertEqual(rv.status_code, HTTPStatus.OK)
 
         # verify that viewing non-approved algorithms is not allowed, even with public
@@ -57,59 +52,54 @@ class TestAlgorithmResources(TestResources):
             "in_review_process",
             "invalidated",
         ]:
-            result = self.app.get(f"/api/algorithm?{arg}=1", headers=HEADERS)
-            self.assertEqual(result.status_code, HTTPStatus.FORBIDDEN)
+            result = self.app.get(f"/api/algorithm?{arg}=1")
+            self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
         policy.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_view_algorithm_decorator_whitelisted(self, validate_token_mock):
-        """
-        Test the @with_permission_to_view_algorithms decorator when the policy is set to
-        whitelisted.
-        """
-        # create policy
-        policy = Policy(
-            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.WHITELISTED
-        )
-        policy.save()
+    # @patch("vantage6.algorithm.store.resource._authenticate")
+    # def test_view_algorithm_decorator_whitelisted(self, authenticate_mock):
+    #     """
+    #     Test the @with_permission_to_view_algorithms decorator when the policy is set to
+    #     whitelisted.
+    #     """
+    #     # create policy
+    #     policy = Policy(
+    #         key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.WHITELISTED
+    #     )
+    #     policy.save()
 
-        # test endpoint without required server-url header
-        headers = {}
-        rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
+    #     self.register_user(authenticate_mock=authenticate_mock, auth=False)
+    #     # test without required authorization header
+    #     rv = self.app.get("/api/algorithm")
+    #     self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test without required authorization header
-        headers = {"server_url": SERVER_URL}
-        rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+    #     # Now use all required headers and test if the endpoint is protected if no
+    #     # servers are whitelisted
+    #     headers["Authorization"] = "mock"
+    #     rv = self.app.get("/api/algorithm")
+    #     self.assertEqual(rv.status_code, HTTPStatus.FORBIDDEN)
 
-        # Now use all required headers and test if the endpoint is protected if no
-        # servers are whitelisted
-        headers["Authorization"] = "mock"
-        rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertEqual(rv.status_code, HTTPStatus.FORBIDDEN)
+    #     # whitelist the server
+    #     whitelisted_server = self.register_server()
 
-        # whitelist the server
-        whitelisted_server = self.register_server()
+    #     # verify returned status when server is not found
+    #     validate_token_mock.return_value = MockResponse(), HTTPStatus.NOT_FOUND
+    #     rv = self.app.get("/api/algorithm")
+    #     self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
-        # verify returned status when server is not found
-        validate_token_mock.return_value = MockResponse(), HTTPStatus.NOT_FOUND
-        rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
+    #     # if token validation is successful, the endpoint should be accessible
+    #     validate_token_mock.return_value = MockResponse(), HTTPStatus.OK
+    #     rv = self.app.get("/api/algorithm")
+    #     self.assertEqual(rv.status_code, HTTPStatus.OK)
 
-        # if token validation is successful, the endpoint should be accessible
-        validate_token_mock.return_value = MockResponse(), HTTPStatus.OK
-        rv = self.app.get("/api/algorithm", headers=headers)
-        self.assertEqual(rv.status_code, HTTPStatus.OK)
+    #     # cleanup
+    #     policy.delete()
+    #     whitelisted_server.delete()
 
-        # cleanup
-        policy.delete()
-        whitelisted_server.delete()
-
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_view_algorithm_decorator_private(self, validate_token_mock):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_view_algorithm_decorator_private(self, authenticate_mock):
         """
         Test the @with_permission_to_view_algorithms decorator when the policy is set to
         private.
@@ -120,49 +110,32 @@ class TestAlgorithmResources(TestResources):
             value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION,
         )
         policy.save()
-        whitelisted_server = self.register_server()
 
         # test if the endpoint is protected if user is not authenticated
-        validate_token_mock.return_value = (
-            MockResponse(),
-            HTTPStatus.UNAUTHORIZED,
-        )
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
-        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
-
-        # test if the endpoint is protected if user authenticated but not whitelisted
-        validate_token_mock.return_value = (
-            MockResponse(json_data={"username": USERNAME}, status_code=HTTPStatus.OK),
-            HTTPStatus.OK,
-        )
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
+        rv = self.app.get("/api/algorithm")
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test if the endpoint is accessible if user is whitelisted but does not have
         # explicit permission to view algorithms
-        user = self.register_user(whitelisted_server.id)
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
+        user = self.register_user(authenticate_mock=authenticate_mock)
+        rv = self.app.get("/api/algorithm")
         self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test if the endpoint is accessible if user is whitelisted and has explicit
         # permission to view algorithms
         user.rules = [Rule.get_by_("algorithm", Operation.VIEW)]
         user.save()
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
+        rv = self.app.get("/api/algorithm")
         self.assertEqual(rv.status_code, HTTPStatus.OK)
 
         # cleanup
         policy.delete()
-        whitelisted_server.delete()
         user.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_view_multi(self, validate_token_mock):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_algorithm_view_multi(self, authenticate_mock):
         """Test GET /api/algorithm"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Create an algorithm
         algorithm = Algorithm(
@@ -188,8 +161,8 @@ class TestAlgorithmResources(TestResources):
         )
         # test if the endpoint is accessible. Only approved algorithms should be
         # returned
-        rv = self.app.get("/api/algorithm", headers=HEADERS)
-        self.assertEqual(rv.status_code, 200)
+        rv = self.app.get("/api/algorithm")
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
         self.assertEqual(
             len(rv.json["data"]),
             num_approved,
@@ -198,27 +171,25 @@ class TestAlgorithmResources(TestResources):
         # now approve the algorithm and verify that it is returned
         algorithm.status = AlgorithmStatus.APPROVED
         algorithm.save()
-        result = self.app.get("/api/algorithm", headers=HEADERS)
-        self.assertEqual(result.status_code, 200)
+        result = self.app.get("/api/algorithm")
+        self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(result.json["data"]), num_approved + 1)
 
         # check that by authenticating we can see the awaiting_reviewer_assignment
         # algorithms
         algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
         algorithm.save()
-        user, server = self.register_user_and_server(
-            username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.VIEW)]
+        user = self.register_user(
+            user_rules=[Rule.get_by_("algorithm", Operation.VIEW)],
+            authenticate_mock=authenticate_mock,
         )
-        result = self.app.get(
-            "/api/algorithm?awaiting_reviewer_assignment=1", headers=HEADERS
-        )
-        self.assertEqual(result.status_code, 200)
+        result = self.app.get("/api/algorithm?awaiting_reviewer_assignment=1")
+        self.assertEqual(result.status_code, HTTPStatus.OK)
         self.assertEqual(len(result.json["data"]), num_awaiting_review)
 
         # cleanup
         algorithm.delete()
         policy.delete()
-        server.delete()
         user.delete()
 
     def test_algorithm_view_single(self):
@@ -231,7 +202,7 @@ class TestAlgorithmResources(TestResources):
         policy.save()
 
         # Test when algorithm is not found
-        response = self.app.get("/api/algorithm/9999", headers=HEADERS)
+        response = self.app.get("/api/algorithm/9999")
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # Create a mock algorithm
@@ -248,7 +219,7 @@ class TestAlgorithmResources(TestResources):
         algorithm.save()
 
         # Test when algorithm is found
-        response = self.app.get(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        response = self.app.get(f"/api/algorithm/{algorithm.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["name"], "test_algorithm")
         self.assertEqual(response.json["description"], "Test algorithm")
@@ -264,34 +235,32 @@ class TestAlgorithmResources(TestResources):
         # Cleanup
         algorithm.delete()
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    @patch("vantage6.algorithm.store.resource._authenticate")
     @patch(
         "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
     )
-    def test_algorithm_create(self, get_image_digest_mock, validate_token_mock):
+    def test_algorithm_create(self, get_image_digest_mock, authenticate_mock):
         """Test POST /api/algorithm"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
         get_image_digest_mock.return_value = "some-image", "some-digest"
 
-        # test if the endpoint is accessible
+        # test if the endpoint is protected if user is not authenticated
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
         rv = self.app.post(
             "/api/algorithm",
             json={"name": "test_algorithm", "description": "test_description"},
-            headers=HEADERS,
         )
-        self.assertEqual(rv.status_code, 403)
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
         # create user allowed to create algorithms
-        user, _ = self.register_user_and_server(
-            username=USERNAME, user_rules=[Rule.get_by_("algorithm", Operation.CREATE)]
+        user = self.register_user(
+            username="my_user",
+            user_rules=[Rule.get_by_("algorithm", Operation.CREATE)],
+            authenticate_mock=authenticate_mock,
         )
 
         # check that incomplete input data returns 400
-        rv = self.app.post("/api/algorithm", json={}, headers=HEADERS)
-        self.assertEqual(rv.status_code, 400)
+        rv = self.app.post("/api/algorithm", json={})
+        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
         json_data = {
             "name": "test_algorithm",
@@ -322,9 +291,8 @@ class TestAlgorithmResources(TestResources):
         rv = self.app.post(
             "/api/algorithm",
             json=json_data,
-            headers=HEADERS,
         )
-        self.assertEqual(rv.status_code, 201)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertEqual(rv.json["name"], "test_algorithm")
         self.assertEqual(rv.json["description"], "test_description")
         self.assertEqual(rv.json["partitioning"], Partitioning.HORIZONTAL)
@@ -376,21 +344,21 @@ class TestAlgorithmResources(TestResources):
                 "default_value": 1,
             }
         ]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 400)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
         # test default values - now with correct default value type
         json_data["functions"][0]["arguments"][0]["default_value"] = "test"
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 201)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertEqual(
             rv.json["functions"][0]["arguments"][0]["default_value"], "test"
         )
 
         # also check that default value can be null
         del json_data["functions"][0]["arguments"][0]["default_value"]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 201)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertEqual(rv.json["functions"][0]["arguments"][0]["default_value"], None)
 
         # test that arguments cannot have the same name
@@ -404,8 +372,8 @@ class TestAlgorithmResources(TestResources):
                 "type": ArgumentType.FLOAT,
             },
         ]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 400)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
         # test that conditional arguments are correctly created
         json_data["functions"][0]["arguments"] = [
@@ -422,8 +390,8 @@ class TestAlgorithmResources(TestResources):
                 "type": ArgumentType.STRING,
             },
         ]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 201)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertEqual(
             rv.json["functions"][0]["arguments"][0]["conditional_on_id"],
             rv.json["functions"][0]["arguments"][1]["id"],
@@ -438,8 +406,8 @@ class TestAlgorithmResources(TestResources):
         # test that there is an error if argument with conditional does not have a
         # default value
         json_data["functions"][0]["arguments"][0]["has_default_value"] = False
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 400)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
         # test that we get an error if conditions are circular
         json_data["functions"][0]["arguments"] = [
@@ -458,37 +426,26 @@ class TestAlgorithmResources(TestResources):
                 "conditional_value": "test",
             },
         ]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
-        self.assertEqual(rv.status_code, 400)
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
+    @patch("vantage6.algorithm.store.resource._authenticate")
     @patch(
         "vantage6.algorithm.store.resource.algorithm.AlgorithmBaseResource._get_image_digest"
     )
-    def test_algorithm_update(self, get_image_digest_mock, validate_token_mock):
+    def test_algorithm_update(self, get_image_digest_mock, authenticate_mock):
         """Test PATCH /api/algorithm/<id>"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
         get_image_digest_mock.return_value = "some-image", "some-digest"
 
-        # check that not allowed to patch if server is not whitelisted
-        response = self.app.patch("/api/algorithm/9999", headers=HEADERS)
-        self.assertEqual(response.status_code, 403)
-
-        # register server so that we don't get forbidden
-        server = self.register_server()
-
         # test unauthorized without user with permission to update algorithms
-        response = self.app.patch("/api/algorithm/9999", headers=HEADERS)
-        self.assertEqual(response.status_code, 401)
+        self.register_user(authenticate_mock=authenticate_mock)
+        response = self.app.patch("/api/algorithm/9999")
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # get user with permission to update algorithms
         user = self.register_user(
-            server.id,
-            username=USERNAME,
             user_rules=[Rule.get_by_("algorithm", Operation.EDIT)],
+            authenticate_mock=authenticate_mock,
         )
 
         # create an algorithm
@@ -508,17 +465,14 @@ class TestAlgorithmResources(TestResources):
         response = self.app.patch(
             f"/api/algorithm/{algorithm.id}",
             json={"non-existing": True},
-            headers=HEADERS,
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # check that the algorithm is updated if providing correct data
         response = self.app.patch(
-            f"/api/algorithm/{algorithm.id}",
-            json={"description": "new_description"},
-            headers=HEADERS,
+            f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["description"], "new_description")
 
         # check that algorithm cannot be updated if it is approved
@@ -526,21 +480,17 @@ class TestAlgorithmResources(TestResources):
         algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
         response = self.app.patch(
-            f"/api/algorithm/{algorithm.id}",
-            json={"description": "new_description"},
-            headers=HEADERS,
+            f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that algorithm cannot be updated if it is invalidated
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
         response = self.app.patch(
-            f"/api/algorithm/{algorithm.id}",
-            json={"description": "new_description"},
-            headers=HEADERS,
+            f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that algorithm cannot be updated if at least one review has been
         # completed
@@ -552,23 +502,18 @@ class TestAlgorithmResources(TestResources):
         )
         review.save()
         response = self.app.patch(
-            f"/api/algorithm/{algorithm.id}",
-            json={"description": "new_description"},
-            headers=HEADERS,
+            f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_delete(self, validate_token_mock):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_algorithm_delete(self, authenticate_mock):
         """Test DELETE /api/algorithm/<id>"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Test if endpoint is accessible without user
-        response = self.app.delete("/api/algorithm/9999", headers=HEADERS)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
+        response = self.app.delete("/api/algorithm/9999")
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Create a mock algorithm
         algorithm = Algorithm(
@@ -596,27 +541,22 @@ class TestAlgorithmResources(TestResources):
         arg_id = algorithm.functions[0].arguments[0].id
         vis_id = algorithm.functions[0].ui_visualizations[0].id
 
-        # register server so that we don't get forbidden, but not the user wo that
-        # we get unauthorized
-        server = self.register_server()
-
-        # Test when user is not found
-        response = self.app.delete(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        # Test when user is not authenticated
+        response = self.app.delete(f"/api/algorithm/{algorithm.id}")
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Register user in the store with permission to delete algorithms
         self.register_user(
-            server.id,
-            username=USERNAME,
             user_rules=[Rule.get_by_("algorithm", Operation.DELETE)],
+            authenticate_mock=authenticate_mock,
         )
 
         # Test when algorithm is not found
-        response = self.app.delete("/api/algorithm/9999", headers=HEADERS)
+        response = self.app.delete("/api/algorithm/9999")
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # Test when algorithm is found
-        response = self.app.delete(f"/api/algorithm/{algorithm.id}", headers=HEADERS)
+        response = self.app.delete(f"/api/algorithm/{algorithm.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         # check that resources inside the algorithm are also deleted
         self.assertEqual(Algorithm.get(algorithm.id), None)
@@ -625,17 +565,14 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(Argument.get(arg_id), None)
         self.assertEqual(UIVisualization.get(vis_id), None)
 
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_algorithm_invalidate(self, validate_token_mock):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_algorithm_invalidate(self, authenticate_mock):
         """Test PATCH /api/algorithm/<id>/invalidate"""
-        validate_token_mock.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
 
         # Test if endpoint is accessible without user
-        response = self.app.post("/api/algorithm/9999/invalidate", headers=HEADERS)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
+        response = self.app.post("/api/algorithm/9999/invalidate")
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Create a mock algorithm
         algorithm = Algorithm(
@@ -644,31 +581,23 @@ class TestAlgorithmResources(TestResources):
         algorithm.save()
         review_id = algorithm.reviews[0].id
 
-        # register server so that we don't get forbidden, but not the user wo that
-        # we get unauthorized
-        server = self.register_server()
-
-        # Test when user is not found
-        response = self.app.post(
-            f"/api/algorithm/{algorithm.id}/invalidate", headers=HEADERS
-        )
+        # Test when user is not authorized
+        self.register_user(authenticate_mock=authenticate_mock)
+        response = self.app.post(f"/api/algorithm/{algorithm.id}/invalidate")
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # Register user in the store with permission to invalidate algorithms
         self.register_user(
-            server.id,
-            username=USERNAME,
             user_rules=[Rule.get_by_("algorithm", Operation.DELETE)],
+            authenticate_mock=authenticate_mock,
         )
 
         # Test when algorithm is not found
-        response = self.app.post("/api/algorithm/9999/invalidate", headers=HEADERS)
+        response = self.app.post("/api/algorithm/9999/invalidate")
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # Test when algorithm is found
-        response = self.app.post(
-            f"/api/algorithm/{algorithm.id}/invalidate", headers=HEADERS
-        )
+        response = self.app.post(f"/api/algorithm/{algorithm.id}/invalidate")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         updated_algo = Algorithm.get(algorithm.id)
         self.assertEqual(updated_algo.status, AlgorithmStatus.REMOVED)

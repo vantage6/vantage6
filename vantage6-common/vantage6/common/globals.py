@@ -35,10 +35,6 @@ DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
 
-# start trying to refresh the JWT token of the node 10 minutes before it
-# expires.
-NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
-
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
@@ -93,6 +89,14 @@ class ContainerEnvNames(str, Enum):
     DB_PARAM_PREFIX = "DB_PARAM_"
     USER_REQUESTED_DATAFRAMES = "USER_REQUESTED_DATAFRAMES"
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
+
+
+class RequiredNodeEnvVars(str, Enum):
+    """Enum containing the required node environment variables"""
+
+    KEYCLOAK_URL = "KEYCLOAK_URL"
+    V6_API_KEY = "V6_API_KEY"
+    V6_NODE_NAME = "V6_NODE_NAME"
 
 
 class AuthStatus(str, Enum):

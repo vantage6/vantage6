@@ -4,7 +4,6 @@ store:
   replications: 1
 
   vantage6Server:
-    uri: http://localhost:7601/server
     rootUser: root
 
   policies:
@@ -34,7 +33,7 @@ store:
 
   logging:
     level: INFO
-  
+
   # TODO: merge the dev section with policies.dev?
   dev:
     host_uri: host.docker.internal

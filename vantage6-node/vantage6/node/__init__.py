@@ -27,23 +27,26 @@ import json
 import logging
 import os
 import queue
-import random
 import sys
 import time
 import threading
 from pathlib import Path
 from threading import Thread
 
+from keycloak import KeycloakAuthenticationError
 import requests.exceptions
 from gevent.pywsgi import WSGIServer
 from socketio import Client as SocketIO
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name
+from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    NodePolicy,
+    RequiredNodeEnvVars,
+)
 from vantage6.common.log import get_file_logger
 
 # make sure the version is available
@@ -78,6 +81,9 @@ class Node:
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
 
+        # validate that the required environment variables are set
+        validate_required_env_vars(RequiredNodeEnvVars)
+
         # Initialize the node. If it crashes, shut down the parts that started
         # already
         try:
@@ -95,11 +101,7 @@ class Node:
         self._using_encryption = None
 
         # initialize Node connection to the server
-        self.client = NodeClient(
-            host=self.config.get("server_url"),
-            port=self.config.get("port"),
-            path=self.config.get("api_path"),
-        )
+        self.client = self._setup_node_client(self.config)
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
@@ -135,6 +137,15 @@ class Node:
         self.start_processing_threads()
 
         self.log.info("Init complete")
+
+    def _setup_node_client(self, config: dict) -> NodeClient:
+        return NodeClient(
+            host=config.get("server_url"),
+            port=config.get("port"),
+            path=config.get("api_path"),
+            node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
+            api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
+        )
 
     def __proxy_server_worker(self) -> None:
         """
@@ -471,23 +482,16 @@ class Node:
         file. If the server rejects for any reason -other than a wrong API key-
         serveral attempts are taken to retry.
         """
-        api_key = os.environ.get("V6_API_KEY")
-        if not api_key:
-            self.log.critical(
-                "No API key found in environment variables. Make sure to set the "
-                "'V6_API_KEY' environment variable."
-            )
-            exit(1)
 
         success = False
         i = 0
         while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
-                self.client.authenticate(api_key)
+                self.client.authenticate()
 
-            except AuthenticationException as e:
-                msg = "Authentication failed: API key is wrong!"
+            except KeycloakAuthenticationError as e:
+                msg = "Authentication failed: API key or node name is wrong!"
                 self.log.warning(msg)
                 self.log.warning(e)
                 break
@@ -509,13 +513,13 @@ class Node:
                 break
 
         if success:
-            self.log.info(f"Node name: {self.client.name}")
+            self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
             self.log.critical("Unable to authenticate. Exiting")
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
-        self.client.auto_refresh_token()
+        self.client.auto_renew_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""

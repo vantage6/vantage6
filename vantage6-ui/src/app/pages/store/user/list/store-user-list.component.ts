@@ -18,21 +18,21 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-    selector: 'app-store-user-list',
-    templateUrl: './store-user-list.component.html',
-    styleUrl: './store-user-list.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatCard,
-        MatCardContent,
-        TableComponent,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-store-user-list',
+  templateUrl: './store-user-list.component.html',
+  styleUrl: './store-user-list.component.scss',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class StoreUserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetStoreUserParameters = {};
@@ -86,15 +86,13 @@ export class StoreUserListComponent extends BaseListComponent implements OnInit,
           label: this.translateService.instant('user.username'),
           searchEnabled: true,
           initSearchString: unlikeApiParameter(getUserParameters.username)
-        },
-        { id: 'server', label: this.translateService.instant('store.server') }
+        }
       ],
       rows: result.data.map((user: StoreUser) => ({
         id: user.id.toString(),
         columnData: {
           id: user.id,
-          username: user.username,
-          server: user.server.url
+          username: user.username
         }
       }))
     };
