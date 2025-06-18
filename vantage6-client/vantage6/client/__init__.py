@@ -1855,8 +1855,8 @@ class UserClient(ClientBase):
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
                 available from either, there will be an error. Suitable actions may be
-                one of 'data extraction', 'preprocessing', 'federated compute',
-                'central compute' or 'postprocessing'.
+                one of 'data_extraction', 'preprocessing', 'federated_compute',
+                'central_compute' or 'postprocessing'.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.

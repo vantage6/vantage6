@@ -164,7 +164,6 @@ class Node:
         proxy_server.app.config["SERVER_IO"] = self.client
 
         # The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        # TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
         proxy_server.server_url = self.client.base_path
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",

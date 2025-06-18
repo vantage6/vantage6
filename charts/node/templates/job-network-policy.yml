@@ -1,12 +1,103 @@
-# Policy to disable job's networking, except with the Node
+# Policy for the POD where the Node and its server-proxy are running.
+# It ensures that only the POD running the server-proxy is able to 
+# reach the outside world (in this case, to get access to the v6-server).
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: {{ .Release.Name }}-egress-isolation
+  name: {{ .Release.Name }}-node-proxy-outbound-traffic-policy
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
-  podSelector: {} # This selects all pods in the vantage6-node namespace
+  podSelector: # Allow outbound traffic only to the node-proxy
+    matchLabels:
+      # must match the 'app' label defined on node/templates/node-deployment
+      app: v6-node-server-proxy
   policyTypes:
   - Egress
   egress:
   - {}
+
+---
+
+# DEFAULT policy for the 'tasks' namespace (inboud/outbound traffic blocked)
+# It defines the policies of the algorith steps with no custom rules defined, 
+# and to any other POD running in this namespace.
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-tasks-namespace-default-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector: {}  # Selects all pods in the namespace
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
+
+---
+
+# Network policies for central_compute step/jobs
+# These jobs require access to the server proxy provided by the node
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-central-compute-step-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
+      role: central_compute
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    # Allows outbound traffic only to PODs on the node namespace
+    - namespaceSelector: 
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}
+    ports:
+    # If numberOfNodes and and nodeProxyStartingPortNumber exist, this chart template is being
+    # used within a dev environment (devspace), where multiple ports must be enabled
+  {{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodeProxyStartingPortNumber") }}
+    {{- $start := int .Values.node.nodeProxyStartingPortNumber }}
+    {{- $count := int .Values.node.numberOfNodes }}
+    {{- range $i, $ := until $count }}
+      - protocol: TCP
+        port:  {{ add $start $i }}
+    {{- end }}
+    # Otherwise, use the standard proxyPort helm Chart variable
+  {{- else }}
+      - protocol: TCP
+        port:  {{ .Values.node.proxyPort }}
+  {{- end }}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+
+---
+
+# Network policies for data_extraction jobs
+# This kind of jobs may require access to external databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-data-extraction-step-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
+      role: data_extraction
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+  egress: []
