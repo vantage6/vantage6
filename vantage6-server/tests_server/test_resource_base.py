@@ -2,6 +2,7 @@ from uuid import uuid1
 import unittest
 import random
 import string
+import os
 import json
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -73,6 +74,9 @@ class TestResourceBase(unittest.TestCase):
         Database().connect("sqlite://", allow_drop_all=True)
 
         ctx = TestContext.from_external_config_file(PACKAGE_FOLDER, InstanceType.SERVER)
+
+        # set required environment variables *before* creating the app
+        os.environ["KEYCLOAK_URL"] = "dummy-keycloak-url"
 
         # Mock the Keycloak public key fetch
         with patch(
