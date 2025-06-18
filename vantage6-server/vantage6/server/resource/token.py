@@ -155,7 +155,7 @@ class ContainerToken(ServicesResources):
         # We store the task metadata in the token, so the server can verify later on
         # that the container is allowed to access certain server resources.
         container = {
-            "client_type": "container",
+            "vantage6_client_type": "container",
             "node_id": g.node.id,
             "organization_id": g.node.organization_id,
             "collaboration_id": g.node.collaboration_id,

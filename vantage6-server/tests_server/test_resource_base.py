@@ -115,7 +115,7 @@ class TestResourceBase(unittest.TestCase):
         # Create a real JWT token with mock claims
         mock_claims = {
             "sub": user.keycloak_id,
-            "client_type": "user",
+            "vantage6_client_type": "user",
             "exp": 9999999999,
             "iat": 0,
         }
@@ -178,7 +178,7 @@ class TestResourceBase(unittest.TestCase):
         # Create a real JWT token with mock claims
         mock_claims = {
             "sub": node.keycloak_id,
-            "client_type": "node",
+            "vantage6_client_type": "node",
             "exp": 9999999999,
             "iat": 0,
         }
@@ -225,7 +225,7 @@ class TestResourceBase(unittest.TestCase):
         ) as mock_get_identity:
             mock_get_token.return_value = {
                 "sub": node.keycloak_id,
-                "client_type": "node",
+                "vantage6_client_type": "node",
             }
             mock_get_identity.return_value = node.keycloak_id
             token = self.app.post(
