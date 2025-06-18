@@ -1,3 +1,4 @@
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-node-task-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -22,3 +23,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.node.k8sNodeName }}
+{{- end }}
