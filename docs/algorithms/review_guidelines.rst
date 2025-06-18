@@ -53,6 +53,9 @@ but are not limited to:
     available to anyone or only to authenticated clients, and is this in line
     with the project requirements?
   - Is the algorithm image digitally signed (if required by your project)?
+  - Is the algorithm build process transparent? Is the image produced by a pipeline (or
+    similar) or is it built locally? Can you verify that the image contains the proper
+    algorithm code?
 
 - Code quality:
 
@@ -128,7 +131,9 @@ but are not limited to:
       record-level information without making the algorithm wrong or unusable?
   - Checks on database size. This is e.g. relevant when calculating the average
     on a single record, which would normally not be allowed because it leaks the
-    individual value.
+    individual value. Also, depending on the algorithm, proper
+    :ref:`cell suppression <https://nces.ed.gov/fcsm/dpt/content/3-2-2-1>`_ may be
+    necessary.
 
     - Are there checks on data size where necessary?
     - If the algorithm creates some data subgroups, are analyses rejected if the
@@ -136,8 +141,11 @@ but are not limited to:
     - If the sample size is too small to share the results, is the data station
       properly excluded from the analysis? Does the algorithm properly report
       that the data station was excluded for this reason?
+
   - Is the algorithm at risk for one or more of the federate learning exploits
     described in :ref:`prevent-common-federated-learning-exploits`?
+  - If a server administrator, node administrator or researcher tries to gain
+    access to your data, does the algorithm properly protect the data from them?
 
 .. _prevent-common-federated-learning-exploits:
 

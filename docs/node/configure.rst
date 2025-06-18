@@ -104,7 +104,8 @@ There are two important steps to be taken to accomplish this:
 
 -  Setting policies on the allowed algorithms in the ``policies`` section
    of the node-configuration file. You can specify a list of regex expressions
-   here. Some examples of what you could define:
+   here. Some examples of what you could define (note that these examples overlap so
+   in practice you would not use all of them):
 
    .. code:: yaml
 
