@@ -10,7 +10,7 @@ from flask import request, g
 from flask_restful import Api
 from marshmallow import ValidationError
 
-from vantage6.common.enum import TaskStatus
+from vantage6.common.enum import TaskStatus, AlgorithmStepType
 from vantage6.server import db
 from vantage6.server.resource import with_node, ServicesResources
 from vantage6.server.resource.common.input_schema import TokenAlgorithmInputSchema
@@ -100,6 +100,19 @@ class ContainerToken(ServicesResources):
                 f"{task_id} that does not exist"
             )
             return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
+
+        # Check wether the action of the task is of type 'central_compute' as only
+        # the central task requires to communicate with the server.
+        if db_task.action != AlgorithmStepType.CENTRAL_COMPUTE.value:
+            log.warning(
+                "Node %s attempts to generate key for task %s which is not a "
+                "central compute task.",
+                g.node.id,
+                task_id,
+            )
+            return {
+                "msg": "Task is not a central compute task"
+            }, HTTPStatus.UNAUTHORIZED
 
         # check if the node is in the collaboration to which the task is
         # enlisted

@@ -2,9 +2,9 @@ apiVersion: v2
 name: node
 description: A Helm chart to deploy a vantage6 node
 type: application
-version: "5.0.0-a.17"
-appVersion: "5.0.0-a.17"
+version: "5.0.0-a.18"
+appVersion: "5.0.0-a.18"
 dependencies:
   - name: common
-    version: "5.0.0-a.17"
+    version: "5.0.0-a.18"
     repository: file://../common

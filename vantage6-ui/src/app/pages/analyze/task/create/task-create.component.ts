@@ -25,7 +25,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   destroy$ = new Subject();
 
-  // TODO(BART/RIAN) RIAN: Check if all available steps are implemented in the template for conditional form components.
   availableSteps: AvailableSteps = {
     session: true,
     study: true,

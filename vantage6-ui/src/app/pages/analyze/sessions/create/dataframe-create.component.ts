@@ -74,27 +74,10 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   }
 
   async onSubmitHandler(formCreateOutput: FormCreateOutput): Promise<void> {
-    // TODO(BART/RIAN) RIAN: Change the create dataframe form input to include the required input fields.
-    // TODO(BART/RIAN) RIAN: Change the create dataframe api parameters and modify the code below. Also add extra UI components to sessions / read to display the extra dataframe information.
-    //
-    // const newDataframe: CreateTask = {
-    //   name: formCreateOutput?.name || '',
-    //   label: '#! add label info',
-    //   description: '',
-    //   image: formCreateOutput.image || '',
-    //   session_id: Number(this.sessionId) || -1,
-    //   collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
-    //   store_id: formCreateOutput.store_id || -1,
-    //   databases: formCreateOutput.databases || [],
-    //   organizations: formCreateOutput.organizations || []
-    //   //TODO: Add preprocessing and filtering when backend is ready
-    // };
     let session_id: number = Number(this.sessionId);
     const dataframeInput: CreateDataframe = {
       name: formCreateOutput.name,
       label: formCreateOutput.database || '',
-      //TODO(BART/RIAN) RIAN: Add component parameters for conditional 'Name', 'Label', 'Description' etc and process this in form-create.component
-      // description: '',
       task: {
         image: formCreateOutput.image,
         method: formCreateOutput.method,

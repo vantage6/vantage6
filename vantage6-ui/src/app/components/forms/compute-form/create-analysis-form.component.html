@@ -51,7 +51,7 @@
             <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
                 Also check other steps -->
             <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+              <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Study)">{{ "general.back" | translate }}</button>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
           </form>
@@ -125,16 +125,25 @@
                 </ng-template>
                 <!-- End ugly if-else -->
               </mat-form-field>
-              <div class="field-description">{{ "task-create.step-package.description.name" | translate }}</div>
+              <div class="field-description" *ngIf="isDataExtractionStep()">
+                {{ "task-create.step-function.description.df-name" | translate }}
+              </div>
+              <div class="field-description" *ngIf="!isDataExtractionStep()">
+                {{ "task-create.step-function.description.name" | translate }}
+              </div>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task.name" | translate }}</mat-label>
                 <input matInput type="text" formControlName="taskName" />
               </mat-form-field>
-              <div class="field-description">{{ "task-create.step-package.description.description" | translate }}</div>
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ "task.description" | translate }}</mat-label>
-                <input matInput type="text" formControlName="description" />
-              </mat-form-field>
+              <div *ngIf="!isDataExtractionStep()">
+                <div class="field-description">
+                  {{ "task-create.step-function.description.description" | translate }}
+                </div>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ "task.description" | translate }}</mat-label>
+                  <input matInput type="text" formControlName="description" />
+                </mat-form-field>
+              </div>
             </div>
             <app-alert
               class="node-alert"
@@ -142,8 +151,12 @@
               label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
             ></app-alert>
             <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+              <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
+                {{ "general.back" | translate }}
+              </button>
+              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
+                {{ "general.next" | translate }}
+              </button>
             </div>
           </form>
         </mat-step>
@@ -165,7 +178,9 @@
           </form>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
+              {{ "general.next" | translate }}
+            </button>
           </div>
         </mat-step>
         <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
@@ -179,9 +194,17 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <div *ngIf="dataframes.length === 0">
+              <app-alert class="node-alert" label="{{ 'task-create.alert-no-dataframes' | translate }}"></app-alert>
+              <button mat-flat-button color="primary" [routerLink]="[routes.dataframeCreate, session?.id]">
+                <mat-icon>add</mat-icon>{{ "task-create.step-dataframe.create-new-df" | translate }}
+              </button>
+            </div>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
+                {{ "general.next" | translate }}
+              </button>
             </div>
           </form>
         </mat-step>

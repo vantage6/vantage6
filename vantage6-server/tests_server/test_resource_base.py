@@ -21,7 +21,7 @@ from vantage6.server.globals import PACKAGE_FOLDER
 
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.common.globals import InstanceType
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.server import ServerApp
 from vantage6.server.model import (
     Organization,
@@ -183,7 +183,12 @@ class TestResourceBase(unittest.TestCase):
         return {"Authorization": f"Bearer {mock_token}"}
 
     def login_container(
-        self, collaboration=None, organization=None, node=None, task=None
+        self,
+        collaboration=None,
+        organization=None,
+        node=None,
+        task=None,
+        action: AlgorithmStepType = AlgorithmStepType.CENTRAL_COMPUTE,
     ):
         if not node:
             if not organization:
@@ -206,7 +211,7 @@ class TestResourceBase(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
-                runs=[Run(status=RunStatus.PENDING)],
+                runs=[Run(status=RunStatus.PENDING, action=action)],
             )
             task.save()
 

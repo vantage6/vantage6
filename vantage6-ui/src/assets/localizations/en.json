@@ -108,6 +108,8 @@
     "delete-content": "This operation cannot be undone.",
     "name": "Name",
     "user": "Initiating user",
+    "scope": "Scope",
+    "ready": "Ready to use?",
     "created-at": "Created",
     "dataframes": {
       "title": "Dataframes",
@@ -116,7 +118,8 @@
       "db-label": "Database used to create this dataframe",
       "ready": "Ready to use?",
       "last_session_task": "Last task executed on this dataframe",
-      "columns": "Columns"
+      "columns": "Columns",
+      "no-dataframes": "No dataframes created yet for this session."
     }
   },
   "dataframe-read": {
@@ -194,14 +197,6 @@
       "description": "Select the study you want to run an analysis for. If you want to run the analysis for the entire collaboration, select that option.",
       "select-full-collaboration": "Entire collaboration"
     },
-    "step-package": {
-      "title": "Select algorithm",
-      "description": {
-        "algorithm": "Select which algorithm you want to run",
-        "name": "Provide a suitable name for your task",
-        "description": "Optionally, describe your task so you can find it back later"
-      }
-    },
     "step-function": {
       "title": "Select algorithm function",
       "organization": "Organization(s) to run this function",
@@ -209,9 +204,10 @@
         "function": "Select which algorithm function you want to run",
         "function-placeholder": "Provide your search term here",
         "name": "Provide a suitable name for your task",
+        "df-name": "Provide a suitable name for the dataframe created by this task",
         "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
-        "organization-partial": "Select the organizations that will carry out a partial function"
+        "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations."
       }
     },
     "step-database": {
@@ -224,7 +220,8 @@
       "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later."
     },
     "step-dataframe": {
-      "title": "Select dataframe"
+      "title": "Select dataframe",
+      "create-new-df": "Create dataframe"
     },
     "step-preprocessing": {
       "title": "Extend data",
@@ -250,7 +247,8 @@
     "alert-no-stores": "You cannot create an analysis because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
     "alert-no-algorithms": "You cannot create an analysis because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
     "alert-no-node-config": "The node '{{name}}' does not share its configuration, nor does any other node that is online. This is required to determine the available databases. Please contact the node administrator.",
-    "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm requires one or more. Please contact the node administrator so that they might add them."
+    "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm function requires one or more. Please contact the node administrator so that they might add them.",
+    "alert-no-dataframes": "The selected session does not contain any dataframes, while this algorithm function requires one or more. Please initialize your session by creating a dataframe."
   },
   "task-read": {
     "title": "Analysis",
@@ -567,6 +565,7 @@
     "name": "Name",
     "encrypted": "Encrypted",
     "organizations": "Organizations",
+    "session-restrict-to-same-image": "Restrict session to single image?",
     "algorithm-store": {
       "url": "Web address",
       "actions": {
@@ -730,6 +729,7 @@
       "event": "Event",
       "port": "Port",
       "study": "Study",
+      "session": "Session",
       "algorithm": "Algorithm",
       "vantage6_server": "Whitelisted server",
       "review": "Review"

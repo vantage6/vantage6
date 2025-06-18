@@ -18,9 +18,9 @@ import { CollaborationFormComponent } from '../../../../components/forms/collabo
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-collaboration-edit',
-    templateUrl: './collaboration-edit.component.html',
-    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
+  selector: 'app-collaboration-edit',
+  templateUrl: './collaboration-edit.component.html',
+  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -58,6 +58,7 @@ export class CollaborationEditComponent implements OnInit {
     const collaborationCreate: CollaborationCreate = {
       name: collaborationForm.name,
       encrypted: collaborationForm.encrypted,
+      session_restrict_to_same_image: collaborationForm.session_restrict_to_same_image,
       organization_ids: collaborationForm.organizations.map((organization: BaseOrganization) => organization.id)
     };
     const result = await this.collaborationService.editCollaboration(this.collaboration?.id.toString(), collaborationCreate);

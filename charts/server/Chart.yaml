@@ -2,9 +2,9 @@ apiVersion: v2
 name: server
 description: A Helm chart for deploying the vantage6 server
 type: application
-version: "5.0.0-a.17"
-appVersion: "5.0.0-a.17"
+version: "5.0.0-a.18"
+appVersion: "5.0.0-a.18"
 dependencies:
   - name: common
-    version: "5.0.0-a.17"
+    version: "5.0.0-a.18"
     repository: file://../common

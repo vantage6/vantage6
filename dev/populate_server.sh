@@ -24,13 +24,21 @@ if [ ! -f "${POPULATE_MARKER}" ]; then
     # Run the pipeline to populate the server
     echo "Starting to populate vantage6 server..."
     devspace run-pipeline init
-    echo "Populating vantage6 server done."
+    INIT_STATUS=$?
+    if [ $INIT_STATUS -eq 0 ]; then
+      echo "Populating vantage6 server completed successfully."
+      # Create the marker file to indicate the server has been populated
+      mkdir -p .devspace
+      touch "${POPULATE_MARKER}"
+    else
+      echo "Error: Failed to populate vantage6 server. The init pipeline did not complete successfully (exit code: $INIT_STATUS)."
+      exit $INIT_STATUS
+    fi
   else
+    # Create the marker file so that we do not bother the user again
+    touch "${POPULATE_MARKER}"
     echo "Skipping populating vantage6 server."
   fi
-  # Create the marker file to indicate the server has been populated
-  mkdir -p .devspace
-  touch "${POPULATE_MARKER}"
 else
   # Skip population if the marker file already exists
   echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."

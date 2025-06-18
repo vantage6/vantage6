@@ -13,9 +13,9 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-collaboration-create',
-    templateUrl: './collaboration-create.component.html',
-    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner, TranslateModule]
+  selector: 'app-collaboration-create',
+  templateUrl: './collaboration-create.component.html',
+  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class CollaborationCreateComponent {
   @HostBinding('class') class = 'card-container';
@@ -35,6 +35,7 @@ export class CollaborationCreateComponent {
     const collaborationCreate: CollaborationCreate = {
       name: collaborationForm.name,
       encrypted: collaborationForm.encrypted,
+      session_restrict_to_same_image: collaborationForm.session_restrict_to_same_image,
       organization_ids: collaborationForm.organizations.map((organization: BaseOrganization) => organization.id)
     };
     const collaboration = await this.collaborationService.createCollaboration(collaborationCreate);
