@@ -9,8 +9,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
-  storageClassName: local-storage
+      storage: {{ .Values.node.persistence.tasks.size }}
+  storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
   selector:
     matchLabels:
       type: local-tasks

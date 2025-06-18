@@ -8,10 +8,10 @@ metadata:
     type: local-database
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ .Values.node.persistence.database.size }}
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: {{ .Values.node.persistence.database.storageClass }}
   persistentVolumeReclaimPolicy: Delete
   {{- range .Values.node.databases.fileBased }}
   local:

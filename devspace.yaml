@@ -249,7 +249,9 @@ deployments:
               originalName: ${NODE_TEST_DATABASE_NAME}
             serviceBased: []
           k8sNodeName: ${K8S_NODE_NAME}
-          taskDirHost: ${TASK_DIRECTORY}
+          persistence:
+            tasks:
+              hostPath: ${TASK_DIRECTORY}
           logging:
             level: DEBUG
 

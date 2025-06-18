@@ -7,10 +7,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: {{ .Values.node.persistence.database.storageClass }}
   resources:
     requests:
-      storage: 10Gi
+      storage: {{ .Values.node.persistence.database.size }}
   selector:
     matchLabels:
       type: local-database
