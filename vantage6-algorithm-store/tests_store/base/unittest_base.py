@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import Mock
 from http import HTTPStatus
@@ -19,11 +20,15 @@ class TestResources(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Called immediately before running a test method."""
+
         Database().connect("sqlite://", allow_drop_all=True)
 
         ctx = test_context.TestContext.from_external_config_file(
             PACKAGE_FOLDER, InstanceType.ALGORITHM_STORE
         )
+
+        # set required environment variables *before* creating the app
+        os.environ["KEYCLOAK_URL"] = "dummy-keycloak-url"
 
         cls.server = AlgorithmStoreApp(ctx)
         cls.server.app.testing = True
