@@ -520,7 +520,7 @@ class Node:
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
-        self.client.auto_refresh_token()
+        self.client.auto_renew_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""

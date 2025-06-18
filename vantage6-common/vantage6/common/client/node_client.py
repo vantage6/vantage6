@@ -58,7 +58,7 @@ class NodeClient(ClientBase):
         """
         # get token from keycloak
         try:
-            self.refresh_token()
+            self.obtain_new_token()
         except Exception as e:
             self.log.exception("Getting token failed: %s", e)
             raise e
@@ -81,9 +81,9 @@ class NodeClient(ClientBase):
             organization_name=organization_name,
         )
 
-    def refresh_token(self) -> None:
-        """Renew the token."""
-        self.log.debug("Refreshing token")
+    def obtain_new_token(self) -> None:
+        """Get a new token."""
+        self.log.debug("Obtaining new token")
         token = self.kc_openid.token(
             grant_type="password",
             username=self.node_account_name,
@@ -95,13 +95,13 @@ class NodeClient(ClientBase):
         decoded_token = self.kc_openid.decode_token(self._access_token)
         self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]
 
-    def auto_refresh_token(self) -> None:
+    def auto_renew_token(self) -> None:
         """Start a thread that refreshes token before it expires."""
         # set up thread to refresh token
-        t = Thread(target=self.__refresh_token_worker, daemon=True)
+        t = Thread(target=self.__renew_token_worker, daemon=True)
         t.start()
 
-    def __refresh_token_worker(self) -> None:
+    def __renew_token_worker(self) -> None:
         """Keep refreshing token to prevent it from expiring."""
         # set variable to start trying to refresh the token 3/4 of the time before
         # it expires
@@ -124,7 +124,7 @@ class NodeClient(ClientBase):
                 try:
                     # For service accounts, we need to get a new token instead of
                     # refreshing
-                    self.refresh_token()
+                    self.obtain_new_token()
                 except Exception as e:
                     self.log.error("Getting new token failed: %s", e)
                     # sleep for a bit and then try again. The server might be

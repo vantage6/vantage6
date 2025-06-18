@@ -251,11 +251,11 @@ class UserClient(ClientBase):
         # is enabled
         self.cryptor = DummyCryptor()
 
-    def refresh_token(self):
+    def obtain_new_token(self):
         """Refresh the token"""
         self.log.info("Refreshing token")
 
-        assert self._refresh_token, "Refresh URL not found, did you authenticate?"
+        assert self._refresh_token, "Refresh token not found, did you authenticate?"
 
         try:
             new_token = self.kc_openid.refresh_token(self._refresh_token)

@@ -268,7 +268,7 @@ class ClientBase(object):
 
             if retry:
                 if first_try:
-                    self.refresh_token()
+                    self.obtain_new_token()
                     return self.request(
                         endpoint,
                         json,
@@ -359,8 +359,11 @@ class ClientBase(object):
         return
 
     @abc.abstractmethod
-    def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token"""
+    def obtain_new_token(self) -> None:
+        """Obtain a new token.
+
+        Depending on the type of entity authenticating, this may use a refresh token
+        """
         return
 
     def _decrypt_input(self, input_: str) -> bytes:

@@ -103,9 +103,9 @@ class AlgorithmClient(ClientBase):
         """
         return NotImplementedError("Algorithm containers cannot authenticate!")
 
-    def refresh_token(self) -> None:
+    def obtain_new_token(self) -> None:
         """
-        Overwrite base refresh_token function to prevent algorithm containers
+        Overwrite base obtain_new_token function to prevent algorithm containers
         from trying to refresh their token, which they would be unable to do.
 
         Raises
@@ -113,7 +113,9 @@ class AlgorithmClient(ClientBase):
         NotImplementedError
             Always.
         """
-        return NotImplementedError("Algorithm containers cannot refresh their token!")
+        return NotImplementedError(
+            "Algorithm containers should use their original token!"
+        )
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
