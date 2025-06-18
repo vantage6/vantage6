@@ -111,14 +111,6 @@ smtp:
 # (defaults to support@vantage6.ai)
 support_email: your-support@example.com
 
-# set how long reset token provided via email are valid (default 1 hour)
-email_token_validity_minutes: 60
-
-# set how long tokens and refresh tokens are valid (default 6 and 48
-# hours, respectively)
-token_expires_hours: 6
-refresh_token_expires_hours: 48
-
 # a worker will run every hour and delete results from completed runs that are
 # older than the number of days specified here. Disabled by default.
 # Careful! Make sure you have regular backups of your database before enabling
@@ -171,23 +163,6 @@ ui:
 
   # port at which the UI will be available on your local machine
   port: 3456
-
-# set password policies for the server
-password_policy:
-  # maximum number of failed login attempts before the user is locked out for
-  # a certain amount of time. Default is 5.
-  max_failed_attempts: 5
-
-  # number of minutes the user is locked out after the maximum number of failed
-  # login attempts is reached. Default is 15.
-  inactivation_minutes: 15
-
-  # number of minutes to wait between emails sent to the user for each of the following events:
-  #  - their account has been blocked (max login attempts exceeded)
-  #  - a password reset request via email
-  #  - a 2FA reset request via email
-  # (these events have an independent timer). Default is 60.
-  between_user_emails_minutes: 60
 
 # set up with which origins the server should allow CORS requests. The default
 # is to allow all origins. If you want to restrict this, you can specify a list

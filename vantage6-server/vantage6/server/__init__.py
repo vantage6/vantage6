@@ -69,8 +69,6 @@ from vantage6.server.globals import (
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
-    MIN_TOKEN_VALIDITY_SECONDS,
-    MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
@@ -420,70 +418,6 @@ class ServerApp(Vantage6App):
         )
         key = response.json()["public_key"]
         return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
-
-    def _get_jwt_expiration_seconds(
-        self,
-        config_key: str,
-        default_hours: int,
-        longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
-        is_refresh: bool = False,
-    ) -> int:
-        """
-        Return the expiration time for JWT tokens.
-
-        This time may be specified in the config file. If it is not, the
-        default value is returned.
-
-        Parameters
-        ----------
-        config_key: str
-            The config key to look for that sets the expiration time
-        default_hours: int
-            The default expiration time in hours
-        longer_than: int
-            The minimum expiration time in hours.
-        is_refresh: bool
-            If True, the expiration time is for a refresh token. If False, it
-            is for an access token.
-
-        Returns
-        -------
-        int:
-            The JWT token expiration time in seconds
-        """
-        hours_expire = self.ctx.config.get(config_key)
-        if hours_expire is None:
-            # No value is present in the config file, use default
-            seconds_expire = int(float(default_hours) * 3600)
-        elif (
-            isinstance(hours_expire, (int, float))
-            or hours_expire.replace(".", "").isnumeric()
-        ):
-            # Numeric value is present in the config file
-            seconds_expire = int(float(hours_expire) * 3600)
-            if seconds_expire < longer_than:
-                log.warning(
-                    f"Invalid value for '{config_key}': {hours_expire}. Tokens"
-                    f" must be valid for at least {longer_than} seconds. Using"
-                    f" default value: {default_hours} hours"
-                )
-                if is_refresh:
-                    log.warning(
-                        "Note that refresh tokens should be valid at "
-                        f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
-                        "seconds longer than access tokens."
-                    )
-                seconds_expire = int(float(default_hours) * 3600)
-        else:
-            # Non-numeric value is present in the config file. Warn and use
-            # default
-            log.error(
-                f"Invalid value for '{config_key}': {hours_expire}. "
-                f"Using default value: {default_hours} hours"
-            )
-            seconds_expire = int(float(default_hours) * 3600)
-
-        return seconds_expire
 
     def configure_api(self) -> None:
         """Define global API output and its structure."""
