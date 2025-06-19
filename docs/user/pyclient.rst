@@ -135,9 +135,9 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   # e.g. https://cotopaxi.vantage6.ai, or http://localhost:7601 for a local dev server
-   server_url = "https://<my_server_url>:<my_port>"
-   server_api = "" # This is specified when you first created the server
+   # e.g. https://cotopaxi.vantage6.ai/api, or http://localhost:7601/api for a local
+   # dev server
+   server_url = "https://<my_server_url>:<my_port>/<my_api_path>"
 
    organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
 
@@ -157,7 +157,7 @@ object, and authenticating
    import config
 
    # Initialize the client object, and run the authentication
-   client = Client(config.server_url, config.server_api, log_level='debug')
+   client = Client(config.server_url, log_level='debug')
    client.authenticate()
 
    # Optional: setup the encryption, if you have an organization_key

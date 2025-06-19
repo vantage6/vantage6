@@ -20,22 +20,19 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str, path: str = "/api") -> None:
+    def __init__(self, server_url: str) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
         server_url : str
             URL of the vantage6 server you want to connect to
-        path : str, optional
-            path of the api, by default '/api'
         """
 
         self.log = logging.getLogger(module_name)
 
         # server settings
         self.__server_url = server_url
-        self.__api_path = path
 
         # tokens
         self._access_token = None
@@ -97,18 +94,7 @@ class ClientBase(object):
         """
         return self.__server_url
 
-    @property
-    def path(self) -> str:
-        """
-        Path/endpoint at the server where the api resides
-
-        Returns
-        -------
-        str
-            Path to the api
-        """
-        return self.__api_path
-
+    # TODO remove this property as it can be replaced by server_url
     @property
     def base_path(self) -> str:
         """
@@ -119,7 +105,7 @@ class ClientBase(object):
         str
             Server URL
         """
-        return f"{self.server_url}{self.__api_path}"
+        return f"{self.server_url}"
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint

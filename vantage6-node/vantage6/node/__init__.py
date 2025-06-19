@@ -140,9 +140,10 @@ class Node:
 
     def _setup_node_client(self, config: dict) -> NodeClient:
         return NodeClient(
-            host=config.get("server_url"),
-            port=config.get("port"),
-            path=config.get("api_path"),
+            server_url=(
+                f"{config.get('server_url')}:{config.get('port')}"
+                f"{config.get('api_path')}"
+            ),
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
             api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
         )

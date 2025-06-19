@@ -71,9 +71,7 @@ def _algorithm_client() -> callable:
             port = os.environ[ContainerEnvNames.PORT.value]
             api_path = os.environ[ContainerEnvNames.API_PATH.value]
 
-            client = AlgorithmClient(
-                token=token, server_url=f"{host}:{port}", path=api_path
-            )
+            client = AlgorithmClient(token=token, server_url=f"{host}:{port}{api_path}")
             return func(client, *args, **kwargs)
 
         # set attribute that this function is wrapped in an algorithm client

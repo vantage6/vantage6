@@ -68,7 +68,7 @@ def cli_test_features(
     if all_nodes or not organizations:
         organizations = None
 
-    client = UserClient(f"{host}:{port}", api_path, log_level="critical")
+    client = UserClient(f"{host}:{port}{api_path}", log_level="critical")
     client.authenticate()
     client.setup_encryption(private_key)
     diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
