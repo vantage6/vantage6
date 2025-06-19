@@ -31,5 +31,5 @@ data:
         name: docker.utils.config
       - level: warning
         name: docker.auth
-    task_dir: {{ .Values.node.taskDirHost }}
+    task_dir: {{ .Values.node.persistence.tasks.hostPath }}
     task_namespace: {{ .Values.node.taskNamespace }}

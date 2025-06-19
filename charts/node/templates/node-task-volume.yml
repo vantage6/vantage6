@@ -1,3 +1,4 @@
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-node-task-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -7,13 +8,13 @@ metadata:
     type: local-tasks
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ .Values.node.persistence.tasks.size }}
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
   persistentVolumeReclaimPolicy: Retain
   local:
-    path: {{ .Values.node.taskDirHost }}
+    path: {{ .Values.node.persistence.tasks.hostPath }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -22,3 +23,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.node.k8sNodeName }}
+{{- end }}

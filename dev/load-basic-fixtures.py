@@ -120,7 +120,7 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
         node_config = template.render(
             {
                 "logging": {"file": f"node_{index}.log"},  # Use index in log file name
-                "port": 80,
+                "port": 7601,
                 "server_url": "http://vantage6-server-vantage6-server-service",
                 "task_dir": task_directory,
                 "api_path": "/server",

@@ -47,7 +47,7 @@ class NodeClient(ClientBase):
         self.kc_openid = KeycloakOpenID(
             server_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             realm_name=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_REALM.value),
-            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT_ID.value),
+            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT.value),
             client_secret_key=os.environ.get(
                 RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
             ),
