@@ -14,7 +14,7 @@ dev_dir = Path("dev")
 dev_data_dir = dev_dir / ".data"
 dev_data_dir.mkdir(exist_ok=True)
 
-client = Client("http://localhost", 7601, "/server", log_level="error")
+client = Client("http://localhost:7601", "/server", log_level="error")
 client.authenticate()
 existing_stores = client.store.list().get("data", [])
 existing_urls = [store["url"] for store in existing_stores]

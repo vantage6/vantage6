@@ -35,7 +35,7 @@ def create_client(ctx: NodeContext) -> UserClient:
     port = ctx.config["port"]
     api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
-    return UserClient(host, port, api_path, log_level="warn")
+    return UserClient(f"{host}:{port}", api_path, log_level="warn")
 
 
 def create_client_and_authenticate(ctx: NodeContext) -> UserClient:

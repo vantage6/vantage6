@@ -20,15 +20,13 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = "/api") -> None:
+    def __init__(self, server_url: str, path: str = "/api") -> None:
         """Basic setup for the client
 
         Parameters
         ----------
-        host : str
-            Address (including protocol, e.g. `https://`) of the vantage6 server
-        port : int
-            port number to which the server listens
+        server_url : str
+            URL of the vantage6 server you want to connect to
         path : str, optional
             path of the api, by default '/api'
         """
@@ -36,8 +34,7 @@ class ClientBase(object):
         self.log = logging.getLogger(module_name)
 
         # server settings
-        self.__host = host
-        self.__port = port
+        self.__server_url = server_url
         self.__api_path = path
 
         # tokens
@@ -89,28 +86,16 @@ class ClientBase(object):
         return self._access_token
 
     @property
-    def host(self) -> str:
+    def server_url(self) -> str:
         """
-        Host including protocol (HTTP/HTTPS)
+        URL of the vantage6 server
 
         Returns
         -------
         str
             Host address of the vantage6 server
         """
-        return self.__host
-
-    @property
-    def port(self) -> int:
-        """
-        Port on which vantage6 server listens
-
-        Returns
-        -------
-        int
-            Port number
-        """
-        return self.__port
+        return self.__server_url
 
     @property
     def path(self) -> str:
@@ -134,10 +119,7 @@ class ClientBase(object):
         str
             Server URL
         """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
+        return f"{self.server_url}{self.__api_path}"
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint

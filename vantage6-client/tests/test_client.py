@@ -123,7 +123,7 @@ class TestClient(TestCase):
 
     @staticmethod
     def setup_client() -> UserClient:
-        client = UserClient(HOST, PORT)
+        client = UserClient(f"{HOST}:{PORT}")
         client.authenticate()
         client.setup_encryption(None)
         return client

@@ -171,8 +171,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     client = NodeClient(
         instance_name,
         config["api_key"],
-        config["server_url"],
-        config["port"],
+        f"{config['server_url']}:{config['port']}",
         config["api_path"],
     )
     try:
