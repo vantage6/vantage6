@@ -14,7 +14,6 @@ from vantage6.server.model.run import Run  # noqa: F401
 from vantage6.server.model.permission import Permission, UserPermission  # noqa: F401
 from vantage6.server.model.role import Role  # noqa: F401
 from vantage6.server.model.rule import Rule  # noqa: F401
-from vantage6.server.model.algorithm_port import AlgorithmPort  # noqa: F401
 from vantage6.server.model.task_database import TaskDatabase  # noqa: F401
 from vantage6.server.model.algorithm_store import AlgorithmStore  # noqa: F401
 from vantage6.server.model.study import Study  # noqa: F401

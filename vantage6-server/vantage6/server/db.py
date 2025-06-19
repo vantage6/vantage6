@@ -1,7 +1,6 @@
 # TODO this file is awkward...
 from vantage6.server.model import (
     Base,
-    AlgorithmPort,
     AlgorithmStore,
     Authenticatable,
     Collaboration,

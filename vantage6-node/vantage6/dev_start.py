@@ -1,7 +1,7 @@
 import sys
 import logging
 from pathlib import Path
-from vantage6.node.context import DockerNodeContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.node import run
 
 logging.basicConfig(level=logging.DEBUG)
@@ -15,7 +15,7 @@ def run_function(config):
         return
 
     name = Path(config).stem
-    ctx = DockerNodeContext(name, True, config, logger_prefix=f"{name} | ")
+    ctx = NodeContext(name, True, config, logger_prefix=f"{name} | ")
 
     run(ctx)
 
