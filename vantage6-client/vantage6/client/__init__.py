@@ -786,7 +786,6 @@ class UserClient(ClientBase):
             collaboration: int = None,
             study: int = None,
             is_online: bool = None,
-            ip: str = None,
             last_seen_from: str = None,
             last_seen_till: str = None,
             page: int = 1,
@@ -807,8 +806,6 @@ class UserClient(ClientBase):
                 Filter by study id
             is_online: bool, optional
                 Filter on whether nodes are online or not
-            ip: str, optional
-                Filter by node internal IP address
             last_seen_from: str, optional
                 Filter if node has been online since date (format: yyyy-mm-dd)
             last_seen_till: str, optional
@@ -841,6 +838,7 @@ class UserClient(ClientBase):
             """
             if collaboration is None:
                 collaboration = self.parent.collaboration_id
+
             params = {
                 "page": page,
                 "per_page": per_page,
@@ -848,7 +846,6 @@ class UserClient(ClientBase):
                 "organization_id": organization,
                 "collaboration_id": collaboration,
                 "study_id": study,
-                "ip": ip,
                 "last_seen_from": last_seen_from,
                 "last_seen_till": last_seen_till,
             }
