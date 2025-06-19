@@ -579,7 +579,7 @@ class Node:
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=self.client.host,
+            url=self.client.server_url,
             headers=self.client.headers,
             wait=False,
         )
@@ -597,7 +597,7 @@ class Node:
             time.sleep(1)
             i += 1
 
-        self.log.info("Connected to server at %s", self.client.host)
+        self.log.info("Connected to server at %s", self.client.server_url)
 
         self.log.debug(
             "Starting thread to ping the server to notify this node is online."
