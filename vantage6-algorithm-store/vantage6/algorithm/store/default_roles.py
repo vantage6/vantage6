@@ -12,7 +12,6 @@ class DefaultRole(str, Enum):
     STORE_MANAGER = "Store Manager"
     ALGORITHM_MANAGER = "Algorithm Manager"
     VIEWER = "Viewer"
-    SERVER_MANAGER = "Server Manager"
 
     @classmethod
     def list(cls):
@@ -100,18 +99,6 @@ def get_default_roles() -> list[dict]:
         "description": "Can view store resources and create new algorithms.",
         "rules": DEVELOPER_RULES,
     }
-    # server manager role
-    SERVER_MANAGER_RULES = [
-        Rule.get_by_("vantage6_server", Operation.DELETE),
-    ]
-    SERVER_MANAGER_ROLE = {
-        "name": "Server Manager",
-        "description": (
-            "Can delete their own whitelisted vantage6 server. This rule is"
-            " assigned automatically upon whitelisting a server"
-        ),
-        "rules": SERVER_MANAGER_RULES,
-    }
     # Combine all in array
     return [
         SUPER_ROLE,
@@ -120,5 +107,4 @@ def get_default_roles() -> list[dict]:
         STORE_MANAGER,
         ALGORITHM_MANAGER,
         DEVELOPER_ROLE,
-        SERVER_MANAGER_ROLE,
     ]

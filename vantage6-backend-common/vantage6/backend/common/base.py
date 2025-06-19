@@ -497,3 +497,25 @@ class BaseModelBase:
             f"Relations: \n{relations}\n"
             f"Methods: \n{methods}\n"
         )
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check if the object is equal to another object.
+
+        Parameters
+        ----------
+        other: Any
+            The other object to compare to
+
+        Returns
+        -------
+        bool
+            True if the objects are equal, False otherwise
+        """
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        """
+        Hash the object.
+        """
+        return self.id

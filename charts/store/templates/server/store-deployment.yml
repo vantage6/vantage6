@@ -21,6 +21,9 @@ spec:
       containers:
       - name: vantage6-store-backend
         image: {{ .Values.store.image }}
+        env:
+        - name: KEYCLOAK_URL
+          value: http://vantage6-auth-keycloak.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [

@@ -1,4 +1,5 @@
 api_path: '/api'
+jwt_secret_key: 'dummy-jwt-secret'
 logging:
     level:        CRITICAL                   # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'; 'NONE' disables logging.
     file:         unittest.log           # Filename of logfile

@@ -17,7 +17,6 @@
 [![Discord](https://img.shields.io/discord/643526403207331841)](https://discord.gg/yAyFf6Y)
 [![Research software directory](https://img.shields.io/badge/rsd-vantage6-deepskyblue)](https://research-software-directory.org/software/vantage6)
 
-
 </h3>
 
 <p align="center">
@@ -105,7 +104,7 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client('http://127.0.0.1', 7601, '/api', log_level='debug')
-client.authenticate('dev_admin', 'password')
+client.authenticate()
 client.setup_encryption(None)
 
 client.organization.create(
@@ -170,10 +169,10 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of 
-the federated learning community. If you are interested in contributing, first of all, 
-thank you! Second, please take a look at our 
-[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html) 
+We hope to continue developing, improving, and supporting **vantage6** with the help of
+the federated learning community. If you are interested in contributing, first of all,
+thank you! Second, please take a look at our
+[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
 and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">

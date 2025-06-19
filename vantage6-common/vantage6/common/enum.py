@@ -7,8 +7,6 @@ class StorePolicies(str, Enum):
     """
 
     ALGORITHM_VIEW = "algorithm_view"
-    ALLOWED_SERVERS = "allowed_servers"
-    ALLOW_LOCALHOST = "allow_localhost"
     MIN_REVIEWERS = "min_reviewers"
     ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
     MIN_REVIEWING_ORGANIZATIONS = "min_reviewing_organizations"
@@ -41,10 +39,10 @@ class AlgorithmStepType(EnumBase):
     does not require access to the original data source.
     """
 
-    DATA_EXTRACTION = "data extraction"
+    DATA_EXTRACTION = "data_extraction"
     PREPROCESSING = "preprocessing"
-    FEDERATED_COMPUTE = "federated compute"
-    CENTRAL_COMPUTE = "central compute"
+    FEDERATED_COMPUTE = "federated_compute"
+    CENTRAL_COMPUTE = "central_compute"
     POST_PROCESSING = "postprocessing"
 
     @classmethod

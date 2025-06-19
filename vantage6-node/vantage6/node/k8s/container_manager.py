@@ -144,8 +144,6 @@ class ContainerManager:
                     spec=k8s_client.V1PodSpec(
                         containers=[
                             k8s_client.V1Container(
-                                # TODO ensure image is an image that can always be
-                                # pulled by the node
                                 name="test-container",
                                 image=(
                                     f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
@@ -487,7 +485,7 @@ class ContainerManager:
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
-                        labels={"app": run_io.container_name}
+                        labels={"app": run_io.container_name, "role": action}
                     ),
                     spec=k8s_client.V1PodSpec(
                         containers=[container],

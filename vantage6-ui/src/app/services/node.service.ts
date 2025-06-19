@@ -56,7 +56,8 @@ export class NodeService {
     const organization = await this.organizationService.getOrganization(organizationID.toString());
 
     const node: NodeCreate = {
-      name: `${collaboration.name} - ${organization.name}`,
+      // ensure no spaces in node name as that would make it an invalid keycloak username
+      name: `${collaboration.name}-${organization.name}-node`.replace(/ /g, '-'),
       organization_id: organizationID,
       collaboration_id: collaboration.id
     };

@@ -2,6 +2,7 @@
 # namespace: vantage6-node
 node:
 
+  name: put-your-node-name-here
   apiKey: put-your-api-key-here
 
   server:

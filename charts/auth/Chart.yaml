@@ -1,0 +1,10 @@
+apiVersion: v2
+name: keycloak
+description: A Helm chart to deploy a keycloak server to authenticate vantage6 users and nodes
+type: application
+version: "5.0.0-a.15"
+appVersion: "5.0.0-a.15"
+dependencies:
+  - name: keycloak
+    version: "24.6.1"
+    repository: https://charts.bitnami.com/bitnami

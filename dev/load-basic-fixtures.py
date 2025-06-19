@@ -13,12 +13,11 @@ from jinja2 import Environment, FileSystemLoader
 from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
 from vantage6.client import Client
 
-
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
 client = Client("http://localhost", 7601, "/server", log_level="error")
-client.authenticate("root", "root")
+client.authenticate()
 
 parser = argparse.ArgumentParser(
     description="Load basic fixtures for a given number of nodes"
@@ -137,7 +136,8 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
         print("===> Creating .env file for the node")
         env_file = node_dev_dir / ".env"
         with open(env_file, "w") as f:
-            f.write(f"V6_API_KEY={node['api_key']}")
+            f.write(f"V6_API_KEY={node['api_key']}\n")
+            f.write(f"V6_NODE_NAME={name}\n")
 
         print(f"===> .env file saved to `{env_file.name}`")
 
@@ -148,7 +148,7 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
 def create_sessions(collaboration_id, users):
     for user in users:
         user_client = Client("http://localhost", 7601, "/server", log_level="error")
-        user_client.authenticate(user["username"], "Password123!")
+        user_client.authenticate()
         user_client.session.create(
             collaboration=collaboration_id,
             name=f"session {user['username']} (own scope)",

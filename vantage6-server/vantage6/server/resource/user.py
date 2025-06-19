@@ -5,6 +5,7 @@ from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
+from keycloak import KeycloakAdmin
 from sqlalchemy import select
 
 from vantage6.common import logger_name
@@ -21,6 +22,7 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources,
 )
+from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.input_schema import UserInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
@@ -54,6 +56,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         path,
         endpoint="user_without_id",
         methods=("GET", "POST"),
+        resource_class_kwargs=services,
+    )
+    api.add_resource(
+        CurrentUser,
+        path + "/me",
+        endpoint="user_me",
+        methods=("GET",),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -462,26 +471,67 @@ class Users(UserBase):
             rules = [db.Rule.get(rule) for rule in potential_rules if db.Rule.get(rule)]
             self.permissions.check_user_rules(rules)
 
-        # Ok, looks like we got most of the security hazards out of the way
+        # Ok, looks like we got most of the security hazards out of the way. Create
+        # the user in keycloak and database.
+        keycloak_id = self._create_user_in_keycloak(data)
+
         user = db.User(
             username=data["username"],
             firstname=data["firstname"],
             lastname=data["lastname"],
+            keycloak_id=keycloak_id,
             roles=roles,
             rules=rules,
             organization_id=organization_id,
             email=data["email"],
-            password=data["password"],
         )
-
-        # check if the password meets password criteria
-        msg = user.set_password(data["password"])
-        if msg:
-            return {"msg": msg}, HTTPStatus.BAD_REQUEST
-
         user.save()
 
         return user_schema.dump(user), HTTPStatus.CREATED
+
+    def _create_user_in_keycloak(self, data):
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_id = keycloak_admin.create_user(
+            {
+                "username": data["username"],
+                "email": data["email"],
+                "enabled": True,
+                "firstName": data["firstname"],
+                "lastName": data["lastname"],
+                "credentials": [
+                    {"type": "password", "value": data["password"], "temporary": True}
+                ],
+            }
+        )
+        return keycloak_id
+
+
+class CurrentUser(UserBase):
+    @with_user
+    def get(self):
+        """Get your own user
+        ---
+        description: >-
+          The user that is currently authenticated is returned. This is always
+          allowed.
+
+        parameters:
+          - in: path
+            name: include_permissions
+            schema:
+              type: boolean
+            description: Whether or not to include extra permission info for
+              the user. By default false.
+
+        responses:
+          200:
+            description: Ok
+        """
+        schema = user_schema
+
+        if request.args.get("include_permissions", False):
+            schema = user_schema_with_permissions
+        return schema.dump(g.user), HTTPStatus.OK
 
 
 class User(UserBase):
@@ -751,6 +801,7 @@ class User(UserBase):
         return user_schema.dump(user), HTTPStatus.OK
 
     @with_user
+    @handle_exceptions
     def delete(self, id):
         """Remove user.
         ---
@@ -826,6 +877,12 @@ class User(UserBase):
                 for task in user.created_tasks:
                     task.delete()
 
+        self._delete_user_in_keycloak(user)
+
         user.delete()
         log.info(f"user id={id} is removed from the database")
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK
+
+    def _delete_user_in_keycloak(self, user):
+        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_admin.delete_user(user.keycloak_id)

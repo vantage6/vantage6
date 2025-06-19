@@ -1,3 +1,5 @@
+from enum import Enum
+
 # pagination settings
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 10
@@ -14,3 +16,9 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 
 # default email address used in 'from' header
 DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
+
+
+class RequiredServerEnvVars(str, Enum):
+    """Enum containing the required server environment variables"""
+
+    KEYCLOAK_URL = "KEYCLOAK_URL"

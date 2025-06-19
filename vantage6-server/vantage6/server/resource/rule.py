@@ -1,6 +1,7 @@
 import logging
 
 from http import HTTPStatus
+from flask import g
 from flask.globals import request
 from flask_restful import Api
 from sqlalchemy import or_, select
@@ -88,9 +89,15 @@ class Rules(ServicesResources):
             - in: query
               name: user_id
               schema:
-                type: integer
+                type: string
               description: Get rules for a specific user. This includes the
-                rules that are part of the user's roles.
+                rules that are part of the user's roles. If provided together with
+                current_user, the current user will be used and user_id will be ignored.
+            - in: query
+              name: current_user
+              schema:
+                type: boolean
+              description: Get rules for the current user
             - in: query
               name: page
               schema:
@@ -152,25 +159,33 @@ class Rules(ServicesResources):
         # tables to find all rules originating from a user's roles. Then, we
         # do an outer join to find all rules that are directly assigned to the
         # user.
-        if "user_id" in args:
-            user = db.User.get(args["user_id"])
-            if not user:
-                return {
-                    "msg": f'User with id={args["user_id"]} does not exist!'
-                }, HTTPStatus.BAD_REQUEST
-            q = (
+        if "user_id" in args or args.get("current_user", False):
+            if args.get("current_user", False):
+                user = g.user
+            else:
+                user = db.User.get(args["user_id"])
+                if not user:
+                    return {
+                        "msg": f'User with id={args["user_id"]} does not exist!'
+                    }, HTTPStatus.BAD_REQUEST
+
+            # Create two subqueries - one for role-based permissions and one for direct
+            # user permissions
+            role_based_rules = (
                 q.join(db.role_rule_association)
                 .join(db.Role)
                 .join(db.Permission)
                 .join(db.User)
-                .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
-                .filter(
-                    or_(
-                        db.User.id == args["user_id"],
-                        db.UserPermission.c.user_id == args["user_id"],
-                    )
-                )
+                .filter(db.User.id == user.id)
             )
+
+            direct_user_rules = q.join(
+                db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id
+            ).filter(db.UserPermission.c.user_id == user.id)
+
+            # Combine both queries
+            union_query = role_based_rules.union(direct_user_rules).subquery()
+            q = select(db.Rule).join(union_query, db.Rule.id == union_query.c.id)
 
         # check if pagination is disabled
         paginate = True

@@ -198,7 +198,6 @@ class Organizations(OrganizationBase):
 
         tags: ["Organization"]
         """
-
         # Obtain the organization of the requester
         auth_org = self.obtain_auth_organization()
         args = request.args

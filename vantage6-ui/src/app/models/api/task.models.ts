@@ -149,7 +149,6 @@ export interface CreateTask {
   collaboration_id: number;
   study_id?: number;
   store_id: number;
-  server_url: string;
   organizations: CreateTaskOrganization[];
   databases: CreateTaskDatabase[];
 }
