@@ -5,6 +5,11 @@ node:
   name: put-your-node-name-here
   apiKey: put-your-api-key-here
 
+  # Keycloak configuration
+  keycloakRealm: vantage6
+  keycloakClient: node-client
+  keycloakClientSecret: mynodeclientsecret
+
   server:
     # TODO set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
     url: http://vantage6-server-vantage6-server-service

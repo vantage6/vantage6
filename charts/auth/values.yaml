@@ -65,6 +65,7 @@ keycloak:
             redirectUris:
               - "*"
             secret: mystoreregularclientsecret
+            # TODO delete separate clients for store-client and store-admin-client - use server clients as well
           - clientId: vantage6-store-admin-client
             publicClient: false
             redirectUris:

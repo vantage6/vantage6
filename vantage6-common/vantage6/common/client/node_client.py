@@ -46,9 +46,11 @@ class NodeClient(ClientBase):
 
         self.kc_openid = KeycloakOpenID(
             server_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
-            realm_name="vantage6",
-            client_id="node-client",
-            client_secret_key="mynodeclientsecret",
+            realm_name=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_REALM.value),
+            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT_ID.value),
+            client_secret_key=os.environ.get(
+                RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
+            ),
         )
         self.token_validity_period = None
 

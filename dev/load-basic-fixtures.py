@@ -35,7 +35,10 @@ parser.add_argument(
     "--starting-port-number",
     type=int,
     default=7654,
-    help="The port number to be allocated to the proxy server of the first node. Additional nodes will use consecutive ports incremented by 1 from this value.",
+    help=(
+        "The port number to be allocated to the proxy server of the first node. "
+        "Additional nodes will use consecutive ports incremented by 1 from this value."
+    ),
 )
 
 args = parser.parse_args()
