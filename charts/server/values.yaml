@@ -10,6 +10,13 @@ server:
   baseUrl: http://localhost:7601
   apiPath: /server
 
+  # Keycloak configuration
+  keycloakRealm: vantage6
+  keycloakAdminClient: backend-admin-client
+  keycloakAdminClientSecret: myadminclientsecret
+  keycloakUserClient: backend-user-client
+  keycloakUserClientSecret: myuserclientsecret
+
   internal:
     port: 7601
 

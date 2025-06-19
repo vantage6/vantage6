@@ -627,9 +627,11 @@ class ServerApp(Vantage6App):
     def _add_keycloak_id_to_super_user(self, super_user: db.User) -> None:
         keycloak_openid = KeycloakOpenID(
             server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-            client_id="admin-client",
-            realm_name="vantage6",
-            client_secret_key="myadminsecret",
+            client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
+            realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
+            client_secret_key=os.environ.get(
+                RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
+            ),
         )
         token = keycloak_openid.token("admin", "admin")
         decoded_token = keycloak_openid.decode_token(token["access_token"])

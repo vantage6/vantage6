@@ -47,33 +47,19 @@ keycloak:
                   userinfo.token.claim: true
                   id.token.claim: true
                   access.token.claim: true
-          - clientId: backend
+          - clientId: backend-admin-client
             publicClient: false
             redirectUris:
               - "*"
-            secret: mysecret
-          - clientId: admin-client
-            publicClient: false
-            redirectUris:
-              - "*"
-            secret: myadminsecret
+            secret: myadminclientsecret
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
-          - clientId: vantage6-store-client
+          - clientId: backend-user-client
             publicClient: false
             redirectUris:
               - "*"
-            secret: mystoreregularclientsecret
-            # TODO delete separate clients for store-client and store-admin-client - use server clients as well
-          - clientId: vantage6-store-admin-client
-            publicClient: false
-            redirectUris:
-              - "*"
-            secret: mystoreclientsecret
-            directAccessGrantsEnabled: true
-            serviceAccountsEnabled: true
-            standardFlowEnabled: true
+            secret: myuserclientsecret
           - clientId: node-client
             publicClient: false
             redirectUris:

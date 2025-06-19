@@ -6,6 +6,13 @@ store:
   vantage6Server:
     rootUser: root
 
+  # Keycloak configuration
+  keycloakRealm: vantage6
+  keycloakAdminClient: backend-admin-client
+  keycloakAdminClientSecret: myadminclientsecret
+  keycloakUserClient: backend-user-client
+  keycloakUserClientSecret: myuserclientsecret
+
   policies:
     algorithmView: public
     allowLocalhost: false
