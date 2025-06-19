@@ -8,7 +8,7 @@ node:
   server:
     # TODO set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
     url: http://vantage6-server-vantage6-server-service
-    port: 80
+    port: 7601
     path: /server
 
   image: harbor2.vantage6.ai/infrastructure/node:latest
