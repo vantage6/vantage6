@@ -12,7 +12,7 @@
       "standalone": true,
       "description": "Compute the global sum of a federated dataset",
       "ui_visualizations": [],
-      "step_type": "central compute",
+      "step_type": "central_compute",
       "arguments": [
         {
           "has_default_value": false,
@@ -37,7 +37,7 @@
       "standalone": true,
       "description": "Sleep for a given number of seconds",
       "ui_visualizations": [],
-      "step_type": "federated compute",
+      "step_type": "federated_compute",
       "arguments": [],
       "databases": []
     },
@@ -47,7 +47,7 @@
       "standalone": true,
       "description": "",
       "ui_visualizations": [],
-      "step_type": "data extraction",
+      "step_type": "data_extraction",
       "arguments": [],
       "databases": [
         {
@@ -96,7 +96,7 @@
       "standalone": true,
       "description": "",
       "ui_visualizations": [],
-      "step_type": "federated compute",
+      "step_type": "federated_compute",
       "arguments": [
         {
           "has_default_value": false,
