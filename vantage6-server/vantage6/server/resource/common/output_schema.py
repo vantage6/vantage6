@@ -191,9 +191,6 @@ class RunSchema(HATEOASModelSchema):
     node = fields.Function(
         serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
     )
-    ports = fields.Function(
-        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
-    )
 
     @staticmethod
     def result_link(obj):
@@ -212,17 +209,6 @@ class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
         exclude = ("type", "api_key", "collaboration", "organization", "last_seen")
-
-
-class PortSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.AlgorithmPort
-
-
-class RunPortSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.AlgorithmPort
-        exclude = ("run",)
 
 
 class OrganizationSchema(HATEOASModelSchema):

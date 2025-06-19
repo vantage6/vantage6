@@ -287,32 +287,6 @@ class OrganizationInputSchema(_NameValidationSchema):
     public_key = fields.String()
 
 
-class PortInputSchema(Schema):
-    """Schema for validating input for a creating a port."""
-
-    port = fields.Integer(required=True)
-    run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT), allow_none=True)
-
-    @validates("port")
-    def validate_port(self, port):
-        """
-        Validate the port in the input.
-
-        Parameters
-        ----------
-        port : int
-            Port to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the port is not valid.
-        """
-        if not 1 <= port <= 65535:
-            raise ValidationError("Port must be between 1 and 65535")
-
-
 class RecoverPasswordInputSchema(Schema):
     """Schema for validating input for recovering a password."""
 

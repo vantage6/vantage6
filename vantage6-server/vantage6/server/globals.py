@@ -47,7 +47,6 @@ RESOURCES = [
     "role",
     "rule",
     "health",
-    "port",
     "event",
     "algorithm_store",
     "study",
