@@ -204,7 +204,7 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
     claims = get_jwt()
 
     # check that identity has access to endpoint
-    g.type = claims["client_type"]
+    g.type = claims["vantage6_client_type"]
 
     if g.type not in types:
         # FIXME BvB 23-10-19: user gets a 500 error, would be better to
@@ -263,7 +263,7 @@ def _validate_container_token():
         raise Exception("Authentication failed")
 
     # Verify this is a container token
-    if claims.get("sub", {}).get("client_type") != "container":
+    if claims.get("sub", {}).get("vantage6_client_type") != "container":
         raise Exception("Not a container token")
 
     # Set the container info in the global context

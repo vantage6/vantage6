@@ -36,12 +36,12 @@ keycloak:
             webOrigins:
               - "*"
             protocolMappers:
-              - name: client_type
+              - name: vantage6_client_type
                 protocol: openid-connect
                 protocolMapper: oidc-hardcoded-claim-mapper
                 consentRequired: false
                 config:
-                  claim.name: client_type
+                  claim.name: vantage6_client_type
                   claim.value: user
                   introspection.token.claim: true
                   userinfo.token.claim: true
@@ -81,12 +81,12 @@ keycloak:
             directAccessGrantsEnabled: true
             standardFlowEnabled: false
             protocolMappers:
-              - name: client_type
+              - name: vantage6_client_type
                 protocol: openid-connect
                 protocolMapper: oidc-hardcoded-claim-mapper
                 consentRequired: false
                 config:
-                  claim.name: client_type
+                  claim.name: vantage6_client_type
                   claim.value: node
                   introspection.token.claim: true
                   userinfo.token.claim: true
