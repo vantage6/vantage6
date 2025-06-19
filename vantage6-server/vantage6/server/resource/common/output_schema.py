@@ -140,7 +140,6 @@ class ResultSchema(HATEOASModelSchema):
             "started_at",
             "finished_at",
             "status",
-            "ports",
             "organization",
             "log",
             "input",
