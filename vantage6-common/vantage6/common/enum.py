@@ -114,6 +114,8 @@ class RunStatus(EnumBase):
     UNKNOWN_ERROR = "unknown error"
     # Datafrome was not found
     DATAFRAME_NOT_FOUND = "dataframe not found"
+    # Task was not executed because a task that it depended on failed
+    DEPENDED_ON_FAILED_TASK = "depended on failed task"
 
     # Unexpected output type from container
     UNEXPECTED_OUTPUT = "unexpected output"
@@ -166,6 +168,7 @@ class RunStatus(EnumBase):
             cls.NO_DOCKER_IMAGE.value,
             cls.UNEXPECTED_OUTPUT.value,
             cls.DATAFRAME_NOT_FOUND.value,
+            cls.DEPENDED_ON_FAILED_TASK.value,
         ]
 
     @classmethod
