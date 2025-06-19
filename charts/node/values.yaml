@@ -16,10 +16,18 @@ node:
   logging:
     level: INFO
 
-  # Task directory on the host machine
-  taskDirHost: /tmp/vantage6/tasks
-
   proxyPort: 7654
+
+  # Persistence configuration, these settings are both used for the file based databases
+  # and the task directory.
+  persistence:
+    tasks:
+      storageClass: local-storage
+      size: 10Gi
+      hostPath: /tmp/vantage6/tasks
+    database:
+      storageClass: local-storage
+      size: 5Gi
 
   # It is also possible not to specify the details of the service-based databases
   # here. The node will then automatically detect the databases in the environment
