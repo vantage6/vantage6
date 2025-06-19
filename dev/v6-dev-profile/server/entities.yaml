@@ -1,0 +1,55 @@
+# Test development entities (collaboration, organizations, nodes, users)
+#
+# You can load this file by using:
+#  $ vserver-local import entities.yaml --config /path/to/config.yaml
+# Will be processed by:
+#  https://github.com/vantage6/vantage6/blob/version/3.10.3/vantage6-server/vantage6/server/controller/fixture.py#L31
+
+collaborations:
+  - name: "Planets Development"
+    encrypted: False
+    participants:
+      - name: "Mars"
+        # dev/test key
+        api_key: "d83ef105-cafe-face-ba58-4ae79eab9b71"
+      - name: "Jupiter"
+        # dev/test key
+        api_key: "afdf68da-dead-beef-9594-c68b0ed821ca"
+      - name: "Saturn"
+        # dev/test key
+        api_key: "b91d24fe-beef-feed-baff-0b9c7b70dbec"
+
+organizations:
+  - name: "Mars"
+    domain: "mars.dev.example.com"
+    address1: "1.524 AU"
+    address2: "1.85 deg"
+    zipcode: "91109"
+    country: "Marsland"
+    public_key: ""
+    users:
+      - username: "phobos"
+        firstname: "Phobos"
+        lastname: "Moon"
+        password: "test-password-two-orbit"
+  - name: "Jupiter"
+    domain: "jupiter.dev.example.com"
+    address1: "5.204 AU"
+    address2: "1.30 deg"
+    zipcode: "77058"
+    country: "Jupiterland"
+    public_key: ""
+  - name: "Saturn"
+    domain: "saturn.dev.example.com"
+    address1: "9.537 AU"
+    address2: "2.48 deg"
+    zipcode: "94035"
+    country: "Saturnland"
+    public_key: ""
+    users:
+      - username: "titan"
+        firstname: "Titan"
+        lastname: "Moon"
+        password: "test-password-cloudy-orbit"
+# Doesn't work.. class User(Authenticatable): accepts `roles` : list[:class:`~.model.role.Role`]
+        # roles: ["researcher"]

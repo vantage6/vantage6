@@ -74,6 +74,9 @@ setup(
             "vnode=vantage6.cli.cli:cli_node",
             "vserver=vantage6.cli.cli:cli_server",
             "vdev=vantage6.cli.cli:cli_dev",
-        ]
+        ],
+        "pytest11": [
+            "vantage6 = vantage6.testing.plugin",
+        ],
     },
 )

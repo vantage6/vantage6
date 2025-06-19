@@ -95,10 +95,9 @@ class UserClient(ClientBase):
         logging.Logger
             Logger object
         """
-        # get logger that prints to console
-        logger = logging.getLogger()
-        logger.handlers.clear()
-        logger.addHandler(logging.StreamHandler(sys.stdout))
+        logger = logging.getLogger("vantage6.client")
+        if not logger.hasHandlers():
+            logger.addHandler(logging.StreamHandler(sys.stdout))
 
         # set log level
         level = level.upper()

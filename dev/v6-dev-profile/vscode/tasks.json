@@ -1,0 +1,185 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "start run-server profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "start",
+                "run-server"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop run-server profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "stop",
+                "run-server"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "start debug-server profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "start",
+                "debug-server"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop debug-server profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "stop",
+                "debug-server"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "start run-node-mars profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "start",
+                "run-node-mars"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop run-node-mars profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "stop",
+                "run-node-mars"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "start debug-node-mars profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "start",
+                "debug-node-mars"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop debug-node-mars profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "stop",
+                "debug-node-mars"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "start run-all profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "start",
+                "run-all"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop run-all profile",
+            "type": "shell",
+            "command": "v6",
+            "args": [
+                "dev",
+                "profile",
+                "--profiles",
+                "./dev/v6-dev-profile/profiles.json",
+                "stop",
+                "run-all"
+            ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}

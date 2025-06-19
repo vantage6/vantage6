@@ -43,7 +43,8 @@ class NodeConfiguration(Configuration):
         "api_key": Use(str),
         "server_url": Use(str),
         "port": Or(Use(int), None),
-        "task_dir": Use(str),
+        # TODO: task_dir is never read? Commented out for now
+        #"task_dir": Use(str),
         # TODO: remove `dict` validation from databases
         "databases": Or([Use(dict)], dict, None),
         "api_path": Use(str),

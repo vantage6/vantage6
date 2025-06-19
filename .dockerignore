@@ -1,0 +1,31 @@
+# Git, python bytecode, and other development files
+.git
+.github
+.vscode
+.pytest_cache
+.coverage
+.gitignore
+.pre-commit-config.yaml
+.readthedocs.yml
+*.py[cod]
+*.swp
+*.log
+*.bak
+*.tmp
+**/tests/
+**/__pycache__/
+
+# Documentation
+docs/
+CITATION.cff
+SECURITY.md
+CODE_OF_CONDUCT.md
+LICENSE
+
+# Tests and other development dirs
+tests/
+dev/
+tools/
+
+# TODO: probably best to split images (no single node-and-server.Dockerfile),
+# and be more explicit about what to copy (no COPY . /vantage6)

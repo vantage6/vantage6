@@ -14,7 +14,6 @@ import logging
 import docker
 import re
 import shutil
-from docker.utils import parse_repository_tag
 
 from typing import NamedTuple
 from pathlib import Path
@@ -661,6 +660,7 @@ class DockerManager(DockerBaseManager):
             socketIO=socketIO,
             collaboration_id=self.client.collaboration_id,
             share_algorithm_logs=self.share_algorithm_logs,
+            debugger_algorithm=self.ctx.debugger_algorithm,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
