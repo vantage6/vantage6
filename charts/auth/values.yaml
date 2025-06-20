@@ -29,7 +29,7 @@ keycloak:
             realmRoles:
               - admin
         clients:
-          - clientId: myclient
+          - clientId: public_client
             publicClient: true
             redirectUris:
               - "*"

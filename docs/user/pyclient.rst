@@ -142,6 +142,10 @@ submitting particular tasks) that you might want to share publicly.
    # http://localhost:8080 for a local dev server
    auth_url = "https://<my_auth_url>:<my_port>"
 
+   # Realm and client id of the auth server (keycloak)
+   keycloak_realm = "vantage6"
+   keycloak_client = "public_client"
+
    organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
 
 Note that the ``organization_key`` should be a filepath that points to
@@ -163,6 +167,8 @@ object, and authenticating
    client = Client(
        server_url=config.server_url,
        auth_url=config.auth_url,
+       auth_realm=config.keycloak_realm,
+       auth_client=config.keycloak_client,
        log_level='debug'
    )
    client.authenticate()

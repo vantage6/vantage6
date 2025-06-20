@@ -9,5 +9,5 @@
     window["env"]["allowed_algorithm_stores"] = "*";
     window["env"]["auth_url"] = "https://auth.cotopaxi.vantage6.ai";
     window["env"]["keycloak_realm"] = "vantage6";
-    window["env"]["keycloak_client"] = "myclient";
+    window["env"]["keycloak_client"] = "public_client";
 })(this);

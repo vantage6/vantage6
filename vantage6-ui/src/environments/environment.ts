@@ -7,7 +7,7 @@ const env: EnvironmentConfig = {
   api_path: (window as any).env?.api_path || '',
   auth_url: (window as any).env?.auth_url || 'https://auth.cotopaxi.vantage6.ai',
   keycloak_realm: (window as any).env?.keycloak_realm || 'vantage6',
-  keycloak_client: (window as any).env?.keycloak_client || 'myclient'
+  keycloak_client: (window as any).env?.keycloak_client || 'public_client'
 };
 
 export const environment = env;

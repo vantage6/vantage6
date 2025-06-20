@@ -8,16 +8,29 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 
 
 @click.command()
-@click.option("--host", type=str, default="http://localhost", help="URL of the server")
 @click.option(
-    "--port", type=int, default=Ports.DEV_SERVER.value, help="Port of the server"
+    "--server-url",
+    type=str,
+    default=f"http://localhost:{Ports.DEV_SERVER.value}/api",
+    help="URL of the server",
 )
-@click.option("--api-path", type=str, default="/api", help="API path of the server")
 @click.option(
     "--auth-url",
     type=str,
     default="http://localhost:8080",
     help="URL of the authentication server (Keycloak)",
+)
+@click.option(
+    "--auth-realm",
+    type=str,
+    default="vantage6",
+    help="Realm of the authentication server (Keycloak)",
+)
+@click.option(
+    "--auth-client",
+    type=str,
+    default="public_client",
+    help="Client ID of the authentication server (Keycloak)",
 )
 @click.option(
     "--collaboration",
@@ -51,10 +64,10 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
     help="Path to the private key for end-to-end encryption",
 )
 def cli_test_features(
-    host: str,
-    port: int,
-    api_path: str,
+    server_url: str,
     auth_url: str,
+    auth_realm: str,
+    auth_client: str,
     collaboration: int,
     organizations: list[int] | None,
     all_nodes: bool,
@@ -76,8 +89,10 @@ def cli_test_features(
         organizations = None
 
     client = UserClient(
-        server_url=f"{host}:{port}{api_path}",
+        server_url=server_url,
         auth_url=auth_url,
+        auth_realm=auth_realm,
+        auth_client=auth_client,
         log_level="critical",
     )
     client.authenticate()

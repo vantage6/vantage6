@@ -8,7 +8,7 @@ const env: EnvironmentConfig = {
   api_path: '/server',
   auth_url: 'http://localhost:8080',
   keycloak_realm: 'vantage6',
-  keycloak_client: 'myclient'
+  keycloak_client: 'public_client'
 };
 
 export const environment = env;
