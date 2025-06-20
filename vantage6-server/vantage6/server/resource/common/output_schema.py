@@ -127,6 +127,7 @@ class TaskSchema(HATEOASModelSchema):
                 "type": db.type_,
                 "dataframe_id": db.dataframe_id,
                 "dataframe_name": db.dataframe.name if db.dataframe else None,
+                "position": db.position,
             }
             for db in obj.databases
         ]

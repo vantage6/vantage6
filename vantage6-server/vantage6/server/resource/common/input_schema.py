@@ -413,13 +413,13 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict] | None):
+    def validate_databases(self, databases: list[list[dict]] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict] | None
+        databases : list[list[dict]] | None
             List of databases to validate. Each database must have at least a database
             label or dataframe_id.
 
@@ -430,7 +430,13 @@ class TaskInputSchema(_NameValidationSchema):
         """
         if databases is None:
             return  # some algorithms don't use any database
-        for database in databases:
+
+        if isinstance(databases, list) and not isinstance(databases[0], list):
+            raise ValidationError(
+                "Databases must be a list of lists of dictionaries or None"
+            )
+
+        for database in [db for sublist in databases for db in sublist]:
             if "type" not in database:
                 raise ValidationError("Each database must have a 'type' key")
 
