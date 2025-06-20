@@ -187,8 +187,41 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                run["input"] = self.parent._decrypt_input(run["input"])
+                input_value = run["input"]
+                self.parent.log.info(f"Parsing uuid from input: {input_value}")
 
+                if isinstance(input_value, bytes):
+                    input_value = input_value.decode('utf-8')
+                input_value = input_value.strip('\'"')
+                self.parent.log.info(f"stripped uuid: {input_value}")
+                
+                self.parent.log.info(f"Parsing uuid from input: {input_value}")
+
+                uuid_obj = uuid.UUID(input_value)
+                url = self.parent.generate_path_to("resultstream", False)
+                url = f"{url}/{str(uuid_obj)}"
+                self.parent.log.info(f"Retrieving input data for url: {url}")
+                headers = {
+                    "Authorization": f"Bearer {self.parent.token}",
+                    "Content-Type": "application/octet-stream",
+                }
+                timeout = 300
+                result_bytes = b''
+                try:
+                    with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
+                        if response.status_code == 200:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                result_bytes += chunk
+                        else:
+                            self.parent.log.error(f"Failed to stream input for task_id {run['id']}. Status code: {response.status_code}")
+                            self.parent.log.error(f"Response: {response.text}")
+                            return
+                except requests.RequestException as e:
+                    self.parent.log.error(f"An error occurred while streaming input: {e}")
+                    return
+                run["input"] = self.parent._decrypt_input(result_bytes)
+                self.parent.log.info(f"Retrieved input for run {run['id']}: {run['input']}")
+            self.parent.log.info(f"Retrieved {run_data}")
             return run_data
         
         def is_uuid(self, value):

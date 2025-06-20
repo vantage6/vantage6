@@ -248,44 +248,6 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved an the input is
     # encrypted specifically for them.
-    def encrypt_input(organization: dict) -> dict:
-        """
-        Encrypt the input for a specific organization by using its private key.
-        This method is run as background
-
-        Parameters
-        ----------
-        organization : dict
-            Input as specified by the client (algorithm in this case)
-
-        Returns
-        -------
-        dict
-            Modified organization dictionary in which the `input` key is
-            contains encrypted input
-        """
-        input_ = organization.get("input", {})
-        organization_id = organization.get("id")
-
-        # retrieve public key of the organization
-        log.debug("Retrieving public key of org: %s", organization_id)
-        response = make_request(
-            "get", f"organization/{organization_id}", headers=headers
-        )
-        public_key = response.json().get("public_key")
-
-        # Encrypt the input field
-        client: NodeClient = app.config.get("SERVER_IO")
-        organization["input"] = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_), public_key
-        )
-
-        log.debug("Input succesfully encrypted for organization %s!", organization_id)
-        return organization
-
-    if client.is_encrypted_collaboration():
-        log.debug("Applying end-to-end encryption")
-        data["organizations"] = [encrypt_input(o) for o in organizations]
 
     # Attempt to send the task to the central server
     try:
@@ -342,8 +304,6 @@ def proxy_result() -> Response:
     # Attempt to decrypt the results. The endpoint should have returned
     # a list of results
     results = get_response_json_and_handle_exceptions(response)
-    for result in results["data"]:
-        result = decrypt_result(result)
 
     return results, response.status_code
 
@@ -413,17 +373,10 @@ def stream_handler(id: str) -> FlaskResponse:
             headers,
         )
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
-
-    def generate():
-        try:
-            for chunk in backend_response.iter_content(chunk_size=8192):
-                if chunk:
-                    yield chunk
-        finally:
-            backend_response.close()
+    client: NodeClient = app.config.get("SERVER_IO")
 
     return FlaskResponse(
-        stream_with_context(generate()),
+        stream_with_context(client.cryptor.decrypt_stream(backend_response.raw)),
         status=backend_response.status_code,
         headers=dict(backend_response.headers),
         content_type=backend_response.headers.get("Content-Type")
@@ -432,23 +385,26 @@ def stream_handler(id: str) -> FlaskResponse:
 @app.route("/resultstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
     log.info("Proxy stream POST handler called")
+
+    client: NodeClient = app.config.get("SERVER_IO")
+    pubkey_base64 = request.headers.get("X-Public-Key")
+    log.info("Received public key: %s", pubkey_base64)
+
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
-            if h in request.headers:
-                headers[h] = request.headers[h]
+        if h in request.headers:
+            headers[h] = request.headers[h]
 
-
-    def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-        for i in range(0, len(result), chunk_size):
-            yield result[i:i + chunk_size]
-        
     url = f"{server_url}/resultstream"
     log.info("Making proxied POST request to %s", url)
+
+    encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)
+
     backend_response = requests.post(
         url,
         params=request.args,
         headers=headers,
-        data=request.stream
+        data=encrypted_stream
     )
 
     log.info("Received response with status code %s", backend_response.status_code)

@@ -16,7 +16,7 @@ these public keys is outside the scope of this module).
 # TODO handle no public key from other organization (should that happen here?)
 import os
 import logging
-import json
+import base64
 
 from pathlib import Path
 
@@ -101,7 +101,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return self.bytes_to_str(data)
 
-    def decrypt_str_to_bytes(self, data: str) -> bytes:
+    def decrypt_str_to_bytes(self, data: bytes) -> bytes:
         """
         Decrypt base64 encoded *string* data.
 
@@ -115,7 +115,88 @@ class CryptorBase(metaclass=Singleton):
         bytes
             The decrypted data.
         """
-        return self.str_to_bytes(data)
+        return self.str_to_bytes(data.decode('utf-8'))
+         
+    def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=8192):
+        """
+        Base64-encode a stream, yielding encoded chunks.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to encode (must support .read()).
+        pubkey_base64s : str
+            Ignored.
+        chunk_size : int
+            The size of chunks to read and encode.
+
+        Yields
+        ------
+        bytes
+            Base64-encoded data chunks.
+        """
+        import base64
+
+        buffer = b""
+        while True:
+            chunk = stream.read(chunk_size)
+            if not chunk:
+                break
+            buffer += chunk
+            # Only encode in multiples of 3 (base64 works on 3-byte blocks)
+            to_encode_len = (len(buffer) // 3) * 3
+            if to_encode_len == 0:
+                continue
+            to_encode = buffer[:to_encode_len]
+            buffer = buffer[to_encode_len:]
+            encoded = base64.b64encode(to_encode)
+            yield encoded
+        # Encode any remaining data in the buffer
+        if buffer:
+            encoded = base64.b64encode(buffer)
+            yield encoded
+    
+    def decrypt_stream(self, stream, chunk_size=8192):
+        """
+        Decode a base64-encoded stream to bytes, yielding decoded chunks.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to decode (must support .read()).
+        chunk_size : int
+            The size of chunks to read and decode.
+
+        Yields
+        ------
+        bytes
+            Decoded data chunks.
+        """
+
+        # Read the entire stream (since base64 decoding requires the full input)
+        buffer = b""
+        while True:
+            chunk = stream.read(chunk_size)
+            self.log.info(f"Read {chunk} from stream")
+            if not chunk:
+                break
+            buffer += chunk
+            # Only decode in multiples of 4
+            to_decode_len = (len(buffer) // 4) * 4
+            if to_decode_len == 0:
+                continue
+            to_decode = buffer[:to_decode_len]
+            buffer = buffer[to_decode_len:]
+            self.log.info(f"Read {to_decode} from stream")
+            decoded = base64.b64decode(to_decode)
+            self.log.info(f"Decoded {decoded} from stream")
+            yield decoded
+        # Decode any remaining data in the buffer
+        if buffer:
+            decoded = base64.b64decode(buffer)
+            self.log.info(f"Decoded last bits: {decoded} from stream")
+            yield decoded
+    
 
 
 # ------------------------------------------------------------------------------
@@ -294,77 +375,174 @@ class RSACryptor(CryptorBase):
         encryptor = cipher.encryptor()
         encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
 
-        # Create a public key instance.
         pubkey = load_pem_public_key(
             base64s_to_bytes(pubkey_base64s), backend=default_backend()
         )
 
-        # Encrypt the shared key using the public key (i.e. assymmetrically)
         encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
-
-        # Join the encrypted key, iv and encrypted message into a single string
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
-        encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
-        return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
+        header_str = SEPARATOR.join([encrypted_key, iv, ""])
+        header_bytes = header_str.encode("utf-8")
 
-    def decrypt_str_to_bytes(self, data: str) -> bytes:
+        return header_bytes + encrypted_msg_bytes
+
+    def decrypt_str_to_bytes(self, data: bytes) -> bytes:
         """
-        Decrypt base64 encoded *string* data.
+        Decrypt a payload with a base64-encoded header and raw encrypted body.
 
         Parameters
         ----------
-        data: str
-            The data to decrypt.
+        data : bytes
+            The input bytes to decrypt (header + encrypted content).
 
         Returns
         -------
         bytes
-            The decrypted data.
+            The fully decrypted data.
         """
-        # Note that the decryption process is the reverse of the encryption process
-        # in the function above
-        (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
+        sep_bytes = SEPARATOR.encode()
+        sep_count = 0
+        sep_indices = []
 
-        # Convert the strings to back to bytes
-        encrypted_key_bytes = self.str_to_bytes(encrypted_key)
-        iv_bytes = self.str_to_bytes(iv)
-        encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
+        for i in range(len(data)):
+            if data[i:i+1] == sep_bytes:
+                sep_count += 1
+                sep_indices.append(i)
+                if sep_count == 2:
+                    break
+        if sep_count < 2:
+            raise ValueError("Header format is invalid — missing separators.")
 
-        # Decrypt the shared key using asymmetric encryption
+        header_bytes = data[:sep_indices[1] + 1]
+        header_str = header_bytes.decode("utf-8")
+        encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
+        encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
+        iv_bytes = self.str_to_bytes(iv_b64)
+
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
-
-        # In the UI, the bytes have to be base64 encoded before encryption (we cannot
-        # encrypt bytes directly in javascript) - so if this key was encrypted in the
-        # UI, we need to decode it here as extra step. If it fails, ignore it as it is
-        # apparently not needed.
-        # TODO v5+ add additional encoding step in Python so that we always have the
-        # same process
         try:
             shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
         except UnicodeDecodeError:
             pass
-
-        # Use the shared key for symmetric decryption of the payload
-        cipher = Cipher(
-            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-        )
+        body = data[sep_indices[1] + 1:]
+        cipher = Cipher(algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend())
         decryptor = cipher.decryptor()
-        result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
+        decrypted = decryptor.update(body) + decryptor.finalize()
 
-        # In the UI, the result has an extra base64 encoding step also for the
-        # symmetrical part of the encryption. If it fails, ignore it as it is
-        # apparently not needed.
-        # TODO v5+ adapt as stated above in decrypting shared key
-        try:
-            json.loads(result.decode("utf-8"))
-        except json.decoder.JSONDecodeError:
-            try:
-                result = base64s_to_bytes(result.decode("utf-8"))
-            except UnicodeDecodeError:
-                pass
+        return decrypted
 
-        return result
+
+    def _crypt_stream(self, stream, key, iv, chunk_size=8192):
+        """
+        Encrypt or decrypt a stream using AES-CTR.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to process (must support .read()).
+        key : bytes
+            The AES key.
+        iv : bytes
+            The initialization vector.
+        chunk_size : int
+            The size of chunks to read and process.
+
+        Yields
+        ------
+        bytes
+            Processed data chunks.
+        """
+        cipher = Cipher(
+            algorithms.AES(key), modes.CTR(iv), backend=default_backend()
+        )
+        cryptor = cipher.encryptor()
+
+        while True:
+            chunk = stream.read(chunk_size)
+            if not chunk:
+                break
+            processed_chunk = cryptor.update(chunk)
+            if processed_chunk:
+                yield processed_chunk
+
+        final_chunk = cryptor.finalize()
+        if final_chunk:
+            yield final_chunk
+
+    def encrypt_stream(self, stream, pubkey_base64s: str, chunk_size=8192):
+        """
+        Encrypt a stream using hybrid RSA/AES encryption.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to encrypt (must support .read()).
+        pubkey_base64s : str
+            The public key to use for encryption (PEM format, base64 string).
+        chunk_size : int
+            The size of chunks to read and encrypt.
+
+        Yields
+        ------
+        bytes
+            Header followed by encrypted data chunks.
+        """
+        shared_key = os.urandom(32)
+        iv_bytes = os.urandom(16)
+
+        pubkey = load_pem_public_key(
+            base64s_to_bytes(pubkey_base64s), backend=default_backend()
+        )
+        encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
+
+        encrypted_key_b64 = self.bytes_to_str(encrypted_key_bytes)
+        iv_b64 = self.bytes_to_str(iv_bytes)
+
+        header_str = f"{encrypted_key_b64}${iv_b64}$"
+        header_bytes = header_str.encode("utf-8")
+
+        yield header_bytes
+
+        yield from self._crypt_stream(stream, shared_key, iv_bytes, chunk_size)
+
+    def decrypt_stream(self, stream, chunk_size=8192):
+        """
+        Decrypt a stream that was encrypted using hybrid RSA/AES encryption.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to decrypt (must support .read()).
+        chunk_size : int
+            The size of chunks to read and decrypt.
+
+        Yields
+        ------
+        bytes
+            Decrypted data chunks.
+        """
+        sep_count = 0
+        header_bytes = b""
+        while sep_count < 2:
+            c = stream.read(1)
+            if not c:
+                raise RuntimeError("Stream ended before header was fully read")
+            header_bytes += c
+            if c == SEPARATOR.encode():
+                sep_count += 1
+
+        header_str = header_bytes.decode("utf-8")
+        encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
+        encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
+        iv_bytes = self.str_to_bytes(iv_b64)
+
+        shared_key = self.private_key.decrypt(
+            encrypted_key_bytes,
+            padding.PKCS1v15()
+        )
+
+        yield from self._crypt_stream(stream, shared_key, iv_bytes, chunk_size)
 
     def verify_public_key(self, pubkey_base64: str) -> bool:
         """

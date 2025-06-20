@@ -253,9 +253,6 @@ class UserClient(ClientBase):
                         self.log.error(f"Response: {response.text}")
             except requests.RequestException as e:
                 self.log.error(f"An error occurred while streaming result: {e}")
-        for item in result["data"]:
-            if isinstance(item['result'], bytes):
-                item['result'] = item['result'].decode('utf-8')
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
 
@@ -1890,15 +1887,39 @@ class UserClient(ClientBase):
             # public key.
             organization_json_list = []
             for org_id in organizations:
-                pub_key = self.parent.request(f"organization/{org_id}").get(
-                    "public_key"
+                pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
+                encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
+
+                headers = {
+                    "Authorization": f"Bearer {self.parent.token}",
+                    "Content-Type": "application/octet-stream",
+                }
+                url = self.parent.generate_path_to("resultstream", False)
+                self.parent.log.debug(f"Uploading input to resultstream: {url}")
+
+                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
+                    for i in range(0, len(result), chunk_size):
+                        yield result[i:i + chunk_size]
+
+                response = requests.post(url, data=chunked_result_stream(encrypted_input), headers=headers)
+                if not (200 <= response.status_code < 300):
+                    self.parent.log.error(
+                        f"Failed to upload input to resultstream: {response.text}"
+                    )
+                    raise RuntimeError("Failed to upload input to resultstream")
+
+                result_uuid_response = response.json()
+                result_uuid = result_uuid_response.get("uuid")
+                if not result_uuid:
+                    self.parent.log.error("Failed to get UUID from resultstream response")
+                    raise RuntimeError("Failed to get UUID from resultstream response")
+                self.parent.log.info(
+                    f"Input uploaded to resultstream with UUID: {result_uuid}"
                 )
                 organization_json_list.append(
                     {
                         "id": org_id,
-                        "input": self.parent.cryptor.encrypt_bytes_to_str(
-                            serialized_input, pub_key
-                        ),
+                        "input": result_uuid,
                     }
                 )
 
@@ -2260,9 +2281,6 @@ class UserClient(ClientBase):
                             self.parent.log.error(f"Response: {response.text}")
                 except requests.RequestException as e:
                     self.parent.log.error(f"An error occurred while streaming result: {e}")
-            for item in results["data"]:
-                if isinstance(item['result'], bytes):
-                    item['result'] = item['result'].decode('utf-8')
             results = self._decrypt_result(results, is_single_result=False)
             print("Decrypted result: ")
             print(results)

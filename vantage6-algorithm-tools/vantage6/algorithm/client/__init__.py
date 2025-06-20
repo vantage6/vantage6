@@ -168,21 +168,8 @@ class AlgorithmClient(ClientBase):
                 self.log.error(f"An error occurred while streaming result: {e}")
         for item in result["data"]:
             if isinstance(item['result'], bytes):
-                item['result'] = item['result'].decode('utf-8')
-        decoded_results = []
-        try:
-            decoded_results = [
-                json_lib.loads(base64s_to_bytes(result.get("result")).decode())
-                for result in result["data"]
-                if result.get("result")
-            ]
-        except Exception as e:
-            self.log.error("Unable to load results")
-            self.log.error(e)
-
-        
-
-        return decoded_results
+                item['result'] = json_lib.loads(item['result'].decode('utf-8'))
+        return result["data"]
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
@@ -411,39 +398,44 @@ class AlgorithmClient(ClientBase):
             if input_:
                 # serializing input. Note that the input is not encrypted here, but
                 # in the proxy server (self.parent.request())
-                serialized_input = bytes_to_base64s(serialize(input_))
-
-                headers = {
-                    "Authorization": f"Bearer {self.parent.token}",
-                    "Content-Type": "application/octet-stream",
-                }
-                url = self.parent.generate_path_to("resultstream", False)
-                self.parent.log.debug(f"Uploading input to resultstream: {url}")
-
-                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                    for i in range(0, len(result), chunk_size):
-                        yield result[i:i + chunk_size]
-
-                response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
-                if not (200 <= response.status_code < 300):
-                    self.parent.log.error(
-                        f"Failed to upload input to resultstream: {response.text}"
-                    )
-                    raise RuntimeError("Failed to upload input to resultstream")
-
-                result_uuid_response = response.json()
-                result_uuid = result_uuid_response.get("uuid")
-                if not result_uuid:
-                    self.parent.log.error("Failed to get UUID from resultstream response")
-                    raise RuntimeError("Failed to get UUID from resultstream response")
-                self.parent.log.info(
-                    f"Input uploaded to resultstream with UUID: {result_uuid}"
-                )
-                input_ = result_uuid
-                serialized_input = bytes_to_base64s(serialize(input_))
+                serialized_input = serialize(input_)
                 organization_json_list = []
                 for org_id in organizations:
-                    organization_json_list.append({"id": org_id, "input": serialized_input})
+                    pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
+                    self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
+                    headers = {
+                        "Authorization": f"Bearer {self.parent.token}",
+                        "Content-Type": "application/octet-stream",
+                        "X-Public-Key": pub_key,
+                    }
+                    url = self.parent.generate_path_to("resultstream", False)
+                    self.parent.log.debug(f"Uploading input to resultstream: {url}")
+
+                    def chunked_result_stream(result: bytes, chunk_size: int = 8192):
+                        for i in range(0, len(result), chunk_size):
+                            yield result[i:i + chunk_size]
+
+                    response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                    if not (200 <= response.status_code < 300):
+                        self.parent.log.error(
+                            f"Failed to upload input to resultstream: {response.text}"
+                        )
+                        raise RuntimeError("Failed to upload input to resultstream")
+
+                    result_uuid_response = response.json()
+                    result_uuid = result_uuid_response.get("uuid")
+                    if not result_uuid:
+                        self.parent.log.error("Failed to get UUID from resultstream response")
+                        raise RuntimeError("Failed to get UUID from resultstream response")
+                    self.parent.log.info(
+                        f"Input uploaded to resultstream with UUID: {result_uuid}"
+                    )
+                    organization_json_list.append(
+                        {
+                            "id": org_id,
+                            "input": result_uuid,
+                        }
+                    )
 
             json_body = {
                 "name": name,
