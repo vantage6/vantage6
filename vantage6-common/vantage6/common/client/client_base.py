@@ -97,19 +97,6 @@ class ClientBase(object):
         """
         return self.__server_url
 
-    # TODO remove this property as it can be replaced by server_url
-    @property
-    def base_path(self) -> str:
-        """
-        Full path to the server URL. Combination of host, port and api-path
-
-        Returns
-        -------
-        str
-            Server URL
-        """
-        return f"{self.server_url}"
-
     @property
     def auth_url(self) -> str:
         """
@@ -133,7 +120,7 @@ class ClientBase(object):
             URL to the endpoint
         """
         if not is_for_algorithm_store:
-            base_path = self.base_path
+            base_path = self.server_url
         else:
             try:
                 base_path = self.store.url

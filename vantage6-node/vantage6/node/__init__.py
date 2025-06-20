@@ -113,7 +113,7 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
-        self.log.info(f"Connecting server: {self.client.base_path}")
+        self.log.info("Connecting server: %s", self.client.server_url)
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -177,8 +177,9 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        proxy_server.server_url = self.client.base_path
+        # The value on the module variable 'server_url' defines the target of the
+        # 'make_request' method.
+        proxy_server.server_url = self.client.server_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
             proxy_server.server_url,
@@ -476,7 +477,7 @@ class Node:
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
         self.log.info(
-            "Are you sure the server can be reached at %s?", self.client.base_path
+            "Are you sure the server can be reached at %s?", self.client.server_url
         )
 
     def authenticate(self) -> None:
