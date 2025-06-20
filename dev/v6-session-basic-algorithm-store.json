@@ -91,7 +91,7 @@
       ]
     },
     {
-      "name": "sum",
+      "name": "sum_",
       "display_name": "Sum",
       "standalone": true,
       "description": "",
