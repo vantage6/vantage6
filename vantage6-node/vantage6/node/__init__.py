@@ -144,6 +144,7 @@ class Node:
                 f"{config.get('server_url')}:{config.get('port')}"
                 f"{config.get('api_path')}"
             ),
+            auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
             api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
         )
@@ -156,8 +157,9 @@ class Node:
         server.
         """
 
-        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
-        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default
+        # values for it as its value (a FQDN) depends on the namespace where the
+        # K8S-service with the node is running.
         if "PROXY_SERVER_HOST" in os.environ:
             proxy_host = os.environ.get("PROXY_SERVER_HOST")
             os.environ["PROXY_SERVER_HOST"] = proxy_host

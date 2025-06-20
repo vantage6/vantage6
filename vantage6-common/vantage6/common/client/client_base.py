@@ -20,19 +20,22 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str) -> None:
+    def __init__(self, server_url: str, auth_url: str) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
         server_url : str
             URL of the vantage6 server you want to connect to
+        auth_url : str
+            URL of the vantage6 auth server (keycloak) you want to authenticate with
         """
 
         self.log = logging.getLogger(module_name)
 
         # server settings
         self.__server_url = server_url
+        self.__auth_url = auth_url
 
         # tokens
         self._access_token = None
@@ -106,6 +109,13 @@ class ClientBase(object):
             Server URL
         """
         return f"{self.server_url}"
+
+    @property
+    def auth_url(self) -> str:
+        """
+        URL of the vantage6 auth server (keycloak)
+        """
+        return self.__auth_url
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint

@@ -16,7 +16,11 @@ from vantage6.client import Client
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
-client = Client("http://localhost:7601/server", log_level="error")
+client = Client(
+    server_url="http://localhost:7601/server",
+    auth_url="http://localhost:8080",
+    log_level="error",
+)
 client.authenticate()
 
 parser = argparse.ArgumentParser(
@@ -150,7 +154,11 @@ def create_node(index, collaboration, organization, task_namespace, node_port):
 
 def create_sessions(collaboration_id, users):
     for user in users:
-        user_client = Client("http://localhost:7601/server", log_level="error")
+        user_client = Client(
+            server_url="http://localhost:7601/server",
+            auth_url="http://localhost:8080",
+            log_level="error",
+        )
         user_client.authenticate()
         user_client.session.create(
             collaboration=collaboration_id,

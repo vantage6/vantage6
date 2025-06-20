@@ -14,6 +14,12 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 )
 @click.option("--api-path", type=str, default="/api", help="API path of the server")
 @click.option(
+    "--auth-url",
+    type=str,
+    default="http://localhost:8080",
+    help="URL of the authentication server (Keycloak)",
+)
+@click.option(
     "--collaboration",
     type=int,
     default=1,
@@ -48,6 +54,7 @@ def cli_test_features(
     host: str,
     port: int,
     api_path: str,
+    auth_url: str,
     collaboration: int,
     organizations: list[int] | None,
     all_nodes: bool,
@@ -68,7 +75,11 @@ def cli_test_features(
     if all_nodes or not organizations:
         organizations = None
 
-    client = UserClient(f"{host}:{port}{api_path}", log_level="critical")
+    client = UserClient(
+        server_url=f"{host}:{port}{api_path}",
+        auth_url=auth_url,
+        log_level="critical",
+    )
     client.authenticate()
     client.setup_encryption(private_key)
     diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
