@@ -83,13 +83,13 @@ def dataframe(*sources: str | int) -> callable:
     >>>     pass
 
     >>> @dataframe("many", 3)
-    >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
+    >>> def my_algorithm(many_df: dict[str, pd.DataFrame], first_df: pd.DataFrame,
     >>>                  third_df: pd.DataFrame, <other arguments>):
     >>>     pass
 
     >>> @dataframe("many", 1, "many")
-    >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
-    >>>                  many_df_2: list[pd.DataFrame], <other arguments>):
+    >>> def my_algorithm(many_df: dict[str, pd.DataFrame], first_df: pd.DataFrame,
+    >>>                  many_df_2: dict[str, pd.DataFrame], <other arguments>):
     >>>     pass
     """
     if not sources:
@@ -133,14 +133,15 @@ def dataframe(*sources: str | int) -> callable:
 
             for source, requested_dataframes in zip(sources, dataframes_grouped):
                 # read the data from the database
-                data_ = [
-                    _read_df_from_disk(df_name) for df_name in requested_dataframes
-                ]
 
                 # if the source is not "many", we can just add the first (and only)
                 # dataframe to the arguments
                 if source.lower() != "many":
-                    data_ = data_[0]
+                    data_ = _read_df_from_disk(requested_dataframes[0])
+                else:
+                    data_ = {}
+                    for df_name in requested_dataframes:
+                        data_[df_name] = _read_df_from_disk(df_name)
 
                 # add the data to the arguments
                 args = (data_, *args)
