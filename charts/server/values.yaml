@@ -11,6 +11,7 @@ server:
   apiPath: /server
 
   # Keycloak configuration
+  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
   keycloakAdminUsername: admin
   keycloakAdminPassword: admin

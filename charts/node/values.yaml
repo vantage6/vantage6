@@ -6,6 +6,7 @@ node:
   apiKey: put-your-api-key-here
 
   # Keycloak configuration
+  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
   keycloakClient: node-client
   keycloakClientSecret: mynodeclientsecret

@@ -23,7 +23,7 @@ spec:
         image: {{ .Values.server.image }}
         env:
         - name: KEYCLOAK_URL
-          value: http://vantage6-auth-keycloak.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+          value: {{ .Values.server.keycloakUrl }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.server.keycloakRealm }}
         - name: LOCAL_STORE_URL
