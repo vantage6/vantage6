@@ -138,7 +138,7 @@ submitting particular tasks) that you might want to share publicly.
    # Server address, e.g. https://cotopaxi.vantage6.ai/api, or http://localhost:7601/api
    # for a local dev server
    server_url = "https://<my_server_url>:<my_port>/<my_api_path>"
-   # Auth server address (keycloak), e.g. https://cotopaxi.vantage6.ai/auth, or
+   # Auth server address (keycloak), e.g. https://auth.cotopaxi.vantage6.ai/, or
    # http://localhost:8080 for a local dev server
    auth_url = "https://<my_auth_url>:<my_port>"
 

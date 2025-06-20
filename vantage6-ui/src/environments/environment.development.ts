@@ -5,7 +5,10 @@ const env: EnvironmentConfig = {
   // server_url: 'https://cotopaxi.vantage6.ai',
   // api_path: ''
   server_url: 'http://localhost:7601',
-  api_path: '/server'
+  api_path: '/server',
+  auth_url: 'http://localhost:8080',
+  keycloak_realm: 'vantage6',
+  keycloak_client: 'myclient'
 };
 
 export const environment = env;
