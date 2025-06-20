@@ -82,7 +82,7 @@ def data(number_of_databases: int = 1) -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_data: list[pd.DataFrame] = None, **kwargs
+            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the data
@@ -124,6 +124,48 @@ def data(number_of_databases: int = 1) -> callable:
                 # add the data to the arguments
                 args = (data_, *args)
 
+            return func(*args, **kwargs)
+
+        # set attribute that this function is wrapped in a data decorator
+        decorator.wrapped_in_data_decorator = True
+        return decorator
+
+    return protection_decorator
+
+
+def dataframes() -> callable:
+    """
+    Decorator that adds several dataframes to a function as single argument
+
+    Returns
+    -------
+    callable
+        Decorated function
+
+    Examples
+    --------
+    >>> @dataframes()
+    >>> def my_algorithm(dataframes: list[pd.DataFrame], <other arguments>):
+    >>>     pass
+    """
+
+    def protection_decorator(func: callable, *args, **kwargs) -> callable:
+
+        @wraps(func)
+        def decorator(
+            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
+        ) -> callable:
+            """
+            Wrap the function with the data
+            """
+            if mock_data is not None:
+                return func(*mock_data, *args, **kwargs)
+
+            # get the dataframe names that the user requested
+            dataframes = _get_user_dataframes()
+            for df_name in dataframes:
+                df = _read_df_from_disk(df_name)
+                args = (df, *args)
             return func(*args, **kwargs)
 
         # set attribute that this function is wrapped in a data decorator
