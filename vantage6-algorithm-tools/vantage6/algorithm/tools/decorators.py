@@ -119,13 +119,15 @@ def _algorithm_client() -> callable:
 algorithm_client = _algorithm_client()
 
 
-def data(number_of_databases: int = 1) -> callable:
+def data(number_of_databases: int = 1, just_uri: bool = False) -> callable:
     """
     Decorator that adds algorithm data to a function
 
     By adding `@data()` to a function, one or several pandas dataframes will be
     added to the front of the argument list. This data will be read from the
-    databases that the user who creates the task provides.
+    databases that the user who creates the task provides. Alternatively, if the
+    argument `just_uri` is set to True, database URI(s) will be added to the
+    front of the argument list.
 
     Note that the user should provide exactly as many databases as the
     decorated function requires when they create the task.
@@ -152,6 +154,9 @@ def data(number_of_databases: int = 1) -> callable:
     >>> def my_algorithm(first_df: pd.DataFrame, second_df: pd.DataFrame,
     >>>                  <other arguments>):
     >>>     pass
+    >>> @data(number_of_databases=1, just_uri=True)
+    >>> def my_algorithm(database_uri: str, <other arguments>):
+    >>>     pd.read_csv(database_uri, dtype=str, na_values=["na"])
     """
 
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
@@ -190,18 +195,18 @@ def data(number_of_databases: int = 1) -> callable:
 
             for i in range(number_of_databases):
                 label = labels[i]
-                # read the data from the database
-                info("Reading data from database")
-                data_ = _get_data_from_label(label)
+                # read the data from the database, or just get uri
+                data_ = _get_data_from_label(label, just_uri=just_uri)
 
-                # do any data preprocessing here
-                info(f"Applying preprocessing for database '{label}'")
-                env_prepro = os.environ.get(f"{label.upper()}_PREPROCESSING")
-                if env_prepro is not None:
-                    preprocess = json.loads(env_prepro)
-                    data_ = preprocess_data(data_, preprocess)
+                if not just_uri:
+                    # do any data preprocessing here
+                    info(f"Applying preprocessing for database '{label}'")
+                    env_prepro = os.environ.get(f"{label.upper()}_PREPROCESSING")
+                    if env_prepro is not None:
+                        preprocess = json.loads(env_prepro)
+                        data_ = preprocess_data(data_, preprocess)
 
-                # add the data to the arguments
+                # add the data (or just uri) to the arguments
                 args = (data_, *args)
 
             return func(*args, **kwargs)
@@ -463,7 +468,7 @@ def _check_environment_var_exists_or_exit(var: str):
         exit(1)
 
 
-def _get_data_from_label(label: str) -> pd.DataFrame:
+def _get_data_from_label(label: str, just_uri: bool = False) -> pd.DataFrame | str:
     """
     Load data from a database based on the label
 
@@ -472,14 +477,22 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
     label : str
         Label of the database to load
 
+    just_uri : bool
+        If True, only return the database URI instead of loading the data.
+        Useful when the user requires tighter control over how the data is
+        loaded into a dataframe.
+
     Returns
     -------
-    pd.DataFrame
-        Data from the database
+    pd.DataFrame | str
+        Data from the database, or the database URI if just_uri is True.
     """
     # Load the input data from the input file - this may e.g. include the
     database_uri = os.environ[f"{label.upper()}_DATABASE_URI"]
     info(f"Using '{database_uri}' with label '{label}' as database")
+
+    if just_uri:
+        return database_uri
 
     # Get the database type from the environment variable, this variable is
     # set by the vantage6 node based on its configuration file.
@@ -487,6 +500,7 @@ def _get_data_from_label(label: str) -> pd.DataFrame:
 
     # Load the data based on the database type. Try to provide environment
     # variables that should be available for some data types.
+    info("Reading data from database")
     return load_data(
         database_uri,
         database_type,
