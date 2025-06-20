@@ -633,7 +633,10 @@ class ServerApp(Vantage6App):
                 RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
             ),
         )
-        token = keycloak_openid.token("admin", "admin")
+        token = keycloak_openid.token(
+            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value),
+            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value),
+        )
         decoded_token = keycloak_openid.decode_token(token["access_token"])
         super_user.keycloak_id = decoded_token["sub"]
         super_user.save()

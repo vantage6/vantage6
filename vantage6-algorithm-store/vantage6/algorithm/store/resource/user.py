@@ -358,8 +358,12 @@ class Users(AlgorithmStoreResources):
         """Get the keycloak admin client"""
         keycloak_openid = KeycloakOpenIDConnection(
             server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-            username="admin",
-            password="admin",
+            username=os.environ.get(
+                RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value
+            ),
+            password=os.environ.get(
+                RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value
+            ),
             client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
             realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
             client_secret_key=os.environ.get(

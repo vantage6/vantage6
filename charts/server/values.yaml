@@ -12,6 +12,8 @@ server:
 
   # Keycloak configuration
   keycloakRealm: vantage6
+  keycloakAdminUsername: admin
+  keycloakAdminPassword: admin
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
   keycloakUserClient: backend-user-client
