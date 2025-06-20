@@ -13,11 +13,14 @@ def _get_user_dataframes() -> list[str]:
 
     Returns
     -------
-    list[str]
-        List of database names
+    list[list[str]]
+        List of database names, each list contains the names of the databases
+        that are required for the argument.
     """
     dfs = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
-    return dfs.split(",")
+
+    data_arguments = dfs.split(";")
+    return [arg.split(",") for arg in data_arguments]
 
 
 def _read_df_from_disk(df_name: str) -> pd.DataFrame:
@@ -44,7 +47,7 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     return pd.read_parquet(dataframe_file)
 
 
-def data(number_of_databases: int = 1) -> callable:
+def data(*sources: str | int) -> callable:
     """
     Decorator that adds algorithm data to a function
 
@@ -62,9 +65,10 @@ def data(number_of_databases: int = 1) -> callable:
 
     Parameters
     ----------
-    number_of_databases: int
-        Number of data sources to load. These will be loaded in order by which
-        the user provided them. Default is 1.
+    sources: str | int
+        Number of the dataframe to load. It can either be a number to indicate the
+        number of dataframes to load or a string "many" to indicate that multiple
+        dataframes need to be supplied as a single argument.
 
     Returns
     -------
@@ -73,11 +77,23 @@ def data(number_of_databases: int = 1) -> callable:
 
     Examples
     --------
-    >>> @data(number_of_databases=2)
+    >>> @data(2)
     >>> def my_algorithm(first_df: pd.DataFrame, second_df: pd.DataFrame,
     >>>                  <other arguments>):
     >>>     pass
+
+    >>> @data("many", 3)
+    >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
+    >>>                  third_df: pd.DataFrame, <other arguments>):
+    >>>     pass
+
+    >>> @data("many", 1, "many")
+    >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
+    >>>                  many_df_2: list[pd.DataFrame], <other arguments>):
+    >>>     pass
     """
+    if not sources:
+        sources = (1,)
 
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
@@ -97,75 +113,38 @@ def data(number_of_databases: int = 1) -> callable:
                 return func(*mock_data, *args, **kwargs)
 
             # get the dataframe names that the user requested
-            dataframes = _get_user_dataframes()
+            dataframes_grouped = _get_user_dataframes()
 
             # check if user provided enough databases
-            if len(dataframes) < number_of_databases:
+            number_of_expected_arguments = len(sources)
+            if len(dataframes_grouped) < number_of_expected_arguments:
                 error(
-                    f"Algorithm requires {number_of_databases} databases "
-                    f"but only {len(dataframes)} were provided. "
+                    f"Algorithm requires {number_of_expected_arguments} databases "
+                    f"but only {len(dataframes_grouped)} were provided. "
                     "Exiting..."
                 )
                 exit(1)
-            elif len(dataframes) > number_of_databases:
+            elif len(dataframes_grouped) > number_of_expected_arguments:
                 warn(
-                    f"Algorithm requires only {number_of_databases} databases"
-                    f", but {len(dataframes)} were provided. Using the "
-                    f"first {number_of_databases} databases."
+                    f"Algorithm requires only {number_of_expected_arguments} databases"
+                    f", but {len(dataframes_grouped)} were provided. Using the "
+                    f"first {number_of_expected_arguments} databases."
                 )
 
-            for i in range(number_of_databases):
-
-                dataframe_name = dataframes[i]
+            for source, requested_dataframes in zip(sources, dataframes_grouped):
                 # read the data from the database
-                info("Reading dataframe")
-                data_ = _read_df_from_disk(dataframe_name)
+                data_ = [
+                    _read_df_from_disk(df_name) for df_name in requested_dataframes
+                ]
+
+                # if the source is not "many", we can just add the first (and only)
+                # dataframe to the arguments
+                if source.lower() != "many":
+                    data_ = data_[0]
 
                 # add the data to the arguments
                 args = (data_, *args)
 
-            return func(*args, **kwargs)
-
-        # set attribute that this function is wrapped in a data decorator
-        decorator.wrapped_in_data_decorator = True
-        return decorator
-
-    return protection_decorator
-
-
-def dataframes() -> callable:
-    """
-    Decorator that adds several dataframes to a function as single argument
-
-    Returns
-    -------
-    callable
-        Decorated function
-
-    Examples
-    --------
-    >>> @dataframes()
-    >>> def my_algorithm(dataframes: list[pd.DataFrame], <other arguments>):
-    >>>     pass
-    """
-
-    def protection_decorator(func: callable, *args, **kwargs) -> callable:
-
-        @wraps(func)
-        def decorator(
-            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
-        ) -> callable:
-            """
-            Wrap the function with the data
-            """
-            if mock_data is not None:
-                return func(*mock_data, *args, **kwargs)
-
-            # get the dataframe names that the user requested
-            dataframes = _get_user_dataframes()
-            for df_name in dataframes:
-                df = _read_df_from_disk(df_name)
-                args = (df, *args)
             return func(*args, **kwargs)
 
         # set attribute that this function is wrapped in a data decorator
