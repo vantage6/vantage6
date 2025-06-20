@@ -109,7 +109,7 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj) -> list[dict]:
-        """Returns the database label and type for all databases of a task.
+        """Returns the database metadata for all databases of a task.
 
         Arguments
         ---------
@@ -119,7 +119,7 @@ class TaskSchema(HATEOASModelSchema):
         Returns
         -------
             list[dict]
-                A list of dictionaries containing the database label and type.
+                A list of dictionaries containing the database metadata.
         """
         return [
             {
