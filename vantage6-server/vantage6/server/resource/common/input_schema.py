@@ -384,7 +384,7 @@ class TaskInputSchema(_NameValidationSchema):
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict(), allow_none=True)
+    databases = fields.List(fields.List(fields.Dict()), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
     action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))

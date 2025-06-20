@@ -287,7 +287,7 @@ class SessionDataframes(SessionBase):
                 method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
-                databases=[{"label": source_db_label, "type": "source"}],
+                databases=[[{"label": source_db_label, "type": "source"}]],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
@@ -573,7 +573,12 @@ class DataframePreprocessing(SessionBase):
         response, status_code = self.create_session_task(
             session=session,
             databases=[
-                {"dataframe_id": dataframe.id, "type": TaskDatabaseType.DATAFRAME}
+                [
+                    {
+                        "dataframe_id": dataframe.id,
+                        "type": TaskDatabaseType.DATAFRAME,
+                    }
+                ]
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],

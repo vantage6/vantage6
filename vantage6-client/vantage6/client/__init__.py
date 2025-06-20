@@ -1887,7 +1887,7 @@ class UserClient(ClientBase):
         @staticmethod
         def _parse_arg_databases(
             databases: list[list[dict]] | list[dict] | str,
-        ) -> list[dict]:
+        ) -> list[list[dict]]:
             """Parse the databases argument
 
             Parameters
@@ -1918,7 +1918,7 @@ class UserClient(ClientBase):
                 # str, in that case we convert it to a list
                 databases = [[{"label": databases}]]
 
-            # Its quite common to only specify a single level of databases, we assume
+            # It is common to only specify a single level of databases, we assume
             # that its not a many databases argument and convert it so that every
             # requested dataframe is handled as a single argument in the algorithm.
             if isinstance(databases, list) and not isinstance(databases[0], list):
