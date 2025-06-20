@@ -619,6 +619,20 @@ class DataframeInitInputSchema(Schema):
     # the data extraction task
     task = fields.Nested(SessionTaskInputSchema, required=True)
 
+    @validates("name")
+    def validate_name(self, name: str):
+        """
+        Validate the name in the input.
+        """
+        # Check that the name does not contain special characters or spaces, hyphens
+        # and underscores are allowed. We need to be safe as this name is used as the
+        # filename on the nodes. And ',' and ';' have special meaning in the
+        # environment variables.
+        if not re.match(r"^[a-zA-Z0-9-_]+$", name):
+            raise ValidationError(
+                "Name must contain only letters, numbers, hyphens and underscores"
+            )
+
 
 class DataframePreprocessingInputSchema(Schema):
     """

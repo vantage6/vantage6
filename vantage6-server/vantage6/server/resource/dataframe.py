@@ -254,6 +254,7 @@ class SessionDataframes(SessionBase):
                     "names are not allowed because they are stored on nodes by that "
                     "name."
                 }, HTTPStatus.BAD_REQUEST
+
         else:
             while True:
                 df_name = generate_name()

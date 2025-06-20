@@ -806,7 +806,7 @@ class ContainerManager:
                 groupby(databases_to_use, key=lambda x: x["position"])
             )
 
-            # groups are seperated by ';' and the dataframes are seperated by ','
+            # Groups are separated by ';' and the dataframes are separated by ','
             # so we need to join the dataframes and the groups
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
                 ";".join(
