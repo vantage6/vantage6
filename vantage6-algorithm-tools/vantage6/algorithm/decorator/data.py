@@ -47,11 +47,11 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     return pd.read_parquet(dataframe_file)
 
 
-def data(*sources: str | int) -> callable:
+def dataframe(*sources: str | int) -> callable:
     """
     Decorator that adds algorithm data to a function
 
-    By adding `@data()` to a function, one or several pandas dataframes will be
+    By adding `@dataframe()` to a function, one or several pandas dataframes will be
     added to the front of the argument list. This data will be read from the
     databases that the user who creates the task provides.
 
@@ -77,17 +77,17 @@ def data(*sources: str | int) -> callable:
 
     Examples
     --------
-    >>> @data(2)
+    >>> @dataframe(2)
     >>> def my_algorithm(first_df: pd.DataFrame, second_df: pd.DataFrame,
     >>>                  <other arguments>):
     >>>     pass
 
-    >>> @data("many", 3)
+    >>> @dataframe("many", 3)
     >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
     >>>                  third_df: pd.DataFrame, <other arguments>):
     >>>     pass
 
-    >>> @data("many", 1, "many")
+    >>> @dataframe("many", 1, "many")
     >>> def my_algorithm(many_df: list[pd.DataFrame], first_df: pd.DataFrame,
     >>>                  many_df_2: list[pd.DataFrame], <other arguments>):
     >>>     pass
@@ -152,3 +152,14 @@ def data(*sources: str | int) -> callable:
         return decorator
 
     return protection_decorator
+
+
+def dataframes() -> callable:
+    """
+    Decorator that adds multiple pandas dataframes to a function
+
+    By adding `@dataframes()` to a function, multiple pandas dataframes will be
+    added to the front of the argument list. This data will be read from the
+    databases that the user who creates the task provides.
+    """
+    return dataframe("many")
