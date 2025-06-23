@@ -7,7 +7,7 @@
   "partitioning": "horizontal",
   "functions": [
     {
-      "name": "global_sum_dev",
+      "name": "global_sum_dev_many",
       "display_name": "Sum Many",
       "standalone": true,
       "description": "Compute the global sum of a federated dataset",
