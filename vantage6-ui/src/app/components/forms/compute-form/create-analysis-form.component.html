@@ -187,8 +187,10 @@
           <form class="form" [formGroup]="dataframeForm">
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
             <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.dataframe" | translate }}</mat-label>
-              <mat-select formControlName="dataframeId">
+              <mat-label>{{ "task.dataframe" | translate }}{{ function?.databases?.[0] && isManyDatabaseType(function?.databases?.[0]) ? 's' : '' }}</mat-label>
+              <mat-select
+                formControlName="dataframeId"
+                [multiple]="function?.databases?.[0] && isManyDatabaseType(function?.databases?.[0])">
                 <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
                   {{ dataframe.name }}
                 </mat-option>

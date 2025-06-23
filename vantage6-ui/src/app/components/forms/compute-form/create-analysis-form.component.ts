@@ -19,7 +19,8 @@ import {
   AlgorithmFunction,
   Argument,
   AlgorithmFunctionExtended,
-  ConditionalArgComparatorType
+  ConditionalArgComparatorType,
+  FunctionDatabase
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
@@ -241,6 +242,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
+  }
+
+  isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
+    if (!db) return false;
+    return db.many === true;
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
@@ -466,7 +472,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      formCreateOutput.dataframes = [[{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }]];
+      const ids = this.dataframeForm.controls.dataframeId.value;
+      formCreateOutput.dataframes = [
+        (Array.isArray(ids) ? ids : [ids]).map(id => ({
+          dataframe_id: id,
+          type: TaskDatabaseType.Dataframe
+        }))
+      ];
     }
 
     this.onSubmit.next(formCreateOutput);
