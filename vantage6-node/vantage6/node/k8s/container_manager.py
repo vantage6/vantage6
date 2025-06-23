@@ -802,12 +802,15 @@ class ContainerManager:
             self._validate_dataframes(databases_to_use, run_io)
 
             # group and sort on the position of the database in the argument list
-            grouped_databases = sorted(
-                groupby(databases_to_use, key=lambda x: x["position"])
+            databases_to_use_sorted = sorted(
+                databases_to_use, key=lambda x: x["position"]
+            )
+            grouped_databases = groupby(
+                databases_to_use_sorted, key=lambda x: x["position"]
             )
 
-            # Groups are separated by ';' and the dataframes are separated by ','
-            # so we need to join the dataframes and the groups
+            # # Groups are separated by ';' and the dataframes are separated by ','
+            # # so we need to join the dataframes and the groups
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
                 ";".join(
                     [

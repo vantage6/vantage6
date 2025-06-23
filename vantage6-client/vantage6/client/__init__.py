@@ -1892,7 +1892,7 @@ class UserClient(ClientBase):
 
             Parameters
             ----------
-            databases: list[dict] | str
+            databases: list[list[dict]] | list[dict] | str
                 Each dict should contain at least a 'label' key. A single str
                 can be passed and will be interpreted as a single database with
                 that label.

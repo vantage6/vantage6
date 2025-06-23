@@ -466,7 +466,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
+      formCreateOutput.dataframes = [[{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }]];
     }
 
     this.onSubmit.next(formCreateOutput);

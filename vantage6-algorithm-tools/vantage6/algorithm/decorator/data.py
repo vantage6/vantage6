@@ -136,7 +136,7 @@ def dataframe(*sources: str | int) -> callable:
 
                 # if the source is not "many", we can just add the first (and only)
                 # dataframe to the arguments
-                if source.lower() != "many":
+                if str(source).lower() != "many":
                     data_ = _read_df_from_disk(requested_dataframes[0])
                 else:
                     data_ = {}
@@ -155,12 +155,12 @@ def dataframe(*sources: str | int) -> callable:
     return protection_decorator
 
 
-def dataframes() -> callable:
+def dataframes(func: callable) -> callable:
     """
     Decorator that adds multiple pandas dataframes to a function
 
-    By adding `@dataframes()` to a function, multiple pandas dataframes will be
+    By adding `@dataframes` to a function, multiple pandas dataframes will be
     added to the front of the argument list. This data will be read from the
     databases that the user who creates the task provides.
     """
-    return dataframe("many")
+    return dataframe("many")(func)

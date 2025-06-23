@@ -150,7 +150,7 @@ export interface CreateTask {
   study_id?: number;
   store_id: number;
   organizations: CreateTaskOrganization[];
-  databases: CreateTaskDatabase[];
+  databases: CreateTaskDatabase[][];
 }
 
 export interface KillTask {
