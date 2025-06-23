@@ -428,6 +428,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              many:
+                                type: boolean
+                                description: Whether more than one database is can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -594,6 +598,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    many=database.get("many", False),
                 )
                 db_.save()
             # create the visualizations
