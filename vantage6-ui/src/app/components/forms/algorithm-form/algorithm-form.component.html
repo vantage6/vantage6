@@ -274,6 +274,9 @@
                           <mat-label>{{ "general.description" | translate }}</mat-label>
                           <input matInput type="text" formControlName="description" />
                         </mat-form-field>
+                        <mat-checkbox formControlName="many">
+                          {{ "algorithm.function.databases.many" | translate }}
+                        </mat-checkbox>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteDatabase(functionFormGroup, dbIdx)">
                             {{ "algorithm-create.function.database.delete" | translate }}

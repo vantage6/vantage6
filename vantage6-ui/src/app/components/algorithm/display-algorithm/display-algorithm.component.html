@@ -179,6 +179,10 @@
                           <b>{{ "general.description" | translate }}</b>
                           <span>{{ db.description || "-" }}</span>
                         </div>
+                        <div class="data-list__item">
+                          <b>{{ "algorithm.function.databases.many" | translate }}</b>
+                          <span>{{ db.many ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+                        </div>
                       </div>
                     </ng-template>
                   </mat-expansion-panel>
