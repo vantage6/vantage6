@@ -187,10 +187,10 @@
           <form class="form" [formGroup]="dataframeForm">
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
             <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.dataframe" | translate }}{{ function?.databases?.[0] && isManyDatabaseType(function?.databases?.[0]) ? 's' : '' }}</mat-label>
+              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMany() ? 's' : '' }}</mat-label>
               <mat-select
                 formControlName="dataframeId"
-                [multiple]="function?.databases?.[0] && isManyDatabaseType(function?.databases?.[0])">
+                [multiple]="isFirstDatabaseMany()">
                 <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
                   {{ dataframe.name }}
                 </mat-option>
@@ -213,6 +213,14 @@
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
             <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+
+            <div *ngIf="isFirstDatabaseMany() && containsColumnArguments()" class="warning-message">
+              <app-alert
+                class="warning-alert"
+                label="{{ 'task-create.step-parameters.warning-column-list-many-dataframes' | translate }}"
+              ></app-alert>
+            </div>
+
             <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
               <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
               <ng-container *ngFor="let argument of sortArgumentsForDisplay(function?.arguments)">
@@ -300,8 +308,9 @@
           </form>
         </mat-step>
       </mat-stepper>
-      <button mat-flat-button color="primary" [disabled]="isFormInvalid()" (click)="handleSubmit()">
-        {{ "general.submit" | translate }}
+      <button mat-flat-button color="primary" [disabled]="isFormInvalid() || isSubmitting" (click)="handleSubmit()">
+        <mat-spinner *ngIf="isSubmitting" diameter="20" class="button-spinner"></mat-spinner>
+        <span *ngIf="!isSubmitting">{{ "general.submit" | translate }}</span>
       </button>
       <button mat-flat-button color="secondary" (click)="handleCancel()">
         {{ "general.cancel" | translate }}
