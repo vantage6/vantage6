@@ -1076,6 +1076,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        many=database.get("many", False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

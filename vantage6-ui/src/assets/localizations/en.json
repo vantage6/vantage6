@@ -344,7 +344,10 @@
           "short_header": "Only for UI"
         }
       },
-      "databases": "Databases",
+      "databases": {
+        "title": "Databases",
+        "many": "Can multiple databases be used?"
+      },
       "visualization": {
         "title": "Visualizations",
         "type": "Type of visualization",
