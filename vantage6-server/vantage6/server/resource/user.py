@@ -11,7 +11,6 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
-    InternalServerError,
     handle_exceptions,
 )
 from vantage6.server import db
