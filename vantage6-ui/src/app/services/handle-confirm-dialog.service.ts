@@ -2,7 +2,8 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, takeUntil } from 'rxjs';
 import { CallbackFunction } from 'src/app/models/general.model';
-import { ConfirmDialogComponent } from '../components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogComponent, BaseDialogData } from '../components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogOption } from '../models/application/confirmDialog.model';
 
 @Injectable({
   providedIn: 'root'
@@ -20,23 +21,31 @@ export class HandleConfirmDialogService implements OnDestroy {
     title: string,
     content: string,
     confirmButtonText: string,
-    confirmButtonType: string,
-    onSuccessfullDeleteFunc: CallbackFunction
+    confirmButtonType: 'primary' | 'warn' | 'accent',
+    onSuccessfullDeleteFunc: CallbackFunction,
+    secondOptionButtonText?: string,
+    secondOptionButtonType?: 'primary' | 'warn' | 'accent'
   ): Promise<void> {
+    const dialogData: BaseDialogData = {
+      title: title,
+      content: content,
+      confirmButtonText: confirmButtonText,
+      confirmButtonType: confirmButtonType
+    };
+    if (secondOptionButtonText) {
+      dialogData.secondOptionButtonText = secondOptionButtonText;
+      dialogData.secondOptionButtonType = secondOptionButtonType;
+    }
+
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: title,
-        content: content,
-        confirmButtonText: confirmButtonText,
-        confirmButtonType: confirmButtonType
-      }
+      data: dialogData
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           onSuccessfullDeleteFunc();
         }
       });

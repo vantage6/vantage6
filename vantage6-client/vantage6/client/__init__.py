@@ -1329,6 +1329,7 @@ class UserClient(ClientBase):
             organization: int = None,
             roles: list = [],
             rules: list = [],
+            create_in_keycloak: bool = True,
         ) -> dict:
             """Create new user
 
@@ -1361,6 +1362,8 @@ class UserClient(ClientBase):
                 Which data fields to keep in the returned dict. For instance,
                 "fields=['name', 'id']" will only return the names and ids of the
                 user. Default is None.
+            create_in_keycloak: bool, optional
+                Whether or not the user should be created in Keycloak. Default is True.
 
             Returns
             -------
@@ -1376,18 +1379,22 @@ class UserClient(ClientBase):
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
+                "create_in_keycloak": create_in_keycloak,
             }
             return self.parent.request("user", json=user_data, method="post")
 
-        def delete(self, id_: int) -> None:
+        def delete(self, id_: int, delete_from_keycloak: bool = True) -> None:
             """Delete user
 
             Parameters
             ----------
             id_ : int
                 Id of the user you want to delete
+            delete_from_keycloak: bool, optional
+                If True, the user will be deleted from Keycloak. Default is True.
             """
-            res = self.parent.request(f"user/{id_}", method="delete")
+            params = {"delete_from_keycloak": delete_from_keycloak}
+            res = self.parent.request(f"user/{id_}", method="delete", params=params)
             self.parent.log.info(f'--> {res.get("msg")}')
 
     class Role(ClientBase.SubClient):

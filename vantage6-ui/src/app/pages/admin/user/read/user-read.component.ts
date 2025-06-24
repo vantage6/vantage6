@@ -20,6 +20,9 @@ import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/m
 import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
 import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-user-read',
@@ -60,7 +63,8 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
     private userService: UserService,
     protected override translateService: TranslateService,
     private permissionService: PermissionService,
-    private ruleService: RuleService
+    private ruleService: RuleService,
+    private dialog: MatDialog
   ) {
     super(handleConfirmDialogService, translateService);
   }
@@ -97,18 +101,33 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
   }
 
   async handleDelete(): Promise<void> {
-    this.handleDeleteBase(
-      this.user,
-      this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
-      this.translateService.instant('user-read.delete-dialog.content'),
-      this.executeDeleteUser.bind(this)
-    );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
+        content: this.translateService.instant('user-read.delete-dialog.content'),
+        confirmButtonText: this.translateService.instant('user-read.delete-dialog.delete-with-keycloak'),
+        confirmButtonType: 'warn',
+        secondOptionButtonText: this.translateService.instant('user-read.delete-dialog.delete-without-keycloak'),
+        secondOptionButtonType: 'accent'
+      }
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === ConfirmDialogOption.PRIMARY) {
+          this.executeDeleteUser(true);
+        } else if (result === ConfirmDialogOption.SECONDARY) {
+          this.executeDeleteUser(false);
+        }
+      });
   }
 
-  protected async executeDeleteUser(): Promise<void> {
+  protected async executeDeleteUser(deleteInKeycloak: boolean): Promise<void> {
     if (!this.user) return;
     this.isLoading = true;
-    await this.userService.deleteUser(this.user.id);
+    await this.userService.deleteUser(this.user.id, deleteInKeycloak);
     this.router.navigate([routePaths.users]);
   }
 
