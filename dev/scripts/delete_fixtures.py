@@ -1,0 +1,58 @@
+"""
+Development script to delete all entities from the server
+
+The `devspace` commands use this script to clean all tasks, nodes,
+collaborations, etc. from the server.
+"""
+
+
+def delete_fixtures(client):
+
+    # Track deletion counts
+    deletion_counts = {}
+
+    # Delete sessions & dataframes
+    sessions = client.session.list(per_page=999)["data"]
+    for session in sessions:
+        client.session.delete(session["id"], delete_dependents=True)
+    deletion_counts["sessions"] = len(sessions)
+
+    # Delete tasks and nodes
+    for client_subclass_name in ("task", "node"):
+        client_subclass = getattr(client, client_subclass_name)
+        entities = client_subclass.list(per_page=999)["data"]
+        for entity in entities:
+            client_subclass.delete(entity["id"])
+        deletion_counts[f"{client_subclass_name}s"] = len(entities)
+
+    # Delete collaborations
+    collabs = client.collaboration.list(per_page=999, scope="global")["data"]
+    for collab in collabs:
+        client.collaboration.delete(collab["id"])
+    deletion_counts["collaborations"] = len(collabs)
+
+    # Delete users (excluding admin)
+    users = client.user.list(per_page=999)["data"]
+    deleted_users = 0
+    for user in users:
+        if user["username"] == "admin":
+            continue
+        client.user.delete(user["id"])
+        deleted_users += 1
+    deletion_counts["users"] = deleted_users
+
+    # Delete organizations (excluding root)
+    orgs = client.organization.list(per_page=999)["data"]
+    deleted_orgs = 0
+    for org in orgs:
+        if org["name"] == "root":
+            continue
+        client.organization.delete(org["id"])
+        deleted_orgs += 1
+    deletion_counts["organizations"] = deleted_orgs
+
+    # Print summary
+    print("=== Deletion Summary ===")
+    for entity_type, count in deletion_counts.items():
+        print(f"Deleted {count} {entity_type}")
+    print("=======================")
