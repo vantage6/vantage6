@@ -12,7 +12,11 @@ from vantage6.client import Client
 dev_dir = Path("dev") / ".data"
 dev_dir.mkdir(exist_ok=True)
 
-client = Client("http://localhost", 7601, "/server", log_level="error")
+client = Client(
+    server_url="http://localhost:7601/server",
+    auth_url="http://localhost:8080",
+    log_level="error",
+)
 client.authenticate()
 
 print("=> Deleting sessions & dataframes")

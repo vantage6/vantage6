@@ -2,12 +2,12 @@
 Common functions that are used in node CLI commands
 """
 
-import questionary as q
+import os
 import docker
 from colorama import Fore, Style
 
 from vantage6.common import error, info, debug
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
 from vantage6.client import UserClient
 
 from vantage6.cli.context.node import NodeContext
@@ -35,7 +35,11 @@ def create_client(ctx: NodeContext) -> UserClient:
     port = ctx.config["port"]
     api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
-    return UserClient(host, port, api_path, log_level="warn")
+    return UserClient(
+        server_url=f"{host}:{port}{api_path}",
+        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+        log_level="warn",
+    )
 
 
 def create_client_and_authenticate(ctx: NodeContext) -> UserClient:

@@ -20,25 +20,22 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = "/api") -> None:
+    def __init__(self, server_url: str, auth_url: str) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
-        host : str
-            Address (including protocol, e.g. `https://`) of the vantage6 server
-        port : int
-            port number to which the server listens
-        path : str, optional
-            path of the api, by default '/api'
+        server_url : str
+            URL of the vantage6 server you want to connect to
+        auth_url : str
+            URL of the vantage6 auth server (keycloak) you want to authenticate with
         """
 
         self.log = logging.getLogger(module_name)
 
         # server settings
-        self.__host = host
-        self.__port = port
-        self.__api_path = path
+        self.__server_url = server_url
+        self.__auth_url = auth_url
 
         # tokens
         self._access_token = None
@@ -89,55 +86,23 @@ class ClientBase(object):
         return self._access_token
 
     @property
-    def host(self) -> str:
+    def server_url(self) -> str:
         """
-        Host including protocol (HTTP/HTTPS)
+        URL of the vantage6 server
 
         Returns
         -------
         str
             Host address of the vantage6 server
         """
-        return self.__host
+        return self.__server_url
 
     @property
-    def port(self) -> int:
+    def auth_url(self) -> str:
         """
-        Port on which vantage6 server listens
-
-        Returns
-        -------
-        int
-            Port number
+        URL of the vantage6 auth server (keycloak)
         """
-        return self.__port
-
-    @property
-    def path(self) -> str:
-        """
-        Path/endpoint at the server where the api resides
-
-        Returns
-        -------
-        str
-            Path to the api
-        """
-        return self.__api_path
-
-    @property
-    def base_path(self) -> str:
-        """
-        Full path to the server URL. Combination of host, port and api-path
-
-        Returns
-        -------
-        str
-            Server URL
-        """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
+        return self.__auth_url
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint
@@ -155,7 +120,7 @@ class ClientBase(object):
             URL to the endpoint
         """
         if not is_for_algorithm_store:
-            base_path = self.base_path
+            base_path = self.server_url
         else:
             try:
                 base_path = self.store.url

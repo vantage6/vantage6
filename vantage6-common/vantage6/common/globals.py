@@ -94,9 +94,12 @@ class ContainerEnvNames(str, Enum):
 class RequiredNodeEnvVars(str, Enum):
     """Enum containing the required node environment variables"""
 
-    KEYCLOAK_URL = "KEYCLOAK_URL"
     V6_API_KEY = "V6_API_KEY"
     V6_NODE_NAME = "V6_NODE_NAME"
+    KEYCLOAK_URL = "KEYCLOAK_URL"
+    KEYCLOAK_REALM = "KEYCLOAK_REALM"
+    KEYCLOAK_CLIENT = "KEYCLOAK_CLIENT"
+    KEYCLOAK_CLIENT_SECRET = "KEYCLOAK_CLIENT_SECRET"
 
 
 class AuthStatus(str, Enum):
