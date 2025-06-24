@@ -26,7 +26,7 @@ def create_fixtures(
     task_namespace,
     node_starting_port_number,
     dev_dir,
-):
+) -> str:
 
     # Track creation details
     creation_details = {
@@ -180,73 +180,69 @@ def create_fixtures(
             except Exception as e:
                 print(f"Error creating node {name}: {str(e)}")
 
-    # Print detailed summary
-    print("=== Creation Summary ===")
+    # Build detailed summary string
+    summary = "=== Creation Summary ===\n"
 
-    print(
-        f"\nOrganizations: {len(creation_details['organizations']['created'])} "
-        f"created, {len(creation_details['organizations']['existing'])} existing"
-    )
+    summary += f"\nOrganizations: {len(creation_details['organizations']['created'])} "
+    summary += f"created, {len(creation_details['organizations']['existing'])} existing"
     if creation_details["organizations"]["created"]:
-        print("  Created:")
+        summary += "\n  Created:"
         for org in creation_details["organizations"]["created"]:
-            print(f"    - {org['name']} ({org['domain']})")
+            summary += f"\n    - {org['name']} ({org['domain']})"
     if creation_details["organizations"]["existing"]:
-        print("  Existing:")
+        summary += "\n  Existing:"
         for org in creation_details["organizations"]["existing"]:
-            print(f"    - {org['name']} ({org['domain']})")
+            summary += f"\n    - {org['name']} ({org['domain']})"
 
-    print(
-        f"\nUsers: {len(creation_details['users']['created'])} created, "
-        f"{len(creation_details['users']['existing'])} existing"
-    )
+    summary += f"\n\nUsers: {len(creation_details['users']['created'])} created, "
+    summary += f"{len(creation_details['users']['existing'])} existing"
     if creation_details["users"]["created"]:
-        print("  Created:")
+        summary += "\n  Created:"
         for user in creation_details["users"]["created"]:
-            print(
-                f"    - {user['username']} ({user['email']}) - Password: "
-                f"{user['password']} - Org: {user['organization']}"
-            )
+            summary += f"\n    - {user['username']} ({user['email']}) - Password: "
+            summary += f"{user['password']} - Org: {user['organization']}"
     if creation_details["users"]["existing"]:
-        print("  Existing:")
+        summary += "\n  Existing:"
         for user in creation_details["users"]["existing"]:
-            print(
-                f"    - {user['username']} ({user['email']}) - Org: "
-                f"{user['organization']}"
-            )
+            summary += f"\n    - {user['username']} ({user['email']}) - Org: "
+            summary += f"{user['organization']}"
 
-    print(
-        f"\nNodes: {len(creation_details['nodes']['created'])} created, "
-        f"{len(creation_details['nodes']['existing'])} existing"
-    )
+    summary += f"\n\nNodes: {len(creation_details['nodes']['created'])} created, "
+    summary += f"{len(creation_details['nodes']['existing'])} existing"
     if creation_details["nodes"]["created"]:
-        print("  Created:")
+        summary += "\n  Created:"
         for node in creation_details["nodes"]["created"]:
-            print(f"    - {node['name']} (Org: {node['organization']})")
-            print(f"      API Key: {node['api_key']}")
-            print(f"      Config: {node['config_file']}")
-            print(f"      Env: {node['env_file']}")
+            summary += f"\n    - {node['name']} (Org: {node['organization']})"
+            summary += f"\n      API Key: {node['api_key']}"
+            summary += f"\n      Config: {node['config_file']}"
+            summary += f"\n      Env: {node['env_file']}"
     if creation_details["nodes"]["existing"]:
-        print("  Existing:")
+        summary += "\n  Existing:"
         for node in creation_details["nodes"]["existing"]:
-            print(f"    - {node['name']} (Org: {node['organization']})")
+            summary += f"\n    - {node['name']} (Org: {node['organization']})"
 
-    print(
-        f"\nCollaborations: {len(creation_details['collaborations']['created'])} "
+    summary += (
+        f"\n\nCollaborations: {len(creation_details['collaborations']['created'])} "
+    )
+    summary += (
         f"created, {len(creation_details['collaborations']['existing'])} existing"
     )
     if creation_details["collaborations"]["created"]:
-        print("  Created:")
+        summary += "\n  Created:"
         for collab in creation_details["collaborations"]["created"]:
-            print(f"    - {collab['name']} (ID: {collab['id']})")
+            summary += f"\n    - {collab['name']} (ID: {collab['id']})"
     if creation_details["collaborations"]["existing"]:
-        print("  Existing:")
+        summary += "\n  Existing:"
         for collab in creation_details["collaborations"]["existing"]:
-            print(f"    - {collab['name']} (ID: {collab['id']})")
+            summary += f"\n    - {collab['name']} (ID: {collab['id']})"
 
     if creation_details["dev_folders_cleared"]:
-        print(f"\nDev folders cleared: {len(creation_details['dev_folders_cleared'])}")
+        summary += (
+            f"\n\nDev folders cleared: {len(creation_details['dev_folders_cleared'])}"
+        )
         for folder in creation_details["dev_folders_cleared"]:
-            print(f"  - {folder}")
+            summary += f"\n  - {folder}"
 
-    print("\n=======================")
+    summary += "\n\n======================="
+    print(summary)
+    return summary

@@ -5,7 +5,7 @@ Development script to delete all entities from the server
 from vantage6.client import Client
 
 
-def delete_fixtures(client: Client) -> None:
+def delete_fixtures(client: Client) -> str:
     """
     Delete all entities from the server.
 
@@ -58,8 +58,10 @@ def delete_fixtures(client: Client) -> None:
         deleted_orgs += 1
     deletion_counts["organizations"] = deleted_orgs
 
-    # Print summary
-    print("=== Deletion Summary ===")
+    # Create summary string
+    summary = "=== Deletion Summary ===\n"
     for entity_type, count in deletion_counts.items():
-        print(f"Deleted {count} {entity_type}")
-    print("=======================")
+        summary += f"Deleted {count} {entity_type}\n"
+    summary += "======================="
+    print(summary)
+    return summary

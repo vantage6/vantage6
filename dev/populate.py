@@ -36,12 +36,19 @@ parser.add_argument(
         "Additional nodes will use consecutive ports incremented by 1 from this value."
     ),
 )
+parser.add_argument(
+    "--populate-marker",
+    type=str,
+    default=".devspace/vantage6_populate_done",
+    help="Path to the populate marker file",
+)
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
 task_directory = args.task_directory
 task_namespace = args.task_namespace
 node_starting_port_number = args.starting_port_number
+populate_marker = args.populate_marker
 
 #
 # Required directories
@@ -104,8 +111,8 @@ while attempt <= max_attempts:
 # also want the development environment to start in case something fails.
 #
 try:
-    delete_fixtures(client)
-    create_fixtures(
+    report_deletion = delete_fixtures(client)
+    report_creation = create_fixtures(
         client,
         number_of_nodes,
         task_directory,
@@ -113,7 +120,13 @@ try:
         node_starting_port_number,
         dev_data_dir,
     )
-    connect_store(client, dev_dir)
+    report_store = connect_store(client, dev_dir)
+
+    # Create marker file
+    with open(populate_marker, "w") as f:
+        f.write(report_deletion + "\n" + report_creation + "\n" + report_store)
+
+
 except Exception as e:
     print("=" * 80)
     print("Failed to populate server")

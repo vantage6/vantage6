@@ -10,7 +10,7 @@ from vantage6.common.enum import AlgorithmStepType
 from vantage6.client import Client
 
 
-def connect_store(client: Client, dev_dir: Path) -> None:
+def connect_store(client: Client, dev_dir: Path) -> str:
     """
     Connect the server to the local store.
 
@@ -24,6 +24,7 @@ def connect_store(client: Client, dev_dir: Path) -> None:
 
     existing_stores = client.store.list().get("data", [])
     existing_urls = [store["url"] for store in existing_stores]
+    summary = "=== Store Connection Summary ===\n"
 
     # URL should be retrieved from the store, see issue:
     # https://github.com/vantage6/vantage6/issues/1824
@@ -31,7 +32,7 @@ def connect_store(client: Client, dev_dir: Path) -> None:
     client.store.url = local_store_url
     client.store.store_id = 1
     if local_store_url not in existing_urls:
-        print("Registering local store")
+        summary += "Registering local store\n"
         store_response = client.store.create(
             algorithm_store_url=local_store_url,
             name="Local store",
@@ -45,7 +46,7 @@ def connect_store(client: Client, dev_dir: Path) -> None:
     all_users = client.user.list()["data"]
     for user in all_users:
         if user["keycloak_id"] not in [u["keycloak_id"] for u in users_in_store]:
-            print(f"Registering user {user['username']} in local store")
+            summary += f"Registering user {user['username']} in local store\n"
             client.store.user.register(username=user["username"], roles=[1])
 
     # Remove existing algorithm
@@ -54,13 +55,14 @@ def connect_store(client: Client, dev_dir: Path) -> None:
     # client.store.set(id_=store_response["id"])
     algorithms = client.algorithm.list(name="session basic example")["data"]
     if len(algorithms) > 0:
-        print(f"Removing existing algorithm {algorithms[0]['name']}")
+        summary += f"Removing existing algorithm {algorithms[0]['name']}\n"
         client.algorithm.delete(id_=algorithms[0]["id"])
 
     with open(dev_dir / "v6-session-basic-algorithm-store.json", "r") as f:
         algorithm_store = json.load(f)
         function_metadata = algorithm_store["functions"]
 
+    summary += "Creating Session Basics algorithm\n"
     client.algorithm.create(
         name="Session Basics",
         description="A set of basic algorithms for a session management",
@@ -71,6 +73,7 @@ def connect_store(client: Client, dev_dir: Path) -> None:
         functions=function_metadata,
     )
 
+    summary += "Creating Network Diagnostics algorithm\n"
     client.algorithm.create(
         name="Network Diagnostics",
         description=(
@@ -136,3 +139,5 @@ def connect_store(client: Client, dev_dir: Path) -> None:
             },
         ],
     )
+
+    return summary
