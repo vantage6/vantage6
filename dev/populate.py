@@ -65,7 +65,11 @@ dev_data_dir.mkdir(exist_ok=True)
 # initialized yet. The first step it to wait till we can authenticate with the keycloak
 # service, then we check if the server is fully initialized by checking if the admin
 # user is present.
-client = Client("http://localhost", 7601, "/server", log_level="error")
+client = Client(
+    server_url="http://localhost:7601/server",
+    auth_url="http://localhost:8080",
+    log_level="error",
+)
 print("Waiting for authentication...")
 max_attempts = 120
 attempt = 1
