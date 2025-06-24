@@ -1,9 +1,8 @@
 """
 Development script to populate the server
-
-The `devspace` commands use this script to populate the server with basic
-fixtures.
 """
+
+from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -11,7 +10,7 @@ from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
 from vantage6.client import Client
 
 
-def clear_dev_folder(dev_dir, name):
+def clear_dev_folder(dev_dir: Path, name: str) -> None:
     node_dev_dir = dev_dir / name
     if node_dev_dir.exists():
         for file_ in node_dev_dir.iterdir():
@@ -185,7 +184,8 @@ def create_fixtures(
     print("=== Creation Summary ===")
 
     print(
-        f"\nOrganizations: {len(creation_details['organizations']['created'])} created, {len(creation_details['organizations']['existing'])} existing"
+        f"\nOrganizations: {len(creation_details['organizations']['created'])} "
+        f"created, {len(creation_details['organizations']['existing'])} existing"
     )
     if creation_details["organizations"]["created"]:
         print("  Created:")
@@ -197,23 +197,27 @@ def create_fixtures(
             print(f"    - {org['name']} ({org['domain']})")
 
     print(
-        f"\nUsers: {len(creation_details['users']['created'])} created, {len(creation_details['users']['existing'])} existing"
+        f"\nUsers: {len(creation_details['users']['created'])} created, "
+        f"{len(creation_details['users']['existing'])} existing"
     )
     if creation_details["users"]["created"]:
         print("  Created:")
         for user in creation_details["users"]["created"]:
             print(
-                f"    - {user['username']} ({user['email']}) - Password: {user['password']} - Org: {user['organization']}"
+                f"    - {user['username']} ({user['email']}) - Password: "
+                f"{user['password']} - Org: {user['organization']}"
             )
     if creation_details["users"]["existing"]:
         print("  Existing:")
         for user in creation_details["users"]["existing"]:
             print(
-                f"    - {user['username']} ({user['email']}) - Org: {user['organization']}"
+                f"    - {user['username']} ({user['email']}) - Org: "
+                f"{user['organization']}"
             )
 
     print(
-        f"\nNodes: {len(creation_details['nodes']['created'])} created, {len(creation_details['nodes']['existing'])} existing"
+        f"\nNodes: {len(creation_details['nodes']['created'])} created, "
+        f"{len(creation_details['nodes']['existing'])} existing"
     )
     if creation_details["nodes"]["created"]:
         print("  Created:")
@@ -228,7 +232,8 @@ def create_fixtures(
             print(f"    - {node['name']} (Org: {node['organization']})")
 
     print(
-        f"\nCollaborations: {len(creation_details['collaborations']['created'])} created, {len(creation_details['collaborations']['existing'])} existing"
+        f"\nCollaborations: {len(creation_details['collaborations']['created'])} "
+        f"created, {len(creation_details['collaborations']['existing'])} existing"
     )
     if creation_details["collaborations"]["created"]:
         print("  Created:")

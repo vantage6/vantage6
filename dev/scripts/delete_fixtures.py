@@ -1,12 +1,19 @@
 """
 Development script to delete all entities from the server
-
-The `devspace` commands use this script to clean all tasks, nodes,
-collaborations, etc. from the server.
 """
 
+from vantage6.client import Client
 
-def delete_fixtures(client):
+
+def delete_fixtures(client: Client) -> None:
+    """
+    Delete all entities from the server.
+
+    Arguments
+    ---------
+    client: Client
+        The client to use to delete the entities.
+    """
 
     # Track deletion counts
     deletion_counts = {}

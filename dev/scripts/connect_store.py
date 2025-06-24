@@ -1,17 +1,26 @@
 """
-Development script to configure the server
-
-The `devspace` commands use this script to connect the server to the local
-store.
+Development script to connect the server to the local store.
 """
 
 import json
-from vantage6.client import Client
+
 from pathlib import Path
+
 from vantage6.common.enum import AlgorithmStepType
+from vantage6.client import Client
 
 
-def connect_store(client, dev_dir):
+def connect_store(client: Client, dev_dir: Path) -> None:
+    """
+    Connect the server to the local store.
+
+    Arguments
+    ---------
+    client: Client
+        The client to use to connect to the server.
+    dev_dir: Path
+        The directory to use to store the development data.
+    """
 
     existing_stores = client.store.list().get("data", [])
     existing_urls = [store["url"] for store in existing_stores]
@@ -64,7 +73,11 @@ def connect_store(client, dev_dir):
 
     client.algorithm.create(
         name="Network Diagnostics",
-        description="Functions to diagnose network policies, that is, to what extent the jobs running on a V6 Node could have access to the internal k8s network or to the outside world.",
+        description=(
+            "Functions to diagnose network policies, that is, to what extent the "
+            "jobs running on a V6 Node could have access to the internal k8s network "
+            "or to the outside world."
+        ),
         image="ghcr.io/hcadavid/v6-sessions-k8s-diagnostics:latest",
         vantage6_version="5.0.0",
         code_url="https://github.com/hcadavid/v6-sessions-k8s-diagnostics",
@@ -82,7 +95,11 @@ def connect_store(client, dev_dir):
                         "has_default_value": True,
                         "name": "sleep_time",
                         "display_name": "Delay ",
-                        "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the POD running and access it to perform further tests) ",
+                        "description": (
+                            "Delay in seconds before finishing the the diagnostics "
+                            "task (useful to keep the POD running and access it to "
+                            "perform further tests) "
+                        ),
                         "type": "integer",
                         "default_value": "1",
                         "is_frontend_only": False,
@@ -94,7 +111,10 @@ def connect_store(client, dev_dir):
                 "name": "central_network_diagnostics",
                 "display_name": "Get the network diagnostics performed on all the nodes",
                 "standalone": True,
-                "description": "Get the network diagnostics performed on all the nodes within a collaboration",
+                "description": (
+                    "Get the network diagnostics performed on all the nodes within a "
+                    "collaboration"
+                ),
                 "ui_visualizations": [],
                 "step_type": AlgorithmStepType.CENTRAL_COMPUTE.value,
                 "arguments": [
@@ -102,7 +122,11 @@ def connect_store(client, dev_dir):
                         "has_default_value": True,
                         "name": "sleep_time",
                         "display_name": "Delay ",
-                        "description": "Delay in seconds before finishing the the diagnostics task (useful to keep the PODs running on all the nodes to access them and perform further inspections) ",
+                        "description": (
+                            "Delay in seconds before finishing the the diagnostics "
+                            "task (useful to keep the PODs running on all the nodes "
+                            "to access them and perform further inspections) "
+                        ),
                         "type": "integer",
                         "default_value": "1",
                         "is_frontend_only": False,
