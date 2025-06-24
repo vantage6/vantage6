@@ -3,6 +3,8 @@ name: vantage6git
 
 # TODO using tags isnt safe with the devspace build stuff
 vars:
+  CURRENT_NAMESPACE:
+    command: kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null | grep -v "^null$" | grep -v "^$" || echo "default"
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
@@ -185,6 +187,7 @@ deployments:
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
+          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
           logging:
             level: DEBUG
           jwt:
@@ -206,6 +209,7 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
+          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
           logging:
             level: DEBUG
           vantage6Server:
@@ -247,6 +251,7 @@ deployments:
         node:
           image: ${NODE_IMAGE}
           numberOfNodes: ${NUMBER_OF_NODES}
+          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:

@@ -50,6 +50,7 @@ import {
   UserActivityService,
   includeBearerTokenInterceptor
 } from 'keycloak-angular';
+import { environment } from 'src/environments/environment';
 
 // Send the Keycloak token along with all requests when the user is authenticated.
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
@@ -60,9 +61,9 @@ const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
 export const provideKeycloakAngular = () =>
   provideKeycloak({
     config: {
-      realm: 'vantage6',
-      url: 'http://localhost:8080',
-      clientId: 'myclient'
+      realm: environment.keycloak_realm,
+      url: environment.auth_url,
+      clientId: environment.keycloak_client
     },
     initOptions: {
       onLoad: 'check-sso',

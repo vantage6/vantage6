@@ -29,7 +29,7 @@ keycloak:
             realmRoles:
               - admin
         clients:
-          - clientId: myclient
+          - clientId: public_client
             publicClient: true
             redirectUris:
               - "*"
@@ -47,32 +47,19 @@ keycloak:
                   userinfo.token.claim: true
                   id.token.claim: true
                   access.token.claim: true
-          - clientId: backend
+          - clientId: backend-admin-client
             publicClient: false
             redirectUris:
               - "*"
-            secret: mysecret
-          - clientId: admin-client
-            publicClient: false
-            redirectUris:
-              - "*"
-            secret: myadminsecret
+            secret: myadminclientsecret
             directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
             standardFlowEnabled: true
-          - clientId: vantage6-store-client
+          - clientId: backend-user-client
             publicClient: false
             redirectUris:
               - "*"
-            secret: mystoreregularclientsecret
-          - clientId: vantage6-store-admin-client
-            publicClient: false
-            redirectUris:
-              - "*"
-            secret: mystoreclientsecret
-            directAccessGrantsEnabled: true
-            serviceAccountsEnabled: true
-            standardFlowEnabled: true
+            secret: myuserclientsecret
           - clientId: node-client
             publicClient: false
             redirectUris:

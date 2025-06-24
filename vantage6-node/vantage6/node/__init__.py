@@ -113,7 +113,7 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
-        self.log.info(f"Connecting server: {self.client.base_path}")
+        self.log.info("Connecting server: %s", self.client.server_url)
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -140,9 +140,11 @@ class Node:
 
     def _setup_node_client(self, config: dict) -> NodeClient:
         return NodeClient(
-            host=config.get("server_url"),
-            port=config.get("port"),
-            path=config.get("api_path"),
+            server_url=(
+                f"{config.get('server_url')}:{config.get('port')}"
+                f"{config.get('api_path')}"
+            ),
+            auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
             api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
         )
@@ -155,8 +157,9 @@ class Node:
         server.
         """
 
-        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
-        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default
+        # values for it as its value (a FQDN) depends on the namespace where the
+        # K8S-service with the node is running.
         if "PROXY_SERVER_HOST" in os.environ:
             proxy_host = os.environ.get("PROXY_SERVER_HOST")
             os.environ["PROXY_SERVER_HOST"] = proxy_host
@@ -174,8 +177,9 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        proxy_server.server_url = self.client.base_path
+        # The value on the module variable 'server_url' defines the target of the
+        # 'make_request' method.
+        proxy_server.server_url = self.client.server_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
             proxy_server.server_url,
@@ -473,7 +477,7 @@ class Node:
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
         self.log.info(
-            "Are you sure the server can be reached at %s?", self.client.base_path
+            "Are you sure the server can be reached at %s?", self.client.server_url
         )
 
     def authenticate(self) -> None:
@@ -579,7 +583,7 @@ class Node:
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=f"{self.client.host}:{self.client.port}",
+            url=self.client.server_url,
             headers=self.client.headers,
             wait=False,
         )
@@ -597,9 +601,7 @@ class Node:
             time.sleep(1)
             i += 1
 
-        self.log.info(
-            f"Connected to host={self.client.host} on port=" f"{self.client.port}"
-        )
+        self.log.info("Connected to server at %s", self.client.server_url)
 
         self.log.debug(
             "Starting thread to ping the server to notify this node is online."
