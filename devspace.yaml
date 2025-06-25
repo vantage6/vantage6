@@ -1,6 +1,10 @@
 version: v2beta1
 name: vantage6git
 
+# Import external profile configurations
+imports:
+  - path: dev/pipeline/profiles.yaml
+
 # TODO using tags isnt safe with the devspace build stuff
 vars:
   CURRENT_NAMESPACE:
@@ -40,23 +44,40 @@ vars:
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
-  DEVSPACE_ENV_FILE: ".devspace/.env"
   KEYCLOAK_URL:
-    default: ""
+    source: env
+    default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
   KEYCLOAK_REALM:
-    default: ""
-  KEYCLOAK_USER_CLIENT:
-    default: ""
-  KEYCLOAK_USER_CLIENT_SECRET:
-    default: ""
+    source: env
+    default: vantage6
+  KEYCLOAK_FRONTEND_CLIENT:
+    source: env
+    default: public_client
+  KEYCLOAK_BACKEND_CLIENT:
+    source: env
+    default: backend-user-client
+  KEYCLOAK_BACKEND_CLIENT_SECRET:
+    source: env
+    default: myuserclientsecret
   KEYCLOAK_ADMIN_CLIENT:
-    default: ""
+    source: env
+    default: backend-admin-client
   KEYCLOAK_ADMIN_CLIENT_SECRET:
-    default: ""
+    source: env
+    default: myadminclientsecret
   KEYCLOAK_ADMIN_USERNAME:
-    default: ""
+    source: env
+    default: admin
   KEYCLOAK_ADMIN_PASSWORD:
-    default: ""
+    source: env
+    default: admin
+  KEYCLOAK_NODE_CLIENT:
+    source: env
+    default: node-client
+  KEYCLOAK_NODE_CLIENT_SECRET:
+    source: env
+    default: mynodeclientsecret
+  DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
 
@@ -95,15 +116,13 @@ pipelines:
       ensure_pull_secrets --all
       create_deployments \
         vantage6-server \
-        vantage6-store \
-        vantage6-auth
+        vantage6-store
       start_dev \
         vantage6-server \
         vantage6-server-db \
         vantage6-ui \
         vantage6-store \
-        vantage6-store-db \
-        vantage6-auth
+        vantage6-store-db
 
   node:
     run: |-
@@ -181,7 +200,6 @@ images:
 deployments:
 
   vantage6-auth:
-    name: vantage6-auth
     helm:
       chart:
         name: ./charts/auth
@@ -199,14 +217,20 @@ deployments:
   # store is deployed separately as it can have an many-to-many relationship with the
   # server (This is also why they are in separate Helm charts).
   vantage6-server:
-    name: vantage6-server
     helm:
       chart:
         name: ./charts/server
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           jwt:
@@ -215,6 +239,9 @@ deployments:
             host_uri: ${HOST_URI}
         ui:
           image: ${UI_IMAGE}
+          keycloakPublicUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
@@ -222,14 +249,20 @@ deployments:
 
   # The store deployment contains the store and the database.
   vantage6-store:
-    name: vantage6-store
     helm:
       chart:
         name: ./charts/store
       values:
         store:
           image: ${STORE_IMAGE}
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           vantage6Server:
@@ -262,7 +295,6 @@ deployments:
   # the `dev_start.py` script. This allows us to run multiple nodes in a single
   # container. The good part about this is that all nodes receive hot-reloaded code :)
   vantage6-node:
-    name: vantage6-node
     helm:
       chart:
         name: ./charts/node
@@ -272,7 +304,10 @@ deployments:
         node:
           image: ${NODE_IMAGE}
           numberOfNodes: ${NUMBER_OF_NODES}
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_NODE_CLIENT}
+          keycloakClientSecret: ${KEYCLOAK_NODE_CLIENT_SECRET}
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
@@ -365,9 +400,9 @@ dev:
       - port: 7633:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
 
-  # This puts the store container in development mode.
   vantage6-ui:
     imageSelector: ${UI_IMAGE}
+    command: ["/app/startup/dev_startup.sh"]
     sync:
     # TODO ideally we'd include the entire dir vantage6-ui/ but that leads to issues
     # with the node_modules dir, as well as with the JSON files. Usually changing these
@@ -420,51 +455,6 @@ dev:
       inject: true
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
-
-
-# profile to run without local Keycloak. Run this with `devspace dev --profile no-local-auth`
-profiles:
-  - name: no-local-auth
-    patches:
-      - op: remove
-        path: deployments.name=vantage6-auth
-      - op: replace
-        path: deployments.name=vantage6-server.helm.values.server.keycloakUrl
-        value: $KEYCLOAK_URL
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakRealm
-        value: $KEYCLOAK_REALM
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakUserClient
-        value: $KEYCLOAK_USER_CLIENT
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakUserClientSecret
-        value: $KEYCLOAK_USER_CLIENT_SECRET
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminClient
-        value: $KEYCLOAK_ADMIN_CLIENT
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminClientSecret
-        value: $KEYCLOAK_ADMIN_CLIENT_SECRET
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminUsername
-        value: $KEYCLOAK_ADMIN_USERNAME
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminPassword
-        value: $KEYCLOAK_ADMIN_PASSWORD
-      - op: replace
-        path: deployments.name=vantage6-store.helm.values.store.keycloakUrl
-        value: $KEYCLOAK_URL
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.ui.keycloakPublicUrl
-        value: $KEYCLOAK_URL
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.ui.keycloakRealm
-        value: $KEYCLOAK_REALM
-      - op: add
-        path: deployments.name=vantage6-server.helm.values.ui.keycloakUserClient
-        value: $KEYCLOAK_USER_CLIENT
-
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:

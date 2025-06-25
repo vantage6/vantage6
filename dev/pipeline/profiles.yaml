@@ -1,0 +1,28 @@
+# Profile to run without local Keycloak
+# This profile removes the local Keycloak deployment and configures all components to
+# use external Keycloak
+version: v2beta1
+profiles:
+- name: no-local-auth
+  patches:
+  # Remove the auth deployment from the deployments section
+  - op: remove
+    path: deployments.vantage6-auth
+  # Remove vantage6-auth from the server pipeline create_deployments command
+  - op: replace
+    path: pipelines.server.run
+    value: |-
+      run_dependencies --all
+      ensure_pull_secrets --all
+      create_deployments \
+        vantage6-server \
+        vantage6-store
+      start_dev \
+        vantage6-server \
+        vantage6-server-db \
+        vantage6-ui \
+        vantage6-store \
+        vantage6-store-db
+  # Remove the auth deployment from the dev section
+  - op: remove
+    path: dev.vantage6-auth
