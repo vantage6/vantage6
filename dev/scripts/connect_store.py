@@ -33,13 +33,13 @@ def connect_store(client: Client, dev_dir: Path) -> str:
     client.store.store_id = 1
     if local_store_url not in existing_urls:
         summary += "Registering local store\n"
-        store_response = client.store.create(
+        client.store.create(
             algorithm_store_url=local_store_url,
             name="Local store",
             all_collaborations=True,
         )
     else:
-        store_response = client.store.list(name="Local store")["data"][0]
+        client.store.list(name="Local store")["data"][0]
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]
@@ -51,8 +51,6 @@ def connect_store(client: Client, dev_dir: Path) -> str:
 
     # Remove existing algorithm
     # This is broken, see issue: https://github.com/vantage6/vantage6/issues/1824
-    # client.store.url = store_response["url"]
-    # client.store.set(id_=store_response["id"])
     algorithms = client.algorithm.list(name="session basic example")["data"]
     if len(algorithms) > 0:
         summary += f"Removing existing algorithm {algorithms[0]['name']}\n"

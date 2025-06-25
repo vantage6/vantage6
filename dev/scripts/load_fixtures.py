@@ -7,7 +7,6 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
-from vantage6.client import Client
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
