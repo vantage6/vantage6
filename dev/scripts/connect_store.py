@@ -38,8 +38,6 @@ def connect_store(client: Client, dev_dir: Path) -> str:
             name="Local store",
             all_collaborations=True,
         )
-    else:
-        client.store.list(name="Local store")["data"][0]
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]
