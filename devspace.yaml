@@ -40,6 +40,23 @@ vars:
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
+  DEVSPACE_ENV_FILE: ".devspace/.env"
+  KEYCLOAK_URL:
+    default: ""
+  KEYCLOAK_REALM:
+    default: ""
+  KEYCLOAK_USER_CLIENT:
+    default: ""
+  KEYCLOAK_USER_CLIENT_SECRET:
+    default: ""
+  KEYCLOAK_ADMIN_CLIENT:
+    default: ""
+  KEYCLOAK_ADMIN_CLIENT_SECRET:
+    default: ""
+  KEYCLOAK_ADMIN_USERNAME:
+    default: ""
+  KEYCLOAK_ADMIN_PASSWORD:
+    default: ""
 
 pipelines:
 
@@ -174,6 +191,7 @@ images:
 deployments:
 
   vantage6-auth:
+    name: vantage6-auth
     helm:
       chart:
         name: ./charts/auth
@@ -191,6 +209,7 @@ deployments:
   # store is deployed separately as it can have an many-to-many relationship with the
   # server (This is also why they are in separate Helm charts).
   vantage6-server:
+    name: vantage6-server
     helm:
       chart:
         name: ./charts/server
@@ -213,6 +232,7 @@ deployments:
 
   # The store deployment contains the store and the database.
   vantage6-store:
+    name: vantage6-store
     helm:
       chart:
         name: ./charts/store
@@ -252,6 +272,7 @@ deployments:
   # the `dev_start.py` script. This allows us to run multiple nodes in a single
   # container. The good part about this is that all nodes receive hot-reloaded code :)
   vantage6-node:
+    name: vantage6-node
     helm:
       chart:
         name: ./charts/node
@@ -410,6 +431,49 @@ dev:
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 
+
+# profile to run without local Keycloak. Run this with `devspace dev --profile no-local-auth`
+profiles:
+  - name: no-local-auth
+    patches:
+      - op: remove
+        path: deployments.name=vantage6-auth
+      - op: replace
+        path: deployments.name=vantage6-server.helm.values.server.keycloakUrl
+        value: $KEYCLOAK_URL
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakRealm
+        value: $KEYCLOAK_REALM
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakUserClient
+        value: $KEYCLOAK_USER_CLIENT
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakUserClientSecret
+        value: $KEYCLOAK_USER_CLIENT_SECRET
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminClient
+        value: $KEYCLOAK_ADMIN_CLIENT
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminClientSecret
+        value: $KEYCLOAK_ADMIN_CLIENT_SECRET
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminUsername
+        value: $KEYCLOAK_ADMIN_USERNAME
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.server.keycloakAdminPassword
+        value: $KEYCLOAK_ADMIN_PASSWORD
+      - op: replace
+        path: deployments.name=vantage6-store.helm.values.store.keycloakUrl
+        value: $KEYCLOAK_URL
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.ui.keycloakPublicUrl
+        value: $KEYCLOAK_URL
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.ui.keycloakRealm
+        value: $KEYCLOAK_REALM
+      - op: add
+        path: deployments.name=vantage6-server.helm.values.ui.keycloakUserClient
+        value: $KEYCLOAK_USER_CLIENT
 
 
 # Use the `commands` section to define repeatable dev workflows for this project
