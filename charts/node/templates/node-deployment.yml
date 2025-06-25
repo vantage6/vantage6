@@ -50,15 +50,15 @@ spec:
           mountPath: /app/databases/{{ .name }}.{{ .type }}
           subPath: {{ .originalName }}
         {{- end }}
-      {{- range .Values.node.databases.fileBased }}
       volumes:
-      - name: database-volume-{{ .name }}
-      {{- end }}
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-node-database-pvc
       - name: task-files-root
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-vantage6-node-task-pvc
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
+      {{- range .Values.node.databases.fileBased }}
+      - name: database-volume-{{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-database-pvc
+      {{- end }}
