@@ -9,6 +9,7 @@
 
 POPULATE_MARKER=$1
 
+
 # Validate that the POPULATE_MARKER argument is provided
 if [ -z "${POPULATE_MARKER}" ]; then
   echo "Error: POPULATE_MARKER argument is required."
@@ -19,27 +20,20 @@ fi
 # Check if the marker file exists
 if [ ! -f "${POPULATE_MARKER}" ]; then
   echo "Do you want to populate vantage6 server with some example data? (y/n)"
-  read -r answer
+  read -n 1 -s -r answer
   if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-    # Run the pipeline to populate the server
-    echo "Starting to populate vantage6 server..."
-    devspace run-pipeline init
-    INIT_STATUS=$?
-    if [ $INIT_STATUS -eq 0 ]; then
-      echo "Populating vantage6 server completed successfully."
-      # Create the marker file to indicate the server has been populated
-      mkdir -p .devspace
-      touch "${POPULATE_MARKER}"
-    else
-      echo "Error: Failed to populate vantage6 server. The init pipeline did not complete successfully (exit code: $INIT_STATUS)."
-      exit $INIT_STATUS
-    fi
-  else
-    # Create the marker file so that we do not bother the user again
+    echo "Populating vantage6 server and starting development environment..."
     touch "${POPULATE_MARKER}"
+    devspace run-pipeline all-with-populate
+  else
     echo "Skipping populating vantage6 server."
+    devspace run-pipeline all-without-populate
   fi
 else
   # Skip population if the marker file already exists
   echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."
+  devspace run-pipeline all-without-populate
 fi
+
+
+

@@ -64,40 +64,30 @@ pipelines:
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
-      dev/populate_server.sh ${POPULATE_MARKER}
-      run_dependencies --all
+      dev/start.sh ${POPULATE_MARKER}
+
+  populate:
+    run: |-
+      python dev/populate.py \
+        --number-of-nodes $NUMBER_OF_NODES \
+        --task-directory $TASK_DIRECTORY \
+        --task-namespace $TASK_NAMESPACE \
+        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
+
+  all-without-populate:
+    run: |-
       run_pipelines \
         server \
         node \
         --sequential
 
-  # Initialize a development vantage6 network. This will create the necessary
-  # entities at the server (e.g. organizations, nodes, etc.), generate the node
-  # configuration files (stores these in the `dev/.data` directory) and finally
-  # connects the local store to the server.
-  # TODO register the diagnostics image in the algorithm store
-  init:
+  all-with-populate:
     run: |-
-      run_dependencies --all
-      ensure_pull_secrets --all
-      create_deployments \
-        vantage6-server \
-        vantage6-store \
-        vantage6-auth
-      start_dev \
-        vantage6-server \
-        vantage6-store \
-        vantage6-auth
-      # TODO replace this with a retry mechanism
-      echo "Waiting for server to start..."
-      python dev/delete-basic-fixtures.py
-      python dev/load-basic-fixtures.py \
-        --number-of-nodes $NUMBER_OF_NODES \
-        --task-directory $TASK_DIRECTORY \
-        --task-namespace $TASK_NAMESPACE \
-        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
-      python dev/connect-store.py
-      stop_dev --all
+      run_pipelines \
+        server \
+        populate \
+        node \
+        --sequential
 
   server:
     run: |-
