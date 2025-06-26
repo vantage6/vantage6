@@ -406,7 +406,8 @@ class Users(UserBase):
           201:
             description: Ok
           400:
-            description: Username or email already exists
+            description: Username or email already exists or in case of setting
+              create_in_keycloak to false, the user is missing in Keycloak
           401:
             description: Unauthorized
           404:
