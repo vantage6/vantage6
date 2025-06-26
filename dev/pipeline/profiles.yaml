@@ -1,7 +1,9 @@
 # Profile to run without local Keycloak
 # This profile removes the local Keycloak deployment and configures all components to
 # use external Keycloak
-# You can use this profile by running `devspace run start-dev --profile no-local-auth`
+# You can use this profile by running `devspace run start-dev --profile no-local-auth`.
+# When doing so, also make sure to set the environment variables in the `.devspace/.env`
+# file.
 version: v2beta1
 profiles:
 - name: no-local-auth
