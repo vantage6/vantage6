@@ -8,17 +8,24 @@
       <mat-label>{{ "user.email" | translate }}</mat-label>
       <input matInput type="text" formControlName="email" />
     </mat-form-field>
-    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
-      <mat-label>{{ "user.password" | translate }}</mat-label>
-      <input matInput type="password" formControlName="password" />
-      <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "password.validation.length" | translate }}</mat-error>
-      <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "password.validation.pattern" | translate }}</mat-error>
-    </mat-form-field>
-    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
-      <mat-label>{{ "user.password-repeat" | translate }}</mat-label>
-      <input matInput type="password" formControlName="passwordRepeat" />
-      <mat-error *ngIf="form.hasError('compare')">{{ "password.validation.compare" | translate }}</mat-error>
-    </mat-form-field>
+    <div *ngIf="!isEdit">
+      <mat-checkbox formControlName="create_in_keycloak" color="primary" labelPosition="after">
+        {{ "user.create-in-keycloak" | translate }}
+      </mat-checkbox>
+      <div *ngIf="form.controls.create_in_keycloak.value">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "user.password" | translate }}</mat-label>
+          <input matInput type="password" formControlName="password" />
+          <mat-error *ngIf="form.controls.password.hasError('minlength')">{{ "password.validation.length" | translate }}</mat-error>
+          <mat-error *ngIf="form.controls.password.hasError('pattern')">{{ "password.validation.pattern" | translate }}</mat-error>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ "user.password-repeat" | translate }}</mat-label>
+          <input matInput type="password" formControlName="passwordRepeat" />
+          <mat-error *ngIf="form.hasError('compare')">{{ "password.validation.compare" | translate }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.first-name" | translate }}</mat-label>
       <input matInput type="text" formControlName="firstname" />

@@ -50,16 +50,27 @@ class BadRequestError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
+class InternalServerError(Exception):
+    """
+    Exception raised for internal server errors.
+    """
+
+    def __init__(self, message):
+        self.message = message
+        self.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+
+
 def handle_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except UnauthorizedError as e:
-            return {"msg": e.message}, e.status_code
-        except NotFoundError as e:
-            return {"msg": e.message}, e.status_code
-        except BadRequestError as e:
+        except (
+            UnauthorizedError,
+            NotFoundError,
+            BadRequestError,
+            InternalServerError,
+        ) as e:
             return {"msg": e.message}, e.status_code
         except Exception as e:
             log.exception(e)

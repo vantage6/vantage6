@@ -27,6 +27,7 @@ import { TableData } from 'src/app/models/application/table.model';
 import { SearchRequest, TableComponent } from 'src/app/components/table/table.component';
 import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-session-read',
@@ -203,7 +204,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.session) return;
           this.isLoading = true;
           await this.sessionService.deleteSession(this.session.id);

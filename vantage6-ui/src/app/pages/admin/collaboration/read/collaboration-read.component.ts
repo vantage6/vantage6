@@ -35,6 +35,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { TableComponent } from '../../../../components/table/table.component';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-collaboration-read',
@@ -181,7 +182,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.collaboration) return;
           this.isLoading = true;
           await this.collaborationService.deleteCollaboration(this.collaboration.id.toString());
@@ -236,7 +237,7 @@ export class CollaborationReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.collaboration || !this.selectedAlgoStore) return;
           await this.algorithmStoreService.delete(this.selectedAlgoStore.id.toString());
 

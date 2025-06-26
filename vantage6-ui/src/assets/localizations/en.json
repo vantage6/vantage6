@@ -760,7 +760,8 @@
     "last-name": "Last name",
     "organization": "Organization",
     "roles": "Roles",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "create-in-keycloak": "Create user in Keycloak"
   },
   "user-list": {
     "title": "Users",
@@ -776,7 +777,9 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the user '{{name}}'?",
-      "content": "Note, this will also delete all analyses this user created.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses this user created. This operation cannot be undone.\nPlease also choose if you want to delete the linked Keycloak account as well.",
+      "delete-with-keycloak": "Delete user from vantage6 and Keycloak",
+      "delete-without-keycloak": "Delete user from vantage6 only"
     }
   },
   "user-edit": {

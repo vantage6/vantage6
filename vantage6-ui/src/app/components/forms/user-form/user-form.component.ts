@@ -22,6 +22,7 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatCheckbox } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-user-form',
@@ -37,6 +38,7 @@ import { TranslateModule } from '@ngx-translate/core';
     MatSelect,
     NgFor,
     MatOption,
+    MatCheckbox,
     MatHint,
     PermissionsMatrixServerComponent,
     AlertComponent,
@@ -53,6 +55,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     {
       username: ['', [Validators.required]],
       email: ['', [Validators.required]],
+      create_in_keycloak: [true],
       password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
       firstname: '',
@@ -61,7 +64,9 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
       roles: [{ value: [] as number[], disabled: true }],
       rules: [{ value: [] as number[], disabled: true }]
     },
-    { validators: [createCompareValidator('password', 'passwordRepeat')] }
+    {
+      validators: [createCompareValidator('password', 'passwordRepeat')]
+    }
   );
 
   organizationRoles: Role[] = [];
@@ -93,6 +98,13 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.isEdit = !!this.user;
     this.setPermissions();
 
+    // initialize validators for password and passwordRepeat and update them when
+    // create_in_keycloak changes
+    this.togglePasswordValidators(this.form.controls.create_in_keycloak.value);
+    this.form.controls.create_in_keycloak.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((createInKeycloak) => {
+      this.togglePasswordValidators(createInKeycloak);
+    });
+
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
@@ -108,6 +120,16 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     }
 
     this.isLoading = false;
+  }
+
+  private togglePasswordValidators(createInKeycloak: boolean): void {
+    if (createInKeycloak) {
+      this.form.controls.password.enable();
+      this.form.controls.passwordRepeat.enable();
+    } else {
+      this.form.controls.password.disable();
+      this.form.controls.passwordRepeat.disable();
+    }
   }
 
   private setupForm(): void {

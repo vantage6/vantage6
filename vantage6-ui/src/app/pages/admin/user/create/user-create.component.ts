@@ -13,9 +13,9 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-user-create',
-    templateUrl: './user-create.component.html',
-    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner, TranslateModule]
+  selector: 'app-user-create',
+  templateUrl: './user-create.component.html',
+  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class UserCreateComponent extends BaseCreateComponent {
   constructor(
@@ -29,6 +29,10 @@ export class UserCreateComponent extends BaseCreateComponent {
     this.isSubmitting = true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userCreate: UserCreate = (({ passwordRepeat, ...data }) => data)(userForm as UserForm);
+    // don't send password if user doesn't have to be created in keycloak
+    if (!userCreate.create_in_keycloak) {
+      delete userCreate.password;
+    }
     const user = await this.userService.createUser(userCreate);
     if (user.id) {
       this.router.navigate([routePaths.users]);

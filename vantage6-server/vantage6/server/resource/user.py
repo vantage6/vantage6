@@ -5,11 +5,14 @@ from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
-from keycloak import KeycloakAdmin
+from keycloak import KeycloakAdmin, KeycloakDeleteError
 from sqlalchemy import select
 
 from vantage6.common import logger_name
-from vantage6.backend.common.resource.error_handling import handle_exceptions
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    handle_exceptions,
+)
 from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,
@@ -23,7 +26,10 @@ from vantage6.server.resource import (
     ServicesResources,
 )
 from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
-from vantage6.server.resource.common.input_schema import UserInputSchema
+from vantage6.server.resource.common.input_schema import (
+    UserDeleteInputSchema,
+    UserInputSchema,
+)
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     UserSchema,
@@ -113,6 +119,7 @@ def permissions(permissions: PermissionManager) -> None:
 user_schema = UserSchema()
 user_input_schema = UserInputSchema()
 user_schema_with_permissions = UserWithPermissionDetailsSchema()
+user_delete_input_schema = UserDeleteInputSchema()
 
 
 class UserBase(ServicesResources):
@@ -389,12 +396,18 @@ class Users(UserBase):
                   email:
                     type: string
                     description: Email address
+                  create_in_keycloak:
+                    type: boolean
+                    description: Whether the user should be created in Keycloak.
+                      If true, the user will be created in Keycloak. If false,
+                      the user will not be created in Keycloak. Default is true.
 
         responses:
           201:
             description: Ok
           400:
-            description: Username or email already exists
+            description: Username or email already exists or in case of setting
+              create_in_keycloak to false, the user is missing in Keycloak
           401:
             description: Unauthorized
           404:
@@ -473,7 +486,10 @@ class Users(UserBase):
 
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
-        keycloak_id = self._create_user_in_keycloak(data)
+        if data.get("create_in_keycloak"):
+            keycloak_id = self._create_user_in_keycloak(data)
+        else:
+            keycloak_id = self._verify_user_in_keycloak(data)
 
         user = db.User(
             username=data["username"],
@@ -491,7 +507,7 @@ class Users(UserBase):
 
     def _create_user_in_keycloak(self, data):
         keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.create_user(
+        return keycloak_admin.create_user(
             {
                 "username": data["username"],
                 "email": data["email"],
@@ -499,10 +515,20 @@ class Users(UserBase):
                 "firstName": data["firstname"],
                 "lastName": data["lastname"],
                 "credentials": [
-                    {"type": "password", "value": data["password"], "temporary": True}
+                    {
+                        "type": "password",
+                        "value": data["password"],
+                        "temporary": True,
+                    }
                 ],
             }
         )
+
+    def _verify_user_in_keycloak(self, data):
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_id = keycloak_admin.get_user_id(data["username"])
+        if keycloak_id is None:
+            raise BadRequestError("User does not exist in Keycloak")
         return keycloak_id
 
 
@@ -834,6 +860,12 @@ class User(UserBase):
               type: boolean
             description: If set to true, the user will be deleted along with
               all tasks they created (default=False)
+          - in: query
+            name: delete_from_keycloak
+            schema:
+              type: boolean
+            description: If set to true, the user will be deleted from Keycloak
+              (default=True)
 
         responses:
           200:
@@ -848,6 +880,15 @@ class User(UserBase):
 
         tags: ["User"]
         """
+        params = request.args
+        try:
+            params = user_delete_input_schema.load(params)
+        except ValidationError as e:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
+
         user = db.User.get(id)
         if not user:
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
@@ -861,7 +902,6 @@ class User(UserBase):
 
         # check if user created any tasks
         if user.created_tasks:
-            params = request.args
             if not params.get("delete_dependents", False):
                 return {
                     "msg": f"User has created {len(user.created_tasks)} tasks."
@@ -870,19 +910,27 @@ class User(UserBase):
                     "automatically together with this user."
                 }, HTTPStatus.BAD_REQUEST
             else:
-                log.warn(
-                    f"Deleting {len(user.created_tasks)} tasks created by"
-                    f" user id={id}"
+                log.warning(
+                    "Deleting %s tasks created by user id=%s",
+                    len(user.created_tasks),
+                    id,
                 )
                 for task in user.created_tasks:
                     task.delete()
 
-        self._delete_user_in_keycloak(user)
+        if params.get("delete_from_keycloak", True):
+            self._delete_user_in_keycloak(user)
+        else:
+            log.info("User id=%s will not be deleted from Keycloak", id)
 
         user.delete()
-        log.info(f"user id={id} is removed from the database")
+        log.info("user id=%s is removed from the database", id)
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK
 
     def _delete_user_in_keycloak(self, user):
         keycloak_admin = getKeyCloakAdminClient()
-        keycloak_admin.delete_user(user.keycloak_id)
+        try:
+            keycloak_admin.delete_user(user.keycloak_id)
+        except KeycloakDeleteError as exc:
+            log.exception(exc)
+            raise BadRequestError("User could not be deleted from Keycloak") from exc
