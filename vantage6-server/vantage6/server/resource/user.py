@@ -920,7 +920,7 @@ class User(UserBase):
         if params.get("delete_from_keycloak", True):
             self._delete_user_in_keycloak(user)
         else:
-            log.warning("User id=%s will not be deleted from Keycloak", id)
+            log.info("User id=%s will not be deleted from Keycloak", id)
 
         user.delete()
         log.info("user id=%s is removed from the database", id)
