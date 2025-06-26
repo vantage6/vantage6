@@ -27,6 +27,8 @@ if [ ! -f "${POPULATE_MARKER}" ]; then
     devspace run-pipeline all-with-populate
   else
     echo "Skipping populating vantage6 server."
+    # Create the marker file to prevent asking the user again
+    touch "${POPULATE_MARKER}"
     devspace run-pipeline all-without-populate
   fi
 else
