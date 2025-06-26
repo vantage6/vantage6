@@ -45,7 +45,7 @@ collaborations. The server contains users, organizations, collaborations, tasks 
 their results. It provides a central access point for both the clients and nodes. The
 nodes have access to privacy sensitive data and handle computation requests retrieved
 from the server. Computation request are executed as separate containers on the node.
-These containers are connected to containers at other nodes by a VPN network._
+These containers are connected to containers at other nodes by a internal network._
 
 ## :books: Quickstart
 
@@ -160,11 +160,7 @@ with `VERSION` being the full semantic version of the vantage6 infrastructure, e
 Several other images are used to support the infrastructure:
 
 - `harbor2.vantage6.ai/infrastructure/infrastructure-base:VERSION` -> _Base image for the infrastructure_
-- `harbor2.vantage6.ai/infrastructure/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
 - `harbor2.vantage6.ai/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
-- `harbor2.vantage6.ai/infrastructure/vpn-client` -> _VPN image used to connect to the VPN_
-- `harbor2.vantage6.ai/infrastructure/vpn-configurator` -> _VPN image used for initialization_
-- `harbor2.vantage6.ai/infrastructure/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
 
 And finally there are some images released for algorithm development:
 

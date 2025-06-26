@@ -29,8 +29,6 @@ DEFAULT_ALPINE_IMAGE = "infrastructure/alpine:latest"
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-VPN_CONFIG_FILE = "vpn-config.ovpn.conf"
-
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
