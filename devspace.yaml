@@ -132,7 +132,6 @@ pipelines:
         vantage6-node
 
   purge:
-    # Careful with destructive rm commands like `rm -rf ${p}/*`!!
     run: |-
       echo "Purging all deployments..."
       stop_dev --all
@@ -404,10 +403,12 @@ dev:
     imageSelector: ${UI_IMAGE}
     command: ["/app/startup/dev_startup.sh"]
     sync:
-    # TODO ideally we'd include the entire dir vantage6-ui/ but that leads to issues
-    # with the node_modules dir, as well as with the JSON files. Usually changing these
-    # would require image rebuild but it's not transparent.
+    # Ideally we'd include the entire dir vantage6-ui/ but that leads to issues
+    # with the node_modules dir, as well as with the JSON files. Changing these
+    # usually requires image rebuild so it's not a big deal, but also not ideal.
     - path: ./vantage6-ui/src/:/app/src/
+      disableDownload: true
+    - path: ./vantage6-ui/startup/:/app/startup/
       disableDownload: true
     ports:
       - port: 7600:80
