@@ -49,7 +49,7 @@ class AlgorithmStoreResources(BaseServicesResources):
 
 def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
     """
-    Authenticate with a vantage6 server.
+    Authenticate with a vantage6 algorithm store.
 
     Returns
     -------
@@ -64,9 +64,11 @@ def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
 
     keycloak_openid = KeycloakOpenID(
         server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-        client_id="vantage6-store-client",
-        realm_name="vantage6",
-        client_secret_key="mystoreregularclientsecret",
+        client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_USER_CLIENT.value),
+        realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
+        client_secret_key=os.environ.get(
+            RequiredServerEnvVars.KEYCLOAK_USER_CLIENT_SECRET.value
+        ),
     )
 
     try:

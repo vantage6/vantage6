@@ -10,6 +10,16 @@ server:
   baseUrl: http://localhost:7601
   apiPath: /server
 
+  # Keycloak configuration
+  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakRealm: vantage6
+  keycloakAdminUsername: admin
+  keycloakAdminPassword: admin
+  keycloakAdminClient: backend-admin-client
+  keycloakAdminClientSecret: myadminclientsecret
+  keycloakUserClient: backend-user-client
+  keycloakUserClientSecret: myuserclientsecret
+
   internal:
     port: 7601
 
@@ -105,3 +115,7 @@ ui:
   image: harbor2.vantage6.ai/infrastructure/ui:latest
   # Service port for the UI
   port: 7600
+  # keycloak client
+  keycloakClient: public_client
+  # keycloak public URL
+  keycloakPublicUrl: http://localhost:8080

@@ -33,7 +33,9 @@ spec:
         - name: PROXY_SERVER_HOST
           value: http://{{ .Release.Name }}-node-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         - name: KEYCLOAK_URL
-          value: http://vantage6-auth-keycloak.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+          value: "{{ .Values.node.keycloakUrl }}"
+        - name: KEYCLOAK_REALM
+          value: {{ .Values.node.keycloakRealm }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
@@ -48,15 +50,15 @@ spec:
           mountPath: /app/databases/{{ .name }}.{{ .type }}
           subPath: {{ .originalName }}
         {{- end }}
-      {{- range .Values.node.databases.fileBased }}
       volumes:
-      - name: database-volume-{{ .name }}
-      {{- end }}
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-node-database-pvc
       - name: task-files-root
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-vantage6-node-task-pvc
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
+      {{- range .Values.node.databases.fileBased }}
+      - name: database-volume-{{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-database-pvc
+      {{- end }}

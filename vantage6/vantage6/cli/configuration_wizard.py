@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import questionary as q
@@ -9,6 +10,7 @@ from vantage6.common.globals import (
     NodePolicy,
     Ports,
     DEFAULT_API_PATH,
+    RequiredNodeEnvVars,
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
@@ -171,9 +173,8 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     client = NodeClient(
         instance_name,
         config["api_key"],
-        config["server_url"],
-        config["port"],
-        config["api_path"],
+        server_url=f"{config['server_url']}:{config['port']}{config['api_path']}",
+        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
     )
     try:
         client.authenticate()

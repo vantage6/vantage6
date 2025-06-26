@@ -135,10 +135,16 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://cotopaxi.vantage6.ai or
-                                             # http://localhost for a local dev server
-   server_port = 443 # This is specified when you first created the server
-   server_api = "" # This is specified when you first created the server
+   # Server address, e.g. https://cotopaxi.vantage6.ai/api, or http://localhost:7601/api
+   # for a local dev server
+   server_url = "https://<my_server_url>:<my_port>/<my_api_path>"
+   # Auth server address (keycloak), e.g. https://auth.cotopaxi.vantage6.ai/, or
+   # http://localhost:8080 for a local dev server
+   auth_url = "https://<my_auth_url>:<my_port>"
+
+   # Realm and client id of the auth server (keycloak)
+   keycloak_realm = "vantage6"
+   keycloak_client = "public_client"
 
    organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
 
@@ -158,8 +164,13 @@ object, and authenticating
    import config
 
    # Initialize the client object, and run the authentication
-   client = Client(config.server_url, config.server_port, config.server_api,
-                   log_level='debug')
+   client = Client(
+       server_url=config.server_url,
+       auth_url=config.auth_url,
+       auth_realm=config.keycloak_realm,
+       auth_client=config.keycloak_client,
+       log_level='debug'
+   )
    client.authenticate()
 
    # Optional: setup the encryption, if you have an organization_key

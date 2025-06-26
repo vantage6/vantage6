@@ -42,13 +42,24 @@ module_name = __name__.split(".")[1]
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, log_level="info", **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        auth_realm: str = "vantage6",
+        auth_client: str = "public_client",
+        log_level="info",
+        **kwargs,
+    ) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
 
         Parameters
         ----------
+        auth_realm : str, optional
+            The Keycloak realm to use for authentication, by default 'vantage6'
+        auth_client : str, optional
+            The Keycloak client to use for authentication, by default 'public_client'
         log_level : str, optional
             The log level to use, by default 'info'
         """
@@ -56,6 +67,9 @@ class UserClient(ClientBase):
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
+
+        self.auth_realm = auth_realm
+        self.auth_client = auth_client
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -78,10 +92,9 @@ class UserClient(ClientBase):
         self.session_id = None
 
         self.kc_openid = KeycloakOpenID(
-            server_url="http://localhost:8080",
-            client_id="myclient",
-            realm_name="vantage6",
-            client_secret_key=None,  # Public client
+            server_url=self.auth_url,
+            client_id=self.auth_client,
+            realm_name=self.auth_realm,
         )
 
         # Display welcome message
