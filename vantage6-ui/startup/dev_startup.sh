@@ -26,10 +26,6 @@ get_env_hash_from_env_js() {
     envjs_keycloak_realm=$(grep "keycloak_realm" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
     envjs_keycloak_client=$(grep "keycloak_client" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
     envjs_auth_url=$(grep "auth_url" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
-    # envjs_api_url=$(grep "api_url" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
-    # envjs_server_url=$(grep "server_url" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
-    # envjs_api_path=$(grep "api_path" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
-    # envjs_allowed_algorithm_stores=$(grep "allowed_algorithm_stores" /app/src/assets/env.js | cut -d'=' -f2 | cut -d'"' -f2)
     echo "$envjs_keycloak_realm$envjs_keycloak_client$envjs_auth_url" | md5sum | cut -d' ' -f1
 }
 
