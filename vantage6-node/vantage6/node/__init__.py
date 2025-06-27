@@ -30,7 +30,6 @@ import queue
 import sys
 import time
 import threading
-import shutil
 import requests.exceptions
 import psutil
 import pynvml

@@ -8,11 +8,11 @@ from pathlib import Path
 import requests
 
 from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import (
     STRING_ENCODING,
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
-    STRING_ENCODING,
 )
 
 module_name = __name__.split(".")[1]
@@ -534,7 +534,7 @@ class ClientBase(object):
             response = request_func(f"task/{task_id}/status")
             status = response.get("status")
 
-            if has_task_finished(status):
+            if TaskStatus.has_finished(status):
                 _log_completion(task_id, start_time, log_animation)
                 break
 
