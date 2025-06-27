@@ -793,26 +793,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     // set columns if dataframe is selected
     this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
+      this.columns = [];
+      let dataframe = null;
       if (Array.isArray(dataframeID) && dataframeID.length > 0) {
         // For multi-select, use the first selected dataframe to get columns
-        const firstDataframeId = dataframeID[0];
-        const dataframe = this.dataframes.find((_) => _.id === Number(firstDataframeId));
-        if (dataframe) {
-          this.setColumns(dataframe);
-        } else {
-          this.columns = [];
-        }
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
       } else if (dataframeID) {
         // For single select
-        const dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
-        if (dataframe) {
-          this.setColumns(dataframe);
-        } else {
-          this.columns = [];
-        }
-      } else {
-        // No selection
-        this.columns = [];
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      }
+      if (dataframe) {
+        this.setColumns(dataframe);
       }
     });
 
