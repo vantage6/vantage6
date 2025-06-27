@@ -106,9 +106,7 @@ class MockAlgorithmClient:
             org_data = []
             for dataset in org_datasets:
                 db = dataset.get("database")
-                if isinstance(db, pd.DataFrame):
-                    df = db
-                elif isinstance(db, dict):
+                if isinstance(db, pd.DataFrame) or isinstance(db, dict):
                     df = db
                 else:
                     df = load_data(
