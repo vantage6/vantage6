@@ -1929,8 +1929,13 @@ class UserClient(ClientBase):
                     label_input = db.get("label")
                 except AttributeError:
                     raise ValueError(
-                        "Databases specified should be a list of dicts with"
-                        "label keys or a single str"
+                        "Each database should be specified as a dict with at least "
+                        "a 'label' key. Alternatively, a single str can be passed "
+                        "and will be interpreted as a single database with that "
+                        "label. These dicts can be nested in a list of lists to "
+                        "specify multiple databases for each argument. Example: "
+                        "databases=[[{'label': 'db1'}, {'label': 'db2'}], "
+                        "[{'label': 'db3'}]] or databases='db1'"
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(
