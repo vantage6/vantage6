@@ -3,7 +3,7 @@ import pandas as pd
 
 from functools import wraps
 
-from vantage6.common.globals import ContainerEnvNames
+from vantage6.common.globals import ContainerEnvNames, DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.algorithm.tools.util import info, error, warn
 
 
@@ -130,14 +130,13 @@ def dataframe(*sources: str | int) -> callable:
                     f", but {len(dataframes_grouped)} were provided. Using the "
                     f"first {number_of_expected_arguments} databases."
                 )
-            info("who likes cake")
+
             for source, requested_dataframes in zip(sources, dataframes_grouped):
                 # read the data from the database
 
                 # if the source is not "multiple", we can just add the first (and only)
                 # dataframe to the arguments
-                if str(source).lower() != "multiple":
-                    info("not multiple")
+                if str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
                     data_ = _read_df_from_disk(requested_dataframes[0])
                 else:
                     data_ = {}
@@ -165,4 +164,4 @@ def dataframes(func: callable) -> callable:
     databases that the user who creates the task provides.
     """
     info("Using dataframes decorator")
-    return dataframe("multiple")(func)
+    return dataframe(DATAFRAME_MULTIPLE_KEYWORD)(func)
