@@ -157,7 +157,7 @@ export interface FunctionDatabase {
   id: number;
   name: string;
   description?: string;
-  many?: boolean;
+  multiple?: boolean;
 }
 
 export interface ArgumentForm extends NameDescription {
@@ -175,7 +175,7 @@ export interface ArgumentForm extends NameDescription {
 }
 
 export interface DatabaseForm extends NameDescription {
-  many?: boolean;
+  multiple?: boolean;
 }
 
 export interface FunctionForm extends NameDescription {

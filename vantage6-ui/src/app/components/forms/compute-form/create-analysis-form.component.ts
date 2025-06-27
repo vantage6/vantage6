@@ -246,7 +246,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
     if (!db) return false;
-    return db.many === true;
+    return db.multiple === true;
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
@@ -980,12 +980,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     studyOrCollabControl?.updateValueAndValidity();
   }
 
-  isFirstDatabaseMany(): boolean {
-    return this.function?.databases?.[0] ? this.function.databases[0].many || false : false;
+  isFirstDatabaseMultiple(): boolean {
+    return this.function?.databases?.[0] ? this.function.databases[0].multiple || false : false;
   }
 
-  hasColumnListWithManyDataframes(): boolean {
-    if (!this.isFirstDatabaseMany()) return false;
+  hasColumnListWithMultipleDataframes(): boolean {
+    if (!this.isFirstDatabaseMultiple()) return false;
     return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
   }
 

@@ -67,7 +67,7 @@ def dataframe(*sources: str | int) -> callable:
     ----------
     sources: str | int
         Number of the dataframe to load. It can either be a number to indicate the
-        number of dataframes to load or a string "many" to indicate that multiple
+        number of dataframes to load or a string "multiple" to indicate that multiple
         dataframes need to be supplied as a single argument.
 
     Returns
@@ -82,14 +82,14 @@ def dataframe(*sources: str | int) -> callable:
     >>>                  <other arguments>):
     >>>     pass
 
-    >>> @dataframe("many", 3)
-    >>> def my_algorithm(many_df: dict[str, pd.DataFrame], first_df: pd.DataFrame,
+    >>> @dataframe("multiple", 3)
+    >>> def my_algorithm(dfs: dict[str, pd.DataFrame], first_df: pd.DataFrame,
     >>>                  third_df: pd.DataFrame, <other arguments>):
     >>>     pass
 
-    >>> @dataframe("many", 1, "many")
-    >>> def my_algorithm(many_df: dict[str, pd.DataFrame], first_df: pd.DataFrame,
-    >>>                  many_df_2: dict[str, pd.DataFrame], <other arguments>):
+    >>> @dataframe("multiple", 1, "multiple")
+    >>> def my_algorithm(dfs: dict[str, pd.DataFrame], first_df: pd.DataFrame,
+    >>>                  dfs_2: dict[str, pd.DataFrame], <other arguments>):
     >>>     pass
     """
     if not sources:
@@ -130,13 +130,14 @@ def dataframe(*sources: str | int) -> callable:
                     f", but {len(dataframes_grouped)} were provided. Using the "
                     f"first {number_of_expected_arguments} databases."
                 )
-
+            info("who likes cake")
             for source, requested_dataframes in zip(sources, dataframes_grouped):
                 # read the data from the database
 
-                # if the source is not "many", we can just add the first (and only)
+                # if the source is not "multiple", we can just add the first (and only)
                 # dataframe to the arguments
-                if str(source).lower() != "many":
+                if str(source).lower() != "multiple":
+                    info("not multiple")
                     data_ = _read_df_from_disk(requested_dataframes[0])
                 else:
                     data_ = {}
@@ -163,4 +164,5 @@ def dataframes(func: callable) -> callable:
     added to the front of the argument list. This data will be read from the
     databases that the user who creates the task provides.
     """
-    return dataframe("many")(func)
+    info("Using dataframes decorator")
+    return dataframe("multiple")(func)

@@ -28,7 +28,7 @@
         {
           "name": "Data",
           "description": "Dataframe to use for computing the sum",
-          "many": true
+          "multiple": true
         }
       ]
     },
@@ -163,7 +163,7 @@
           {
             "name": "Dataframes",
             "description": "Dataframes to use for computing the sum",
-            "many": true
+            "multiple": true
           }
         ]
       }

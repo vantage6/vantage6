@@ -22,7 +22,7 @@ class Database(Base):
         ID of the algorithm that this function belongs to
     function : :class:`~.model.algorithm.algorithm`
         Algorithm function that this database belongs to
-    many : bool
+    multiple : bool
         Whether this multiple dataframes can be supplied for this argument
     """
 
@@ -30,7 +30,7 @@ class Database(Base):
     name = Column(String)
     description = Column(String)
     function_id = Column(Integer, ForeignKey("function.id"))
-    many = Column(Boolean, default=False)
+    multiple = Column(Boolean, default=False)
 
     # relationships
     function = relationship("Function", back_populates="databases")

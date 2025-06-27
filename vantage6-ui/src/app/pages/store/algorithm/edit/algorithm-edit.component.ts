@@ -99,7 +99,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
             return {
               name: db.name,
               description: db.description,
-              many: db.many
+              multiple: db.multiple
             };
           }),
           ui_visualizations: func.ui_visualizations.map((vis) => {

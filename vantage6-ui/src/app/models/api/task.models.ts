@@ -138,7 +138,7 @@ interface CreateTaskDatabase {
   label?: string;
   dataframe_id?: number;
   type: TaskDatabaseType;
-  many?: boolean;
+  multiple?: boolean;
 }
 
 export interface CreateTask {

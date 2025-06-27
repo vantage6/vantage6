@@ -428,9 +428,9 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
-                              many:
+                              multiple:
                                 type: boolean
-                                description: Whether more than one database is can be
+                                description: Whether more than one database can be
                                   supplied.
                         arguments:
                           type: array
@@ -598,7 +598,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
-                    many=database.get("many", False),
+                    multiple=database.get("multiple", False),
                 )
                 db_.save()
             # create the visualizations
@@ -1076,7 +1076,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
-                        many=database.get("many", False),
+                        multiple=database.get("multiple", False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):
