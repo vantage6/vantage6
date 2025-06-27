@@ -388,6 +388,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   async handleSubmit(): Promise<void> {
+    if (this.isSubmitting) return;
     if (this.isFormInvalid()) {
       return;
     }
