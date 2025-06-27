@@ -63,6 +63,8 @@ setup(
             "template/server_import_config.j2",
             "template/algo_store_config.j2",
             "dev/data/olympic_athletes_2016.csv",
+            "dev/data/km_dataset.csv",
+            "prometheus/prometheus.yml",
         ],
     },
     entry_points={

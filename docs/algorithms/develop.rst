@@ -277,7 +277,93 @@ Once your infrastructure is set up, you can create a task for your algorithm.
 You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
-.. todo Add example with ``v6 dev``
+It is also possible to test your algorithm by running a test script on a local
+vantage6 :ref:`dev network <create-dev-network>`. This can be done by running
+the following CLI command:
+
+.. code:: bash
+
+   v6 test client-script --create-dev-network
+
+This will create a dev network and run the test script included in the repository on the
+latest version of the vantage6 infrastructure.
+To let the script run the algorithm, the arguments needed by the task should be added to
+``algo_test_arguments.py``
+
+A custom test script can be used by running:
+
+.. code:: bash
+
+   v6 test client-script --create-dev-network --script path/to/test_script.py
+
+In this case, the script should contain the code to run and test the algorithm, and return the
+execution result. For example, to test the average algorithm, the script could look like this:
+
+.. code:: python
+
+    from vantage6.client import Client
+    from vantage6.common.globals import Ports
+
+    def run_test():
+        # Create a client and authenticate
+        client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
+        client.authenticate("dev_admin", "password")
+
+        input_ = {
+            "method": "central_average",
+            "args": [],
+            "kwargs": {"column_name": "Age"},
+        }
+
+        # create the task
+        task = client.task.create(
+            collaboration=1,
+            organizations=[1],
+            name="test_average_task",
+            image="harbor2.vantage6.ai/demo/average",
+            description="",
+            input_=input_,
+            databases=[{"label": "olympic_athletes"}],
+        )
+
+        # wait for the task to complete
+        task_result = client.wait_for_results(task["id"])
+
+        # verify the result
+        assert task_result.get("data")[0].get("result") == '{"average": 27.613448844884488}'
+
+    if __name__ == "__main__":
+        run_test()
+
+Another option to test the algorithm without writing a script, is to pass the arguments
+directly to the command:
+
+.. code:: bash
+
+   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'input_': { 'method': 'my_method', 'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
+
+After running, the network will be stopped and removed unless you specify otherwise by setting
+``--keep true`` in the command.
+
+If a dataset different from the default ones is needed, it can be included in the
+dev network by specifying the label and the path to the dataset in the ``--add-dataset``
+argument of the command:
+
+.. code:: bash
+
+   v6 test client-script --script /path/to/test_script.py --create-dev-network --add-dataset my_label /path/to/dataset
+
+If a dev network configuration exists, but the network is not running, it is possible
+to start the existing network configuration and run the test script on it:
+
+.. code:: bash
+
+   v6 test client-script --script /path/to/test_script.py --start-dev-network --name my_network
+
+If a the ``--start-dev-network`` and the ``--create-dev-network`` arguments are not specified,
+the test script will be executed on the running dev network, if active.
+
+
 
 .. _algo-dev-update-algo:
 

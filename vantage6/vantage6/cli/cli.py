@@ -24,6 +24,7 @@ from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.version import cli_node_version
 from vantage6.cli.algorithm.create import cli_algorithm_create
 from vantage6.cli.algorithm.update import cli_algorithm_update
+from vantage6.cli.test.client_script import cli_test_client_script
 from vantage6.cli.test.feature_tester import cli_test_features
 
 # from vantage6.cli.test.integration_test import cli_test_integration
@@ -117,6 +118,7 @@ def cli_test() -> None:
 # Define the commands for the test group
 cli_test.add_command(cli_test_features, name="feature-test")
 # cli_test.add_command(cli_test_integration, name="integration-test")
+cli_test.add_command(cli_test_client_script, name="client-script")
 
 
 # Define the algorithm-store group

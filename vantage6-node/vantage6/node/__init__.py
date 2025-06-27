@@ -30,6 +30,11 @@ import queue
 import sys
 import time
 import threading
+import shutil
+import requests.exceptions
+import psutil
+import pynvml
+
 from pathlib import Path
 from threading import Thread
 
@@ -80,6 +85,7 @@ class Node:
     def __init__(self, ctx: NodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
+        self.gpu_metadata_available = True
 
         # validate that the required environment variables are set
         validate_required_env_vars(RequiredNodeEnvVars)
@@ -136,6 +142,12 @@ class Node:
 
         self.start_processing_threads()
 
+        # TODO reactivate this after redoing docker-specific implementation (issue
+        # https://github.com/vantage6/vantage6/issues/2080)
+        # self.log.debug("Start thread for sending system metadata")
+        # t = Thread(target=self.__metadata_worker, daemon=True)
+        # t.start()
+
         self.log.info("Init complete")
 
     def _setup_node_client(self, config: dict) -> NodeClient:
@@ -148,6 +160,90 @@ class Node:
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
             api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
         )
+
+    def __metadata_worker(self) -> None:
+        """
+        Periodically send system metadata to the server.
+        """
+        report_interval = self.config.get("report_interval_seconds", 45)
+
+        while True:
+            try:
+                metadata = self.__gather_system_metadata()
+                self.socketIO.emit("node_metrics_update", metadata, namespace="/tasks")
+            except Exception:
+                self.log.exception("Metadata thread had an exception")
+            time.sleep(report_interval)
+
+    def __gather_system_metadata(self) -> dict:
+        """
+        Gather system metadata such as CPU, memory, OS, and GPU information.
+
+        Returns
+        -------
+        dict
+            Dictionary containing system metadata.
+        """
+        metadata = {
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "num_algorithm_containers": len(self.__docker.active_tasks),
+            "os": os.name,
+            "platform": sys.platform,
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "memory_available": psutil.virtual_memory().available,
+        }
+
+        if self.gpu_metadata_available:
+            gpu_metadata = self.__gather_gpu_metadata()
+            if gpu_metadata:
+                metadata.update(gpu_metadata)
+
+        return metadata
+
+    def __gather_gpu_metadata(self) -> dict | None:
+        """
+        Gather GPU metadata such as GPU name, load, memory usage, and temperature.
+
+        Returns
+        -------
+        dict
+            Dictionary containing GPU-related metrics.
+        """
+
+        try:
+            pynvml.nvmlInit()
+            gpu_count = pynvml.nvmlDeviceGetCount()
+
+            gpu_metadata = {
+                "gpu_count": gpu_count,
+                "gpu_load": [],
+                "gpu_memory_used": [],
+                "gpu_memory_free": [],
+                "gpu_temperature": [],
+            }
+
+            for i in range(gpu_count):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_metadata["gpu_load"].append(
+                    pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
+                )
+                gpu_metadata["gpu_memory_used"].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).used
+                )
+                gpu_metadata["gpu_memory_free"].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).free
+                )
+                gpu_metadata["gpu_temperature"].append(
+                    pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                )
+            pynvml.nvmlShutdown()
+            return gpu_metadata
+        except pynvml.NVMLError as e:
+            self.log.warning(f"Failed to gather GPU metadata: {e}")
+            self.gpu_metadata_available = False
+            return None
 
     def __proxy_server_worker(self) -> None:
         """
@@ -468,7 +564,9 @@ class Node:
                 )
             except Exception as e:
                 self.log.exception(
-                    f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}"
+                    "poll_task_results (Speaking) thread had an exception: %s - %s",
+                    type(e).__name__,
+                    e,
                 )
 
             time.sleep(1)

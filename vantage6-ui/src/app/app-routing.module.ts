@@ -58,8 +58,30 @@ import { DataframeCreateComponent } from './pages/analyze/sessions/create/datafr
 import { DataframeReadComponent } from './pages/analyze/sessions/read/dataframe-read/dataframe-read.component';
 import { DataframePreprocessComponent } from './pages/analyze/sessions/preprocessing/dataframe-preprocess.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
+import { CommunityStoreComponent } from './layouts/community-store/community-store.component';
+import { AlgorithmReadPublicComponent } from './pages/store/algorithm/read-public/algorithm-read-public.component';
+import { AlgorithmListPublicComponent } from './pages/store/algorithm/list-public/algorithm-list-public.component';
 
 export const routes: Routes = [
+  {
+    path: 'communitystore',
+    component: CommunityStoreComponent,
+    children: [
+      {
+        path: '',
+        redirectTo: routePaths.communityStoreAlgorithms,
+        pathMatch: 'full'
+      },
+      {
+        path: routerConfig.communityStoreAlgorithm,
+        component: AlgorithmReadPublicComponent
+      },
+      {
+        path: routerConfig.communityStoreAlgorithms,
+        component: AlgorithmListPublicComponent
+      }
+    ]
+  },
   {
     path: '',
     component: LayoutDefaultComponent,

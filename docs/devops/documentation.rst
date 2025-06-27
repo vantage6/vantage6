@@ -3,10 +3,8 @@
 Documentation
 =============
 
-The vantage6 framework is documented on this website.
-Additionally, there is :ref:`oas3`. This documentation is
-shipped directly  with the server instance. All of these documentation pages are
-described in more detail below.
+The vantage6 framework is documented on this website. This page describes how
+this documentation is created and how to build the documentation locally.
 
 How this documentation is created
 ---------------------------------
@@ -59,41 +57,3 @@ other -less important- settings.
 
 The files in this documentation use the ``rst`` format, to see the syntax view
 `this cheatsheet <https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst>`_.
-
-.. _oas3:
-
-API Documenation with OAS3+
------------------------------------------
-The API documentation is hosted at the server at the ``/apidocs`` endpoint. This documentation is generated from the docstrings using `Flasgger <https://github.com/flasgger/flasgger>`_. The source of this documentation can be found in the docstrings of the API functions.
-
-If you are unfamiliar with OAS3+, note that it was formerly known as Swagger.
-
-An example of such a docsting:
-  ::
-
-    """Summary of the endpoint
-       ---
-       description: >-
-           Short description on what the endpoint does, and which users have
-           access or which permissions are required.
-
-       parameters:
-           - in: path
-             name: id
-             schema:
-               type: integer
-             description: some identifier
-             required: true
-
-       responses:
-           200:
-               description: Ok
-           401:
-               description: Unauthorized or missing permission
-
-       security:
-           - bearerAuth: []
-
-       tags: ["Group"]
-    """
-

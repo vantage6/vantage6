@@ -1,5 +1,6 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { Subject } from 'rxjs';
+import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { printDate } from 'src/app/helpers/general.helper';
 import { Algorithm, AlgorithmFunction, AlgorithmStatus, Argument } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
@@ -58,6 +59,7 @@ export class DisplayAlgorithmComponent {
   algorithmStatus = AlgorithmStatus;
 
   selectedFunction?: AlgorithmFunction;
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   selectFunction(functionId: number): void {
     this.selectedFunction = this.algorithm?.functions.find((func: AlgorithmFunction) => func.id === functionId);

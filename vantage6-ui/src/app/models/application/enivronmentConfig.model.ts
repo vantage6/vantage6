@@ -5,4 +5,5 @@ export interface EnvironmentConfig {
   auth_url: string;
   keycloak_realm: string;
   keycloak_client: string;
+  community_store_url: string;
 }

@@ -1,6 +1,83 @@
 Release notes
 =============
 
+4.11.0
+-----
+
+*12 June 2025*
+
+- **Security**
+
+  - Server's auto-generated JWT secret key was not completely cryptographically secure.
+    The generation protocol was changed to use a more secure method
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-m3mq-f375-5vgh>`_,
+    `commit <https://github.com/vantage6/vantage6/pull/2034/commits/273f8fe70529f8853a6bd62274ecf40175387208>`_).
+  - The change-password functionality did not have brute-force protection: if an
+    attacker managed to access an authenticated session, they could try to guess the
+    password by brute force. This is fixed by limiting the number of attempts to change
+    a password similar to the number of attempts to login.
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-j6g5-p62x-58hw>`_,
+    `commit <https://github.com/vantage6/vantage6/pull/2034/commits/e0f1841b310f6f610e8137db2506cf683ce154d0>`_).
+  - Update several dependencies to fix security vulnerabilities
+    (`PR#1897 <https://github.com/vantage6/vantage6/pull/1897>`_,
+    `PR#2028 <https://github.com/vantage6/vantage6/pull/2028>`_).
+
+- **Feature**
+
+  - The UI has a new page ``https://<my-ui-url>/communitystore`` that shows the
+    algorithms available in the community store
+    (`Issue#1558 <https://github.com/vantage6/vantage6/issues/1558>`_,
+    `PR#1887 <https://github.com/vantage6/vantage6/pull/1887>`_).
+  - The cards with algorithm titles in the UI contain more information so that they
+    are more descriptive (`Issue#1916 <https://github.com/vantage6/vantage6/issues/1916>`_,
+    `PR#1927 <https://github.com/vantage6/vantage6/pull/1927>`_).
+  - New option to run Prometheus at the data station in order to share diagnostics
+    with the server so that users may find out what resources are consumed at the nodes
+    (`Issue#253 <https://github.com/vantage6/vantage6/issues/253>`_,
+    `PR#1814 <https://github.com/vantage6/vantage6/pull/1814>`_).
+  - New command ``v6 test client-script`` that sets up a local vantage6 test environment
+    and then runs a script in that environment. This is mostly meant for testing
+    algorithms (`Issue#1615 <https://github.com/vantage6/vantage6/issues/1615>`_,
+    `PR#1835 <https://github.com/vantage6/vantage6/pull/1835>`_).
+  - The performance of the ``wait_for_results`` function in the algorithm client and
+    the user client has been improved by implementing a specific task `/status`
+    endpoint (`Issue#1363 <https://github.com/vantage6/vantage6/issues/1363>`_,
+    `PR#1885 <https://github.com/vantage6/vantage6/pull/1885>`_).
+  - Option to set allowed values for a function parameter in the algorithm store
+    (`Issue#1636 <https://github.com/vantage6/vantage6/issues/1636>`_,
+    `PR#1875 <https://github.com/vantage6/vantage6/pull/1875>`_).
+  - Option to not send algorithm logs to the server
+    (`Issue#1878 <https://github.com/vantage6/vantage6/issues/1878>`_,
+    `PR#1912 <https://github.com/vantage6/vantage6/pull/1912>`_).
+  - Algorithm logs are always printed in the node logs (because they are no longer sent
+    to the server always, see above)
+    (`Issue#1878 <https://github.com/vantage6/vantage6/issues/1878>`_,
+    `PR#1912 <https://github.com/vantage6/vantage6/pull/1912>`_).
+
+- **Change**
+
+  - Algorithm logs are always printed in the node logs (because they are no longer sent
+    to the server always, see above)
+    (`Issue#1877 <https://github.com/vantage6/vantage6/issues/1877>`_,
+    `PR#1912 <https://github.com/vantage6/vantage6/pull/1912>`_).
+  - Swagger / OpenAPI documentation has been removed because flasgger is no longer
+    maintained. Removing it was necessary to be able to update other dependencies
+    (`PR#1897 <https://github.com/vantage6/vantage6/pull/1897>`_).
+
+- **Bugfix**
+
+  - In GET /user, users of own organization were not shown if the user sending the
+    request had collaboration-level permission but the organization was not involved
+    in any collaborations (`PR#1951 <https://github.com/vantage6/vantage6/pull/1951>`_).
+  - Remove ``algorithmClient.node`` subclass as it no longer existed
+    (`PR#2015 <https://github.com/vantage6/vantage6/pull/2015>`_).
+  - Fix issue on aproved algorithm details page in UI when user did not have permission
+    to view reviews (`PR#2018 <https://github.com/vantage6/vantage6/pull/2018>`_).
+  - Logs from killed tasks were previously not shown - now they are
+    (`Issue#1616 <https://github.com/vantage6/vantage6/issues/1616>`_,
+    `PR#1765 <https://github.com/vantage6/vantage6/pull/1765>`_).
+
+
 4.10.2
 -----
 

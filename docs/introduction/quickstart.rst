@@ -30,6 +30,8 @@ Then, install the vantage6 command line interface (CLI) by running:
 
     pip install vantage6
 
+.. _create-dev-network:
+
 Start a local vantage6 network
 ------------------------------
 

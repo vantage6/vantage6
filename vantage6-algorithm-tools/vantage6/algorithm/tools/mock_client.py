@@ -132,7 +132,6 @@ class MockAlgorithmClient:
         self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
-        self.node = self.Node(self)
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
