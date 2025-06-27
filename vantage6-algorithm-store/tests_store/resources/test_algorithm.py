@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from vantage6.algorithm.store.model.argument import Argument
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
@@ -278,7 +279,11 @@ class TestAlgorithmResources(TestResources):
                         {"name": "test_database", "description": "test_description"}
                     ],
                     "arguments": [
-                        {"name": "test_argument", "type": ArgumentType.STRING}
+                        {
+                            "name": "test_argument",
+                            "type": ArgumentType.STRING,
+                            "allowed_values": ["A"],
+                        }
                     ],
                     "ui_visualizations": [
                         {"name": "test_visualization", "type": "table"}
@@ -316,6 +321,14 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(
             rv.json["functions"][0]["arguments"][0]["type"], ArgumentType.STRING
         )
+
+        self.assertEqual(
+            len(rv.json["functions"][0]["arguments"][0]["allowed_values"]), 1
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["allowed_values"][0]["value"], "A"
+        )
+
         self.assertEqual(len(rv.json["functions"][0]["ui_visualizations"]), 1)
         self.assertEqual(
             rv.json["functions"][0]["ui_visualizations"][0]["name"],
@@ -525,7 +538,11 @@ class TestAlgorithmResources(TestResources):
                         Database(name="test_database", description="test_description"),
                     ],
                     arguments=[
-                        Argument(name="test_argument", type_=ArgumentType.STRING)
+                        Argument(
+                            name="test_argument",
+                            type_=ArgumentType.STRING,
+                            allowed_values=[AllowedArgumentValue(value="A")],
+                        ),
                     ],
                     ui_visualizations=[
                         UIVisualization(
@@ -539,6 +556,7 @@ class TestAlgorithmResources(TestResources):
         func_id = algorithm.functions[0].id
         db_id = algorithm.functions[0].databases[0].id
         arg_id = algorithm.functions[0].arguments[0].id
+        allowed_value_id = algorithm.functions[0].arguments[0].allowed_values[0].id
         vis_id = algorithm.functions[0].ui_visualizations[0].id
 
         # Test when user is not authenticated
@@ -563,6 +581,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(Function.get(func_id), None)
         self.assertEqual(Database.get(db_id), None)
         self.assertEqual(Argument.get(arg_id), None)
+        self.assertEqual(AllowedArgumentValue.get(allowed_value_id), None)
         self.assertEqual(UIVisualization.get(vis_id), None)
 
     @patch("vantage6.algorithm.store.resource._authenticate")

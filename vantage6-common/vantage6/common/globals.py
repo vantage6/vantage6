@@ -40,6 +40,13 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 
 # default API path (for server and algorithm store)
 DEFAULT_API_PATH = "/api"
+DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
+# Maximum interval to wait for requesting results from a task
+MAX_INTERVAL = 300
+
+# Constant multiplier to make interval for requesting results from a task progressively longer
+INTERVAL_MULTIPLIER = 1.5
 
 
 class InstanceType(str, Enum):
