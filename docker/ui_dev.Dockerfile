@@ -9,9 +9,6 @@ FROM node:alpine
 LABEL version=${TAG}
 LABEL maintainer="Bart van Beusekom <b.vanbeusekom@iknl.nl>, Frank Martin <f.martin@iknl.nl>"
 
-# Install gettext for envsubst command
-RUN apk add --no-cache gettext
-
 RUN npm install -g @angular/cli
 
 # copy and install
@@ -19,6 +16,4 @@ WORKDIR /app
 COPY vantage6-ui/ /app
 RUN npm install
 
-RUN chmod +x /app/startup/dev_startup.sh
-
-CMD ["/bin/sh", "/app/startup/dev_startup.sh"]
+CMD ["ng", "serve", "--host", "0.0.0.0", "--port", "80"]

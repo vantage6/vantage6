@@ -28,9 +28,9 @@ spec:
           value: {{ .Values.server.baseUrl | quote }}
         - name: API_PATH
           value: /server
-        - name: AUTH_URL
+        - name: KEYCLOAK_URL
           value: {{ .Values.ui.keycloakPublicUrl | quote }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.ui.keycloakRealm | quote }}
+          value: {{ .Values.server.keycloakRealm | quote }}
         - name: KEYCLOAK_CLIENT
           value: {{ .Values.ui.keycloakClient | quote }}

@@ -9,11 +9,6 @@
 
 POPULATE_MARKER=$1
 
-# Get the profile from environment variable if set
-PROFILE_FLAG=""
-if [ ! -z "${DEVSPACE_PROFILE}" ]; then
-  PROFILE_FLAG="-p ${DEVSPACE_PROFILE}"
-fi
 
 # Validate that the POPULATE_MARKER argument is provided
 if [ -z "${POPULATE_MARKER}" ]; then
@@ -29,17 +24,15 @@ if [ ! -f "${POPULATE_MARKER}" ]; then
   if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
     echo "Populating vantage6 server and starting development environment..."
     touch "${POPULATE_MARKER}"
-    devspace run-pipeline all-with-populate ${PROFILE_FLAG}
+    devspace run-pipeline all-with-populate
   else
     echo "Skipping populating vantage6 server."
-    # Create the marker file to prevent asking the user again
-    touch "${POPULATE_MARKER}"
-    devspace run-pipeline all-without-populate ${PROFILE_FLAG}
+    devspace run-pipeline all-without-populate
   fi
 else
   # Skip population if the marker file already exists
   echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."
-  devspace run-pipeline all-without-populate ${PROFILE_FLAG}
+  devspace run-pipeline all-without-populate
 fi
 
 
