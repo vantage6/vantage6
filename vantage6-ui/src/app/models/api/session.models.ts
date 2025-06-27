@@ -12,8 +12,8 @@ export enum SessionSortProperties {
 }
 
 export enum SessionScope {
-  Collaboration = 'col',
-  Organization = 'org',
+  Collaboration = 'collaboration',
+  Organization = 'organization',
   Own = 'own'
 }
 

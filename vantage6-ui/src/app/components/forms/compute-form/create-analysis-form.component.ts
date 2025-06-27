@@ -19,7 +19,8 @@ import {
   AlgorithmFunction,
   Argument,
   AlgorithmFunctionExtended,
-  ConditionalArgComparatorType
+  ConditionalArgComparatorType,
+  FunctionDatabase
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
@@ -243,6 +244,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
   }
 
+  isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
+    if (!db) return false;
+    return db.multiple === true;
+  }
+
   async setupRepeatTask(taskID: string): Promise<void> {
     this.isLoadingColumns = true;
     this.repeatedTask = await this.taskService.getTask(Number(taskID));
@@ -383,8 +389,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   async handleSubmit(): Promise<void> {
     if (this.isSubmitting) return;
-    if (this.isFormInvalid()) return;
+    if (this.isFormInvalid()) {
+      return;
+    }
+
     this.isSubmitting = true;
+
     try {
       await this.submitTask();
     } catch (error) {
@@ -466,7 +476,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
+      const ids = this.dataframeForm.controls.dataframeId.value;
+      formCreateOutput.dataframes = [
+        (Array.isArray(ids) ? ids : [ids]).map(id => ({
+          dataframe_id: id,
+          type: TaskDatabaseType.Dataframe
+        }))
+      ];
     }
 
     this.onSubmit.next(formCreateOutput);
@@ -777,11 +793,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     // set columns if dataframe is selected
     this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
-      const dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      this.columns = [];
+      let dataframe = null;
+      if (Array.isArray(dataframeID) && dataframeID.length > 0) {
+        // For multi-select, use the first selected dataframe to get columns
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
+      } else if (dataframeID) {
+        // For single select
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      }
       if (dataframe) {
         this.setColumns(dataframe);
-      } else {
-        this.columns = [];
       }
     });
 
@@ -949,4 +971,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     studyOrCollabControl?.updateValueAndValidity();
   }
+
+  isFirstDatabaseMultiple(): boolean {
+    return this.function?.databases?.[0] ? this.function.databases[0].multiple || false : false;
+  }
+
+  hasColumnListWithMultipleDataframes(): boolean {
+    if (!this.isFirstDatabaseMultiple()) return false;
+    return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
+  }
+
 }

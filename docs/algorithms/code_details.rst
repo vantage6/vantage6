@@ -71,19 +71,16 @@ can be provided to your algorithm function in the following way:
     import pandas as pd
     from vantage6.algorithm.tools.decorator import data
 
-    @data(2)
+    @dataframe(2)
     def my_function(df1: pd.DataFrame, df2: pd.DataFrame, column_name: str):
         pass
 
-The ``@data(2)`` decorator indicates that the first two arguments of the
+The ``@dataframe(2)`` decorator indicates that the first two arguments of the
 function are dataframes that should be provided by the vantage6 infrastructure.
 In this case, the user would have to specify two databases when calling the
 algorithm. Note that depending on the type of the database used, the user may
 also have to specify additional parameters such as a SQL query or the name of a
 worksheet in an Excel file.
-
-Note that it is also possible to just specify ``@data()`` without an argument -
-in that case, a single dataframe is added to the arguments.
 
 For some data sources it's not trivial to construct a dataframe from the data.
 One of these data sources is the OHDSI OMOP CDM database. For this data source,
@@ -136,7 +133,7 @@ Another useful decorator is the ``@algorithm_client`` decorator:
     from vantage6.client.algorithm_client import AlgorithmClient
     from vantage6.algorithm.tools.decorators import algorithm_client, data
 
-    @data()
+    @dataframe(1)
     @algorithm_client
     def my_function(client: AlgorithmClient, df1: pd.DataFrame, column_name: str):
         pass
@@ -149,8 +146,8 @@ can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
 .. warning::
 
-    The decorators ``@data`` and ``@algorithm_client`` each have one reserved
-    keyword: ``mock_data`` for the ``@data`` decorator and ``mock_client`` for
+    The decorators ``@dataframe`` and ``@algorithm_client`` each have one reserved
+    keyword: ``mock_data`` for the ``@dataframe`` decorator and ``mock_client`` for
     the ``@algorithm_client`` decorator. These keywords should not be used as
     argument names in your algorithm functions.
 

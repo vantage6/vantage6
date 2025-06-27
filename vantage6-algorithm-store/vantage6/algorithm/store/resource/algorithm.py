@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
+from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -428,6 +429,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              multiple:
+                                type: boolean
+                                description: Whether more than one database can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -594,6 +599,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                 )
                 db_.save()
             # create the visualizations
@@ -1071,6 +1077,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

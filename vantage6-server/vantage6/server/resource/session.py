@@ -292,7 +292,7 @@ class SessionBase(ServicesResources):
         image: str,
         method: str,
         organizations: dict,
-        databases: list[dict],
+        databases: list[list[dict]],
         action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",
@@ -312,7 +312,7 @@ class SessionBase(ServicesResources):
             Method to use for the task
         organizations : dict
             Organizations that need to execute the task
-        databases : list[dict]
+        databases : list[list[dict]]
             Databases used for the task
         action : AlgorithmStepType
             Action to perform (e.g. data extraction, preprocessing, etc)

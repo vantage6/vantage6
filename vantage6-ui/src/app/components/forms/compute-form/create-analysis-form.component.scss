@@ -59,3 +59,21 @@
   display: block;
   width: 100%;
 }
+
+.warning-message {
+  margin-bottom: 16px;
+
+  .warning-alert {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+  }
+}
+
+.button-spinner {
+  margin-right: 8px;
+}
+
+button mat-spinner {
+  display: inline-block;
+}

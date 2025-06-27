@@ -171,6 +171,9 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Name of the database
                 - description: str, optional
                     Description of the database
+                - multiple: bool
+                    Whether the database can be used multiple times in a single
+                    function. Default is False.
             - arguments: list[dict]
                 List of arguments of the function. Each argument is a dict with
                 the following keys:

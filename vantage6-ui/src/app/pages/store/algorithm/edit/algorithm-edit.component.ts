@@ -98,7 +98,8 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
           databases: func.databases.map((db) => {
             return {
               name: db.name,
-              description: db.description
+              description: db.description,
+              multiple: db.multiple
             };
           }),
           ui_visualizations: func.ui_visualizations.map((vis) => {
