@@ -347,7 +347,7 @@
       },
       "databases": {
         "title": "Databases",
-        "multiple": "Can multiple databases be used?"
+        "multiple": "Does the algorithm accept multiple dataframes in this single argument?"
       },
       "visualization": {
         "title": "Visualizations",
