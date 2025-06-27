@@ -8,7 +8,7 @@
   "functions": [
     {
       "name": "global_sum_dev_many",
-      "display_name": "Sum Many",
+      "display_name": "Sum for multiple dataframes",
       "standalone": true,
       "description": "Compute the global sum of a federated dataset",
       "ui_visualizations": [],
@@ -143,7 +143,7 @@
     },
     {
         "name": "sum_many",
-        "display_name": "Sum Many",
+        "display_name": "Sum for multiple dataframes",
         "standalone": true,
         "description": "Sum one column for each dataframe",
         "ui_visualizations": [],
