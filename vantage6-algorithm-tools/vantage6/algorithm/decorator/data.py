@@ -98,15 +98,23 @@ def dataframe(*sources: str | int) -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
+            *args,
+            mock_data: list[dict[str, pd.DataFrame] | pd.DataFrame] | None = None,
+            **kwargs,
         ) -> callable:
             """
             Wrap the function with the data
 
             Parameters
             ----------
-            mock_data : list[pd.DataFrame]
-                Mock data to use instead of the regular data
+            mock_data : list[dict[str, pd.DataFrame] | pd.DataFrame]
+                Mock data to use instead of the regular data. The list contains data
+                for each argument that the function requires. For example, if the
+                decorator is used as @dataframe(1, 2), the mock_data should be a list
+                with two dataframes. If the decorator is used as
+                `@dataframe("multiple")`, the mock_data should be a list of
+                dictionaries with the dataframe names as keys and the dataframes as
+                values.
             """
 
             if mock_data is not None:

@@ -30,7 +30,8 @@ class MockAlgorithmClient:
         described as a dictionary with the same keys as in a node
         configuration:
 
-        - database: str (path to file or SQL connection string) or pd.DataFrame
+        - database: str (path to file or SQL connection string), pd.DataFrame, or
+          dict with the dataframe name as key and the dataframe as value
         - db_type (str, e.g. "csv" or "sql")
 
         There are also a number of keys that are optional but may be required
@@ -105,7 +106,7 @@ class MockAlgorithmClient:
             org_data = []
             for dataset in org_datasets:
                 db = dataset.get("database")
-                if isinstance(db, pd.DataFrame):
+                if isinstance(db, pd.DataFrame) or isinstance(db, dict):
                     df = db
                 else:
                     df = load_data(
@@ -132,7 +133,6 @@ class MockAlgorithmClient:
         self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
-        self.node = self.Node(self)
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
