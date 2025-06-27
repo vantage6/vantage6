@@ -116,13 +116,15 @@ pipelines:
       ensure_pull_secrets --all
       create_deployments \
         vantage6-server \
-        vantage6-store
+        vantage6-store \
+        vantage6-auth
       start_dev \
         vantage6-server \
         vantage6-server-db \
         vantage6-ui \
         vantage6-store \
-        vantage6-store-db
+        vantage6-store-db \
+        vantage6-auth
 
   node:
     run: |-
