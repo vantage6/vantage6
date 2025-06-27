@@ -152,10 +152,6 @@ class ContainerToken(ServicesResources):
             )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 
-        # We store the task metadata in the token, so the server can verify later on
-        # that the container is allowed to access certain server resources.
-
-        # TODO: FM this is not super nice generated AI code.
         # Group databases by position and convert to list of lists
         databases_by_position = {}
         for db_entry in db_task.databases:
@@ -169,11 +165,12 @@ class ContainerToken(ServicesResources):
                     "dataframe_id": db_entry.dataframe_id,
                 }
             )
-
         databases = [
             databases_by_position[pos] for pos in sorted(databases_by_position.keys())
         ]
 
+        # We store the task metadata in the token, so the server can verify later on
+        # that the container is allowed to access certain server resources.
         container = {
             "vantage6_client_type": "container",
             "node_id": g.node.id,
