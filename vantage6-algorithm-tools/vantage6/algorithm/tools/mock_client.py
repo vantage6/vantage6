@@ -17,8 +17,8 @@ module_name = __name__.split(".")[1]
 
 class MockAlgorithmClient:
     """
-    The MockAlgorithmClient mimics the behavior of the AlgorithmClient. It
-    can be used to mock the behavior of the AlgorithmClient and its
+    The MockAlgorithmClient mimics the behaviour of the AlgorithmClient. It
+    can be used to mock the behaviour of the AlgorithmClient and its
     communication with the server.
 
     Parameters
