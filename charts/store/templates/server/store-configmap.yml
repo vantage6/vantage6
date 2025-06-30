@@ -43,4 +43,5 @@ data:
     port: {{ .Values.store.internal.port }}
     root_user:
       username: {{ .Values.store.vantage6Server.rootUser }}
+      v6_server_uri: {{ .Values.store.vantage6Server.uri }}
     uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}

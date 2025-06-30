@@ -305,6 +305,11 @@ class ServerApp(Vantage6App):
         self.app.config["JWT_ALGORITHM"] = "RS256"
         self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
 
+        # Leeway is provided for the token IAT to prevent errors that token is not yet
+        # valid, which can happen if server times are drifting slightly.
+        self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
+            "jwt_decode_leeway", 10
+        )
         self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
 
         # set JWT secret key
