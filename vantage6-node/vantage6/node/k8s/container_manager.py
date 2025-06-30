@@ -555,36 +555,19 @@ class ContainerManager:
             - RunStatus.UNKNOWN_ERROR: If the POD's status is unknown or an unexpected error occurs.
         """
 
-        terminal_k8sjobstatus_to_v6_status_map: dict[str, RunStatus] = {
-            "Running": RunStatus.ACTIVE,
-            "Failed": RunStatus.FAILED,
-            "Succeded": RunStatus.COMPLETED,
-            "Unknown": RunStatus.UNKNOWN_ERROR,
-        }
-
-        # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
-        # reported after multiple ErrImagePull ocurrences.
-        no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff", "InvalidImageName"]
-
-        container_image_pulling_k8s_waiting_reasons = [
-            "ContainerCreating",
-            "ImagePulling",
-        ]
-
         # Wait until the POD is created
         w = watch.Watch()
 
         try:
 
-            # Within this loop
-
             while True:
-                # Non-busy waiting for new status events on the job POD. This loop will process events until
-                # a terminal status is reached (Running, Failed, Succeded) or timeout_seconds is reached.
-                # If timeout_seconds is reached before getting a terminal status, the method will
-                # check the cause of not getting a terminal status yet and either wait for
-                # another 'timeout_seconds' (to get this new status), or report this as an error (see
-                # comments below).
+                # Non-busy waiting for status changes on the job POD through K8S' event stream watch. This
+                # inner for loop will process events until a terminal status is identifed (Running, Failed,
+                # Succeded) or timeout_seconds is reached.
+                #
+                # Given that after the timeout the status would be uncertain, the job pod status is
+                # checked (directly) again to decide whether a new stream-watch iteration is performed
+                # (e.g, an image may be too large), or an error is reported.
                 for event in w.stream(
                     func=self.core_api.list_namespaced_pod,
                     namespace=self.task_namespace,
@@ -601,8 +584,6 @@ class ContainerManager:
                         return pod_phase
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
-                # Now this checks whether the POD hasn't moved from the 'Pending' because of an error,
-                # or because it requires more time (e.g., pulling a large image container).
                 self.log.debug(
                     "Job (label %s, namespace %s) event stream timeout reached. Checking the cause...",
                     label,
@@ -617,8 +598,8 @@ class ContainerManager:
 
                 pod_phase: RunStatus = self.__compute_job_pod_phase(pod, label)
 
-                # Another iteration on the outher loop is performed only if the pod is pending for reasons other than
-                # missing/invalid Docker image.
+                # Another iteration on the outher loop is performed if the pod is pending for reasons other than
+                # missing/invalid Docker image (which is reported as INITIALIZING).
                 if pod_phase != RunStatus.INITIALIZING:
                     return pod_phase
 
@@ -714,12 +695,18 @@ class ContainerManager:
 
         # The POD is no longer pending, and a terminal phase has been reached: return the corresponding v6 status
         elif pod_phase in terminal_k8s_phase_to_v6_status_map.keys():
+            self.log.debug(
+                "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
+                label,
+                self.task_namespace,
+                terminal_k8s_phase_to_v6_status_map[pod_phase],
+            )
             return terminal_k8s_phase_to_v6_status_map[pod_phase]
 
         # No other kind of phase is expected to be reported (according to current k8s's specifications)
         else:
             self.log.critical(
-                "Job (label %s, namespace %s) Unexpected/unhandled POD creation phase: %s. Reporting this as an unknown error.",
+                "Job (label %s, namespace %s) Unexpected/unhandled POD creation phase: %s. Reporting this as an UNKNOWN_ERROR.",
                 label,
                 self.task_namespace,
                 pod_phase,
