@@ -260,8 +260,9 @@ class TestPreprocessing(unittest.TestCase):
 
         org_ids = [org["id"] for org in mockclient.organization.list()]
 
-        input_ = {"method": "execute", "kwargs": {}}
+        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
+            method="execute",
             organizations=org_ids,
             input_=input_,
         )
@@ -422,8 +423,9 @@ class TestPreprocessing(unittest.TestCase):
 
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"method": "execute", "kwargs": {}}
+        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
+            method="execute",
             organizations=org_ids,
             input_=input_,
         )
@@ -513,8 +515,9 @@ class TestPreprocessing(unittest.TestCase):
         ]
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"method": "execute", "kwargs": {}}
+        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
+            method="execute",
             organizations=org_ids,
             input_=input_,
         )
@@ -630,8 +633,9 @@ class TestPreprocessing(unittest.TestCase):
         ]
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"method": "execute", "kwargs": {}}
+        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
+            method="execute",
             organizations=org_ids,
             input_=input_,
         )
