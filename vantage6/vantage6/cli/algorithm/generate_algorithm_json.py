@@ -1,4 +1,3 @@
-import os
 import sys
 import importlib
 import traceback
@@ -76,7 +75,7 @@ def _read_function_signature(func: callable) -> dict:
     return {
         "name": func.__name__,
         "standalone": True,
-        "description": func.__doc__,
+        "description": _extract_headline_of_docstring(func.__doc__),
         "ui_visualizations": [],
         "arguments": [
             arg_json
@@ -84,6 +83,21 @@ def _read_function_signature(func: callable) -> dict:
             if (arg_json := _get_argument_json(func, name, param)) is not None
         ],
     }
+
+
+def _extract_headline_of_docstring(docstring: str) -> str:
+    """Extract the headline of the docstring"""
+    if not docstring:
+        return ""
+
+    # Split by double newlines to get the first paragraph
+    paragraphs = docstring.split("\n\n")
+    first_paragraph = paragraphs[0]
+
+    # Split by single newlines and join the lines with spaces
+    lines = first_paragraph.split("\n")
+    header = " ".join(line.strip() for line in lines if line.strip() != "")
+    return header
 
 
 def _get_argument_json(
