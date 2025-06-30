@@ -9,8 +9,9 @@ from rich.console import Console
 
 from vantage6.cli.dev.create import create_demo_network
 from vantage6.cli.dev.remove import remove_demo_network
-from vantage6.cli.dev.start import start_demo_network
-from vantage6.cli.dev.stop import stop_demo_network
+
+# from vantage6.cli.dev.start import start_demo_network
+# from vantage6.cli.dev.stop import stop_demo_network
 from vantage6.cli.utils import prompt_config_name
 from vantage6.common.globals import Ports
 
