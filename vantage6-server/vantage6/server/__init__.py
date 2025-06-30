@@ -304,7 +304,9 @@ class ServerApp(Vantage6App):
         # set JWT algorithms that keycloak uses
         self.app.config["JWT_ALGORITHM"] = "RS256"
         self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
-
+        self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
+            "jwt_decode_leeway", 10
+        )
         self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
 
         # set JWT secret key
