@@ -82,7 +82,7 @@ def data(number_of_databases: int = 1) -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_data: list[pd.DataFrame] = None, **kwargs
+            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the data
