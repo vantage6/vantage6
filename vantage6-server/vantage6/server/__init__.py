@@ -304,6 +304,11 @@ class ServerApp(Vantage6App):
         # set JWT algorithms that keycloak uses
         self.app.config["JWT_ALGORITHM"] = "RS256"
         self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
+
+        # Leeway is provided for the token IAT to prevent errors that token is not yet
+        # valid, which can happen if server times are drifting slightly. Note that this
+        # may be removed after updating to pyjwt > 3.0, where the validation behaviour
+        # changes - but be sure to check that.
         self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
             "jwt_decode_leeway", 10
         )
