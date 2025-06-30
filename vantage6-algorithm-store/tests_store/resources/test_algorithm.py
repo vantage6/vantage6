@@ -4,12 +4,12 @@ import unittest
 from unittest.mock import patch
 
 from vantage6.common.globals import Ports
+from vantage6.common.enum import AlgorithmArgumentType
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
     ReviewStatus,
-    ArgumentType,
 )
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
@@ -309,7 +309,7 @@ class TestAlgorithmResources(TestResources):
                         {"name": "test_database", "description": "test_description"}
                     ],
                     "arguments": [
-                        {"name": "test_argument", "type": ArgumentType.STRING}
+                        {"name": "test_argument", "type": AlgorithmArgumentType.STRING}
                     ],
                     "ui_visualizations": [
                         {"name": "test_visualization", "type": "table"}
@@ -346,7 +346,8 @@ class TestAlgorithmResources(TestResources):
             rv.json["functions"][0]["arguments"][0]["name"], "test_argument"
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][0]["type"], ArgumentType.STRING
+            rv.json["functions"][0]["arguments"][0]["type"],
+            AlgorithmArgumentType.STRING,
         )
         self.assertEqual(len(rv.json["functions"][0]["ui_visualizations"]), 1)
         self.assertEqual(
@@ -371,7 +372,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test_argument",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": True,
                 "default_value": 1,
             }
@@ -397,11 +398,11 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
             },
             {
                 "name": "test",
-                "type": ArgumentType.FLOAT,
+                "type": AlgorithmArgumentType.FLOAT,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
@@ -411,7 +412,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": True,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
@@ -419,7 +420,7 @@ class TestAlgorithmResources(TestResources):
             },
             {
                 "name": "conditional",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
@@ -445,14 +446,14 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
                 "conditional_value": "test",
             },
             {
                 "name": "conditional",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "conditional_on": "dependent",
                 "conditional_operator": "==",
                 "conditional_value": "test",
@@ -580,7 +581,9 @@ class TestAlgorithmResources(TestResources):
                         Database(name="test_database", description="test_description"),
                     ],
                     arguments=[
-                        Argument(name="test_argument", type_=ArgumentType.STRING)
+                        Argument(
+                            name="test_argument", type_=AlgorithmArgumentType.STRING
+                        )
                     ],
                     ui_visualizations=[
                         UIVisualization(

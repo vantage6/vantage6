@@ -8,14 +8,15 @@ import traceback
 from enum import Enum
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, UnionType
 
 import click
 import questionary as q
 import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.common import error, info
+from vantage6.common import error, info, warning
+from vantage6.common.enum import AlgorithmArgumentType
 
 from pprint import pprint
 
@@ -95,7 +96,6 @@ def _convert_functions_to_json(functions: list) -> list:
     """Convert the functions to a JSON format"""
     function_jsons = []
     for func in functions:
-        print(func)
         try:
             func_json = _read_function_signature(func)
         except Exception as e:
@@ -103,9 +103,6 @@ def _convert_functions_to_json(functions: list) -> list:
             error(f"Error reading function signature for {func.__name__}: {e}")
             exit(1)
 
-        pprint(func_json)
-        # print(func_json)
-        print()
         function_jsons.append(func_json)
     return function_jsons
 
@@ -185,7 +182,7 @@ def _get_argument_json(
             "name": name,
             "display_name": _pretty_print_name(name),
             "description": _extract_parameter_description(name, func.__doc__),
-            "type": str(param.annotation),
+            "type": _get_argument_type(param, name, func),
             "required": param.default == inspect.Parameter.empty,
             "has_default_value": param.default != inspect.Parameter.empty,
             "is_frontend_only": False,
@@ -195,6 +192,62 @@ def _get_argument_json(
         if param.default != inspect.Parameter.empty:
             arg_json["default"] = param.default
         return arg_json, FunctionArgumentType.PARAMETER
+
+
+def _get_argument_type(param: inspect.Parameter, name: str, func: callable) -> str:
+    """Get the type of the argument"""
+
+    if type(param.annotation) is UnionType:
+        # Arguments with default values may have type 'str | None'. If that is the case,
+        # we want to use the type of the first element in the union.
+        if len(param.annotation.__args__) > 2:
+            # if there are more than 2 elements in the union, we don't know what to do
+            warning(
+                f"Unsupported argument type: {param.annotation} for argument {name} "
+                f"in function {func.__name__}"
+            )
+            return None
+        elif len(param.annotation.__args__) == 2:
+            # if there are two, we want to use the first one if the second is None
+            if param.annotation.__args__[1] is type(None):
+                type_ = param.annotation.__args__[0]
+            else:
+                warning(
+                    f"Unsupported argument type: {param.annotation} for argument {name}"
+                    f" in function {func.__name__}"
+                )
+                return None
+        else:
+            # normally, unions have 2+ elements. If there is only one, we can use that
+            type_ = param.annotation.__args__[0]
+
+    else:
+        type_ = param.annotation
+
+    if type_ == str:
+        return AlgorithmArgumentType.STRING.value
+    elif type_ == dict:
+        return AlgorithmArgumentType.JSON.value
+    elif type_ == int:
+        return AlgorithmArgumentType.INTEGER.value
+    elif type_ == float:
+        return AlgorithmArgumentType.FLOAT.value
+    elif type_ == bool:
+        return AlgorithmArgumentType.BOOLEAN.value
+    elif type_ == list:
+        return AlgorithmArgumentType.STRINGS.value
+    elif type_ == list[str]:
+        return AlgorithmArgumentType.STRINGS.value
+    elif type_ == list[int]:
+        return AlgorithmArgumentType.INTEGERS.value
+    elif type_ == list[float]:
+        return AlgorithmArgumentType.FLOATS.value
+    else:
+        warning(
+            f"Unsupported argument type: {param.annotation} for argument {name} "
+            f"in function {func.__name__}"
+        )
+        return None
 
 
 def _extract_parameter_description(name: str, docstring: str) -> str:
