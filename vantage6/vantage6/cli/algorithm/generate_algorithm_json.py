@@ -8,6 +8,7 @@ from types import ModuleType
 
 import click
 import questionary as q
+import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common import error, info
@@ -63,7 +64,10 @@ def _convert_functions_to_json(functions: list) -> list:
             traceback.print_exc()
             error(f"Error reading function signature for {func.__name__}: {e}")
             exit(1)
-        print(func_json)
+        from pprint import pprint
+
+        pprint(func_json)
+        # print(func_json)
         print()
 
 
@@ -74,6 +78,7 @@ def _read_function_signature(func: callable) -> dict:
     # TODO also databases
     return {
         "name": func.__name__,
+        "display_name": _pretty_print_name(func.__name__),
         "standalone": True,
         "description": _extract_headline_of_docstring(func.__doc__),
         "ui_visualizations": [],
@@ -83,6 +88,14 @@ def _read_function_signature(func: callable) -> dict:
             if (arg_json := _get_argument_json(func, name, param)) is not None
         ],
     }
+
+
+def _pretty_print_name(name: str) -> str:
+    """Pretty print the name of the function"""
+    pretty = name.replace("_", " ")
+    if len(pretty):
+        pretty = pretty[0].upper() + pretty[1:]
+    return pretty
 
 
 def _extract_headline_of_docstring(docstring: str) -> str:
@@ -113,15 +126,32 @@ def _get_argument_json(
 
     if param.annotation is AlgorithmClient:
         return None  # Algorithm client arguments do not have to be provided by the user
+    elif param.annotation is pd.DataFrame:
+        return None  # DataFrame arguments are supplied by the infrastructure
 
     return {
         "name": name,
-        # "description": param.description,
+        "description": _extract_parameter_description(name, func.__doc__),
         "type": param.annotation,
         "required": param.default == inspect.Parameter.empty,
         "default": param.default if param.default != inspect.Parameter.empty else None,
         "is_frontend_only": False,
     }
+
+
+def _extract_parameter_description(name: str, docstring: str) -> str:
+    """Extract the description of the parameter"""
+    if not docstring:
+        return ""
+
+    # Try both patterns: "{name}:" and "{name} :"
+    patterns = [f"{name}:", f"{name} :"]
+
+    for pattern in patterns:
+        if pattern in docstring:
+            return docstring.split(pattern)[1].split("\n")[1].strip()
+
+    return ""
 
 
 def _get_functions_from_file(file_path: str) -> None:
