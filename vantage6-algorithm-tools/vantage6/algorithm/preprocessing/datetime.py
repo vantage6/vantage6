@@ -194,9 +194,11 @@ def timedelta(
     fmt: str | None = None,
 ) -> pd.DataFrame:
     """
-    Convert a datetime column to a timedelta column in days in a new DataFrame,
-    where the result is the number of days since the date in the column to the
-    reference date or reference column, which defaults to today.
+    Create a timedelta column from a datetime column. The new column shows the time in
+    days since the reference date.
+
+    A reference column may be provided to calculate the timedelta for each row.
+    Otherwise, the default reference date is today.
 
     Parameters
     ----------
@@ -271,8 +273,8 @@ def calculate_age(
     reference_date: date | None = None,
 ) -> pd.DataFrame:
     """
-    Calculate the calendar age in years from the birthdate column to a
-    reference date (defaults to today).
+    Calculate the calendar age in years from the birthdate column to a reference date
+    (defaults to today).
 
     Parameters
     ----------

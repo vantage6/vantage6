@@ -13,8 +13,9 @@ from vantage6.algorithm.decorator.data import data
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
     Select rows from the data based on a query. It uses the
-    pandas.DataFrame.query function to filter the data. See the documentation
-    of that function for more information on the query syntax.
+    pandas.DataFrame.query function to filter the data.
+
+    See the documentation of that function for more information on the query syntax.
 
     Parameters
     ----------
@@ -269,10 +270,10 @@ def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
 def filter_by_date(
     df: pd.DataFrame,
     column: str,
-    start_date: str = None,
-    end_date: str = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     keep_between: bool = True,
-    fmt: str = None,
+    fmt: str | None = None,
 ) -> pd.DataFrame:
     """
     Filters a DataFrame based on a datetime column within a given start and end

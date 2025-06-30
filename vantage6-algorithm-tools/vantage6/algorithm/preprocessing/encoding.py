@@ -24,10 +24,11 @@ def min_max_scale(
 ) -> pd.DataFrame:
     """
     Perform min-max scaling on specified columns of a DataFrame using the
-    formula (x - min) / (max - min). The function is applied in a federated
-    setting, meaning one node does not know the global min and mix. This means
-    the minimum and maximum values for each column must be specified.
-    If columns are not provided, all columns are scaled and the length of
+    formula (x - min) / (max - min).
+
+    The function is applied in a federated setting, meaning one node does not know the
+    global min and mix. This means the minimum and maximum values for each column must
+    be specified. If columns are not provided, all columns are scaled and the length of
     min_vals and max_vals must match the number of DataFrame columns.
 
     Parameters
@@ -97,11 +98,12 @@ def standard_scale(
 ) -> pd.DataFrame:
     """
     Perform standard scaling on specified columns of a DataFrame using the
-    formula (x - mean) / std. The function is applied in a federated
-    setting, meaning one node does not know the global mean and std. This means
-    the mean and standard deviation values for each column must be specified.
-    If columns are not provided, all columns are scaled and the length of
-    means and stds must match the number of DataFrame columns.
+    formula (x - mean) / std.
+
+    The function is applied in a federated setting, meaning one node does not know the
+    global mean and std. This means the mean and standard deviation values for each
+    column must be specified. If columns are not provided, all columns are scaled and
+    the length of means and stds must match the number of DataFrame columns.
 
     Parameters
     ----------
@@ -171,9 +173,10 @@ def one_hot_encode(
     prefix: str | None = None,
 ) -> pd.DataFrame:
     """
-    Perform one-hot encoding on a specific column of a DataFrame. As one node
-    may not have access to all possible categories in the entire dataset, this
-    requires predefined categories to be specified upfront. The function allows
+    Perform one-hot encoding on a specific column of a DataFrame.
+
+    As one node may not have access to all possible categories in the entire dataset,
+    this requires predefined categories to be specified upfront. The function allows
     encoding of unseen categories into a specified 'unknown' category label.
     The original column can be optionally dropped, and a prefix can be added
     to the new one-hot encoded columns.
@@ -325,10 +328,10 @@ def discretize_column(
     df: pd.DataFrame,
     column_name: str,
     bins: int | list[int | float],
-    labels: list[str] = None,
+    labels: list[str] | None = None,
     right: bool = True,
     include_lowest: bool = False,
-    output_column: str = None,
+    output_column: str | None = None,
 ) -> pd.DataFrame:
     """
     Discretize a column in a new DataFrame based on the given bin edges or
