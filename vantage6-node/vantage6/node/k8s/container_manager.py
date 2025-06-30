@@ -48,8 +48,6 @@ from vantage6.node.k8s.exceptions import (
 from vantage6.node.k8s.data_classes import Result, ToBeKilled, KilledRun
 
 
-
-
 class ContainerManager:
 
     def __init__(self, ctx: NodeContext, client: NodeClient):
@@ -561,24 +559,32 @@ class ContainerManager:
             "Running": RunStatus.ACTIVE,
             "Failed": RunStatus.FAILED,
             "Succeded": RunStatus.COMPLETED,
+            "Unknown": RunStatus.UNKNOWN_ERROR,
         }
 
         # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
-        # reported after multiple ErrImagePull ocurrences. 
-        no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff","InvalidImageName"]
+        # reported after multiple ErrImagePull ocurrences.
+        no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff", "InvalidImageName"]
 
-        container_image_pulling_k8s_waiting_reasons = ["ContainerCreating", "ImagePulling" ]
+        container_image_pulling_k8s_waiting_reasons = [
+            "ContainerCreating",
+            "ImagePulling",
+        ]
 
         # Wait until the POD is created
         w = watch.Watch()
 
         try:
-            while True:
 
-                # Watch events on the created POD during 'timeout_seconds' seconds.
-                # Addional event-watch 'rounds' (new iterations on this loop) are performed only 
-                # when, after the timeout, the POD is in 'waiting' state due to "ContainerCreating",
-                # or "ImagePulling" events. In any other cases a RunStatus is returned.
+            # Within this loop
+
+            while True:
+                # Non-busy waiting for new status events on the job POD. This loop will process events until
+                # a terminal status is reached (Running, Failed, Succeded) or timeout_seconds is reached.
+                # If timeout_seconds is reached before getting a terminal status, the method will
+                # check the cause of not getting a terminal status yet and either wait for
+                # another 'timeout_seconds' (to get this new status), or report this as an error (see
+                # comments below).
                 for event in w.stream(
                     func=self.core_api.list_namespaced_pod,
                     namespace=self.task_namespace,
@@ -589,86 +595,32 @@ class ContainerManager:
 
                     pod = event["object"]
 
-                    self.log.debug(
-                        "Job POD (label %s) created successfully in %s namespace. Still in pending status...",
-                        label,
-                        self.task_namespace,
-                    )
+                    pod_phase: RunStatus = self.__compute_job_pod_phase(pod, label)
 
-                    pod_phase = pod.status.phase
+                    if pod_phase != RunStatus.INITIALIZING:
+                        return pod_phase
 
-                    #'Pending' phase: keep waiting unless the waiting is caused by a container-image related error
-                    if pod_phase == "Pending":
-
-                        pending_status_reason = None
-
-                        if pod.status:
-                            if pod.status.container_statuses:
-                                # The job pods have use single container, container_statuses will always have a single element
-                                container_status:V1ContainerStatus = pod.status.container_statuses[0]
-                                if container_status.state.waiting:
-                                    pending_status_reason = (
-                                        container_status.state.waiting.reason,
-                                    )
-
-                        self.log.debug(
-                            "Job POD (label %s, namespace %s) Still with pending status. Reason: %s",
-                            label,
-                            self.task_namespace,
-                            pending_status_reason,
-                        )
-
-                        if pending_status_reason in no_docker_image_k8s_waiting_reasons:
-                            return RunStatus.NO_DOCKER_IMAGE
-
-                    # The other POD creation-terminal statuses: return the corresponding v6 status
-                    elif pod_phase in terminal_k8sjobstatus_to_v6_status_map.keys():
-                        return terminal_k8sjobstatus_to_v6_status_map[pod_phase]
-
-                # POD event-watch TIMEOUT was reached, now checking why the POD hasn't moved from 
-                # the 'Pending' status: due to an error, or because it requires more time (e.g., pulling 
-                # a large image container).
+                # POD event-watch TIMEOUT (timeout_seconds) was reached.
+                # Now this checks whether the POD hasn't moved from the 'Pending' because of an error,
+                # or because it requires more time (e.g., pulling a large image container).
                 self.log.debug(
                     "Job (label %s, namespace %s) event stream timeout reached. Checking the cause...",
                     label,
                     self.task_namespace,
                 )
-                
+
+                # Getting the POD again to check its post-timeout status
+                # Note on using container_statuses[0]: The job pods always use a single container, container_statuses will always have a single element
                 pod = self.core_api.list_namespaced_pod(
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
-                
-                # The job pods have use single container, container_statuses will always have a single element
-                container_status = pod.status.container_statuses[0]
 
-                if container_status.state.waiting:
+                pod_phase: RunStatus = self.__compute_job_pod_phase(pod, label)
 
-                    if container_status.state.waiting.reason in no_docker_image_k8s_waiting_reasons:
-                        self.log.debug(
-                            "Job (label %s, namespace %s) timeout: image couldn't be pulled.",
-                            label,
-                            self.task_namespace,
-                        )
-                        return RunStatus.NO_DOCKER_IMAGE
-
-                    elif container_status.state.waiting.reason in container_image_pulling_k8s_waiting_reasons:
-                        # No status is returned, so the POD events are watched one more time
-                        self.log.info(
-                            "Job (label %s, namespace %s) still pulling the (probably large) docker image. Waiting again for a new status update...",
-                            label,
-                            self.task_namespace,
-                        )
-                        
-                    else:
-                        # Timeout caused by unkown reason
-                        self.log.debug(
-                            "Job (label %s, namespace %s) Timeout caused by an unexpected reason: [%s]. Reporting this as UNKOWN_ERROR",
-                            label,
-                            self.task_namespace,
-                            container_status.state.waiting.reason,
-                        )
-                        return RunStatus.UNKNOWN_ERROR
-                
+                # Another iteration on the outher loop is performed only if the pod is pending for reasons other than
+                # missing/invalid Docker image.
+                if pod_phase != RunStatus.INITIALIZING:
+                    return pod_phase
 
                 self.log.debug(
                     "Job (label %s, namespace %s) still pulling the (probably large) docker image. Waiting again for a new status update...",
@@ -679,6 +631,100 @@ class ContainerManager:
         finally:
             w.stop()
 
+    def __compute_job_pod_phase(self, pod: k8s_client.V1Pod, label: str) -> RunStatus:
+        """
+        Determines the current run status of a Kubernetes job pod based on its phase and container status.
+        This method inspects the provided Kubernetes pod object to map its current phase and, if applicable,
+        the container's waiting reason to a corresponding `RunStatus` value used by the application.
+        Args:
+            pod: The Kubernetes pod object whose status is to be evaluated. It is expected to have a `status`
+                attribute with `phase` and (optionally) `container_statuses`.
+            label: A label identifying the job pod, used for logging purposes.
+        Returns:
+            RunStatus: The computed run status for the pod, which can be one of:
+                - RunStatus.INITIALIZING: The pod is still pending for reasons other than missing/invalid Docker image.
+                - RunStatus.NO_DOCKER_IMAGE: The pod is pending due to image pull errors or invalid image name.
+                - RunStatus.ACTIVE: The pod is running.
+                - RunStatus.FAILED: The pod has failed.
+                - RunStatus.COMPLETED: The pod has succeeded.
+                - RunStatus.UNKNOWN_ERROR: The pod is in an unknown or unexpected phase.
+        """
+
+        terminal_k8s_phase_to_v6_status_map: dict[str, RunStatus] = {
+            "Running": RunStatus.ACTIVE,
+            "Failed": RunStatus.FAILED,
+            "Succeded": RunStatus.COMPLETED,
+            "Unknown": RunStatus.UNKNOWN_ERROR,
+        }
+
+        # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
+        # reported after multiple ErrImagePull ocurrences.
+        no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff", "InvalidImageName"]
+
+        pod_phase = pod.status.phase
+
+        if pod_phase == "Pending":
+
+            self.log.debug(
+                "Job POD (label %s) is already in %s namespace, but still in pending status...",
+                label,
+                self.task_namespace,
+            )
+
+            pending_status_reason = None
+
+            if pod.status:
+                if pod.status.container_statuses:
+                    # The job pods have use single container, container_statuses will always have a single element
+                    container_status: V1ContainerStatus = pod.status.container_statuses[
+                        0
+                    ]
+                    if container_status.state.waiting:
+                        pending_status_reason = (container_status.state.waiting.reason,)
+                        self.log.debug(
+                            "Job POD (label %s, namespace %s) Still in pending phase. Container status: %s",
+                            label,
+                            self.task_namespace,
+                            pending_status_reason,
+                        )
+                    else:
+                        self.log.debug(
+                            "Job POD (label %s, namespace %s) Still in pending phase (container status not yet available)",
+                            label,
+                            self.task_namespace,
+                        )
+
+            # If the 'pending' status is caused by an image/image-registry related problem, the corresponding status is returned.
+            # Otherwise (e.g, the image is still being pulled "ImagePulling" ot the container is being created "ContainerCreating"),
+            # an "INITIALIZING" status is returned.
+            if pending_status_reason in no_docker_image_k8s_waiting_reasons:
+                self.log.debug(
+                    "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE status",
+                    label,
+                    self.task_namespace,
+                )
+                return RunStatus.NO_DOCKER_IMAGE
+            else:
+                self.log.debug(
+                    "Job POD (label %s, namespace %s) - Reporting INITIALIZING status (image still being pulled or container still being created)",
+                    label,
+                    self.task_namespace,
+                )
+                return RunStatus.INITIALIZING
+
+        # The POD is no longer pending, and a terminal phase has been reached: return the corresponding v6 status
+        elif pod_phase in terminal_k8s_phase_to_v6_status_map.keys():
+            return terminal_k8s_phase_to_v6_status_map[pod_phase]
+
+        # No other kind of phase is expected to be reported (according to current k8s's specifications)
+        else:
+            self.log.critical(
+                "Job (label %s, namespace %s) Unexpected/unhandled POD creation phase: %s. Reporting this as an unknown error.",
+                label,
+                self.task_namespace,
+                pod_phase,
+            )
+            return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
         self,
