@@ -15,7 +15,8 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.remove import cli_server_remove
 from vantage6.cli.utils import remove_file
 from vantage6.common.globals import InstanceType
-from vantage6.cli.dev.utils import get_dev_server_context
+
+# from vantage6.cli.dev.utils import get_dev_server_context
 
 
 @click.command()

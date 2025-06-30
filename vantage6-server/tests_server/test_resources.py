@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.serialization import serialize
+from vantage6.common.enum import TaskStatus
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session as db_session
 from vantage6.server.model import (
@@ -3948,8 +3949,8 @@ class TestResources(TestResourceBase):
         task.save()
 
         # Add runs to the task with valid statuses
-        run1 = Run(task=task, status=TaskStatus.ACTIVE.value)
-        run2 = Run(task=task, status=TaskStatus.PENDING.value)
+        run1 = Run(task=task, status=RunStatus.ACTIVE.value)
+        run2 = Run(task=task, status=RunStatus.PENDING.value)
         run1.save()
         run2.save()
 
@@ -3963,14 +3964,14 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
 
         # Test with global permissions
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
 
         # Test with organization permissions (should fail for other organizations)
         rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
@@ -3982,7 +3983,7 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.ACTIVE)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
 
         # Cleanup
         task.delete()
