@@ -2,6 +2,11 @@
 # namespace: vantage6-node
 node:
 
+  # Set to false to prevent creation of node secrets (useful when secrets are managed
+  # externally)
+  createSecrets: true
+
+
   name: put-your-node-name-here
   apiKey: put-your-api-key-here
 

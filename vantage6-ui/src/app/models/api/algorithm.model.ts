@@ -158,6 +158,7 @@ export interface FunctionDatabase {
   id: number;
   name: string;
   description?: string;
+  multiple?: boolean;
 }
 
 export interface ArgumentForm extends NameDescription {
@@ -174,10 +175,15 @@ export interface ArgumentForm extends NameDescription {
   conditionalValueNull?: boolean | string;
   is_frontend_only: boolean | string;
 }
+
+export interface DatabaseForm extends NameDescription {
+  multiple?: boolean;
+}
+
 export interface FunctionForm extends NameDescription {
   display_name?: string;
   arguments: ArgumentForm[];
-  databases: NameDescription[];
+  databases: DatabaseForm[];
   ui_visualizations: VisualizationForm[];
   step_type: string;
   standalone?: boolean;

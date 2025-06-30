@@ -240,7 +240,8 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function",
       "valid-json": "Please provide valid JSON input.",
-      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
+      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field",
+      "warning-column-list-multiple-dataframes": "This function accepts multiple dataframes in a single argument. The selection of columns are from the first selected dataframe."
     },
     "alert-no-online-nodes": "You cannot create an analysis right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-sessions-found": "No sessions found. To compute you must first create a session.",
@@ -346,7 +347,10 @@
           "short_header": "Only for UI"
         }
       },
-      "databases": "Databases",
+      "databases": {
+        "title": "Databases",
+        "multiple": "Does the algorithm accept multiple dataframes in this single argument?"
+      },
       "visualization": {
         "title": "Visualizations",
         "type": "Type of visualization",

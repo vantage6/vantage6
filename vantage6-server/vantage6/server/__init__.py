@@ -421,7 +421,7 @@ class ServerApp(Vantage6App):
     def _get_keycloak_public_key():
         response = requests.get(
             f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
-            "/vantage6"
+            f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}"
         )
         key = response.json()["public_key"]
         return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"

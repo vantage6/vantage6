@@ -48,6 +48,9 @@ MAX_INTERVAL = 300
 # Constant multiplier to make interval for requesting results from a task progressively longer
 INTERVAL_MULTIPLIER = 1.5
 
+# keyword for the multiple dataframes in single argument decorator
+DATAFRAME_MULTIPLE_KEYWORD = "multiple"
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""

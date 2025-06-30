@@ -282,7 +282,7 @@ class TaskInputSchema(_NameValidationSchema):
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict(), allow_none=True)
+    databases = fields.List(fields.List(fields.Dict()), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
     action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
@@ -311,13 +311,13 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict] | None):
+    def validate_databases(self, databases: list[list[dict]] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict] | None
+        databases : list[list[dict]] | None
             List of databases to validate. Each database must have at least a database
             label or dataframe_id.
 
@@ -328,7 +328,13 @@ class TaskInputSchema(_NameValidationSchema):
         """
         if databases is None:
             return  # some algorithms don't use any database
-        for database in databases:
+
+        if isinstance(databases, list) and not isinstance(databases[0], list):
+            raise ValidationError(
+                "Databases must be a list of lists of dictionaries or None"
+            )
+
+        for database in [db for sublist in databases for db in sublist]:
             if "type" not in database:
                 raise ValidationError("Each database must have a 'type' key")
 
@@ -547,6 +553,20 @@ class DataframeInitInputSchema(Schema):
     # Task metadata that is executed on the node for session initialization, which is
     # the data extraction task
     task = fields.Nested(SessionTaskInputSchema, required=True)
+
+    @validates("name")
+    def validate_name(self, name: str):
+        """
+        Validate the name in the input.
+        """
+        # Check that the name does not contain special characters or spaces, hyphens
+        # and underscores are allowed. We need to be safe as this name is used as the
+        # filename on the nodes. And ',' and ';' have special meaning in the
+        # environment variables.
+        if not re.match(r"^[a-zA-Z0-9-_]+$", name):
+            raise ValidationError(
+                "Name must contain only letters, numbers, hyphens and underscores"
+            )
 
 
 class DataframePreprocessingInputSchema(Schema):

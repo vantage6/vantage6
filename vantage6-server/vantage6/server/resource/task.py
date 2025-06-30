@@ -797,7 +797,7 @@ class Tasks(TaskBase):
             image_with_hash = parent.image
 
         # Obtain the user requested database or dataframes
-        databases = data.get("databases", [])
+        databases = data.get("databases", [[]])
 
         # check the action of the task
         action = Tasks.__check_action(data, action, algorithm)
@@ -820,7 +820,7 @@ class Tasks(TaskBase):
         # all new modification tasks will depend on it. The `depends_on_ids` parameter
         # is set by the session endpoints.
         dependent_tasks = []
-        for database in databases:
+        for database in [db for sublist in databases for db in sublist]:
             # add last modification task to dependent tasks
             if database["type"] == TaskDatabaseType.DATAFRAME:
                 df = db.Dataframe.get(database["dataframe_id"])
@@ -902,19 +902,21 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        for database in databases:
+        for idx, database_group in enumerate(databases):
 
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            task_db = db.TaskDatabase(
-                task_id=task.id,
-                label=database.get("label"),
-                type_=database.get("type"),
-                dataframe_id=database.get("dataframe_id"),
-            )
-            task_db.save()
+            for database in database_group:
+                task_db = db.TaskDatabase(
+                    task_id=task.id,
+                    label=database.get("label"),
+                    type_=database.get("type"),
+                    dataframe_id=database.get("dataframe_id"),
+                    position=idx,
+                )
+                task_db.save()
 
         # All checks completed, save task to database
         task.save()

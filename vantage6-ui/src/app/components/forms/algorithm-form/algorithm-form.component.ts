@@ -405,6 +405,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           const databaseFormGroup = this.getDatabaseForm();
           databaseFormGroup.controls['name'].setValue(db.name);
           databaseFormGroup.controls['description'].setValue(db.description);
+          databaseFormGroup.controls['multiple'].setValue(db.multiple || false);
           (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
         });
       }
@@ -537,7 +538,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   private getDatabaseForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required]],
-      description: ['']
+      description: [''],
+      multiple: [false]
     });
   }
 

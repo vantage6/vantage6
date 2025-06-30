@@ -1,6 +1,10 @@
 version: v2beta1
 name: vantage6git
 
+# Import external profile configurations
+imports:
+  - path: dev/pipeline/profiles.yaml
+
 # TODO using tags isnt safe with the devspace build stuff
 vars:
   CURRENT_NAMESPACE:
@@ -40,6 +44,40 @@ vars:
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
+  KEYCLOAK_URL:
+    source: env
+    default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+  KEYCLOAK_REALM:
+    source: env
+    default: vantage6
+  KEYCLOAK_FRONTEND_CLIENT:
+    source: env
+    default: public_client
+  KEYCLOAK_BACKEND_CLIENT:
+    source: env
+    default: backend-user-client
+  KEYCLOAK_BACKEND_CLIENT_SECRET:
+    source: env
+    default: myuserclientsecret
+  KEYCLOAK_ADMIN_CLIENT:
+    source: env
+    default: backend-admin-client
+  KEYCLOAK_ADMIN_CLIENT_SECRET:
+    source: env
+    default: myadminclientsecret
+  KEYCLOAK_ADMIN_USERNAME:
+    source: env
+    default: admin
+  KEYCLOAK_ADMIN_PASSWORD:
+    source: env
+    default: admin
+  KEYCLOAK_NODE_CLIENT:
+    source: env
+    default: node-client
+  KEYCLOAK_NODE_CLIENT_SECRET:
+    source: env
+    default: mynodeclientsecret
+  DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
 
@@ -96,7 +134,6 @@ pipelines:
         vantage6-node
 
   purge:
-    # Careful with destructive rm commands like `rm -rf ${p}/*`!!
     run: |-
       echo "Purging all deployments..."
       stop_dev --all
@@ -187,7 +224,14 @@ deployments:
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           jwt:
@@ -196,6 +240,9 @@ deployments:
             host_uri: ${HOST_URI}
         ui:
           image: ${UI_IMAGE}
+          keycloakPublicUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
@@ -209,7 +256,14 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           vantage6Server:
@@ -251,7 +305,10 @@ deployments:
         node:
           image: ${NODE_IMAGE}
           numberOfNodes: ${NUMBER_OF_NODES}
-          keycloakUrl: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_NODE_CLIENT}
+          keycloakClientSecret: ${KEYCLOAK_NODE_CLIENT_SECRET}
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
@@ -344,14 +401,16 @@ dev:
       - port: 7633:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
 
-  # This puts the store container in development mode.
   vantage6-ui:
     imageSelector: ${UI_IMAGE}
+    command: ["/app/startup/dev_startup.sh"]
     sync:
-    # TODO ideally we'd include the entire dir vantage6-ui/ but that leads to issues
-    # with the node_modules dir, as well as with the JSON files. Usually changing these
-    # would require image rebuild but it's not transparent.
+    # Ideally we'd include the entire dir vantage6-ui/ but that leads to issues
+    # with the node_modules dir, as well as with the JSON files. Changing these
+    # usually requires image rebuild so it's not a big deal, but also not ideal.
     - path: ./vantage6-ui/src/:/app/src/
+      disableDownload: true
+    - path: ./vantage6-ui/startup/:/app/startup/
       disableDownload: true
     ports:
       - port: 7600:80
@@ -399,8 +458,6 @@ dev:
       inject: true
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
-
-
 
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
