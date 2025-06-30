@@ -1,9 +1,13 @@
+import os
 import sys
 import importlib
-import traceback
-from pathlib import Path
-from inspect import getmembers, isfunction, ismodule, signature
 import inspect
+import json
+import traceback
+
+from enum import Enum
+from inspect import getmembers, isfunction, ismodule, signature
+from pathlib import Path
 from types import ModuleType
 
 import click
@@ -12,6 +16,15 @@ import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common import error, info
+
+from pprint import pprint
+
+
+class FunctionArgumentType(Enum):
+    """Type of the function argument"""
+
+    PARAMETER = "parameter"
+    DATAFRAME = "dataframe"
 
 
 @click.command()
@@ -27,13 +40,22 @@ from vantage6.common import error, info
     type=str,
     help="Path to the current algorithm.json file",
 )
+@click.option(
+    "--output-file",
+    default="new-algorithm.json",
+    type=str,
+    help="Path to the output file",
+)
 # TODO note in the docstring that some algorithm json fields (e.g. ui_visualizations)
 # are not supported. Or support filling them in manually.
 # unsupported: ui_visualizations, databases, step_type, display_name
-# unsupported for arguments: description, conditional_value, conditional_operator,
-# display_name, type==column|organization|json|...
+# unsupported for arguments: conditional_value, conditional_operator,
+# type==column|organization|json|...
+# TODO print warnings that the output should always be checked
+# TODO create JSON file for infra functions so that those are always created
+# correctly - these values should not be overwritten by the command unless flag
 def cli_algorithm_generate_algorithm_json(
-    algo_function_file: str, current_json: str
+    algo_function_file: str, current_json: str, output_file: str
 ) -> dict:
     """
     Generate an updated algorithm.json file to submit to the algorithm store.
@@ -48,14 +70,30 @@ def cli_algorithm_generate_algorithm_json(
 
     current_json = _get_current_json_location(current_json)
 
+    # read the current algorithm.json file
+    with open(current_json, "r", encoding="utf-8") as f:
+        current_json_data = json.load(f)
+        pprint(current_json_data)
+
     # get the functions from the file
+    info(f"Importing functions from {algo_function_file}...")
     functions = _get_functions_from_file(algo_function_file)
 
+    info("Converting functions to JSON...")
     function_json = _convert_functions_to_json(functions)
+
+    # write the new algorithm.json file
+    info(f"Writing new algorithm.json file to {output_file}...")
+    current_json_data["functions"] = function_json
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(current_json_data, f, indent=2)
+
+    info(f"New algorithm.json file written to {output_file}")
 
 
 def _convert_functions_to_json(functions: list) -> list:
     """Convert the functions to a JSON format"""
+    function_jsons = []
     for func in functions:
         print(func)
         try:
@@ -64,30 +102,36 @@ def _convert_functions_to_json(functions: list) -> list:
             traceback.print_exc()
             error(f"Error reading function signature for {func.__name__}: {e}")
             exit(1)
-        from pprint import pprint
 
         pprint(func_json)
         # print(func_json)
         print()
+        function_jsons.append(func_json)
+    return function_jsons
 
 
 def _read_function_signature(func: callable) -> dict:
     """Read the signature of the function"""
     sig = signature(func)
     # TODO steptype based on the decoration of the function
-    # TODO also databases
-    return {
+    function_json = {
         "name": func.__name__,
         "display_name": _pretty_print_name(func.__name__),
         "standalone": True,
         "description": _extract_headline_of_docstring(func.__doc__),
         "ui_visualizations": [],
-        "arguments": [
-            arg_json
-            for name, param in sig.parameters.items()
-            if (arg_json := _get_argument_json(func, name, param)) is not None
-        ],
+        "arguments": [],
+        "databases": [],
     }
+    for name, param in sig.parameters.items():
+        arg_json, arg_type = _get_argument_json(func, name, param)
+        if arg_json is None:
+            continue
+        elif arg_type == FunctionArgumentType.DATAFRAME:
+            function_json["databases"].append(arg_json)
+        else:
+            function_json["arguments"].append(arg_json)
+    return function_json
 
 
 def _pretty_print_name(name: str) -> str:
@@ -115,7 +159,7 @@ def _extract_headline_of_docstring(docstring: str) -> str:
 
 def _get_argument_json(
     func: callable, name: str, param: inspect.Parameter
-) -> dict | None:
+) -> tuple[dict | None, FunctionArgumentType | None]:
     """Get the argument JSON"""
 
     if param.annotation is None:
@@ -125,18 +169,32 @@ def _get_argument_json(
         exit(1)
 
     if param.annotation is AlgorithmClient:
-        return None  # Algorithm client arguments do not have to be provided by the user
+        # Algorithm client arguments do not have to be provided by the user
+        return None, None
     elif param.annotation is pd.DataFrame:
-        return None  # DataFrame arguments are supplied by the infrastructure
-
-    return {
-        "name": name,
-        "description": _extract_parameter_description(name, func.__doc__),
-        "type": param.annotation,
-        "required": param.default == inspect.Parameter.empty,
-        "default": param.default if param.default != inspect.Parameter.empty else None,
-        "is_frontend_only": False,
-    }
+        # this is an argument that requires the user to supply a dataframe. That only
+        # requires a name and description.
+        return {
+            "name": name,
+            "description": _extract_parameter_description(name, func.__doc__),
+        }, FunctionArgumentType.DATAFRAME
+    else:
+        # This is a regular function parameter
+        # TODO add type (column|organization|json|...)
+        arg_json = {
+            "name": name,
+            "display_name": _pretty_print_name(name),
+            "description": _extract_parameter_description(name, func.__doc__),
+            "type": str(param.annotation),
+            "required": param.default == inspect.Parameter.empty,
+            "has_default_value": param.default != inspect.Parameter.empty,
+            "is_frontend_only": False,
+            "conditional_value": None,
+            "conditional_operator": None,
+        }
+        if param.default != inspect.Parameter.empty:
+            arg_json["default"] = param.default
+        return arg_json, FunctionArgumentType.PARAMETER
 
 
 def _extract_parameter_description(name: str, docstring: str) -> str:
@@ -203,7 +261,7 @@ def _get_functions_from_file(file_path: str) -> None:
     return import_functions
 
 
-def _get_algo_function_file_location(algo_function_file: str) -> None:
+def _get_algo_function_file_location(algo_function_file: str | None) -> None:
     """Get user input for the algorithm creation
 
     Parameters
