@@ -675,7 +675,6 @@ class ContainerManager:
                             self.task_namespace,
                         )
 
-
             # If the 'pending' status is caused by an image/image-registry related problem, the corresponding status is returned.
             # Otherwise (e.g, the image is still being pulled "ImagePulling" ot the container is being created "ContainerCreating"),
             # an "INITIALIZING" status is returned.
