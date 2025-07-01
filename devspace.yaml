@@ -47,6 +47,9 @@ vars:
   KEYCLOAK_URL:
     source: env
     default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+  KEYCLOAK_PUBLIC_URL:
+    source: env
+    default: http://localhost:8080
   KEYCLOAK_REALM:
     source: env
     default: vantage6
@@ -240,7 +243,7 @@ deployments:
             host_uri: ${HOST_URI}
         ui:
           image: ${UI_IMAGE}
-          keycloakPublicUrl: ${KEYCLOAK_URL}
+          keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
