@@ -38,6 +38,7 @@ from vantage6.node.globals import (
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
     TASK_START_TIMEOUT_SECONDS,
+    K8S_EVENT_STREAM_LOOP_TIMEOUT,
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
@@ -535,7 +536,9 @@ class ContainerManager:
         """"
         This method monitors the status of a Kubernetes POD created by a job and 
         waits until it transitions to a 'Running' state or another terminal state 
-        (e.g., 'Failed', 'Succeeded'). 
+        (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
+        After the timeout, this method will have additional status-event waiting windows
+        only if the reason for such timeout is an (large) image that is already being pulled.
 
                              - Succeeded
                             /
@@ -573,12 +576,12 @@ class ContainerManager:
                     namespace=self.task_namespace,
                     label_selector=label,
                     # Timeout
-                    timeout_seconds=120,
+                    timeout_seconds=K8S_EVENT_STREAM_LOOP_TIMEOUT,
                 ):
 
                     pod = event["object"]
 
-                    pod_phase: RunStatus = self.__compute_job_pod_phase(pod, label)
+                    pod_phase: RunStatus = self.__compute_job_pod_run_status(pod, label)
 
                     if pod_phase != RunStatus.INITIALIZING:
                         return pod_phase
@@ -596,7 +599,7 @@ class ContainerManager:
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
 
-                pod_phase: RunStatus = self.__compute_job_pod_phase(pod, label)
+                pod_phase: RunStatus = self.__compute_job_pod_run_status(pod, label)
 
                 # Another iteration on the outher loop is performed if the pod is pending for reasons other than
                 # missing/invalid Docker image (which is reported as INITIALIZING).
@@ -612,9 +615,11 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __compute_job_pod_phase(self, pod: k8s_client.V1Pod, label: str) -> RunStatus:
+    def __compute_job_pod_run_status(
+        self, pod: k8s_client.V1Pod, label: str
+    ) -> RunStatus:
         """
-        Determines the current run status of a Kubernetes job pod based on its phase and container status.
+        Determines the current run status of a Kubernetes job pod based on its phase and container initialization status.
         This method inspects the provided Kubernetes pod object to map its current phase and, if applicable,
         the container's waiting reason to a corresponding `RunStatus` value used by the application.
         Args:
@@ -623,9 +628,9 @@ class ContainerManager:
             label: A label identifying the job pod, used for logging purposes.
         Returns:
             RunStatus: The computed run status for the pod, which can be one of:
-                - RunStatus.INITIALIZING: The pod is still pending for reasons other than missing/invalid Docker image.
+                - RunStatus.INITIALIZING: The pod is still pending for creation (for reasons other than missing/invalid Docker image).
                 - RunStatus.NO_DOCKER_IMAGE: The pod is pending due to image pull errors or invalid image name.
-                - RunStatus.ACTIVE: The pod is running.
+                - RunStatus.ACTIVE: The pod is already running.
                 - RunStatus.FAILED: The pod has failed.
                 - RunStatus.COMPLETED: The pod has succeeded.
                 - RunStatus.UNKNOWN_ERROR: The pod is in an unknown or unexpected phase.
@@ -639,7 +644,7 @@ class ContainerManager:
         }
 
         # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
-        # reported after multiple ErrImagePull ocurrences.
+        # reported after multiple ErrImagePull events.
         no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff", "InvalidImageName"]
 
         pod_phase = pod.status.phase
