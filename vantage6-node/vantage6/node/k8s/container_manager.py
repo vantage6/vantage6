@@ -661,7 +661,7 @@ class ContainerManager:
                         0
                     ]
                     if container_status.state.waiting:
-                        pending_status_reason = (container_status.state.waiting.reason,)
+                        pending_status_reason = container_status.state.waiting.reason
                         self.log.debug(
                             "Job POD (label %s, namespace %s) Still in pending phase. Container status: %s",
                             label,
@@ -675,6 +675,7 @@ class ContainerManager:
                             self.task_namespace,
                         )
 
+
             # If the 'pending' status is caused by an image/image-registry related problem, the corresponding status is returned.
             # Otherwise (e.g, the image is still being pulled "ImagePulling" ot the container is being created "ContainerCreating"),
             # an "INITIALIZING" status is returned.
@@ -687,9 +688,10 @@ class ContainerManager:
                 return RunStatus.NO_DOCKER_IMAGE
             else:
                 self.log.debug(
-                    "Job POD (label %s, namespace %s) - Reporting INITIALIZING status (image still being pulled or container still being created)",
+                    "Job POD (label %s, namespace %s) - Reporting INITIALIZING status (image still being pulled or container still being created): %s",
                     label,
                     self.task_namespace,
+                    pending_status_reason,
                 )
                 return RunStatus.INITIALIZING
 
