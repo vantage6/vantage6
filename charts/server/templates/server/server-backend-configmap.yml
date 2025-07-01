@@ -55,7 +55,7 @@ data:
       host_uri: {{ .Values.server.dev.host_uri }}
     {{- end }}
     keycloak:
-      {{- if .Values.server.keycloak.manage_users_and_nodes }}
+      {{- if hasKey .Values.server.keycloak "manage_users_and_nodes" }}
       manage_users_and_nodes: {{ .Values.server.keycloak.manage_users_and_nodes }}
       {{- else }}
       manage_users_and_nodes: true
