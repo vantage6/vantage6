@@ -4,6 +4,7 @@ from functools import wraps
 from vantage6.common import error
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import get_env_var
+from vantage6.algorithm.tools import DecoratorType
 
 
 def source_database(func) -> callable:
@@ -97,4 +98,5 @@ def source_database(func) -> callable:
 
         return func(connection_details, *args, **kwargs)
 
+    decorator.vantage6_decorated_type = DecoratorType.SOURCE_DATABASE
     return decorator

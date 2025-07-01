@@ -14,6 +14,7 @@ import click
 import questionary as q
 import pandas as pd
 
+import vantage6.algorithm.decorator as decorator_module
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common import error, info, warning
 from vantage6.common.enum import AlgorithmArgumentType
@@ -302,13 +303,22 @@ def _get_functions_from_file(file_path: str) -> None:
     import_functions = [m for m in import_members if isfunction(m)]
     import_modules = [m for m in import_members if ismodule(m)]
 
+    def _is_decorated_func(func: callable) -> bool:
+        """Check if the function is decorated with a vantage6 decorator, which all
+        functions being called in vantage6 algorithm should be"""
+        return getattr(func, "vantage6_decorated_type", None) is not None
+
     # add the functions from the imported modules (only 1 level deep). This is so that
     # if you do e.g. 'from vantage6.algorithm.preprocessing import *', all functions
     # from within those modules are also imported.
     for import_module in import_modules:
         second_level_import_members = get_members_from_module(import_module)
         import_functions.extend(
-            [m for m in second_level_import_members if isfunction(m)]
+            [
+                m
+                for m in second_level_import_members
+                if isfunction(m) and _is_decorated_func(m)
+            ]
         )
 
     return import_functions

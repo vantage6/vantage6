@@ -5,7 +5,6 @@ collapse a DataFrame using various aggregation techniques, and to enrich a
 DataFrame with statistical information based on a given grouping.
 """
 
-from typing import Callable
 import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
@@ -17,9 +16,10 @@ from vantage6.algorithm.tools.exceptions import UserInputError
 @data(1)
 def collapse(
     df: pd.DataFrame,
-    group_columns: str | list[str],
-    aggregation: str | Callable | dict[str, str | Callable | list[str | Callable]],
-    default_aggregation: str | Callable | None = None,
+    group_columns: list[str],
+    aggregation_strategy: str | None = None,
+    aggregation_dict: dict | None = None,
+    default_aggregation: str | None = None,
     strict_mode: bool = True,
 ) -> pd.DataFrame:
     """
@@ -30,16 +30,14 @@ def collapse(
     -----------
     df : pd.DataFrame
         The input DataFrame.
-    group_columns : str or list[str]
+    group_columns : list[str]
         Columns by which the DataFrame will be grouped.
-    aggregation : str, callable, or dict
-        The aggregation strategy to apply. Can be a string to apply to all
-        columns, or a dictionary specifying the aggregation for each column.
-        For complex type definitions, refer to the function signature.
+    aggregation_strategy : str | None
+        The aggregation strategy to apply. This strategy is applied to all columns. If
+        you want to apply different strategies to different columns, use the
+        aggregation_dict parameter (either this or aggregation should be provided).
 
-        Valid aggregation strategies:
-
-        String:
+        Following aggregation strategies are supported:
 
         * "sum"
         * "mean"
@@ -56,10 +54,15 @@ def collapse(
         * "set": Convert group items into a set.
         * "any": Check if any item in the group evaluates to True.
         * "all": Check if all items in the group evaluate to True.
-    default_aggregation : str or callable, optional
+
+    aggregation_dict: dict | None
+        A dictionary for specific manner of  aggregation per column. Each column can
+        be aggregated in the same ways as the string aggregation strategies. Either this
+        variable or aggregation should be provided.
+    default_aggregation : str | None
         Used for left-over columns when column-specific aggregation is
-        specified. Only relevant when aggregation is a dictionary.
-    strict_mode : bool, optional
+        specified. Only used when aggregation_dict is provided.
+    strict_mode : bool
         If True, all columns not in groupby must have an aggregation
         definition. An error is raised otherwise. Defaults to True.
 
@@ -88,6 +91,16 @@ def collapse(
     1           2         [A, A]         40            2
 
     """
+
+    if aggregation_strategy is None and aggregation_dict is None:
+        raise UserInputError(
+            "Either aggregation_strategy or aggregation_dict must be provided."
+        )
+    elif aggregation_strategy is not None and aggregation_dict is not None:
+        raise UserInputError(
+            "Only one of aggregation_strategy or aggregation_dict must be provided."
+        )
+
     # Convert string aggregation keywords to actual functions
     aggregation_mapping = {
         "len": len,
@@ -96,11 +109,6 @@ def collapse(
         "any": any,
         "all": all,
     }
-
-    # Assert conditions for default_aggregation
-    assert default_aggregation is None or isinstance(
-        aggregation, dict
-    ), "If default_aggregation is not None, aggregation must be a dictionary."
 
     # Helper function to apply mapping
     def map_aggregation(agg):
@@ -112,16 +120,16 @@ def collapse(
 
     # If a single string is provided, map to function, otherwise, apply
     # mapping to dict
-    if isinstance(aggregation, str):
-        aggregation = map_aggregation(aggregation)
-    elif isinstance(aggregation, dict):
-        aggregation = {col: map_aggregation(agg) for col, agg in aggregation.items()}
+    if aggregation_strategy is not None:
+        aggregation = map_aggregation(aggregation_strategy)
+    else:
+        aggregation = {
+            col: map_aggregation(agg) for col, agg in aggregation_dict.items()
+        }
 
     if strict_mode and isinstance(aggregation, dict) and default_aggregation is None:
         all_columns = set(df.columns)
-        groupby_set = set(
-            group_columns if isinstance(group_columns, list) else [group_columns]
-        )
+        groupby_set = set(group_columns)
         aggregation_set = set(aggregation.keys())
 
         undefined_columns = all_columns - (groupby_set | aggregation_set)
@@ -155,9 +163,9 @@ def collapse(
 @data(1)
 def group_statistics(
     df: pd.DataFrame,
-    group_columns: str | list[str],
+    group_columns: list[str],
     target_columns: list[str],
-    aggregation: str | Callable,
+    aggregation_strategy: str,
     prefix: str | None = None,
 ) -> pd.DataFrame:
     """
@@ -167,11 +175,11 @@ def group_statistics(
     ----------
     df : pd.DataFrame
         The input DataFrame.
-    group_columns : str | list[str]
-        The column(s) by which the DataFrame will be grouped.
+    group_columns : list[str]
+        The columns by which the DataFrame will be grouped.
     target_columns : list[str]
-        The column(s) on which the aggregation will be performed.
-    aggregation : str | Callable
+        The columns on which the aggregation will be performed.
+    aggregation_strategy : str
         The aggregation strategy to apply.
     prefix : str | None, optional
         An optional prefix for the names of new columns.
@@ -221,13 +229,13 @@ def group_statistics(
 
     # Compute the statistics and reset index
     stats = pd.DataFrame(
-        df.groupby(group_columns)[target_columns].transform(aggregation)
+        df.groupby(group_columns)[target_columns].transform(aggregation_strategy)
     )
 
     prefix = group_columns if prefix is None else prefix
     if prefix:
         prefix = f"{prefix}_" if not prefix.endswith("_") else prefix
-    stats.columns = [f"{prefix}{col}_{aggregation}" for col in stats.columns]
+    stats.columns = [f"{prefix}{col}_{aggregation_strategy}" for col in stats.columns]
 
     # Add the statistics back to the original DataFrame
     return pd.concat([df, stats], axis=1)

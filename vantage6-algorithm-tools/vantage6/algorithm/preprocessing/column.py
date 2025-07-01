@@ -14,7 +14,7 @@ from vantage6.algorithm.tools.exceptions import UserInputError
 @preprocessing
 @data(1)
 def rename_columns(
-    df: pd.DataFrame, new_names: dict[str, str], strict: bool = False
+    df: pd.DataFrame, new_names: dict, strict: bool = False
 ) -> pd.DataFrame:
     """
     Rename DataFrame columns.
@@ -23,7 +23,7 @@ def rename_columns(
     ----------
     df : pd.DataFrame
         The DataFrame whose columns you want to rename.
-    new_names : dict[str, str]
+    new_names : dict
         A mapping from current column names to new names.
     strict : bool
         If True, raise an error if a column is not found in the DataFrame. Default is
@@ -136,7 +136,7 @@ def redefine_column(
 @preprocessing
 @data(1)
 def change_column_type(
-    df: pd.DataFrame, columns: list[str], target_type: str | type
+    df: pd.DataFrame, columns: list[str], target_type: str
 ) -> pd.DataFrame:
     """
     Change DataFrame column data types.
@@ -147,9 +147,8 @@ def change_column_type(
         The DataFrame whose columns' data types you want to change.
     columns : list[str]
         List of column names whose data types you want to change.
-    target_type : str | type
-        The desired data type (either string representation or Python type)
-        for the specified columns.
+    target_type : str
+        The desired data type for the specified columns.
 
     Returns
     -------

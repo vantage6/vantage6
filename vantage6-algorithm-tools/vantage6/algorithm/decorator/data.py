@@ -5,6 +5,7 @@ from functools import wraps
 
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import info, error, warn
+from vantage6.algorithm.tools import DecoratorType
 
 
 def _get_user_dataframes() -> list[str]:
@@ -82,7 +83,7 @@ def data(number_of_databases: int = 1) -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_data: list[pd.DataFrame] = None, **kwargs
+            *args, mock_data: list[pd.DataFrame] | None = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the data
@@ -127,7 +128,7 @@ def data(number_of_databases: int = 1) -> callable:
             return func(*args, **kwargs)
 
         # set attribute that this function is wrapped in a data decorator
-        decorator.wrapped_in_data_decorator = True
+        decorator.vantage6_decorated_type = DecoratorType.DATAFRAME
         return decorator
 
     return protection_decorator

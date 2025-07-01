@@ -12,6 +12,7 @@ import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.tools.exceptions import UserInputError
 
 
 @preprocessing
@@ -256,8 +257,9 @@ def encode(
     df: pd.DataFrame,
     columns: list[str],
     mapping: dict,
-    unknown_value: str | int = -1,
+    unknown_value: str = -1,
     raise_on_unknown: bool = False,
+    unknown_value_type: str = "str",
 ) -> pd.DataFrame:
     """
     Custom encoding of DataFrame columns using a provided mapping.
@@ -276,6 +278,8 @@ def encode(
     raise_on_unknown : bool
         If True, raises an error when encountering an unknown category.
         Otherwise, uses unknown_value.
+    unknown_value_type : str, default="str"
+        The type of the unknown value. Can be "str" or "int".
 
     Returns
     -------
@@ -310,6 +314,15 @@ def encode(
 
     """
 
+    if unknown_value_type == "int":
+        try:
+            unknown_value = int(unknown_value)
+        except TypeError as exc:
+            raise UserInputError(
+                "The `unknown_value` must be a valid integer if `unknown_value_type` is"
+                " 'int'."
+            ) from exc
+
     encoded_df = df.copy()
     for col in columns:
         unique_vals = set(encoded_df[col].unique()) - set(mapping.keys())
@@ -327,7 +340,7 @@ def encode(
 def discretize_column(
     df: pd.DataFrame,
     column_name: str,
-    bins: int | list[int | float],
+    bins: list[float],
     labels: list[str] | None = None,
     right: bool = True,
     include_lowest: bool = False,
@@ -343,8 +356,8 @@ def discretize_column(
         The DataFrame from which a new DataFrame will be created.
     column_name : str
         The name of the column to discretize.
-    bins : int or list of int or float
-        The number of bins to create or the specific bin edges.
+    bins : list[float]
+        The bins to use in the discretization.
     labels : list of str, default=None
         Labels to assign to the bins.
     right : bool, default=True
@@ -456,10 +469,12 @@ def extract_from_string(
 def impute(
     df: pd.DataFrame,
     columns: list[str] | None = None,
-    missing_values: str | int | float = np.nan,
+    missing_values: str | None = None,
+    missing_values_type: str = "str",
     strategy: str = "mean",
     group_columns: list[str] | None = None,
-    fill_value: str | int | float | None = None,
+    fill_value: str | None = None,
+    fill_value_type: str = "str",
 ) -> pd.DataFrame:
     """
     Impute missing values in a DataFrame. If group_columns are provided, the
@@ -474,14 +489,18 @@ def impute(
         applied to all columns.
     missing_values : str | int | float, default=np.nan
         The placeholder for the missing values.
+    missing_values_type : str, default="str"
+        The type of the missing values. Can be "str", "int" or "float".
     strategy : str, default='mean'
         The imputation strategy. Options include "mean", "median",
         "most_frequent", and "constant".
     group_columns : list[str] | None, default=None
         List of columns to group by for imputation.
-    fill_value : str | int | float | None, default=None
+    fill_value : str | None, default=None
         When strategy == "constant", fill_value is used to replace all missing
         values.
+    fill_value_type : str, default="str"
+        The type of the fill_value. Can be "str", "int" or "float".
 
     Returns
     -------
@@ -520,6 +539,19 @@ def impute(
     columns = [columns] if isinstance(columns, str) else columns
     if columns is None:
         columns = df.columns
+
+    def _convert_to_type(value, value_type):
+        if value_type == "str":
+            return str(value)
+        elif value_type == "int":
+            return int(value)
+        elif value_type == "float":
+            return float(value)
+        else:
+            raise ValueError(f"Unknown value_type: {value_type}")
+
+    missing_values = _convert_to_type(missing_values, missing_values_type)
+    fill_value = _convert_to_type(fill_value, fill_value_type)
 
     def impute_group(group):
         for col in columns:

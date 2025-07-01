@@ -85,7 +85,7 @@ def to_datetime(
 def to_timedelta(
     df: pd.DataFrame,
     input_column: str | None = None,
-    duration: str | int | None = None,
+    duration: int | None = None,
     unit: str = "days",
     output_column: str | None = None,
     errors: str = "raise",
@@ -103,9 +103,9 @@ def to_timedelta(
         Input DataFrame.
     input_column : str | None, optional
         The name of the column to convert.
-    duration : str | int | None, optional
-        A fixed duration to apply to all rows. Could be either a string like
-        '1 days' or an integer.
+    duration : int | None, optional
+        A fixed duration to apply to all rows. Default unit is 'days' but may be
+        changed by using the `unit` parameter.
     unit : str, default 'days'
         The unit for the fixed duration, applicable when `duration` is an
         integer.
@@ -189,7 +189,7 @@ def timedelta(
     df: pd.DataFrame,
     column: str,
     output_column: str = "timedelta",
-    to_date: pd.Timestamp | None = None,
+    to_date: str | None = None,
     to_date_column: str | None = None,
     fmt: str | None = None,
 ) -> pd.DataFrame:
@@ -208,7 +208,7 @@ def timedelta(
         The name of the datetime column to convert to a timedelta.
     output_column : str
         Output column name.
-    to_date : pd.Timestamp | None, optional
+    to_date : str | None, optional
         The date to which the timedelta is calculated. Defaults to today if not
         provided.
     to_date_column : str | None, optional
@@ -246,6 +246,11 @@ def timedelta(
     1          250
 
     """
+    try:
+        to_date = pd.to_datetime(to_date)
+    except ValueError as exc:
+        raise UserInputError("The `to_date` must be a valid date string.") from exc
+
     dates = pd.to_datetime(df[column], format=fmt)
 
     if to_date_column:
@@ -270,7 +275,7 @@ def calculate_age(
     output_column: str = "age",
     fmt: str | None = None,
     keep_original: bool = True,
-    reference_date: date | None = None,
+    reference_date: str | None = None,
 ) -> pd.DataFrame:
     """
     Calculate the calendar age in years from the birthdate column to a reference date
@@ -284,16 +289,16 @@ def calculate_age(
         The name of the column containing birthdate information.
     output_column : str
         The name of the column to store the age.
-    fmt : str | None, optional
+    fmt : str | None
         The format string to parse the birthdate column. If None, the format
         will be inferred.
-    keep_original : bool, default True
+    keep_original : bool
         Whether to keep the original birthdate column in the DataFrame.
-    reference_date : date | None, optional
+    reference_date : str | None
         The date to use as the reference for calculating age. If None, today's
         date is used.
 
-            Returns
+    Returns
     -------
     pd.DataFrame
         DataFrame with the calculated age column.
@@ -311,6 +316,11 @@ def calculate_age(
     """
     if reference_date is None:
         reference_date = date.today()
+    else:
+        try:
+            reference_date = pd.to_datetime(reference_date)
+        except ValueError:
+            raise UserInputError("The `reference_date` must be a valid date string.")
 
     def compute_age(birthdate):
         return (
