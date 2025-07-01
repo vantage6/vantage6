@@ -71,7 +71,7 @@
           "display_name": "Seconds",
           "description": "How many seconds to sleep",
           "type": "integer",
-          "default_value": "",
+          "default_value": "10",
           "is_frontend_only": false
         }
       ],
