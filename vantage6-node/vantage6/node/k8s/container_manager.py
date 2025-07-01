@@ -700,7 +700,7 @@ class ContainerManager:
                 return RunStatus.INITIALIZING
 
         # The POD is no longer pending, and a terminal phase has been reached: return the corresponding v6 status
-        elif pod_phase in terminal_k8s_phase_to_v6_status_map.keys():
+        elif pod_phase in terminal_k8s_phase_to_v6_status_map:
             self.log.debug(
                 "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
                 label,
