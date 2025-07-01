@@ -510,7 +510,10 @@ class Nodes(NodeBase):
         # Return the node information to the user. Manually return the api_key
         # to the user as the hashed key is not returned
         node_json = node_schema.dump(node)
-        node_json["api_key"] = api_key
+        # only include API key if it is the password for a keycloak account that was
+        # just created
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
     def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
@@ -529,9 +532,9 @@ class Nodes(NodeBase):
         )
         return keycloak_id
 
-    def _verify_user_in_keycloak(self, data):
+    def _verify_node_in_keycloak(self, node_name: str) -> str:
         keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.get_user_id(data["username"])
+        keycloak_id = keycloak_admin.get_user_id(node_name)
         if keycloak_id is None:
             raise BadRequestError("User does not exist in Keycloak")
         return keycloak_id
