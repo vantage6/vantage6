@@ -12,7 +12,6 @@ import os
 import sys
 import questionary as q
 import errno
-import debugpy
 from vantage6.common.globals import InstanceType
 
 import vantage6.node.globals as constants
@@ -66,16 +65,8 @@ def cli_node() -> None:
     default=False,
     help=("Whether to use DockerNodeContext or regular NodeContext " "(default)"),
 )
-@click.option(
-    "--debug-port",
-    "debug_port",
-    default=None,
-    help="Port for debugpy to listen on",
-    type=int,
-    show_default=True,
-)
 def cli_node_start(
-    name: str, config: str, system_folders: bool, dockerized: bool, debug_port: int
+    name: str, config: str, system_folders: bool, dockerized: bool
 ) -> None:
     """Start the node instance.
 
@@ -112,8 +103,6 @@ def cli_node_start(
 
         # create dummy node context
         ctx = ContextClass(name, system_folders)
-    if debug_port:
-        debugpy.listen(("0.0.0.0", debug_port))
 
     # run the node application
     node.run(ctx)

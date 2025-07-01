@@ -131,6 +131,35 @@ class ResultStream(ResultStreamBase):
                 "Content-Disposition": f"attachment; filename=result_{id}.bin"
             }
         )
+    
+class UwsgiChunkedStream:
+    def __init__(self, chunk_size=4096):
+        self.chunk_size = chunk_size
+        self._buffer = b""
+        self._eof = False
+
+    def read(self, size=-1):
+        log.info(f"Reading with size: {size}")
+        if size < 0:
+            chunks = [self._buffer]
+            self._buffer = b""
+            while not self._eof:
+                chunk = uwsgi.chunked_read(self.chunk_size)
+                if not chunk:
+                    self._eof = True
+                    break
+                chunks.append(chunk)
+            return b"".join(chunks)
+
+        while len(self._buffer) < size and not self._eof:
+            chunk = uwsgi.chunked_read(self.chunk_size)
+            if not chunk:
+                self._eof = True
+                break
+            self._buffer += chunk
+
+        result, self._buffer = self._buffer[:size], self._buffer[size:]
+        return result
   
 class ResultStreams(ResultStreamBase):
   """Resource for /api/resultstream/<id>"""
@@ -140,28 +169,23 @@ class ResultStreams(ResultStreamBase):
 
   @only_for(("node", "user", "container"))
   def post(self):
-      if not self.storage_adapter:
+    if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to azure blob storage, result streaming is not available."
             )
             return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
-      result_uuid = str(uuid.uuid4())
+    result_uuid = str(uuid.uuid4())
+    transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
+    is_chunked = "chunked" in transfer_encoding
+    try:
+        if is_chunked:
+            stream = UwsgiChunkedStream()
+            self.storage_adapter.store_blob(result_uuid, stream)
+        else:
+            data = request.get_data()
+            self.storage_adapter.store_blob(result_uuid, data)
+    except Exception as e:
+        log.error(f"Error uploading result: {e}")
+        return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
-      def process_stream(stream):
-            chunk_size = 4096
-            total_bytes = b""
-            while True:
-                chunk = uwsgi.chunked_read(chunk_size)
-                if not chunk:
-                    break
-                yield chunk
-            return total_bytes
-
-
-      try:
-          self.storage_adapter.store_blob(result_uuid, process_stream(request.stream))
-      except Exception as e:
-          log.error(f"Error uploading result: {e}")
-          return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-      return {"uuid": result_uuid}, HTTPStatus.CREATED
+    return {"uuid": result_uuid}, HTTPStatus.CREATED

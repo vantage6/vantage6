@@ -1,7 +1,7 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
 import jwt
-import json as json_lib
+import json
 import time
 
 from typing import Any
@@ -148,28 +148,34 @@ class AlgorithmClient(ClientBase):
             time.sleep(interval)
 
         result = self.request("result", params={"task_id": task_id})
-        self.log.info(f"Result from server: {result}")
         base_url = super().generate_path_to("resultstream", False)
+        output = []
         for item in result["data"]:
             url = f"{base_url}/{str(uuid.UUID(item['result']))}"
             self.log.info(f"retrieving data for url: {url}")
             headers = self.headers
             timeout = 300
+            output_result = b""
+
             try:
                 with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                     if response.status_code == 200:
-                        item['result'] = b""
                         for chunk in response.iter_content(chunk_size=8192):
-                            item['result'] += chunk
+                            output_result += chunk
                     else:
                         self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
                         self.log.error(f"Response: {response.text}")
             except requests.RequestException as e:
                 self.log.error(f"An error occurred while streaming result: {e}")
-        for item in result["data"]:
-            if isinstance(item['result'], bytes):
-                item['result'] = json_lib.loads(item['result'].decode('utf-8'))
-        return result["data"]
+            output_json = json.loads(output_result.decode('utf-8'))
+            output.append(output_json)
+            
+        for output_item in output:
+            try:
+                output_item['is_params_json']
+            except Exception as e:
+                raise Exception(output_item) from e
+        return output
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """

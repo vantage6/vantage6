@@ -302,11 +302,6 @@ class Node:
         task_runs = self.client.run.list(
             include_task=True, state="open", task_id=task_id
         )
-        self.log.info(
-            "Received task %s - %s from the server",
-            task_runs[0]["task"]["id"],
-            task_runs[0]["task"]["name"],
-        )
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_runs)
 

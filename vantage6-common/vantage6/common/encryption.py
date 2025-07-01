@@ -177,7 +177,6 @@ class CryptorBase(metaclass=Singleton):
         buffer = b""
         while True:
             chunk = stream.read(chunk_size)
-            self.log.info(f"Read {chunk} from stream")
             if not chunk:
                 break
             buffer += chunk
@@ -187,14 +186,11 @@ class CryptorBase(metaclass=Singleton):
                 continue
             to_decode = buffer[:to_decode_len]
             buffer = buffer[to_decode_len:]
-            self.log.info(f"Read {to_decode} from stream")
             decoded = base64.b64decode(to_decode)
-            self.log.info(f"Decoded {decoded} from stream")
             yield decoded
         # Decode any remaining data in the buffer
         if buffer:
             decoded = base64.b64decode(buffer)
-            self.log.info(f"Decoded last bits: {decoded} from stream")
             yield decoded
     
 

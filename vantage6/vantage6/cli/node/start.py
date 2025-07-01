@@ -53,21 +53,12 @@ from vantage6.cli import __version__
     help="Override vantage6 source code in container with the source"
     " code in this path",
 )
-@click.option(
-    "--debug-port",
-    "debug_port",
-    type=int,
-    default=None,
-    help="Port to use for debugging the node. If set, the node will "
-    "start with debugpy enabled on this port.",
-)
 @click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
 def cli_node_start(
     ctx: NodeContext,
     name: str,
     system_folders: bool,
     image: str,
-    debug_port: int,
     keep: bool,
     mount_src: str,
     attach: bool,
@@ -272,7 +263,7 @@ def cli_node_start(
     system_folders_option = "--system" if system_folders else "--user"
     cmd = (
         f"vnode-local start -c /mnt/config/{name}.yaml -n {name} "
-        f" --dockerized {system_folders_option} --debug-port {debug_port} "
+        f" --dockerized {system_folders_option} "
     )
 
     volumes = []
@@ -308,9 +299,6 @@ def cli_node_start(
         docker_client=docker_client, name=ctx.docker_container_name
     )
 
-    ports={
-        f"{debug_port}/tcp": debug_port
-    }
     info("Running Docker container")
     container = docker_client.containers.run(
         image,
@@ -324,7 +312,6 @@ def cli_node_start(
         },
         environment=env,
         name=ctx.docker_container_name,
-        ports=ports,
         auto_remove=not keep,
         tty=True,
         extra_hosts=extra_hosts,

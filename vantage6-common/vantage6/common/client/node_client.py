@@ -220,8 +220,6 @@ class NodeClient(ClientBase):
                     self.parent.log.error(f"An error occurred while streaming input: {e}")
                     return
                 run["input"] = self.parent._decrypt_input(result_bytes)
-                self.parent.log.info(f"Retrieved input for run {run['id']}: {run['input']}")
-            self.parent.log.info(f"Retrieved {run_data}")
             return run_data
         
         def is_uuid(self, value):
