@@ -101,33 +101,18 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
   }
 
   async handleDelete(): Promise<void> {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
-        content: this.translateService.instant('user-read.delete-dialog.content'),
-        confirmButtonText: this.translateService.instant('user-read.delete-dialog.delete-with-keycloak'),
-        confirmButtonType: 'warn',
-        secondOptionButtonText: this.translateService.instant('user-read.delete-dialog.delete-without-keycloak'),
-        secondOptionButtonType: 'accent'
-      }
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (result) => {
-        if (result === ConfirmDialogOption.PRIMARY) {
-          this.executeDeleteUser(true);
-        } else if (result === ConfirmDialogOption.SECONDARY) {
-          this.executeDeleteUser(false);
-        }
-      });
+    this.handleDeleteBase(
+      this.user,
+      this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
+      this.translateService.instant('user-read.delete-dialog.content'),
+      this.executeDeleteUser.bind(this)
+    );
   }
 
-  protected async executeDeleteUser(deleteInKeycloak: boolean): Promise<void> {
+  protected async executeDeleteUser(): Promise<void> {
     if (!this.user) return;
     this.isLoading = true;
-    await this.userService.deleteUser(this.user.id, deleteInKeycloak);
+    await this.userService.deleteUser(this.user.id);
     this.router.navigate([routePaths.users]);
   }
 
