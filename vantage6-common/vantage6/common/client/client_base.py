@@ -1,7 +1,7 @@
 import logging
 import time
 import requests
-import json as json_lib
+import json
 
 from pathlib import Path
 
@@ -263,7 +263,7 @@ class ClientBase(object):
                 self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
-            except json_lib.JSONDecodeError:
+            except json.JSONDecodeError:
                 self.log.error("Did not find a message from the server")
                 self.log.error(response.content)
 

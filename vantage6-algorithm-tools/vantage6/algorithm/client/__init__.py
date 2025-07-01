@@ -169,12 +169,6 @@ class AlgorithmClient(ClientBase):
                 self.log.error(f"An error occurred while streaming result: {e}")
             output_json = json.loads(output_result.decode('utf-8'))
             output.append(output_json)
-            
-        for output_item in output:
-            try:
-                output_item['is_params_json']
-            except Exception as e:
-                raise Exception(output_item) from e
         return output
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
@@ -291,7 +285,7 @@ class AlgorithmClient(ClientBase):
             result = None
             if response.get("result"):
                 try:
-                    result = json_lib.loads(
+                    result = json.loads(
                         base64s_to_bytes(response.get("result")).decode()
                     )
                 except Exception as e:
@@ -330,7 +324,7 @@ class AlgorithmClient(ClientBase):
             decoded_results = []
             try:
                 decoded_results = [
-                    json_lib.loads(base64s_to_bytes(result.get("result")).decode())
+                    json.loads(base64s_to_bytes(result.get("result")).decode())
                     for result in results
                     if result.get("result")
                 ]

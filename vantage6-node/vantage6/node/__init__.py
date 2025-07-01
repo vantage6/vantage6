@@ -32,9 +32,7 @@ import queue
 import json
 import shutil
 import requests.exceptions
-import uuid
-import json as json_lib
-from vantage6.common import base64s_to_bytes
+import json
 import re
 
 UUID_REGEX = re.compile(
