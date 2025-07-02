@@ -144,22 +144,22 @@ class Function:
                 f"Different values for the same key '{key}' in function '{self.name}' "
                 "were found."
             )
-            info(f"Value from docstring: {target[key]}")
+            info(f"Value from function itself: {target[key]}")
             info(f"Value from algorithm.json: {value}")
             result = q.select(
                 "Please select the value to keep:",
                 choices=[
-                    "docstring",
+                    "function itself",
                     "algorithm.json",
-                    "docstring (also for all other conflicts)",
+                    "function itself (also for all other conflicts)",
                     "algorithm.json (also for all other conflicts)",
                 ],
             ).unsafe_ask()
             if result == "algorithm.json":
                 target[key] = value
-            elif result == "docstring":
+            elif result == "function itself":
                 pass  # do nothing
-            elif result == "docstring (also for all other conflicts)":
+            elif result == "function itself (also for all other conflicts)":
                 MergePreference.set_preference(False)
             elif result == "algorithm.json (also for all other conflicts)":
                 MergePreference.set_preference(True)
@@ -395,10 +395,10 @@ def cli_algorithm_generate_algorithm_json(
 
     info(f"New algorithm.json file written to {output_file}")
 
-    warning(
-        "Always check the generated algorithm.json file before submitting it to the "
-        "algorithm store!"
-    )
+    warning("-" * 80)
+    warning("Always check the generated algorithm.json file before submitting it to ")
+    warning("the algorithm store!")
+    warning("-" * 80)
 
 
 def _get_functions_from_file(file_path: str) -> None:
