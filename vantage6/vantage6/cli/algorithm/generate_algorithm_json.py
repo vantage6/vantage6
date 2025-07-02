@@ -3,12 +3,12 @@ import sys
 import importlib
 import inspect
 import json
-import traceback
 
 from enum import Enum
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
+from typing import Any
 
 import click
 import questionary as q
@@ -23,6 +23,33 @@ from vantage6.algorithm.preprocessing.algorithm_json_data import (
 )
 
 
+class MergePreference:
+    """Singleton class to manage global merge preference state"""
+
+    _instance = None
+    _prefer_existing = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(MergePreference, cls).__new__(cls)
+        return cls._instance
+
+    @classmethod
+    def get_preference(cls) -> bool | None:
+        """Get the current merge preference"""
+        return cls._prefer_existing
+
+    @classmethod
+    def set_preference(cls, prefer_existing: bool) -> None:
+        """Set the merge preference globally"""
+        cls._prefer_existing = prefer_existing
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the preference to None"""
+        cls._prefer_existing = None
+
+
 class FunctionArgumentType(Enum):
     """Type of the function argument"""
 
@@ -31,6 +58,8 @@ class FunctionArgumentType(Enum):
 
 
 class Function:
+    """Class to handle a function and its JSON representation"""
+
     def __init__(self, func: callable):
         self.func = func
         self.name = func.__name__
@@ -82,6 +111,59 @@ class Function:
         if "frontend_arguments" in template_json:
             for frontend_argument in template_json["frontend_arguments"]:
                 self._add_frontend_argument(template_json, frontend_argument)
+
+    def merge_with_existing_json(self, existing_json: dict) -> None:
+        """Merge the function json with the existing json data"""
+        self._merge_dicts(self.json, existing_json)
+
+    def _merge_dicts(self, target: dict, source: dict) -> None:
+        """
+        Recursively merge source dict into target dict, with source taking precedence
+        """
+        for key, value in source.items():
+            if key in target:
+                if isinstance(value, dict) and isinstance(target[key], dict):
+                    # Recursively merge nested dictionaries
+                    self._merge_dicts(target[key], value)
+                else:
+                    self._replace_target_with_source(target, key, value)
+            else:
+                # Add new key-value pair from source to target
+                self._replace_target_with_source(target, key, value)
+
+    def _replace_target_with_source(self, target: dict, key: str, value: Any) -> None:
+        """Replace the value in target with the one from source"""
+        if target[key] == value:
+            return
+
+        prefer_existing = MergePreference.get_preference()
+        if prefer_existing:
+            target[key] = value
+        elif prefer_existing is None:
+            info(
+                f"Different values for the same key '{key}' in function '{self.name}' "
+                "were found."
+            )
+            info(f"Value from docstring: {target[key]}")
+            info(f"Value from algorithm.json: {value}")
+            result = q.select(
+                "Please select the value to keep:",
+                choices=[
+                    "docstring",
+                    "algorithm.json",
+                    "docstring (also for all other conflicts)",
+                    "algorithm.json (also for all other conflicts)",
+                ],
+            ).unsafe_ask()
+            if result == "algorithm.json":
+                target[key] = value
+            elif result == "docstring":
+                pass  # do nothing
+            elif result == "docstring (also for all other conflicts)":
+                MergePreference.set_preference(False)
+            elif result == "algorithm.json (also for all other conflicts)":
+                MergePreference.set_preference(True)
+                target[key] = value
 
     def _get_argument_json(
         self, name: str, param: inspect.Parameter
@@ -144,14 +226,14 @@ class Function:
 
     def get_argument_type(self, param: inspect.Parameter, name: str) -> str:
         """Get the type of the argument"""
-        if type(param.annotation) is UnionType:
+        if isinstance(param.annotation, UnionType):
             # Arguments with default values may have type 'str | None'. If that is the
             # case, we want to use the type of the first element in the union.
             if len(param.annotation.__args__) > 2:
                 # if there are more than 2 elements in the union, don't handle
                 warning(
-                    f"Unsupported argument type: {param.annotation} for argument {name} "
-                    f"in function {self.name}"
+                    f"Unsupported argument type: {param.annotation} for argument {name}"
+                    f" in function {self.name}"
                 )
                 return None
             elif len(param.annotation.__args__) == 2:
@@ -298,10 +380,15 @@ def cli_algorithm_generate_algorithm_json(
         function.prepare_json()
         function.merge_with_template_json_data()
 
+        # merge the function jsons with the existing json data
+        current_json_func = [
+            f for f in current_json_data["functions"] if f["name"] == function.name
+        ]
+        if current_json_func:
+            function.merge_with_existing_json(current_json_func[0])
+
     # write the new algorithm.json file
     info(f"Writing new algorithm.json file to {output_file}...")
-    # TODO don't overwrite the current json file, but merge it with the new one - e.g.
-    # the old one may already have descriptions etc that should not be overwritten
     current_json_data["functions"] = [f.json for f in function_objs]
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(current_json_data, f, indent=2)
@@ -338,7 +425,7 @@ def _get_functions_from_file(file_path: str) -> None:
     try:
         module = importlib.import_module(module_name)
     except ImportError as e:
-        raise ImportError(f"Could not import module {module_name}: {str(e)}")
+        raise ImportError(f"Could not import module {module_name}: {str(e)}") from e
 
     def get_members_from_module(module: ModuleType) -> list:
         """Get the functions from the module"""
