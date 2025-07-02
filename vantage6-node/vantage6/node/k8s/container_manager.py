@@ -576,7 +576,6 @@ class ContainerManager:
                     func=self.core_api.list_namespaced_pod,
                     namespace=self.task_namespace,
                     label_selector=label,
-                    # Timeout
                     timeout_seconds=K8S_EVENT_STREAM_LOOP_TIMEOUT,
                 ):
 
