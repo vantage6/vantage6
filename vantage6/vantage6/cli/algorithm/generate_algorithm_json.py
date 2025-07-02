@@ -14,10 +14,13 @@ import click
 import questionary as q
 import pandas as pd
 
-import vantage6.algorithm.decorator as decorator_module
 from vantage6.algorithm.client import AlgorithmClient
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common import error, info, warning
-from vantage6.common.enum import AlgorithmArgumentType
+from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
+from vantage6.algorithm.preprocessing.algorithm_json_data import (
+    PREPROCESSING_FUNCTIONS_JSON_DATA,
+)
 
 from pprint import pprint
 
@@ -84,13 +87,72 @@ def cli_algorithm_generate_algorithm_json(
     info("Converting functions to JSON...")
     function_json = _convert_functions_to_json(functions)
 
+    # merge the function jsons with the json data from the algorithm_json_data module
+    function_json = _merge_function_jsons_with_json_data(function_json, functions)
+
     # write the new algorithm.json file
     info(f"Writing new algorithm.json file to {output_file}...")
+    # TODO don't overwrite the current json file, but merge it with the new one - e.g.
+    # the old one may already have descriptions etc that should not be overwritten
     current_json_data["functions"] = function_json
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(current_json_data, f, indent=2)
 
     info(f"New algorithm.json file written to {output_file}")
+
+
+def _merge_function_jsons_with_json_data(function_jsons: list, functions: list) -> list:
+    """
+    Merge the function jsons with the json data from the algorithm_json_data module
+    """
+    for function_json in function_jsons:
+        # Only merge the function jsons with template json data if it is an
+        # infrastructure-defined function
+        func_callable = next(
+            f for f in functions if f.__name__ == function_json["name"]
+        )
+        if (
+            not func_callable
+            or not func_callable.__module__.startswith("vantage6.algorithm.")
+            or not function_json["name"] in PREPROCESSING_FUNCTIONS_JSON_DATA
+        ):
+            continue
+
+        # get the template json data for the function
+        template_json = PREPROCESSING_FUNCTIONS_JSON_DATA[function_json["name"]]
+        # merge the dicts, with the template dict taking precedence
+        for argument in function_json["arguments"]:
+            if argument["name"] in template_json["arguments"]:
+                argument.update(template_json["arguments"][argument["name"]])
+        # Add any frontend arguments specified in the template json
+        for frontend_argument in template_json["frontend_arguments"]:
+            _add_frontend_argument(function_json, template_json, frontend_argument)
+
+    return function_jsons
+
+
+def _add_frontend_argument(
+    function_json: dict, template_json: dict, frontend_argument: str
+) -> None:
+    """Add a frontend argument to the function json"""
+    frontend_argument_json: dict = template_json["frontend_arguments"][
+        frontend_argument
+    ]
+    before_arg_name = frontend_argument_json.pop("before_argument")
+
+    try:
+        before_arg_idx = next(
+            idx
+            for idx, arg in enumerate(function_json["arguments"])
+            if arg["name"] == before_arg_name
+        )
+        function_json["arguments"].insert(before_arg_idx, frontend_argument_json)
+    except StopIteration:
+        warning(
+            f"Could not find argument {before_arg_name} in function "
+            f"{function_json['name']}. Frontend argument {frontend_argument} "
+            "will not be added."
+        )
 
 
 def _convert_functions_to_json(functions: list) -> list:
@@ -111,12 +173,12 @@ def _convert_functions_to_json(functions: list) -> list:
 def _read_function_signature(func: callable) -> dict:
     """Read the signature of the function"""
     sig = signature(func)
-    # TODO steptype based on the decoration of the function
     function_json = {
         "name": func.__name__,
         "display_name": _pretty_print_name(func.__name__),
         "standalone": True,
         "description": _extract_headline_of_docstring(func.__doc__),
+        "step_type": _get_step_type(func),
         "ui_visualizations": [],
         "arguments": [],
         "databases": [],
@@ -173,7 +235,7 @@ def _get_argument_json(
         # this is an argument that requires the user to supply a dataframe. That only
         # requires a name and description.
         return {
-            "name": name,
+            "name": name if name != "df" else "Data to use",
             "description": _extract_parameter_description(name, func.__doc__),
         }, FunctionArgumentType.DATAFRAME
     else:
@@ -303,11 +365,6 @@ def _get_functions_from_file(file_path: str) -> None:
     import_functions = [m for m in import_members if isfunction(m)]
     import_modules = [m for m in import_members if ismodule(m)]
 
-    def _is_decorated_func(func: callable) -> bool:
-        """Check if the function is decorated with a vantage6 decorator, which all
-        functions being called in vantage6 algorithm should be"""
-        return getattr(func, "vantage6_decorated_type", None) is not None
-
     # add the functions from the imported modules (only 1 level deep). This is so that
     # if you do e.g. 'from vantage6.algorithm.preprocessing import *', all functions
     # from within those modules are also imported.
@@ -322,6 +379,35 @@ def _get_functions_from_file(file_path: str) -> None:
         )
 
     return import_functions
+
+
+def _is_decorated_func(func: callable) -> bool:
+    """Check if the function is decorated with a vantage6 decorator, which all
+    functions being called in vantage6 algorithm should be"""
+    return _get_vantage6_decorator_type(func) is not None
+
+
+def _get_vantage6_decorator_type(func: callable) -> str:
+    """Get the vantage6 decorator type of the function"""
+    return getattr(func, "vantage6_decorated_type", None)
+
+
+def _get_step_type(func: callable) -> str:
+    """Get the step type of the function"""
+    decorator_type = _get_vantage6_decorator_type(func)
+    if decorator_type == DecoratorType.FEDERATED:
+        return AlgorithmStepType.FEDERATED_COMPUTE.value
+    elif decorator_type == DecoratorType.CENTRAL:
+        return AlgorithmStepType.CENTRAL_COMPUTE.value
+    elif decorator_type == DecoratorType.PREPROCESSING:
+        return AlgorithmStepType.PREPROCESSING.value
+    elif decorator_type == DecoratorType.DATA_EXTRACTION:
+        return AlgorithmStepType.DATA_EXTRACTION.value
+    else:
+        warning(
+            f"Unsupported decorator type: {decorator_type} for function {func.__name__}"
+        )
+        return None
 
 
 def _get_algo_function_file_location(algo_function_file: str | None) -> None:
