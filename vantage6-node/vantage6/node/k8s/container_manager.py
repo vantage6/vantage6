@@ -660,8 +660,7 @@ class ContainerManager:
 
             pending_status_reason = None
 
-            if pod.status:
-                if pod.status.container_statuses:
+            if pod.status and pod.status.container_statuses:
                     # The job pods have use single container, container_statuses will always have a single element
                     container_status: V1ContainerStatus = pod.status.container_statuses[
                         0
