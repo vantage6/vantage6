@@ -41,6 +41,9 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 # default API path (for server and algorithm store)
 DEFAULT_API_PATH = "/api"
 
+# keyword for the multiple dataframes in single argument decorator
+DATAFRAME_MULTIPLE_KEYWORD = "multiple"
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""

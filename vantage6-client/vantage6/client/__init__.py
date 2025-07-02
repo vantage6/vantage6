@@ -1771,7 +1771,7 @@ class UserClient(ClientBase):
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
-            databases: list[dict] | None = None,
+            databases: list[list[dict]] | list[dict] | None = None,
             action: AlgorithmStepType | None = None,
         ) -> dict:
             """Create a new task
@@ -1802,11 +1802,12 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
-            databases: list[dict], optional
+            databases: list[list[dict]] | list[dict], optional
                 Databases to be used at the node. Each dict should contain
-                at least a 'label' key. Additional keys are 'query' (if using
-                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
-                and 'preprocessing' information.
+                at least a 'label' key. If a list of lists is provided, the first
+                list is the databases that are required for the first argument, the
+                second list is the databases that are required for the second
+                argument, etc.
             action: AlgorithmStepType, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
@@ -1904,12 +1905,14 @@ class UserClient(ClientBase):
             )
 
         @staticmethod
-        def _parse_arg_databases(databases: list[dict] | str) -> list[dict]:
+        def _parse_arg_databases(
+            databases: list[list[dict]] | list[dict] | str,
+        ) -> list[list[dict]]:
             """Parse the databases argument
 
             Parameters
             ----------
-            databases: list[dict] | str
+            databases: list[list[dict]] | list[dict] | str
                 Each dict should contain at least a 'label' key. A single str
                 can be passed and will be interpreted as a single database with
                 that label.
@@ -1933,15 +1936,26 @@ class UserClient(ClientBase):
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [{"label": databases}]
+                databases = [[{"label": databases}]]
 
-            for db in databases:
+            # It is common to only specify a single level of databases, we assume
+            # that its not a multiple databases argument and convert it so that every
+            # requested dataframe is handled as a single argument in the algorithm.
+            if isinstance(databases, list) and not isinstance(databases[0], list):
+                databases = [[db] for db in databases]
+
+            for db in [db for sublist in databases for db in sublist]:
                 try:
                     label_input = db.get("label")
                 except AttributeError:
                     raise ValueError(
-                        "Databases specified should be a list of dicts with"
-                        "label keys or a single str"
+                        "Each database should be specified as a dict with at least "
+                        "a 'label' key. Alternatively, a single str can be passed "
+                        "and will be interpreted as a single database with that "
+                        "label. These dicts can be nested in a list of lists to "
+                        "specify multiple databases for each argument. Example: "
+                        "databases=[[{'label': 'db1'}, {'label': 'db2'}], "
+                        "[{'label': 'db3'}]] or databases='db1'"
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(

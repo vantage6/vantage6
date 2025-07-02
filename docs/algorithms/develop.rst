@@ -174,9 +174,9 @@ Partial function
 .. code:: python
 
    import pandas as pd
-   from vantage6.algorithm.tools.decorator import data
+   from vantage6.algorithm.tools.decorator import dataframe
 
-   @data(1)
+   @dataframe(1)
    def my_partial_function(data: pd.DataFrame, column_name: str):
        # do something with the data
        data[column_name] = data[column_name] + 1

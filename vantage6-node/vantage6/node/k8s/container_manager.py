@@ -4,6 +4,7 @@ import time
 import re
 import base64
 
+from itertools import groupby
 from typing import Tuple
 from pathlib import Path
 import uuid
@@ -304,7 +305,7 @@ class ContainerManager:
         docker_input: bytes,
         session_id: int,
         token: str,
-        databases_to_use: list[str],
+        databases_to_use: list[dict],
         action: AlgorithmStepType,
     ) -> RunStatus:
         """
@@ -324,8 +325,8 @@ class ContainerManager:
             ID of the session
         token: str
             Bearer token that the container can use
-        databases_to_use: list[str]
-            Labels of the databases to use
+        databases_to_use: list[dict]
+            Metadata of the databases to use.
         action: AlgorithmStepType
             The action to perform
 
@@ -658,7 +659,7 @@ class ContainerManager:
         self,
         run_io: RunIO,
         docker_input: bytes,
-        databases_to_use: list[str],
+        databases_to_use: list[dict],
     ) -> Tuple[
         list[k8s_client.V1Volume],
         list[k8s_client.V1VolumeMount],
@@ -674,8 +675,8 @@ class ContainerManager:
             RunIO object that contains information about the run
         docker_input: bytes
             Input that can be read by the algorithm container
-        databases_to_use: list[str]
-            Labels of the databases to use
+        databases_to_use: list[dict]
+            Metadata of the databases to use.
 
         Returns
         -------
@@ -759,9 +760,7 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
-            environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
-                ",".join([db["label"] for db in databases_to_use]),
-            )
+
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
@@ -802,8 +801,23 @@ class ContainerManager:
             # available in the session.
             self._validate_dataframes(databases_to_use, run_io)
 
+            # group and sort on the position of the database in the argument list
+            databases_to_use_sorted = sorted(
+                databases_to_use, key=lambda x: x["position"]
+            )
+            grouped_databases = groupby(
+                databases_to_use_sorted, key=lambda x: x["position"]
+            )
+
+            # # Groups are separated by ';' and the dataframes are separated by ','
+            # # so we need to join the dataframes and the groups
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["dataframe_name"] for db in databases_to_use])
+                ";".join(
+                    [
+                        ",".join([db["dataframe_name"] for db in db_group])
+                        for _, db_group in grouped_databases
+                    ]
+                )
             )
 
         return volumes, vol_mounts, environment_variables, secrets
