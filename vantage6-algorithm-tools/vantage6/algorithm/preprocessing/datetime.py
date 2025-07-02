@@ -11,7 +11,7 @@ import pandas as pd
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import data
-from vantage6.algorithm.tools.exceptions import UserInputError
+from vantage6.algorithm.tools.exceptions import DataError, UserInputError
 
 
 @preprocessing
@@ -109,11 +109,6 @@ def to_timedelta(
     unit : str, default 'days'
         The unit for the fixed duration, applicable when `duration` is an
         integer.
-
-        Possible values:
-        * 'W', 'D', 'T', 'S', 'L', 'U', or 'N'
-        * 'days' or 'day'
-        * 'hours', 'hour', 'hr', or 'h'
     output_column : str | None, optional
         The name of the output column. Required if using the `duration`
         parameter.
@@ -189,8 +184,8 @@ def timedelta(
     df: pd.DataFrame,
     column: str,
     output_column: str = "timedelta",
-    to_date: str | None = None,
     to_date_column: str | None = None,
+    to_date: str | None = None,
     fmt: str | None = None,
 ) -> pd.DataFrame:
     """
@@ -208,12 +203,12 @@ def timedelta(
         The name of the datetime column to convert to a timedelta.
     output_column : str
         Output column name.
-    to_date : str | None, optional
-        The date to which the timedelta is calculated. Defaults to today if not
-        provided.
     to_date_column : str | None, optional
         A column containing dates to which the timedelta is calculated for each
         row. If not provided, `to_date` is used for all rows.
+    to_date : str | None, optional
+        The date to which the timedelta is calculated. Defaults to today if not
+        provided. Ignored if `to_date_column` is provided.
     fmt : str | None, optional
         The format to use for parsing date strings if the `column` or
         `to_date_column` contains strings instead of actual datetime objects.
@@ -246,17 +241,22 @@ def timedelta(
     1          250
 
     """
-    try:
-        to_date = pd.to_datetime(to_date)
-    except ValueError as exc:
-        raise UserInputError("The `to_date` must be a valid date string.") from exc
-
     dates = pd.to_datetime(df[column], format=fmt)
 
     if to_date_column:
-        duration_col = (pd.to_datetime(df[to_date_column], format=fmt) - dates).dt.days
+        try:
+            to_date = pd.to_datetime(df[to_date_column], format=fmt)
+        except ValueError as exc:
+            raise DataError(
+                f"The column `{to_date_column}` cannot be converted to a datetime "
+                "object."
+            ) from exc
+        duration_col = (to_date - dates).dt.days
     elif to_date:
-        to_date = pd.Timestamp(to_date)
+        try:
+            to_date = pd.Timestamp(to_date)
+        except ValueError as exc:
+            raise UserInputError("The `to_date` must be a valid date string.") from exc
         duration_col = (to_date - dates).dt.days
     else:
         to_date = pd.to_datetime("today")

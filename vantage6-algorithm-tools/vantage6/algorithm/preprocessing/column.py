@@ -14,7 +14,7 @@ from vantage6.algorithm.tools.exceptions import UserInputError
 @preprocessing
 @data(1)
 def rename_columns(
-    df: pd.DataFrame, new_names: dict, strict: bool = False
+    df: pd.DataFrame, old_names: list[str], new_names: list[str], strict: bool = False
 ) -> pd.DataFrame:
     """
     Rename DataFrame columns.
@@ -23,8 +23,10 @@ def rename_columns(
     ----------
     df : pd.DataFrame
         The DataFrame whose columns you want to rename.
-    new_names : dict
-        A mapping from current column names to new names.
+    old_names : list[str]
+        The names of the columns to rename.
+    new_names : list[str]
+        The new names for the columns.
     strict : bool
         If True, raise an error if a column is not found in the DataFrame. Default is
         False.
@@ -40,12 +42,16 @@ def rename_columns(
     ...     'a': [1, 2],
     ...     'b': [3, 4]
     ... })
-    >>> rename_columns(df, {'a': 'x', 'b': 'y'})
+    >>> rename_columns(df, ['a', 'b'], ['x', 'y'])
        x  y
     0  1  3
     1  2  4
     """
-    return df.rename(columns=new_names, errors="raise" if strict else "ignore")
+    if len(old_names) != len(new_names):
+        raise UserInputError("old_names and new_names must have the same length")
+    return df.rename(
+        columns=dict(zip(old_names, new_names)), errors="raise" if strict else "ignore"
+    )
 
 
 @preprocessing

@@ -125,8 +125,9 @@ def _merge_function_jsons_with_json_data(function_jsons: list, functions: list) 
             if argument["name"] in template_json["arguments"]:
                 argument.update(template_json["arguments"][argument["name"]])
         # Add any frontend arguments specified in the template json
-        for frontend_argument in template_json["frontend_arguments"]:
-            _add_frontend_argument(function_json, template_json, frontend_argument)
+        if "frontend_arguments" in template_json:
+            for frontend_argument in template_json["frontend_arguments"]:
+                _add_frontend_argument(function_json, template_json, frontend_argument)
 
     return function_jsons
 
@@ -249,8 +250,6 @@ def _get_argument_json(
             "required": param.default == inspect.Parameter.empty,
             "has_default_value": param.default != inspect.Parameter.empty,
             "is_frontend_only": False,
-            "conditional_value": None,
-            "conditional_operator": None,
         }
         if param.default != inspect.Parameter.empty:
             arg_json["default"] = param.default

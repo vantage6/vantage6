@@ -258,8 +258,8 @@ def encode(
     columns: list[str],
     mapping: dict,
     unknown_value: str = -1,
-    raise_on_unknown: bool = False,
     unknown_value_type: str = "str",
+    raise_on_unknown: bool = False,
 ) -> pd.DataFrame:
     """
     Custom encoding of DataFrame columns using a provided mapping.
@@ -275,11 +275,11 @@ def encode(
         values and values are the new encoded values.
     unknown_value : str | int
         Value to use for any unknown categories.
+    unknown_value_type : str, default="str"
+        The type of the unknown value. Can be "str" or "int".
     raise_on_unknown : bool
         If True, raises an error when encountering an unknown category.
         Otherwise, uses unknown_value.
-    unknown_value_type : str, default="str"
-        The type of the unknown value. Can be "str" or "int".
 
     Returns
     -------
@@ -344,7 +344,7 @@ def discretize_column(
     labels: list[str] | None = None,
     right: bool = True,
     include_lowest: bool = False,
-    output_column: str | None = None,
+    output_column: str = "discretized",
 ) -> pd.DataFrame:
     """
     Discretize a column in a new DataFrame based on the given bin edges or
@@ -364,9 +364,8 @@ def discretize_column(
         Indicates whether bins include the rightmost edge or not.
     include_lowest : bool, default=False
         Whether the first interval should include the lowest value or not.
-    output_column : str, default=None
+    output_column : str, default="discretized"
         The name of the output column that contains the discretized data.
-        If not specified, the original column will be replaced.
 
     Returns
     -------
@@ -392,20 +391,14 @@ def discretize_column(
     2   45      Senior
     3   55         Old
     """
-    new_df = df.copy()
-    new_column = pd.cut(
+    df[output_column] = pd.cut(
         df[column_name],
         bins=bins,
         labels=labels,
         right=right,
         include_lowest=include_lowest,
     )
-
-    if output_column is None:
-        output_column = column_name
-
-    new_df[output_column] = new_column
-    return new_df
+    return df
 
 
 @preprocessing
