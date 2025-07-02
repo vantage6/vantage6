@@ -22,8 +22,6 @@ from vantage6.algorithm.preprocessing.algorithm_json_data import (
     PREPROCESSING_FUNCTIONS_JSON_DATA,
 )
 
-from pprint import pprint
-
 
 class FunctionArgumentType(Enum):
     """Type of the function argument"""
@@ -51,14 +49,6 @@ class FunctionArgumentType(Enum):
     type=str,
     help="Path to the output file",
 )
-# TODO note in the docstring that some algorithm json fields (e.g. ui_visualizations)
-# are not supported. Or support filling them in manually.
-# unsupported: ui_visualizations, databases, step_type, display_name
-# unsupported for arguments: conditional_value, conditional_operator,
-# type==column|organization|json|...
-# TODO print warnings that the output should always be checked
-# TODO create JSON file for infra functions so that those are always created
-# correctly - these values should not be overwritten by the command unless flag
 def cli_algorithm_generate_algorithm_json(
     algo_function_file: str, current_json: str, output_file: str
 ) -> dict:
@@ -78,7 +68,6 @@ def cli_algorithm_generate_algorithm_json(
     # read the current algorithm.json file
     with open(current_json, "r", encoding="utf-8") as f:
         current_json_data = json.load(f)
-        pprint(current_json_data)
 
     # get the functions from the file
     info(f"Importing functions from {algo_function_file}...")
@@ -99,6 +88,11 @@ def cli_algorithm_generate_algorithm_json(
         json.dump(current_json_data, f, indent=2)
 
     info(f"New algorithm.json file written to {output_file}")
+
+    warning(
+        "Always check the generated algorithm.json file before submitting it to the "
+        "algorithm store!"
+    )
 
 
 def _merge_function_jsons_with_json_data(function_jsons: list, functions: list) -> list:
