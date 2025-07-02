@@ -64,7 +64,17 @@
       "description": "Sleep for a given number of seconds",
       "ui_visualizations": [],
       "step_type": "federated_compute",
-      "arguments": [],
+      "arguments": [        
+        {
+          "has_default_value": false,
+          "name": "seconds",
+          "display_name": "Seconds",
+          "description": "How many seconds to sleep",
+          "type": "integer",
+          "default_value": "10",
+          "is_frontend_only": false
+        }
+      ],
       "databases": []
     },
     {
