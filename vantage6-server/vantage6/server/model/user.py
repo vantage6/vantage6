@@ -1,14 +1,11 @@
 from __future__ import annotations
-import bcrypt
 
 from sqlalchemy import Column, String, Integer, ForeignKey, select
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
-from vantage6.server.model.common.utils import validate_password
-from vantage6.server.hashedpassword import HashedPassword
 
 
 class User(Authenticatable):

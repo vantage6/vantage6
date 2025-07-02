@@ -107,7 +107,6 @@ def permissions(permissions: PermissionManager) -> None:
     add(S.GLOBAL, P.EDIT, description="Edit any user")
     add(S.COLLABORATION, P.EDIT, description="Edit any user in your collaborations")
     add(S.ORGANIZATION, P.EDIT, description="Edit users from your organization")
-    add(S.OWN, P.EDIT, description="Edit your own info")
     add(S.GLOBAL, P.DELETE, description="Delete any user")
     add(S.COLLABORATION, P.DELETE, description="Delete any user in your collaborations")
     add(S.ORGANIZATION, P.DELETE, description="Delete users from your organization")

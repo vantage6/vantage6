@@ -823,7 +823,6 @@ class TestResources(TestResourceBase):
         # you need to own all rules in order to assign them
         headers = self.get_user_auth_header(org, rules=[rule])
         userdata["username"] = "smarty2"
-        userdata["email"] = "mail2@me.org"
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -837,7 +836,6 @@ class TestResources(TestResourceBase):
         )
         headers = self.get_user_auth_header(organization=org, rules=[rule])
         userdata["username"] = "smarty4"
-        userdata["email"] = "mail4@me.org"
         userdata["organization_id"] = org2.id
         userdata["rules"] = [rule.id]
         result = self.app.post("/api/user", headers=headers, json=userdata)
@@ -847,7 +845,6 @@ class TestResources(TestResourceBase):
         org3 = Organization()
         org3.save()
         userdata["username"] = "smarty5"
-        userdata["email"] = "mail5@me.org"
         userdata["organization_id"] = org3.id
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -858,7 +855,6 @@ class TestResources(TestResourceBase):
         role = Role(rules=[rule], organization=org)
         role.save()
         userdata["username"] = "smarty3"
-        userdata["email"] = "mail3@me.org"
         userdata["roles"] = [role.id]
         del userdata["organization_id"]
         del userdata["rules"]
@@ -923,18 +919,6 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertEqual("Username-unique-1", user.username)
-
-        # edit 'simple' fields
-        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
-        user.rules.append(rule)
-        user.save()
-        headers = self.login(user)
-        result = self.app.patch(
-            f"/api/user/{user.id}", headers=headers, json={"rules": [rule.id]}
-        )
-        db_session.session.refresh(user)
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(user.rules, [rule])
 
         # edit other user within your organization
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.EDIT)
