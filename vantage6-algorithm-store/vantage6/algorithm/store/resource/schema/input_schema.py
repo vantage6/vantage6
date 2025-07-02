@@ -248,7 +248,7 @@ class DatabaseInputSchema(_NameDescriptionSchema):
 
     # databases have a name and optional description so we can use the
     # _NameDescriptionSchema
-    many = fields.Boolean(required=False, default=False)
+    multiple = fields.Boolean(required=False, default=False)
 
 
 class ArgumentInputSchema(_NameDescriptionSchema):
