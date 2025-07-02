@@ -13,3 +13,4 @@ spec:
   selector:
     matchLabels:
       type: local
+      app: vantage6-store
