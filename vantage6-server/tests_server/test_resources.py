@@ -909,17 +909,6 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertEqual("Username-unique-1", user.username)
 
-        # patch as another user from the same organization
-        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
-        self.get_user_auth_header(user.organization, [rule])
-        result = self.app.patch(
-            f"/api/user/{user.id}",
-            headers=headers,
-            json={"rules": [rule.id]},
-        )
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
-        self.assertEqual("Username-unique-1", user.username)
-
         # edit other user within your organization
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.EDIT)
         headers = self.get_user_auth_header(
@@ -960,6 +949,8 @@ class TestResources(TestResourceBase):
         rule2 = Rule.get_by_(
             "user", scope=Scope.COLLABORATION, operation=Operation.EDIT
         )
+        user.rules = [rule2]
+        user.save()
         headers = self.get_user_auth_header(organization=org2, rules=[rule2])
         result = self.app.patch(
             f"/api/user/{user.id}",

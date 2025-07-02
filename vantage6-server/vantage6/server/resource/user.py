@@ -11,6 +11,7 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
+    UnauthorizedError,
     handle_exceptions,
 )
 from vantage6.server import db
@@ -662,9 +663,7 @@ class User(UserBase):
             }, HTTPStatus.BAD_REQUEST
 
         # check permissions
-        if not (self.r.e_own.can() and user == g.user) and not self.r.allowed_for_org(
-            P.EDIT, user.organization_id
-        ):
+        if not self.r.allowed_for_org(P.EDIT, user.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -731,7 +730,12 @@ class User(UserBase):
             # validate that user is not deleting rules they do not have
             # themselves
             deleted_rules = [r for r in user.rules if r not in rules]
-            self.permissions.check_user_rules(deleted_rules)
+            try:
+                self.permissions.check_user_rules(deleted_rules)
+            except UnauthorizedError as e:
+                return {
+                    "msg": "You cannot delete rules you do not have! " + str(e)
+                }, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
 
