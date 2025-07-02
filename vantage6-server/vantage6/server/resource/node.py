@@ -7,6 +7,10 @@ from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 from sqlalchemy import select
 
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    handle_exceptions,
+)
 from vantage6.common import generate_apikey
 from vantage6.common.globals import AuthStatus
 from vantage6.server.resource import with_user_or_node, with_user, with_node
@@ -356,6 +360,7 @@ class Nodes(NodeBase):
     # TODO the example in swagger docs for this doesn't include
     # organization_id. Find out why
     @with_user
+    @handle_exceptions
     def post(self):
         """Create node
         ---
@@ -486,14 +491,18 @@ class Nodes(NodeBase):
             status=AuthStatus.OFFLINE.value,
         )
 
-        # Create a keycloak account for the node
-        try:
-            keycloak_id = self._create_node_in_keycloak(name, api_key)
-            node.keycloak_id = keycloak_id
-        except Exception as e:
-            msg = f"Error creating keycloak account for node {name}: {e}"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+        # Create a keycloak account for the node if the server is configured to do so,
+        # otherwise verify that the node exists in keycloak
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            try:
+                keycloak_id = self._create_node_in_keycloak(name, api_key)
+            except Exception as e:
+                msg = f"Error creating keycloak account for node {name}: {e}"
+                log.error(msg)
+                return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+        else:
+            keycloak_id = self._verify_node_in_keycloak(name)
+        node.keycloak_id = keycloak_id
 
         # save the node in the database now that keycloak account is setup
         node.save()
@@ -501,7 +510,10 @@ class Nodes(NodeBase):
         # Return the node information to the user. Manually return the api_key
         # to the user as the hashed key is not returned
         node_json = node_schema.dump(node)
-        node_json["api_key"] = api_key
+        # only include API key if it is the password for a keycloak account that was
+        # just created
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
     def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
@@ -518,6 +530,13 @@ class Nodes(NodeBase):
                 ],
             }
         )
+        return keycloak_id
+
+    def _verify_node_in_keycloak(self, node_name: str) -> str:
+        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_id = keycloak_admin.get_user_id(node_name)
+        if keycloak_id is None:
+            raise BadRequestError("User does not exist in Keycloak")
         return keycloak_id
 
 
@@ -651,7 +670,10 @@ class Node(NodeBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        self._delete_node_in_keycloak(node)
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            self._delete_node_in_keycloak(node)
+        else:
+            log.info("Node id=%s will not be deleted from Keycloak", id)
 
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
