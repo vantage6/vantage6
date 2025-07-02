@@ -550,6 +550,7 @@ class ContainerManager:
             Label selector to identify the POD associated with the job.
         Returns
         -------
+        RunStatus
             The status of the run:
             - RunStatus.ACTIVE: If the POD is running.
             - RunStatus.FAILED: If the POD has failed.
