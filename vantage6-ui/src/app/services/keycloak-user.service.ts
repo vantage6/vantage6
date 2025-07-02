@@ -7,9 +7,6 @@ export interface KeycloakUserProfile {
   email?: string;
   firstName?: string;
   lastName?: string;
-  emailVerified?: boolean;
-  enabled?: boolean;
-  [key: string]: any;
 }
 
 @Injectable({
