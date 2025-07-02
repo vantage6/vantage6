@@ -54,11 +54,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
-      email: ['', [Validators.required]],
       password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
-      firstname: '',
-      lastname: '',
       organization_id: [NaN as number, [Validators.required]],
       roles: [{ value: [] as number[], disabled: true }],
       rules: [{ value: [] as number[], disabled: true }]
@@ -101,9 +98,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
-      this.form.controls.email.setValue(this.user.email);
-      this.form.controls.firstname.setValue(this.user.firstname);
-      this.form.controls.lastname.setValue(this.user.lastname);
       this.form.controls.organization_id.setValue(this.user.organization?.id || NaN);
       this.form.controls.roles.setValue(this.userRoles.map((role) => role.id));
     }

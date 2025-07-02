@@ -22,12 +22,6 @@ class User(Authenticatable):
     ----------
     username : str
         Username of the user
-    firstname : str
-        First name of the user
-    lastname : str
-        Last name of the user
-    email : str
-        Email address of the user
     organization_id : int
         Foreign key to the organization to which the user belongs
 
@@ -55,9 +49,6 @@ class User(Authenticatable):
 
     # fields
     username = Column(String, unique=True)
-    firstname = Column(String)
-    lastname = Column(String)
-    email = Column(String, unique=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
 
     # relationships
@@ -124,31 +115,6 @@ class User(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(select(cls).order_by(cls.id)).first()
-        session.commit()
-        return result
-
-    @classmethod
-    def get_by_email(cls, email: str) -> User:
-        """
-        Get a user by their email
-
-        Parameters
-        ----------
-        email: str
-            Email of the user
-
-        Returns
-        -------
-        User
-            User with the given email
-
-        Raises
-        ------
-        NoResultFound
-            If no user with the given email exists
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(select(cls).filter_by(email=email)).one()
         session.commit()
         return result
 

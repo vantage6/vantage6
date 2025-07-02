@@ -20,6 +20,8 @@ import { MatNavList, MatListItem, MatListItemIcon } from '@angular/material/list
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { LoginLogoutService } from 'src/app/services/logout.service';
+import { environment } from 'src/environments/environment';
+import { KeycloakUserService } from 'src/app/services/keycloak-user.service';
 
 @Component({
   selector: 'app-layout-default',
@@ -79,7 +81,8 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
     private translateService: TranslateService,
-    private storePermissionService: StorePermissionService
+    private storePermissionService: StorePermissionService,
+    private keycloakUserService: KeycloakUserService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isAdministration = event.url.startsWith('/admin');
@@ -102,8 +105,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
-    // TODO get username - issue #1990
-    this.username = '';
+    this.getUserFromKeycloak();
   }
 
   ngAfterViewInit(): void {
@@ -122,6 +124,20 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  getUserFromKeycloak() {
+    this.keycloakUserService.getUserProfile().then((userProfile) => {
+      this.username = userProfile?.username || '';
+    });
+  }
+
+  goToKeycloakAccount() {
+    window.open(environment.auth_url + '/realms/' + environment.keycloak_realm + '/account', '_blank');
+  }
+
+  changePassword() {
+    window.open(environment.auth_url + '/realms/' + environment.keycloak_realm + '/account/account-security/signing-in', '_blank');
   }
 
   private setNavigationLinks(): void {

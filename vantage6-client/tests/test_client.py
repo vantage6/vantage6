@@ -104,7 +104,7 @@ class TestClient(TestCase):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
 
-        user = {"id": FAKE_ID, "firstname": "naam", "organization": {"id": FAKE_ID}}
+        user = {"id": FAKE_ID, "organization": {"id": FAKE_ID}}
         organization = {"id": FAKE_ID, "name": FAKE_NAME}
 
         # The client will first send a post request for authentication, then

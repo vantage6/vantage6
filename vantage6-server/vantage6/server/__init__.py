@@ -623,8 +623,6 @@ class ServerApp(Vantage6App):
             username=SUPER_USER_INFO["username"],
             roles=[root],
             organization=org,
-            # TODO: should we use RFC6761's "invalid." here?
-            email="admin@domain.ext",
         )
         user.save()
         return user

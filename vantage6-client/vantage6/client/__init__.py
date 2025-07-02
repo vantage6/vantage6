@@ -241,7 +241,7 @@ class UserClient(ClientBase):
 
         user = self.request("user/me")
         user_id = user.get("id")
-        user_name = user.get("firstname")
+        user_name = user.get("username")
         type_ = "user"
         organization_id = user.get("organization").get("id")
         organization = self.request(f"organization/{organization_id}")
@@ -1152,9 +1152,6 @@ class UserClient(ClientBase):
             self,
             username: str = None,
             organization: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            email: str = None,
             role: int = None,
             rule: int = None,
             last_seen_from: str = None,
@@ -1170,12 +1167,6 @@ class UserClient(ClientBase):
                 Filter by username (with LIKE operator)
             organization: int, optional
                 Filter by organization id
-            firstname: str, optional
-                Filter by firstname (with LIKE operator)
-            lastname: str, optional
-                Filter by lastname (with LIKE operator)
-            email: str, optional
-                Filter by email (with LIKE operator)
             role: int, optional
                 Show only users that have this role id
             rule: int, optional
@@ -1214,9 +1205,6 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "username": username,
                 "organization_id": organization,
-                "firstname": firstname,
-                "lastname": lastname,
-                "email": email,
                 "role_id": role,
                 "rule_id": rule,
                 "last_seen_from": last_seen_from,
@@ -1271,12 +1259,8 @@ class UserClient(ClientBase):
         def update(
             self,
             id_: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            organization: int = None,
             rules: list = None,
             roles: list = None,
-            email: str = None,
         ) -> dict:
             """Update user details
 
@@ -1287,21 +1271,12 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 User `id` from the user you want to update
-            firstname : str
-                Your first name
-            lastname : str
-                Your last name
-            organization : int
-                Organization id of the organization you want to be part
-                of. This can only done by super-users.
             rules : list of ints
                 USE WITH CAUTION! Rule ids that should be assigned to
                 this user. All previous assigned rules will be removed!
             roles : list of ints
                 USE WITH CAUTION! Role ids that should be assigned to
                 this user. All previous assigned roles will be removed!
-            email : str
-                New email from the user
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1319,12 +1294,8 @@ class UserClient(ClientBase):
                 id_ = self.parent.whoami.id_
 
             data = {
-                "firstname": firstname,
-                "lastname": lastname,
-                "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
-                "email": email,
             }
             data = self._clean_update_data(data)
 
@@ -1335,10 +1306,7 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            firstname: str,
-            lastname: str,
             password: str,
-            email: str,
             organization: int = None,
             roles: list = [],
             rules: list = [],
@@ -1350,14 +1318,8 @@ class UserClient(ClientBase):
             username : str
                 Used to login to the service. This can not be changed
                 later.
-            firstname : str
-                Firstname of the new user
-            lastname : str
-                Lastname of the new user
             password : str
                 Password of the new user
-            email : str
-                Email address of the new user
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
@@ -1382,10 +1344,7 @@ class UserClient(ClientBase):
             """
             user_data = {
                 "username": username,
-                "firstname": firstname,
-                "lastname": lastname,
                 "password": password,
-                "email": email,
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
