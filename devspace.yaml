@@ -203,11 +203,6 @@ images:
 # set `updateImageTags: false` in the deployment.
 deployments:
 
-  local-storage-class:
-    helm:
-      chart:
-        name: ./charts/storageclass
-
   vantage6-auth:
     helm:
       chart:
