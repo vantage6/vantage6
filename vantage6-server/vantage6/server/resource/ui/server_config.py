@@ -68,7 +68,7 @@ class KeycloakConfigSettings(ServicesResources):
         security:
             - bearerAuth: []
 
-        tags: ["Task"]
+        tags: ["Authentication"]
         """
         return {
             "manage_users_and_nodes": self.config.get("keycloak", {}).get(
