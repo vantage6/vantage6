@@ -13,7 +13,6 @@ import unittest
 # from vantage6.algorithm.store.model.role import Role
 # from vantage6.algorithm.store.model.rule import Rule
 # from vantage6.algorithm.store.model.user import User
-# from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
 from .base.unittest_base import TestResources
 
 

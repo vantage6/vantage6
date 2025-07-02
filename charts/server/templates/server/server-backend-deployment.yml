@@ -21,6 +21,16 @@ spec:
       containers:
       - name: vantage6-server
         image: {{ .Values.server.image }}
+        env:
+        - name: KEYCLOAK_URL
+          value: {{ .Values.server.keycloakUrl }}
+        - name: KEYCLOAK_REALM
+          value: {{ .Values.server.keycloakRealm }}
+        - name: LOCAL_STORE_URL
+          value: http://vantage6-store-store-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-server-secrets
         ports:
         - containerPort: {{ .Values.server.internal.port }}
         command: [

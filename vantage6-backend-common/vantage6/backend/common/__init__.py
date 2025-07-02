@@ -1,9 +1,19 @@
 """Common functionality for the vantage6 server and algorithm store."""
 
+from vantage6.backend.common.globals import RequiredServerEnvVars
+from vantage6.common import validate_required_env_vars
 from vantage6.common.globals import DEFAULT_API_PATH
 
 # make sure the version is available
 from vantage6.backend.common._version import __version__  # noqa: F401
+
+
+class Vantage6App:
+    """Base class for all vantage6 server applications."""
+
+    def validate_required_env_vars(self) -> None:
+        """Validate that the required environment variables are set."""
+        validate_required_env_vars(RequiredServerEnvVars)
 
 
 def get_server_url(

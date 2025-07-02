@@ -10,6 +10,7 @@ from vantage6.common.globals import STRING_ENCODING
 # Mock server
 HOST = "mock_server"
 PORT = 1234
+AUTH_URL = "mock_auth_url"
 
 # Mock credentials
 FAKE_USERNAME = "vantage6_test"
@@ -123,8 +124,11 @@ class TestClient(TestCase):
 
     @staticmethod
     def setup_client() -> UserClient:
-        client = UserClient(HOST, PORT)
-        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+        client = UserClient(
+            server_url=f"{HOST}:{PORT}/api",
+            auth_url=AUTH_URL,
+        )
+        client.authenticate()
         client.setup_encryption(None)
         return client
 

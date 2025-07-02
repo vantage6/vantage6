@@ -292,13 +292,12 @@ class SessionBase(ServicesResources):
         image: str,
         method: str,
         organizations: dict,
-        databases: list[dict],
+        databases: list[list[dict]],
         action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",
         depends_on_ids=None,
         store_id=None,
-        server_url=None,
     ) -> dict:
         """
         Create a task to initialize a session.
@@ -313,7 +312,7 @@ class SessionBase(ServicesResources):
             Method to use for the task
         organizations : dict
             Organizations that need to execute the task
-        databases : list[dict]
+        databases : list[list[dict]]
             Databases used for the task
         action : AlgorithmStepType
             Action to perform (e.g. data extraction, preprocessing, etc)
@@ -325,8 +324,6 @@ class SessionBase(ServicesResources):
             List of task ids that this task depends on
         store_id : int
             Id of the store to use for the task
-        server_url : str
-            URL of the server to use for the task
 
         Returns
         -------
@@ -350,7 +347,6 @@ class SessionBase(ServicesResources):
             "depends_on_ids": depends_on_ids,
             "dataframe_id": dataframe.id,
             "store_id": store_id,
-            "server_url": server_url,
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
@@ -358,7 +354,6 @@ class SessionBase(ServicesResources):
             input_,
             self.socketio,
             getattr(self.permissions, "task"),
-            self.config,
             action,
         )
 

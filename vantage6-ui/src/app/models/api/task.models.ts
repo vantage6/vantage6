@@ -138,6 +138,7 @@ interface CreateTaskDatabase {
   label?: string;
   dataframe_id?: number;
   type: TaskDatabaseType;
+  multiple?: boolean;
 }
 
 export interface CreateTask {
@@ -149,9 +150,8 @@ export interface CreateTask {
   collaboration_id: number;
   study_id?: number;
   store_id: number;
-  server_url: string;
   organizations: CreateTaskOrganization[];
-  databases: CreateTaskDatabase[];
+  databases: CreateTaskDatabase[][];
 }
 
 export interface KillTask {

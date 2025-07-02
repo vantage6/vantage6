@@ -254,6 +254,7 @@ class SessionDataframes(SessionBase):
                     "names are not allowed because they are stored on nodes by that "
                     "name."
                 }, HTTPStatus.BAD_REQUEST
+
         else:
             while True:
                 df_name = generate_name()
@@ -287,12 +288,11 @@ class SessionDataframes(SessionBase):
                 method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
-                databases=[{"label": source_db_label, "type": "source"}],
+                databases=[[{"label": source_db_label, "type": "source"}]],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
                 store_id=extraction_details.get("store_id"),
-                server_url=extraction_details.get("server_url"),
             )
         except Exception as e:
             dataframe.delete()
@@ -574,7 +574,12 @@ class DataframePreprocessing(SessionBase):
         response, status_code = self.create_session_task(
             session=session,
             databases=[
-                {"dataframe_id": dataframe.id, "type": TaskDatabaseType.DATAFRAME}
+                [
+                    {
+                        "dataframe_id": dataframe.id,
+                        "type": TaskDatabaseType.DATAFRAME,
+                    }
+                ]
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
@@ -584,7 +589,6 @@ class DataframePreprocessing(SessionBase):
             organizations=preprocessing_task["organizations"],
             dataframe=dataframe,
             store_id=preprocessing_task.get("store_id"),
-            server_url=preprocessing_task.get("server_url"),
         )
         # In case the task is not created we do not want to modify the chain of tasks.
         # The user can try again.

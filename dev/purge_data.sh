@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # This script is used to purge data for devspace.
-# It deletes the populate marker file, task directory, server database, and store database.
+# It deletes the populate marker file, task directory, server database, store database, and keycloak database.
 
 # Arguments:
 #   $1 - Path to the populate marker file
 #   $2 - Path to the task directory
 #   $3 - Path to the server database mount directory
 #   $4 - Path to the store database mount directory
+#   $5 - Path to the keycloak database mount directory
 
 # Functions
 usage() {

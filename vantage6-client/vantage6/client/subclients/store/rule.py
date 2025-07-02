@@ -12,8 +12,8 @@ class StoreRuleSubClient(ClientBase.SubClient):
         name: str = None,
         operation: str = None,
         role: int = None,
-        username: str = None,
-        serverUrl: str = None,
+        user_id: int = None,
+        current_user: bool = False,
         page: int = 1,
         per_page: int = 10,
     ) -> List[dict]:
@@ -28,12 +28,11 @@ class StoreRuleSubClient(ClientBase.SubClient):
             Filter by operation (view, create, update, delete, or review).
         role : int, optional
             Filter by role id.
-        username : str, optional
-            Filter by user using the username. Used in combination with 'serverUrl' to
-            identify a user.
-        serverUrl : str, optional
-            Filter by user. Used in combination with 'username' to identify a user. If
-            not given, defaults to the server this client is connected to.
+        user_id : int, optional
+            Filter by user using the user id. If provided together with current_user,
+            the current user will be used and user_id will be ignored.
+        current_user : bool, optional
+            Filter rules for the current user.
         field : str, optional
             Which data field to keep in the result. For instance, "field='name'"
             will only return the name of the rules. Default is None.
@@ -63,16 +62,15 @@ class StoreRuleSubClient(ClientBase.SubClient):
             "name": name,
             "operation": operation,
             "role_id": role,
+            "current_user": current_user,
             "page": page,
             "per_page": per_page,
         }
-        if username:
-            params["username"] = username
-            params["server_url"] = serverUrl or self.parent.base_path
+        if user_id:
+            params["user_id"] = user_id
 
         return self.parent.request(
             "rule",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )

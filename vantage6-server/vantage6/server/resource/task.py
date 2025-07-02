@@ -13,7 +13,6 @@ from sqlalchemy.sql import visitors
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
 from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskDatabaseType
 from vantage6.common.encryption import DummyCryptor
-from vantage6.backend.common import get_server_url
 from vantage6.server import db
 from vantage6.server.algo_store_communication import request_algo_store
 from vantage6.server.permission import (
@@ -584,7 +583,6 @@ class Tasks(TaskBase):
             request.get_json(),
             self.socketio,
             self.r,
-            self.config,
         )
 
     # TODO this function should be refactored to make it more readable
@@ -593,7 +591,6 @@ class Tasks(TaskBase):
         data: dict,
         socketio: SocketIO,
         rules: RuleCollection,
-        config: dict,
         action: AlgorithmStepType | None = None,
     ):
         """
@@ -769,10 +766,7 @@ class Tasks(TaskBase):
                 # get the algorithm from the algorithm store
                 try:
                     algorithm = Tasks._get_algorithm_from_store(
-                        store=store,
-                        image=image,
-                        config=config,
-                        server_url_from_request=data.get("server_url"),
+                        store=store, image=image
                     )
                     image = algorithm["image"]
                     digest = algorithm["digest"]
@@ -796,7 +790,7 @@ class Tasks(TaskBase):
             image_with_hash = parent.image
 
         # Obtain the user requested database or dataframes
-        databases = data.get("databases", [])
+        databases = data.get("databases", [[]])
 
         # check the action of the task
         action = Tasks.__check_action(data, action, algorithm)
@@ -819,7 +813,7 @@ class Tasks(TaskBase):
         # all new modification tasks will depend on it. The `depends_on_ids` parameter
         # is set by the session endpoints.
         dependent_tasks = []
-        for database in databases:
+        for database in [db for sublist in databases for db in sublist]:
             # add last modification task to dependent tasks
             if database["type"] == TaskDatabaseType.DATAFRAME:
                 df = db.Dataframe.get(database["dataframe_id"])
@@ -901,19 +895,21 @@ class Tasks(TaskBase):
             log.debug(f"Sub task from parent_id={task.parent_id}")
 
         # save the databases that the task uses
-        for database in databases:
+        for idx, database_group in enumerate(databases):
 
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            task_db = db.TaskDatabase(
-                task_id=task.id,
-                label=database.get("label"),
-                type_=database.get("type"),
-                dataframe_id=database.get("dataframe_id"),
-            )
-            task_db.save()
+            for database in database_group:
+                task_db = db.TaskDatabase(
+                    task_id=task.id,
+                    label=database.get("label"),
+                    type_=database.get("type"),
+                    dataframe_id=database.get("dataframe_id"),
+                    position=idx,
+                )
+                task_db.save()
 
         # All checks completed, save task to database
         task.save()
@@ -1097,8 +1093,6 @@ class Tasks(TaskBase):
     def _get_algorithm_from_store(
         store: db.AlgorithmStore,
         image: str,
-        config: dict,
-        server_url_from_request: str | None = None,
     ) -> dict:
         """
         Determine the image and hash from the algorithm store.
@@ -1109,10 +1103,6 @@ class Tasks(TaskBase):
             Algorithm store.
         image : str
             URL of the docker image to be used.
-        config : dict
-            Configuration dictionary.
-        server_url_from_request : str, optional
-            Server URL from the request, by default None
 
         Returns
         -------
@@ -1124,19 +1114,13 @@ class Tasks(TaskBase):
         Exception
             If the algorithm cannot be retrieved from the store.
         """
-        server_url = get_server_url(config, server_url_from_request)
-        if not server_url:
-            raise ValueError(
-                "Server URL is not set in the configuration nor in the request "
-                "arguments. Please provide it as 'server_url' in the request."
-            )
         # get the algorithm from the store
         response, status_code = request_algo_store(
             algo_store_url=store.url,
-            server_url=server_url,
             endpoint="algorithm",
             method="GET",
             params={"image": image},
+            headers={"Authorization": request.headers["Authorization"]},
         )
         if status_code != HTTPStatus.OK:
             raise Exception(

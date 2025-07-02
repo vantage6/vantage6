@@ -12,7 +12,7 @@ import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
 import { BaseTask, GetTaskParameters, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { TableData } from 'src/app/models/application/table.model';
-import { CHOSEN_COLLABORATION, USER_ID } from 'src/app/models/constants/sessionStorage';
+import { CHOSEN_COLLABORATION } from 'src/app/models/constants/sessionStorage';
 import { AlgorithmStatusChangeMsg } from 'src/app/models/socket-messages.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -139,7 +139,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   private async getTasks(page: number, parameters: GetTaskParameters) {
     const collaborationID = sessionStorage.getItem(CHOSEN_COLLABORATION);
-    const userID = sessionStorage.getItem(USER_ID);
+    const userID = this.permissionService.activeUser?.id;
     if (!collaborationID || !userID) return;
 
     parameters = { ...parameters, collaboration_id: collaborationID };

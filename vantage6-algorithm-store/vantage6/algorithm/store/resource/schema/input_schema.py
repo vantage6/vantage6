@@ -249,8 +249,9 @@ class DatabaseInputSchema(_NameDescriptionSchema):
     Schema for the input of a database.
     """
 
-    # databases only have a name and optional description so we can use the
+    # databases have a name and optional description so we can use the
     # _NameDescriptionSchema
+    multiple = fields.Boolean(required=False, default=False)
 
 
 class ArgumentInputSchema(_NameDescriptionSchema):
@@ -473,15 +474,6 @@ class UserUpdateInputSchema(Schema):
             )
 
 
-class Vantage6ServerInputSchema(Schema):
-    """
-    Schema for the input of a vantage6 server.
-    """
-
-    url = fields.String(required=True)
-    force = fields.Boolean()
-
-
 class PolicyInputSchema(Schema):
     """
     Schema for the input of policies.
@@ -493,8 +485,6 @@ class PolicyInputSchema(Schema):
     algorithm_view = fields.String(
         validate=validate.OneOf([p.value for p in AlgorithmViewPolicies])
     )
-    allowed_servers = fields.List(fields.String())
-    allow_localhost = fields.Boolean()
 
 
 class ReviewCreateInputSchema(Schema):

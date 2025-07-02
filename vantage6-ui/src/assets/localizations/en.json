@@ -240,7 +240,8 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function",
       "valid-json": "Please provide valid JSON input.",
-      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
+      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field",
+      "warning-column-list-multiple-dataframes": "This function accepts multiple dataframes in a single argument. The selection of columns are from the first selected dataframe."
     },
     "alert-no-online-nodes": "You cannot create an analysis right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-sessions-found": "No sessions found. To compute you must first create a session.",
@@ -344,7 +345,10 @@
           "short_header": "Only for UI"
         }
       },
-      "databases": "Databases",
+      "databases": {
+        "title": "Databases",
+        "multiple": "Does the algorithm accept multiple dataframes in this single argument?"
+      },
       "visualization": {
         "title": "Visualizations",
         "type": "Type of visualization",
@@ -639,17 +643,11 @@
     "title": "Add algorithm store to your collaboration",
     "name": "Name",
     "url": "Algorithm store URL",
-    "server_url": "Vantage6 server URL",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
       "url-hint": "The web address of the algorithm store, including the API path (often '/api') at the end.",
       "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
       "all-collaborations": "Make this algorithm store available to all collaborations"
-    },
-    "localhost-dialog": {
-      "title": "Adding localhost algorithm store",
-      "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
-      "confirm": "I understand, proceed."
     }
   },
   "algorithm-store-list": {
@@ -679,8 +677,6 @@
     "policy": "Policy",
     "not-defined": "No extra limitations",
     "algorithm_view": "Who can view algorithms?",
-    "allowed_servers": "Which servers are responsible for managing this algorithm store?",
-    "allow_localhost": "Are localhost servers allowed to access the store?",
     "min_reviewers": "Minimum number of reviewers",
     "min_reviewing_organizations": "Minimum number of organizations providing reviewers",
     "assign_review_own_algorithm": "Are developers allowed to assign reviewers for their own algorithms?",
@@ -768,7 +764,8 @@
     "last-name": "Last name",
     "organization": "Organization",
     "roles": "Roles",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "create-in-keycloak": "Create user in Keycloak"
   },
   "user-list": {
     "title": "Users",
@@ -784,7 +781,9 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the user '{{name}}'?",
-      "content": "Note, this will also delete all analyses this user created.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses this user created. This operation cannot be undone.\nPlease also choose if you want to delete the linked Keycloak account as well.",
+      "delete-with-keycloak": "Delete user from vantage6 and Keycloak",
+      "delete-without-keycloak": "Delete user from vantage6 only"
     }
   },
   "user-edit": {

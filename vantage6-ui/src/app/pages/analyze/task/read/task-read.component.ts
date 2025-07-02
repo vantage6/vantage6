@@ -65,6 +65,7 @@ import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
 import { AlgorithmStepType, Session } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-task-read',
@@ -354,7 +355,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.task) return;
           this.isLoading = true;
           await this.taskService.deleteTask(this.task.id);
@@ -386,7 +387,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.task) return;
           await this.taskService.killTask(this.task.id);
           this.task.status == TaskStatus.Killed;

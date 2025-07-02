@@ -22,31 +22,32 @@ import { AlertComponent } from '../../../../components/alerts/alert/alert.compon
 import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
-    selector: 'app-algorithm-read',
-    templateUrl: './algorithm-read.component.html',
-    styleUrl: './algorithm-read.component.scss',
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        AlertWithButtonComponent,
-        AlertComponent,
-        DisplayAlgorithmComponent,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-read',
+  templateUrl: './algorithm-read.component.html',
+  styleUrl: './algorithm-read.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    AlertWithButtonComponent,
+    AlertComponent,
+    DisplayAlgorithmComponent,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -126,7 +127,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.algorithm) return;
           this.isLoading = true;
           await this.algorithmService.deleteAlgorithm(this.algorithm.id.toString());

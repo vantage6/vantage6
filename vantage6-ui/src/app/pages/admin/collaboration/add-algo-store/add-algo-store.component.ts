@@ -1,13 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { TranslateService, TranslateModule } from '@ngx-translate/core';
-import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { TranslateModule } from '@ngx-translate/core';
 import { AddAlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { SnackbarService } from 'src/app/services/snackbar.service';
 import { environment } from 'src/environments/environment';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { NgIf } from '@angular/common';
@@ -16,21 +13,18 @@ import { AlgorithmStoreFormComponent } from '../../../../components/forms/algori
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-add-algo-store',
-    templateUrl: './add-algo-store.component.html',
-    styleUrls: ['./add-algo-store.component.scss'],
-    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
+  selector: 'app-add-algo-store',
+  templateUrl: './add-algo-store.component.html',
+  styleUrls: ['./add-algo-store.component.scss'],
+  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class AddAlgoStoreComponent implements OnInit {
   id = '';
   isSubmitting = false;
 
   constructor(
-    private dialog: MatDialog,
     private router: Router,
-    private translateService: TranslateService,
     private algorithmStoreService: AlgorithmStoreService,
-    private snackBarService: SnackbarService,
     private chosenCollaborationService: ChosenCollaborationService
   ) {}
 
@@ -42,8 +36,7 @@ export class AddAlgoStoreComponent implements OnInit {
     // convert form to API parameters
     const addAlgorithmStore: AddAlgorithmStore = {
       name: algorithmStoreForm.name,
-      algorithm_store_url: algorithmStoreForm.algorithm_store_url,
-      server_url: environment.server_url + environment.api_path
+      algorithm_store_url: algorithmStoreForm.algorithm_store_url
     };
     if (!algorithmStoreForm.all_collaborations) {
       addAlgorithmStore.collaboration_id = algorithmStoreForm.collaboration_id;
@@ -52,10 +45,6 @@ export class AddAlgoStoreComponent implements OnInit {
     this.isSubmitting = true;
     try {
       await this.addAlgorithmStore(addAlgorithmStore);
-    } catch (error) {
-      if (this.urlsContainLocalhost(addAlgorithmStore)) {
-        await this.handleLocalhostAddition(addAlgorithmStore);
-      }
     } finally {
       this.goToCollaboration();
     }
@@ -63,25 +52,6 @@ export class AddAlgoStoreComponent implements OnInit {
 
   async handleCancel(): Promise<void> {
     this.goToCollaboration();
-  }
-
-  private async handleLocalhostAddition(algorithmStoreForm: AddAlgorithmStore): Promise<void> {
-    // close the snackbar that has been opened with the warning
-    this.snackBarService.dismiss();
-    // for localhost additions, show a warning first
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translateService.instant('algorithm-store-add.localhost-dialog.title'),
-        content: this.translateService.instant('algorithm-store-add.localhost-dialog.content'),
-        confirmButtonText: this.translateService.instant('algorithm-store-add.localhost-dialog.confirm'),
-        confirmButtonType: 'warn'
-      }
-    });
-    const dialogResponse = await dialogRef.afterClosed().toPromise();
-    if (dialogResponse === true) {
-      algorithmStoreForm.force = true;
-      await this.addAlgorithmStore(algorithmStoreForm);
-    }
   }
 
   private async addAlgorithmStore(algorithmStoreForm: AddAlgorithmStore): Promise<void> {
@@ -92,14 +62,5 @@ export class AddAlgoStoreComponent implements OnInit {
 
   private goToCollaboration(): void {
     this.router.navigate([routePaths.collaboration, this.id]);
-  }
-
-  private urlsContainLocalhost(addAlgorithmStore: AddAlgorithmStore): boolean {
-    return (
-      addAlgorithmStore.algorithm_store_url.includes('localhost') ||
-      addAlgorithmStore.server_url.includes('localhost') ||
-      addAlgorithmStore.algorithm_store_url.includes('127.0.0.1') ||
-      addAlgorithmStore.server_url.includes('127.0.0.1')
-    );
   }
 }

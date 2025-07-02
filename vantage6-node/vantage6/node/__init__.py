@@ -27,23 +27,26 @@ import json
 import logging
 import os
 import queue
-import random
 import sys
 import time
 import threading
 from pathlib import Path
 from threading import Thread
 
+from keycloak import KeycloakAuthenticationError
 import requests.exceptions
 from gevent.pywsgi import WSGIServer
 from socketio import Client as SocketIO
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name
+from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    NodePolicy,
+    RequiredNodeEnvVars,
+)
 from vantage6.common.log import get_file_logger
 
 # make sure the version is available
@@ -78,6 +81,9 @@ class Node:
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
 
+        # validate that the required environment variables are set
+        validate_required_env_vars(RequiredNodeEnvVars)
+
         # Initialize the node. If it crashes, shut down the parts that started
         # already
         try:
@@ -95,11 +101,7 @@ class Node:
         self._using_encryption = None
 
         # initialize Node connection to the server
-        self.client = NodeClient(
-            host=self.config.get("server_url"),
-            port=self.config.get("port"),
-            path=self.config.get("api_path"),
-        )
+        self.client = self._setup_node_client(self.config)
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
@@ -111,7 +113,7 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
-        self.log.info(f"Connecting server: {self.client.base_path}")
+        self.log.info("Connecting server: %s", self.client.server_url)
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -136,6 +138,17 @@ class Node:
 
         self.log.info("Init complete")
 
+    def _setup_node_client(self, config: dict) -> NodeClient:
+        return NodeClient(
+            server_url=(
+                f"{config.get('server_url')}:{config.get('port')}"
+                f"{config.get('api_path')}"
+            ),
+            auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+            node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
+            api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
+        )
+
     def __proxy_server_worker(self) -> None:
         """
         Proxy algorithm container communcation.
@@ -144,8 +157,9 @@ class Node:
         server.
         """
 
-        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
-        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default
+        # values for it as its value (a FQDN) depends on the namespace where the
+        # K8S-service with the node is running.
         if "PROXY_SERVER_HOST" in os.environ:
             proxy_host = os.environ.get("PROXY_SERVER_HOST")
             os.environ["PROXY_SERVER_HOST"] = proxy_host
@@ -163,9 +177,9 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        # TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
-        proxy_server.server_url = self.client.base_path
+        # The value on the module variable 'server_url' defines the target of the
+        # 'make_request' method.
+        proxy_server.server_url = self.client.server_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
             proxy_server.server_url,
@@ -296,7 +310,7 @@ class Node:
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
         token = ""
-        if AlgorithmStepType.is_compute(container_action):
+        if container_action == AlgorithmStepType.CENTRAL_COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             try:
                 token = token["container_token"]
@@ -463,7 +477,7 @@ class Node:
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
         self.log.info(
-            "Are you sure the server can be reached at %s?", self.client.base_path
+            "Are you sure the server can be reached at %s?", self.client.server_url
         )
 
     def authenticate(self) -> None:
@@ -472,23 +486,16 @@ class Node:
         file. If the server rejects for any reason -other than a wrong API key-
         serveral attempts are taken to retry.
         """
-        api_key = os.environ.get("V6_API_KEY")
-        if not api_key:
-            self.log.critical(
-                "No API key found in environment variables. Make sure to set the "
-                "'V6_API_KEY' environment variable."
-            )
-            exit(1)
 
         success = False
         i = 0
         while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
-                self.client.authenticate(api_key)
+                self.client.authenticate()
 
-            except AuthenticationException as e:
-                msg = "Authentication failed: API key is wrong!"
+            except KeycloakAuthenticationError as e:
+                msg = "Authentication failed: API key or node name is wrong!"
                 self.log.warning(msg)
                 self.log.warning(e)
                 break
@@ -510,13 +517,13 @@ class Node:
                 break
 
         if success:
-            self.log.info(f"Node name: {self.client.name}")
+            self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
             self.log.critical("Unable to authenticate. Exiting")
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
-        self.client.auto_refresh_token()
+        self.client.auto_renew_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
@@ -576,7 +583,7 @@ class Node:
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=f"{self.client.host}:{self.client.port}",
+            url=self.client.server_url,
             headers=self.client.headers,
             wait=False,
         )
@@ -594,9 +601,7 @@ class Node:
             time.sleep(1)
             i += 1
 
-        self.log.info(
-            f"Connected to host={self.client.host} on port=" f"{self.client.port}"
-        )
+        self.log.info("Connected to server at %s", self.client.server_url)
 
         self.log.debug(
             "Starting thread to ping the server to notify this node is online."

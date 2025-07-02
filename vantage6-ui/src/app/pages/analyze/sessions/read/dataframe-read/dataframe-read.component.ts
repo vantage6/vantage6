@@ -28,6 +28,7 @@ import { NodeService } from 'src/app/services/node.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { MatButton, MatIconButton } from '@angular/material/button';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-dataframe-read',
@@ -135,7 +136,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.dataframe) return;
           this.isLoading = true;
           const sessionId = this.dataframe.session.id;

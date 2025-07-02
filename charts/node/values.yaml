@@ -2,12 +2,24 @@
 # namespace: vantage6-node
 node:
 
+  # Set to false to prevent creation of node secrets (useful when secrets are managed
+  # externally)
+  createSecrets: true
+
+
+  name: put-your-node-name-here
   apiKey: put-your-api-key-here
+
+  # Keycloak configuration
+  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakRealm: vantage6
+  keycloakClient: node-client
+  keycloakClientSecret: mynodeclientsecret
 
   server:
     # TODO set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
     url: http://vantage6-server-vantage6-server-service
-    port: 80
+    port: 7601
     path: /server
 
   image: harbor2.vantage6.ai/infrastructure/node:latest
@@ -15,10 +27,18 @@ node:
   logging:
     level: INFO
 
-  # Task directory on the host machine
-  taskDirHost: /tmp/vantage6/tasks
-
   proxyPort: 7654
+
+  # Persistence configuration, these settings are both used for the file based databases
+  # and the task directory.
+  persistence:
+    tasks:
+      storageClass: local-storage
+      size: 10Gi
+      hostPath: /tmp/vantage6/tasks
+    database:
+      storageClass: local-storage
+      size: 5Gi
 
   # It is also possible not to specify the details of the service-based databases
   # here. The node will then automatically detect the databases in the environment

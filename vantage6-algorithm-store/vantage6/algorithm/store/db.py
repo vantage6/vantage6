@@ -14,7 +14,6 @@ from vantage6.algorithm.store.model import (
     Rule,
     User,
     Review,
-    Vantage6Server,
     Policy,
     UserPermission,
     role_rule_association,

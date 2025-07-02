@@ -8,11 +8,10 @@ export interface FormCreateOutput {
   session_id: number;
   organizations: CreateTaskOrganization[];
   store_id: number;
-  server_url: string;
   collaboration_id?: number;
   study_id?: number;
   database?: string;
-  dataframes?: any[];
+  dataframes?: any[][];
 }
 
 export interface AvailableSteps {

@@ -1,4 +1,3 @@
-import uuid
 import ipaddress
 import re
 
@@ -15,7 +14,6 @@ from vantage6.backend.common.resource.input_schema import (
 from vantage6.server.model.common.utils import validate_password
 
 _MAX_LEN_STR_SHORT = 128
-_MAX_LEN_PW = 128
 
 
 def _validate_username(username: str) -> None:
@@ -132,66 +130,6 @@ class _NameValidationSchema(Schema):
             If the name is empty, too long or numerical
         """
         validate_name(name)
-
-
-class _PasswordValidationSchema(Schema):
-    """Schema that contains password validation function"""
-
-    password = fields.String(required=True)
-
-    @validates("password")
-    def _validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        _validate_password(password)
-
-
-class ChangePasswordInputSchema(Schema):
-    """Schema for validating input for changing a password."""
-
-    # validation for current password is not necessary, as it is checked in the
-    # authentication process
-    current_password = fields.String(required=True, validate=Length(max=_MAX_LEN_PW))
-    new_password = fields.String(required=True)
-
-    @validates("new_password")
-    def validate_password(self, password: str):
-        """
-        Check if the password is strong enough.
-
-        Parameters
-        ----------
-        password : str
-            Password to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the password is not strong enough.
-        """
-        _validate_password(password)
-
-
-class BasicAuthInputSchema(Schema):
-    """Schema for validating input for basic authentication using a username and password."""
-
-    username = fields.String(required=True, validate=Length(min=1, max=MAX_LEN_NAME))
-    # Note that we don't inherit from _PasswordValidationSchema here and
-    # don't validate password in case the password does not fulfill the
-    # password policy. This is e.g. the case with the default root user created
-    # when the server is started for the first time.
-    password = fields.String(required=True, validate=Length(min=1, max=_MAX_LEN_PW))
 
 
 class CollaborationInputSchema(_NameValidationSchema):
@@ -313,47 +251,6 @@ class PortInputSchema(Schema):
             raise ValidationError("Port must be between 1 and 65535")
 
 
-class RecoverPasswordInputSchema(Schema):
-    """Schema for validating input for recovering a password."""
-
-    email = fields.Email()
-    username = fields.String(validate=Length(max=MAX_LEN_NAME))
-
-    @validates_schema
-    def validate_email_or_username(self, data: dict, **kwargs) -> None:
-        """
-        Validate the input, which should contain either an email or username.
-
-        Parameters
-        ----------
-        data : dict
-            The input data. Should contain an email or username.
-
-        Raises
-        ------
-        ValidationError
-            If the input does not contain an email or username.
-        """
-        if not ("email" in data or "username" in data):
-            raise ValidationError("Email or username is required")
-
-
-class ResetPasswordInputSchema(_PasswordValidationSchema):
-    """Schema for validating input for resetting a password."""
-
-    reset_token = fields.String(required=True, validate=Length(max=MAX_LEN_STR_LONG))
-
-
-class Recover2FAInputSchema(BasicAuthInputSchema):
-    """Schema for validating input for recovering 2FA."""
-
-
-class Reset2FAInputSchema(Schema):
-    """Schema for validating input for resetting 2FA."""
-
-    reset_token = fields.String(required=True, validate=Length(max=MAX_LEN_STR_LONG))
-
-
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
     """Schema for validating input for resetting an API key."""
 
@@ -381,12 +278,11 @@ class TaskInputSchema(_NameValidationSchema):
     collaboration_id = fields.Integer(validate=Range(min=1))
     study_id = fields.Integer(validate=Range(min=1))
     store_id = fields.Integer(validate=Range(min=1))
-    server_url = fields.Url()
     depends_on_ids = fields.List(
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict(), allow_none=True)
+    databases = fields.List(fields.List(fields.Dict()), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
     action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
@@ -415,13 +311,13 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict] | None):
+    def validate_databases(self, databases: list[list[dict]] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict] | None
+        databases : list[list[dict]] | None
             List of databases to validate. Each database must have at least a database
             label or dataframe_id.
 
@@ -432,7 +328,13 @@ class TaskInputSchema(_NameValidationSchema):
         """
         if databases is None:
             return  # some algorithms don't use any database
-        for database in databases:
+
+        if isinstance(databases, list) and not isinstance(databases[0], list):
+            raise ValidationError(
+                "Databases must be a list of lists of dictionaries or None"
+            )
+
+        for database in [db for sublist in databases for db in sublist]:
             if "type" not in database:
                 raise ValidationError("Each database must have a 'type' key")
 
@@ -457,55 +359,6 @@ class TaskInputSchema(_NameValidationSchema):
                 )
 
 
-class TokenUserInputSchema(BasicAuthInputSchema):
-    """Schema for validating input for creating a token for a user."""
-
-    mfa_code = fields.String(validate=Length(max=10))
-
-    @validates("username")
-    def validate_username(self, username: str):
-        """
-        Check if the username is appropriate
-
-        Parameters
-        ----------
-        username : str
-            Username to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the username is too short, too long or numeric.
-        """
-        _validate_username(username)
-
-
-class TokenNodeInputSchema(Schema):
-    """Schema for validating input for creating a token for a node."""
-
-    api_key = fields.String(required=True)
-
-    @validates("api_key")
-    def validate_api_key(self, api_key: str):
-        """
-        Validate the API key in the input. The API key should be a valid UUID
-
-        Parameters
-        ----------
-        api_key : str
-            API key to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the API key is not valid.
-        """
-        try:
-            uuid.UUID(api_key)
-        except ValueError:
-            raise ValidationError("API key is not a valid UUID")
-
-
 class TokenAlgorithmInputSchema(Schema):
     """Schema for validating input for creating a token for an algorithm."""
 
@@ -513,16 +366,29 @@ class TokenAlgorithmInputSchema(Schema):
     image = fields.String(required=True, validate=Length(min=1))
 
 
-class UserInputSchema(_PasswordValidationSchema):
+class UserInputSchema(Schema):
     """Schema for validating input for creating a user."""
 
     username = fields.String(required=True, validate=Length(min=3, max=MAX_LEN_NAME))
+    password = fields.String()
     email = fields.Email(required=True)
     firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
+    create_in_keycloak = fields.Boolean(load_default=1)
+
+    @validates_schema
+    def validate_schema(self, data: dict, **kwargs) -> None:
+        """
+        Validate the input, which should contain a password if the user has to be
+        created in Keycloak.
+        """
+        if data.get("create_in_keycloak") and not data.get("password"):
+            raise ValidationError(
+                "Password is required if the user has to be created in Keycloak"
+            )
 
     @validates("username")
     def validate_username(self, username: str):
@@ -540,6 +406,30 @@ class UserInputSchema(_PasswordValidationSchema):
             If the username is too short, too long or numeric.
         """
         _validate_username(username)
+
+    @validates("password")
+    def _validate_password(self, password: str):
+        """
+        Check if the password is strong enough.
+
+        Parameters
+        ----------
+        password : str
+            Password to validate.
+
+        Raises
+        ------
+        ValidationError
+            If the password is not strong enough.
+        """
+        _validate_password(password)
+
+
+class UserDeleteInputSchema(Schema):
+    """Schema for validating input for deleting a user."""
+
+    delete_from_keycloak = fields.Boolean()
+    delete_dependents = fields.Boolean()
 
 
 class VPNConfigUpdateInputSchema(Schema):
@@ -567,9 +457,7 @@ class AlgorithmStoreInputSchema(Schema):
 
     name = fields.String(required=True)
     algorithm_store_url = fields.Url(required=True)
-    server_url = fields.Url()
     collaboration_id = fields.Integer(validate=Range(min=1))
-    force = fields.Boolean()
 
 
 class StudyInputSchema(_NameValidationSchema):
@@ -665,6 +553,20 @@ class DataframeInitInputSchema(Schema):
     # Task metadata that is executed on the node for session initialization, which is
     # the data extraction task
     task = fields.Nested(SessionTaskInputSchema, required=True)
+
+    @validates("name")
+    def validate_name(self, name: str):
+        """
+        Validate the name in the input.
+        """
+        # Check that the name does not contain special characters or spaces, hyphens
+        # and underscores are allowed. We need to be safe as this name is used as the
+        # filename on the nodes. And ',' and ';' have special meaning in the
+        # environment variables.
+        if not re.match(r"^[a-zA-Z0-9-_]+$", name):
+            raise ValidationError(
+                "Name must contain only letters, numbers, hyphens and underscores"
+            )
 
 
 class DataframePreprocessingInputSchema(Schema):

@@ -49,8 +49,9 @@ export interface User {
 export interface UserForm {
   username: string;
   email: string;
-  password: string;
-  passwordRepeat: string;
+  password?: string;
+  passwordRepeat?: string;
+  create_in_keycloak: boolean;
   firstname: string;
   lastname: string;
   organization_id: number;
@@ -64,6 +65,9 @@ export interface UserPermissions {
   rules: number[];
 }
 
-export type UserCreate = Pick<UserForm, 'username' | 'email' | 'password' | 'firstname' | 'lastname' | 'organization_id' | 'roles'>;
+export type UserCreate = Pick<
+  UserForm,
+  'username' | 'email' | 'password' | 'create_in_keycloak' | 'firstname' | 'lastname' | 'organization_id' | 'roles'
+>;
 
 export type UserEdit = Pick<UserForm, 'username' | 'email' | 'firstname' | 'lastname' | 'roles'>;

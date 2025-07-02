@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import questionary as q
@@ -9,6 +10,7 @@ from vantage6.common.globals import (
     NodePolicy,
     Ports,
     DEFAULT_API_PATH,
+    RequiredNodeEnvVars,
 )
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
@@ -168,9 +170,14 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
     }
 
     # Check if we can login to the server to retrieve collaboration settings
-    client = NodeClient(config["server_url"], config["port"], config["api_path"])
+    client = NodeClient(
+        instance_name,
+        config["api_key"],
+        server_url=f"{config['server_url']}:{config['port']}{config['api_path']}",
+        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+    )
     try:
-        client.authenticate(config["api_key"])
+        client.authenticate()
     except Exception as e:
         error(f"Could not authenticate with server: {e}")
         error("Please check (1) your API key and (2) if your server is online")
@@ -494,7 +501,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     default_v6_server_uri = (
         f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"
     )
-    default_root_username = "root"
+    default_root_username = "admin"
 
     v6_server_uri = q.text(
         "What is the Vantage6 server linked to the algorithm store? "

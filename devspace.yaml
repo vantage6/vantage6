@@ -1,8 +1,14 @@
 version: v2beta1
 name: vantage6git
 
+# Import external profile configurations
+imports:
+  - path: dev/pipeline/profiles.yaml
+
 # TODO using tags isnt safe with the devspace build stuff
 vars:
+  CURRENT_NAMESPACE:
+    command: kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null | grep -v "^null$" | grep -v "^$" || echo "default"
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
   SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
@@ -38,6 +44,43 @@ vars:
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
+  KEYCLOAK_URL:
+    source: env
+    default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+  KEYCLOAK_PUBLIC_URL:
+    source: env
+    default: http://localhost:8080
+  KEYCLOAK_REALM:
+    source: env
+    default: vantage6
+  KEYCLOAK_FRONTEND_CLIENT:
+    source: env
+    default: public_client
+  KEYCLOAK_BACKEND_CLIENT:
+    source: env
+    default: backend-user-client
+  KEYCLOAK_BACKEND_CLIENT_SECRET:
+    source: env
+    default: myuserclientsecret
+  KEYCLOAK_ADMIN_CLIENT:
+    source: env
+    default: backend-admin-client
+  KEYCLOAK_ADMIN_CLIENT_SECRET:
+    source: env
+    default: myadminclientsecret
+  KEYCLOAK_ADMIN_USERNAME:
+    source: env
+    default: admin
+  KEYCLOAK_ADMIN_PASSWORD:
+    source: env
+    default: admin
+  KEYCLOAK_NODE_CLIENT:
+    source: env
+    default: node-client
+  KEYCLOAK_NODE_CLIENT_SECRET:
+    source: env
+    default: mynodeclientsecret
+  DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
 
@@ -45,39 +88,30 @@ pipelines:
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
-      dev/populate_server.sh ${POPULATE_MARKER}
-      run_dependencies --all
+      dev/start.sh ${POPULATE_MARKER}
+
+  populate:
+    run: |-
+      python dev/populate.py \
+        --number-of-nodes $NUMBER_OF_NODES \
+        --task-directory $TASK_DIRECTORY \
+        --task-namespace $TASK_NAMESPACE \
+        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
+
+  all-without-populate:
+    run: |-
       run_pipelines \
         server \
         node \
         --sequential
 
-  # Initialize a development vantage6 network. This will create the necessary
-  # entities at the server (e.g. organizations, nodes, etc.), generate the node
-  # configuration files (stores these in the `dev/.data` directory) and finally
-  # connects the local store to the server.
-  # TODO register the diagnostics image in the algorithm store
-  init:
+  all-with-populate:
     run: |-
-      run_dependencies --all
-      ensure_pull_secrets --all
-      create_deployments \
-        vantage6-server
-      create_deployments \
-        vantage6-store
-      start_dev \
-        vantage6-server-init \
-        vantage6-store-init
-      # TODO replace this with a retry mechanism
-      echo "Waiting for server to start..."
-      python dev/delete-basic-fixtures.py
-      python dev/load-basic-fixtures.py \
-        --number-of-nodes $NUMBER_OF_NODES \
-        --task-directory $TASK_DIRECTORY \
-        --task-namespace $TASK_NAMESPACE \
-        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
-      python dev/connect-store.py
-      stop_dev --all
+      run_pipelines \
+        server \
+        populate \
+        node \
+        --sequential
 
   server:
     run: |-
@@ -85,13 +119,15 @@ pipelines:
       ensure_pull_secrets --all
       create_deployments \
         vantage6-server \
-        vantage6-store
+        vantage6-store \
+        vantage6-auth
       start_dev \
         vantage6-server \
         vantage6-server-db \
         vantage6-ui \
         vantage6-store \
-        vantage6-store-db
+        vantage6-store-db \
+        vantage6-auth
 
   node:
     run: |-
@@ -99,20 +135,20 @@ pipelines:
         vantage6-node
       start_dev \
         vantage6-node
-    
+
   purge:
-    # Careful with destructive rm commands like `rm -rf ${p}/*`!! 
     run: |-
       echo "Purging all deployments..."
       stop_dev --all
       purge_deployments --all
       run_dependencies --all --pipeline purge
+      dev/purge_keycloak_storage.sh
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH}
-    
+
   stop-dev:
     run: |-
       echo "Purging all deployments..."
@@ -167,6 +203,20 @@ images:
 # set `updateImageTags: false` in the deployment.
 deployments:
 
+  vantage6-auth:
+    helm:
+      chart:
+        name: ./charts/auth
+      values:
+        service:
+          type: ClusterIP
+        postgresql:
+          enabled: true
+          auth:
+            postgresPassword: postgres
+            password: keycloak
+            database: keycloak
+
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
   # server (This is also why they are in separate Helm charts).
@@ -177,6 +227,14 @@ deployments:
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           jwt:
@@ -185,6 +243,9 @@ deployments:
             host_uri: ${HOST_URI}
         ui:
           image: ${UI_IMAGE}
+          keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
@@ -198,6 +259,14 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
+          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
+          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           vantage6Server:
@@ -239,6 +308,10 @@ deployments:
         node:
           image: ${NODE_IMAGE}
           numberOfNodes: ${NUMBER_OF_NODES}
+          keycloakUrl: ${KEYCLOAK_URL}
+          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloakClient: ${KEYCLOAK_NODE_CLIENT}
+          keycloakClientSecret: ${KEYCLOAK_NODE_CLIENT_SECRET}
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
@@ -249,32 +322,20 @@ deployments:
               originalName: ${NODE_TEST_DATABASE_NAME}
             serviceBased: []
           k8sNodeName: ${K8S_NODE_NAME}
-          taskDirHost: ${TASK_DIRECTORY}
+          persistence:
+            tasks:
+              hostPath: ${TASK_DIRECTORY}
           logging:
             level: DEBUG
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
-
-  # we use this to populate the database with some basic data. We need a port to talk
-  # to as the ingress is not deployed yet.
-  vantage6-server-init:
-    imageSelector: ${SERVER_IMAGE}
+  # This starts keycloak in development mode.
+  vantage6-auth:
+    labelSelector:
+      app.kubernetes.io/instance: vantage6-auth
     ports:
-      - port: 7601:7601
-        bindAddress: localhost
-      - port: 7601:7601
-        bindAddress: ${PORTS_BIND_ADDRESS}
-
-  # We use this to enable the server and the store to be coupled. We need a port to talk
-  # to as the ingress is not deployed yet.
-  vantage6-store-init:
-    imageSelector: ${STORE_IMAGE}
-    ports:
-      - port: 7602:7602
-        bindAddress: localhost
-      - port: 7602:7602
-        bindAddress: ${PORTS_BIND_ADDRESS}
+      - port: 8080:8080
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
@@ -343,15 +404,22 @@ dev:
       - port: 7633:5432
         bindAddress: ${PORTS_BIND_ADDRESS}
 
-  # This puts the store container in development mode.
   vantage6-ui:
     imageSelector: ${UI_IMAGE}
+    command: ["/app/startup/dev_startup.sh"]
     sync:
-    # TODO ideally we'd include the entire dir vantage6-ui/ but that leads to issues
-    # with the node_modules dir, as well as with the JSON files. Usually changing these
-    # would require image rebuild but it's not transparent.
+    # Ideally we'd include the entire dir vantage6-ui/ but that leads to issues
+    # with the node_modules dir, as well as with the JSON files. Changing these
+    # usually requires image rebuild so it's not a big deal, but also not ideal.
     - path: ./vantage6-ui/src/:/app/src/
       disableDownload: true
+    - path: ./vantage6-ui/startup/:/app/startup/
+      disableDownload: true
+    ports:
+      - port: 7600:80
+        bindAddress: localhost
+      - port: 7600:80
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
@@ -394,8 +462,6 @@ dev:
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 
-
-
 # Use the `commands` section to define repeatable dev workflows for this project
 commands:
   # This will put all components in development mode. This is the main entrypoint
@@ -404,12 +470,12 @@ commands:
     description: "Start the development environment"
     command: devspace dev
 
-  # This will remove all running k8s resources from the development mode. 
+  # This will remove all running k8s resources from the development mode.
   stop-dev:
     description: "Stop the development environment"
     command: devspace run-pipeline stop-dev
 
-  # This will delete all running k8s resources and local data (e.g. tasks data, database data). 
+  # This will delete all running k8s resources and local data (e.g. tasks data, database data).
   # This is useful when you want to start from scratch.
   purge:
     description: "Purge the development environment"

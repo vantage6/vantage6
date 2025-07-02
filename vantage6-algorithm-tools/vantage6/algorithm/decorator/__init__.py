@@ -1,4 +1,4 @@
-from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.decorator.data import dataframe, dataframes  # noqa: F401
 from vantage6.algorithm.decorator.action import (
     data_extraction,
     preprocessing,

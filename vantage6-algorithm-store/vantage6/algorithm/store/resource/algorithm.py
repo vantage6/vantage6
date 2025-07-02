@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
+from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -409,8 +410,8 @@ class Algorithms(AlgorithmBaseResource):
                         step_type:
                           type: string
                           description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                            extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -428,6 +429,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              multiple:
+                                type: boolean
+                                description: Whether more than one database can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -539,7 +544,7 @@ class Algorithms(AlgorithmBaseResource):
             code_url=data["code_url"],
             documentation_url=data.get("documentation_url", None),
             digest=digest,
-            developer=g.user,
+            developer_id=g.user.id,
             submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
@@ -594,6 +599,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                 )
                 db_.save()
             # create the visualizations
@@ -687,7 +693,6 @@ class Algorithms(AlgorithmBaseResource):
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
                 "store_url": get_server_url(config, store_url),
-                "server_url": algo_manager.server.url,
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
                 "support_email": support_email,
@@ -848,9 +853,9 @@ class Algorithm(AlgorithmBaseResource):
                           description: Description of the function
                         step_type:
                           type: string
-                          description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                          description: Step type of the function. Can be
+                            'data_extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -1072,6 +1077,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

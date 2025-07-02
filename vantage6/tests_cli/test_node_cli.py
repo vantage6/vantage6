@@ -417,8 +417,7 @@ class NodeCLITest(unittest.TestCase):
     @patch("vantage6.cli.node.common.debug")
     @patch("vantage6.cli.node.common.error")
     @patch("vantage6.cli.node.common.UserClient")
-    @patch("vantage6.cli.node.common.q")
-    def test_client(self, q, client, error, debug, info):
+    def test_client(self, client, error, debug, info):
         ctx = MagicMock(
             config={
                 "server_url": "localhost",

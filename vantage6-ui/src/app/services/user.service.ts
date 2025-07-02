@@ -37,7 +37,8 @@ export class UserService {
     return await this.apiService.patchForApi<BaseUser>(`/user/${userID}`, user);
   }
 
-  async deleteUser(id: number): Promise<void> {
-    return await this.apiService.deleteForApi(`/user/${id}`);
+  async deleteUser(id: number, deleteInKeycloak: boolean): Promise<void> {
+    const delete_from_keycloak_setting = deleteInKeycloak ? '1' : '0';
+    return await this.apiService.deleteForApi(`/user/${id}?delete_from_keycloak=${delete_from_keycloak_setting}`);
   }
 }

@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRuleService } from './store-rule.service';
 import { AlgorithmStore, AlgorithmViewPolicies, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
-import { PermissionService } from './permission.service';
 import { environment } from 'src/environments/environment';
 import { AlgorithmStoreService } from './algorithm-store.service';
 import { POLICY_ALLOW_ALL_SERVERS } from '../models/constants/policies';
@@ -22,7 +21,6 @@ export class StorePermissionService {
 
   constructor(
     private storeRuleService: StoreRuleService,
-    private permissionService: PermissionService,
     private algorithmStoreService: AlgorithmStoreService
   ) {}
 
@@ -38,7 +36,7 @@ export class StorePermissionService {
     this.initialized$.next(true);
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.activeRules = null;
   }
 
@@ -48,38 +46,20 @@ export class StorePermissionService {
   }
 
   private async getStoreRules(): Promise<StoreRule[]> {
-    if (!this.store || !this.isServerAllowedToBeWhitelisted) {
+    if (!this.store) {
       this.isUserRegistered = false;
       return [];
     }
 
     // get the rules
-    const username = this.permissionService.activeUser?.username;
-    const serverUrl = `${environment.server_url}${environment.api_path}`;
     try {
-      const result = await this.storeRuleService.getRules(
-        this.store.url,
-        { no_pagination: 1, username: username, server_url: serverUrl },
-        false
-      );
+      const result = await this.storeRuleService.getRules(this.store.url, { no_pagination: 1, current_user: true }, false);
       this.isUserRegistered = true;
       return result;
     } catch (error) {
       this.isUserRegistered = false;
       return [];
     }
-  }
-
-  private isServerAllowedToBeWhitelisted(): boolean {
-    // Determine if the server is potentialy whitelisted at the store. This is the
-    // case if A) all stores are allowed to be whitelisted or B) the store is in the
-    // list of explicitly allowed servers
-    if (!this.publicPolicies) return false;
-    const allowedServersPolicy = this.publicPolicies[AvailableStorePolicies.ALLOWED_SERVERS];
-    return (
-      allowedServersPolicy === POLICY_ALLOW_ALL_SERVERS ||
-      (Array.isArray(allowedServersPolicy) && allowedServersPolicy.includes(`${environment.server_url}${environment.api_path}`))
-    );
   }
 
   private async determineViewAlgorithms(): Promise<boolean> {

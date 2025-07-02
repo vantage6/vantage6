@@ -22,6 +22,8 @@ import json
 import time
 import datetime as dt
 import traceback
+import requests
+from keycloak import KeycloakOpenID
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -48,9 +50,14 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
-from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
+from vantage6.backend.common.globals import (
+    HOST_URI_ENV,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+    RequiredServerEnvVars,
+)
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
@@ -59,19 +66,14 @@ from vantage6.server import db
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
     APPNAME,
-    ACCESS_TOKEN_EXPIRES_HOURS,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
-    REFRESH_TOKENS_EXPIRE_HOURS,
-    MIN_TOKEN_VALIDITY_SECONDS,
-    MIN_REFRESH_TOKEN_EXPIRY_DELTA,
     SERVER_MODULE_NAME,
 )
 from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
-from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 
 # make sure the version is available
@@ -81,7 +83,7 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class ServerApp:
+class ServerApp(Vantage6App):
     """
     Vantage6 server instance.
 
@@ -95,6 +97,9 @@ class ServerApp:
         """Create a vantage6-server application."""
 
         self.ctx = ctx
+
+        # validate that the required environment variables are set
+        self.validate_required_env_vars()
 
         # initialize, configure Flask
         self.app = Flask(
@@ -149,6 +154,7 @@ class ServerApp:
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
+        # TODO reactivate this option - and then remove it in dev setup script - #1983
         # self.couple_algorithm_stores()
 
         # TODO v5+ clean this up (simply delete community store URL update). This
@@ -295,29 +301,20 @@ class ServerApp:
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
-        # patch where to obtain token
-        # TODO is this still used? It was set to /api/token for a long time and not
-        # noticed anything not working because it was not set properly
-        self.app.config["JWT_AUTH_URL_RULE"] = f"/{api_path}/token"
+        # set JWT algorithms that keycloak uses
+        self.app.config["JWT_ALGORITHM"] = "RS256"
+        self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
 
-        # If no secret is set in the config file, one is generated. This
-        # implies that all (even refresh) tokens will be invalidated on restart
-        self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
-            "jwt_secret_key", str(uuid.uuid1())
+        # Leeway is provided for the token IAT to prevent errors that token is not yet
+        # valid, which can happen if server times are drifting slightly.
+        self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
+            "jwt_decode_leeway", 10
         )
+        self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
 
-        # Default expiration time
-        token_expiry_seconds = self._get_jwt_expiration_seconds(
-            config_key="token_expires_hours", default_hours=ACCESS_TOKEN_EXPIRES_HOURS
-        )
-        self.app.config["JWT_ACCESS_TOKEN_EXPIRES"] = token_expiry_seconds
-
-        # Set refresh token expiration time
-        self.app.config["JWT_REFRESH_TOKEN_EXPIRES"] = self._get_jwt_expiration_seconds(
-            config_key="refresh_token_expires_hours",
-            default_hours=REFRESH_TOKENS_EXPIRE_HOURS,
-            longer_than=token_expiry_seconds + MIN_REFRESH_TOKEN_EXPIRY_DELTA,
-            is_refresh=True,
+        # set JWT secret key
+        self.app.config["jwt_secret_key"] = self.ctx.config.get(
+            "jwt_secret_key", str(uuid.uuid4())
         )
 
         # Open Api Specification (f.k.a. swagger)
@@ -418,69 +415,14 @@ class ServerApp:
         def static_from_root():
             return send_from_directory(self.app.static_folder, request.path[1:])
 
-    def _get_jwt_expiration_seconds(
-        self,
-        config_key: str,
-        default_hours: int,
-        longer_than: int = MIN_TOKEN_VALIDITY_SECONDS,
-        is_refresh: bool = False,
-    ) -> int:
-        """
-        Return the expiration time for JWT tokens.
-
-        This time may be specified in the config file. If it is not, the
-        default value is returned.
-
-        Parameters
-        ----------
-        config_key: str
-            The config key to look for that sets the expiration time
-        default_hours: int
-            The default expiration time in hours
-        longer_than: int
-            The minimum expiration time in hours.
-        is_refresh: bool
-            If True, the expiration time is for a refresh token. If False, it
-            is for an access token.
-
-        Returns
-        -------
-        int:
-            The JWT token expiration time in seconds
-        """
-        hours_expire = self.ctx.config.get(config_key)
-        if hours_expire is None:
-            # No value is present in the config file, use default
-            seconds_expire = int(float(default_hours) * 3600)
-        elif (
-            isinstance(hours_expire, (int, float))
-            or hours_expire.replace(".", "").isnumeric()
-        ):
-            # Numeric value is present in the config file
-            seconds_expire = int(float(hours_expire) * 3600)
-            if seconds_expire < longer_than:
-                log.warning(
-                    f"Invalid value for '{config_key}': {hours_expire}. Tokens"
-                    f" must be valid for at least {longer_than} seconds. Using"
-                    f" default value: {default_hours} hours"
-                )
-                if is_refresh:
-                    log.warning(
-                        "Note that refresh tokens should be valid at "
-                        f"least {MIN_REFRESH_TOKEN_EXPIRY_DELTA} "
-                        "seconds longer than access tokens."
-                    )
-                seconds_expire = int(float(default_hours) * 3600)
-        else:
-            # Non-numeric value is present in the config file. Warn and use
-            # default
-            log.error(
-                f"Invalid value for '{config_key}': {hours_expire}. "
-                f"Using default value: {default_hours} hours"
-            )
-            seconds_expire = int(float(default_hours) * 3600)
-
-        return seconds_expire
+    @staticmethod
+    def _get_keycloak_public_key():
+        response = requests.get(
+            f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
+            f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}"
+        )
+        key = response.json()["public_key"]
+        return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
 
     def configure_api(self) -> None:
         """Define global API output and its structure."""
@@ -519,70 +461,6 @@ class ServerApp:
     def configure_jwt(self):
         """Configure JWT authentication."""
 
-        @self.jwt.additional_claims_loader
-        # pylint: disable=unused-argument
-        def additional_claims_loader(identity: db.Authenticatable | dict) -> dict:
-            """
-            Create additional claims for JWT tokens: set user type and for
-            users, set their roles.
-
-            Parameters
-            ----------
-            identity: db.Authenticatable | dict
-                The identity for which to create the claims
-
-            Returns
-            -------
-            dict:
-                The claims to be added to the JWT token
-            """
-            roles = []
-            if isinstance(identity, db.User):
-                type_ = "user"
-                roles = [role.name for role in identity.roles]
-
-            elif isinstance(identity, db.Node):
-                type_ = "node"
-            elif isinstance(identity, dict):
-                type_ = "container"
-            else:
-                log.error(f"could not create claims from {str(identity)}")
-                return
-
-            claims = {
-                "client_type": type_,
-                "roles": roles,
-            }
-
-            return claims
-
-        @self.jwt.user_identity_loader
-        # pylint: disable=unused-argument
-        def user_identity_loader(identity: db.Authenticatable | dict) -> str | dict:
-            """ "
-            JSON serializing identity to be used by ``create_access_token``.
-
-            Parameters
-            ----------
-            identity: db.Authenticatable | dict
-                The identity to be serialized
-
-            Returns
-            -------
-            str | dict:
-                The serialized identity. For a node or user, this is the id;
-                for a container, it is a dict.
-            """
-            if isinstance(identity, db.Authenticatable):
-                return identity.id
-            if isinstance(identity, dict):
-                return identity
-
-            log.error(
-                f"Could not create a JSON serializable identity \
-                        from '{str(identity)}'"
-            )
-
         @self.jwt.user_lookup_loader
         # pylint: disable=unused-argument
         def user_lookup_loader(
@@ -606,64 +484,49 @@ class ServerApp:
             """
             identity = jwt_headers["sub"]
             auth_identity = Identity(identity)
+            try:
+                auth = db.Authenticatable.get_by_keycloak_id(identity)
+            except Exception:
+                raise Exception("No user or node found for keycloak id %s", identity)
 
-            # in case of a user or node an auth id is shared as identity
-            if isinstance(identity, int):
-                # auth_identity = Identity(identity)
-
-                auth = db.Authenticatable.get(identity)
-
-                if isinstance(auth, db.Node):
-                    for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
-                        auth_identity.provides.add(
-                            RuleNeed(
-                                name=rule.name,
-                                scope=rule.scope,
-                                operation=rule.operation,
-                            )
-                        )
-
-                if isinstance(auth, db.User):
-                    # add role permissions
-                    for role in auth.roles:
-                        for rule in role.rules:
-                            auth_identity.provides.add(
-                                RuleNeed(
-                                    name=rule.name,
-                                    scope=rule.scope,
-                                    operation=rule.operation,
-                                )
-                            )
-
-                    # add 'extra' permissions
-                    for rule in auth.rules:
-                        auth_identity.provides.add(
-                            RuleNeed(
-                                name=rule.name,
-                                scope=rule.scope,
-                                operation=rule.operation,
-                            )
-                        )
-
-                identity_changed.send(
-                    current_app._get_current_object(), identity=auth_identity
-                )
-
-                return auth
-            else:
-                # container identity
-
-                for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
+            # in case of a user or node, we find an authenticated entity
+            if isinstance(auth, db.Node):
+                for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
                     auth_identity.provides.add(
                         RuleNeed(
-                            name=rule.name, scope=rule.scope, operation=rule.operation
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation,
                         )
                     )
-                identity_changed.send(
-                    current_app._get_current_object(), identity=auth_identity
-                )
-                log.debug("identity %s", identity)
-                return identity
+
+            elif isinstance(auth, db.User):
+                # add role permissions
+                for role in auth.roles:
+                    for rule in role.rules:
+                        auth_identity.provides.add(
+                            RuleNeed(
+                                name=rule.name,
+                                scope=rule.scope,
+                                operation=rule.operation,
+                            )
+                        )
+
+                # add 'extra' permissions
+                for rule in auth.rules:
+                    auth_identity.provides.add(
+                        RuleNeed(
+                            name=rule.name,
+                            scope=rule.scope,
+                            operation=rule.operation,
+                        )
+                    )
+
+            identity_changed.send(
+                current_app._get_current_object(), identity=auth_identity
+            )
+
+            return auth
 
     def load_resources(self) -> None:
         """Import the modules containing API resources."""
@@ -719,10 +582,13 @@ class ServerApp:
 
         # create root user if it is not in the DB yet
         try:
-            db.User.get_by_username(SUPER_USER_INFO["username"])
+            admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
         except Exception:
             log.warning("No root user found! Is this the first run?")
-            self._create_super_user()
+            admin_user = self._create_super_user()
+
+        if not admin_user.keycloak_id:
+            self._add_keycloak_id_to_super_user(admin_user)
 
         return self
 
@@ -747,58 +613,38 @@ class ServerApp:
         # TODO use constant instead of 'Root' literal
         root = db.Role.get_by_name(DefaultRole.ROOT)
 
-        super_user_password = None
-
-        # Note: server admin is supposed to set these env vars via docker
-        # compose for instance
-        if "V6_INIT_SUPER_PASS_HASHED_FILE" in os.environ:
-            log.info("Using initial hashed super user password from file")
-
-            with open(os.environ["V6_INIT_SUPER_PASS_HASHED_FILE"], "r") as f:
-                super_user_password = HashedPassword(f.read().strip())
-
-            if "V6_INIT_SUPER_PASS_HASHED" in os.environ:
-                log.warn(
-                    "Both V6_INIT_SUPER_PASS_HASHED_FILE and"
-                    " V6_INIT_SUPER_PASS_HASHED are set. Using the value from"
-                    " V6_INIT_SUPER_PASS_HASHED_FILE"
-                )
-        elif "V6_INIT_SUPER_PASS_HASHED" in os.environ:
-            log.info(
-                "Using initial hashed super user password provided via"
-                " environemnt variable"
-            )
-            super_user_password = HashedPassword(
-                os.environ["V6_INIT_SUPER_PASS_HASHED"]
-            )
-        else:
-            # FIXME / TODO v5+: for backwards compatibility we still set this
-            # as default but we might want to remove this soon!
-            super_user_password = SUPER_USER_INFO["password"]
-            log.warn(
-                f"Creating super user ({SUPER_USER_INFO['username']})"
-                " with default password!"
-            )
-            log.warn(
-                "Please change it or set an initial password using the"
-                " V6_INIT_SUPER_PASS_HASHED/_FILE environment variable"
-            )
-
-        # sanity check
-        if not super_user_password:
-            raise ValueError("No initial password assigned to root user!")
+        # TODO no longer use any default root username / password
+        log.warning(
+            f"Creating super user ({SUPER_USER_INFO['username']})"
+            " with default password!"
+        )
 
         user = db.User(
             username=SUPER_USER_INFO["username"],
             roles=[root],
             organization=org,
             # TODO: should we use RFC6761's "invalid." here?
-            email="root@domain.ext",
-            password=super_user_password,
-            failed_login_attempts=0,
-            last_login_attempt=None,
+            email="admin@domain.ext",
         )
         user.save()
+        return user
+
+    def _add_keycloak_id_to_super_user(self, super_user: db.User) -> None:
+        keycloak_openid = KeycloakOpenID(
+            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
+            client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
+            realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
+            client_secret_key=os.environ.get(
+                RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
+            ),
+        )
+        token = keycloak_openid.token(
+            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value),
+            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value),
+        )
+        decoded_token = keycloak_openid.decode_token(token["access_token"])
+        super_user.keycloak_id = decoded_token["sub"]
+        super_user.save()
 
     def __node_status_worker(self) -> None:
         """
@@ -846,9 +692,7 @@ class ServerApp:
             # simple for now: check every hour
             time.sleep(3600)
 
-    # TODO this functionality is temporarily disabled since it requires a user token
-    # to couple the algorithm stores. It may be nice to find a way later to offer this
-    # functionality again.
+    # TODO Enable this functionality again - see issue #1983
     # def couple_algorithm_stores(self) -> None:
     #     """Couple algorithm stores to the server.
 
@@ -880,12 +724,11 @@ class ServerApp:
     #                 continue
     #             store = db.AlgorithmStore.get_by_url(url)
     #             if not store:
-    #                 response, status = post_algorithm_store(
+    #                 response, status = add_algorithm_store_to_database(
     #                     {
     #                         "name": name,
     #                         "algorithm_store_url": url,
     #                         "server_url": server_url,
-    #                         "force": True,
     #                     },
     #                     self.ctx.config,
     #                 )

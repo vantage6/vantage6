@@ -32,5 +32,4 @@ class PolicySubClient(ClientBase.SubClient):
         return self.parent.request(
             f"policy{public_or_not}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )

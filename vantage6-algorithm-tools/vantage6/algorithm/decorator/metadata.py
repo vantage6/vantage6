@@ -36,7 +36,7 @@ def _extract_token_payload(token: str) -> dict:
     Returns
     -------
     dict
-        The payload as a dictionary. It contains the keys: `client_type`,
+        The payload as a dictionary. It contains the keys: `vantage6_client_type`,
         `node_id`, `organization_id`, `collaboration_id`, `task_id`, `image`,
         and `databases`.
     """
