@@ -105,7 +105,7 @@ class PermissionManager(PermissionManagerBase):
             rule.save()
             log.debug(
                 f"New auth rule '{resource}' with"
-                f" operation={operation} is stored in the DB"
+                f" operation={operation.value} is stored in the DB"
             )
 
         # assign all new rules to root user
