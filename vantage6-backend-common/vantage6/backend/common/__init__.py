@@ -1,6 +1,5 @@
 """Common functionality for the vantage6 server and algorithm store."""
 
-import importlib
 import json
 import logging
 import os
