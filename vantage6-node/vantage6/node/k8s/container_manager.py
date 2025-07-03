@@ -513,7 +513,7 @@ class ContainerManager:
         # the last failed retry.
 
         # Wait until the POD is running. The following method is blocking until the POD is
-        # running or 
+        # running or
         # TODO we could make this non-blocking by keeping track of the started jobs
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
@@ -580,7 +580,12 @@ class ContainerManager:
 
                     pod = event["object"]
 
-                    pod_phase: RunStatus = compute_job_pod_run_status(pod=pod, label=label,log=self.log,task_namespace=self.task_namespace)
+                    pod_phase: RunStatus = compute_job_pod_run_status(
+                        pod=pod,
+                        label=label,
+                        log=self.log,
+                        task_namespace=self.task_namespace,
+                    )
 
                     if pod_phase != RunStatus.INITIALIZING:
                         return pod_phase
@@ -598,7 +603,12 @@ class ContainerManager:
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
 
-                pod_phase: RunStatus = compute_job_pod_run_status(pod=pod, label=label,log=self.log,task_namespace=self.task_namespace)
+                pod_phase: RunStatus = compute_job_pod_run_status(
+                    pod=pod,
+                    label=label,
+                    log=self.log,
+                    task_namespace=self.task_namespace,
+                )
 
                 # Another iteration on the outher loop is performed if the pod is pending for reasons other than
                 # missing/invalid Docker image (which is reported as INITIALIZING).
@@ -613,7 +623,6 @@ class ContainerManager:
 
         finally:
             w.stop()
-
 
     def _create_run_mount(
         self,
