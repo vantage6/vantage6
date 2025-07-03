@@ -42,6 +42,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
+from vantage6.node.k8s.pod_state_to_job_status_mapper import compute_job_pod_run_status
 from vantage6.node.k8s.exceptions import (
     PermanentAlgorithmStartFail,
     DataFrameNotFound,
@@ -510,11 +511,9 @@ class ContainerManager:
         # Kubernetes will automatically retry the job ``backoff_limit`` times. According
         # to the Pod's backoff failure policy, it will have a failed status only after
         # the last failed retry.
-        # start_time = time.time()
 
-        # Wait until the POD is running. This method is blocking until the POD is
-        # running or a timeout is reached.
-        # TODO even though the timeout is reached, the POD could still be running
+        # Wait until the POD is running. The following method is blocking until the POD is
+        # running or 
         # TODO we could make this non-blocking by keeping track of the started jobs
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
@@ -581,7 +580,7 @@ class ContainerManager:
 
                     pod = event["object"]
 
-                    pod_phase: RunStatus = self.__compute_job_pod_run_status(pod, label)
+                    pod_phase: RunStatus = compute_job_pod_run_status(pod=pod, label=label,log=self.log,task_namespace=self.task_namespace)
 
                     if pod_phase != RunStatus.INITIALIZING:
                         return pod_phase
@@ -599,7 +598,7 @@ class ContainerManager:
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
 
-                pod_phase: RunStatus = self.__compute_job_pod_run_status(pod, label)
+                pod_phase: RunStatus = compute_job_pod_run_status(pod=pod, label=label,log=self.log,task_namespace=self.task_namespace)
 
                 # Another iteration on the outher loop is performed if the pod is pending for reasons other than
                 # missing/invalid Docker image (which is reported as INITIALIZING).
@@ -615,108 +614,6 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __compute_job_pod_run_status(
-        self, pod: k8s_client.V1Pod, label: str
-    ) -> RunStatus:
-        """
-        Determines the current run status of a Kubernetes job pod based on its phase and container initialization status.
-        This method inspects the provided Kubernetes pod object to map its current phase and, if applicable,
-        the container's waiting reason to a corresponding `RunStatus` value used by the application.
-        Args:
-            pod: The Kubernetes pod object whose status is to be evaluated. It is expected to have a `status`
-                attribute with `phase` and (optionally) `container_statuses`.
-            label: A label identifying the job pod, used for logging purposes.
-        Returns:
-            RunStatus: The computed run status for the pod, which can be one of:
-                - RunStatus.INITIALIZING: The pod is still pending for creation (for reasons other than missing/invalid Docker image).
-                - RunStatus.NO_DOCKER_IMAGE: The pod is pending due to image pull errors or invalid image name.
-                - RunStatus.ACTIVE: The pod is already running.
-                - RunStatus.FAILED: The pod has failed.
-                - RunStatus.COMPLETED: The pod has succeeded.
-                - RunStatus.UNKNOWN_ERROR: The pod is in an unknown or unexpected phase.
-        """
-
-        terminal_k8s_phase_to_v6_status_map: dict[str, RunStatus] = {
-            "Running": RunStatus.ACTIVE,
-            "Failed": RunStatus.FAILED,
-            "Succeded": RunStatus.COMPLETED,
-            "Unknown": RunStatus.UNKNOWN_ERROR,
-        }
-
-        # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
-        # reported after multiple ErrImagePull events.
-        no_docker_image_k8s_waiting_reasons = ["ImagePullBackOff", "InvalidImageName"]
-
-        pod_phase = pod.status.phase
-
-        if pod_phase == "Pending":
-
-            self.log.debug(
-                "Job POD (label %s) is already in %s namespace, but still in pending status...",
-                label,
-                self.task_namespace,
-            )
-
-            pending_status_reason = None
-
-            if pod.status and pod.status.container_statuses:
-                    # The job pods have use single container, container_statuses will always have a single element
-                    container_status: V1ContainerStatus = pod.status.container_statuses[
-                        0
-                    ]
-                    if container_status.state.waiting:
-                        pending_status_reason = container_status.state.waiting.reason
-                        self.log.debug(
-                            "Job POD (label %s, namespace %s) Still in pending phase. Container status: %s",
-                            label,
-                            self.task_namespace,
-                            pending_status_reason,
-                        )
-                    else:
-                        self.log.debug(
-                            "Job POD (label %s, namespace %s) Still in pending phase (container status not yet available)",
-                            label,
-                            self.task_namespace,
-                        )
-
-            # If the 'pending' status is caused by an image/image-registry related problem, the corresponding status is returned.
-            # Otherwise (e.g, the image is still being pulled "ImagePulling" ot the container is being created "ContainerCreating"),
-            # an "INITIALIZING" status is returned.
-            if pending_status_reason in no_docker_image_k8s_waiting_reasons:
-                self.log.debug(
-                    "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE status",
-                    label,
-                    self.task_namespace,
-                )
-                return RunStatus.NO_DOCKER_IMAGE
-            else:
-                self.log.debug(
-                    "Job POD (label %s, namespace %s) - Reporting INITIALIZING status (image still being pulled or container still being created): %s",
-                    label,
-                    self.task_namespace,
-                    pending_status_reason,
-                )
-                return RunStatus.INITIALIZING
-
-        # The POD is no longer pending, and a terminal phase has been reached: return the corresponding v6 status
-        elif pod_phase in terminal_k8s_phase_to_v6_status_map:
-            self.log.debug(
-                "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
-                label,
-                self.task_namespace,
-                terminal_k8s_phase_to_v6_status_map[pod_phase],
-            )
-            return terminal_k8s_phase_to_v6_status_map[pod_phase]
-
-        # No other kind of phase is expected to be reported (according to current k8s's specifications)
-        else:
-            self.log.critical(
-                "Job (label %s, namespace %s) Unexpected/unhandled POD creation phase: %s. Reporting this as an UNKNOWN_ERROR.",
-                label,
-                self.task_namespace,
-                pod_phase,
-            )
-            return RunStatus.UNKNOWN_ERROR
 
     def _create_run_mount(
         self,
