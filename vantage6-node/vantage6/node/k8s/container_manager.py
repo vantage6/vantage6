@@ -551,11 +551,12 @@ class ContainerManager:
         -------
         RunStatus
             The status of the run:
-            - RunStatus.ACTIVE: If the POD is running.
-            - RunStatus.FAILED: If the POD has failed.
-            - RunStatus.COMPLETED: If the POD has succeeded.
-            - RunStatus.NO_DOCKER_IMAGE: If the POD failed due to an image pull error.
-            - RunStatus.UNKNOWN_ERROR: If the POD's status is unknown or an unexpected error occurs.
+            - RunStatus.ACTIVE: If the pod is already with a Running status
+            - RunStatus.FAILED: If the pod reported a Failed status
+            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
+            - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
+            - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.            
         """
 
         # Wait until the POD is created

@@ -12,7 +12,7 @@ terminal_k8s_phase_to_v6_status_map: dict[str, RunStatus] = {
 
 # Note on why ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
 # reported after multiple ErrImagePull events.
-container_related_reasons_for_still_pending = {
+container_image_related_reasons_for_still_pending = {
     "ImagePullBackOff": "The pod is unable to pull the specified Docker image (authentication issues, network problems, or the image not existing in the registry) after multiple attempts.",
     "InvalidImageName": "The specified image name is malformed or invalid.",
     "ErrImageNeverPull": "ImagePullPolicy is Never, but the image doesn't exist locally",
@@ -36,21 +36,28 @@ def compute_job_pod_run_status(
     task_namespace: str, log: Logger, pod: V1Pod, label: str
 ) -> RunStatus:
     """
-    Determines the current run status of a Kubernetes job pod based on its phase and container initialization status.
-    This method inspects the provided Kubernetes pod object to map its current phase and, if applicable,
-    the container's waiting reason to a corresponding `RunStatus` value used by the application.
+    Maps the current phase and container status to one of the V6- RunStatuses
+
+    This function inspects the provided Kubernetes pod object and maps its current state to a corresponding
+    `RunStatus` value used by the application.
+
     Args:
-        pod: The Kubernetes pod object whose status is to be evaluated. It is expected to have a `status`
-            attribute with `phase` and (optionally) `container_statuses`.
-        label: A label identifying the job pod, used for logging purposes.
+        task_namespace (str): The Kubernetes namespace in which the pod is running.
+        log (Logger): Logger instance for logging debug, warning, and critical messages.
+        pod (V1Pod): The Kubernetes pod object whose status is to be evaluated.
+        label (str): A label identifying the job or pod for logging purposes.
+
     Returns:
-        RunStatus: The computed run status for the pod, which can be one of:
-            - RunStatus.INITIALIZING: The pod is still pending for creation (for reasons other than missing/invalid Docker image).
-            - RunStatus.NO_DOCKER_IMAGE: The pod is pending due to image pull errors or invalid image name.
-            - RunStatus.ACTIVE: The pod is already running.
-            - RunStatus.FAILED: The pod has failed.
-            - RunStatus.COMPLETED: The pod has succeeded.
-            - RunStatus.UNKNOWN_ERROR: The pod is in an unknown or unexpected phase.
+        RunStatus: The mapped run status corresponding to the pod's current state. Possible values include:
+            - RunStatus.ACTIVE: If the pod is already with a Running status
+            - RunStatus.FAILED: If the pod reported a Failed status
+            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
+            - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
+            - RunStatus.INITIALIZING: If the pod is still initializing or waiting for image pull.
+            - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.
+
+
     """
 
     pod_phase = pod.status.phase
@@ -83,17 +90,18 @@ def compute_job_pod_run_status(
                     task_namespace,
                 )
 
-        # If the 'pending' status is caused by an image/image-registry related problem, the corresponding status is returned.
-        # Otherwise (e.g, the image is still being pulled "ImagePulling" ot the container is being created "ContainerCreating"),
-        # an "INITIALIZING" status is returned.
-        if pending_status_reason in container_related_reasons_for_still_pending:
+        # The reason the POD status is "Pending" is related to an docker-image issue: NO_DOCKER_IMAGE
+        if pending_status_reason in container_image_related_reasons_for_still_pending:
             log.debug(
                 "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE status: %s",
                 label,
                 task_namespace,
-                container_related_reasons_for_still_pending[pending_status_reason],
+                container_image_related_reasons_for_still_pending[
+                    pending_status_reason
+                ],
             )
             return RunStatus.NO_DOCKER_IMAGE
+        # The reason the POD status is "Pending" is due to an image that is crashing: CRASHED
         elif pending_status_reason in runtime_pod_related_reasons_for_still_pending:
             log.debug(
                 "Job POD (label %s, namespace %s) - Reporting CRASHED status: %s",
@@ -102,6 +110,7 @@ def compute_job_pod_run_status(
                 runtime_pod_related_reasons_for_still_pending[pending_status_reason],
             )
             return RunStatus.CRASHED
+        # The reason the POD status is "Pending" is an image still being pulled or intialized: INITIALIZING
         elif (
             pending_status_reason
             in pod_initialization_related_reasons_for_still_pending
@@ -115,6 +124,7 @@ def compute_job_pod_run_status(
                 ],
             )
             return RunStatus.INITIALIZING
+        # The "Pending" status is caused by an unexpected reason
         elif pending_status_reason != None:
             log.warning(
                 "Job POD (label %s, namespace %s) - WARNING: the POD has an unknown/unsupported status: %s. Reporting this as an UNKNOWN error.",
@@ -123,16 +133,16 @@ def compute_job_pod_run_status(
                 pending_status_reason,
             )
             return RunStatus.UNKNOWN_ERROR
+        # The "Pending" status reason is still undefined (on the early stages of the POD creation)
         else:
             log.warning(
                 "Job POD (label %s, namespace %s) - POD container(s) state information not yet available.",
                 label,
                 task_namespace,
-                pending_status_reason,
             )
             return RunStatus.INITIALIZING
 
-    # The POD is no longer pending, and a terminal phase has been reached: return the corresponding v6 status
+    # The POD is no longer pending, and a terminal phase has been reached: return the v6-status that correspond to such phase
     elif pod_phase in terminal_k8s_phase_to_v6_status_map:
         log.debug(
             "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
