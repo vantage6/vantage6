@@ -144,6 +144,7 @@ class Vantage6App:
             "jwt_decode_leeway", 10
         )
         self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
+        self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})

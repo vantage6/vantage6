@@ -9,7 +9,6 @@ store to a vantage6 server.
 
 import os
 from gevent import monkey
-from vantage6.backend.common.permission import RuleNeed
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -19,47 +18,19 @@ if not os.environ.get("READTHEDOCS"):
 # pylint: disable=C0413, C0411
 import importlib
 import logging
-import json
-import traceback
-import datetime
 
-from http import HTTPStatus
-from werkzeug.exceptions import HTTPException
-from flask import (
-    Flask,
-    make_response,
-    request,
-    send_from_directory,
-    Request,
-    Response,
-    current_app,
-)
-from flask_cors import CORS
-from flask_marshmallow import Marshmallow
-from flask_restful import Api
-from flask_principal import Principal, Identity, identity_changed
-from pathlib import Path
-from keycloak import KeycloakOpenID
-from flask_jwt_extended import JWTManager
-
+from flask import current_app
+from flask_principal import Identity, identity_changed
 
 from vantage6.common import logger_name
-from vantage6.common.globals import APPNAME, DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 from vantage6.backend.common import Vantage6App
-from vantage6.backend.common.globals import (
-    HOST_URI_ENV,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    RequiredServerEnvVars,
-)
-from vantage6.backend.common.jsonable import jsonable
-from vantage6.backend.common.mail_service import MailService
-
-# TODO move this to common, then remove dependency on CLI in algorithm store
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
-from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
 from vantage6.algorithm.store.globals import (

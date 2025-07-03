@@ -18,53 +18,25 @@ if not os.environ.get("READTHEDOCS"):
 import importlib
 import logging
 import uuid
-import json
 import time
 import datetime as dt
-import traceback
-import requests
-from keycloak import KeycloakOpenID
 
-from http import HTTPStatus
-from werkzeug.exceptions import HTTPException
-from flask import (
-    Flask,
-    make_response,
-    current_app,
-    request,
-    send_from_directory,
-    Request,
-    Response,
-)
-from flask_cors import CORS
-from flask_cors.core import probably_regex
-from flask_jwt_extended import JWTManager
-from flask_marshmallow import Marshmallow
-from flask_restful import Api
-from flask_principal import Principal, Identity, identity_changed
+from flask import current_app
+from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
-from pathlib import Path
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
-from vantage6.backend.common.globals import (
-    HOST_URI_ENV,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-    RequiredServerEnvVars,
-)
-from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common import Vantage6App
-from vantage6.backend.common.mail_service import MailService
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.permission import PermissionManager
 from vantage6.server import db
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.globals import (
-    APPNAME,
     RESOURCES,
     RESOURCES_PATH,
     SUPER_USER_INFO,
