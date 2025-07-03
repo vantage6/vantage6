@@ -27,7 +27,6 @@ from keycloak import KeycloakOpenID
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
-from flasgger import Swagger
 from flask import (
     Flask,
     make_response,
@@ -71,7 +70,6 @@ from vantage6.server.globals import (
     SUPER_USER_INFO,
     SERVER_MODULE_NAME,
 )
-from vantage6.server.resource.common.swagger_templates import swagger_template
 from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.controller import cleanup
@@ -96,45 +94,7 @@ class ServerApp(Vantage6App):
     def __init__(self, ctx: ServerContext) -> None:
         """Create a vantage6-server application."""
 
-        self.ctx = ctx
-
-        # validate that the required environment variables are set
-        self.validate_required_env_vars()
-
-        # initialize, configure Flask
-        self.app = Flask(
-            SERVER_MODULE_NAME,
-            root_path=Path(__file__),
-            template_folder=Path(__file__).parent / "templates",
-            static_folder=Path(__file__).parent / "static",
-        )
-        self.debug: dict = self.ctx.config.get("debug", {})
-        self.configure_flask(self.ctx.config.get("api_path"))
-
-        # Setup SQLAlchemy and Marshmallow for marshalling/serializing
-        self.ma = Marshmallow(self.app)
-
-        # Setup the Flask-JWT-Extended extension (JWT: JSON Web Token)
-        self.jwt = JWTManager(self.app)
-        self.configure_jwt()
-
-        # Setup Principal, granular API access manegement
-        self.principal = Principal(self.app, use_sessions=False)
-
-        # Enable cross-origin resource sharing. Note that Flask-CORS interprets
-        # the origins as regular expressions.
-        cors_allowed_origins = self.ctx.config.get("cors_allowed_origins", "*")
-        self._warn_if_cors_regex(cors_allowed_origins)
-        self.cors = CORS(
-            self.app,
-            resources={r"/*": {"origins": cors_allowed_origins}},
-        )
-
-        # SWAGGER documentation
-        self.swagger = Swagger(self.app, template=swagger_template)
-
-        # Setup the Flask-Mail client
-        self.mail = MailService(self.app)
+        super().__init__(ctx, SERVER_MODULE_NAME)
 
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
@@ -142,40 +102,13 @@ class ServerApp(Vantage6App):
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Api - REST JSON-rpc
-        self.api = Api(self.app)
-        self.configure_api()
+        # Load API resources
         self.load_resources()
-
-        # set environment variable for dev environment
-        host_uri = self.ctx.config.get("dev", {}).get("host_uri")
-        if host_uri:
-            os.environ[HOST_URI_ENV] = host_uri
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
         # TODO reactivate this option - and then remove it in dev setup script - #1983
         # self.couple_algorithm_stores()
-
-        # TODO v5+ clean this up (simply delete community store URL update). This
-        # change is here to prevent errors when going from v4.3-4.7 to 4.8+.
-        # Because in v4.8, the algorithm store's API path was made
-        # flexible, the /api from then on had to be included in the database
-        community_stores = db.AlgorithmStore.get_by_url(
-            "https://store.cotopaxi.vantage6.ai"
-        )
-        if community_stores:
-            # only need to update first one (there shouldn't be more than 1 anyway)
-            community_store = community_stores[0]
-            log.warning(
-                "Updating community store URL to include '/api'. This change is"
-                " necessary as you are updating to v4.8"
-            )
-            community_store.url = f"{community_store.url}/api"
-            community_store.save()
-
-        # set the server version
-        self.__version__ = __version__
 
         if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(
@@ -191,35 +124,6 @@ class ServerApp(Vantage6App):
         t.start()
 
         log.info("Initialization done")
-
-    @staticmethod
-    def _warn_if_cors_regex(origins: str | list[str]) -> None:
-        """
-        Give a warning if CORS origins are regular expressions. This will not work
-        properly for socket events (Flask-SocketIO checks for string equality and does
-        not use regex).
-
-        Note that we are using the `probably_regex` function from Flask-CORS to check
-        if the origins are probably regular expressions - the Flask implementation for
-        determining if it is a regex is a bit hacky (see
-        https://github.com/corydolphin/flask-cors/blob/3.0.10/flask_cors/core.py#L275-L285)
-        and Flask-CORS doesn't currently offer an opt out of regex's altogether.
-
-        Parameters
-        ----------
-        origins: str | list[str]
-            The origins to check
-        """
-        if isinstance(origins, str):
-            origins = [origins]
-
-        for origin in origins:
-            if probably_regex(origin) and not origin == "*":
-                log.warning(
-                    "CORS origin '%s' is a regular expression. Socket events sent from "
-                    "this origin will not be handled properly.",
-                    origin,
-                )
 
     def setup_socket_connection(self) -> SocketIO:
         """
@@ -288,7 +192,7 @@ class ServerApp(Vantage6App):
 
         return socketio
 
-    def configure_flask(self, api_path: str) -> None:
+    def configure_flask(self) -> None:
         """
         Configure the Flask settings of the vantage6 server.
 
@@ -298,165 +202,16 @@ class ServerApp(Vantage6App):
             The base path of the API
         """
 
-        # let us handle exceptions
-        self.app.config["PROPAGATE_EXCEPTIONS"] = True
+        self._configure_flask_base(DatabaseSessionManager)
 
-        # set JWT algorithms that keycloak uses
-        self.app.config["JWT_ALGORITHM"] = "RS256"
-        self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
-
-        # Leeway is provided for the token IAT to prevent errors that token is not yet
-        # valid, which can happen if server times are drifting slightly.
-        self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
-            "jwt_decode_leeway", 10
-        )
-        self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
-
-        # set JWT secret key
+        # set JWT secret key to generate container tokens
         self.app.config["jwt_secret_key"] = self.ctx.config.get(
             "jwt_secret_key", str(uuid.uuid4())
         )
 
-        # Open Api Specification (f.k.a. swagger)
-        self.app.config["SWAGGER"] = {
-            "title": APPNAME,
-            "uiversion": "3",
-            "openapi": "3.0.0",
-            "version": __version__,
-        }
-
-        # Mail settings
-        mail_config = self.ctx.config.get("smtp", {})
-        self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
-        self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
-        self.app.config["MAIL_USERNAME"] = mail_config.get(
-            "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
-        )
-        self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
-        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS", True)
-        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL", False)
-        debug_mode = self.debug.get("flask", False)
-        if debug_mode:
-            log.debug("Flask debug mode enabled")
-        self.app.debug = debug_mode
-
-        def _get_request_path(request: Request) -> str:
-            """
-            Return request extension of request URL, e.g.
-            http://localhost:7601/api/task/1 -> api/task/1
-
-            Parameters
-            ----------
-            request: Request
-                Flask request object
-
-            Returns
-            -------
-            string:
-                The endpoint path of the request
-            """
-            return request.url.replace(request.url_root, "")
-
-        # before request
-        @self.app.before_request
-        def do_before_request():
-            """Before every flask request method."""
-            # Add log message before each request
-            log.debug(
-                f"Received request: {request.method} {_get_request_path(request)}"
-            )
-
-            # This will obtain a (scoped) db session from the session factory
-            # that is linked to the flask request global `g`. In every endpoint
-            # we then can access the database by using this session. We ensure
-            # that the session is removed (and uncommited changes are rolled
-            # back) at the end of every request.
-            DatabaseSessionManager.new_session()
-
-        @self.app.after_request
-        def remove_db_session(response):
-            """After every flask request.
-
-            This will close the database session created by the
-            `before_request`.
-            """
-            DatabaseSessionManager.clear_session()
-            return response
-
-        @self.app.errorhandler(HTTPException)
-        def error_remove_db_session(error: HTTPException):
-            """In case an HTTP-exception occurs during the request.
-
-            It is important to close the db session to avoid having dangling
-            sessions.
-            """
-            if error.code == 404:
-                log.debug("404 error for route '%s'", _get_request_path(request))
-            else:
-                log.warning("HTTP Exception occured during request")
-                log.debug("Details exception: %s", traceback.format_exc())
-            DatabaseSessionManager.clear_session()
-            return error.get_response()
-
-        @self.app.errorhandler(Exception)
-        def error2_remove_db_session(error):
-            """In case an exception occurs during the request.
-
-            It is important to close the db session to avoid having dangling
-            sessions.
-            """
-            log.exception("Exception occured during request")
-            DatabaseSessionManager.clear_session()
-            return {
-                "msg": f"An unexpected error occurred on the server!"
-            }, HTTPStatus.INTERNAL_SERVER_ERROR
-
-        @self.app.route("/robots.txt")
-        def static_from_root():
-            return send_from_directory(self.app.static_folder, request.path[1:])
-
-    @staticmethod
-    def _get_keycloak_public_key():
-        response = requests.get(
-            f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
-            f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}"
-        )
-        key = response.json()["public_key"]
-        return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
-
     def configure_api(self) -> None:
         """Define global API output and its structure."""
-
-        # helper to create HATEOAS schemas
-        HATEOASModelSchema.api = self.api
-
-        # whatever you get try to json it
-        @self.api.representation("application/json")
-        # pylint: disable=unused-argument
-        def output_json(
-            data: db.Base | list[db.Base], code: HTTPStatus, headers: dict = None
-        ) -> Response:
-            """
-            Return jsonified data for request responses.
-
-            Parameters
-            ----------
-            data: db.Base | list[db.Base]
-                The data to be jsonified
-            code: HTTPStatus
-                The HTTP status code of the response
-            headers: dict
-                Additional headers to be added to the response
-            """
-
-            if isinstance(data, db.Base):
-                data = jsonable(data)
-            elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
-                data = jsonable(data)
-
-            resp = make_response(json.dumps(data), code)
-            resp.headers.extend(headers or {})
-            return resp
+        self._configure_api_base(HATEOASModelSchema, db.Base)
 
     def configure_jwt(self):
         """Configure JWT authentication."""
@@ -545,31 +300,6 @@ class ServerApp(Vantage6App):
             module = importlib.import_module("vantage6.server.resource." + res)
             module.setup(self.api, self.ctx.config["api_path"], services)
 
-    # TODO consider moving this method elsewhere. This is not trivial at the
-    # moment because of the circular import issue with `db`, see
-    # https://github.com/vantage6/vantage6/issues/53
-    @staticmethod
-    def _add_default_roles() -> None:
-        for role in get_default_roles(db):
-            if not db.Role.get_by_name(role["name"]):
-                log.warning("Creating new default role %s...", role["name"].value)
-                new_role = db.Role(
-                    name=role["name"],
-                    description=role["description"],
-                    rules=role["rules"],
-                    is_default_role=True,
-                )
-                new_role.save()
-            else:
-                current_role = db.Role.get_by_name(role["name"])
-                # check that the rules are the same. Use set() to compare without order
-                if set(current_role.rules) != set(role["rules"]):
-                    log.warning(
-                        "Updating default role %s with new rules", role["name"].value
-                    )
-                    current_role.rules = role["rules"]
-                    current_role.save()
-
     def start(self) -> None:
         """
         Start the server.
@@ -578,7 +308,7 @@ class ServerApp(Vantage6App):
         (re)set where appropriate.
         """
         # add default roles (if they don't exist yet)
-        self._add_default_roles()
+        self._add_default_roles(get_default_roles(db), db)
 
         # create root user if it is not in the DB yet
         try:
