@@ -56,12 +56,6 @@ vars:
   KEYCLOAK_FRONTEND_CLIENT:
     source: env
     default: public_client
-  KEYCLOAK_BACKEND_CLIENT:
-    source: env
-    default: backend-user-client
-  KEYCLOAK_BACKEND_CLIENT_SECRET:
-    source: env
-    default: myuserclientsecret
   KEYCLOAK_ADMIN_CLIENT:
     source: env
     default: backend-admin-client
@@ -233,8 +227,6 @@ deployments:
           keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
           keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
           keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
-          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
-          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           jwt:
@@ -265,8 +257,6 @@ deployments:
           keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
           keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
           keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
-          keycloakUserClient: ${KEYCLOAK_BACKEND_CLIENT}
-          keycloakUserClientSecret: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
           logging:
             level: DEBUG
           vantage6Server:

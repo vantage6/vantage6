@@ -51,8 +51,6 @@ class TestResources(unittest.TestCase):
         os.environ["KEYCLOAK_REALM"] = "dummy-keycloak-realm"
         os.environ["KEYCLOAK_ADMIN_USERNAME"] = "dummy-keycloak-admin-username"
         os.environ["KEYCLOAK_ADMIN_PASSWORD"] = "dummy-keycloak-admin-password"
-        os.environ["KEYCLOAK_USER_CLIENT"] = "dummy-keycloak-user-client"
-        os.environ["KEYCLOAK_USER_CLIENT_SECRET"] = "dummy-keycloak-user-client-secret"
         os.environ["KEYCLOAK_ADMIN_CLIENT"] = "dummy-keycloak-admin-client"
         os.environ["KEYCLOAK_ADMIN_CLIENT_SECRET"] = (
             "dummy-keycloak-admin-client-secret"
