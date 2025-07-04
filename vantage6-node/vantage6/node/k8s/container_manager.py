@@ -10,7 +10,6 @@ import uuid
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client.rest import ApiException
-from kubernetes.client.models.v1_container_status import V1ContainerStatus
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name

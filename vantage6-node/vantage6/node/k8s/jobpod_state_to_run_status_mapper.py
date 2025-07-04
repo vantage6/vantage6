@@ -1,6 +1,6 @@
 from logging import Logger
 from vantage6.common.enum import RunStatus
-from kubernetes.client import V1Pod, V1PodStatus, V1ContainerStatus, V1PodCondition
+from kubernetes.client import V1Pod, V1ContainerStatus
 
 # The phases that follow the 'Pending' one
 #
