@@ -1,5 +1,7 @@
 import os
+import yaml
 from pathlib import Path
+from typing import Any
 
 import questionary as q
 
@@ -16,6 +18,7 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common import error, warning, info
 from vantage6.cli.context import select_context_class
+from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,
@@ -368,115 +371,243 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     return config
 
 
-def server_configuration_questionaire(instance_name: str) -> dict:
+# TODO: This questionnaire is only asking for the options in devspace.yaml. Need to add/remove
+# questions, and adjust the order of questions
+def server_configuration_questionaire(
+    instance_name: str,
+    chart_path: str,
+) -> dict[str, Any]:
     """
-    Questionary to generate a config file for the server instance.
+    Kubernetes-specific questionnaire to generate Helm values for server.
 
     Parameters
     ----------
     instance_name : str
-        Name of the server instance.
+        Name of the server instance
+    chart_path : str
+        Path to the Helm chart directory
 
     Returns
     -------
-    dict
-        Dictionary with the new server configuration
+    dict[str, Any]
+        dictionary with Helm values for the server configuration
     """
+    # Load defaults from Helm chart
+    cli_config = CliConfig()
+    chart_path = cli_config.get_default_chart(chart_type="server")
+    values_path = Path(chart_path) / "values.yaml"
+    with open(values_path, "r") as f:
+        helm_defaults = yaml.safe_load(f)
 
-    config = _get_common_server_config(InstanceType.SERVER, instance_name)
+    # get active kube namespace
+    kube_namespace = cli_config.get_last_namespace()
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").unsafe_ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = generate_apikey()
+    # Initialize config with basic structure
+    config = {"server": {}, "database": {}, "ui": {}}
 
-    is_mfa = q.confirm("Do you want to enforce two-factor authentication?").unsafe_ask()
-    if is_mfa:
-        config["two_factor_auth"] = is_mfa
-
-    current_server_url = f"http://localhost:{config['port']}{config['api_path']}"
-    config["server_url"] = q.text(
-        "What is the server url exposed to the users? If you are running a"
-        " development server running locally, this is the same as the "
-        "server url. If you are running a production server, this is the "
-        "url that users will connect to.",
-        default=current_server_url,
+    # Basic server configuration - always configure these
+    config["server"]["description"] = q.text(
+        "Enter a human-readable description:",
+        default=helm_defaults.get("server", {}).get(
+            "description", f"Vantage6 server {instance_name}"
+        ),
     ).unsafe_ask()
 
-    is_add_vpn = q.confirm(
-        "Do you want to add a VPN server?", default=False
+    # Server URL configuration - important for external access
+    default_base_url = helm_defaults.get("server", {}).get(
+        "baseUrl", "http://localhost:7601"
+    )
+    config["server"]["baseUrl"] = q.text(
+        "What is the server URL that users will connect to?", default=default_base_url
     ).unsafe_ask()
-    if is_add_vpn:
-        vpn_config = q.unsafe_prompt(
-            [
-                {
-                    "type": "text",
-                    "name": "url",
-                    "message": "VPN server URL:",
-                },
-                {
-                    "type": "text",
-                    "name": "portal_username",
-                    "message": "VPN portal username:",
-                },
-                {
-                    "type": "password",
-                    "name": "portal_userpass",
-                    "message": "VPN portal password:",
-                },
-                {
-                    "type": "text",
-                    "name": "client_id",
-                    "message": "VPN client username:",
-                },
-                {
-                    "type": "password",
-                    "name": "client_secret",
-                    "message": "VPN client password:",
-                },
-                {
-                    "type": "text",
-                    "name": "redirect_url",
-                    "message": "Redirect url (should be local address of server)",
-                    "default": "http://localhost",
-                },
-            ]
-        )
-        config["vpn_server"] = vpn_config
 
-    is_add_rabbitmq = q.confirm(
-        "Do you want to add a RabbitMQ message queue?"
+    # API path - use helm chart default
+    config["server"]["apiPath"] = helm_defaults.get("server", {}).get(
+        "apiPath", DEFAULT_API_PATH
+    )
+
+    # === Configure devspace.yaml equivalent options ===
+
+    # 1. HOST_URI (from devspace.yaml: "What is the ip address of your host machine?")
+    host_uri = q.text(
+        "What is the ip address of your host machine? (How containers reach the host)",
+        default="host.docker.internal",
     ).unsafe_ask()
-    if is_add_rabbitmq:
-        rabbit_uri = q.text(message="Enter the URI for your RabbitMQ:").unsafe_ask()
-        run_rabbit_locally = q.confirm(
-            "Do you want to run RabbitMQ locally? (Use only for testing)"
+
+    config["server"]["dev"] = {
+        "host_uri": host_uri,
+        "drop_all": "True",  # Development setting
+    }
+
+    # 2. Database configuration
+    use_external_db = q.confirm(
+        "Do you want to use an external database? (If no, PostgreSQL will be deployed in the cluster)",
+        default=False,
+    ).unsafe_ask()
+
+    if use_external_db:
+        db_uri = q.text(
+            "Enter the database URI (e.g., postgresql://user:password@host:port/database):"
         ).unsafe_ask()
-        config["rabbitmq"] = {
-            "uri": rabbit_uri,
-            "start_with_server": run_rabbit_locally,
-        }
-
-    # add algorithm stores to this server
-    is_add_community_store = q.confirm(
-        "Do you want to make the algorithms from the community algorithm store "
-        "available to your users?"
-    ).unsafe_ask()
-    algorithm_stores = []
-    if is_add_community_store:
-        algorithm_stores.append(
-            {"name": "Community store", "url": "https://store.cotopaxi.vantage6.ai"}
-        )
-    add_more_stores = q.confirm(
-        "Do you want to add more algorithm stores?", default=False
-    ).unsafe_ask()
-    while add_more_stores:
-        store_name = q.text(message="Enter the name of the store:").unsafe_ask()
-        store_url = q.text(message="Enter the URL of the store:").unsafe_ask()
-        algorithm_stores.append({"name": store_name, "url": store_url})
-        add_more_stores = q.confirm(
-            "Do you want to add more algorithm stores?", default=False
+        config["server"]["database_uri"] = db_uri
+    else:
+        # SERVER_DATABASE_MOUNT_PATH (from devspace.yaml)
+        db_mount_path = q.text(
+            "Where is your server database located on the host machine?",
+            default=f"{Path.cwd()}/dev/.db/db_pv_server",
         ).unsafe_ask()
-    config["algorithm_stores"] = algorithm_stores
+
+        config["database"]["volumePath"] = db_mount_path
+
+        # K8S_NODE_NAME (from devspace.yaml)
+        k8s_node_name = q.text(
+            "What is the name of the k8s node where the databases are running?",
+            default="docker-desktop",
+        ).unsafe_ask()
+
+        config["database"]["k8sNodeName"] = k8s_node_name
+
+    # === Keycloak configuration (from devspace.yaml env vars) ===
+    configure_keycloak = q.confirm(
+        "Do you want to configure Keycloak authentication settings?", default=True
+    ).unsafe_ask()
+
+    if configure_keycloak:
+        # KEYCLOAK_URL
+        default_kc_url = helm_defaults.get("server", {}).get(
+            "keycloakUrl",
+            f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local",
+        )
+        config["server"]["keycloakUrl"] = q.text(
+            "Keycloak server URL (internal cluster URL):", default=default_kc_url
+        ).unsafe_ask()
+
+        # KEYCLOAK_REALM
+        default_realm = helm_defaults.get("server", {}).get("keycloakRealm", "vantage6")
+        config["server"]["keycloakRealm"] = q.text(
+            "Keycloak realm:", default=default_realm
+        ).unsafe_ask()
+
+        # KEYCLOAK_ADMIN_USERNAME
+        default_admin_user = helm_defaults.get("server", {}).get(
+            "keycloakAdminUsername", "admin"
+        )
+        config["server"]["keycloakAdminUsername"] = q.text(
+            "Keycloak admin username:", default=default_admin_user
+        ).unsafe_ask()
+
+        # KEYCLOAK_ADMIN_PASSWORD
+        default_admin_pass = helm_defaults.get("server", {}).get(
+            "keycloakAdminPassword", "admin"
+        )
+        config["server"]["keycloakAdminPassword"] = q.password(
+            "Keycloak admin password:", default=default_admin_pass
+        ).unsafe_ask()
+
+        # KEYCLOAK_BACKEND_CLIENT
+        default_backend_client = helm_defaults.get("server", {}).get(
+            "keycloakUserClient", "backend-user-client"
+        )
+        config["server"]["keycloakUserClient"] = q.text(
+            "Keycloak backend client ID:", default=default_backend_client
+        ).unsafe_ask()
+
+        # KEYCLOAK_BACKEND_CLIENT_SECRET
+        default_backend_secret = helm_defaults.get("server", {}).get(
+            "keycloakUserClientSecret", "myuserclientsecret"
+        )
+        config["server"]["keycloakUserClientSecret"] = q.password(
+            "Keycloak backend client secret:", default=default_backend_secret
+        ).unsafe_ask()
+
+        # KEYCLOAK_ADMIN_CLIENT
+        default_admin_client = helm_defaults.get("server", {}).get(
+            "keycloakAdminClient", "backend-admin-client"
+        )
+        config["server"]["keycloakAdminClient"] = q.text(
+            "Keycloak admin client ID:", default=default_admin_client
+        ).unsafe_ask()
+
+        # KEYCLOAK_ADMIN_CLIENT_SECRET
+        default_admin_client_secret = helm_defaults.get("server", {}).get(
+            "keycloakAdminClientSecret", "myadminclientsecret"
+        )
+        config["server"]["keycloakAdminClientSecret"] = q.password(
+            "Keycloak admin client secret:", default=default_admin_client_secret
+        ).unsafe_ask()
+
+    # === UI configuration ===
+    configure_ui = q.confirm(
+        "Do you want to configure UI settings?", default=True
+    ).unsafe_ask()
+
+    if configure_ui:
+        # KEYCLOAK_PUBLIC_URL
+        default_public_url = helm_defaults.get("ui", {}).get(
+            "keycloakPublicUrl", "http://localhost:8080"
+        )
+        config["ui"]["keycloakPublicUrl"] = q.text(
+            "Keycloak public URL (accessible from browser):", default=default_public_url
+        ).unsafe_ask()
+
+        # KEYCLOAK_FRONTEND_CLIENT
+        default_frontend_client = helm_defaults.get("ui", {}).get(
+            "keycloakClient", "public_client"
+        )
+        config["ui"]["keycloakClient"] = q.text(
+            "Keycloak frontend client ID:", default=default_frontend_client
+        ).unsafe_ask()
+
+        # Copy keycloak realm to UI if configured
+        if "keycloakRealm" in config.get("server", {}):
+            config["ui"]["keycloakRealm"] = config["server"]["keycloakRealm"]
+
+    # === Common server settings ===
+
+    # Server image
+    default_server_image = helm_defaults.get("server", {}).get(
+        "image", "harbor2.vantage6.ai/infrastructure/server:latest"
+    )
+    config["server"]["image"] = q.text(
+        "Server Docker image:", default=default_server_image
+    ).unsafe_ask()
+
+    # UI image
+    default_ui_image = helm_defaults.get("ui", {}).get(
+        "image", "harbor2.vantage6.ai/infrastructure/ui:latest"
+    )
+    config["ui"]["image"] = q.text(
+        "UI Docker image:", default=default_ui_image
+    ).unsafe_ask()
+
+    # Logging level
+    log_level = q.select(
+        "Which level of logging would you like?",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=helm_defaults.get("server", {}).get("logging", {}).get("level", "INFO"),
+    ).unsafe_ask()
+
+    config["server"]["logging"] = {"level": log_level}
+
+    # JWT secret configuration
+    use_constant_jwt = q.confirm(
+        "Do you want a constant JWT secret? (Recommended for development)", default=True
+    ).unsafe_ask()
+
+    if use_constant_jwt:
+        config["server"]["jwt"] = {"secret": generate_apikey()}
+
+    # External RabbitMQ configuration
+    use_external_rabbitmq = q.confirm(
+        "Do you want to use an external RabbitMQ server? (If no, RabbitMQ will be deployed in the cluster)",
+        default=False,
+    ).unsafe_ask()
+
+    if use_external_rabbitmq:
+        rabbitmq_uri = q.text(
+            "Enter the RabbitMQ URI (e.g., amqp://user:password@host:port/vhost):"
+        ).unsafe_ask()
+        config["server"]["rabbitmq_uri"] = rabbitmq_uri
 
     return config
 
@@ -542,7 +673,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
 
 
 def configuration_wizard(
-    type_: InstanceType, instance_name: str, system_folders: bool
+    type_: InstanceType, instance_name: str, system_folders: bool, chart_path: str = ""
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -570,7 +701,10 @@ def configuration_wizard(
         config = node_configuration_questionaire(dirs, instance_name)
     elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(instance_name)
+        config = server_configuration_questionaire(
+            instance_name=instance_name,
+            chart_path=chart_path,
+        )
     else:
         conf_manager = ServerConfigurationManager
         config = algo_store_configuration_questionaire(instance_name)

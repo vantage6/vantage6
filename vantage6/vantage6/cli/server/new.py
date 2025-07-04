@@ -1,12 +1,14 @@
 import click
 from colorama import Fore, Style
+from kubernetes import config
 
-from vantage6.common import info, error, ensure_config_dir_writable
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.common import info, error, warning, ensure_config_dir_writable
+from vantage6.common.globals import InstanceType
+from vantage6.cli.config import CliConfig
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.configuration_wizard import configuration_wizard
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
-from vantage6.common.globals import InstanceType
 
 
 @click.command()
@@ -17,10 +19,33 @@ from vantage6.common.globals import InstanceType
 @click.option(
     "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
 )
-def cli_server_new(name: str, system_folders: bool) -> None:
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option(
+    "--namespace",
+    default=None,
+    help="Kubernetes namespace to use",
+)
+@click.option(
+    "--chart",
+    default=None,
+    help="Path to the Helm chart directory",
+)
+def cli_server_new(
+    name: str,
+    system_folders: bool,
+    namespace: str,
+    context: str,
+    chart: str,
+) -> None:
     """
     Create a new server configuration.
     """
+    cli_config = CliConfig()
+    context, namespace, chart = cli_config.compare_changes_config(
+        chart_type="server", context=context, namespace=namespace, chart=chart
+    )
+    server_chart = cli_config.get_default_chart("server")
+
     name = prompt_config_name(name)
 
     # check if name is allowed for docker volume, else exit
@@ -46,7 +71,9 @@ def cli_server_new(name: str, system_folders: bool) -> None:
 
     # create config in ctx location
     try:
-        cfg_file = configuration_wizard(InstanceType.SERVER, name, system_folders)
+        cfg_file = configuration_wizard(
+            InstanceType.SERVER, name, system_folders, server_chart
+        )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
         exit(1)
