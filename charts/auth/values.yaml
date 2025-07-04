@@ -28,6 +28,13 @@ keycloak:
                 value: admin
             realmRoles:
               - admin
+          - username: service-account-backend-admin-client
+            enabled: true
+            serviceAccountClientId: backend-admin-client
+            clientRoles:
+              realm-management:
+                - view-users
+                - manage-users
         clients:
           - clientId: public_client
             publicClient: true
@@ -82,21 +89,21 @@ keycloak:
               composites:
                 client:
                   realm-management:
-                    - query-users
-                    - query-groups
-                    - impersonation
                     - view-users
-                    - view-events
-                    - manage-clients
-                    - view-identity-providers
-                    - query-clients
-                    - view-realm
                     - manage-users
-                    - query-realms
-                    - manage-identity-providers
-                    - view-authorization
-                    - create-client
-                    - view-clients
-                    - manage-realm
-                    - manage-events
-                    - manage-authorization
+                    # - query-users
+                    # - query-groups
+                    # - impersonation
+                    # - view-events
+                    # - manage-clients
+                    # - view-identity-providers
+                    # - query-clients
+                    # - view-realm
+                    # - query-realms
+                    # - manage-identity-providers
+                    # - view-authorization
+                    # - create-client
+                    # - view-clients
+                    # - manage-realm
+                    # - manage-events
+                    # - manage-authorization
