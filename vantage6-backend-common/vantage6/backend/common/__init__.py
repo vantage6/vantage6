@@ -29,6 +29,7 @@ from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
 from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.backend.common.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     HOST_URI_ENV,
@@ -300,20 +301,8 @@ class Vantage6App:
                     current_role.save()
 
     def _add_keycloak_id_to_super_user(self, super_user: BaseModelBase) -> None:
-        keycloak_openid = KeycloakOpenID(
-            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-            client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
-            realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
-            client_secret_key=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
-            ),
-        )
-        token = keycloak_openid.token(
-            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value),
-            os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value),
-        )
-        decoded_token = keycloak_openid.decode_token(token["access_token"])
-        super_user.keycloak_id = decoded_token["sub"]
+        print("Adding keycloak id to super user", super_user.username)
+        super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
         super_user.save()
 
     @staticmethod

@@ -37,6 +37,7 @@ setup(
         "marshmallow==3.19.0",
         "marshmallow-sqlalchemy==1.4.0",
         "sqlalchemy==2.0.37",
+        "python-keycloak==5.5.0",
         f'vantage6-common == {version_ns["__version__"]}',
     ],
     extras_require={"dev": ["coverage==6.4.4"]},

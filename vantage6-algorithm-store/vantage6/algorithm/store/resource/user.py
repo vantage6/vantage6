@@ -15,6 +15,7 @@ from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.backend.common.globals import RequiredServerEnvVars
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
@@ -295,9 +296,8 @@ class Users(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # check if the user already exists in keycloak
-        keycloak_admin_client = self._get_keycloak_admin_client()
         try:
-            user_id = keycloak_admin_client.get_user_id(request.json["username"])
+            user_id = get_keycloak_id_for_user(request.json["username"])
         except Exception:
             return {
                 "msg": f"User {request.json['username']} not found: cannot register "
