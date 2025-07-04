@@ -1,6 +1,5 @@
 """Common functionality for the vantage6 server and algorithm store."""
 
-import importlib
 import json
 import logging
 import os
@@ -10,7 +9,6 @@ from http import HTTPStatus
 from pathlib import Path
 from types import ModuleType
 
-from keycloak import KeycloakOpenID
 import requests
 from flask import Flask, Request, Response, make_response, request, send_from_directory
 from flask_jwt_extended import JWTManager

@@ -14,7 +14,10 @@ from vantage6.backend.common.resource.error_handling import (
     UnauthorizedError,
     handle_exceptions,
 )
-from vantage6.backend.common.auth import get_keycloak_admin_client, get_keycloak_id_for_user
+from vantage6.backend.common.auth import (
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
+)
 from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,

@@ -2,16 +2,14 @@ import logging
 
 from functools import wraps
 from http import HTTPStatus
-from flask import request, current_app, g
+from flask import request, g
 from flask_mail import Mail
-from flask_principal import Identity, identity_changed
 from flask_restful import Api
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.algorithm.store.model.user import User
-from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.algorithm.store import PermissionManager
 from vantage6.algorithm.store.model.rule import Operation
