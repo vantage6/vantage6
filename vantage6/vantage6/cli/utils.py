@@ -8,6 +8,7 @@ import re
 import docker
 import os
 import questionary as q
+import subprocess
 
 from pathlib import Path
 
@@ -99,3 +100,33 @@ def prompt_config_name(name: str | None) -> None:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
     return name
+
+
+def switch_context_and_namespace(
+    context: str | None = None, namespace: str | None = None
+) -> None:
+    try:
+        if context:
+            subprocess.run(
+                ["kubectl", "config", "use-context", context],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            info(f"Successfully set context to: {context}")
+
+        if namespace:
+            subprocess.run(
+                [
+                    "kubectl",
+                    "config",
+                    "set-context",
+                    context or "--current",
+                    f"--namespace={namespace}",
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            info(f"Successfully set namespace to: {namespace}")
+
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to set Kubernetes context or namespace: {e}")
