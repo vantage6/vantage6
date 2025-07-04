@@ -85,6 +85,7 @@ def _authorize_user(
         Tuple containing an error message and status code if the user is not
         authorized, None otherwise.
     """
+    g.user = user
     if not user.can(resource, operation):
         msg = (
             f"You are not allowed to perform the operation '{operation}' on resource "

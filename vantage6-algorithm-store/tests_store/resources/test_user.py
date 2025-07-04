@@ -69,16 +69,15 @@ class TestUserResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
-    @patch("vantage6.algorithm.store.resource.user.KeycloakAdmin")
+    @patch("vantage6.algorithm.store.resource.user.get_keycloak_id_for_user")
     def test_user_create(
         self,
-        keycloak_admin_mock,
+        get_keycloak_id_for_user_mock,
         authenticate_mock,
     ):
         """Test the user create."""
         # Mock the keycloak admin client
-        keycloak_admin_instance = keycloak_admin_mock.return_value
-        keycloak_admin_instance.get_user_id.return_value = "test-keycloak-id"
+        get_keycloak_id_for_user_mock.return_value = "test-keycloak-id"
 
         self.register_user(authenticate_mock=authenticate_mock)
 
@@ -101,7 +100,7 @@ class TestUserResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # ensure we cannot register a user with more permissions then we have
-        keycloak_admin_instance.get_user_id.return_value = "other-test-keycloak-id"
+        get_keycloak_id_for_user_mock.return_value = "other-test-keycloak-id"
         role = Role(rules=Rule.get())
         role.save()
         body_ = {
