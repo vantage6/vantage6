@@ -42,7 +42,7 @@ from vantage6.node.globals import (
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
-from vantage6.node.k8s.pod_state_to_job_status_mapper import compute_job_pod_run_status
+from vantage6.node.k8s.jobpod_state_to_run_status_mapper import compute_job_pod_run_status
 from vantage6.node.k8s.exceptions import (
     PermanentAlgorithmStartFail,
     DataFrameNotFound,

@@ -10,7 +10,7 @@ from kubernetes.client import (
     V1ContainerStateWaiting,
     V1ContainerStateTerminated,
 )
-from vantage6.node.k8s.pod_state_to_job_status_mapper import compute_job_pod_run_status
+from vantage6.node.k8s.jobpod_state_to_run_status_mapper import compute_job_pod_run_status
 from vantage6.common.enum import RunStatus
 
 
@@ -92,4 +92,37 @@ class TestPodStatus(TestCase):
                 log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.NO_DOCKER_IMAGE,
+        )
+
+    def test_waiting_reason_not_ready_err(self):
+        self.mock_pod.status.phase = "Pending"
+        self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
+        self.mock_pod.status.container_statuses[0].state.waiting = None
+        self.assertEqual(
+            compute_job_pod_run_status(
+                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+            ),
+            RunStatus.INITIALIZING,
+        )
+
+    def test_container_runtime_error(self):
+        self.mock_pod.status.phase = "Pending"
+        self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
+        self.mock_pod.status.container_statuses[0].state.waiting.reason = (
+            "CrashLoopBackOff"
+        )
+        self.assertEqual(
+            compute_job_pod_run_status(
+                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+            ),
+            RunStatus.CRASHED,
+        )
+
+    def test_completed_job(self):
+        self.mock_pod.status.phase = "Succeded"
+        self.assertEqual(
+            compute_job_pod_run_status(
+                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+            ),
+            RunStatus.COMPLETED,
         )
