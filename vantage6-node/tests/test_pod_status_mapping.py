@@ -10,7 +10,9 @@ from kubernetes.client import (
     V1ContainerStateWaiting,
     V1ContainerStateTerminated,
 )
-from vantage6.node.k8s.jobpod_state_to_run_status_mapper import compute_job_pod_run_status
+from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
+    compute_job_pod_run_status,
+)
 from vantage6.common.enum import RunStatus
 
 

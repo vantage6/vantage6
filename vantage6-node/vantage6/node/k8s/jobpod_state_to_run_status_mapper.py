@@ -100,7 +100,10 @@ def compute_job_pod_run_status(
                 )
 
                 # The reason the POD status is "Pending" is related to an docker-image issue: NO_DOCKER_IMAGE
-                if pending_status_reason in container_image_related_reasons_for_still_pending:
+                if (
+                    pending_status_reason
+                    in container_image_related_reasons_for_still_pending
+                ):
                     log.debug(
                         "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE status: %s",
                         label,
@@ -111,12 +114,17 @@ def compute_job_pod_run_status(
                     )
                     return RunStatus.NO_DOCKER_IMAGE
                 # The reason the POD status is "Pending" is due to an image that is crashing: CRASHED
-                elif pending_status_reason in runtime_pod_related_reasons_for_still_pending:
+                elif (
+                    pending_status_reason
+                    in runtime_pod_related_reasons_for_still_pending
+                ):
                     log.debug(
                         "Job POD (label %s, namespace %s) - Reporting CRASHED status: %s",
                         label,
                         task_namespace,
-                        runtime_pod_related_reasons_for_still_pending[pending_status_reason],
+                        runtime_pod_related_reasons_for_still_pending[
+                            pending_status_reason
+                        ],
                     )
                     return RunStatus.CRASHED
                 # The reason the POD status is "Pending" is an image still being pulled or intialized: INITIALIZING
