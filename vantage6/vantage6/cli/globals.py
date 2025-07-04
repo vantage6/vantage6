@@ -7,6 +7,14 @@ from pathlib import Path
 from vantage6.common.globals import APPNAME
 
 #
+#  CLI SETTINGS
+#
+
+DEFAULT_CLI_CONFIG_FOLDER = Path.home() / ".vantage6"
+DEFAULT_CLI_CONFIG_FILE = DEFAULT_CLI_CONFIG_FOLDER / "config.yaml"
+DEFAULT_HELM_CHART_FOLDER = Path(__file__).parent / "charts"
+
+#
 #   SERVER SETTINGS
 #
 DEFAULT_SERVER_SYSTEM_FOLDERS = True
@@ -64,3 +72,10 @@ class AlgoStoreGlobals(str, Enum):
 
     DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
+
+
+class ChartType(str, Enum):
+    AUTH = "auth"
+    NODE = "node"
+    SERVER = "server"
+    STORE = "store"
