@@ -4,15 +4,15 @@ Utility functions for the CLI
 
 from __future__ import annotations
 
-import re
-import docker
 import os
-import questionary as q
+import re
 import subprocess
-
 from pathlib import Path
 
-from vantage6.common import error, warning, info
+import questionary as q
+
+import docker
+from vantage6.common import error, info, warning
 
 
 def check_config_name_allowed(name: str) -> None:

@@ -1,7 +1,8 @@
 import click
-from vantage6.common import info
+
 from vantage6.cli.config import CliConfig
 from vantage6.cli.globals import ChartType
+from vantage6.common import info
 
 
 @click.command()

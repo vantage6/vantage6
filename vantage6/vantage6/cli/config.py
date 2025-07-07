@@ -1,17 +1,18 @@
 import os
 from os import PathLike
-from colorama import Fore, Style
 from pathlib import Path
+
+import questionary
 import yaml
-from vantage6.common import error, warning, info
+from colorama import Fore, Style
+from kubernetes import config
+
 from vantage6.cli.globals import (
     DEFAULT_CLI_CONFIG_FILE,
     DEFAULT_HELM_CHART_FOLDER,
     ChartType,
 )
-from kubernetes import config
-import questionary
-
+from vantage6.common import error, info, warning
 
 """
 The config.yaml has following structure:

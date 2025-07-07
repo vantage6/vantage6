@@ -1,9 +1,10 @@
 import click
 import questionary
 from kubernetes import config
-from vantage6.common import error
+
 from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
+from vantage6.common import error
 
 
 @click.command()
@@ -32,7 +33,7 @@ def cli_use_context(context: str):
     # Load the selected context
     try:
         config.load_kube_config(context=context)
-    except Exception as e:
+    except Exception:
         error(f"Cannot not find {context} in kube config")
         return
 
