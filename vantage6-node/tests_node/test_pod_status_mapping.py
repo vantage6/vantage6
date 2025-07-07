@@ -1,5 +1,6 @@
 import logging
-from unittest import TestCase
+import unittest
+
 from kubernetes.client import (
     V1Pod,
     V1PodStatus,
@@ -23,7 +24,7 @@ def get_null_logger(name="null_logger"):
     return logger
 
 
-class TestPodStatus(TestCase):
+class TestPodStatus(unittest.TestCase):
 
     def setUp(self):
 
