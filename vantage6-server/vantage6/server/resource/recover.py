@@ -3,8 +3,10 @@ from http import HTTPStatus
 
 from flask import request
 from flask_restful import Api
+from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 
+from vantage6.backend.common.auth import get_keycloak_admin_client
 from vantage6.common import logger_name, generate_apikey
 from vantage6.server import db
 from vantage6.server.model.rule import Operation
@@ -120,8 +122,12 @@ class ResetAPIKey(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
-        log.info(f"Successful API key reset for node {id}")
+        log.info(f"Successful API key reset for node {id_}")
         api_key = generate_apikey()
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        keycloak_admin.set_user_password(
+            user_id=node.keycloak_id, password=api_key, temporary=False
+        )
         node.api_key = api_key
         node.save()
 
