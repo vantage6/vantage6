@@ -3813,7 +3813,8 @@ class TestResources(TestResourceBase):
         col.delete()
         study.delete()
 
-    def test_reset_api_key(self):
+    @patch("vantage6.server.resource.recover.ResetAPIKey._change_api_key_in_keycloak")
+    def test_reset_api_key(self, mock_change_api_key_in_keycloak):
         org = Organization(name="Test Organization")
         org.save()
         node = self.create_node(organization=org)
