@@ -33,10 +33,12 @@ setup(
     install_requires=[
         "click==8.1.3",
         "docker==7.1.0",
-        "gevent==23.9.1",
+        "gevent==25.4.2",
         "jinja2==3.1.6",
         "python-socketio==5.7.2",
-        "requests==2.32.3",
+        "requests==2.32.4",
+        "psutil==5.9.0",
+        "nvidia-ml-py==12.535.133",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-client == {version_ns["__version__"]}',
         f'vantage6-algorithm-tools == {version_ns["__version__"]}',
@@ -48,7 +50,7 @@ setup(
             "SQLAlchemy==1.4.46",
             "schema==0.7.5",
             "appdirs==1.4.4",
-            "flask==2.2.5",
+            "flask==3.1.0",
             "black",
             "pre-commit",
         ]

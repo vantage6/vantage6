@@ -1,10 +1,12 @@
 api_key: {{ api_key }}
 api_path: /api
 databases:
-  {% for label, path in databases.items() %}
+  {% for db in databases %}
+  {% for label, path in db.items() %}
   - label: {{ label }}
     uri: {{ path }}
     type: csv
+  {% endfor %}
   {% endfor %}
 encryption:
   enabled: false
@@ -31,4 +33,4 @@ logging:
 port: {{ port }}
 server_url: {{ server_url }}
 task_dir: {{ task_dir}}
-{{ user_provided_config }}
+{{- user_provided_config -}}

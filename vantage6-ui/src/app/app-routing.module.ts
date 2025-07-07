@@ -62,8 +62,30 @@ import { ReviewSubmitComponent } from './pages/store/algorithms-in-review/review
 import { MyPendingAlgorithmsComponent } from './pages/store/algorithms-in-review/my-pending-algorithms/my-pending-algorithms.component';
 import { OldAlgorithmListComponent } from './pages/store/algorithm/old-list/old-algorithm-list.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
+import { CommunityStoreComponent } from "./layouts/community-store/community-store.component";
+import { AlgorithmReadPublicComponent } from "./pages/store/algorithm/read-public/algorithm-read-public.component";
+import { AlgorithmListPublicComponent } from "./pages/store/algorithm/list-public/algorithm-list-public.component";
 
 const routes: Routes = [
+  {
+    path: 'communitystore',
+    component: CommunityStoreComponent,
+    children: [
+      {
+        path: '',
+        redirectTo: routePaths.communityStoreAlgorithms,
+        pathMatch: 'full',
+      },
+      {
+        path: routerConfig.communityStoreAlgorithm,
+        component: AlgorithmReadPublicComponent,
+      },
+      {
+        path: routerConfig.communityStoreAlgorithms,
+        component: AlgorithmListPublicComponent
+      },
+    ]
+  },
   {
     path: 'auth',
     component: LayoutLoginComponent,
@@ -537,4 +559,5 @@ const routes: Routes = [
   imports: [RouterModule.forRoot(routes, { bindToComponentInputs: true, useHash: true })],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule {
+}

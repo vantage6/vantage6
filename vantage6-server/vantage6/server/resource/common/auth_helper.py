@@ -204,14 +204,17 @@ def __notify_user_blocked(
     )
     email_sent_recently = user.last_email_failed_login_sent and (
         dt.datetime.now(dt.timezone.utc)
-        < user.last_email_failed_login_sent
+        < user.last_email_failed_login_sent.replace(tzinfo=dt.timezone.utc)
         + dt.timedelta(minutes=minutes_between_blocked_emails)
     )
     if email_sent_recently:
         return
 
     # send email
-    smtp_settings = config.get("smtp", {})
+    smtp_settings = config.get("smtp")
+    if not smtp_settings:
+        log.warning("No SMTP settings found in config - cannot send email!")
+        return
     email_from = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
     support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 

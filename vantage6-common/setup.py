@@ -37,7 +37,7 @@ setup(
         "cryptography==44.0.1",
         "docker>=7.1.0",
         "pyfiglet==0.8.post1",
-        "PyJWT==2.6.0",
+        "pyjwt==2.9.0",
         "PyYAML>=6.0.1",
         "python-dateutil==2.8.2",
         "qrcode==7.3.1",

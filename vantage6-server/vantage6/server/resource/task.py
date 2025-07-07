@@ -67,6 +67,13 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET", "DELETE"),
         resource_class_kwargs=services,
     )
+    api.add_resource(
+        TaskStatusEndpoint,
+        path + "/<int:task_id>/status",
+        endpoint="task_status",
+        methods=("GET",),
+        resource_class_kwargs=services,
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -1214,3 +1221,87 @@ class Task(TaskBase):
             Task._delete_subtasks(child_task)
             log.info(f" Removing child task id={child_task.id}")
             child_task.delete()
+
+
+class TaskStatusEndpoint(TaskBase):
+    """Resource for /api/task/<id>/status"""
+
+    @only_for(("user", "container"))
+    def get(self, task_id: int):
+        """Get task status
+        ---
+        description: >-
+          Returns the status of the task specified by the id.
+
+          ### Permission Table\n
+          |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+          Description|\n
+          |--|--|--|--|--|--|\n
+          |Task|Global|View|❌|❌|View any task|\n
+          |Task|Collaboration|View|✅|✅|View any task in your collaborations|
+          |Task|Organization|View|❌|❌|View any task that your organization
+          created|\n
+          |Task|Own|View|❌|❌|View any task that you created|\n
+
+          Accessible to users.
+
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            description: Task id
+            required: true
+
+        responses:
+          200:
+            description: Ok
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      description: The status of the task
+          404:
+            description: Task not found
+          401:
+            description: Unauthorized
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Task"]
+        """
+        task = db.Task.get(task_id)
+        if not task:
+            log.error(f"Task with id={task_id} not found.")
+            return {"msg": f"Task id={task_id} not found"}, HTTPStatus.NOT_FOUND
+
+        if not self._has_permission_to_view_task(task):
+            log.error(f"Unauthorized access to task id={task_id}.")
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+
+        log.info(f"Returning status for task id={task_id}: {task.status}")
+        return {"status": task.status}, HTTPStatus.OK
+
+    def _has_permission_to_view_task(self, task: db.Task) -> bool:
+        """
+        Check if the user has permission to view the task.
+
+        Parameters
+        ----------
+        task : db.Task
+            Task to check permissions for.
+
+        Returns
+        -------
+        bool
+            True if the user has permission, False otherwise.
+        """
+        return self.r.allowed_for_org(P.VIEW, task.init_org_id) or (
+            self.r.v_own.can() and g.user and task.init_user_id == g.user.id
+        )

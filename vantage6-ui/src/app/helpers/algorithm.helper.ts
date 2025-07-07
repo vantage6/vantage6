@@ -9,3 +9,11 @@ export const isListTypeArgument = (type: string) => {
     type === ArgumentType.OrganizationList
   );
 };
+
+export const isArgumentWithAllowedValues = (type: string) => {
+  return (
+    type === ArgumentType.String ||
+    type === ArgumentType.Integer ||
+    type === ArgumentType.Float
+  );
+};

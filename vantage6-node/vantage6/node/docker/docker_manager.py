@@ -175,6 +175,15 @@ class DockerManager(DockerBaseManager):
         if "algorithm_device_requests" in config:
             self._set_algorithm_device_requests(config["algorithm_device_requests"])
 
+        # whether to share or not algorithm logs with the server
+        # TODO: config loading could be centralized in a class, then validate,
+        # set defaults, warn about dangers, etc
+        self.share_algorithm_logs = config.get("share_algorithm_logs", True)
+        if self.share_algorithm_logs:
+            self.log.warning(
+                "Algorithm logs and errors will be shared with the server."
+            )
+
     def _set_database(self, databases: dict | list) -> None:
         """
         Set database location and whether or not it is a file
@@ -651,6 +660,7 @@ class DockerManager(DockerBaseManager):
             ),
             socketIO=socketIO,
             collaboration_id=self.client.collaboration_id,
+            share_algorithm_logs=self.share_algorithm_logs,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
