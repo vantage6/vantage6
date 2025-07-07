@@ -299,7 +299,6 @@ class Vantage6App:
                     current_role.save()
 
     def _add_keycloak_id_to_super_user(self, super_user: BaseModelBase) -> None:
-        print("Adding keycloak id to super user", super_user.username)
         super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
         super_user.save()
 
