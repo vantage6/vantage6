@@ -31,7 +31,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Dictionary with services required for the resource endpoints
     """
     path = "/".join([api_base, module_name])
-    log.info(f'Setting up "{path}" and subdirectories')
+    log.info('Setting up "%s" and subdirectories', path)
     api.add_resource(
         ResetAPIKey,
         path + "/node",
@@ -122,13 +122,10 @@ class ResetAPIKey(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
-        log.info(f"Successful API key reset for node {id_}")
+        log.info("Successful API key reset for node %s", id_)
         api_key = generate_apikey()
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         keycloak_admin.set_user_password(
             user_id=node.keycloak_id, password=api_key, temporary=False
         )
-        node.api_key = api_key
-        node.save()
-
         return {"api_key": api_key}, HTTPStatus.OK
