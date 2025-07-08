@@ -420,9 +420,9 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
         # if there are allowed values, validate that they are of the correct type
         if data.get("allowed_values"):
-            if type_ == ArgumentType.INTEGER.value:
+            if type_ == AlgorithmArgumentType.INTEGER.value:
                 desired_type = int
-            elif type_ == ArgumentType.FLOAT.value:
+            elif type_ == AlgorithmArgumentType.FLOAT.value:
                 desired_type = float
             else:
                 desired_type = str
