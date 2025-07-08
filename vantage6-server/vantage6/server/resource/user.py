@@ -400,18 +400,13 @@ class Users(UserBase):
                   email:
                     type: string
                     description: Email address
-                  create_in_keycloak:
-                    type: boolean
-                    description: Whether the user should be created in Keycloak.
-                      If true, the user will be created in Keycloak. If false,
-                      the user will not be created in Keycloak. Default is true.
 
         responses:
           201:
             description: Ok
           400:
-            description: Username or email already exists or in case of setting
-              create_in_keycloak to false, the user is missing in Keycloak
+            description: Username or email already exists or password is missing when
+              the user has to be created in Keycloak
           401:
             description: Unauthorized
           404:
@@ -438,6 +433,13 @@ class Users(UserBase):
 
         if db.User.exists("email", data["email"]):
             return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
+
+        if self.config.get("keycloak", {}).get(
+            "manage_users_and_nodes", True
+        ) and not data.get("password"):
+            raise ValidationError(
+                "Password is required if the user has to be created in Keycloak"
+            )
 
         # check if the organization has been provided, if this is the case the
         # user needs global permissions in case it is not their own
@@ -490,7 +492,7 @@ class Users(UserBase):
 
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
-        if data.get("create_in_keycloak"):
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             keycloak_id = self._create_user_in_keycloak(data)
         else:
             keycloak_id = self._verify_user_in_keycloak(data)
@@ -864,12 +866,6 @@ class User(UserBase):
               type: boolean
             description: If set to true, the user will be deleted along with
               all tasks they created (default=False)
-          - in: query
-            name: delete_from_keycloak
-            schema:
-              type: boolean
-            description: If set to true, the user will be deleted from Keycloak
-              (default=True)
 
         responses:
           200:
@@ -922,7 +918,7 @@ class User(UserBase):
                 for task in user.created_tasks:
                     task.delete()
 
-        if params.get("delete_from_keycloak", True):
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             self._delete_user_in_keycloak(user)
         else:
             log.info("User id=%s will not be deleted from Keycloak", id)

@@ -22,7 +22,7 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { ServerConfigService } from 'src/app/services/server-config.service';
 
 @Component({
   selector: 'app-user-form',
@@ -38,7 +38,6 @@ import { MatCheckbox } from '@angular/material/checkbox';
     MatSelect,
     NgFor,
     MatOption,
-    MatCheckbox,
     MatHint,
     PermissionsMatrixServerComponent,
     AlertComponent,
@@ -50,12 +49,12 @@ import { MatCheckbox } from '@angular/material/checkbox';
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
   organizations: (BaseOrganization | Organization)[] = [];
+  manageUsersAndNodes: boolean = true;
 
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
       email: ['', [Validators.required]],
-      create_in_keycloak: [true],
       password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
       firstname: '',
@@ -87,7 +86,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     private organizationService: OrganizationService,
     private ruleService: RuleService,
     private roleService: RoleService,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private serverConfigService: ServerConfigService
   ) {
     super();
   }
@@ -97,13 +97,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
 
     this.isEdit = !!this.user;
     this.setPermissions();
-
-    // initialize validators for password and passwordRepeat and update them when
-    // create_in_keycloak changes
-    this.togglePasswordValidators(this.form.controls.create_in_keycloak.value);
-    this.form.controls.create_in_keycloak.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((createInKeycloak) => {
-      this.togglePasswordValidators(createInKeycloak);
-    });
 
     await this.initData();
     if (this.isEdit && this.user) {
@@ -162,6 +155,10 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
       // we only need to collect organizations when creating a new user
       this.organizations = await this.organizationService.getAllowedOrganizations(ResourceType.USER, OperationType.CREATE);
     }
+
+    this.manageUsersAndNodes = await this.serverConfigService.doesKeycloakManageUsersAndNodes();
+    this.togglePasswordValidators(this.manageUsersAndNodes);
+
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();
 

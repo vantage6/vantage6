@@ -155,7 +155,7 @@ images:
   server: harbor2.vantage6.ai/infrastructure/server:cotopaxi
   ui: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
 
-# options for starting the User Interface when starting the server
+# options to start the User Interface when starting the server with `v6 server start`
 ui:
   # set this to true to start the UI when starting the server with
   # `v6 server start`
@@ -163,6 +163,12 @@ ui:
 
   # port at which the UI will be available on your local machine
   port: 3456
+
+# keycloak settings
+keycloak:
+  # whether users and nodes should be created in keycloak when the are created in the
+  # server, and also deleted. Default is true.
+  manage_users_and_nodes: true
 
 # set up with which origins the server should allow CORS requests. The default
 # is to allow all origins. If you want to restrict this, you can specify a list

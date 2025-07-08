@@ -11,6 +11,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { UserFormComponent } from '../../../../components/forms/user-form/user-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
+import { ServerConfigService } from 'src/app/services/server-config.service';
 
 @Component({
   selector: 'app-user-create',
@@ -20,7 +21,8 @@ import { TranslateModule } from '@ngx-translate/core';
 export class UserCreateComponent extends BaseCreateComponent {
   constructor(
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private serverConfigService: ServerConfigService
   ) {
     super();
   }
@@ -30,7 +32,7 @@ export class UserCreateComponent extends BaseCreateComponent {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userCreate: UserCreate = (({ passwordRepeat, ...data }) => data)(userForm as UserForm);
     // don't send password if user doesn't have to be created in keycloak
-    if (!userCreate.create_in_keycloak) {
+    if (!(await this.serverConfigService.doesKeycloakManageUsersAndNodes())) {
       delete userCreate.password;
     }
     const user = await this.userService.createUser(userCreate);

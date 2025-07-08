@@ -104,13 +104,16 @@ export class NodeService {
     await Promise.all(promises);
     const entityNameInFile = fromCollabFirstPerspective ? collaborations[0].name : organizations[0].name;
     this.downloadApiKeys(apiKeys, entityNameInFile);
-    this.alertApiKeyDownload();
   }
 
   private downloadApiKeys(api_keys: ApiKeyExport[], collaboration_name: string): void {
+    if (api_keys.length === 0) {
+      return;
+    }
     const filename = `API_keys_${collaboration_name}.txt`;
     const text = api_keys.map((api_key) => `${api_key.entityName}: ${api_key.api_key}`).join('\n');
     this.fileService.downloadTxtFile(text, filename);
+    this.alertApiKeyDownload();
   }
 
   alertApiKeyDownload(): void {

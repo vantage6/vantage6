@@ -377,18 +377,6 @@ class UserInputSchema(Schema):
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
-    create_in_keycloak = fields.Boolean(load_default=1)
-
-    @validates_schema
-    def validate_schema(self, data: dict, **kwargs) -> None:
-        """
-        Validate the input, which should contain a password if the user has to be
-        created in Keycloak.
-        """
-        if data.get("create_in_keycloak") and not data.get("password"):
-            raise ValidationError(
-                "Password is required if the user has to be created in Keycloak"
-            )
 
     @validates("username")
     def validate_username(self, username: str):
@@ -428,7 +416,6 @@ class UserInputSchema(Schema):
 class UserDeleteInputSchema(Schema):
     """Schema for validating input for deleting a user."""
 
-    delete_from_keycloak = fields.Boolean()
     delete_dependents = fields.Boolean()
 
 
