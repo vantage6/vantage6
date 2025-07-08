@@ -158,7 +158,6 @@ class TestResourceBase(unittest.TestCase):
         user = User(
             username=username,
             organization=organization,
-            email=f"{username}@test.org",
             rules=rules,
             keycloak_id=str(uuid1()),
         )

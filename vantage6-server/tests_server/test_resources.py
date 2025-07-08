@@ -231,7 +231,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(result.status_code, 200)
         user = result.json
 
-        expected_fields = ["username", "firstname", "lastname", "roles"]
+        expected_fields = ["username", "roles"]
         for field in expected_fields:
             self.assertIn(field, user)
 
@@ -247,9 +247,6 @@ class TestResources(TestResourceBase):
         headers = self.login_as_root()
         new_user = {
             "username": "unittest",
-            "firstname": "unit",
-            "lastname": "test",
-            "email": "unit@test.org",
             "password": "Super-secret1!",
         }
         result = self.app.post("/api/user", headers=headers, json=new_user)
@@ -278,7 +275,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}",
             headers=headers,
-            json={"firstname": "Henk", "lastname": "Martin"},
+            json={"rules": [1]},
         )
         self.assertEqual(result.status_code, 200)
 
@@ -293,9 +290,7 @@ class TestResources(TestResourceBase):
         headers = self.login_as_root()
         new_user = {
             "username": "some",
-            "firstname": "guy",
-            "lastname": "there",
-            "roles": "root",
+            "roles": "this-is-not-a-list-of-ints",
             "password": "super-secret",
         }
         result = self.app.post("/api/user", headers=headers, json=new_user)
@@ -798,15 +793,12 @@ class TestResources(TestResourceBase):
         user.delete()
         user_org_4.delete()
 
-    def test_bounce_existing_username_and_email(self):
+    def test_bounce_existing_username(self):
         headers = self.get_user_auth_header()
-        User(username="something", email="mail@me.org").save()
+        User(username="something").save()
         userdata = {
             "username": "not-important",
-            "firstname": "name",
-            "lastname": "lastname",
             "password": "welkom01",
-            "email": "mail@me.org",
         }
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
@@ -821,10 +813,7 @@ class TestResources(TestResourceBase):
 
         userdata = {
             "username": "smarty",
-            "firstname": "Smart",
-            "lastname": "Pants",
             "password": "Welkom01!",
-            "email": "mail-us@me.org",
         }
 
         # Creating users for other organizations can only be by global scope
@@ -849,7 +838,6 @@ class TestResources(TestResourceBase):
         # you need to own all rules in order to assign them
         headers = self.get_user_auth_header(org, rules=[rule])
         userdata["username"] = "smarty2"
-        userdata["email"] = "mail2@me.org"
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
@@ -863,7 +851,6 @@ class TestResources(TestResourceBase):
         )
         headers = self.get_user_auth_header(organization=org, rules=[rule])
         userdata["username"] = "smarty4"
-        userdata["email"] = "mail4@me.org"
         userdata["organization_id"] = org2.id
         userdata["rules"] = [rule.id]
         result = self.app.post("/api/user", headers=headers, json=userdata)
@@ -873,7 +860,6 @@ class TestResources(TestResourceBase):
         org3 = Organization()
         org3.save()
         userdata["username"] = "smarty5"
-        userdata["email"] = "mail5@me.org"
         userdata["organization_id"] = org3.id
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -884,7 +870,6 @@ class TestResources(TestResourceBase):
         role = Role(rules=[rule], organization=org)
         role.save()
         userdata["username"] = "smarty3"
-        userdata["email"] = "mail3@me.org"
         userdata["roles"] = [role.id]
         del userdata["organization_id"]
         del userdata["rules"]
@@ -907,11 +892,8 @@ class TestResources(TestResourceBase):
         org = Organization()
         org.save()
         user = User(
-            firstname="Firstname",
-            lastname="Lastname",
             username="Username-unique-1",
             keycloak_id=str(uuid.uuid1()),
-            email="a@b.c2",
             organization=org,
         )
         user.save()
@@ -926,7 +908,7 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}",
             headers=headers,
-            json={"firstname": "this-aint-gonna-fly"},
+            json={"rules": [1]},
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertEqual("Username-unique-1", user.username)
@@ -937,33 +919,10 @@ class TestResources(TestResourceBase):
         result = self.app.patch(
             f"/api/user/{user.id}",
             headers=headers,
-            json={"firstname": "this-aint-gonna-fly"},
+            json={"rules": [rule.id]},
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertEqual("Username-unique-1", user.username)
-
-        # patch as another user from the same organization
-        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
-        self.get_user_auth_header(user.organization, [rule])
-        result = self.app.patch(
-            f"/api/user/{user.id}",
-            headers=headers,
-            json={"firstname": "this-aint-gonna-fly"},
-        )
-        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
-        self.assertEqual("Username-unique-1", user.username)
-
-        # edit 'simple' fields
-        rule = Rule.get_by_("user", Scope.OWN, Operation.EDIT)
-        user.rules.append(rule)
-        user.save()
-        headers = self.login(user)
-        result = self.app.patch(
-            f"/api/user/{user.id}", headers=headers, json={"firstname": "yeah"}
-        )
-        db_session.session.refresh(user)
-        self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual("yeah", user.firstname)
 
         # edit other user within your organization
         rule = Rule.get_by_("user", Scope.ORGANIZATION, Operation.EDIT)
@@ -971,11 +930,11 @@ class TestResources(TestResourceBase):
             organization=user.organization, rules=[rule]
         )
         result = self.app.patch(
-            f"/api/user/{user.id}", headers=headers, json={"firstname": "whatever"}
+            f"/api/user/{user.id}", headers=headers, json={"rules": [rule.id]}
         )
         db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual("whatever", user.firstname)
+        self.assertEqual(user.rules, [rule])
 
         # check that password cannot be edited
         rule = Rule.get_by_("user", Scope.GLOBAL, Operation.EDIT)
@@ -985,19 +944,17 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
 
-        # edit user from different organization, and test other edit fields
+        # edit user from different organization
         result = self.app.patch(
             f"/api/user/{user.id}",
             headers=headers,
             json={
-                "firstname": "again",
-                "lastname": "and again",
+                "rules": [rule.id],
             },
         )
         db_session.session.refresh(user)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual("again", user.firstname)
-        self.assertEqual("and again", user.lastname)
+        self.assertEqual(user.rules, [rule])
 
         # test editing user inside the collaboration
         org2 = Organization()
@@ -1007,13 +964,14 @@ class TestResources(TestResourceBase):
         rule2 = Rule.get_by_(
             "user", scope=Scope.COLLABORATION, operation=Operation.EDIT
         )
+        user.rules = [rule2]
+        user.save()
         headers = self.get_user_auth_header(organization=org2, rules=[rule2])
         result = self.app.patch(
             f"/api/user/{user.id}",
             headers=headers,
             json={
-                "firstname": "something",
-                "lastname": "everything",
+                "rules": [rule2.id],
             },
         )
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -1026,7 +984,7 @@ class TestResources(TestResourceBase):
             f"/api/user/{user.id}",
             headers=headers,
             json={
-                "firstname": "will-not-work",
+                "rules": [rule2.id],
             },
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
@@ -1160,10 +1118,7 @@ class TestResources(TestResourceBase):
         mock_delete_user_in_keycloak.return_value = None
         org = Organization()
         user = User(
-            firstname="Firstname",
-            lastname="Lastname",
             username="Username",
-            email="a@b.c",
             organization=org,
             keycloak_id=str(uuid.uuid4()),
         )
@@ -1204,10 +1159,7 @@ class TestResources(TestResourceBase):
 
         # delete colleague
         user = User(
-            firstname="Firstname",
-            lastname="Lastname",
             username="Username",
-            email="a@b.c",
             organization=Organization(),
         )
         user.save()
@@ -1221,10 +1173,7 @@ class TestResources(TestResourceBase):
 
         # delete as root
         user = User(
-            firstname="Firstname",
-            lastname="Lastname",
             username="Username",
-            email="a@b.c",
             organization=Organization(),
         )
         user.save()
@@ -1236,10 +1185,7 @@ class TestResources(TestResourceBase):
 
         # check delete outside the collaboration fails
         user = User(
-            firstname="Firstname",
-            lastname="Lastname",
             username="Username",
-            email="a@b.c",
             organization=org,
         )
         user.save()

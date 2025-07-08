@@ -759,11 +759,8 @@
   },
   "user": {
     "username": "Username",
-    "email": "Email",
     "password": "Password",
     "password-repeat": "Repeat password",
-    "first-name": "First name",
-    "last-name": "Last name",
     "organization": "Organization",
     "roles": "Roles",
     "permissions": "Permissions",
@@ -839,8 +836,9 @@
   "header": {
     "actions": {
       "logout": "Logout",
-      "change_password": "Change password",
-      "my-user": "View my user"
+      "change-password": "Change password",
+      "view-account": "View my permissions",
+      "manage-account": "Manage account"
     }
   },
   "login": {

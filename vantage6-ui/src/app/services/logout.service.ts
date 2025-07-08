@@ -4,6 +4,7 @@ import { SocketioConnectService } from './socketio-connect.service';
 import { PermissionService } from './permission.service';
 import { EncryptionService } from './encryption.service';
 import { StorePermissionService } from './store-permission.service';
+import { KeycloakUserService } from './keycloak-user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,8 @@ export class LoginLogoutService {
     private socketConnectService: SocketioConnectService,
     private permissionService: PermissionService,
     private storePermissionService: StorePermissionService,
-    private encryptionService: EncryptionService
+    private encryptionService: EncryptionService,
+    private keycloakUserService: KeycloakUserService
   ) {
     this.authService.authenticatedObservable().subscribe((loggedIn: boolean) => {
       if (loggedIn) {
@@ -34,5 +36,6 @@ export class LoginLogoutService {
     await this.encryptionService.clear();
     await this.socketConnectService.disconnect();
     this.authService.logout();
+    this.keycloakUserService.clearProfile();
   }
 }

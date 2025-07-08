@@ -15,7 +15,6 @@ export class ServerConfigService {
 
   async init() {
     this.keycloakConfig = await this.getKeycloakConfig();
-    console.log('keycloakConfig', this.keycloakConfig);
     this.isInitialized = true;
   }
 

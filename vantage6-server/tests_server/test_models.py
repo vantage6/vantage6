@@ -38,24 +38,16 @@ class TestUserModel(TestModelBase):
     def test_read(self):
         user = User(
             username="test_user",
-            firstname="Test",
-            lastname="User",
-            email="test@user.com",
         )
         user.save()
         db_user = User.get_by_username(user.username)
         self.assertEqual(db_user.username, user.username)
-        self.assertEqual(db_user.firstname, user.firstname)
-        self.assertEqual(db_user.lastname, user.lastname)
 
     def test_insert(self):
         db_organization = Organization.get(1)
         user = User(
             username="unit",
-            firstname="un",
-            lastname="it",
             organization=db_organization,
-            email="unit@org.org",
         )
         user.save()
         db_user = User.get_by_username("unit")
@@ -72,10 +64,10 @@ class TestUserModel(TestModelBase):
     def test_duplicate_user(self):
         """Duplicate usernames are not permitted."""
         # print(User.get())
-        user1 = User(username="duplicate-user", email="unique@org.org")
+        user1 = User(username="duplicate-user")
         user1.save()
 
-        user2 = User(username="duplicate-user", email="something-else@org.org")
+        user2 = User(username="duplicate-user")
         self.assertRaises(IntegrityError, user2.save)
 
         session.session.remove()

@@ -371,9 +371,6 @@ class UserInputSchema(Schema):
 
     username = fields.String(required=True, validate=Length(min=3, max=MAX_LEN_NAME))
     password = fields.String()
-    email = fields.Email(required=True)
-    firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
-    lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
@@ -411,6 +408,13 @@ class UserInputSchema(Schema):
             If the password is not strong enough.
         """
         _validate_password(password)
+
+
+class UserEditInputSchema(UserInputSchema):
+    """Schema for validating input for editing a user."""
+
+    class Meta:
+        fields = ("roles", "rules")
 
 
 class UserDeleteInputSchema(Schema):

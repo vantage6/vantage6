@@ -55,7 +55,6 @@ def get_default_roles(db) -> list[dict]:
     }
     # 2. Role for viewing organization resources
     VIEWER_RULES = [
-        db.Rule.get_by_("user", Scope.OWN, Operation.EDIT),
         db.Rule.get_by_("user", Scope.OWN, Operation.DELETE),
         db.Rule.get_by_("user", Scope.ORGANIZATION, Operation.VIEW),
         db.Rule.get_by_("organization", Scope.ORGANIZATION, Operation.VIEW),

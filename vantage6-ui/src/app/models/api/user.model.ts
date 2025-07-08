@@ -18,18 +18,13 @@ export interface GetUserParameters {
   username?: string;
   organization_id?: string;
   collaboration_id?: string;
-  firstname?: string;
-  lastname?: string;
-  email?: string;
   sort?: UserSortProperties;
 }
 
 export interface BaseUser {
   id: number;
   username: string;
-  email: string;
-  firstname: string;
-  lastname: string;
+  keycloak_id: string;
   organization: BaseLink;
   roles: string;
   permissions?: UserPermissions;
@@ -38,9 +33,10 @@ export interface BaseUser {
 export interface User {
   id: number;
   username: string;
-  email: string;
-  firstname: string;
-  lastname: string;
+  keycloak_id: string;
+  email?: string;
+  firstname?: string;
+  lastname?: string;
   organization?: Organization;
   roles: Role[];
   rules: Rule[];
@@ -48,11 +44,8 @@ export interface User {
 
 export interface UserForm {
   username: string;
-  email: string;
   password?: string;
   passwordRepeat?: string;
-  firstname: string;
-  lastname: string;
   organization_id: number;
   roles?: number[];
   rules?: number[];
@@ -64,6 +57,6 @@ export interface UserPermissions {
   rules: number[];
 }
 
-export type UserCreate = Pick<UserForm, 'username' | 'email' | 'password' | 'firstname' | 'lastname' | 'organization_id' | 'roles'>;
+export type UserCreate = Pick<UserForm, 'username' | 'password' | 'organization_id' | 'roles'>;
 
-export type UserEdit = Pick<UserForm, 'username' | 'email' | 'firstname' | 'lastname' | 'roles'>;
+export type UserEdit = Pick<UserForm, 'username' | 'roles'>;

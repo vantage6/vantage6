@@ -7,13 +7,17 @@
       {{ username }}
     </button>
     <mat-menu #headerMenu="matMenu">
-      <button mat-menu-item [routerLink]="routes.passwordChange">
+      <button mat-menu-item (click)="changePassword()">
         <mat-icon>key</mat-icon>
-        <span>{{ "header.actions.change_password" | translate }}</span>
+        <span>{{ "header.actions.change-password" | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="goToKeycloakAccount()">
+        <mat-icon>person</mat-icon>
+        <span>{{ "header.actions.manage-account" | translate }}</span>
       </button>
       <button mat-menu-item [routerLink]="[routes.user, userId]">
-        <mat-icon>person</mat-icon>
-        <span>{{ "header.actions.my-user" | translate }}</span>
+        <mat-icon>verified_user</mat-icon>
+        <span>{{ "header.actions.view-account" | translate }}</span>
       </button>
       <button mat-menu-item (click)="handleLogout()">
         <mat-icon>logout</mat-icon>

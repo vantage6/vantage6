@@ -11,6 +11,7 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
+    UnauthorizedError,
     handle_exceptions,
 )
 from vantage6.server import db
@@ -29,6 +30,7 @@ from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.input_schema import (
     UserDeleteInputSchema,
     UserInputSchema,
+    UserEditInputSchema,
 )
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
@@ -106,7 +108,6 @@ def permissions(permissions: PermissionManager) -> None:
     add(S.GLOBAL, P.EDIT, description="Edit any user")
     add(S.COLLABORATION, P.EDIT, description="Edit any user in your collaborations")
     add(S.ORGANIZATION, P.EDIT, description="Edit users from your organization")
-    add(S.OWN, P.EDIT, description="Edit your own info")
     add(S.GLOBAL, P.DELETE, description="Delete any user")
     add(S.COLLABORATION, P.DELETE, description="Delete any user in your collaborations")
     add(S.ORGANIZATION, P.DELETE, description="Delete users from your organization")
@@ -118,6 +119,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 user_schema = UserSchema()
 user_input_schema = UserInputSchema()
+user_edit_input_schema = UserEditInputSchema()
 user_schema_with_permissions = UserWithPermissionDetailsSchema()
 user_delete_input_schema = UserDeleteInputSchema()
 
@@ -167,33 +169,6 @@ class Users(UserBase):
             schema:
               type: integer
             description: Collaboration id
-          - in: query
-            name: firstname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: lastname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: email
-            schema:
-              type: string
-            description: >-
-              Email to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
           - in: query
             name: role_id
             schema:
@@ -249,9 +224,8 @@ class Users(UserBase):
         q = select(db.User)
 
         # filter by any field of this endpoint
-        for param in ["username", "firstname", "lastname", "email"]:
-            if param in args:
-                q = q.filter(getattr(db.User, param).like(args[param]))
+        if "username" in args:
+            q = q.filter(db.User.username.like(args["username"]))
         if "organization_id" in args:
             if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
@@ -375,12 +349,6 @@ class Users(UserBase):
                   username:
                     type: string
                     description: Unique username
-                  firstname:
-                    type: string
-                    description: First name
-                  lastname:
-                    type: string
-                    description: Last name
                   password:
                     type: string
                     description: Password
@@ -397,15 +365,12 @@ class Users(UserBase):
                     items:
                       type: integer
                     description: Extra rules for the user on top of the roles
-                  email:
-                    type: string
-                    description: Email address
 
         responses:
           201:
             description: Ok
           400:
-            description: Username or email already exists or password is missing when
+            description: Username already exists or password is missing when
               the user has to be created in Keycloak
           401:
             description: Unauthorized
@@ -430,9 +395,6 @@ class Users(UserBase):
         # check unique constraints
         if db.User.username_exists(data["username"]):
             return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
-
-        if db.User.exists("email", data["email"]):
-            return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
 
         if self.config.get("keycloak", {}).get(
             "manage_users_and_nodes", True
@@ -499,13 +461,10 @@ class Users(UserBase):
 
         user = db.User(
             username=data["username"],
-            firstname=data["firstname"],
-            lastname=data["lastname"],
             keycloak_id=keycloak_id,
             roles=roles,
             rules=rules,
             organization_id=organization_id,
-            email=data["email"],
         )
         user.save()
 
@@ -516,10 +475,7 @@ class Users(UserBase):
         return keycloak_admin.create_user(
             {
                 "username": data["username"],
-                "email": data["email"],
                 "enabled": True,
-                "firstName": data["firstname"],
-                "lastName": data["lastname"],
                 "credentials": [
                     {
                         "type": "password",
@@ -658,18 +614,6 @@ class User(UserBase):
             application/json:
               schema:
                 properties:
-                  username:
-                    type: string
-                    description: Unique username
-                  firstname:
-                    type: string
-                    description: First name
-                  lastname:
-                    type: string
-                    description: Last name
-                  email:
-                    type: string
-                    description: Email address
                   roles:
                     type: array
                     items:
@@ -692,9 +636,8 @@ class User(UserBase):
         responses:
           200:
             description: Ok
-          400:
-            description: User cannot be updated to contents of request body,
-              e.g. due to duplicate email address.
+          500:
+            description: Error updating user in database
           404:
             description: User not found
           401:
@@ -711,51 +654,25 @@ class User(UserBase):
 
         data = request.get_json(silent=True)
         # validate request body
+        if data.get("password"):
+            return {
+                "msg": "You cannot change your password here!"
+            }, HTTPStatus.BAD_REQUEST
         try:
-            data = user_input_schema.load(data, partial=True)
+            data = user_edit_input_schema.load(data, partial=True)
         except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        if data.get("password"):
-            return {
-                "msg": "You cannot change your password here!"
-            }, HTTPStatus.BAD_REQUEST
-
         # check permissions
-        if not (self.r.e_own.can() and user == g.user) and not self.r.allowed_for_org(
-            P.EDIT, user.organization_id
-        ):
+        if not self.r.allowed_for_org(P.EDIT, user.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        # update user and check for unique constraints
-        if data.get("username") is not None:
-            if user.username != data["username"]:
-                if db.User.exists("username", data["username"]):
-                    return {
-                        "msg": "User with that username already exists"
-                    }, HTTPStatus.BAD_REQUEST
-                elif user.id != g.user.id:
-                    return {
-                        "msg": "You cannot change the username of another user"
-                    }, HTTPStatus.BAD_REQUEST
-            user.username = data["username"]
-        if data.get("firstname") is not None:
-            user.firstname = data["firstname"]
-        if data.get("lastname") is not None:
-            user.lastname = data["lastname"]
-        if data.get("email") is not None:
-            if user.email != data["email"] and db.User.exists("email", data["email"]):
-                return {
-                    "msg": "User with that email already exists."
-                }, HTTPStatus.BAD_REQUEST
-            user.email = data["email"]
-
-        # request parser is awefull with lists
+        # request parser is awful with lists
         if "roles" in data:
             # validate that these roles exist
             roles = []
@@ -817,7 +734,12 @@ class User(UserBase):
             # validate that user is not deleting rules they do not have
             # themselves
             deleted_rules = [r for r in user.rules if r not in rules]
-            self.permissions.check_user_rules(deleted_rules)
+            try:
+                self.permissions.check_user_rules(deleted_rules)
+            except UnauthorizedError as e:
+                return {
+                    "msg": "You cannot delete rules you do not have! " + str(e)
+                }, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
 
@@ -828,7 +750,7 @@ class User(UserBase):
             user.session.rollback()
             return {
                 "msg": "User could not be updated with those parameters."
-            }, HTTPStatus.BAD_REQUEST
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return user_schema.dump(user), HTTPStatus.OK
 

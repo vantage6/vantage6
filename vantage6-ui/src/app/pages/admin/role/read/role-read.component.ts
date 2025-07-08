@@ -97,10 +97,8 @@ export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDe
     }
     this.userTable = {
       columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'firstname', label: this.translateService.instant('user.first-name') },
-        { id: 'lastname', label: this.translateService.instant('user.last-name') },
-        { id: 'email', label: this.translateService.instant('user.email') }
+        { id: 'id', label: this.translateService.instant('user.id') },
+        { id: 'username', label: this.translateService.instant('user.username') }
       ],
       rows: this.role.users.map((user) => ({
         id: user.id.toString(),

@@ -4,10 +4,6 @@
       <mat-label>{{ "user.username" | translate }}</mat-label>
       <input matInput type="text" formControlName="username" />
     </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.email" | translate }}</mat-label>
-      <input matInput type="text" formControlName="email" />
-    </mat-form-field>
     <div *ngIf="!isEdit && manageUsersAndNodes">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ "user.password" | translate }}</mat-label>
@@ -21,14 +17,6 @@
         <mat-error *ngIf="form.hasError('compare')">{{ "password.validation.compare" | translate }}</mat-error>
       </mat-form-field>
     </div>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.first-name" | translate }}</mat-label>
-      <input matInput type="text" formControlName="firstname" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.last-name" | translate }}</mat-label>
-      <input matInput type="text" formControlName="lastname" />
-    </mat-form-field>
     <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.organization" | translate }}</mat-label>
       <mat-select formControlName="organization_id">
