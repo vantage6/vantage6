@@ -147,6 +147,7 @@ export interface Argument {
   description?: string;
   has_default_value: boolean;
   default_value?: string | number | boolean | null;
+  allowed_values?: string[];
   conditional_on_id?: number;
   conditional_operator?: string;
   conditional_value?: string | number | boolean;
@@ -163,6 +164,7 @@ export interface FunctionDatabase {
 export interface ArgumentForm extends NameDescription {
   display_name?: string;
   type: string;
+  allowed_values?: string[];
   has_default_value: boolean | string;
   is_default_value_null?: boolean | string;
   default_value?: string | number | boolean | null | string[] | number[] | boolean[];

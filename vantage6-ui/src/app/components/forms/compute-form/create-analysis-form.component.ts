@@ -63,6 +63,7 @@ import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
+import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 
 @Component({
   selector: 'app-create-form',
@@ -105,6 +106,7 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
   availableStepsEnum = AvailableStepsEnum;
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
@@ -517,7 +519,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
       !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument)
+      !this.shouldShowParameterJsonInput(argument) &&
+      !this.shouldShowAllowedValuesDropdown(argument)
     );
   }
 
@@ -536,6 +539,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       argument.type === this.argumentType.StringList ||
       (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
+  }
+
+  shouldShowAllowedValuesDropdown(argument: Argument): boolean {
+    return (argument.allowed_values?.length ?? 0) > 0;
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
