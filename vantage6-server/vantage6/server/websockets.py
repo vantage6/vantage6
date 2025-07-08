@@ -10,6 +10,7 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 from vantage6.common.globals import AuthStatus
+from vantage6.backend.common.metrics import Metrics
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.dataframe_to_be_deleted_at_node import (
@@ -17,6 +18,7 @@ from vantage6.server.model.dataframe_to_be_deleted_at_node import (
 )
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
+
 
 ALL_NODES_ROOM = "all_nodes"
 
@@ -31,9 +33,12 @@ class DefaultSocketNamespace(Namespace):
     functions in this class are called to execute the corresponding action.
     """
 
-    socketio = None
-
     log = logging.getLogger(logger_name(__name__))
+
+    def __init__(self, namespace, socketio, metrics: Metrics) -> None:
+        super().__init__(namespace)
+        self.socketio = socketio
+        self.metrics = metrics
 
     def _is_node(self) -> bool:
         if session.type != "node":
@@ -329,12 +334,7 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing the node's configuration.
         """
         # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warning(
-                "Only nodes can send node configuration updates! %s %s is not allowed.",
-                session.type,
-                session.auth_id,
-            )
+        if not self._is_node():
             return
 
         node = db.Node.get_by_keycloak_id(session.auth_id)
@@ -506,6 +506,40 @@ class DefaultSocketNamespace(Namespace):
             run.log += log_message
         else:
             run.log = log_message
+
+    def on_node_metrics_update(self, data: dict) -> None:
+        """
+        Handle metrics sent by nodes and update Prometheus metrics.
+
+        Parameters
+        ----------
+        data: dict
+            Dictionary containing node metrics.
+        """
+        if not self._is_node():
+            return
+
+        node = db.Node.get(session.auth_id)
+
+        os_label = data.pop("os", "unknown")
+        platform_label = data.pop("platform", "unknown")
+        for metric_name, value in data.items():
+            try:
+                self.metrics.set_metric(
+                    metric_name=metric_name,
+                    value=value,
+                    labels={
+                        "node_id": node.id,
+                        "os": os_label,
+                        "platform": platform_label,
+                    },
+                )
+            except ValueError as e:
+                self.log.warning(f"Invalid metric data: {e}")
+            except Exception as e:
+                self.log.error(f"Failed to process metric '{metric_name}': {e}")
+
+        self.log.info(f"Updated metrics for node {node.id}")
 
     @staticmethod
     def __is_identified_client() -> bool:

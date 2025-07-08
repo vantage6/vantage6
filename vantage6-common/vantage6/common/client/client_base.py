@@ -1,4 +1,5 @@
 import abc
+import itertools
 import logging
 import time
 import json as json_lib
@@ -7,9 +8,64 @@ from pathlib import Path
 import requests
 
 from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.enum import TaskStatus
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    INTERVAL_MULTIPLIER,
+    MAX_INTERVAL,
+)
 
 module_name = __name__.split(".")[1]
+
+
+@staticmethod
+def _log_completion(task_id: int, start_time: float, log_animation: bool) -> None:
+    """
+    Log the completion message for a task.
+
+    Parameters
+    ----------
+    task_id : int
+        ID of the completed task.
+    start_time : float
+        The time when the task started.
+    log_animation : bool
+        Whether to log the message as an animation or a regular log.
+    """
+    elapsed_time = int(time.time() - start_time)
+    message = f"Task {task_id} completed in {elapsed_time} seconds."
+
+    if log_animation:
+        print(f"\r{message}                     ")
+    else:
+        logging.info(message)
+
+
+@staticmethod
+def _log_progress(
+    task_id: int, start_time: float, log_animation: bool, animation_frame: str
+) -> None:
+    """
+    Log the progress message for a task.
+
+    Parameters
+    ----------
+    task_id : int
+        ID of the task in progress.
+    start_time : float
+        The time when the task started.
+    log_animation : bool
+        Whether to log the message as an animation or a regular log.
+    animation_frame : str
+        The current frame of the animation.
+    """
+    elapsed_time = int(time.time() - start_time)
+    message = f"{animation_frame} Waiting for task {task_id}... ({elapsed_time}s)"
+
+    if log_animation:
+        print(f"\r{message}", end="")
+    else:
+        logging.info(message)
 
 
 class ClientBase(object):
@@ -448,6 +504,43 @@ class ClientBase(object):
                 )
                 return False
         return True
+
+    def wait_for_task_completion(
+        self,
+        request_func,
+        task_id: int,
+        interval: float = 1,
+        log_animation: bool = True,
+    ) -> None:
+        """
+        Utility function to wait for a task to complete.
+
+        Parameters
+        ----------
+        request_func : Callable
+            Function to make requests to the server.
+        task_id : int
+            ID of the task to wait for.
+        interval : float
+            Initial interval in seconds between status checks.
+        log_animation : bool
+            Whether to log an animation (default: True). If False, logs will be
+            written as separate lines.
+        """
+        start_time = time.time()
+        animation = itertools.cycle(["|", "/", "-", "\\"])
+
+        while True:
+            response = request_func(f"task/{task_id}/status")
+            status = response.get("status")
+
+            if TaskStatus.has_finished(status):
+                _log_completion(task_id, start_time, log_animation)
+                break
+
+            _log_progress(task_id, start_time, log_animation, next(animation))
+            time.sleep(interval)
+            interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
 
     class SubClient:
         """
