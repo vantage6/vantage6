@@ -36,7 +36,6 @@ from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.use.context import cli_use_context
 from vantage6.cli.use.namespace import cli_use_namespace
-from vantage6.cli.use.chart import cli_use_chart
 
 
 # Define the server group
@@ -144,14 +143,13 @@ cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 @click.group(name="use")
 def cli_use() -> None:
     """
-    Manage Kubernetes context and Helm chart.
+    Manage Kubernetes context and namespace.
     """
 
 
 # Define the commands for the use group
 cli_use.add_command(cli_use_context, name="context")
 cli_use.add_command(cli_use_namespace, name="namespace")
-cli_use.add_command(cli_use_chart, name="chart")
 
 
 # Define the overall group

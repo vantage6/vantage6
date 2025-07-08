@@ -24,26 +24,23 @@ from vantage6.common.globals import InstanceType
     default=None,
     help="Kubernetes namespace to use",
 )
-@click.option(
-    "--chart",
-    default=None,
-    help="Path to the Helm chart directory",
-)
 def cli_server_new(
     name: str,
     system_folders: bool,
     namespace: str,
     context: str,
-    chart: str,
 ) -> None:
     """
     Create a new server configuration.
     """
     cli_config = CliConfig()
-    context, namespace, chart = cli_config.compare_changes_config(
-        chart_type="server", context=context, namespace=namespace, chart=chart
+    context, namespace = cli_config.compare_changes_config(
+        context=context,
+        namespace=namespace,
     )
-    server_chart = cli_config.get_default_chart("server")
+
+    # TODO: pull the chart and use it
+    server_chart = get_server_chart()
 
     name = prompt_config_name(name)
 

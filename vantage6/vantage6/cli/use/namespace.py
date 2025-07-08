@@ -1,9 +1,10 @@
 import click
 import questionary
 from kubernetes import client, config
-from vantage6.common import error
+
 from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
+from vantage6.common import error
 
 
 @click.command()
