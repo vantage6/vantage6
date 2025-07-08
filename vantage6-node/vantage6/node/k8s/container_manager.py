@@ -95,6 +95,15 @@ class ContainerManager:
             [f"{k}={v}" for k, v in self.task_job_labels.items()]
         )
 
+        # whether to share or not algorithm logs with the server
+        # TODO: config loading could be centralized in a class, then validate,
+        # set defaults, warn about dangers, etc
+        self.share_algorithm_logs = self.ctx.config.get("share_algorithm_logs", True)
+        if self.share_algorithm_logs:
+            self.log.warning(
+                "Algorithm logs and errors will be shared with the server."
+            )
+
     def ensure_task_namespace(self) -> bool:
         """
         Ensure that the namespace for the task exists and jobs can be created in it.

@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.common.serialization import serialize
+from vantage6.common.enum import TaskStatus
 from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session as db_session
 from vantage6.server.model import (
@@ -775,13 +776,27 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
 
+        # Check that collaboration permission still works if the organization is not
+        # actually in a collaboration.
+        org4 = Organization()
+        org4.save()
+        user_org_4 = User(organization=org4)
+        user_org_4.save()
+        rule = Rule.get_by_("user", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(organization=org4, rules=[rule])
+        result = self.app.get("/api/user", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(len(result.json["data"]), len(org4.users))
+
         # cleanup
         org.delete()
         org2.delete()
         org3.delete()
+        org4.delete()
         org_outside_col.delete()
         col.delete()
         user.delete()
+        user_org_4.delete()
 
     def test_bounce_existing_username_and_email(self):
         headers = self.get_user_auth_header()
@@ -3914,3 +3929,64 @@ class TestResources(TestResourceBase):
         # Cleanup
         node.delete()
         org.delete()
+
+    def test_get_task_status(self):
+        """Test the /api/task/<id>/status endpoint"""
+
+        # Test non-existent task
+        headers = self.create_user_and_login()
+        result = self.app.get("/api/task/9999/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.NOT_FOUND)
+
+        # Create organizations and collaboration
+        org = Organization()
+        org2 = Organization()
+        col = Collaboration(organizations=[org, org2])
+        col.save()
+
+        # Create a task
+        task = Task(collaboration=col, init_org=org)
+        task.save()
+
+        # Add runs to the task with valid statuses
+        run1 = Run(task=task, status=RunStatus.ACTIVE.value)
+        run2 = Run(task=task, status=RunStatus.PENDING.value)
+        run1.save()
+        run2.save()
+
+        # Test without permissions
+        headers = self.create_user_and_login()
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Test with collaboration permissions
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+
+        # Test with global permissions
+        rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
+        headers = self.create_user_and_login(rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+
+        # Test with organization permissions (should fail for other organizations)
+        rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
+        headers = self.create_user_and_login(org2, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # Test with organization permissions (should succeed for the same organization)
+        headers = self.create_user_and_login(org, rules=[rule])
+        result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
+        self.assertEqual(result.status_code, HTTPStatus.OK)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+
+        # Cleanup
+        task.delete()
+        org.delete()
+        org2.delete()
+        col.delete()

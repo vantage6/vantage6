@@ -120,7 +120,7 @@ class ResetAPIKey(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
-        log.info(f"Successful API key reset for node {id}")
+        log.info("Successful API key reset for node %s", id_)
         api_key = generate_apikey()
         node.api_key = api_key
         node.save()

@@ -29,7 +29,7 @@ from flask_cors import CORS
 from flask_marshmallow import Marshmallow
 from flask_restful import Api
 from flask_principal import Principal
-from flasgger import Swagger
+
 from pathlib import Path
 from keycloak import KeycloakOpenID
 
@@ -108,9 +108,6 @@ class AlgorithmStoreApp(Vantage6App):
             resources={r"/*": {"origins": cors_allowed_origins}},
         )
 
-        # SWAGGER documentation
-        self.swagger = Swagger(self.app, template={})
-
         # setup Flask mail client
         self.mail = MailService(self.app)
 
@@ -155,14 +152,6 @@ class AlgorithmStoreApp(Vantage6App):
 
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
-
-        # Open Api Specification (f.k.a. swagger)
-        self.app.config["SWAGGER"] = {
-            "title": f"{APPNAME} algorithm store",
-            "uiversion": "3",
-            "openapi": "3.0.0",
-            "version": __version__,
-        }
 
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})
