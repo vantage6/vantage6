@@ -14,6 +14,15 @@ keycloak:
       realm:
         realm: vantage6
         enabled: true
+        requiredActions:
+        - alias: CONFIGURE_TOTP
+          name: Configure OTP
+          providerId: CONFIGURE_TOTP
+          enabled: true
+          # by setting defaultAction to true, the user will be prompted to configure
+          # OTP on first login
+          defaultAction: true
+          priority: 10
         users:
           - username: admin
             enabled: true
