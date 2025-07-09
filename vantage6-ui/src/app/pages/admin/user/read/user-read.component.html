@@ -28,15 +28,15 @@
           <b>{{ "user.username" | translate }}</b>
           <span>{{ user.username || "-" }}</span>
         </div>
-        <div class="data-list__item data-list__item--big">
+        <div class="data-list__item data-list__item--big" *ngIf="user.email">
           <b>{{ "user.email" | translate }}</b>
           <span>{{ user.email || "-" }}</span>
         </div>
-        <div class="data-list__item">
+        <div class="data-list__item" *ngIf="user.firstname">
           <b>{{ "user.first-name" | translate }}</b>
           <span>{{ user.firstname || "-" }}</span>
         </div>
-        <div class="data-list__item">
+        <div class="data-list__item" *ngIf="user.lastname">
           <b>{{ "user.last-name" | translate }}</b>
           <span>{{ user.lastname || "-" }}</span>
         </div>

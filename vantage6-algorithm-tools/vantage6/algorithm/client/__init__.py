@@ -2,7 +2,6 @@
 
 import jwt
 import json as json_lib
-import time
 
 from typing import Any
 
@@ -10,7 +9,6 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.serialization import serialize
-from vantage6.algorithm.tools.util import info
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -43,7 +41,10 @@ class AlgorithmClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        jwt_payload = jwt.decode(token, options={"verify_signature": False})
+        jwt_payload = jwt.decode(
+            token,
+            options={"verify_signature": False},
+        )
 
         container_identity = jwt_payload["sub"]
 
@@ -89,32 +90,22 @@ class AlgorithmClient(ClientBase):
         """
         return super().request(*args, **kwargs, retry=False)
 
-    def authenticate(self, credentials: dict = None, path: str = None) -> None:
+    def authenticate(self) -> None:
         """
         Overwrite base authenticate function to prevent algorithm containers
         from trying to authenticate, which they would be unable to do (they are
         already provided with a token on container startup).
 
-        Function parameters have only been included to make the interface
-        identical to the parent class. They are not used.
-
-        Parameters
-        ----------
-        credentials: dict
-            Credentials to authenticate with.
-        path: str
-            Path to the credentials file.
-
         Raises
         ------
         NotImplementedError
-            Always.
+            This function is not implemented for algorithm containers.
         """
         return NotImplementedError("Algorithm containers cannot authenticate!")
 
-    def refresh_token(self) -> None:
+    def obtain_new_token(self) -> None:
         """
-        Overwrite base refresh_token function to prevent algorithm containers
+        Overwrite base obtain_new_token function to prevent algorithm containers
         from trying to refresh their token, which they would be unable to do.
 
         Raises
@@ -122,7 +113,9 @@ class AlgorithmClient(ClientBase):
         NotImplementedError
             Always.
         """
-        return NotImplementedError("Algorithm containers cannot refresh their token!")
+        return NotImplementedError(
+            "Algorithm containers should use their original token!"
+        )
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
@@ -141,13 +134,7 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        status = self.task.get(task_id).get("status")
-        while not RunStatus.has_finished(status):
-            info(f"Waiting for results of task {task_id}...")
-            time.sleep(interval)
-            status = self.task.get(task_id).get("status")
-        info("Done!")
-
+        self.wait_for_task_completion(self.request, task_id, interval, False)
         return self.result.from_task(task_id)
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:

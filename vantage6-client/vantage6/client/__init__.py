@@ -1,24 +1,29 @@
 """Python client for user to communicate with the vantage6 server"""
 
 from __future__ import annotations
-
+import sys
+import itertools
+import threading
+import os
+import subprocess
+import webbrowser
+import urllib.parse as urlparse
 import logging
 import time
 from typing import List
-import jwt
-import pyfiglet
-import itertools
-import sys
-import traceback
 
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import pyfiglet
+from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
 from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
-from vantage6.common.client.utils import print_qr_code
 from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.client.utils import LogLevel
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import LogLevel
@@ -38,13 +43,24 @@ module_name = __name__.split(".")[1]
 class UserClient(ClientBase):
     """User interface to the vantage6-server"""
 
-    def __init__(self, *args, log_level="info", **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        auth_realm: str = "vantage6",
+        auth_client: str = "public_client",
+        log_level="info",
+        **kwargs,
+    ) -> None:
         """Create user client
 
         All paramters from `ClientBase` can be used here.
 
         Parameters
         ----------
+        auth_realm : str, optional
+            The Keycloak realm to use for authentication, by default 'vantage6'
+        auth_client : str, optional
+            The Keycloak client to use for authentication, by default 'public_client'
         log_level : str, optional
             The log level to use, by default 'info'
         """
@@ -52,6 +68,9 @@ class UserClient(ClientBase):
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
+
+        self.auth_realm = auth_realm
+        self.auth_client = auth_client
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -72,6 +91,12 @@ class UserClient(ClientBase):
 
         self.collaboration_id = None
         self.session_id = None
+
+        self.kc_openid = KeycloakOpenID(
+            server_url=self.auth_url,
+            client_id=self.auth_client,
+            realm_name=self.auth_realm,
+        )
 
         # Display welcome message
         self.log.info(" Welcome to")
@@ -121,66 +146,144 @@ class UserClient(ClientBase):
             logger.setLevel(level)
         return logger
 
-    def authenticate(
-        self, username: str, password: str, mfa_code: int | str = None
-    ) -> None:
+    def authenticate(self) -> None:
         """Authenticate as a user
 
         It also collects some additional info about your user.
-
-        Parameters
-        ----------
-        username : str
-            Username used to authenticate
-        password : str
-            Password used to authenticate
-        mfa_code: str | int
-            Six-digit two-factor authentication code
         """
-        auth_json = {
-            "username": username,
-            "password": password,
-        }
-        if mfa_code:
-            auth_json["mfa_code"] = mfa_code
-        auth = super(UserClient, self).authenticate(auth_json, path="token/user")
-        if not auth:
-            # user is not authenticated. The super function is responsible for
-            # printing useful output
+        auth_url = self.kc_openid.auth_url(
+            redirect_uri="http://localhost:8081/callback",
+            scope="openid",
+            state="state",
+        )
+
+        # Create a class to store the token
+        class TokenStore:
+            def __init__(self):
+                self.token = None
+
+        token_store = TokenStore()
+
+        # Start local server to receive callback
+        class CallbackHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                # Parse the callback URL
+                query = urlparse.urlparse(self.path).query
+                params = urlparse.parse_qs(query)
+
+                if "code" in params:
+                    # Exchange code for token
+                    token = self.server.kc_openid.token(
+                        grant_type="authorization_code",
+                        code=params["code"][0],
+                        redirect_uri="http://localhost:8081/callback",
+                    )
+
+                    # Store the token
+                    token_store.token = token
+
+                    # Send success response
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"Login successful! You can close this window.")
+
+                    # Store the token
+                    self.server.token = token
+                else:
+                    # Send error response
+                    self.send_response(400)
+                    self.send_header("Content-type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"Login failed! Please try again.")
+
+                # Stop the server
+                threading.Thread(target=self.server.shutdown).start()
+
+        # Start server in a separate thread
+        server = HTTPServer(("localhost", 8081), CallbackHandler)
+        server.kc_openid = self.kc_openid
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+
+        # Open browser for login
+        print("opening browser for login")
+        # Try to open browser with different methods
+        try:
+            # Check if we're in WSL
+            if (
+                os.path.exists("/proc/version")
+                and "microsoft" in open("/proc/version").read().lower()
+            ):
+                # We're in WSL, try to use Windows browser
+                try:
+                    # Try to use wslview (WSL2)
+                    subprocess.run(["wslview", auth_url], check=True)
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    # Fallback to webbrowser module
+                    webbrowser.open(auth_url)
+            else:
+                # Not in WSL, use regular webbrowser
+                webbrowser.open(auth_url)
+        except Exception as e:
+            self.log.error("Error opening browser: %s", e)
+            print(f"Please open this URL in your browser: {auth_url}")
+
+        # Wait for callback
+        server_thread.join()
+
+        if not token_store.token:
+            self.log.error("Login failed or was cancelled")
             return
 
-        # identify the user and the organization to which this user
-        # belongs. This is usefull for some client side checks
+        self._access_token = token_store.token["access_token"]
+        self._refresh_token = token_store.token["refresh_token"]
+
+        user = self.request("user/me")
+        user_id = user.get("id")
+        user_name = user.get("username")
+        type_ = "user"
+        organization_id = user.get("organization").get("id")
+        organization = self.request(f"organization/{organization_id}")
+        organization_name = organization.get("name")
+
+        self.whoami = WhoAmI(
+            type_=type_,
+            id_=user_id,
+            name=user_name,
+            organization_id=organization_id,
+            organization_name=organization_name,
+        )
+        self.log.info(" --> Succesfully authenticated")
+        self.log.info(" --> Name: %s (id=%s)", user_name, user_id)
+        self.log.info(
+            " --> Organization: %s (id=%s)", organization_name, organization_id
+        )
+
+        # setup default encryption so user doesn't have to do this unless encryption
+        # is enabled
+        self.cryptor = DummyCryptor()
+
+    def obtain_new_token(self):
+        """Refresh the token"""
+        self.log.info("Refreshing token")
+
+        assert self._refresh_token, "Refresh token not found, did you authenticate?"
+
         try:
-            type_ = "user"
-            id_ = jwt.decode(self.token, options={"verify_signature": False})["sub"]
+            new_token = self.kc_openid.refresh_token(self._refresh_token)
+        except KeycloakAuthenticationError as e:
+            self.log.error("Could not authenticate token. Please re-authenticate!")
+            self.log.exception(e)
+            return
+        except Exception as e:
+            self.log.error("Error in refreshing token. Please re-authenticate!")
+            self.log.exception(e)
+            return
 
-            user = self.request(f"user/{id_}")
-            name = user.get("firstname")
-            organization_id = user.get("organization").get("id")
-            organization = self.request(f"organization/{organization_id}")
-            organization_name = organization.get("name")
-
-            self.whoami = WhoAmI(
-                type_=type_,
-                id_=id_,
-                name=name,
-                organization_id=organization_id,
-                organization_name=organization_name,
-            )
-
-            self.log.info(" --> Succesfully authenticated")
-            self.log.info(f" --> Name: {name} (id={id_})")
-            self.log.info(
-                f" --> Organization: {organization_name} " f"(id={organization_id})"
-            )
-
-            # setup default encryption so user doesn't have to do this unless encryption
-            # is enabled
-            self.cryptor = DummyCryptor()
-        except Exception:
-            self.log.info("--> Retrieving additional user info failed!")
-            self.log.error(traceback.format_exc())
+        self._access_token = new_token["access_token"]
+        self._refresh_token = new_token["refresh_token"]
 
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.
@@ -223,39 +326,14 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-
-        animation = itertools.cycle(["|", "/", "-", "\\"])
-        t = time.time()
-
-        while not RunStatus.has_finished(self.task.get(task_id).get("status")):
-            frame = next(animation)
-            sys.stdout.write(
-                f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
-            )
-            sys.stdout.flush()
-            time.sleep(interval)
-        sys.stdout.write("\rDone!                  ")
-
-        # Re-enable logging
+        self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
-
-        def _get_server_url_header(self) -> dict:
-            """
-            Get the server url for request header to algorithm store
-
-            Returns
-            -------
-            dict
-                The server url in a dictionary so it can be used as header
-            """
-            return {"server_url": self.parent.base_path}
 
         def get_server_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
@@ -282,159 +360,6 @@ class UserClient(ClientBase):
                 Containing the server health information
             """
             return self.parent.request("health")
-
-        def change_my_password(self, current_password: str, new_password: str) -> dict:
-            """Change your own password by providing your current password
-
-            Parameters
-            ----------
-            current_password : str
-                Your current password
-            new_password : str
-                Your new password
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "password/change",
-                method="patch",
-                json={
-                    "current_password": current_password,
-                    "new_password": new_password,
-                },
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def reset_my_password(self, email: str = None, username: str = None) -> dict:
-            """Start reset password procedure
-
-            Either a username of email needs to be provided.
-
-            Parameters
-            ----------
-            email : str, optional
-                Email address of your account, by default None
-            username : str, optional
-                Username of your account, by default None
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            if not (email or username):
-                self.parent.log.error("--> You need to provide username or email")
-                return
-
-            data = {}
-            if email:
-                data["email"] = email
-            if username:
-                data["username"] = username
-
-            result = self.parent.request(
-                "recover/lost",
-                method="post",
-                json=data,
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def set_my_password(self, token: str, password: str) -> dict:
-            """Set a new password using a recovery token
-
-            Token can be obtained through `.reset_password(...)`
-
-            Parameters
-            ----------
-            token : str
-                Token obtained from `reset_password`
-            password : str
-                New password
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "recover/reset",
-                method="post",
-                json={"reset_token": token, "password": password},
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def reset_two_factor_auth(
-            self, password: str, email: str = None, username: str = None
-        ) -> dict:
-            """Start reset procedure for two-factor authentication
-
-            The password and either username of email must be provided.
-
-            Parameters
-            ----------
-            password: str
-                Password of your account
-            email : str, optional
-                Email address of your account, by default None
-            username : str, optional
-                Username of your account, by default None
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            assert email or username, "You need to provide username or email!"
-            result = self.parent.request(
-                "recover/2fa/lost",
-                method="post",
-                json={"username": username, "email": email, "password": password},
-                retry=False,
-            )
-            msg = result.get("msg")
-            self.parent.log.info(f"--> {msg}")
-            return result
-
-        def set_two_factor_auth(self, token: str) -> dict:
-            """
-            Setup two-factor authentication using a recovery token after you
-            have lost access.
-
-            Token can be obtained through `.reset_two_factor_auth(...)`
-
-            Parameters
-            ----------
-            token : str
-                Token obtained from `reset_two_factor_auth`
-
-            Returns
-            -------
-            dict
-                Message from the server
-            """
-            result = self.parent.request(
-                "recover/2fa/reset",
-                method="post",
-                json={
-                    "reset_token": token,
-                },
-                retry=False,
-            )
-            if "qr_uri" in result:
-                print_qr_code(result)
-            else:
-                msg = result.get("msg")
-                self.parent.log.info(f"--> {msg}")
-            return result
 
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
@@ -1211,9 +1136,6 @@ class UserClient(ClientBase):
             self,
             username: str = None,
             organization: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            email: str = None,
             role: int = None,
             rule: int = None,
             last_seen_from: str = None,
@@ -1229,12 +1151,6 @@ class UserClient(ClientBase):
                 Filter by username (with LIKE operator)
             organization: int, optional
                 Filter by organization id
-            firstname: str, optional
-                Filter by firstname (with LIKE operator)
-            lastname: str, optional
-                Filter by lastname (with LIKE operator)
-            email: str, optional
-                Filter by email (with LIKE operator)
             role: int, optional
                 Show only users that have this role id
             rule: int, optional
@@ -1273,9 +1189,6 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "username": username,
                 "organization_id": organization,
-                "firstname": firstname,
-                "lastname": lastname,
-                "email": email,
                 "role_id": role,
                 "rule_id": rule,
                 "last_seen_from": last_seen_from,
@@ -1310,15 +1223,28 @@ class UserClient(ClientBase):
             return self.parent.request(f"user/{id_}")
 
         @post_filtering(iterable=False)
+        def get_own_user(self, include_permissions: bool = False) -> dict:
+            """Get own user information
+
+            Parameters
+            ----------
+            include_permissions : bool, optional
+                Include permissions in the response. Default is False.
+
+            Returns
+            -------
+            dict
+                Containing user information
+            """
+            params = {"include_permissions": include_permissions}
+            return self.parent.request("user/me", params=params)
+
+        @post_filtering(iterable=False)
         def update(
             self,
             id_: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            organization: int = None,
             rules: list = None,
             roles: list = None,
-            email: str = None,
         ) -> dict:
             """Update user details
 
@@ -1329,21 +1255,12 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 User `id` from the user you want to update
-            firstname : str
-                Your first name
-            lastname : str
-                Your last name
-            organization : int
-                Organization id of the organization you want to be part
-                of. This can only done by super-users.
             rules : list of ints
                 USE WITH CAUTION! Rule ids that should be assigned to
                 this user. All previous assigned rules will be removed!
             roles : list of ints
                 USE WITH CAUTION! Role ids that should be assigned to
                 this user. All previous assigned roles will be removed!
-            email : str
-                New email from the user
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1361,12 +1278,8 @@ class UserClient(ClientBase):
                 id_ = self.parent.whoami.id_
 
             data = {
-                "firstname": firstname,
-                "lastname": lastname,
-                "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
-                "email": email,
             }
             data = self._clean_update_data(data)
 
@@ -1377,10 +1290,7 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            firstname: str,
-            lastname: str,
             password: str,
-            email: str,
             organization: int = None,
             roles: list = [],
             rules: list = [],
@@ -1392,14 +1302,8 @@ class UserClient(ClientBase):
             username : str
                 Used to login to the service. This can not be changed
                 later.
-            firstname : str
-                Firstname of the new user
-            lastname : str
-                Lastname of the new user
             password : str
                 Password of the new user
-            email : str
-                Email address of the new user
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
@@ -1424,10 +1328,7 @@ class UserClient(ClientBase):
             """
             user_data = {
                 "username": username,
-                "firstname": firstname,
-                "lastname": lastname,
                 "password": password,
-                "email": email,
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
@@ -1806,8 +1707,7 @@ class UserClient(ClientBase):
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
-            server_url: str | None = None,
-            databases: list[dict] | None = None,
+            databases: list[list[dict]] | list[dict] | None = None,
             action: AlgorithmStepType | None = None,
         ) -> dict:
             """Create a new task
@@ -1838,22 +1738,18 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
-            server_url: str, optional
-                URL of the server on which the task is created. This should be given if
-                the algorithm is retrieved from an algorithm store, and the server does
-                not contain its own URL in the configuration (you will be alerted of
-                this in an error message).
-            databases: list[dict], optional
+            databases: list[list[dict]] | list[dict], optional
                 Databases to be used at the node. Each dict should contain
-                at least a 'label' key. Additional keys are 'query' (if using
-                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
-                and 'preprocessing' information.
+                at least a 'label' key. If a list of lists is provided, the first
+                list is the databases that are required for the first argument, the
+                second list is the databases that are required for the second
+                argument, etc.
             action: AlgorithmStepType, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
                 available from either, there will be an error. Suitable actions may be
-                one of 'data extraction', 'preprocessing', 'federated compute',
-                'central compute' or 'postprocessing'.
+                one of 'data_extraction', 'preprocessing', 'federated_compute',
+                'central_compute' or 'postprocessing'.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.
@@ -1935,8 +1831,6 @@ class UserClient(ClientBase):
                 params["study_id"] = study
             if store:
                 params["store_id"] = store
-            if server_url:
-                params["server_url"] = server_url
             if action:
                 params["action"] = action
 
@@ -1947,12 +1841,14 @@ class UserClient(ClientBase):
             )
 
         @staticmethod
-        def _parse_arg_databases(databases: list[dict] | str) -> list[dict]:
+        def _parse_arg_databases(
+            databases: list[list[dict]] | list[dict] | str,
+        ) -> list[list[dict]]:
             """Parse the databases argument
 
             Parameters
             ----------
-            databases: list[dict] | str
+            databases: list[list[dict]] | list[dict] | str
                 Each dict should contain at least a 'label' key. A single str
                 can be passed and will be interpreted as a single database with
                 that label.
@@ -1976,15 +1872,26 @@ class UserClient(ClientBase):
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [{"label": databases}]
+                databases = [[{"label": databases}]]
 
-            for db in databases:
+            # It is common to only specify a single level of databases, we assume
+            # that its not a multiple databases argument and convert it so that every
+            # requested dataframe is handled as a single argument in the algorithm.
+            if isinstance(databases, list) and not isinstance(databases[0], list):
+                databases = [[db] for db in databases]
+
+            for db in [db for sublist in databases for db in sublist]:
                 try:
                     label_input = db.get("label")
                 except AttributeError:
                     raise ValueError(
-                        "Databases specified should be a list of dicts with"
-                        "label keys or a single str"
+                        "Each database should be specified as a dict with at least "
+                        "a 'label' key. Alternatively, a single str can be passed "
+                        "and will be interpreted as a single database with that "
+                        "label. These dicts can be nested in a list of lists to "
+                        "specify multiple databases for each argument. Example: "
+                        "databases=[[{'label': 'db1'}, {'label': 'db2'}], "
+                        "[{'label': 'db3'}]] or databases='db1'"
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(

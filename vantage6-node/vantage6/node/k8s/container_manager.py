@@ -4,6 +4,7 @@ import time
 import re
 import base64
 
+from itertools import groupby
 from typing import Tuple
 from pathlib import Path
 import uuid
@@ -73,11 +74,7 @@ class ContainerManager:
             self.log.exception("Error loading Kubernetes configuration")
             raise e
 
-        # The `local_data_dir` refers to the location where this node can write files
-        # to. When this node instance needs to create a volume mount for a container,
-        # it needs to refer to the location where the file is stored on the host system,
-        # for this we use the `host_data_dir`.
-        self.local_data_dir = TASK_FILES_ROOT
+        # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
 
         self.databases = self._get_database_metadata()
@@ -97,6 +94,15 @@ class ContainerManager:
         self.task_job_label_selector = ",".join(
             [f"{k}={v}" for k, v in self.task_job_labels.items()]
         )
+
+        # whether to share or not algorithm logs with the server
+        # TODO: config loading could be centralized in a class, then validate,
+        # set defaults, warn about dangers, etc
+        self.share_algorithm_logs = self.ctx.config.get("share_algorithm_logs", True)
+        if self.share_algorithm_logs:
+            self.log.warning(
+                "Algorithm logs and errors will be shared with the server."
+            )
 
     def ensure_task_namespace(self) -> bool:
         """
@@ -148,8 +154,6 @@ class ContainerManager:
                     spec=k8s_client.V1PodSpec(
                         containers=[
                             k8s_client.V1Container(
-                                # TODO ensure image is an image that can always be
-                                # pulled by the node
                                 name="test-container",
                                 image=(
                                     f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
@@ -310,7 +314,7 @@ class ContainerManager:
         docker_input: bytes,
         session_id: int,
         token: str,
-        databases_to_use: list[str],
+        databases_to_use: list[dict],
         action: AlgorithmStepType,
     ) -> RunStatus:
         """
@@ -330,8 +334,8 @@ class ContainerManager:
             ID of the session
         token: str
             Bearer token that the container can use
-        databases_to_use: list[str]
-            Labels of the databases to use
+        databases_to_use: list[dict]
+            Metadata of the databases to use.
         action: AlgorithmStepType
             The action to perform
 
@@ -357,11 +361,10 @@ class ContainerManager:
             action,
             self.client,
             df_details,
-            self.local_data_dir,
         )
 
         # Verify that an allowed image is used
-        if not self.is_docker_image_allowed(image, task_info):
+        if not self.is_image_allowed(image, task_info):
             self.log.critical(
                 "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
                 run_id,
@@ -492,7 +495,7 @@ class ContainerManager:
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
-                        labels={"app": run_io.container_name}
+                        labels={"app": run_io.container_name, "role": action}
                     ),
                     spec=k8s_client.V1PodSpec(
                         containers=[container],
@@ -665,7 +668,7 @@ class ContainerManager:
         self,
         run_io: RunIO,
         docker_input: bytes,
-        databases_to_use: list[str],
+        databases_to_use: list[dict],
     ) -> Tuple[
         list[k8s_client.V1Volume],
         list[k8s_client.V1VolumeMount],
@@ -681,8 +684,8 @@ class ContainerManager:
             RunIO object that contains information about the run
         docker_input: bytes
             Input that can be read by the algorithm container
-        databases_to_use: list[str]
-            Labels of the databases to use
+        databases_to_use: list[dict]
+            Metadata of the databases to use.
 
         Returns
         -------
@@ -735,7 +738,8 @@ class ContainerManager:
 
         session_volume, session_mount = self._create_run_mount(
             volume_name=run_io.session_name,
-            host_path=Path(self.host_data_dir) / run_io.session_folder,
+            host_path=Path(self.host_data_dir)
+            / run_io.session_file_manager.session_folder,
             type_="Directory",
             mount_path=JOB_POD_SESSION_FOLDER_PATH,
         )
@@ -751,7 +755,8 @@ class ContainerManager:
             # TODO we only do not need to pass this when the action is `data extraction`
             ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
-                JOB_POD_SESSION_FOLDER_PATH, run_io.session_state_file_name
+                JOB_POD_SESSION_FOLDER_PATH,
+                run_io.session_file_manager.session_state_file_name,
             ),
         }
 
@@ -764,9 +769,7 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
-            environment_variables[ContainerEnvNames.USER_REQUESTED_DATABASES.value] = (
-                ",".join([db["label"] for db in databases_to_use]),
-            )
+
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
@@ -807,8 +810,23 @@ class ContainerManager:
             # available in the session.
             self._validate_dataframes(databases_to_use, run_io)
 
+            # group and sort on the position of the database in the argument list
+            databases_to_use_sorted = sorted(
+                databases_to_use, key=lambda x: x["position"]
+            )
+            grouped_databases = groupby(
+                databases_to_use_sorted, key=lambda x: x["position"]
+            )
+
+            # # Groups are separated by ';' and the dataframes are separated by ','
+            # # so we need to join the dataframes and the groups
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ",".join([db["dataframe_name"] for db in databases_to_use])
+                ";".join(
+                    [
+                        ",".join([db["dataframe_name"] for db in db_group])
+                        for _, db_group in grouped_databases
+                    ]
+                )
             )
 
         return volumes, vol_mounts, environment_variables, secrets
@@ -877,7 +895,11 @@ class ContainerManager:
         # we are about to start the task.
         requested_dataframes = {db["dataframe_name"] for db in databases_to_use}
         available_dataframes = {
-            file_.stem for file_ in Path(run_io.local_session_folder).glob("*.parquet")
+            file_.stem
+            for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
+                "*.parquet"
+            )
+            if not file_.stem == "session_state"
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
@@ -939,24 +961,24 @@ class ContainerManager:
         if not ok:
             raise PermanentAlgorithmStartFail()
 
-    def is_docker_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
+    def is_image_allowed(self, evaluated_img: str, task_info: dict) -> bool:
         """
-        Checks the docker image name.
+        Checks that the (container) image name is allowed.
 
-        Against a list of regular expressions as defined in the configuration
-        file. If no expressions are defined, all docker images are accepted.
+        Against a list of regular expressions as defined in the configuration file. If
+        no expressions are defined, all container images are accepted.
 
         Parameters
         ----------
         evaluated_img: str
-            URI of the docker image of which we are checking if it is allowed
+            URI of the image of which we are checking if it is allowed
         task_info: dict
             Dictionary with information about the task
 
         Returns
         -------
         bool
-            Whether docker image is allowed or not
+            Whether the image is allowed or not
         """
         # check if algorithm matches any of the regex cases
         allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
@@ -1024,18 +1046,13 @@ class ContainerManager:
                         # Note that by comparing the digests, we also take into account
                         # the situation where e.g. the allowed image has a tag, but the
                         # evaluated image has a sha256.
-                        # TODO fix v5+, the self.docker is no longer available
-                        digest_evaluated_image = get_digest(
-                            evaluated_img, client=self.docker
-                        )
+                        digest_evaluated_image = get_digest(evaluated_img)
                         if not digest_evaluated_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s",
                                 evaluated_img,
                             )
-                        digest_policy_image = get_digest(
-                            allowed_algo, client=self.docker
-                        )
+                        digest_policy_image = get_digest(allowed_algo)
                         if not digest_policy_image:
                             self.log.warning(
                                 "Could not obtain digest for image %s", allowed_algo
@@ -1198,9 +1215,7 @@ class ContainerManager:
             for job in finished_jobs:
 
                 # Create helper object to process the output of the job
-                run_io = RunIO.from_dict(
-                    job.metadata.annotations, self.client, self.local_data_dir
-                )
+                run_io = RunIO.from_dict(job.metadata.annotations, self.client)
                 results, status = (
                     run_io.process_output()
                     if job.status.succeeded

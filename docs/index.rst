@@ -5,9 +5,8 @@ Overview
 
 What is vantage6?
 -----------------
-Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
-federa\ **t**\ ed le\ **a**\ rnin\ **g** infrastructur\ **e** for
-\ **s**\ ecure \ **i**\ nsight e\ **x**\ change.
+Vantage6 is a Privacy Enhancing Technology (PET) platform that allows organizations to
+collaborate on data analysis tasks.
 
 .. raw:: html
 
@@ -47,19 +46,17 @@ This documentation space consists of the following main sections:
 
 * **Overview** |rarr| *You are here now*
 * :doc:`/introduction/introduction` |rarr| *Introduction to vantage6 concepts*
-* :doc:`/introduction/architecture` |rarr| *An more extensive explanation of vantage6
-  components*
+* :doc:`/introduction/quickstart` |rarr| *Quickstart guide*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
 * :doc:`/algorithm_store/index` |rarr| *How to configure and deploy vantage6 algorithm stores*
-* :doc:`/features/index` (Under construction) |rarr|
-  *Documentation of vantage6 features*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
   vantage6*
-* :doc:`/function-docs/index` |rarr|
+* :doc:`/technical_reference/index` |rarr| *Technical reference of vantage6*
+* :doc:`/api-docs/index` |rarr|
   *Documentation of the vantage6 infrastructure code*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
 * :doc:`/release_notes` |rarr| *Log of what has been released and when*
@@ -104,8 +101,8 @@ Index
 
    self
    introduction/introduction
-   introduction/architecture
    introduction/quickstart
+   introduction/communitystore
 
 .. toctree::
    :numbered: 3
@@ -114,11 +111,10 @@ Index
    user/index
    node/index
    server/index
-   algorithm_store/index
    algorithms/index
-   features/index
    devops/index
-   function-docs/index
+   technical_reference/index
+   api-docs/index
    glossary
 
 .. toctree::

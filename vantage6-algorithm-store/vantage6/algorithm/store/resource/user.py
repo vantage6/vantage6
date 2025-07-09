@@ -12,14 +12,12 @@ from marshmallow import ValidationError
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
-from vantage6.algorithm.store.model import Vantage6Server
 from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource import (
-    request_from_store_to_v6_server,
     with_permission,
     AlgorithmStoreResources,
 )
@@ -284,10 +282,8 @@ class Users(AlgorithmStoreResources):
 
         tags: ["User"]
         """
-        data = request.get_json(silent=True)
-        # the assumption is that it is possible to create only users linked to your own server
-        server = Vantage6Server.get_by_url(request.headers["Server-Url"])
         # validate request body
+        data = request.get_json(silent=True)
         try:
             data = user_input_schema.load(data)
         except ValidationError as e:
@@ -296,35 +292,38 @@ class Users(AlgorithmStoreResources):
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        # check unique constraints
-        if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
-            return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
-
-        # check whether users of this server are allowed to get any permissions
-        allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
-        if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
+        # check if the user already exists in keycloak
+        try:
+            user_id = get_keycloak_id_for_user(request.json["username"])
+        except Exception:
             return {
-                "msg": f"Users from the server {server.url} are not allowed to be "
-                "registered in this algorithm store by the store administrator."
-            }, HTTPStatus.FORBIDDEN
+                "msg": f"User {request.json['username']} not found: cannot register "
+                "user in algorithm store"
+            }, HTTPStatus.BAD_REQUEST
+
+        # check unique constraints
+        if db.User.get_by_keycloak_id(keycloak_id=user_id):
+            return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
         # Check if the user exists in the relevant vantage6 server. Note that this only
         # works if:
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
-        server_response, status_code = request_from_store_to_v6_server(
-            url=f"{server.url}/user",
-            params={"username": data["username"]},
-        )
-        if (
-            status_code != HTTPStatus.OK
-            or len(server_response.json().get("data", [])) != 1
-        ):
-            return {
-                "msg": f"User '{data['username']}' not found in the Vantage6 server."
-            }, HTTPStatus.BAD_REQUEST
-        user_email = server_response.json()["data"][0].get("email")
-        user_org = server_response.json()["data"][0]["organization"]["id"]
+
+        # TODO find email and organization id from keycloak - issue #1994 and #1995
+        # server_response, status_code = request_from_store_to_v6_server(
+        #     url=f"{server.url}/user",
+        #     params={"username": data["username"]},
+        # )
+        # if (
+        #     status_code != HTTPStatus.OK
+        #     or len(server_response.json().get("data", [])) != 1
+        # ):
+        #     return {
+        #         "msg": f"User '{data['username']}' not found in the Vantage6 server."
+        #     }, HTTPStatus.BAD_REQUEST
+        # user_email = server_response.json()["data"][0].get("email")
+        # user_org = server_response.json()["data"][0]["organization"]["id"]
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -340,9 +339,10 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            email=user_email,
-            organization_id=user_org,
-            v6_server_id=server.id,
+            # email=user_email,
+            # organization_id=user_org,
+            # v6_server_id=server.id,
+            keycloak_id=user_id,
             roles=roles,
         )
 
@@ -410,14 +410,6 @@ class User(AlgorithmStoreResources):
                     type: string
                     description: User's email address. Do not combine this option with
                       the update_email option.
-                  update_email:
-                    type: boolean
-                    description: Whether to update the email address by using the value
-                      from the vantage6 server. Do not combine this option with the
-                      email option to manually set the email address.
-                  organization_id:
-                    type: integer
-                    description: User's organization id. Can be written only if empty.
 
         parameters:
           - in: path
@@ -459,27 +451,6 @@ class User(AlgorithmStoreResources):
 
         if email := data.get("email"):
             user.email = email
-        elif "update_email" in data and data["update_email"]:
-            server = Vantage6Server.get_by_url(request.headers["Server-Url"])
-            server_response, status_code = request_from_store_to_v6_server(
-                url=f"{server.url}/user",
-                params={"username": user.username},
-            )
-            if (
-                status_code != HTTPStatus.OK
-                or len(server_response.json().get("data", [])) != 1
-            ):
-                return {
-                    "msg": f"User '{user.username}' not found in the Vantage6 server."
-                }, HTTPStatus.BAD_REQUEST
-            user.email = server_response.json()["data"][0].get("email")
-            if not user.email:
-                log.warning(
-                    "No email address found for user '%s' in the Vantage6 server.",
-                    user.username,
-                )
-        if organization_id := data.get("organization_id") and not user.organization_id:
-            user.organization_id = organization_id
 
         if "roles" in data:
             # validate that these roles exist

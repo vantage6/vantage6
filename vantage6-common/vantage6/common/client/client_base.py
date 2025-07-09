@@ -1,16 +1,71 @@
+import abc
+import itertools
 import logging
 import time
-import requests
 import json as json_lib
-
 from pathlib import Path
 
-from vantage6.common.exceptions import AuthenticationException
+import requests
+
 from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import STRING_ENCODING
-from vantage6.common.client.utils import print_qr_code
+from vantage6.common.enum import TaskStatus
+from vantage6.common.globals import (
+    STRING_ENCODING,
+    INTERVAL_MULTIPLIER,
+    MAX_INTERVAL,
+)
 
 module_name = __name__.split(".")[1]
+
+
+@staticmethod
+def _log_completion(task_id: int, start_time: float, log_animation: bool) -> None:
+    """
+    Log the completion message for a task.
+
+    Parameters
+    ----------
+    task_id : int
+        ID of the completed task.
+    start_time : float
+        The time when the task started.
+    log_animation : bool
+        Whether to log the message as an animation or a regular log.
+    """
+    elapsed_time = int(time.time() - start_time)
+    message = f"Task {task_id} completed in {elapsed_time} seconds."
+
+    if log_animation:
+        print(f"\r{message}                     ")
+    else:
+        logging.info(message)
+
+
+@staticmethod
+def _log_progress(
+    task_id: int, start_time: float, log_animation: bool, animation_frame: str
+) -> None:
+    """
+    Log the progress message for a task.
+
+    Parameters
+    ----------
+    task_id : int
+        ID of the task in progress.
+    start_time : float
+        The time when the task started.
+    log_animation : bool
+        Whether to log the message as an animation or a regular log.
+    animation_frame : str
+        The current frame of the animation.
+    """
+    elapsed_time = int(time.time() - start_time)
+    message = f"{animation_frame} Waiting for task {task_id}... ({elapsed_time}s)"
+
+    if log_animation:
+        print(f"\r{message}", end="")
+    else:
+        logging.info(message)
 
 
 class ClientBase(object):
@@ -21,30 +76,27 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = "/api") -> None:
+    def __init__(self, server_url: str, auth_url: str) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
-        host : str
-            Address (including protocol, e.g. `https://`) of the vantage6 server
-        port : int
-            port number to which the server listens
-        path : str, optional
-            path of the api, by default '/api'
+        server_url : str
+            URL of the vantage6 server you want to connect to
+        auth_url : str
+            URL of the vantage6 auth server (keycloak) you want to authenticate with
         """
 
         self.log = logging.getLogger(module_name)
 
         # server settings
-        self.__host = host
-        self.__port = port
-        self.__api_path = path
+        self.__server_url = server_url
+        self.__auth_url = auth_url
 
         # tokens
         self._access_token = None
-        self.__refresh_token = None
-        self.__refresh_url = None
+        self._refresh_token = None
+        self._refresh_url = None
 
         self.cryptor = None
         self.whoami = None
@@ -90,55 +142,23 @@ class ClientBase(object):
         return self._access_token
 
     @property
-    def host(self) -> str:
+    def server_url(self) -> str:
         """
-        Host including protocol (HTTP/HTTPS)
+        URL of the vantage6 server
 
         Returns
         -------
         str
             Host address of the vantage6 server
         """
-        return self.__host
+        return self.__server_url
 
     @property
-    def port(self) -> int:
+    def auth_url(self) -> str:
         """
-        Port on which vantage6 server listens
-
-        Returns
-        -------
-        int
-            Port number
+        URL of the vantage6 auth server (keycloak)
         """
-        return self.__port
-
-    @property
-    def path(self) -> str:
-        """
-        Path/endpoint at the server where the api resides
-
-        Returns
-        -------
-        str
-            Path to the api
-        """
-        return self.__api_path
-
-    @property
-    def base_path(self) -> str:
-        """
-        Full path to the server URL. Combination of host, port and api-path
-
-        Returns
-        -------
-        str
-            Server URL
-        """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
+        return self.__auth_url
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint
@@ -156,7 +176,7 @@ class ClientBase(object):
             URL to the endpoint
         """
         if not is_for_algorithm_store:
-            base_path = self.base_path
+            base_path = self.server_url
         else:
             try:
                 base_path = self.store.url
@@ -269,7 +289,7 @@ class ClientBase(object):
 
             if retry:
                 if first_try:
-                    self.refresh_token()
+                    self.obtain_new_token()
                     return self.request(
                         endpoint,
                         json,
@@ -354,114 +374,18 @@ class ClientBase(object):
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
-        """Authenticate to the vantage6-server
+    @abc.abstractmethod
+    def authenticate(self) -> None:
+        """Authenticate to vantage6 via keycloak."""
+        return
 
-        It allows users, nodes and containers to sign in. Credentials can
-        either be a username/password combination or a JWT authorization
-        token.
+    @abc.abstractmethod
+    def obtain_new_token(self) -> None:
+        """Obtain a new token.
 
-        Parameters
-        ----------
-        credentials : dict
-            Credentials used to authenticate
-        path : str, optional
-            Endpoint used for authentication. This differs for users, nodes and
-            containers, by default "token/user"
-
-        Raises
-        ------
-        Exception
-            Failed to authenticate
-
-        Returns
-        -------
-        Bool
-            Whether or not user is authenticated. Alternative is that user is
-            redirected to set up two-factor authentication
+        Depending on the type of entity authenticating, this may use a refresh token
         """
-        if "username" in credentials:
-            self.log.debug(f"Authenticating user {credentials['username']}...")
-        elif "api_key" in credentials:
-            self.log.debug("Authenticating node...")
-
-        # authenticate to the central server
-        url = self.generate_path_to(path, is_for_algorithm_store=False)
-        response = requests.post(url, json=credentials)
-        if response.status_code == 404:
-            self.log.error(
-                "Server not found at %s. Please check the address and whether the "
-                "server is running!",
-                url,
-            )
-            self.log.info(
-                "If the server is running and reachable, %s/health should give a "
-                "response.",
-                self.base_path,
-            )
-            return False
-
-        # handle negative responses
-        data = response.json()
-        if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
-            if response.status_code == 401:
-                raise AuthenticationException("Failed to authenticate")
-            else:
-                raise Exception("Failed to authenticate")
-
-        if "qr_uri" in data:
-            print_qr_code(data)
-            return False
-        else:
-            # Check if there is an access token. If not, there is a problem
-            # with authenticating
-            if "access_token" not in data:
-                if "msg" in data:
-                    raise Exception(data["msg"])
-                else:
-                    raise Exception("No access token in authentication response!")
-
-            # store tokens in object
-            self.log.info("Successfully authenticated")
-            self._access_token = data.get("access_token")
-            self.__refresh_token = data.get("refresh_token")
-            self.__refresh_url = data.get("refresh_url")
-            return True
-
-    def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token
-
-        Raises
-        ------
-        Exception
-            Authentication Error!
-        AssertionError
-            Refresh URL not found
-        """
-        self.log.info("Refreshing token")
-        assert self.__refresh_url, "Refresh URL not found, did you authenticate?"
-
-        # if no port is specified explicit, then it should be omit the
-        # colon : in the path. Similar (but different) to the property
-        # base_path
-        if self.__port:
-            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
-        else:
-            url = f"{self.__host}{self.__refresh_url}"
-
-        # send request to server
-        response = requests.post(
-            url, headers={"Authorization": "Bearer " + self.__refresh_token}
-        )
-
-        # server says no!
-        if response.status_code != 200:
-            self.log.critical("Could not refresh token")
-            raise Exception("Authentication Error!")
-
-        self._access_token = response.json()["access_token"]
-        self.__refresh_token = response.json()["refresh_token"]
+        return
 
     def _decrypt_input(self, input_: str) -> bytes:
         """Helper to decrypt the input of an algorithm run
@@ -580,6 +504,43 @@ class ClientBase(object):
                 )
                 return False
         return True
+
+    def wait_for_task_completion(
+        self,
+        request_func,
+        task_id: int,
+        interval: float = 1,
+        log_animation: bool = True,
+    ) -> None:
+        """
+        Utility function to wait for a task to complete.
+
+        Parameters
+        ----------
+        request_func : Callable
+            Function to make requests to the server.
+        task_id : int
+            ID of the task to wait for.
+        interval : float
+            Initial interval in seconds between status checks.
+        log_animation : bool
+            Whether to log an animation (default: True). If False, logs will be
+            written as separate lines.
+        """
+        start_time = time.time()
+        animation = itertools.cycle(["|", "/", "-", "\\"])
+
+        while True:
+            response = request_func(f"task/{task_id}/status")
+            status = response.get("status")
+
+            if TaskStatus.has_finished(status):
+                _log_completion(task_id, start_time, log_animation)
+                break
+
+            _log_progress(task_id, start_time, log_animation, next(animation))
+            time.sleep(interval)
+            interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
 
     class SubClient:
         """

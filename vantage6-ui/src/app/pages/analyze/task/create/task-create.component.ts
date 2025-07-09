@@ -25,7 +25,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   destroy$ = new Subject();
 
-  // TODO(BART/RIAN) RIAN: Check if all available steps are implemented in the template for conditional form components.
   availableSteps: AvailableSteps = {
     session: true,
     study: true,
@@ -62,8 +61,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       collaboration_id: formOutput.collaboration_id || -1,
       organizations: formOutput.organizations,
       store_id: formOutput.store_id,
-      server_url: formOutput.server_url,
-      databases: formOutput?.dataframes || []
+      databases: formOutput?.dataframes || [[]]
     };
     const newTask = await this.taskService.createTask(newDataframe);
     if (newTask) {

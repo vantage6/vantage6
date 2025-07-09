@@ -24,9 +24,9 @@ export enum TaskDatabaseType {
 
 export enum AlgorithmStepType {
   Preprocessing = 'preprocessing',
-  DataExtraction = 'data extraction',
-  FederatedCompute = 'federated compute',
-  CentralCompute = 'central compute',
+  DataExtraction = 'data_extraction',
+  FederatedCompute = 'federated_compute',
+  CentralCompute = 'central_compute',
   Postprocessing = 'postprocessing'
 }
 
@@ -65,8 +65,6 @@ export interface Session {
   dataframes: string[];
   tasks: string[];
 }
-// TODO(BART/RIAN) RIAN: Only the user who initiated the session will be displayed. Consider including more information and looking at the scope of
-// what should be displayed. For example: scope = organization, then show the initiating organization.
 
 export interface CreateSession {
   name: string;

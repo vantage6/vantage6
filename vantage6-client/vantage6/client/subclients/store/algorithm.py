@@ -30,7 +30,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             f"algorithm/{id_}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=True)
@@ -119,7 +118,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
         return self.parent.request(
             "algorithm",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )
 
@@ -162,8 +160,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             - description: str, optional
                 Description of the function
             - step_type: string
-                Step type of the function (data extraction, preprocessing,
-                federated compute, central compute, or postprocessing)
+                Step type of the function (data_extraction, preprocessing,
+                federated_compute, central_compute, or postprocessing)
             - standalone: bool
                 Whether this function produces useful results when running it by itself
             - databases: list[dict]
@@ -173,6 +171,9 @@ class AlgorithmSubClient(ClientBase.SubClient):
                     Name of the database
                 - description: str, optional
                     Description of the database
+                - multiple: bool
+                    Whether the database can be used multiple times in a single
+                    function. Default is False.
             - arguments: list[dict]
                 List of arguments of the function. Each argument is a dict with
                 the following keys:
@@ -185,6 +186,10 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - allowed_values: list[str | int | float], optional
+                    An optional list of allowed values for the argument. The type of
+                    the values should match the 'type' field, e.g. if 'type' is
+                    'integer', the allowed values should be a list of integers.
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
                 - default_value: str | int | float | boolean | list, optional
@@ -248,7 +253,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             "algorithm",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )
 
@@ -265,7 +269,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}",
             method="delete",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
@@ -296,7 +299,6 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}/invalidate",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=False)
@@ -344,8 +346,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
             - description: str, optional
                 Description of the function
             - step_type: string
-                Step type of the function (data extraction, preprocessing,
-                federated compute, central compute, or postprocessing)
+                Step type of the function (data_extraction, preprocessing,
+                federated_compute, central_compute, or postprocessing)
             - standalone: bool
                 Whether this function produces useful results when running it by itself
             - databases: list[dict]
@@ -367,6 +369,8 @@ class AlgorithmSubClient(ClientBase.SubClient):
                 - type: str
                     Type of the argument. Can be 'string', 'integer', 'float',
                     'boolean', 'json', 'column', 'organization' or 'organizations'
+                - allowed_values: list[str], optional
+                    An optional list of allowed values for the argument
                 - has_default_value: bool, optional
                     Whether the argument has a default value. Default is False.
                 - default_value: str | int | float | boolean | list, optional
@@ -435,6 +439,5 @@ class AlgorithmSubClient(ClientBase.SubClient):
             f"algorithm/{id_}",
             method="PATCH",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )

@@ -17,7 +17,6 @@
 [![Discord](https://img.shields.io/discord/643526403207331841)](https://discord.gg/yAyFf6Y)
 [![Research software directory](https://img.shields.io/badge/rsd-vantage6-deepskyblue)](https://research-software-directory.org/software/vantage6)
 
-
 </h3>
 
 <p align="center">
@@ -104,8 +103,12 @@ For example, you can create a new organization by running:
 ```python
 from vantage6.client import Client
 
-client = Client('http://127.0.0.1', 7601, '/api', log_level='debug')
-client.authenticate('dev_admin', 'password')
+client = Client(
+  server_url='http://127.0.0.1:7601/api',
+  auth_url='http://127.0.0.1:8080',
+  log_level='debug'
+)
+client.authenticate()
 client.setup_encryption(None)
 
 client.organization.create(

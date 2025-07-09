@@ -21,6 +21,14 @@ spec:
       containers:
       - name: vantage6-store-backend
         image: {{ .Values.store.image }}
+        env:
+        - name: KEYCLOAK_URL
+          value: {{ .Values.store.keycloakUrl }}
+        - name: KEYCLOAK_REALM
+          value: {{ .Values.store.keycloakRealm }}
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-store-secrets
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [

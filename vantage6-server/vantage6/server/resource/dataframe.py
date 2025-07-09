@@ -21,7 +21,8 @@ from vantage6.server.resource.common.output_schema import (
     DataframeSchema,
 )
 from vantage6.server.resource.session import SessionBase
-
+from vantage6.server.model import DataframeToBeDeletedAtNode
+from vantage6.server.websockets import send_delete_dataframe_event
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -253,6 +254,7 @@ class SessionDataframes(SessionBase):
                     "names are not allowed because they are stored on nodes by that "
                     "name."
                 }, HTTPStatus.BAD_REQUEST
+
         else:
             while True:
                 df_name = generate_name()
@@ -286,12 +288,11 @@ class SessionDataframes(SessionBase):
                 method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
                 # TODO FM 10-7-2024: we should make a custom type for this
-                databases=[{"label": source_db_label, "type": "source"}],
+                databases=[[{"label": source_db_label, "type": "source"}]],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
                 store_id=extraction_details.get("store_id"),
-                server_url=extraction_details.get("server_url"),
             )
         except Exception as e:
             dataframe.delete()
@@ -412,8 +413,7 @@ class SessionDataframe(SessionBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        df_name = dataframe.name
-        session_id = dataframe.session_id
+        self._delete_dataframe_at_nodes(dataframe)
 
         # Delete alls that are part of this dataframe
         for column in dataframe.columns:
@@ -428,8 +428,34 @@ class SessionDataframe(SessionBase):
         # https://github.com/vantage6/vantage6/issues/1567
 
         return {
-            "msg": f"Successfully deleted dataframe {df_name} from session {session_id}"
+            "msg": f"Successfully deleted dataframe {dataframe.name} from session "
+            f"{dataframe.session_id}"
         }, HTTPStatus.OK
+
+    def _delete_dataframe_at_nodes(self, dataframe: db.Dataframe) -> None:
+        """
+        Delete the dataframe at all nodes.
+        """
+        # store that node dataframes are to be deleted
+        for node in dataframe.session.collaboration.nodes:
+            df_to_be_deleted = DataframeToBeDeletedAtNode(
+                dataframe_name=dataframe.name,
+                session_id=dataframe.session_id,
+                node_id=node.id,
+            )
+            df_to_be_deleted.save()
+
+        # send socket event to nodes to delete the dataframe. Nodes that are online
+        # will delete the dataframe from their local storage and respond with a socket
+        # event to the server. The server will then delete the record created above
+        # from the database. Other records will be deleted when the node comes online
+        # again.
+        send_delete_dataframe_event(
+            self.socketio,
+            dataframe.name,
+            dataframe.session_id,
+            dataframe.session.collaboration_id,
+        )
 
 
 class DataframePreprocessing(SessionBase):
@@ -548,7 +574,12 @@ class DataframePreprocessing(SessionBase):
         response, status_code = self.create_session_task(
             session=session,
             databases=[
-                {"dataframe_id": dataframe.id, "type": TaskDatabaseType.DATAFRAME}
+                [
+                    {
+                        "dataframe_id": dataframe.id,
+                        "type": TaskDatabaseType.DATAFRAME,
+                    }
+                ]
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
@@ -558,7 +589,6 @@ class DataframePreprocessing(SessionBase):
             organizations=preprocessing_task["organizations"],
             dataframe=dataframe,
             store_id=preprocessing_task.get("store_id"),
-            server_url=preprocessing_task.get("server_url"),
         )
         # In case the task is not created we do not want to modify the chain of tasks.
         # The user can try again.

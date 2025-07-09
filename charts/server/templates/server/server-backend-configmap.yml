@@ -14,8 +14,10 @@ data:
     api_path: {{ .Values.server.apiPath }}
     description: {{ .Values.server.description }}
     ip: 0.0.0.0
+    {{- if .Values.server.jwt }}
     {{- if .Values.server.jwt.secret }}
     jwt_secret_key: {{ .Values.server.jwt.secret }}
+    {{- end }}
     {{- end }}
     logging:
       backup_count: {{ .Values.server.logging.backup_count }}
@@ -52,3 +54,9 @@ data:
     dev:
       host_uri: {{ .Values.server.dev.host_uri }}
     {{- end }}
+    keycloak:
+      {{- if hasKey .Values.server.keycloak "manage_users_and_nodes" }}
+      manage_users_and_nodes: {{ .Values.server.keycloak.manage_users_and_nodes }}
+      {{- else }}
+      manage_users_and_nodes: true
+      {{- end }}

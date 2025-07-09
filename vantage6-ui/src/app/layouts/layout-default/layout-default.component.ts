@@ -5,11 +5,9 @@ import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { NavigationLink, NavigationLinkType } from 'src/app/models/application/navigation-link.model';
 import { OperationType, ResourceType, ScopeType, StoreResourceType } from 'src/app/models/api/rule.model';
-import { AuthService } from 'src/app/services/auth.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { TokenStorageService } from 'src/app/services/token-storage.service';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
@@ -21,37 +19,40 @@ import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatNavList, MatListItem, MatListItemIcon } from '@angular/material/list';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
+import { LoginLogoutService } from 'src/app/services/logout.service';
+import { environment } from 'src/environments/environment';
+import { KeycloakUserService } from 'src/app/services/keycloak-user.service';
 
 @Component({
-    selector: 'app-layout-default',
-    templateUrl: './layout-default.component.html',
-    styleUrls: ['./layout-default.component.scss'],
-    imports: [
-        MatToolbar,
-        NgIf,
-        MatIconButton,
-        MatIcon,
-        MatButton,
-        MatMenuTrigger,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        MatSidenavContainer,
-        MatSidenav,
-        MatNavList,
-        NgFor,
-        MatListItem,
-        MatListItemIcon,
-        NgClass,
-        RouterLinkActive,
-        MatSidenavContent,
-        BreadcrumbsComponent,
-        MatCard,
-        MatCardContent,
-        RouterOutlet,
-        AsyncPipe,
-        TranslateModule
-    ]
+  selector: 'app-layout-default',
+  templateUrl: './layout-default.component.html',
+  styleUrls: ['./layout-default.component.scss'],
+  imports: [
+    MatToolbar,
+    NgIf,
+    MatIconButton,
+    MatIcon,
+    MatButton,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatSidenavContainer,
+    MatSidenav,
+    MatNavList,
+    NgFor,
+    MatListItem,
+    MatListItemIcon,
+    NgClass,
+    RouterLinkActive,
+    MatSidenavContent,
+    BreadcrumbsComponent,
+    MatCard,
+    MatCardContent,
+    RouterOutlet,
+    AsyncPipe,
+    TranslateModule
+  ]
 })
 export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   destroy$ = new Subject();
@@ -75,13 +76,13 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
     public router: Router,
     route: ActivatedRoute,
     private breakpointObserver: BreakpointObserver,
-    private authService: AuthService,
+    private loginLogoutService: LoginLogoutService,
     public chosenCollaborationService: ChosenCollaborationService,
     public chosenStoreService: ChosenStoreService,
     private permissionService: PermissionService,
-    private tokenStorageService: TokenStorageService,
     private translateService: TranslateService,
-    private storePermissionService: StorePermissionService
+    private storePermissionService: StorePermissionService,
+    private keycloakUserService: KeycloakUserService
   ) {
     router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((event) => {
       this.isAdministration = event.url.startsWith('/admin');
@@ -104,7 +105,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
-    this.username = this.tokenStorageService.getUsername() || '';
+    this.getUserFromKeycloak();
   }
 
   ngAfterViewInit(): void {
@@ -123,6 +124,20 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy$.next(true);
+  }
+
+  getUserFromKeycloak() {
+    this.keycloakUserService.getUserProfile().then((userProfile) => {
+      this.username = userProfile?.username || '';
+    });
+  }
+
+  goToKeycloakAccount() {
+    window.open(environment.auth_url + '/realms/' + environment.keycloak_realm + '/account', '_blank');
+  }
+
+  changePassword() {
+    window.open(environment.auth_url + '/realms/' + environment.keycloak_realm + '/account/account-security/signing-in', '_blank');
   }
 
   private setNavigationLinks(): void {
@@ -173,8 +188,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
   }
 
   handleLogout() {
-    this.authService.logout();
-    this.router.navigate([routePaths.login]);
+    this.loginLogoutService.logout();
   }
 
   private getAnalyzeLink(): NavigationLink {
@@ -192,8 +206,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       submenus.push({
         route: routePaths.sessions,
         label: this.translateService.instant('resources.sessions'),
-        icon: 'history_toggle_off',
-        //TODO(BART) RIAN: Choose which icon fits the subject. (maybe history_toggle_off or donut_large)
+        icon: 'fitness_center',
         linkType: NavigationLinkType.Analyze
       });
     }
@@ -209,7 +222,7 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       submenus.push({
         route: routePaths.tasks,
         label: this.translateService.instant('links.history'),
-        icon: 'science',
+        icon: 'fingerprint',
         linkType: NavigationLinkType.Analyze
       });
     }

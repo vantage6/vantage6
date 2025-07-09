@@ -9,7 +9,7 @@ class TestSessionResource(TestResourceBase):
 
     def create_session(self, user=None):
         if not user:
-            user = User.get_by_username("root")
+            user = User.get_by_username("admin")
 
         session = Session(
             name=str(uuid1()), collaboration_id=1, scope="OWN", owner=user

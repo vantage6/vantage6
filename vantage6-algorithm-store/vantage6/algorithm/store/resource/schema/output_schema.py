@@ -8,12 +8,13 @@ from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
+from vantage6.common.enum import AlgorithmArgumentType
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
@@ -80,6 +81,44 @@ class ArgumentOutputSchema(HATEOASModelSchema):
 
     type_ = fields.String(data_key="type")
     conditional_on_id = fields.Integer()
+    allowed_values = fields.Nested(
+        "AllowedArgumentValueSchema", many=True, exclude=["id"]
+    )
+
+
+class AllowedArgumentValueSchema(HATEOASModelSchema):
+    """Marshmallow output schema to serialize the AllowedArgumentValue model"""
+
+    class Meta:
+        model = AllowedArgumentValue
+
+    value = fields.String()
+
+    def dump(self, obj, *args, **kwargs):
+        """Convert the value to integer if the argument type is 'int'"""
+        result = super().dump(obj, *args, **kwargs)
+
+        # Handle both single objects and lists
+        if isinstance(obj, list):
+            for item, res in zip(obj, result):
+                self._convert_value_type(item, res)
+        else:
+            self._convert_value_type(obj, result)
+
+        return result
+
+    def _convert_value_type(self, obj, result):
+        """Helper method to convert value type based on argument type"""
+        if obj.argument.type_ == AlgorithmArgumentType.INTEGER.value:
+            try:
+                result["value"] = int(result["value"])
+            except (ValueError, TypeError):
+                pass
+        elif obj.argument.type_ == AlgorithmArgumentType.FLOAT.value:
+            try:
+                result["value"] = float(result["value"])
+            except (ValueError, TypeError):
+                pass
 
 
 class UIVisualizationOutputSchema(HATEOASModelSchema):
@@ -89,19 +128,6 @@ class UIVisualizationOutputSchema(HATEOASModelSchema):
         model = UIVisualization
 
     type_ = fields.String(data_key="type")
-
-
-class Vantage6ServerOutputSchema(HATEOASModelSchema):
-    """Marshmallow output schema to serialize the Vantage6Server model"""
-
-    class Meta:
-        model = Vantage6Server
-
-    users = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="user", link_from="v6_server_id"
-        )
-    )
 
 
 class RoleOutputSchema(HATEOASModelSchema):
@@ -134,7 +160,6 @@ class UserOutputSchema(HATEOASModelSchema):
             obj, link_to="algorithm", link_from="user_id"
         )
     )
-    server = fields.Nested("Vantage6ServerOutputSchema", exclude=["users"])
 
 
 class ReviewOutputSchema(HATEOASModelSchema):

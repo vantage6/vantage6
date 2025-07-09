@@ -33,15 +33,21 @@ DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
 
-# start trying to refresh the JWT token of the node 10 minutes before it
-# expires.
-NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS = 600
-
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
 # default API path (for server and algorithm store)
 DEFAULT_API_PATH = "/api"
+DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
+# Maximum interval to wait for requesting results from a task
+MAX_INTERVAL = 300
+
+# Constant multiplier to make interval for requesting results from a task progressively longer
+INTERVAL_MULTIPLIER = 1.5
+
+# keyword for the multiple dataframes in single argument decorator
+DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 
 
 class InstanceType(str, Enum):
@@ -91,6 +97,17 @@ class ContainerEnvNames(str, Enum):
     DB_PARAM_PREFIX = "DB_PARAM_"
     USER_REQUESTED_DATAFRAMES = "USER_REQUESTED_DATAFRAMES"
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
+
+
+class RequiredNodeEnvVars(str, Enum):
+    """Enum containing the required node environment variables"""
+
+    V6_API_KEY = "V6_API_KEY"
+    V6_NODE_NAME = "V6_NODE_NAME"
+    KEYCLOAK_URL = "KEYCLOAK_URL"
+    KEYCLOAK_REALM = "KEYCLOAK_REALM"
+    KEYCLOAK_CLIENT = "KEYCLOAK_CLIENT"
+    KEYCLOAK_CLIENT_SECRET = "KEYCLOAK_CLIENT_SECRET"
 
 
 class AuthStatus(str, Enum):

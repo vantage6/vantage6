@@ -19,7 +19,8 @@ import {
   AlgorithmFunction,
   Argument,
   AlgorithmFunctionExtended,
-  ConditionalArgComparatorType
+  ConditionalArgComparatorType,
+  FunctionDatabase
 } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
@@ -45,7 +46,7 @@ import { EncryptionService } from 'src/app/services/encryption.service';
 import { environment } from 'src/environments/environment';
 import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
-import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
+import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
@@ -62,6 +63,7 @@ import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
+import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 
 @Component({
   selector: 'app-create-form',
@@ -103,13 +105,14 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
+  availableStepsEnum = AvailableStepsEnum;
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframe?: Dataframe | null = null;
 
-  // TODO(BART/RIAN) RIAN: Somehow we need to be able to calculate which step is first and which is last in order to conditionally add the back or next button.
   @Input() availableSteps: AvailableSteps = {
     session: false,
     study: false,
@@ -232,7 +235,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !this.session || (!!this.dataframes && this.dataframes.length > 0);
+    return !this.session || (!!this.function?.databases && this.function.databases.length > 0);
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -241,6 +244,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
+  }
+
+  isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
+    if (!db) return false;
+    return db.multiple === true;
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
@@ -383,8 +391,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   async handleSubmit(): Promise<void> {
     if (this.isSubmitting) return;
-    if (this.isFormInvalid()) return;
+    if (this.isFormInvalid()) {
+      return;
+    }
+
     this.isSubmitting = true;
+
     try {
       await this.submitTask();
     } catch (error) {
@@ -448,7 +460,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,
-      server_url: environment.server_url,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),
@@ -467,7 +478,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      formCreateOutput.dataframes = [{ dataframe_id: this.dataframeForm.controls.dataframeId.value, type: TaskDatabaseType.Dataframe }];
+      const ids = this.dataframeForm.controls.dataframeId.value;
+      formCreateOutput.dataframes = [
+        (Array.isArray(ids) ? ids : [ids]).map(id => ({
+          dataframe_id: id,
+          type: TaskDatabaseType.Dataframe
+        }))
+      ];
     }
 
     this.onSubmit.next(formCreateOutput);
@@ -502,7 +519,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       !this.shouldShowColumnDropdown(argument) &&
       !this.shouldShowOrganizationDropdown(argument) &&
       !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument)
+      !this.shouldShowParameterJsonInput(argument) &&
+      !this.shouldShowAllowedValuesDropdown(argument)
     );
   }
 
@@ -521,6 +539,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       argument.type === this.argumentType.StringList ||
       (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
     );
+  }
+
+  shouldShowAllowedValuesDropdown(argument: Argument): boolean {
+    return (argument.allowed_values?.length ?? 0) > 0;
   }
 
   shouldShowParameterBooleanInput(argument: Argument): boolean {
@@ -584,6 +606,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return (this.parameterForm.get(argument.name) as FormArray).controls;
   }
 
+  isDataExtractionStep(): boolean {
+    return this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction) || false;
+  }
+
   private getNewControlForInputList(argument: Argument): AbstractControl {
     if (argument.type === this.argumentType.IntegerList) {
       return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);
@@ -591,6 +617,32 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       return this.fb.control('', [Validators.required, Validators.pattern(floatRegex)]);
     } else {
       return this.fb.control('', Validators.required);
+    }
+  }
+
+  isFirstStep(step: AvailableStepsEnum): boolean {
+    if (step === AvailableStepsEnum.Study) {
+      return !this.availableSteps.session;
+    } else if (step === AvailableStepsEnum.Function) {
+      return !this.availableSteps.study && !this.availableSteps.session;
+    } else if (step === AvailableStepsEnum.Session) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  isLastStep(step: AvailableStepsEnum): boolean {
+    if (step === AvailableStepsEnum.Dataframe) {
+      return !this.availableSteps.parameter;
+    } else if (step === AvailableStepsEnum.Database) {
+      return !this.availableSteps.parameter && !this.availableSteps.dataframe;
+    } else if (step === AvailableStepsEnum.Function) {
+      return !this.availableSteps.parameter && !this.availableSteps.dataframe && !this.availableSteps.database;
+    } else if (step === AvailableStepsEnum.Parameter) {
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -748,11 +800,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     // set columns if dataframe is selected
     this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
-      const dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      this.columns = [];
+      let dataframe = null;
+      if (Array.isArray(dataframeID) && dataframeID.length > 0) {
+        // For multi-select, use the first selected dataframe to get columns
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
+      } else if (dataframeID) {
+        // For single select
+        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      }
       if (dataframe) {
         this.setColumns(dataframe);
-      } else {
-        this.columns = [];
       }
     });
 
@@ -831,6 +889,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (selectedFunction) {
       // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
+
+      // If it's a federated step, select all organizations
+      if (this.isFederatedStep(selectedFunction.step_type)) {
+        this.functionForm.patchValue({
+          organizationIDs: this.organizations.map((org) => org.id.toString())
+        });
+      }
     }
 
     // Delay setting function, so that form controls are added
@@ -913,4 +978,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     studyOrCollabControl?.updateValueAndValidity();
   }
+
+  isFirstDatabaseMultiple(): boolean {
+    return this.function?.databases?.[0] ? this.function.databases[0].multiple || false : false;
+  }
+
+  hasColumnListWithMultipleDataframes(): boolean {
+    if (!this.isFirstDatabaseMultiple()) return false;
+    return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
+  }
+
 }

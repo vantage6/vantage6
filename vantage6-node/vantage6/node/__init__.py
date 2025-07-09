@@ -27,23 +27,30 @@ import json
 import logging
 import os
 import queue
-import random
 import sys
 import time
 import threading
+import requests.exceptions
+import psutil
+import pynvml
+
 from pathlib import Path
 from threading import Thread
 
+from keycloak import KeycloakAuthenticationError
 import requests.exceptions
 from gevent.pywsgi import WSGIServer
 from socketio import Client as SocketIO
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.common import logger_name
+from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.globals import PING_INTERVAL_SECONDS, NodePolicy
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    NodePolicy,
+    RequiredNodeEnvVars,
+)
 from vantage6.common.log import get_file_logger
 
 # make sure the version is available
@@ -77,6 +84,10 @@ class Node:
     def __init__(self, ctx: NodeContext):
         self.log = logging.getLogger(logger_name(__name__))
         self.ctx = ctx
+        self.gpu_metadata_available = True
+
+        # validate that the required environment variables are set
+        validate_required_env_vars(RequiredNodeEnvVars)
 
         # Initialize the node. If it crashes, shut down the parts that started
         # already
@@ -95,11 +106,7 @@ class Node:
         self._using_encryption = None
 
         # initialize Node connection to the server
-        self.client = NodeClient(
-            host=self.config.get("server_url"),
-            port=self.config.get("port"),
-            path=self.config.get("api_path"),
-        )
+        self.client = self._setup_node_client(self.config)
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
 
@@ -111,7 +118,7 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
-        self.log.info(f"Connecting server: {self.client.base_path}")
+        self.log.info("Connecting server: %s", self.client.server_url)
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
@@ -134,7 +141,108 @@ class Node:
 
         self.start_processing_threads()
 
+        # TODO reactivate this after redoing docker-specific implementation (issue
+        # https://github.com/vantage6/vantage6/issues/2080)
+        # self.log.debug("Start thread for sending system metadata")
+        # t = Thread(target=self.__metadata_worker, daemon=True)
+        # t.start()
+
         self.log.info("Init complete")
+
+    def _setup_node_client(self, config: dict) -> NodeClient:
+        return NodeClient(
+            server_url=(
+                f"{config.get('server_url')}:{config.get('port')}"
+                f"{config.get('api_path')}"
+            ),
+            auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+            node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
+            api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
+        )
+
+    def __metadata_worker(self) -> None:
+        """
+        Periodically send system metadata to the server.
+        """
+        report_interval = self.config.get("report_interval_seconds", 45)
+
+        while True:
+            try:
+                metadata = self.__gather_system_metadata()
+                self.socketIO.emit("node_metrics_update", metadata, namespace="/tasks")
+            except Exception:
+                self.log.exception("Metadata thread had an exception")
+            time.sleep(report_interval)
+
+    def __gather_system_metadata(self) -> dict:
+        """
+        Gather system metadata such as CPU, memory, OS, and GPU information.
+
+        Returns
+        -------
+        dict
+            Dictionary containing system metadata.
+        """
+        metadata = {
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "num_algorithm_containers": len(self.__docker.active_tasks),
+            "os": os.name,
+            "platform": sys.platform,
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "memory_available": psutil.virtual_memory().available,
+        }
+
+        if self.gpu_metadata_available:
+            gpu_metadata = self.__gather_gpu_metadata()
+            if gpu_metadata:
+                metadata.update(gpu_metadata)
+
+        return metadata
+
+    def __gather_gpu_metadata(self) -> dict | None:
+        """
+        Gather GPU metadata such as GPU name, load, memory usage, and temperature.
+
+        Returns
+        -------
+        dict
+            Dictionary containing GPU-related metrics.
+        """
+
+        try:
+            pynvml.nvmlInit()
+            gpu_count = pynvml.nvmlDeviceGetCount()
+
+            gpu_metadata = {
+                "gpu_count": gpu_count,
+                "gpu_load": [],
+                "gpu_memory_used": [],
+                "gpu_memory_free": [],
+                "gpu_temperature": [],
+            }
+
+            for i in range(gpu_count):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_metadata["gpu_load"].append(
+                    pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
+                )
+                gpu_metadata["gpu_memory_used"].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).used
+                )
+                gpu_metadata["gpu_memory_free"].append(
+                    pynvml.nvmlDeviceGetMemoryInfo(handle).free
+                )
+                gpu_metadata["gpu_temperature"].append(
+                    pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+                )
+            pynvml.nvmlShutdown()
+            return gpu_metadata
+        except pynvml.NVMLError as e:
+            self.log.warning(f"Failed to gather GPU metadata: {e}")
+            self.gpu_metadata_available = False
+            return None
 
     def __proxy_server_worker(self) -> None:
         """
@@ -144,8 +252,9 @@ class Node:
         server.
         """
 
-        # The PROXY_SERVER_HOST is required for the node to work. There are no default values for it
-        # as its value (a FQDN) depends on the namespace where the K8S-service with the node is running.
+        # The PROXY_SERVER_HOST is required for the node to work. There are no default
+        # values for it as its value (a FQDN) depends on the namespace where the
+        # K8S-service with the node is running.
         if "PROXY_SERVER_HOST" in os.environ:
             proxy_host = os.environ.get("PROXY_SERVER_HOST")
             os.environ["PROXY_SERVER_HOST"] = proxy_host
@@ -163,9 +272,9 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the 'make_request' method.
-        # TODO improve encapsulation here - why proxy_server.server_url, and proxy_host?
-        proxy_server.server_url = self.client.base_path
+        # The value on the module variable 'server_url' defines the target of the
+        # 'make_request' method.
+        proxy_server.server_url = self.client.server_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
             proxy_server.server_url,
@@ -296,7 +405,7 @@ class Node:
         # Only compute containers need a token as they are the only ones that should
         # create subtasks
         token = ""
-        if AlgorithmStepType.is_compute(container_action):
+        if container_action == AlgorithmStepType.CENTRAL_COMPUTE:
             token = self.client.request_token_for_container(task["id"], task["image"])
             try:
                 token = token["container_token"]
@@ -454,7 +563,9 @@ class Node:
                 )
             except Exception as e:
                 self.log.exception(
-                    f"poll_task_results (Speaking) thread had an exception: {type(e).__name__} - {e}"
+                    "poll_task_results (Speaking) thread had an exception: %s - %s",
+                    type(e).__name__,
+                    e,
                 )
 
             time.sleep(1)
@@ -463,7 +574,7 @@ class Node:
         """Print error message when node cannot find the server"""
         self.log.warning("Could not connect to the server. Retrying in 10 seconds")
         self.log.info(
-            "Are you sure the server can be reached at %s?", self.client.base_path
+            "Are you sure the server can be reached at %s?", self.client.server_url
         )
 
     def authenticate(self) -> None:
@@ -472,23 +583,16 @@ class Node:
         file. If the server rejects for any reason -other than a wrong API key-
         serveral attempts are taken to retry.
         """
-        api_key = os.environ.get("V6_API_KEY")
-        if not api_key:
-            self.log.critical(
-                "No API key found in environment variables. Make sure to set the "
-                "'V6_API_KEY' environment variable."
-            )
-            exit(1)
 
         success = False
         i = 0
         while i < TIME_LIMIT_RETRY_CONNECT_NODE / SLEEP_BTWN_NODE_LOGIN_TRIES:
             i = i + 1
             try:
-                self.client.authenticate(api_key)
+                self.client.authenticate()
 
-            except AuthenticationException as e:
-                msg = "Authentication failed: API key is wrong!"
+            except KeycloakAuthenticationError as e:
+                msg = "Authentication failed: API key or node name is wrong!"
                 self.log.warning(msg)
                 self.log.warning(e)
                 break
@@ -510,13 +614,13 @@ class Node:
                 break
 
         if success:
-            self.log.info(f"Node name: {self.client.name}")
+            self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
             self.log.critical("Unable to authenticate. Exiting")
             exit(1)
 
         # start thread to keep the connection alive by refreshing the token
-        self.client.auto_refresh_token()
+        self.client.auto_renew_token()
 
     def private_key_filename(self) -> Path:
         """Get the path to the private key."""
@@ -576,7 +680,7 @@ class Node:
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=f"{self.client.host}:{self.client.port}",
+            url=self.client.server_url,
             headers=self.client.headers,
             wait=False,
         )
@@ -594,9 +698,7 @@ class Node:
             time.sleep(1)
             i += 1
 
-        self.log.info(
-            f"Connected to host={self.client.host} on port=" f"{self.client.port}"
-        )
+        self.log.info("Connected to server at %s", self.client.server_url)
 
         self.log.debug(
             "Starting thread to ping the server to notify this node is online."

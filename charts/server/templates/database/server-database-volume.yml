@@ -5,6 +5,7 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     type: local
+    app: vantage6-server
 spec:
   capacity:
     storage: 10Gi

@@ -128,6 +128,10 @@
                           <b>{{ "algorithm.function.argument.type" | translate }}</b>
                           <span>{{ argument.type || "-" }}</span>
                         </div>
+                        <div *ngIf="isArgumentWithAllowedValues(argument.type)" class="data-list__item">
+                          <b>{{ "algorithm.function.argument.allowed_values" | translate }}</b>
+                          <span>{{ argument.allowed_values.join(', ') }}</span>
+                        </div>
                         <div class="data-list__item data-list__item--big">
                           <b>{{ "general.description" | translate }}</b>
                           <span>{{ argument.description || "-" }}</span>
@@ -163,7 +167,7 @@
               </div>
               <!-- Separate accordeon for databases -->
               <div class="data-list__item data-list__item--full">
-                <h4>{{ "algorithm.function.databases" | translate }}</h4>
+                <h4>{{ "algorithm.function.databases.title" | translate }}</h4>
                 <mat-accordion *ngIf="function.databases.length > 0; else noDatabases" class="card-accordion sub-accordeon" [multi]="true">
                   <mat-expansion-panel *ngFor="let db of function.databases">
                     <mat-expansion-panel-header>
@@ -178,6 +182,10 @@
                         <div class="data-list__item data-list__item--big">
                           <b>{{ "general.description" | translate }}</b>
                           <span>{{ db.description || "-" }}</span>
+                        </div>
+                        <div class="data-list__item">
+                          <b>{{ "algorithm.function.databases.multiple" | translate }}</b>
+                          <span>{{ db.multiple ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
                         </div>
                       </div>
                     </ng-template>

@@ -184,58 +184,10 @@ def _get_manifest(
     return response
 
 
-def _get_digest_via_docker(
+def get_digest(
     full_image: str,
-    client: DockerClient,
-    docker_username: str | None = None,
-    docker_password: str | None = None,
-) -> str:
-    """
-    Get digest of an image by fetching the distribution specs using the Docker client
-
-    Parameters
-    ----------
-    full_image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
-    client: DockerClient
-        Docker client.
-    docker_username: str | None
-        Docker username to authenticate with at the registry. Required if the image is
-        private
-    docker_password: str | None
-        Docker password to authenticate with at the registry. Required if the image is
-        private
-
-    Returns
-    -------
-    str | None
-        Digest of the image or `None` if the digest could not be found
-    """
-    try:
-        if docker_username and docker_password:
-            distribution = client.api.inspect_distribution(
-                full_image,
-                auth_config={"username": docker_username, "password": docker_password},
-            )
-        else:
-            distribution = client.api.inspect_distribution(full_image)
-    except docker.errors.APIError:
-        log.warning("Could not find distribution specs of image %s", full_image)
-        return None
-
-    try:
-        return distribution["Descriptor"]["digest"]
-    except KeyError:
-        log.warning(
-            "Distribution spec of image '%s' did not include image digest", full_image
-        )
-        return None
-
-
-def _get_digest_via_manifest(
-    full_image: str,
-    docker_username: str | None = None,
-    docker_password: str | None = None,
+    registry_username: str | None = None,
+    registry_password: str | None = None,
 ) -> str:
     """
     Get digest of an image by fetching the manifest
@@ -244,11 +196,11 @@ def _get_digest_via_manifest(
     ----------
     full_image: str
         Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
-    docker_username: str | None
-        Docker username to authenticate with at the registry. Required if the image is
+    registry_username: str | None
+        Registry username to authenticate with at the registry. Required if the image is
         private
-    docker_password: str | None
-        Docker password to authenticate with at the registry. Required if the image is
+    registry_password: str | None
+        Registry password to authenticate with at the registry. Required if the image is
         private
 
     Returns
@@ -257,7 +209,9 @@ def _get_digest_via_manifest(
         Digest of the image
     """
     try:
-        manifest_response = _get_manifest(full_image, docker_username, docker_password)
+        manifest_response = _get_manifest(
+            full_image, registry_username, registry_password
+        )
     except ValueError as exc:
         log.warning("Could not get manifest of image %s", full_image)
         log.warning("Error: %s", exc)
@@ -266,43 +220,6 @@ def _get_digest_via_manifest(
         return manifest_response.headers["Docker-Content-Digest"]
     else:
         return __calculate_digest(manifest_response.json())
-
-
-def get_digest(
-    full_image: str,
-    client: DockerClient | None = None,
-    docker_username: str | None = None,
-    docker_password: str | None = None,
-) -> str:
-    """
-    Get digest of a Docker image
-
-    Parameters
-    ----------
-    full_image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
-    client: DockerClient | None
-        Docker client to use. If not provided, a new client will be created. An existing
-        client could be useful to provide if it has already been authenticated with one
-        or more registries
-    docker_username: str | None
-        Docker username to authenticate with at the registry. Required if the image is
-        private
-    docker_password: str | None
-        Docker password to authenticate with at the registry. Required if the image is
-        private
-
-    Returns
-    -------
-    str | None
-        Digest of the image or `None` if the digest could not be found
-    """
-    if client is not None:
-        return _get_digest_via_docker(
-            full_image, client, docker_username, docker_password
-        )
-    else:
-        return _get_digest_via_manifest(full_image, docker_username, docker_password)
 
 
 def __calculate_digest(manifest: str) -> str:

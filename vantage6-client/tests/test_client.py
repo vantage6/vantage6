@@ -10,6 +10,7 @@ from vantage6.common.globals import STRING_ENCODING
 # Mock server
 HOST = "mock_server"
 PORT = 1234
+AUTH_URL = "mock_auth_url"
 
 # Mock credentials
 FAKE_USERNAME = "vantage6_test"
@@ -103,7 +104,7 @@ class TestClient(TestCase):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
 
-        user = {"id": FAKE_ID, "firstname": "naam", "organization": {"id": FAKE_ID}}
+        user = {"id": FAKE_ID, "organization": {"id": FAKE_ID}}
         organization = {"id": FAKE_ID, "name": FAKE_NAME}
 
         # The client will first send a post request for authentication, then
@@ -123,8 +124,11 @@ class TestClient(TestCase):
 
     @staticmethod
     def setup_client() -> UserClient:
-        client = UserClient(HOST, PORT)
-        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+        client = UserClient(
+            server_url=f"{HOST}:{PORT}/api",
+            auth_url=AUTH_URL,
+        )
+        client.authenticate()
         client.setup_encryption(None)
         return client
 

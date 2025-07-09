@@ -109,7 +109,7 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj) -> list[dict]:
-        """Returns the database label and type for all databases of a task.
+        """Returns the database metadata for all databases of a task.
 
         Arguments
         ---------
@@ -119,7 +119,7 @@ class TaskSchema(HATEOASModelSchema):
         Returns
         -------
             list[dict]
-                A list of dictionaries containing the database label and type.
+                A list of dictionaries containing the database metadata.
         """
         return [
             {
@@ -127,6 +127,7 @@ class TaskSchema(HATEOASModelSchema):
                 "type": db.type_,
                 "dataframe_id": db.dataframe_id,
                 "dataframe_name": db.dataframe.name if db.dataframe else None,
+                "position": db.position,
             }
             for db in obj.databases
         ]
@@ -207,7 +208,7 @@ class RunTaskIncludedSchema(RunSchema):
 class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
-        exclude = ("type", "api_key", "collaboration", "organization", "last_seen")
+        exclude = ("type", "collaboration", "organization", "last_seen")
 
 
 class OrganizationSchema(HATEOASModelSchema):
@@ -326,7 +327,6 @@ class NodeSchema(HATEOASModelSchema):
 
     class Meta:
         model = db.Node
-        exclude = ("api_key",)
 
 
 class NodeConfigSchema(HATEOASModelSchema):
@@ -341,7 +341,6 @@ class NodeSchemaSimple(HATEOASModelSchema):
         model = db.Node
         exclude = (
             "collaboration",
-            "api_key",
             "type",
         )
 
@@ -364,7 +363,6 @@ class AlgorithmStoreSchema(HATEOASModelSchema):
 class UserSchema(HATEOASModelSchema):
     class Meta:
         model = db.User
-        exclude = ("password", "failed_login_attempts", "last_login_attempt")
 
     roles = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="role", link_from="user_id")
@@ -372,7 +370,6 @@ class UserSchema(HATEOASModelSchema):
     rules = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="rule", link_from="user_id")
     )
-
     organization = fields.Method("organization")
 
 

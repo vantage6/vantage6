@@ -1,0 +1,201 @@
+# Human readable description of the server instance. This is to help
+# your peers to identify the server
+description: Test
+
+# Human readable name of the server instance. This can help users identify
+# the server quickly. It's used for example in the TOTP issuer for 2FA.
+server_name: demo
+
+# IP adress to which the server binds. In case you specify 0.0.0.0
+# the server listens on all interfaces
+ip: 0.0.0.0
+
+# Port to which the server binds
+port: 7601
+
+# API path prefix. Server may be reached at https://domain.org/<api_path>/<endpoint>.
+# In case you use a reverse proxy and use a subpath, make sure to set this option.
+api_path: /api
+
+# Let the server know where it is hosted. This is used as a setting to
+# communicate back and forth with other vantage6 components such as the
+# algorithm store.
+# Example for the cotopaxi server
+server_url: https://cotopaxi.vantage6.ai
+# Example for running the server locally with default settings:
+# server_url: http://localhost:7601
+
+# The URI to the server database. This should be a valid SQLAlchemy URI,
+# e.g. for a SQLite database: sqlite:///database-name.sqlite,
+# or Postgres: postgresql://username:password@172.17.0.1/database).
+# Note that SQLite is not recommended for production use.
+uri: sqlite:///test.sqlite
+
+# This should be set to false in production as this allows to completely
+# wipe the database in a single command. Useful to set to true when
+# testing/developing.
+allow_drop_all: true
+
+# Enable or disable two-factor authentication. If enabled, users will be
+# presented with a QR-code to scan with their phone the first time they log in.
+two_factor_auth: true
+
+# The secret key used to generate JWT authorization tokens. This should
+# be kept secret as others are able to generate access tokens if they
+# know this secret. This parameter is optional. In case it is not
+# provided in the configuration it is generated each time the server
+# starts, thereby invalidating all previous distributed keys. Recommended only in
+# non-production environments
+jwt_secret_key: super-secret-key!
+
+# Settings for the logger
+logging:
+  # Controls the logging output level. Could be one of the following
+  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+  level: DEBUG
+
+  # Filename of the log-file, used by RotatingFileHandler
+  file: test.log
+
+  # Whether the output is shown in the console or not
+  use_console: true
+
+  # The number of log files that are kept, used by RotatingFileHandler
+  backup_count: 5
+
+  # Size in kB of a single log file, used by RotatingFileHandler
+  max_size: 1024
+
+  # format: input for logging.Formatter,
+  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+  datefmt: "%Y-%m-%d %H:%M:%S"
+
+  # (optional) set the individual log levels per logger name, for example
+  # mute some loggers that are too verbose.
+  loggers:
+    - name: urllib3
+      level: warning
+    - name: socketIO-client
+      level: warning
+    - name: engineio.server
+      level: warning
+    - name: socketio.server
+      level: warning
+    - name: sqlalchemy.engine
+      level: warning
+    - name: requests_oauthlib.oauth2_session
+      level: warning
+
+# Additional debug flags
+debug:
+  # Set to `true` to enable debug mode for the socketio server
+  socketio: false
+
+  # Set to `true` to enable debug mode in the Flask app
+  flask: false
+
+# Configure a smtp mail server for the server to use for administrative
+# purposes. e.g. allowing users to reset their password.
+# OPTIONAL
+smtp:
+  port: 587
+  server: smtp.yourmailserver.example.com
+  # credentials for authenticating with the SMTP server
+  username: your-username
+  password: super-secret-password
+  # email address to send emails from (header)
+  # (defaults to noreply@vantage6.ai)
+  email_from: noreply@example.com
+
+# Set an email address you want to direct your users to for support
+# (defaults to support@vantage6.ai)
+support_email: your-support@example.com
+
+# a worker will run every hour and delete results from completed runs that are
+# older than the number of days specified here. Disabled by default.
+# Careful! Make sure you have regular backups of your database before enabling
+# this feature, as a wrong configuration could lead to data loss.
+runs_data_cleanup_days: 30
+# the cleanup worker will also delete the input of the runs if this is set to
+# true. False by default.
+runs_data_cleanup_include_input: false
+
+# If you have a server with a high workload, it is recommended to use
+# multiple server instances (horizontal scaling). If you do so, you also
+# need to set up a RabbitMQ message service to ensure that the communication
+# between the server and the nodes is handled properly. Then, fill out the
+# RabbitMQ connection URI below to connect the server to it. Also, set the
+# start_with_server flag to true to start RabbitMQ when you start the server.
+rabbitmq:
+  uri: amqp://myuser:mypassword@myhostname:5672/myvhost
+  start_with_server: false
+
+# If algorithm containers need direct communication between each other
+# the server also requires a VPN server. (!) This must be a EduVPN
+# instance as vantage6 makes use of their API (!)
+# OPTIONAL
+vpn_server:
+  # the URL of your VPN server
+  url: https://your-vpn-server.ext
+
+  # OATH2 settings, make sure these are the same as in the
+  # configuration file of your EduVPN instance
+  redirect_url: http://localhost
+  client_id: your_VPN_client_user_name
+  client_secret: your_VPN_client_user_password
+
+  # Username and password to acccess the EduVPN portal
+  portal_username: your_eduvpn_portal_user_name
+  portal_userpass: your_eduvpn_portal_user_password
+
+# specify custom Docker images to use for starting the different
+# components.
+# OPTIONAL
+images:
+  server: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+  ui: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+
+# options to start the User Interface when starting the server with `v6 server start`
+ui:
+  # set this to true to start the UI when starting the server with
+  # `v6 server start`
+  enabled: true
+
+  # port at which the UI will be available on your local machine
+  port: 3456
+
+# keycloak settings
+keycloak:
+  # whether users and nodes should be created in keycloak when the are created in the
+  # server, and also deleted. Default is true.
+  manage_users_and_nodes: true
+
+# set up with which origins the server should allow CORS requests. The default
+# is to allow all origins. If you want to restrict this, you can specify a list
+# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+# port 7600 on localhost. Usually, only the UI needs to access the server.
+cors_allowed_origins:
+  - https://portal.cotopaxi.vantage6.ai
+  - http://localhost:7600
+
+# development mode settings. Only use when running both the server and the algorithm
+# store that it communicates with locally
+dev:
+  # Specify the URI to the host. This is used to generate the correct URIs to
+  # communicate with the algorithm store. On Windows and Mac, you can use the special
+  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
+  # should normally use http://172.17.0.1.
+  host_uri: http://host.docker.internal
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects the metrics from the nodes.
+# 2. The Prometheus server (running as a separate Docker container), which scrapes the metrics exposed by the Prometheus exporter and stores them.
+# The exporter is started by default when the server starts. The Prometheus server can be started separately.
+prometheus:
+  # Set to true to start the Prometheus server when starting the server
+  start_with_server: false
+  # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+  # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
+  # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
+  exporter_port: 7603

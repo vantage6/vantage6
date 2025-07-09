@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # This script is used to purge data for devspace.
-# It deletes the populate marker file, task directory, server database, and store database.
+# It deletes the populate marker file, task directory, server database, store database, and keycloak database.
 
 # Arguments:
 #   $1 - Path to the populate marker file
 #   $2 - Path to the task directory
 #   $3 - Path to the server database mount directory
 #   $4 - Path to the store database mount directory
+#   $5 - Path to the keycloak database mount directory
 
 # Functions
 usage() {
@@ -17,14 +18,26 @@ usage() {
   exit 1
 }
 
+# Function to replace WSL paths
+replace_wsl_path() {
+  WSL_REFERENCE_PATH="/run/desktop/mnt/host/wsl"
+  WSL_REGULAR_PATH="/mnt/wsl"
+  local path=$1
+  # If the path contains /run/desktop/mnt/host/wsl, replace it with /mnt/wsl
+  if [[ "$path" == $WSL_REFERENCE_PATH* ]]; then
+    path="${WSL_REGULAR_PATH}${path#${WSL_REFERENCE_PATH}}"
+  fi
+  echo "$path"
+}
+
 if [[ "$1" == "--help" ]]; then
   usage
 fi
 
-POPULATE_MARKER=$1
-TASK_DIRECTORY=$2
-SERVER_DATABASE_MOUNT_PATH=$3
-STORE_DATABASE_MOUNT_PATH=$4
+POPULATE_MARKER=$(replace_wsl_path "$1")
+TASK_DIRECTORY=$(replace_wsl_path "$2")
+SERVER_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
+STORE_DATABASE_MOUNT_PATH=$(replace_wsl_path "$4")
 
 # Validate that all required arguments are provided
 if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ]; then

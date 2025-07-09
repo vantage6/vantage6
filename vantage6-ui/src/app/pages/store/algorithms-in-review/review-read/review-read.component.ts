@@ -24,26 +24,27 @@ import { MarkdownComponent } from 'ngx-markdown';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
-    selector: 'app-review-read',
-    templateUrl: './review-read.component.html',
-    styleUrl: './review-read.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        MarkdownComponent,
-        NgFor,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-review-read',
+  templateUrl: './review-read.component.html',
+  styleUrl: './review-read.component.scss',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MarkdownComponent,
+    NgFor,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class ReviewReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -140,7 +141,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.store) return;
           await this.reviewService.deleteReview(this.store.url, review.id).then(() => {
             this.reviews = this.reviews.filter((r) => r.id !== review.id);

@@ -26,6 +26,9 @@ class TaskDatabase(Base):
         data extraction.
     type_ : str
         Type of the database (e.g. source or dataframe)
+    position : int
+        Position of the database in the argument list supplied to the algorithm, as
+        specified by the user.
 
     Relationships
     -------------
@@ -38,6 +41,7 @@ class TaskDatabase(Base):
     label = Column(String)
     dataframe_id = Column(Integer, ForeignKey("dataframe.id"))
     type_ = Column("type", String)
+    position = Column(Integer)
 
     # relationships
     task = relationship("Task", back_populates="databases")

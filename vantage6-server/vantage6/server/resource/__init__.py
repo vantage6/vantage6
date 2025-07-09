@@ -3,16 +3,24 @@ import logging
 
 from functools import wraps
 
-from flask import g, request
+from flask import current_app, g, request
 from flask_restful import Api
 from flask_mail import Mail
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import (
+    get_jwt,
+    get_jwt_identity,
+    verify_jwt_in_request,
+)
+from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
 
 
+import jwt
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.common import logger_name
 from vantage6.backend.common.services_resources import BaseServicesResources
 from vantage6.server import db
+from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.permission import (
     PermissionManager,
@@ -161,70 +169,145 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
     def protection_decorator(fn):
         @wraps(fn)
         def decorator(*args, **kwargs):
-            # decode JWT-token
-            identity = get_jwt_identity()
-            claims = get_jwt()
+            try:
+                _validate_user_or_node_token(types)
 
-            # check that identity has access to endpoint
-            g.type = claims["client_type"]
+                return fn(*args, **kwargs)
 
-            if g.type not in types:
-                # FIXME BvB 23-10-19: user gets a 500 error, would be better to
-                # get an error message with 400 code
-                msg = (
-                    f"{g.type}s are not allowed to access {request.url} "
-                    f"({request.method})"
-                )
-                log.warning(msg)
-                raise Exception(msg)
+            except Exception:
+                if "container" not in types:
+                    raise Exception("Authentication failed")
 
-            # do some specific stuff per identity
-            g.user = g.container = g.node = None
+                _validate_container_token()
 
-            if g.type == "user":
-                user = get_and_update_authenticatable_info(identity)
-                g.user = user
-                assert g.user.type == g.type
-                log.debug(f"Received request from user {user.username} ({user.id})")
+                return fn(*args, **kwargs)
 
-            elif g.type == "node":
-                node = get_and_update_authenticatable_info(identity)
-                g.node = node
-                assert g.node.type == g.type
-                log.debug(f"Received request from node {node.name} ({node.id})")
-
-            elif g.type == "container":
-                g.container = identity
-                log.debug(
-                    "Received request from container with node id "
-                    f"{identity['node_id']} and task id {identity['task_id']}"
-                )
-
-            else:
-                raise Exception(f"Unknown entity: {g.type}")
-
-            return fn(*args, **kwargs)
-
-        return jwt_required()(decorator)
+        return decorator
 
     return protection_decorator
 
 
-def get_and_update_authenticatable_info(auth_id: int) -> db.Authenticatable:
+def _validate_user_or_node_token(types: tuple[str]) -> None:
+    """
+    Validate that token belongs to a user or node.
+
+    Parameters
+    ----------
+    types : tuple[str]
+        List of types that are allowed to access the endpoint. Possible types
+        are 'user', 'node' and 'container'.
+    """
+    # First verify the JWT (for user/node tokens)
+    verify_jwt_in_request()
+    # Get the identity and claims
+    identity = get_jwt_identity()
+    claims = get_jwt()
+
+    # check that identity has access to endpoint
+    g.type = claims["vantage6_client_type"]
+
+    if g.type not in types:
+        # FIXME BvB 23-10-19: user gets a 500 error, would be better to
+        # get an error message with 400 code
+        msg = (
+            f"{g.type}s are not allowed to access {request.url} " f"({request.method})"
+        )
+        log.warning(msg)
+        raise Exception(msg)
+
+    # do some specific stuff per identity
+    g.user = g.container = g.node = None
+
+    if g.type == "user":
+        try:
+            user = _get_and_update_authenticatable_info(identity)
+        except Exception as e:
+            log.error("No user found for keycloak id %s", identity)
+            raise e
+
+        g.user = user
+        assert g.user.type == g.type
+        log.debug("Received request from user %s (%s)", user.username, user.id)
+
+    elif g.type == "node":
+        node = _get_and_update_authenticatable_info(identity)
+        g.node = node
+        assert g.node.type == g.type
+        log.debug("Received request from node %s (%s)", node.name, node.id)
+
+    else:
+        raise Exception(f"Unknown entity: {g.type}")
+
+
+def _validate_container_token():
+    """
+    Validate that token belongs to a container.
+    """
+    # Get the token from the Authorization header
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise Exception("Missing or invalid Authorization header")
+
+    # Extract the token
+    token = auth_header.replace("Bearer ", "")
+
+    try:
+        # Decode and verify the container token
+        claims = jwt.decode(
+            token,
+            current_app.config["jwt_secret_key"],
+            algorithms=["HS256"],
+        )
+    except Exception as container_error:
+        log.error("Container authentication failed: %s", str(container_error))
+        raise Exception("Authentication failed")
+
+    # Verify this is a container token
+    if claims.get("sub", {}).get("vantage6_client_type") != "container":
+        raise Exception("Not a container token")
+
+    # Set the container info in the global context
+    g.type = "container"
+    g.container = claims["sub"]
+    g.user = g.node = None
+
+    log.debug(
+        "Received request from container with node id "
+        f"{claims['sub']['node_id']} and task id {claims['sub']['task_id']}"
+    )
+
+    # Set up container identity and permissions
+    auth_identity = Identity(claims["sub"])
+
+    # Add container role permissions
+    for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
+        auth_identity.provides.add(
+            RuleNeed(
+                name=rule.name,
+                scope=rule.scope,
+                operation=rule.operation,
+            )
+        )
+
+    # Send identity changed signal
+    identity_changed.send(current_app._get_current_object(), identity=auth_identity)
+
+
+def _get_and_update_authenticatable_info(keycloak_id: int) -> db.Authenticatable:
     """
     Get user or node from ID and update last time seen online.
 
     Parameters
     ----------
-    auth_id : int
-        ID of the user or node
+    keycloak_id : int
+        KeycloakID of the user or node
 
     Returns
     -------
     db.Authenticatable
         User or node database model
     """
-    auth = db.Authenticatable.get(auth_id)
+    auth = db.Authenticatable.get_by_keycloak_id(keycloak_id)
     auth.last_seen = dt.datetime.now(dt.timezone.utc)
     auth.save()
     return auth

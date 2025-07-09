@@ -2,6 +2,7 @@
 Common functionality used in multiple vantage6 components.
 """
 
+from enum import Enum
 import os
 import base64
 import click
@@ -395,3 +396,12 @@ def split_rabbitmq_uri(rabbit_uri: str) -> dict:
         "port": port,
         "vhost": vhost,
     }
+
+
+def validate_required_env_vars(env_vars: Enum) -> None:
+    """Validate that the required environment variables are set."""
+    for env_var in env_vars:
+        if not os.environ.get(env_var.value):
+            raise ValueError(
+                f"Required environment variable '{env_var.value}' is not set"
+            )

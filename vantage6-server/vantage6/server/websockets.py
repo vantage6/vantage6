@@ -1,4 +1,5 @@
 import logging
+from socket import SocketIO
 import jwt
 import datetime as dt
 
@@ -9,10 +10,15 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 from vantage6.common.globals import AuthStatus
+from vantage6.backend.common.metrics import Metrics
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.dataframe_to_be_deleted_at_node import (
+    DataframeToBeDeletedAtNode,
+)
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
+
 
 ALL_NODES_ROOM = "all_nodes"
 
@@ -27,9 +33,12 @@ class DefaultSocketNamespace(Namespace):
     functions in this class are called to execute the corresponding action.
     """
 
-    socketio = None
-
     log = logging.getLogger(logger_name(__name__))
+
+    def __init__(self, namespace, socketio, metrics: Metrics) -> None:
+        super().__init__(namespace)
+        self.socketio = socketio
+        self.metrics = metrics
 
     def _is_node(self) -> bool:
         if session.type != "node":
@@ -79,7 +88,7 @@ class DefaultSocketNamespace(Namespace):
 
         # get identity from token.
         session.auth_id = get_jwt_identity()
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 
@@ -92,7 +101,7 @@ class DefaultSocketNamespace(Namespace):
         # define socket-session variables.
         session.type = auth.type
         session.name = auth.username if session.type == "user" else auth.name
-        self.log.info(f"Client identified as <{session.type}>: <{session.name}>")
+        self.log.info("Client identified as <%s>: <%s>", session.type, session.name)
 
         # join appropiate rooms
         session.rooms = []
@@ -102,6 +111,8 @@ class DefaultSocketNamespace(Namespace):
             # Add node to rooms and alert other clients of that
             self._add_node_to_rooms(auth)
             self.__alert_node_status(online=True, node=auth)
+            # send dataframe deletion instructions to node
+            self._send_dataframe_deletion_instructions(auth)
         elif session.type == "user":
             self._add_user_to_rooms(auth)
 
@@ -140,7 +151,7 @@ class DefaultSocketNamespace(Namespace):
             User that is to be added to the rooms
         """
         # check for which collab rooms the user has permission to enter
-        session.user = db.User.get(session.auth_id)
+        session.user = db.User.get_by_keycloak_id(session.auth_id)
         if session.user.can("event", Scope.GLOBAL, Operation.RECEIVE):
             # user joins all collaboration rooms
             collabs = db.Collaboration.get()
@@ -159,6 +170,18 @@ class DefaultSocketNamespace(Namespace):
                     f"collaboration_{collab.id}_organization_" f"{user.organization.id}"
                 )
 
+    def _send_dataframe_deletion_instructions(self, node: Authenticatable) -> None:
+        """
+        Send dataframe deletion instructions to a node.
+        """
+        for dataframe_to_delete in DataframeToBeDeletedAtNode.get_by_node_id(node.id):
+            send_delete_dataframe_event(
+                self.socketio,
+                dataframe_to_delete.dataframe_name,
+                dataframe_to_delete.session_id,
+                node.collaboration_id,
+            )
+
     def on_disconnect(self) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
@@ -175,7 +198,7 @@ class DefaultSocketNamespace(Namespace):
             # self.__leave_room_and_notify(room)
             self.__leave_room_and_notify(room)
 
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.OFFLINE.value
         auth.save()
 
@@ -311,15 +334,10 @@ class DefaultSocketNamespace(Namespace):
             Dictionary containing the node's configuration.
         """
         # only allow nodes to send this event
-        if session.type != "node":
-            self.log.warning(
-                "Only nodes can send node configuration updates! %s %s is not allowed.",
-                session.type,
-                session.auth_id,
-            )
+        if not self._is_node():
             return
 
-        node = db.Node.get(session.auth_id)
+        node = db.Node.get_by_keycloak_id(session.auth_id)
 
         # delete any old data that may be present (if cleanup on disconnect
         # failed)
@@ -362,10 +380,24 @@ class DefaultSocketNamespace(Namespace):
         A client sends a ping to the server. The server detects who sent the
         ping and sets them as online.
         """
-        auth = db.Authenticatable.get(session.auth_id)
+        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
         auth.status = AuthStatus.ONLINE.value
         auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
+
+    def on_dataframe_deleted(self, data: dict) -> None:
+        """
+        A dataframe has been deleted at a node.
+        """
+        self.log.info(
+            "Instruction to delete dataframe %s was executed by node %s",
+            data["df_name"],
+            data["node_id"],
+        )
+        df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
+            data["df_name"], data["session_id"], data["node_id"]
+        )
+        df_to_be_deleted.delete()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -475,6 +507,40 @@ class DefaultSocketNamespace(Namespace):
         else:
             run.log = log_message
 
+    def on_node_metrics_update(self, data: dict) -> None:
+        """
+        Handle metrics sent by nodes and update Prometheus metrics.
+
+        Parameters
+        ----------
+        data: dict
+            Dictionary containing node metrics.
+        """
+        if not self._is_node():
+            return
+
+        node = db.Node.get(session.auth_id)
+
+        os_label = data.pop("os", "unknown")
+        platform_label = data.pop("platform", "unknown")
+        for metric_name, value in data.items():
+            try:
+                self.metrics.set_metric(
+                    metric_name=metric_name,
+                    value=value,
+                    labels={
+                        "node_id": node.id,
+                        "os": os_label,
+                        "platform": platform_label,
+                    },
+                )
+            except ValueError as e:
+                self.log.warning(f"Invalid metric data: {e}")
+            except Exception as e:
+                self.log.error(f"Failed to process metric '{metric_name}': {e}")
+
+        self.log.info(f"Updated metrics for node {node.id}")
+
     @staticmethod
     def __is_identified_client() -> bool:
         """
@@ -505,3 +571,28 @@ class DefaultSocketNamespace(Namespace):
     def __cleanup() -> None:
         """Cleanup database connections"""
         DatabaseSessionManager.clear_session()
+
+
+def send_delete_dataframe_event(
+    socketio: SocketIO, dataframe_name: str, session_id: int, collaboration_id: int
+) -> None:
+    """
+    Send a socket event to the nodes to delete a dataframe.
+
+    Parameters
+    ----------
+    socketio: SocketIO
+        SocketIO instance
+    dataframe_name: str
+        Name of the dataframe to delete
+    session_id: int
+        ID of the session that contains the dataframe
+    collaboration_id: int
+        ID of the collaboration that contains the dataframe
+    """
+    socketio.emit(
+        "delete_dataframe",
+        {"df_name": dataframe_name, "session_id": session_id},
+        namespace="/tasks",
+        room=f"collaboration_{collaboration_id}",
+    )

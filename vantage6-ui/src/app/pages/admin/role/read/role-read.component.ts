@@ -26,27 +26,26 @@ import { TableComponent } from '../../../../components/table/table.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-role-read',
-    templateUrl: './role-read.component.html',
-    styleUrls: ['./role-read.component.scss'],
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatCard,
-        MatCardContent,
-        MatTabGroup,
-        MatTab,
-        MatButton,
-        MatIcon,
-        PermissionsMatrixServerComponent,
-        RoleSubmitButtonsComponent,
-        TableComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-role-read',
+  templateUrl: './role-read.component.html',
+  styleUrls: ['./role-read.component.scss'],
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatTabGroup,
+    MatTab,
+    MatButton,
+    MatIcon,
+    PermissionsMatrixServerComponent,
+    RoleSubmitButtonsComponent,
+    TableComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
-  // TODO(BART/RIAN) RIAN: When needed implement permissions/rules for sessions, nothing has been implemented for this yet.
   isEditing: boolean = false;
 
   role: Role | null = null;
@@ -98,10 +97,8 @@ export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDe
     }
     this.userTable = {
       columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'firstname', label: this.translateService.instant('user.first-name') },
-        { id: 'lastname', label: this.translateService.instant('user.last-name') },
-        { id: 'email', label: this.translateService.instant('user.email') }
+        { id: 'id', label: this.translateService.instant('user.id') },
+        { id: 'username', label: this.translateService.instant('user.username') }
       ],
       rows: this.role.users.map((user) => ({
         id: user.id.toString(),

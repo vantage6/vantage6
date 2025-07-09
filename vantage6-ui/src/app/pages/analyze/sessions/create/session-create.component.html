@@ -1,12 +1,12 @@
 <app-page-header [title]="title"> </app-page-header>
-<mat-card>
+<mat-card *ngIf="!isLoading; else loading">
   <mat-card-content>
     <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ "session-create.session-form.name" | translate }}</mat-label>
         <input matInput type="text" formControlName="name" />
       </mat-form-field>
-      <mat-form-field subscriptSizing="dynamic" *ngIf="!session">
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ "session-create.session-form.scope" | translate }}</mat-label>
         <mat-select formControlName="scope" multiple="false">
           <mat-option *ngFor="let scope of scopeKeys" [value]="scope">{{ scope }}</mat-option>
@@ -26,3 +26,6 @@
     </form>
   </mat-card-content>
 </mat-card>
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

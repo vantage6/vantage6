@@ -4,6 +4,7 @@ import pandas as pd
 from typing import Any
 from functools import wraps
 
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common import info
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.algorithm.tools.exceptions import (
@@ -106,10 +107,11 @@ def data_extraction(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
+    wrapper.vantage6_decorated_type = DecoratorType.PREPROCESSING
     return wrapper
 
 
-def pre_processing(func: callable) -> callable:
+def preprocessing(func: callable) -> callable:
     """Decorator for pre-processing functions."""
 
     @wraps(func)
@@ -123,6 +125,7 @@ def pre_processing(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
+    wrapper.vantage6_decorated_type = DecoratorType.PREPROCESSING
     return wrapper
 
 
@@ -135,6 +138,7 @@ def federated(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
+    wrapper.vantage6_decorated_type = DecoratorType.FEDERATED
     return wrapper
 
 
@@ -147,4 +151,5 @@ def central(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
+    wrapper.vantage6_decorated_type = DecoratorType.CENTRAL
     return wrapper

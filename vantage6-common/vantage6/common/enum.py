@@ -7,8 +7,6 @@ class StorePolicies(str, Enum):
     """
 
     ALGORITHM_VIEW = "algorithm_view"
-    ALLOWED_SERVERS = "allowed_servers"
-    ALLOW_LOCALHOST = "allow_localhost"
     MIN_REVIEWERS = "min_reviewers"
     ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
     MIN_REVIEWING_ORGANIZATIONS = "min_reviewing_organizations"
@@ -41,10 +39,10 @@ class AlgorithmStepType(EnumBase):
     does not require access to the original data source.
     """
 
-    DATA_EXTRACTION = "data extraction"
+    DATA_EXTRACTION = "data_extraction"
     PREPROCESSING = "preprocessing"
-    FEDERATED_COMPUTE = "federated compute"
-    CENTRAL_COMPUTE = "central compute"
+    FEDERATED_COMPUTE = "federated_compute"
+    CENTRAL_COMPUTE = "central_compute"
     POST_PROCESSING = "postprocessing"
 
     @classmethod
@@ -116,6 +114,8 @@ class RunStatus(EnumBase):
     UNKNOWN_ERROR = "unknown error"
     # Datafrome was not found
     DATAFRAME_NOT_FOUND = "dataframe not found"
+    # Task was not executed because a task that it depended on failed
+    DEPENDED_ON_FAILED_TASK = "depended on failed task"
 
     # Unexpected output type from container
     UNEXPECTED_OUTPUT = "unexpected output"
@@ -168,6 +168,7 @@ class RunStatus(EnumBase):
             cls.NO_DOCKER_IMAGE.value,
             cls.UNEXPECTED_OUTPUT.value,
             cls.DATAFRAME_NOT_FOUND.value,
+            cls.DEPENDED_ON_FAILED_TASK.value,
         ]
 
     @classmethod
@@ -192,3 +193,20 @@ class TaskStatusQueryOptions(EnumBase):
     OPEN = "open"
     WAITING = "waiting"
     FINISHED = "finished"
+
+
+class AlgorithmArgumentType(EnumBase):
+    """Enum for argument types"""
+
+    COLUMN = "column"
+    COLUMNS = "column_list"
+    STRING = "string"
+    STRINGS = "string_list"
+    INTEGER = "integer"
+    INTEGERS = "integer_list"
+    FLOAT = "float"
+    FLOATS = "float_list"
+    BOOLEAN = "boolean"
+    JSON = "json"
+    ORGANIZATION = "organization"
+    ORGANIZATIONS = "organization_list"

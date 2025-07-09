@@ -3,9 +3,13 @@
 store:
   replications: 1
 
-  vantage6Server:
-    uri: http://localhost:7601/server
-    rootUser: root
+  # Keycloak configuration
+  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakRealm: vantage6
+  keycloakAdminUsername: admin
+  keycloakAdminPassword: admin
+  keycloakAdminClient: backend-admin-client
+  keycloakAdminClientSecret: myadminclientsecret
 
   policies:
     algorithmView: public
@@ -34,7 +38,7 @@ store:
 
   logging:
     level: INFO
-  
+
   # TODO: merge the dev section with policies.dev?
   dev:
     host_uri: host.docker.internal

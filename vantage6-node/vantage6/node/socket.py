@@ -4,6 +4,7 @@ from socketio import ClientNamespace
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
+from vantage6.node.k8s.session_manager import SessionFileManager
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -129,8 +130,8 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
-        self.node_worker_ref.client.refresh_token()
-        self.log.debug("Token refreshed")
+        self.node_worker_ref.client.obtain_new_token()
+        self.log.debug("New token obtained")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
         self.node_worker_ref.sync_task_queue_with_server()
@@ -178,3 +179,22 @@ class NodeTaskNamespace(ClientNamespace):
                 },
                 namespace="/tasks",
             )
+
+    def on_delete_dataframe(self, data: dict):
+        """
+        Action to be taken when a dataframe is instructed to be deleted.
+        """
+        self.log.info("Received instruction to delete dataframe: %s", data["df_name"])
+        session_file_manager = SessionFileManager(data["session_id"])
+        session_file_manager.delete_dataframe_file(data["df_name"])
+        # send back a socket event to the server to indicate that the dataframe has been
+        # deleted
+        self.emit(
+            "dataframe_deleted",
+            {
+                "df_name": data["df_name"],
+                "session_id": data["session_id"],
+                "node_id": self.node_worker_ref.client.whoami.id_,
+            },
+            namespace="/tasks",
+        )

@@ -6,7 +6,7 @@ from functools import wraps
 from dataclasses import dataclass
 
 from vantage6.common.globals import ContainerEnvNames
-
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.algorithm.tools.util import info
 
 
@@ -36,7 +36,7 @@ def _extract_token_payload(token: str) -> dict:
     Returns
     -------
     dict
-        The payload as a dictionary. It contains the keys: `client_type`,
+        The payload as a dictionary. It contains the keys: `vantage6_client_type`,
         `node_id`, `organization_id`, `collaboration_id`, `task_id`, `image`,
         and `databases`.
     """
@@ -78,5 +78,7 @@ def metadata(func: callable) -> callable:
             token=token,
         )
         return func(metadata, *args, **kwargs)
+
+    decorator.vantage6_decorated_type = DecoratorType.METADATA
 
     return decorator

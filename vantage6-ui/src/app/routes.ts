@@ -1,11 +1,4 @@
 export const routePaths = {
-  login: '/auth/login',
-  passwordLost: '/auth/password/lost',
-  passwordRecover: '/auth/password/recover',
-  setupMFA: '/auth/mfa/setup',
-  mfaCode: '/auth/mfa/code',
-  mfaLost: '/auth/mfa/lost',
-  mfaRecover: '/auth/mfa/recover',
   home: '/',
   passwordChange: '/password/change',
   adminHome: '/admin',
@@ -41,8 +34,8 @@ export const routePaths = {
   chooseCollaboration: '/analyze/collaboration/choose',
   keyUpload: '/analyze/key/upload',
   tasks: '/analyze/tasks',
-  taskCreate: '/analyze/tasks/create',
-  taskCreateRepeat: '/analyze/tasks/create/repeat',
+  taskCreate: '/analyze/create/task',
+  taskCreateRepeat: '/analyze/create/task/repeat',
   task: '/analyze/tasks',
   dataframeCreate: '/analyze/sessions/dataframe/create',
   sessions: '/analyze/sessions',
@@ -66,17 +59,12 @@ export const routePaths = {
   algorithmReviewAssign: '/store/review/assign',
   algorithmReview: '/store/review',
   algorithmReviewSubmit: '/store/review/submit',
-  myPendingAlgorithms: '/store/pending/algorithms'
+  myPendingAlgorithms: '/store/pending/algorithms',
+  communityStore: '/communitystore',
+  communityStoreAlgorithms: '/communitystore/algorithm',
 };
 
 export const routerConfig = {
-  login: 'login',
-  passwordLost: 'password/lost',
-  passwordRecover: 'password/recover',
-  setupMFA: 'mfa/setup',
-  mfaCode: 'mfa/code',
-  mfaLost: 'mfa/lost',
-  mfaRecover: 'mfa/recover',
   chooseCollaboration: 'collaboration/choose',
   keyUpload: 'key/upload',
   home: '',
@@ -115,8 +103,8 @@ export const routerConfig = {
   analyze: 'analyze',
   analyzeHome: '',
   tasks: 'tasks',
-  taskCreate: 'tasks/create',
-  taskCreateRepeat: 'tasks/create/repeat/:id',
+  taskCreate: 'create/task',
+  taskCreateRepeat: 'create/task/repeat/:id',
   task: 'tasks/:id',
   dataframeCreate: 'sessions/dataframe/create/:sessionId',
   sessions: 'sessions',
@@ -140,5 +128,7 @@ export const routerConfig = {
   algorithmReviewAssign: 'review/assign/:algoID',
   algorithmReview: 'review/:algoID',
   algorithmReviewSubmit: 'review/submit/:id',
-  myPendingAlgorithms: 'pending/algorithms'
+  myPendingAlgorithms: 'pending/algorithms',
+  communityStoreAlgorithm: 'algorithm/:id',
+  communityStoreAlgorithms: 'algorithm'
 };

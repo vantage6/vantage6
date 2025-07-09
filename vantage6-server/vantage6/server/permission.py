@@ -370,8 +370,8 @@ class PermissionManager(PermissionManagerBase):
             log.debug(
                 "New auth rule '%s' with scope=%s and operation=%s is stored in the DB",
                 resource,
-                scope,
-                operation,
+                scope.value,
+                operation.value,
             )
 
         if assign_to_container:

@@ -1,12 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, first } from 'rxjs';
-import { ACCESS_TOKEN_KEY } from 'src/app/models/constants/sessionStorage';
 import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
-import { Router } from '@angular/router';
-import { LoginErrorService } from './login-error.service';
 import { isNested } from 'src/app/helpers/utils.helper';
 
 @Injectable({
@@ -14,16 +11,13 @@ import { isNested } from 'src/app/helpers/utils.helper';
 })
 export class ApiService {
   constructor(
-    private router: Router,
     private http: HttpClient,
-    private snackBarService: SnackbarService,
-    private loginErrorService: LoginErrorService
+    private snackBarService: SnackbarService
   ) {}
 
   async getForApi<T = null>(path: string, params: object | null = null): Promise<T> {
     return await this.handleResult(
       this.http.get<T>(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         params: { ...params }
       })
     );
@@ -32,7 +26,6 @@ export class ApiService {
   async getForApiWithPagination<T>(path: string, currentPage: number, parameters: object | null = null): Promise<Pagination<T>> {
     return await this.handleResultForPagination(
       this.http.get<Pagination<T>>(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         observe: 'response',
         params: {
           ...parameters,
@@ -45,27 +38,18 @@ export class ApiService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async postForApi<T>(path: string, body: any): Promise<T> {
-    return await this.handleResult(
-      this.http.post<T>(this.getApiPath(path), body, {
-        headers: this.getApiAuthenticationHeaders()
-      })
-    );
+    return await this.handleResult(this.http.post<T>(this.getApiPath(path), body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async patchForApi<T>(path: string, body: any): Promise<T> {
-    return await this.handleResult(
-      this.http.patch<T>(this.getApiPath(path), body, {
-        headers: this.getApiAuthenticationHeaders()
-      })
-    );
+    return await this.handleResult(this.http.patch<T>(this.getApiPath(path), body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForApi(path: string, params: object = {}): Promise<any> {
     return await this.handleResult(
       this.http.delete(this.getApiPath(path), {
-        headers: this.getApiAuthenticationHeaders(),
         params: { ...params }
       })
     );
@@ -86,7 +70,6 @@ export class ApiService {
   ): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     const request = this.http.get<T>(algo_store_url + path, {
-      headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
       params: { ...parameters }
     });
     if (showAuthError) {
@@ -105,7 +88,6 @@ export class ApiService {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResultForPagination(
       this.http.get<Pagination<T>>(algo_store_url + path, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() },
         observe: 'response',
         params: {
           ...parameters,
@@ -118,43 +100,18 @@ export class ApiService {
 
   async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.post<T>(algo_store_url + path, body, {
-        headers: {
-          server_url: `${environment.server_url}${environment.api_path}`,
-          store_url: algo_store_url,
-          ...this.getApiAuthenticationHeaders()
-        }
-      })
-    );
+    return await this.handleResult(this.http.post<T>(algo_store_url + path, body));
   }
 
   async patchForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.patch<T>(algo_store_url + path, body, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
-      })
-    );
+    return await this.handleResult(this.http.patch<T>(algo_store_url + path, body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
     algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(
-      this.http.delete(algo_store_url + path, {
-        headers: { server_url: `${environment.server_url}${environment.api_path}`, ...this.getApiAuthenticationHeaders() }
-      })
-    );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getApiAuthenticationHeaders(): any {
-    const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
-
-    if (!accessToken) return {};
-
-    return { Authorization: `Bearer ${accessToken}` };
+    return await this.handleResult(this.http.delete(algo_store_url + path));
   }
 
   private async handleResult<T = null>(request: Observable<T>): Promise<T> {
@@ -165,15 +122,7 @@ export class ApiService {
         },
         (error) => {
           const errorMsg = this.getErrorMsg(error);
-          // TODO it would be nicer to find another way to check if we are on the login page. Difficulty is to
-          // prevent circular dependencies, that's why we can't import authService here
-          if (this.router.url.startsWith('/auth')) {
-            // when not logged in, use loginErrorService to show messages clearly on login page
-            this.loginErrorService.setError(errorMsg);
-          } else {
-            // when logged in, show messages in snackbar
-            this.snackBarService.showMessage(errorMsg);
-          }
+          this.snackBarService.showMessage(errorMsg);
           reject(error);
         }
       );
@@ -248,8 +197,8 @@ export class ApiService {
   }
 
   private getApiPath(path: string): string {
-    //TODO: Lazy loaded calls already include API path
-    if (path.startsWith('/') && path.startsWith(environment.api_path)) {
+    // Lazy loaded calls already include API path
+    if (path.startsWith('/') && path.startsWith(`${environment.api_path}/`)) {
       return environment.server_url + path;
     }
     return environment.server_url + environment.api_path + path;

@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
+from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -27,6 +28,7 @@ from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutp
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import (
     with_permission,
@@ -171,8 +173,8 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             if registry_user and registry_password:
                 digest = get_digest(
                     full_image=image_name,
-                    docker_username=registry_user,
-                    docker_password=registry_password,
+                    registry_username=registry_user,
+                    registry_password=registry_password,
                 )
 
         return image_and_tag, digest
@@ -409,8 +411,8 @@ class Algorithms(AlgorithmBaseResource):
                         step_type:
                           type: string
                           description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                            extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -428,6 +430,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              multiple:
+                                type: boolean
+                                description: Whether more than one database can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -450,6 +456,13 @@ class Algorithms(AlgorithmBaseResource):
                                   'string_list', 'integer', 'integer_list', 'float',
                                   'float_list', 'boolean', 'json', 'column',
                                   'column_list', 'organization' or 'organization_list'
+                              allowed_values:
+                                type: array
+                                description: An optional list of allowed values for the
+                                  argument. If type of the argument is 'string',
+                                  the allowed values should be a list of strings, etc.
+                                items:
+                                  type: string | int | float
                               has_default_value:
                                 type: boolean
                                 description: Whether the argument has a default
@@ -539,7 +552,7 @@ class Algorithms(AlgorithmBaseResource):
             code_url=data["code_url"],
             documentation_url=data.get("documentation_url", None),
             digest=digest,
-            developer=g.user,
+            developer_id=g.user.id,
             submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
@@ -588,12 +601,19 @@ class Algorithms(AlgorithmBaseResource):
                     )
                     arg.conditional_on_id = conditional_on.id
                     arg.save()
+                if argument.get("allowed_values", []):
+                    for value in argument["allowed_values"]:
+                        allowed_value = AllowedArgumentValue(
+                            value=str(value), argument_id=arg.id
+                        )
+                        allowed_value.save()
             # create the databases
             for database in function.get("databases", []):
                 db_ = Database(
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                 )
                 db_.save()
             # create the visualizations
@@ -687,7 +707,6 @@ class Algorithms(AlgorithmBaseResource):
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
                 "store_url": get_server_url(config, store_url),
-                "server_url": algo_manager.server.url,
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
                 "support_email": support_email,
@@ -776,6 +795,8 @@ class Algorithm(AlgorithmBaseResource):
             for database in function.databases:
                 database.delete()
             for argument in function.arguments:
+                for allowed_value in argument.allowed_values:
+                    allowed_value.delete()
                 argument.delete()
             for visualization in function.ui_visualizations:
                 visualization.delete()
@@ -848,9 +869,9 @@ class Algorithm(AlgorithmBaseResource):
                           description: Description of the function
                         step_type:
                           type: string
-                          description: Step type of the function. Can be 'data
-                            extraction', 'preprocessing', 'federated compute',
-                            'central compute', or 'postprocessing'
+                          description: Step type of the function. Can be
+                            'data_extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
                           description: Whether this function produces useful results
@@ -1022,6 +1043,8 @@ class Algorithm(AlgorithmBaseResource):
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
                 for argument in function.arguments:
+                    for allowed_value in argument.allowed_values:
+                        allowed_value.delete()
                     argument.delete()
                 for db_ in function.databases:
                     db_.delete()
@@ -1033,6 +1056,7 @@ class Algorithm(AlgorithmBaseResource):
                 func = Function(
                     name=new_function["name"],
                     description=new_function.get("description", ""),
+                    display_name=new_function.get("display_name", ""),
                     step_type=new_function["step_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,
@@ -1058,7 +1082,7 @@ class Algorithm(AlgorithmBaseResource):
                     arg.save()
                 # after creating the arguments, all have had their IDs assigned so we
                 # can now set the column `conditional_on_id`
-                for argument in function.get("arguments", []):
+                for argument in new_function.get("arguments", []):
                     arg = Argument.get_by_name(argument["name"], func.id)
                     if argument.get("conditional_on"):
                         conditional_on = Argument.get_by_name(
@@ -1066,12 +1090,19 @@ class Algorithm(AlgorithmBaseResource):
                         )
                         arg.conditional_on_id = conditional_on.id
                         arg.save()
+                    if argument.get("allowed_values", []):
+                        for value in argument["allowed_values"]:
+                            allowed_value = AllowedArgumentValue(
+                                value=str(value), argument_id=arg.id
+                            )
+                            allowed_value.save()
                 # Create databases and visualizations
                 for database in new_function.get("databases", []):
                     db = Database(
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

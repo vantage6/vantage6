@@ -7,10 +7,10 @@ from copy import deepcopy
 
 import pandas as pd
 
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
-from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 module_name = __name__.split(".")[1]
 
@@ -30,7 +30,8 @@ class MockAlgorithmClient:
         described as a dictionary with the same keys as in a node
         configuration:
 
-        - database: str (path to file or SQL connection string) or pd.DataFrame
+        - database: str (path to file or SQL connection string), pd.DataFrame, or
+          dict with the dataframe name as key and the dataframe as value
         - db_type (str, e.g. "csv" or "sql")
 
         There are also a number of keys that are optional but may be required
@@ -105,7 +106,7 @@ class MockAlgorithmClient:
             org_data = []
             for dataset in org_datasets:
                 db = dataset.get("database")
-                if isinstance(db, pd.DataFrame):
+                if isinstance(db, pd.DataFrame) or isinstance(db, dict):
                     df = db
                 else:
                     df = load_data(
@@ -114,7 +115,6 @@ class MockAlgorithmClient:
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )
-                df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
@@ -132,7 +132,6 @@ class MockAlgorithmClient:
         self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
-        self.node = self.Node(self)
 
     # pylint: disable=unused-argument
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
@@ -240,9 +239,15 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method_fn, "wrapped_in_algorithm_client_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.ALGORITHM_CLIENT
+                ):
                     mocked_kwargs["mock_client"] = client_copy
-                if getattr(method_fn, "wrapped_in_data_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.DATAFRAME
+                ):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
