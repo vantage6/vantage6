@@ -10,7 +10,7 @@ from kubernetes.client import V1Pod, V1ContainerStatus
 #                     \
 #                      - Unknown
 #
-post_pending_k8s_phase_to_v6_status_map: dict[str, RunStatus] = {
+POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP: dict[str, RunStatus] = {
     "Running": RunStatus.ACTIVE,
     "Failed": RunStatus.FAILED,
     "Succeded": RunStatus.COMPLETED,
@@ -22,7 +22,7 @@ post_pending_k8s_phase_to_v6_status_map: dict[str, RunStatus] = {
 #
 # Note: ErrImagePull is not included: the ImagePullBackOff 'reason' will be eventually
 # reported after multiple ErrImagePull events.
-container_image_related_reasons_for_still_pending = {
+CONTAINER_IMAGE_RELATED_REASONS_FOR_STILL_PENDING = {
     "ImagePullBackOff": "The pod is unable to pull the specified Docker image (authentication issues, network problems, or the image not existing in the registry) after multiple attempts.",
     "InvalidImageName": "The specified image name is malformed or invalid.",
     "ErrImageNeverPull": "ImagePullPolicy is Never, but the image doesn't exist locally",
@@ -31,7 +31,7 @@ container_image_related_reasons_for_still_pending = {
 
 # The reasons reported for a 'waiting' state on a POD's container (when the POD is Pending)
 # related to a problem when creating or running a container
-runtime_pod_related_reasons_for_still_pending = {
+RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING = {
     "CrashLoopBackOff": "The container keeps crashing repeatedly.",
     "CreateContainerConfigError": "Failed to create container due to misconfiguration.",
     "RunContainerError": "An error occurred while running the container.",
@@ -40,7 +40,7 @@ runtime_pod_related_reasons_for_still_pending = {
 
 # The reasons reported for a 'waiting' state on a POD's container (when the POD is Pending)
 # that are related to an ongoing image pull or container initialization
-pod_initialization_related_reasons_for_still_pending = {
+POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING = {
     "ContainerCreating": "Container image is being pulled and/or container is being created.",
     "PodInitializing": "Init containers are still running or haven't finished.",
 }
@@ -102,13 +102,13 @@ def compute_job_pod_run_status(
                 # The reason the POD status is "Pending" is related to an docker-image issue: NO_DOCKER_IMAGE
                 if (
                     pending_status_reason
-                    in container_image_related_reasons_for_still_pending
+                    in CONTAINER_IMAGE_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
                         "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE status: %s",
                         label,
                         task_namespace,
-                        container_image_related_reasons_for_still_pending[
+                        CONTAINER_IMAGE_RELATED_REASONS_FOR_STILL_PENDING[
                             pending_status_reason
                         ],
                     )
@@ -116,13 +116,13 @@ def compute_job_pod_run_status(
                 # The reason the POD status is "Pending" is due to an image that is crashing: CRASHED
                 elif (
                     pending_status_reason
-                    in runtime_pod_related_reasons_for_still_pending
+                    in RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
                         "Job POD (label %s, namespace %s) - Reporting CRASHED status: %s",
                         label,
                         task_namespace,
-                        runtime_pod_related_reasons_for_still_pending[
+                        RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING[
                             pending_status_reason
                         ],
                     )
@@ -130,13 +130,13 @@ def compute_job_pod_run_status(
                 # The reason the POD status is "Pending" is an image still being pulled or intialized: INITIALIZING
                 elif (
                     pending_status_reason
-                    in pod_initialization_related_reasons_for_still_pending
+                    in POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
                         "Job POD (label %s, namespace %s) - Reporting INITIALIZING status: %s",
                         label,
                         task_namespace,
-                        pod_initialization_related_reasons_for_still_pending[
+                        POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING[
                             pending_status_reason
                         ],
                     )
@@ -170,14 +170,14 @@ def compute_job_pod_run_status(
             return RunStatus.INITIALIZING
 
     # The POD is no longer pending, and one of the phases that follows the 'Pending' one has been reached: return the v6-status that correspond to such phase
-    elif pod_phase in post_pending_k8s_phase_to_v6_status_map:
+    elif pod_phase in POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP:
         log.debug(
             "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
             label,
             task_namespace,
-            post_pending_k8s_phase_to_v6_status_map[pod_phase],
+            POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP[pod_phase],
         )
-        return post_pending_k8s_phase_to_v6_status_map[pod_phase]
+        return POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP[pod_phase]
 
     # No other kind of phase is expected to be reported (according to current k8s's specifications)
     else:
