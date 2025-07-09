@@ -73,6 +73,13 @@ server:
     host_uri: host.docker.internal
     drop_all: 'True'
 
+  # If you want to couple algorithm stores to the server on startup, you can add them here.
+  # The name is used to identify the algorithm store in the server's database.
+  # The url is the URL of the algorithm store's API.
+  # algorithm_stores:
+  #   - name: local store
+  #     url: http://localhost:7602/api
+
 rabbitmq:
   # The image of the RabbitMQ server
   image:

@@ -1,8 +1,9 @@
 import logging
 import os
 import requests
-from flask import Response, request
+from flask import Response
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from vantage6.server import db
 
@@ -145,14 +146,16 @@ def request_algo_store(
     # service and use that instead
     local_store_url = os.environ.get("LOCAL_STORE_URL")
     if not response and is_localhost_algo_store and local_store_url:
-        port_number = algo_store_url.split(":")[2].split("/")[0]
-        algo_store_url = algo_store_url.replace(
-            f"http://localhost:{port_number}",
-            f"{local_store_url}:80",
-        )
+        parsed_url = urlparse(algo_store_url)
+        path = parsed_url.path
+
+        # LOCAL_STORE_URL is already a complete URL, just append the path
+        # The Kubernetes service listens on port 80 (service port), not the target port
+        new_url = f"{local_store_url}{path}"
+        log.debug("Retry adding local store with kubernetes service URL: %s", new_url)
         try:
             response = _execute_algo_store_request(
-                algo_store_url, endpoint, method, params, headers
+                new_url, endpoint, method, params, headers
             )
         except requests.exceptions.ConnectionError as exc:
             log.warning("Request to algorithm store failed")
@@ -217,8 +220,13 @@ def _execute_algo_store_request(
         Response from the algorithm store. If the algorithm store is not
         reachable, None is returned
     """
+    # Remove trailing slash from base URL
     if algo_store_url.endswith("/"):
         algo_store_url = algo_store_url[:-1]
+
+    # Remove leading slash from endpoint to avoid double slashes
+    if endpoint.startswith("/"):
+        endpoint = endpoint[1:]
 
     param_dict = param_dict if param_dict is not None else {}
     headers = headers if headers is not None else {}
