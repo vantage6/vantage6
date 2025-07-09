@@ -8,6 +8,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
+from vantage6.server.algo_store_communication import add_algorithm_store_to_database
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -26,6 +27,7 @@ from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
 from threading import Thread
 from sqlalchemy.orm.exc import NoResultFound
+from http import HTTPStatus
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
@@ -88,8 +90,7 @@ class ServerApp(Vantage6App):
 
         # couple any algoritm stores to the server if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
-        # TODO reactivate this option - and then remove it in dev setup script - #1983
-        # self.couple_algorithm_stores()
+        self.couple_algorithm_stores()
 
         if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(
@@ -389,61 +390,52 @@ class ServerApp(Vantage6App):
             # simple for now: check every hour
             time.sleep(3600)
 
-    # TODO Enable this functionality again - see issue #1983
-    # def couple_algorithm_stores(self) -> None:
-    #     """Couple algorithm stores to the server.
+    def couple_algorithm_stores(self) -> None:
+        """Couple algorithm stores to the server.
 
-    #     Checks if default algorithm stores are defined in the configuration and if so,
-    #     couples them to the server.
-    #     """
-    #     algorithm_stores = self.ctx.config.get("algorithm_stores", [])
-    #     server_url = get_server_url(self.ctx.config)
-    #     if algorithm_stores and not server_url:
-    #         log.warning(
-    #             "Algorithm stores are defined in the configuration, but the server "
-    #             "url is not. Skipping coupling of algorithm stores."
-    #         )
-    #         return
-    #     if algorithm_stores:
-    #         # TODO in the future it may change that not just any algorithm store can
-    #         # be added to this server - in that case show a useful error below
-    #         # (automated coupling is not possible for such cases I think?)
-
-    #         # couple the stores
-    #         for store in algorithm_stores:
-    #             if not (name := store.get("name")):
-    #                 log.warning("Algorithm store has no name, skipping coupling")
-    #                 continue
-    #             elif not (url := store.get("url")):
-    #                 log.warning(
-    #                     "Algorithm store %s has no url, skipping coupling", name
-    #                 )
-    #                 continue
-    #             store = db.AlgorithmStore.get_by_url(url)
-    #             if not store:
-    #                 response, status = add_algorithm_store_to_database(
-    #                     {
-    #                         "name": name,
-    #                         "algorithm_store_url": url,
-    #                         "server_url": server_url,
-    #                     },
-    #                     self.ctx.config,
-    #                 )
-    #                 if status == HTTPStatus.CREATED:
-    #                     log.info(
-    #                         "Algorithm store '%s' at %s has been coupled to the server",
-    #                         name,
-    #                         url,
-    #                     )
-    #                 else:
-    #                     log.error(
-    #                         "Failed to couple algorithm store '%s' at %s to the server:"
-    #                         " %s",
-    #                         name,
-    #                         url,
-    #                         response["msg"],
-    #                     )
-    #             # else: store already exists, no need to couple it again
+        Checks if default algorithm stores are defined in the configuration and if so,
+        couples them to the server.
+        """
+        algorithm_stores = self.ctx.config.get("algorithm_stores", [])
+        if algorithm_stores:
+            # couple the stores
+            for store in algorithm_stores:
+                if not (name := store.get("name")):
+                    log.warning("Algorithm store has no name, skipping coupling")
+                    continue
+                elif not (url := store.get("url")):
+                    log.warning(
+                        "Algorithm store %s has no url, skipping coupling", name
+                    )
+                    continue
+                store = db.AlgorithmStore.get_by_url(url)
+                if not store:
+                    response, status = add_algorithm_store_to_database(
+                        {
+                            "name": name,
+                            "algorithm_store_url": url,
+                        },
+                    )
+                    if status == HTTPStatus.CREATED:
+                        log.info(
+                            "Algorithm store '%s' at %s has been coupled to the server",
+                            name,
+                            url,
+                        )
+                    else:
+                        log.error(
+                            "Failed to couple algorithm store '%s' at %s to the server:"
+                            " %s",
+                            name,
+                            url,
+                            response["msg"],
+                        )
+                else:
+                    log.info(
+                        "Algorithm store '%s' at %s is already coupled to the server",
+                        name,
+                        url,
+                    )
 
 
 def run_server(config: str, system_folders: bool = True) -> ServerApp:

@@ -46,7 +46,7 @@ export enum AvailableStorePolicies {
 }
 export interface StorePolicies {
   // TODO it would be nice if we could have a more specific type here like
-  // { algorithm_view: string, allowed_servers: string[], allow_localhost: boolean }
+  // { algorithm_view: string, allowed_servers: string[] }
   // but that doesn't work with conversion to table in the algorithmStoreReadComponent
   [key: string]: string | string[] | boolean;
 }

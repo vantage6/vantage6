@@ -60,3 +60,10 @@ data:
       {{- else }}
       manage_users_and_nodes: true
       {{- end }}
+    {{- if .Values.server.algorithm_stores }}
+    algorithm_stores:
+      {{- range .Values.server.algorithm_stores }}
+      - name: {{ .name }}
+        url: {{ .url }}
+      {{- end }}
+    {{- end }}

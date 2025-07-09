@@ -520,7 +520,6 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     }
 
     # ask about openness of the algorithm store
-    config["policies"] = {"allow_localhost": False}
     is_open = q.confirm(
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",

@@ -32,7 +32,6 @@ data:
       use_console: true
     policies:
       algorithm_view: {{ .Values.store.policies.algorithmView }}
-      allow_localhost: {{ .Values.store.policies.allowLocalhost }}
       min_reviewers: {{ .Values.store.policies.minReviewers }}
       min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
       assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
