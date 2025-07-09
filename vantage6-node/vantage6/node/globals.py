@@ -16,6 +16,15 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 # HCR: This constants is not being used, as well as the other defined in cli/globals.py
 # NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
 
+# Timeout in seconds of the K8S event-stream watch used by the container manager.
+# This is the maximum amount of time the container manager will wait
+# for a terminal event (job pod created successfuly, creation failed, etc).
+# The container manager will wait again (for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds)
+# for events if the timeout is caused by a long image pull (massive image or slow connection)
+# so this parameter doesn't have a significant impact on the container manager
+# behaviour.
+K8S_EVENT_STREAM_LOOP_TIMEOUT = 120
+
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
 # constants for retrying node login
