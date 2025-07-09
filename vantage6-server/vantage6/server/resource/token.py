@@ -152,6 +152,23 @@ class ContainerToken(ServicesResources):
             )
             return {"msg": "Task is already finished!"}, HTTPStatus.BAD_REQUEST
 
+        # Group databases by position and convert to list of lists
+        databases_by_position = {}
+        for db_entry in db_task.databases:
+            pos = db_entry.position
+            if pos not in databases_by_position:
+                databases_by_position[pos] = []
+            databases_by_position[pos].append(
+                {
+                    "label": db_entry.label,
+                    "type": db_entry.type_,
+                    "dataframe_id": db_entry.dataframe_id,
+                }
+            )
+        databases = [
+            databases_by_position[pos] for pos in sorted(databases_by_position.keys())
+        ]
+
         # We store the task metadata in the token, so the server can verify later on
         # that the container is allowed to access certain server resources.
         container = {
@@ -164,14 +181,7 @@ class ContainerToken(ServicesResources):
             "session_id": db_task.session_id,
             "task_id": task_id,
             "image": claim_image,
-            "databases": [
-                {
-                    "label": db_entry.label,
-                    "type": db_entry.type_,
-                    "dataframe_id": db_entry.dataframe_id,
-                }
-                for db_entry in db_task.databases
-            ],
+            "databases": databases,
         }
 
         token = jwt.encode(

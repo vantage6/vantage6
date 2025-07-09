@@ -109,7 +109,7 @@ class TaskSchema(HATEOASModelSchema):
 
     @staticmethod
     def databases_(obj) -> list[dict]:
-        """Returns the database label and type for all databases of a task.
+        """Returns the database metadata for all databases of a task.
 
         Arguments
         ---------
@@ -119,7 +119,7 @@ class TaskSchema(HATEOASModelSchema):
         Returns
         -------
             list[dict]
-                A list of dictionaries containing the database label and type.
+                A list of dictionaries containing the database metadata.
         """
         return [
             {
@@ -127,6 +127,7 @@ class TaskSchema(HATEOASModelSchema):
                 "type": db.type_,
                 "dataframe_id": db.dataframe_id,
                 "dataframe_name": db.dataframe.name if db.dataframe else None,
+                "position": db.position,
             }
             for db in obj.databases
         ]
@@ -140,7 +141,6 @@ class ResultSchema(HATEOASModelSchema):
             "started_at",
             "finished_at",
             "status",
-            "ports",
             "organization",
             "log",
             "input",
@@ -191,9 +191,6 @@ class RunSchema(HATEOASModelSchema):
     node = fields.Function(
         serialize=lambda obj: RunNodeSchema().dump(obj.node, many=False)
     )
-    ports = fields.Function(
-        serialize=lambda obj: RunPortSchema().dump(obj.ports, many=True)
-    )
 
     @staticmethod
     def result_link(obj):
@@ -212,17 +209,6 @@ class RunNodeSchema(HATEOASModelSchema):
     class Meta:
         model = db.Node
         exclude = ("type", "collaboration", "organization", "last_seen")
-
-
-class PortSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.AlgorithmPort
-
-
-class RunPortSchema(HATEOASModelSchema):
-    class Meta:
-        model = db.AlgorithmPort
-        exclude = ("run",)
 
 
 class OrganizationSchema(HATEOASModelSchema):

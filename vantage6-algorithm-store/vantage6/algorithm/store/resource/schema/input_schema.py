@@ -7,10 +7,13 @@ from marshmallow import Schema, fields, ValidationError, validates, validates_sc
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
 
-from vantage6.common.enum import AlgorithmStepType, AlgorithmViewPolicies
+from vantage6.common.enum import (
+    AlgorithmStepType,
+    AlgorithmViewPolicies,
+    AlgorithmArgumentType,
+)
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
-    ArgumentType,
     VisualizationType,
 )
 from vantage6.algorithm.store.globals import ConditionalArgComparator
@@ -140,11 +143,11 @@ class FunctionInputSchema(_NameDescriptionSchema):
                 )
                 # argument of list types cannot be conditional - this is not supported
                 if conditional_arg.get("type_") in [
-                    ArgumentType.COLUMNS.value,
-                    ArgumentType.STRINGS.value,
-                    ArgumentType.INTEGERS.value,
-                    ArgumentType.FLOATS.value,
-                    ArgumentType.ORGANIZATIONS.value,
+                    AlgorithmArgumentType.COLUMNS.value,
+                    AlgorithmArgumentType.STRINGS.value,
+                    AlgorithmArgumentType.INTEGERS.value,
+                    AlgorithmArgumentType.FLOATS.value,
+                    AlgorithmArgumentType.ORGANIZATIONS.value,
                 ]:
                     raise ValidationError(
                         f"The argument '{arg_name}' is conditional on "
@@ -152,8 +155,8 @@ class FunctionInputSchema(_NameDescriptionSchema):
                         " type, which is not supported."
                     )
                 elif conditional_arg.get("type_") in [
-                    ArgumentType.ORGANIZATION.value,
-                    ArgumentType.JSON.value,
+                    AlgorithmArgumentType.ORGANIZATION.value,
+                    AlgorithmArgumentType.JSON.value,
                 ]:
                     raise ValidationError(
                         f"The argument '{arg_name}' is conditional on "
@@ -172,7 +175,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                     # conditional value is null - this is allowed and does not need to
                     # be checked further
                     continue
-                elif conditional_type == ArgumentType.INTEGER.value:
+                elif conditional_type == AlgorithmArgumentType.INTEGER.value:
                     try:
                         int(conditional_value)
                     except (ValueError, TypeError) as exc:
@@ -181,7 +184,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"integer, while the conditional argument '{conditional_on}' "
                             "requires an integer"
                         ) from exc
-                elif conditional_type == ArgumentType.FLOAT.value:
+                elif conditional_type == AlgorithmArgumentType.FLOAT.value:
                     try:
                         float(conditional_value)
                     except (ValueError, TypeError) as exc:
@@ -190,7 +193,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"float, while the conditional argument '{conditional_on}' "
                             "requires a float"
                         ) from exc
-                elif conditional_type == ArgumentType.BOOLEAN.value:
+                elif conditional_type == AlgorithmArgumentType.BOOLEAN.value:
                     if conditional_value.lower() not in ["true", "false", "1", "0"]:
                         raise ValidationError(
                             f"Conditional value '{conditional_value}' is not a valid "
@@ -246,8 +249,21 @@ class DatabaseInputSchema(_NameDescriptionSchema):
     Schema for the input of a database.
     """
 
-    # databases only have a name and optional description so we can use the
+    # databases have a name and optional description so we can use the
     # _NameDescriptionSchema
+    multiple = fields.Boolean(required=False, default=False)
+
+
+class _MixedBaseTypeField(fields.Field):
+    """
+    Field that can be used to validate a field that can be str, int or float
+    """
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+            return value
+        else:
+            raise ValidationError("Values should be str, int or float")
 
 
 class ArgumentInputSchema(_NameDescriptionSchema):
@@ -257,6 +273,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
     display_name = fields.String()
     type_ = fields.String(required=True, data_key="type")
+    allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
     default_value = fields.String()
     conditional_on = fields.String()
@@ -269,7 +286,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         """
         Validate that the type is one of the allowed values.
         """
-        types = [a.value for a in ArgumentType]
+        types = [a.value for a in AlgorithmArgumentType]
         if value not in types:
             raise ValidationError(
                 f"Argument type '{value}' is not one of the allowed values: {types}"
@@ -322,11 +339,11 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 " be specified"
             )
         # if default value is given, validate that it matches the type
+        type_ = data.get("type_")
         if default := data.get("default_value"):
-            type_ = data.get("type_")
             if (
-                type_ == ArgumentType.INTEGER.value
-                or type_ == ArgumentType.ORGANIZATION.value
+                type_ == AlgorithmArgumentType.INTEGER.value
+                or type_ == AlgorithmArgumentType.ORGANIZATION.value
             ):
                 try:
                     int(default)
@@ -335,7 +352,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"Default value '{default}' is not a valid integer, while the "
                         f"argument type {type_} requires an integer"
                     ) from exc
-            elif type_ == ArgumentType.FLOAT.value:
+            elif type_ == AlgorithmArgumentType.FLOAT.value:
                 try:
                     float(default)
                 except ValueError as exc:
@@ -343,14 +360,14 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"Default value '{default}' is not a valid float, while the "
                         f"argument type {type_} requires a float"
                     ) from exc
-            elif type_ == ArgumentType.BOOLEAN.value:
+            elif type_ == AlgorithmArgumentType.BOOLEAN.value:
                 if str(default).lower() not in ["true", "false", "1", "0"]:
                     raise ValidationError(
                         f"Default value '{default}' is not a valid boolean, while the "
                         f"argument type {type_} requires a boolean. Please use 'true', "
                         "'false', '1', or '0'"
                     )
-            elif type_ == ArgumentType.JSON.value:
+            elif type_ == AlgorithmArgumentType.JSON.value:
                 try:
                     json.loads(default)
                 except ValueError as exc:
@@ -359,8 +376,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"the argument type {type_} requires a JSON object"
                     ) from exc
             elif (
-                type_ == ArgumentType.STRINGS.value
-                or type_ == ArgumentType.COLUMNS.value
+                type_ == AlgorithmArgumentType.STRINGS.value
+                or type_ == AlgorithmArgumentType.COLUMNS.value
             ):
                 try:
                     json_list = json.loads(default)
@@ -372,8 +389,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"the argument type {type_} requires a JSON array"
                     ) from exc
             elif (
-                type_ == ArgumentType.INTEGERS.value
-                or type_ == ArgumentType.ORGANIZATIONS.value
+                type_ == AlgorithmArgumentType.INTEGERS.value
+                or type_ == AlgorithmArgumentType.ORGANIZATIONS.value
             ):
                 try:
                     json_list = json.loads(default)
@@ -387,7 +404,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"integers, while the argument type {type_} requires a JSON "
                         "array of integers"
                     ) from exc
-            elif type_ == ArgumentType.FLOATS.value:
+            elif type_ == AlgorithmArgumentType.FLOATS.value:
                 try:
                     json_list = json.loads(default)
                     if not isinstance(json_list, list):
@@ -400,6 +417,29 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"floats, while the argument type {type_} requires a JSON array"
                         " of floats"
                     ) from exc
+
+        # if there are allowed values, validate that they are of the correct type
+        if data.get("allowed_values"):
+            if type_ == AlgorithmArgumentType.INTEGER.value:
+                desired_type = int
+            elif type_ == AlgorithmArgumentType.FLOAT.value:
+                desired_type = float
+            else:
+                desired_type = str
+            for value in data.get("allowed_values"):
+                try:
+                    desired_type(value)
+                except (ValueError, TypeError):
+                    raise ValidationError(
+                        f"Allowed values should be of type {desired_type} because the "
+                        f"argument type is {type_}"
+                    )
+
+        # if there are both allowed values and a default value, validate that the
+        # default value is one of the allowed values
+        if data.get("default_value") and data.get("allowed_values"):
+            if data.get("default_value") not in data.get("allowed_values"):
+                raise ValidationError("Default value is not one of the allowed values")
 
 
 class UIVisualizationInputSchema(_NameDescriptionSchema):

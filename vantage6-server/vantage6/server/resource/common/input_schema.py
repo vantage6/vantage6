@@ -225,32 +225,6 @@ class OrganizationInputSchema(_NameValidationSchema):
     public_key = fields.String()
 
 
-class PortInputSchema(Schema):
-    """Schema for validating input for a creating a port."""
-
-    port = fields.Integer(required=True)
-    run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT), allow_none=True)
-
-    @validates("port")
-    def validate_port(self, port):
-        """
-        Validate the port in the input.
-
-        Parameters
-        ----------
-        port : int
-            Port to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the port is not valid.
-        """
-        if not 1 <= port <= 65535:
-            raise ValidationError("Port must be between 1 and 65535")
-
-
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
     """Schema for validating input for resetting an API key."""
 
@@ -282,7 +256,7 @@ class TaskInputSchema(_NameValidationSchema):
         fields.Integer(validate=Range(min=1), required=False), load_default=[]
     )
     organizations = fields.List(fields.Dict(), required=True)
-    databases = fields.List(fields.Dict(), allow_none=True)
+    databases = fields.List(fields.List(fields.Dict()), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
     action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
@@ -311,13 +285,13 @@ class TaskInputSchema(_NameValidationSchema):
         _validate_organizations(organizations)
 
     @validates("databases")
-    def validate_databases(self, databases: list[dict] | None):
+    def validate_databases(self, databases: list[list[dict]] | None):
         """
         Validate the databases in the input.
 
         Parameters
         ----------
-        databases : list[dict] | None
+        databases : list[list[dict]] | None
             List of databases to validate. Each database must have at least a database
             label or dataframe_id.
 
@@ -328,7 +302,13 @@ class TaskInputSchema(_NameValidationSchema):
         """
         if databases is None:
             return  # some algorithms don't use any database
-        for database in databases:
+
+        if isinstance(databases, list) and not isinstance(databases[0], list):
+            raise ValidationError(
+                "Databases must be a list of lists of dictionaries or None"
+            )
+
+        for database in [db for sublist in databases for db in sublist]:
             if "type" not in database:
                 raise ValidationError("Each database must have a 'type' key")
 
@@ -365,24 +345,9 @@ class UserInputSchema(Schema):
 
     username = fields.String(required=True, validate=Length(min=3, max=MAX_LEN_NAME))
     password = fields.String()
-    email = fields.Email(required=True)
-    firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
-    lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
-    create_in_keycloak = fields.Boolean(load_default=1)
-
-    @validates_schema
-    def validate_schema(self, data: dict, **kwargs) -> None:
-        """
-        Validate the input, which should contain a password if the user has to be
-        created in Keycloak.
-        """
-        if data.get("create_in_keycloak") and not data.get("password"):
-            raise ValidationError(
-                "Password is required if the user has to be created in Keycloak"
-            )
 
     @validates("username")
     def validate_username(self, username: str):
@@ -419,17 +384,17 @@ class UserInputSchema(Schema):
         _validate_password(password)
 
 
+class UserEditInputSchema(UserInputSchema):
+    """Schema for validating input for editing a user."""
+
+    class Meta:
+        fields = ("roles", "rules")
+
+
 class UserDeleteInputSchema(Schema):
     """Schema for validating input for deleting a user."""
 
-    delete_from_keycloak = fields.Boolean()
     delete_dependents = fields.Boolean()
-
-
-class VPNConfigUpdateInputSchema(Schema):
-    """Schema for validating input for updating a VPN configuration."""
-
-    vpn_config = fields.String(required=True)
 
 
 class ColumnNameInputSchema(Schema):
@@ -547,6 +512,20 @@ class DataframeInitInputSchema(Schema):
     # Task metadata that is executed on the node for session initialization, which is
     # the data extraction task
     task = fields.Nested(SessionTaskInputSchema, required=True)
+
+    @validates("name")
+    def validate_name(self, name: str):
+        """
+        Validate the name in the input.
+        """
+        # Check that the name does not contain special characters or spaces, hyphens
+        # and underscores are allowed. We need to be safe as this name is used as the
+        # filename on the nodes. And ',' and ';' have special meaning in the
+        # environment variables.
+        if not re.match(r"^[a-zA-Z0-9-_]+$", name):
+            raise ValidationError(
+                "Name must contain only letters, numbers, hyphens and underscores"
+            )
 
 
 class DataframePreprocessingInputSchema(Schema):

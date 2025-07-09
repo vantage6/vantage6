@@ -89,7 +89,6 @@ def create_fixtures(
             creation_details["users"]["existing"].append(
                 {
                     "username": username,
-                    "email": user["email"],
                     "organization": org["name"],
                 }
             )
@@ -98,10 +97,7 @@ def create_fixtures(
             password = "Password123!"
             user = client.user.create(
                 username=username,
-                firstname=f"user {index + 1}",
-                lastname=f"one {index + 1}",
                 password=password,
-                email=f"user_{index + 1}@one.org",
                 organization=org["id"],
                 roles=[1],  # TODO assign proper roles
             )
@@ -109,7 +105,6 @@ def create_fixtures(
                 {
                     "username": username,
                     "password": password,
-                    "email": user["email"],
                     "organization": org["name"],
                 }
             )
@@ -198,12 +193,12 @@ def create_fixtures(
     if creation_details["users"]["created"]:
         summary += "\n  Created:"
         for user in creation_details["users"]["created"]:
-            summary += f"\n    - {user['username']} ({user['email']}) - Password: "
+            summary += f"\n    - {user['username']} - Password: "
             summary += f"{user['password']} - Org: {user['organization']}"
     if creation_details["users"]["existing"]:
         summary += "\n  Existing:"
         for user in creation_details["users"]["existing"]:
-            summary += f"\n    - {user['username']} ({user['email']}) - Org: "
+            summary += f"\n    - {user['username']} - Org: "
             summary += f"{user['organization']}"
 
     summary += f"\n\nNodes: {len(creation_details['nodes']['created'])} created, "

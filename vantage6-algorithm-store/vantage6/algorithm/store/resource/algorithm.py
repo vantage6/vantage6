@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
+from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -27,6 +28,7 @@ from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutp
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.function import Function
 from vantage6.algorithm.store.resource import (
     with_permission,
@@ -428,6 +430,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              multiple:
+                                type: boolean
+                                description: Whether more than one database can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -450,6 +456,13 @@ class Algorithms(AlgorithmBaseResource):
                                   'string_list', 'integer', 'integer_list', 'float',
                                   'float_list', 'boolean', 'json', 'column',
                                   'column_list', 'organization' or 'organization_list'
+                              allowed_values:
+                                type: array
+                                description: An optional list of allowed values for the
+                                  argument. If type of the argument is 'string',
+                                  the allowed values should be a list of strings, etc.
+                                items:
+                                  type: string | int | float
                               has_default_value:
                                 type: boolean
                                 description: Whether the argument has a default
@@ -588,12 +601,19 @@ class Algorithms(AlgorithmBaseResource):
                     )
                     arg.conditional_on_id = conditional_on.id
                     arg.save()
+                if argument.get("allowed_values", []):
+                    for value in argument["allowed_values"]:
+                        allowed_value = AllowedArgumentValue(
+                            value=str(value), argument_id=arg.id
+                        )
+                        allowed_value.save()
             # create the databases
             for database in function.get("databases", []):
                 db_ = Database(
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                 )
                 db_.save()
             # create the visualizations
@@ -775,6 +795,8 @@ class Algorithm(AlgorithmBaseResource):
             for database in function.databases:
                 database.delete()
             for argument in function.arguments:
+                for allowed_value in argument.allowed_values:
+                    allowed_value.delete()
                 argument.delete()
             for visualization in function.ui_visualizations:
                 visualization.delete()
@@ -1021,6 +1043,8 @@ class Algorithm(AlgorithmBaseResource):
         if (functions := data.get("functions")) is not None:
             for function in algorithm.functions:
                 for argument in function.arguments:
+                    for allowed_value in argument.allowed_values:
+                        allowed_value.delete()
                     argument.delete()
                 for db_ in function.databases:
                     db_.delete()
@@ -1032,6 +1056,7 @@ class Algorithm(AlgorithmBaseResource):
                 func = Function(
                     name=new_function["name"],
                     description=new_function.get("description", ""),
+                    display_name=new_function.get("display_name", ""),
                     step_type=new_function["step_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,
@@ -1057,7 +1082,7 @@ class Algorithm(AlgorithmBaseResource):
                     arg.save()
                 # after creating the arguments, all have had their IDs assigned so we
                 # can now set the column `conditional_on_id`
-                for argument in function.get("arguments", []):
+                for argument in new_function.get("arguments", []):
                     arg = Argument.get_by_name(argument["name"], func.id)
                     if argument.get("conditional_on"):
                         conditional_on = Argument.get_by_name(
@@ -1065,12 +1090,19 @@ class Algorithm(AlgorithmBaseResource):
                         )
                         arg.conditional_on_id = conditional_on.id
                         arg.save()
+                    if argument.get("allowed_values", []):
+                        for value in argument["allowed_values"]:
+                            allowed_value = AllowedArgumentValue(
+                                value=str(value), argument_id=arg.id
+                            )
+                            allowed_value.save()
                 # Create databases and visualizations
                 for database in new_function.get("databases", []):
                     db = Database(
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

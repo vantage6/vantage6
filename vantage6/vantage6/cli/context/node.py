@@ -16,9 +16,6 @@ class NodeContext(AppContext):
     """
     Node context object for the host system.
 
-    See DockerNodeContext for the node instance mounts when running as a
-    dockerized service.
-
     Parameters
     ----------
     instance_name : str
@@ -189,48 +186,6 @@ class NodeContext(AppContext):
         return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
 
     @property
-    def docker_vpn_volume_name(self) -> str:
-        """
-        Docker volume in which the VPN configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "VPN_VOLUME_NAME", f"{self.docker_container_name}-vpn-vol"
-        )
-
-    @property
-    def docker_ssh_volume_name(self) -> str:
-        """
-        Docker volume in which the SSH configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "SSH_TUNNEL_VOLUME_NAME", f"{self.docker_container_name}-ssh-vol"
-        )
-
-    @property
-    def docker_squid_volume_name(self) -> str:
-        """
-        Docker volume in which the SSH configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "SSH_SQUID_VOLUME_NAME", f"{self.docker_container_name}-squid-vol"
-        )
-
-    @property
     def proxy_log_file(self):
         return self.log_file_name(type_="proxy_server")
 
@@ -249,6 +204,40 @@ class NodeContext(AppContext):
             URI to the database
         """
         return self.config["databases"][label]
+
+    def set_folders(
+        self, instance_type: InstanceType, instance_name: str, system_folders: bool
+    ) -> None:
+        """
+        Set the folders for the node.
+
+        Parameters
+        ----------
+        instance_type : InstanceType
+            Instance type
+        instance_name : str
+            Instance name
+        system_folders : bool
+            Whether to use system folders
+        """
+        dirs = self.instance_folders(instance_type, instance_name, system_folders)
+
+        self.log_dir = dirs.get("log")
+        self.data_dir = dirs.get("data")
+        self.config_dir = dirs.get("config")
+
+    @staticmethod
+    def instance_folders(*_args, **_kwargs) -> dict:
+        """Log, data and config folders are always mounted. The node manager
+        should take care of this.
+        """
+        mnt = Path("/mnt")
+
+        return {
+            "log": mnt / "log",
+            "data": mnt / "data",
+            "config": mnt / "config",
+        }
 
     def __create_node_identifier(self) -> str:
         """

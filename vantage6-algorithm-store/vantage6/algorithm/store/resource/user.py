@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
-import os
 from http import HTTPStatus
 
-from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from flask import request, g
@@ -14,7 +12,7 @@ from marshmallow import ValidationError
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.backend.common.globals import RequiredServerEnvVars
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
@@ -295,9 +293,8 @@ class Users(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # check if the user already exists in keycloak
-        keycloak_admin_client = self._get_keycloak_admin_client()
         try:
-            user_id = keycloak_admin_client.get_user_id(request.json["username"])
+            user_id = get_keycloak_id_for_user(request.json["username"])
         except Exception:
             return {
                 "msg": f"User {request.json['username']} not found: cannot register "
@@ -352,25 +349,6 @@ class Users(AlgorithmStoreResources):
         user.save()
 
         return user_output_schema.dump(user), HTTPStatus.CREATED
-
-    @staticmethod
-    def _get_keycloak_admin_client():
-        """Get the keycloak admin client"""
-        keycloak_openid = KeycloakOpenIDConnection(
-            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-            username=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value
-            ),
-            password=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value
-            ),
-            client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
-            realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
-            client_secret_key=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
-            ),
-        )
-        return KeycloakAdmin(connection=keycloak_openid)
 
 
 class User(AlgorithmStoreResources):

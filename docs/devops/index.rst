@@ -18,3 +18,4 @@ Please note that this project is released with a
    contribute
    documentation
    release
+   develop_env

@@ -10,8 +10,8 @@ import webbrowser
 import urllib.parse as urlparse
 import logging
 import time
-
 from typing import List
+
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -23,6 +23,7 @@ from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
 from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.client.utils import LogLevel
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
 from vantage6.client.utils import LogLevel
@@ -241,7 +242,7 @@ class UserClient(ClientBase):
 
         user = self.request("user/me")
         user_id = user.get("id")
-        user_name = user.get("firstname")
+        user_name = user.get("username")
         type_ = "user"
         organization_id = user.get("organization").get("id")
         organization = self.request(f"organization/{organization_id}")
@@ -325,22 +326,8 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-
-        animation = itertools.cycle(["|", "/", "-", "\\"])
-        t = time.time()
-
-        while not RunStatus.has_finished(self.task.get(task_id).get("status")):
-            frame = next(animation)
-            sys.stdout.write(
-                f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
-            )
-            sys.stdout.flush()
-            time.sleep(interval)
-        sys.stdout.write("\rDone!                  ")
-
-        # Re-enable logging
+        self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
@@ -724,7 +711,6 @@ class UserClient(ClientBase):
             collaboration: int = None,
             study: int = None,
             is_online: bool = None,
-            ip: str = None,
             last_seen_from: str = None,
             last_seen_till: str = None,
             page: int = 1,
@@ -745,8 +731,6 @@ class UserClient(ClientBase):
                 Filter by study id
             is_online: bool, optional
                 Filter on whether nodes are online or not
-            ip: str, optional
-                Filter by node VPN IP address
             last_seen_from: str, optional
                 Filter if node has been online since date (format: yyyy-mm-dd)
             last_seen_till: str, optional
@@ -779,6 +763,7 @@ class UserClient(ClientBase):
             """
             if collaboration is None:
                 collaboration = self.parent.collaboration_id
+
             params = {
                 "page": page,
                 "per_page": per_page,
@@ -786,7 +771,6 @@ class UserClient(ClientBase):
                 "organization_id": organization,
                 "collaboration_id": collaboration,
                 "study_id": study,
-                "ip": ip,
                 "last_seen_from": last_seen_from,
                 "last_seen_till": last_seen_till,
             }
@@ -859,7 +843,7 @@ class UserClient(ClientBase):
             name : str, optional
                 New node name, by default None
             clear_ip : bool, optional
-                Clear the VPN IP address of the node, by default None
+                Clear the internal IP address of the node, by default None
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the node. Default is None.
@@ -1152,9 +1136,6 @@ class UserClient(ClientBase):
             self,
             username: str = None,
             organization: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            email: str = None,
             role: int = None,
             rule: int = None,
             last_seen_from: str = None,
@@ -1170,12 +1151,6 @@ class UserClient(ClientBase):
                 Filter by username (with LIKE operator)
             organization: int, optional
                 Filter by organization id
-            firstname: str, optional
-                Filter by firstname (with LIKE operator)
-            lastname: str, optional
-                Filter by lastname (with LIKE operator)
-            email: str, optional
-                Filter by email (with LIKE operator)
             role: int, optional
                 Show only users that have this role id
             rule: int, optional
@@ -1214,9 +1189,6 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "username": username,
                 "organization_id": organization,
-                "firstname": firstname,
-                "lastname": lastname,
-                "email": email,
                 "role_id": role,
                 "rule_id": rule,
                 "last_seen_from": last_seen_from,
@@ -1271,12 +1243,8 @@ class UserClient(ClientBase):
         def update(
             self,
             id_: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            organization: int = None,
             rules: list = None,
             roles: list = None,
-            email: str = None,
         ) -> dict:
             """Update user details
 
@@ -1287,21 +1255,12 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 User `id` from the user you want to update
-            firstname : str
-                Your first name
-            lastname : str
-                Your last name
-            organization : int
-                Organization id of the organization you want to be part
-                of. This can only done by super-users.
             rules : list of ints
                 USE WITH CAUTION! Rule ids that should be assigned to
                 this user. All previous assigned rules will be removed!
             roles : list of ints
                 USE WITH CAUTION! Role ids that should be assigned to
                 this user. All previous assigned roles will be removed!
-            email : str
-                New email from the user
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1319,12 +1278,8 @@ class UserClient(ClientBase):
                 id_ = self.parent.whoami.id_
 
             data = {
-                "firstname": firstname,
-                "lastname": lastname,
-                "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
-                "email": email,
             }
             data = self._clean_update_data(data)
 
@@ -1335,14 +1290,10 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            firstname: str,
-            lastname: str,
             password: str,
-            email: str,
             organization: int = None,
             roles: list = [],
             rules: list = [],
-            create_in_keycloak: bool = True,
         ) -> dict:
             """Create new user
 
@@ -1351,14 +1302,8 @@ class UserClient(ClientBase):
             username : str
                 Used to login to the service. This can not be changed
                 later.
-            firstname : str
-                Firstname of the new user
-            lastname : str
-                Lastname of the new user
             password : str
                 Password of the new user
-            email : str
-                Email address of the new user
             organization : int
                 Organization `id` this user should belong to
             roles : list of ints
@@ -1375,8 +1320,6 @@ class UserClient(ClientBase):
                 Which data fields to keep in the returned dict. For instance,
                 "fields=['name', 'id']" will only return the names and ids of the
                 user. Default is None.
-            create_in_keycloak: bool, optional
-                Whether or not the user should be created in Keycloak. Default is True.
 
             Returns
             -------
@@ -1385,29 +1328,22 @@ class UserClient(ClientBase):
             """
             user_data = {
                 "username": username,
-                "firstname": firstname,
-                "lastname": lastname,
                 "password": password,
-                "email": email,
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
-                "create_in_keycloak": create_in_keycloak,
             }
             return self.parent.request("user", json=user_data, method="post")
 
-        def delete(self, id_: int, delete_from_keycloak: bool = True) -> None:
+        def delete(self, id_: int) -> None:
             """Delete user
 
             Parameters
             ----------
             id_ : int
                 Id of the user you want to delete
-            delete_from_keycloak: bool, optional
-                If True, the user will be deleted from Keycloak. Default is True.
             """
-            params = {"delete_from_keycloak": delete_from_keycloak}
-            res = self.parent.request(f"user/{id_}", method="delete", params=params)
+            res = self.parent.request(f"user/{id_}", method="delete")
             self.parent.log.info(f'--> {res.get("msg")}')
 
     class Role(ClientBase.SubClient):
@@ -1771,7 +1707,7 @@ class UserClient(ClientBase):
             collaboration: int | None = None,
             study: int | None = None,
             store: int | None = None,
-            databases: list[dict] | None = None,
+            databases: list[list[dict]] | list[dict] | None = None,
             action: AlgorithmStepType | None = None,
         ) -> dict:
             """Create a new task
@@ -1802,11 +1738,12 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
-            databases: list[dict], optional
+            databases: list[list[dict]] | list[dict], optional
                 Databases to be used at the node. Each dict should contain
-                at least a 'label' key. Additional keys are 'query' (if using
-                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
-                and 'preprocessing' information.
+                at least a 'label' key. If a list of lists is provided, the first
+                list is the databases that are required for the first argument, the
+                second list is the databases that are required for the second
+                argument, etc.
             action: AlgorithmStepType, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
@@ -1904,12 +1841,14 @@ class UserClient(ClientBase):
             )
 
         @staticmethod
-        def _parse_arg_databases(databases: list[dict] | str) -> list[dict]:
+        def _parse_arg_databases(
+            databases: list[list[dict]] | list[dict] | str,
+        ) -> list[list[dict]]:
             """Parse the databases argument
 
             Parameters
             ----------
-            databases: list[dict] | str
+            databases: list[list[dict]] | list[dict] | str
                 Each dict should contain at least a 'label' key. A single str
                 can be passed and will be interpreted as a single database with
                 that label.
@@ -1933,15 +1872,26 @@ class UserClient(ClientBase):
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [{"label": databases}]
+                databases = [[{"label": databases}]]
 
-            for db in databases:
+            # It is common to only specify a single level of databases, we assume
+            # that its not a multiple databases argument and convert it so that every
+            # requested dataframe is handled as a single argument in the algorithm.
+            if isinstance(databases, list) and not isinstance(databases[0], list):
+                databases = [[db] for db in databases]
+
+            for db in [db for sublist in databases for db in sublist]:
                 try:
                     label_input = db.get("label")
                 except AttributeError:
                     raise ValueError(
-                        "Databases specified should be a list of dicts with"
-                        "label keys or a single str"
+                        "Each database should be specified as a dict with at least "
+                        "a 'label' key. Alternatively, a single str can be passed "
+                        "and will be interpreted as a single database with that "
+                        "label. These dicts can be nested in a list of lists to "
+                        "specify multiple databases for each argument. Example: "
+                        "databases=[[{'label': 'db1'}, {'label': 'db2'}], "
+                        "[{'label': 'db3'}]] or databases='db1'"
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(

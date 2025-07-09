@@ -3,12 +3,13 @@ import datetime
 import unittest
 from unittest.mock import patch
 
+from vantage6.common.enum import AlgorithmArgumentType
 from vantage6.algorithm.store.model.argument import Argument
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
     ReviewStatus,
-    ArgumentType,
 )
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
@@ -278,7 +279,11 @@ class TestAlgorithmResources(TestResources):
                         {"name": "test_database", "description": "test_description"}
                     ],
                     "arguments": [
-                        {"name": "test_argument", "type": ArgumentType.STRING}
+                        {
+                            "name": "test_argument",
+                            "type": AlgorithmArgumentType.STRING,
+                            "allowed_values": ["A"],
+                        }
                     ],
                     "ui_visualizations": [
                         {"name": "test_visualization", "type": "table"}
@@ -314,8 +319,17 @@ class TestAlgorithmResources(TestResources):
             rv.json["functions"][0]["arguments"][0]["name"], "test_argument"
         )
         self.assertEqual(
-            rv.json["functions"][0]["arguments"][0]["type"], ArgumentType.STRING
+            rv.json["functions"][0]["arguments"][0]["type"],
+            AlgorithmArgumentType.STRING,
         )
+
+        self.assertEqual(
+            len(rv.json["functions"][0]["arguments"][0]["allowed_values"]), 1
+        )
+        self.assertEqual(
+            rv.json["functions"][0]["arguments"][0]["allowed_values"][0]["value"], "A"
+        )
+
         self.assertEqual(len(rv.json["functions"][0]["ui_visualizations"]), 1)
         self.assertEqual(
             rv.json["functions"][0]["ui_visualizations"][0]["name"],
@@ -339,7 +353,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test_argument",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": True,
                 "default_value": 1,
             }
@@ -365,11 +379,11 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
             },
             {
                 "name": "test",
-                "type": ArgumentType.FLOAT,
+                "type": AlgorithmArgumentType.FLOAT,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data)
@@ -379,7 +393,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": True,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
@@ -387,7 +401,7 @@ class TestAlgorithmResources(TestResources):
             },
             {
                 "name": "conditional",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data)
@@ -413,14 +427,14 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
                 "conditional_value": "test",
             },
             {
                 "name": "conditional",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "conditional_on": "dependent",
                 "conditional_operator": "==",
                 "conditional_value": "test",
@@ -525,7 +539,11 @@ class TestAlgorithmResources(TestResources):
                         Database(name="test_database", description="test_description"),
                     ],
                     arguments=[
-                        Argument(name="test_argument", type_=ArgumentType.STRING)
+                        Argument(
+                            name="test_argument",
+                            type_=AlgorithmArgumentType.STRING,
+                            allowed_values=[AllowedArgumentValue(value="A")],
+                        )
                     ],
                     ui_visualizations=[
                         UIVisualization(
@@ -539,6 +557,7 @@ class TestAlgorithmResources(TestResources):
         func_id = algorithm.functions[0].id
         db_id = algorithm.functions[0].databases[0].id
         arg_id = algorithm.functions[0].arguments[0].id
+        allowed_value_id = algorithm.functions[0].arguments[0].allowed_values[0].id
         vis_id = algorithm.functions[0].ui_visualizations[0].id
 
         # Test when user is not authenticated
@@ -563,6 +582,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(Function.get(func_id), None)
         self.assertEqual(Database.get(db_id), None)
         self.assertEqual(Argument.get(arg_id), None)
+        self.assertEqual(AllowedArgumentValue.get(allowed_value_id), None)
         self.assertEqual(UIVisualization.get(vis_id), None)
 
     @patch("vantage6.algorithm.store.resource._authenticate")

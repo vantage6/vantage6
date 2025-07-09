@@ -8,6 +8,7 @@ from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.default_roles import get_default_roles
+from vantage6.algorithm.store import db
 
 from .base.unittest_base import TestResources
 
@@ -72,7 +73,7 @@ class TestAlgorithmStoreApp(TestResources):
         """Test that the default roles are added to the database"""
 
         # pylint: disable=protected-access
-        self.server._add_default_roles()
+        self.server._add_default_roles(get_default_roles(), db)
 
         roles = Role.get()
         role_names = [role.value for role in DefaultRole]
@@ -81,7 +82,7 @@ class TestAlgorithmStoreApp(TestResources):
             self.assertIn(role.name, role_names)
 
         # run function again to ensure that the roles are not duplicated
-        self.server._add_default_roles()
+        self.server._add_default_roles(get_default_roles(), db)
         self.assertEqual(len(Role.get()), len(role_names))
 
         # verify that function to get the default roles includes all default roles
@@ -93,7 +94,7 @@ class TestAlgorithmStoreApp(TestResources):
         role = Role.get_by_name(DefaultRole.VIEWER)
         role.rules = []
         role.save()
-        self.server._add_default_roles()
+        self.server._add_default_roles(get_default_roles(), db)
         role = Role.get_by_name(DefaultRole.VIEWER)
         self.assertNotEqual(len(role.rules), 0)
         for r in default_role_list_dict:

@@ -11,7 +11,7 @@ export interface FormCreateOutput {
   collaboration_id?: number;
   study_id?: number;
   database?: string;
-  dataframes?: any[];
+  dataframes?: any[][];
 }
 
 export interface AvailableSteps {

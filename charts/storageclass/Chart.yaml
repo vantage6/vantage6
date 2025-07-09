@@ -1,6 +1,0 @@
-apiVersion: v2
-name: storageclass
-description: "Helm chart to create the local-storage StorageClass if missing"
-type: application
-version: "5.0.0-a.20"
-appVersion: "5.0.0-a.20"

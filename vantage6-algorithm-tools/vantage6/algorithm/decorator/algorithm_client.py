@@ -2,10 +2,11 @@ import os
 
 from functools import wraps
 
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
-from vantage6.algorithm.tools.util import info, error
+from vantage6.algorithm.tools.util import error
 
 
 def _algorithm_client() -> callable:
@@ -75,7 +76,7 @@ def _algorithm_client() -> callable:
             return func(client, *args, **kwargs)
 
         # set attribute that this function is wrapped in an algorithm client
-        decorator.wrapped_in_algorithm_client_decorator = True
+        decorator.vantage6_decorated_type = DecoratorType.ALGORITHM_CLIENT
         return decorator
 
     return protection_decorator

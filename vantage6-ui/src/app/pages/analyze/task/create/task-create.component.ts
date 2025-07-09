@@ -61,7 +61,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       collaboration_id: formOutput.collaboration_id || -1,
       organizations: formOutput.organizations,
       store_id: formOutput.store_id,
-      databases: formOutput?.dataframes || []
+      databases: formOutput?.dataframes || [[]]
     };
     const newTask = await this.taskService.createTask(newDataframe);
     if (newTask) {

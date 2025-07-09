@@ -100,12 +100,17 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, [AlgorithmLazyProperties.Reviews]);
-
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
     this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
     this.canViewReviews = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW);
+
+    const propertiesToLoad = [];
+    if (this.canViewReviews) {
+      propertiesToLoad.push(AlgorithmLazyProperties.Reviews);
+    }
+
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, propertiesToLoad);
 
     this.isLoading = false;
   }

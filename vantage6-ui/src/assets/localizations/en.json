@@ -240,7 +240,8 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function",
       "valid-json": "Please provide valid JSON input.",
-      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
+      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field",
+      "warning-column-list-multiple-dataframes": "This function accepts multiple dataframes in a single argument. The selection of columns are from the first selected dataframe."
     },
     "alert-no-online-nodes": "You cannot create an analysis right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
     "alert-no-sessions-found": "No sessions found. To compute you must first create a session.",
@@ -318,6 +319,8 @@
       "argument": {
         "title": "Parameters",
         "type": "Type of argument",
+        "allowed_values": "Allowed values",
+        "allowed_values_placeholder": "New value...",
         "has_default": "Has default value:",
         "default_value_null": "Default value is empty (null/none):",
         "default_value": "Default value",
@@ -344,7 +347,10 @@
           "short_header": "Only for UI"
         }
       },
-      "databases": "Databases",
+      "databases": {
+        "title": "Databases",
+        "multiple": "Does the algorithm accept multiple dataframes in this single argument?"
+      },
       "visualization": {
         "title": "Visualizations",
         "type": "Type of visualization",
@@ -753,11 +759,8 @@
   },
   "user": {
     "username": "Username",
-    "email": "Email",
     "password": "Password",
     "password-repeat": "Repeat password",
-    "first-name": "First name",
-    "last-name": "Last name",
     "organization": "Organization",
     "roles": "Roles",
     "permissions": "Permissions",
@@ -833,8 +836,9 @@
   "header": {
     "actions": {
       "logout": "Logout",
-      "change_password": "Change password",
-      "my-user": "View my user"
+      "change-password": "Change password",
+      "view-account": "View my permissions",
+      "manage-account": "Manage account"
     }
   },
   "login": {
@@ -908,5 +912,11 @@
       "length": "Password must be at least 8 characters long",
       "pattern": "Password must contain a lowercase letter, uppercase letter, number and special character"
     }
+  },
+  "communitystore": {
+    "algorithms": "Algorithms",
+    "welcome": "Welcome",
+    "introduction": "The community store is a place where you can find algorithms that are shared by members of the vantage6 community. More information about vantage6 can be found on ",
+    "community-store": "Community Store"
   }
 }

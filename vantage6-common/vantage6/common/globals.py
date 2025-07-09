@@ -29,8 +29,6 @@ DEFAULT_ALPINE_IMAGE = "infrastructure/alpine:latest"
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-VPN_CONFIG_FILE = "vpn-config.ovpn.conf"
-
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 
 PING_INTERVAL_SECONDS = 60
@@ -40,6 +38,16 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 
 # default API path (for server and algorithm store)
 DEFAULT_API_PATH = "/api"
+DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
+
+# Maximum interval to wait for requesting results from a task
+MAX_INTERVAL = 300
+
+# Constant multiplier to make interval for requesting results from a task progressively longer
+INTERVAL_MULTIPLIER = 1.5
+
+# keyword for the multiple dataframes in single argument decorator
+DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 
 
 class InstanceType(str, Enum):

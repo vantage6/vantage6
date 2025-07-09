@@ -20,9 +20,8 @@ import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/m
 import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
 import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
+import { KeycloakUserProfile, KeycloakUserService } from 'src/app/services/keycloak-user.service';
 
 @Component({
   selector: 'app-user-read',
@@ -51,6 +50,7 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
 export class UserReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   showUserSpecificRulesOnly: boolean = false;
   user: User | null = null;
+  loggedInUserProfile: KeycloakUserProfile | null = null;
 
   allUserRules: Rule[] = [];
   rolesRules: Rule[] = [];
@@ -64,7 +64,7 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
     protected override translateService: TranslateService,
     private permissionService: PermissionService,
     private ruleService: RuleService,
-    private dialog: MatDialog
+    private keycloakUserService: KeycloakUserService
   ) {
     super(handleConfirmDialogService, translateService);
   }
@@ -82,6 +82,18 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
     this.rolesRules = await this.ruleService.getRulesOfRoles(this.user.roles.map((role) => role.id));
     this.userSpecificRules = this.determineUserRules(this.rolesRules, this.allUserRules);
     this.isLoading = false;
+    this.setAdditionalDetailsIfUserLoggedIn();
+  }
+
+  async setAdditionalDetailsIfUserLoggedIn() {
+    if (!this.user) return;
+    this.loggedInUserProfile = await this.keycloakUserService.getUserProfile();
+    if (this.loggedInUserProfile?.id === this.user?.keycloak_id) {
+      this.user.username = this.loggedInUserProfile!.username || '';
+      this.user.email = this.loggedInUserProfile!.email || '';
+      this.user.firstname = this.loggedInUserProfile!.firstName || '';
+      this.user.lastname = this.loggedInUserProfile!.lastName || '';
+    }
   }
 
   processRulesForDisplay(): void {
@@ -101,33 +113,18 @@ export class UserReadComponent extends BaseReadComponent implements OnInit, OnDe
   }
 
   async handleDelete(): Promise<void> {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
-        content: this.translateService.instant('user-read.delete-dialog.content'),
-        confirmButtonText: this.translateService.instant('user-read.delete-dialog.delete-with-keycloak'),
-        confirmButtonType: 'warn',
-        secondOptionButtonText: this.translateService.instant('user-read.delete-dialog.delete-without-keycloak'),
-        secondOptionButtonType: 'accent'
-      }
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (result) => {
-        if (result === ConfirmDialogOption.PRIMARY) {
-          this.executeDeleteUser(true);
-        } else if (result === ConfirmDialogOption.SECONDARY) {
-          this.executeDeleteUser(false);
-        }
-      });
+    this.handleDeleteBase(
+      this.user,
+      this.translateService.instant('user-read.delete-dialog.title', { name: this.user?.username }),
+      this.translateService.instant('user-read.delete-dialog.content'),
+      this.executeDeleteUser.bind(this)
+    );
   }
 
-  protected async executeDeleteUser(deleteInKeycloak: boolean): Promise<void> {
+  protected async executeDeleteUser(): Promise<void> {
     if (!this.user) return;
     this.isLoading = true;
-    await this.userService.deleteUser(this.user.id, deleteInKeycloak);
+    await this.userService.deleteUser(this.user.id);
     this.router.navigate([routePaths.users]);
   }
 

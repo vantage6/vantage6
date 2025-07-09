@@ -7,11 +7,16 @@ from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 from sqlalchemy import select
 
+from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.common import generate_apikey
 from vantage6.common.globals import AuthStatus
 from vantage6.server.resource import with_user_or_node, with_user, with_node
 from vantage6.server.resource import ServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.auth import (
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
+)
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
@@ -19,7 +24,6 @@ from vantage6.server.permission import (
     PermissionManager,
 )
 from vantage6.server import db
-from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
@@ -356,6 +360,7 @@ class Nodes(NodeBase):
     # TODO the example in swagger docs for this doesn't include
     # organization_id. Find out why
     @with_user
+    @handle_exceptions
     def post(self):
         """Create node
         ---
@@ -486,26 +491,31 @@ class Nodes(NodeBase):
             status=AuthStatus.OFFLINE.value,
         )
 
-        # Create a keycloak account for the node
-        try:
-            keycloak_id = self._create_node_in_keycloak(name, api_key)
-            node.keycloak_id = keycloak_id
-        except Exception as e:
-            msg = f"Error creating keycloak account for node {name}: {e}"
-            log.error(msg)
-            return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+        # Create a keycloak account for the node if the server is configured to do so,
+        # otherwise verify that the node exists in keycloak
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            try:
+                keycloak_id = self._create_node_in_keycloak(name, api_key)
+            except Exception as e:
+                msg = f"Error creating keycloak account for node {name}: {e}"
+                log.error(msg)
+                return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+        else:
+            keycloak_id = get_keycloak_id_for_user(name)
+        node.keycloak_id = keycloak_id
 
         # save the node in the database now that keycloak account is setup
         node.save()
 
-        # Return the node information to the user. Manually return the api_key
-        # to the user as the hashed key is not returned
+        # Return the node information to the user. Manually include the api_key
+        # to the user if the keycloak account was just created.
         node_json = node_schema.dump(node)
-        node_json["api_key"] = api_key
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
     def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         keycloak_id = keycloak_admin.create_user(
             {
                 "username": name,
@@ -651,13 +661,16 @@ class Node(NodeBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        self._delete_node_in_keycloak(node)
+        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
+            self._delete_node_in_keycloak(node)
+        else:
+            log.info("Node id=%s will not be deleted from Keycloak", id)
 
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
 
     def _delete_node_in_keycloak(self, node: db.Node) -> None:
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         keycloak_admin.delete_user(node.keycloak_id)
 
     @with_user_or_node
@@ -699,10 +712,10 @@ class Node(NodeBase):
                     description: Node name
                   ip:
                     type: string
-                    description: The node's VPN IP address
+                    description: The node's internal IP address
                   clear_ip:
                     type: boolean
-                    description: Clear the node's VPN IP address
+                    description: Clear the node's internal IP address
 
         responses:
           200:

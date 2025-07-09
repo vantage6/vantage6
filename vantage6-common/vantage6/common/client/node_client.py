@@ -90,8 +90,10 @@ class NodeClient(ClientBase):
             grant_type="password",
             username=self.node_account_name,
             password=self.api_key,
-            client_id="node-client",
-            client_secret_key="mynodeclientsecret",
+            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT.value),
+            client_secret_key=os.environ.get(
+                RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
+            ),
         )
         self._access_token = token["access_token"]
         decoded_token = self.kc_openid.decode_token(self._access_token)
@@ -327,63 +329,6 @@ class NodeClient(ClientBase):
                 "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
             },
         )
-
-    def get_vpn_config(self) -> tuple[bool, str]:
-        """
-        Obtain VPN configuration from the server
-
-        Returns
-        -------
-        bool
-            Whether or not obtaining VPN config was successful
-        str
-            OVPN configuration file content
-        """
-        response = self.request("vpn")
-
-        ovpn_config = response.get("ovpn_config")
-        if ovpn_config is None:
-            return False, ""
-
-        # replace windows line endings to linux style to prevent extra
-        # whitespace in writing the file
-        ovpn_config = ovpn_config.replace("\r\n", "\n")
-
-        return True, ovpn_config
-
-    def refresh_vpn_keypair(self, ovpn_file: str) -> bool:
-        """
-        Refresh the client's keypair in an ovpn configuration file
-
-        Parameters
-        ----------
-        ovpn_file: str
-            The path to the current ovpn configuration on disk
-
-        Returns
-        -------
-        bool
-            Whether or not the refresh was successful
-        """
-        # Extract the contents of the VPN file
-        with open(ovpn_file, "r") as file:
-            ovpn_config = file.read()
-
-        response = self.request(
-            "vpn/update",
-            method="POST",
-            json={"vpn_config": ovpn_config},
-        )
-        ovpn_config = response.get("ovpn_config")
-        if not ovpn_config:
-            self.log.warn("Refreshing VPN keypair not successful!")
-            self.log.warn("Disabling node-to-node communication via VPN")
-            return False
-
-        # write new configuration back to file
-        with open(ovpn_file, "w") as f:
-            f.write(ovpn_config)
-        return True
 
     def check_user_allowed_to_send_task(
         self,

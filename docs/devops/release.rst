@@ -83,11 +83,7 @@ the following steps to test a release:
    expected. Additionaly, the `v6-node-to-node-diagnostics` algorithm is run
    to check the VPN functionality.
 
-6. *Check swagger*. Check if the API documentation runs without error. They should be
-   on http://localhost:7601/apidocs for the server and on http://localhost:7602/apidocs
-   for the algorithm store.
-
-7. *Update algorithms*. For some releases, algorithms have to be updated, either because
+6. *Update algorithms*. For some releases, algorithms have to be updated, either because
    they no longer work in the new version of vantage6, or, less urgently, if the
    algorithm store is extended so new metadata on the algorithm can be stored. updating
    the algorithms is especially important for the algorithms in the community store, as
@@ -203,7 +199,7 @@ the latest version of their major release when they are restarted. This
 happens by pulling the newly released docker image. Note that the major
 release is never automatically updated: for example, a node running version
 2.1.0 will update to 2.1.1 or 2.2.0, but never to 3.0.0. Depending on the
-version of Vantage6 that is being used, there is a reserved Docker image tag
+version of vantage6 that is being used, there is a reserved Docker image tag
 for distributing the upgrades. These are the following:
 
 +---------------+------------------------+

@@ -33,13 +33,12 @@ RESOURCES = [
     "role",
     "rule",
     "health",
-    "vpn",
-    "port",
     "event",
     "algorithm_store",
     "study",
     "session",
     "dataframe",
+    "ui.server_config",
 ]
 
 # Super user information. This user is only created if it is not in the

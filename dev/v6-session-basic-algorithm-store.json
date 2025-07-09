@@ -7,7 +7,33 @@
   "partitioning": "horizontal",
   "functions": [
     {
-      "name": "global_sum",
+      "name": "global_sum_dev_many",
+      "display_name": "Sum for a given column in one or more dataframes",
+      "standalone": true,
+      "description": "Compute the global sum of a given column in one or more dataframes",
+      "ui_visualizations": [],
+      "step_type": "central_compute",
+      "arguments": [
+        {
+          "has_default_value": false,
+          "name": "column",
+          "display_name": "Column to sum",
+          "description": "Computes the global sum of the given column",
+          "type": "column",
+          "default_value": "",
+          "is_frontend_only": false
+        }
+      ],
+      "databases": [
+        {
+          "name": "Data",
+          "description": "Dataframe to use for computing the sum",
+          "multiple": true
+        }
+      ]
+    },
+    {
+      "name": "global_sum_dev",
       "display_name": "Sum",
       "standalone": true,
       "description": "Compute the global sum of a federated dataset",
@@ -38,7 +64,17 @@
       "description": "Sleep for a given number of seconds",
       "ui_visualizations": [],
       "step_type": "federated_compute",
-      "arguments": [],
+      "arguments": [        
+        {
+          "has_default_value": true,
+          "name": "seconds",
+          "display_name": "Seconds",
+          "description": "How many seconds to sleep",
+          "type": "integer",
+          "default_value": "10",
+          "is_frontend_only": false
+        }
+      ],
       "databases": []
     },
     {
@@ -57,7 +93,7 @@
       ]
     },
     {
-      "name": "pre_process",
+      "name": "preprocess",
       "display_name": "Change column dtype",
       "standalone": true,
       "description": "Change data type of particular column (e.g. string to int)",
@@ -91,7 +127,7 @@
       ]
     },
     {
-      "name": "sum",
+      "name": "sum_dev",
       "display_name": "Sum",
       "standalone": true,
       "description": "",
@@ -114,7 +150,33 @@
           "description": "Dataframe to use for computing the sum"
         }
       ]
-    }
+    },
+    {
+        "name": "sum_many",
+        "display_name": "Sum for a given column in one or more dataframes",
+        "standalone": true,
+        "description": "Sum one column for each dataframe",
+        "ui_visualizations": [],
+        "step_type": "federated_compute",
+        "arguments": [
+          {
+            "has_default_value": false,
+            "name": "column",
+            "display_name": "Column to sum",
+            "description": "",
+            "type": "column",
+            "default_value": "",
+            "is_frontend_only": false
+          }
+        ],
+        "databases": [
+          {
+            "name": "Dataframes",
+            "description": "Dataframes to use for computing the sum",
+            "multiple": true
+          }
+        ]
+      }
   ],
   "documentation_url": "",
   "image": "harbor2.vantage6.ai/algorithms/session-basics"
