@@ -540,14 +540,17 @@ class ContainerManager:
         After the timeout, this method will have additional status-event waiting windows
         only if the reason for such timeout is an (large) image that is already being pulled.
 
-                             - Succeeded
-                            /
-        Pending - Running ---- Failed
-                            \
-                             - Unknown
-        
+                               - Succeeded
+                              /
+        Pending - Running ------ Failed
+                              \
+                               - Unknown
+
+        Parameters
+        ----------                                                                 
         label : str
             Label selector to identify the POD associated with the job.
+
         Returns
         -------
         RunStatus
