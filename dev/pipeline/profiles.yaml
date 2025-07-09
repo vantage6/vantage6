@@ -29,3 +29,44 @@ profiles:
   # Remove the auth deployment from the dev section
   - op: remove
     path: dev.vantage6-auth
+
+# Profiles for building individual images
+- name: build-server-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      server:
+        image: ${SERVER_IMAGE}
+        dockerfile: docker/node-and-server.Dockerfile
+        context: .
+
+- name: build-node-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      node:
+        image: ${NODE_IMAGE}
+        dockerfile: docker/node-and-server.Dockerfile
+        context: .
+
+- name: build-store-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      store:
+        image: ${STORE_IMAGE}
+        dockerfile: docker/algorithm-store.Dockerfile
+        context: .
+
+- name: build-ui-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      ui:
+        image: "${UI_IMAGE}"
+        dockerfile: docker/ui_dev.Dockerfile
+        context: .

@@ -475,5 +475,6 @@ commands:
   # you want to run. In case you do not run it, it will pull the latest images from
   # our harbor registry (which potentially has outdated dependencies).
   rebuild:
-    description: "Rebuild all images for this project"
-    command: devspace build
+    description: "Rebuild images for this project (use --server, --node, --store, --ui for specific images)"
+    command: |
+      $(./dev/get_rebuild_command.sh "$@")
