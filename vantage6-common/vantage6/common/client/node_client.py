@@ -90,8 +90,10 @@ class NodeClient(ClientBase):
             grant_type="password",
             username=self.node_account_name,
             password=self.api_key,
-            client_id="node-client",
-            client_secret_key="mynodeclientsecret",
+            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT.value),
+            client_secret_key=os.environ.get(
+                RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
+            ),
         )
         self._access_token = token["access_token"]
         decoded_token = self.kc_openid.decode_token(self._access_token)

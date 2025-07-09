@@ -125,6 +125,7 @@ class AlgorithmStoreApp(Vantage6App):
                     auth_identity.provides.add(
                         RuleNeed(
                             name=rule.name,
+                            scope=None,
                             operation=rule.operation,
                         )
                     )
@@ -132,6 +133,7 @@ class AlgorithmStoreApp(Vantage6App):
                 auth_identity.provides.add(
                     RuleNeed(
                         name=rule.name,
+                        scope=None,
                         operation=rule.operation,
                     )
                 )

@@ -3,9 +3,6 @@
 store:
   replications: 1
 
-  vantage6Server:
-    rootUser: root
-
   # Keycloak configuration
   keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
@@ -13,8 +10,6 @@ store:
   keycloakAdminPassword: admin
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
-  keycloakUserClient: backend-user-client
-  keycloakUserClientSecret: myuserclientsecret
 
   policies:
     algorithmView: public

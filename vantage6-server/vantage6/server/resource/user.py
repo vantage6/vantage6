@@ -14,6 +14,10 @@ from vantage6.backend.common.resource.error_handling import (
     UnauthorizedError,
     handle_exceptions,
 )
+from vantage6.backend.common.auth import (
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
+)
 from vantage6.server import db
 from vantage6.server.permission import (
     Scope as S,
@@ -26,7 +30,6 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources,
 )
-from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.input_schema import (
     UserDeleteInputSchema,
     UserInputSchema,
@@ -457,7 +460,7 @@ class Users(UserBase):
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             keycloak_id = self._create_user_in_keycloak(data)
         else:
-            keycloak_id = self._verify_user_in_keycloak(data)
+            keycloak_id = get_keycloak_id_for_user(data["username"])
 
         user = db.User(
             username=data["username"],
@@ -471,7 +474,7 @@ class Users(UserBase):
         return user_schema.dump(user), HTTPStatus.CREATED
 
     def _create_user_in_keycloak(self, data):
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         return keycloak_admin.create_user(
             {
                 "username": data["username"],
@@ -485,13 +488,6 @@ class Users(UserBase):
                 ],
             }
         )
-
-    def _verify_user_in_keycloak(self, data):
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.get_user_id(data["username"])
-        if keycloak_id is None:
-            raise BadRequestError("User does not exist in Keycloak")
-        return keycloak_id
 
 
 class CurrentUser(UserBase):
@@ -850,7 +846,7 @@ class User(UserBase):
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK
 
     def _delete_user_in_keycloak(self, user):
-        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_admin = get_keycloak_admin_client()
         try:
             keycloak_admin.delete_user(user.keycloak_id)
         except KeycloakDeleteError as exc:

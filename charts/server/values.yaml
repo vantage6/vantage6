@@ -17,8 +17,6 @@ server:
   keycloakAdminPassword: admin
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
-  keycloakUserClient: backend-user-client
-  keycloakUserClientSecret: myuserclientsecret
   keycloak:
     manage_users_and_nodes: true
 

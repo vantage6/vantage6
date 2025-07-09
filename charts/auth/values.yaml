@@ -26,8 +26,13 @@ keycloak:
             credentials:
               - type: password
                 value: admin
-            realmRoles:
-              - admin
+          - username: service-account-backend-admin-client
+            enabled: true
+            serviceAccountClientId: backend-admin-client
+            clientRoles:
+              realm-management:
+                - view-users
+                - manage-users
         clients:
           - clientId: public_client
             publicClient: true
@@ -52,14 +57,8 @@ keycloak:
             redirectUris:
               - "*"
             secret: myadminclientsecret
-            directAccessGrantsEnabled: true
             serviceAccountsEnabled: true
-            standardFlowEnabled: true
-          - clientId: backend-user-client
-            publicClient: false
-            redirectUris:
-              - "*"
-            secret: myuserclientsecret
+            standardFlowEnabled: false
           - clientId: node-client
             publicClient: false
             redirectUris:
@@ -79,29 +78,3 @@ keycloak:
                   userinfo.token.claim: true
                   id.token.claim: true
                   access.token.claim: true
-        roles:
-          realm:
-            - name: admin
-              clientRole: true
-              composite: true
-              composites:
-                client:
-                  realm-management:
-                    - query-users
-                    - query-groups
-                    - impersonation
-                    - view-users
-                    - view-events
-                    - manage-clients
-                    - view-identity-providers
-                    - query-clients
-                    - view-realm
-                    - manage-users
-                    - query-realms
-                    - manage-identity-providers
-                    - view-authorization
-                    - create-client
-                    - view-clients
-                    - manage-realm
-                    - manage-events
-                    - manage-authorization

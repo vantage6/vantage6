@@ -37,6 +37,7 @@ setup(
         "marshmallow==3.19.0",
         "marshmallow-sqlalchemy==1.4.0",
         "sqlalchemy==2.0.37",
+        "python-keycloak==5.5.0",
         "prometheus-client==0.21.1",
         f'vantage6-common == {version_ns["__version__"]}',
     ],
