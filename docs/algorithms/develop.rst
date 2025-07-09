@@ -340,7 +340,7 @@ directly to the command:
 
 .. code:: bash
 
-   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'input_': { 'method': 'my_method', 'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
+   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'input_': {'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
 
 After running, the network will be stopped and removed unless you specify otherwise by setting
 ``--keep true`` in the command.

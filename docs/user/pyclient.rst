@@ -392,7 +392,6 @@ us create a task that runs the central part of the
 .. code:: python
 
    input_ = {
-       'method': 'central_average',
        'kwargs': {'column_name': 'age'}
    }
 
@@ -402,6 +401,7 @@ us create a task that runs the central part of the
       name="an-awesome-task",
       image="harbor2.vantage6.ai/demo/average",
       description='',
+      method='central_average',
       input_=input_,
       databases=[
          {'label': 'default'}
@@ -445,16 +445,18 @@ central part of the algorithm will normally do:
 .. code:: python
 
    input_ = {
-       'method': 'partial_average',
        'kwargs': {'column_name': 'age'},
    }
 
-   average_task = client.task.create(collaboration=1,
-                                     organizations=[2,3],
-                                     name="an-awesome-task",
-                                     image="harbor2.vantage6.ai/demo/average",
-                                     description='',
-                                     input_=input_)
+   average_task = client.task.create(
+      collaboration=1,
+      organizations=[2,3],
+      name="an-awesome-task",
+      image="harbor2.vantage6.ai/demo/average",
+      description='',
+      method='partial_average',
+      input_=input_
+   )
 
 Note that when running the partial algorithm, you should run it on all organizations
 that you want to get the results from. In this example, we run the partial algorithm

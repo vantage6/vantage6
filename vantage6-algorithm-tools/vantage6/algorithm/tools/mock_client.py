@@ -191,10 +191,11 @@ class MockAlgorithmClient:
 
             Parameters
             ----------
+            method : str
+                The name of the method that should be called.
             input_ : dict
-                The input data that is passed to the algorithm. This should at
-                least  contain the key 'method' which is the name of the method
-                that should be called. Other keys depend on the algorithm.
+                The input data that is passed to the algorithm. Should contain the
+                arguments to the called function.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
             name : str, optional
