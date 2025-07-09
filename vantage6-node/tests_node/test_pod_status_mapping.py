@@ -28,7 +28,7 @@ class TestPodStatus(unittest.TestCase):
 
     def setUp(self):
 
-        self.sileng_logger = get_null_logger()
+        self.silent_logger = get_null_logger()
 
         self.running_container_state = V1ContainerState(
             running=V1ContainerStateRunning(started_at="")
@@ -69,7 +69,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.phase = "Running"
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.ACTIVE,
         )
@@ -79,7 +79,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.container_statuses = None
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.INITIALIZING,
         )
@@ -92,7 +92,7 @@ class TestPodStatus(unittest.TestCase):
         )
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.NO_DOCKER_IMAGE,
         )
@@ -103,7 +103,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.container_statuses[0].state.waiting = None
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.INITIALIZING,
         )
@@ -116,7 +116,7 @@ class TestPodStatus(unittest.TestCase):
         )
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.CRASHED,
         )
@@ -125,7 +125,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.phase = "Succeded"
         self.assertEqual(
             compute_job_pod_run_status(
-                log=self.sileng_logger, task_namespace="", label="", pod=self.mock_pod
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.COMPLETED,
         )
