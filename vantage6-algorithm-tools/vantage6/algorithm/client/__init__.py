@@ -1,5 +1,6 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
+from cmath import log
 import jwt
 import json
 import time
@@ -145,6 +146,7 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
+        self.log.debug(f"Waiting for results for task_id {task_id}...")
         while not has_task_finished(self.task.get(task_id).get("status")):
             time.sleep(interval)
 
@@ -161,6 +163,7 @@ class AlgorithmClient(ClientBase):
             try:
                 with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                     if response.status_code == 200:
+                        self.log.debug(f"Successfully streamed result for task_id {task_id}.")
                         for chunk in response.iter_content(chunk_size=8192):
                             output_result += chunk
                     else:
@@ -416,7 +419,12 @@ class AlgorithmClient(ClientBase):
                         for i in range(0, len(result), chunk_size):
                             yield result[i:i + chunk_size]
 
-                    response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                    try:
+                        response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                    except Exception as e:
+                        self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
+                        raise requests.RequestException("Error occurred while uploading input to resultstream")
+
                     if not (200 <= response.status_code < 300):
                         self.parent.log.error(
                             f"Failed to upload input to resultstream: {response.text}"

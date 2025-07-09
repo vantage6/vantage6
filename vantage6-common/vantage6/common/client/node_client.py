@@ -197,8 +197,9 @@ class NodeClient(ClientBase):
                     input_value = input_value.decode('utf-8')
                 input_value = input_value.strip('\'"')
                 self.parent.log.info(f"stripped uuid: {input_value}")
-                
-                self.parent.log.info(f"Parsing uuid from input: {input_value}")
+                if not self.is_uuid(input_value):
+                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_value}")
+                    continue
 
                 uuid_obj = uuid.UUID(input_value)
                 url = self.parent.generate_path_to("resultstream", False)
@@ -295,7 +296,12 @@ class NodeClient(ClientBase):
                     for i in range(0, len(result), chunk_size):
                         yield result[i:i + chunk_size]
 
-                response = requests.post(url, data=chunked_result_stream(data["result"]), headers=headers)
+                try:
+                    response = requests.post(url, data=chunked_result_stream(data["result"]), headers=headers)
+                except requests.RequestException as e:
+                    self.parent.log.error(f"Failed to upload result to server: {e}")
+                    return
+
                 if not (200 <= response.status_code < 300):
                     self.parent.log.error(
                         f"Failed to upload result to server: {response.text}"

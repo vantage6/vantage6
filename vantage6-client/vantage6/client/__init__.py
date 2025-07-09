@@ -220,12 +220,12 @@ class UserClient(ClientBase):
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
         result = self.request("result", params={"task_id": task_id})
+        self.log.info(f"--> Task {task_id} completed. Streaming results...")
         for item in result["data"]:
             url = f"{self.base_path}/resultstream/{item['result']}"
             headers = self.headers
             timeout = 300
-        
-
+            self.log.debug(f"Streaming result from {url} for task_id {task_id}...")
             try:
                 with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                     if response.status_code == 200:
@@ -1869,6 +1869,7 @@ class UserClient(ClientBase):
 
             # Encrypt the input per organization using that organization's
             # public key.
+            self.parent.log.debug("Encrypting input for each organization")
             organization_json_list = []
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
@@ -1885,7 +1886,12 @@ class UserClient(ClientBase):
                     for i in range(0, len(result), chunk_size):
                         yield result[i:i + chunk_size]
 
-                response = requests.post(url, data=chunked_result_stream(encrypted_input), headers=headers)
+                try:
+                    response = requests.post(url, data=chunked_result_stream(encrypted_input), headers=headers)
+                except Exception as e:
+                    self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
+                    raise requests.RequestException("Failed to upload input to resultstream.")
+
                 if not (200 <= response.status_code < 300):
                     self.parent.log.error(
                         f"Failed to upload input to resultstream: {response.text}"
@@ -2266,8 +2272,7 @@ class UserClient(ClientBase):
                 except requests.RequestException as e:
                     self.parent.log.error(f"An error occurred while streaming result: {e}")
             results = self._decrypt_result(results, is_single_result=False)
-            print("Decrypted result: ")
-            print(results)
+            self.parent.log.info("Successfully decrypted results")
             return results
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:

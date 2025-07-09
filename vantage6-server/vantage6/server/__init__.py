@@ -525,18 +525,20 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-
+            self.log.debug("Returning response with code %s and data: %s", code, data)
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
-            # Don't attempt json conversion if it's already a response. Should be done more elegantly
+            # Don't attempt json conversion if it's already a response.
+            # TODO: Should be done more elegantly
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
 
             resp = make_response(json.dumps(data), code)
-            resp.headers.extend(headers or {})
+            if isinstance(headers, dict):
+                resp.headers.extend(headers)
             return resp
 
     def configure_jwt(self):
@@ -705,13 +707,16 @@ class ServerApp:
             "storage_adapter": self.storage_adapter,
             **services
         }
-
         for res in RESOURCES:
-            module = importlib.import_module("vantage6.server.resource." + res)
-            if res in ["result"]:
-                module.setup(self.api, self.ctx.config["api_path"], result_services)
-            else:
-                module.setup(self.api, self.ctx.config["api_path"], services)
+            try:
+                module = importlib.import_module("vantage6.server.resource." + res)
+                if res in ["result"]:
+                    module.setup(self.api, self.ctx.config["api_path"], result_services)
+                else:
+                    module.setup(self.api, self.ctx.config["api_path"], services)
+            except Exception as e:
+                log.error(f"Failed to import or set up resource '{res}': {e}")
+                log.debug("Exception details:", exc_info=True)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see

@@ -101,13 +101,27 @@ class ResultStreamBase(ServicesResources):
         self.storage_adapter = storage_adapter
 
 class ResultStream(ResultStreamBase):
-    """Resource for /api/resultstream/<id>"""
+    """Resource for /api/resultstream (POST)"""
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
-      super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
+        """
+        Get the result of a run by its id.
+        Parameters
+        ----------
+        id : str
+            The id of the run to get the result for.    
+        Returns
+        -------
+        Response
+            A streaming response with the result data.
+        HTTPStatus
+            The HTTP status code indicating the result of the operation.
+
+        """
         if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to azure blob storage, result streaming is not available."
@@ -116,6 +130,9 @@ class ResultStream(ResultStreamBase):
         try:
             log.debug(f"Streaming result for run id={id}")
             blob_stream = self.storage_adapter.stream_blob(id)
+            if not blob_stream or not hasattr(blob_stream, "chunks"):
+                log.error(f"Invalid blob_stream returned for id={id}")
+                return {"msg": "Result not found or invalid stream!"}, HTTPStatus.NOT_FOUND
         except Exception as e:
             log.error(f"Error streaming result: {e}")
             return {"msg": "Error streaming result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
@@ -123,7 +140,7 @@ class ResultStream(ResultStreamBase):
         def generate():
             for chunk in blob_stream.chunks():
                 yield chunk
-
+        # Return a streaming response with the content type set to binary
         return Response(
             stream_with_context(generate()),
             content_type="application/octet-stream",
@@ -133,14 +150,16 @@ class ResultStream(ResultStreamBase):
         )
     
 class UwsgiChunkedStream:
+    """A class to handle chunked reading from uwsgi."""
+    
     def __init__(self, chunk_size=4096):
         self.chunk_size = chunk_size
         self._buffer = b""
         self._eof = False
 
     def read(self, size=-1):
-        log.info(f"Reading with size: {size}")
-        if size < 0:
+        log.debug(f"Reading uwsgi chunks with starting size: {size}")
+        if size <= 0:
             chunks = [self._buffer]
             self._buffer = b""
             while not self._eof:
@@ -162,30 +181,34 @@ class UwsgiChunkedStream:
         return result
   
 class ResultStreams(ResultStreamBase):
-  """Resource for /api/resultstream/<id>"""
+    """
+    Resource for /api/resultstream/<id>
+        This resource allows uploading large results to the server.
+        It supports both chunked and non-chunked uploads.
+    """
       
-  def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
+    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
         super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
-  @only_for(("node", "user", "container"))
-  def post(self):
-    if not self.storage_adapter:
-            log.warning(
-                "The large result store is not set to azure blob storage, result streaming is not available."
-            )
-            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
-    result_uuid = str(uuid.uuid4())
-    transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
-    is_chunked = "chunked" in transfer_encoding
-    try:
-        if is_chunked:
-            stream = UwsgiChunkedStream()
-            self.storage_adapter.store_blob(result_uuid, stream)
-        else:
-            data = request.get_data()
-            self.storage_adapter.store_blob(result_uuid, data)
-    except Exception as e:
-        log.error(f"Error uploading result: {e}")
-        return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+    @only_for(("node", "user", "container"))
+    def post(self):
+        if not self.storage_adapter:
+                log.warning(
+                    "The large result store is not set to azure blob storage, result streaming is not available."
+                )
+                return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+        result_uuid = str(uuid.uuid4())
+        transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
+        is_chunked = "chunked" in transfer_encoding
+        try:
+            if is_chunked:
+                stream = UwsgiChunkedStream()
+                self.storage_adapter.store_blob(result_uuid, stream)
+            else:
+                data = request.get_data()
+                self.storage_adapter.store_blob(result_uuid, data)
+        except Exception as e:
+            log.error(f"Error uploading result: {e}")
+            return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
-    return {"uuid": result_uuid}, HTTPStatus.CREATED
+        return {"uuid": result_uuid}, HTTPStatus.CREATED

@@ -364,7 +364,10 @@ def stream_handler(id: str) -> FlaskResponse:
 
     if backend_response.status_code > 210:
         log.warning("Proxy server received status code %s", backend_response.status_code)
-        log.warning("Error messages: %s", backend_response.json())
+        try:
+            log.warning("Error messages: %s", backend_response.json())
+        except Exception:
+            log.warning("Could not decode error response as JSON. Response text: %s", backend_response.text)
         log.debug(
             "method: %s, url: %s, params: %s, headers: %s",
             request.method,
@@ -375,12 +378,18 @@ def stream_handler(id: str) -> FlaskResponse:
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
     client: NodeClient = app.config.get("SERVER_IO")
 
-    return FlaskResponse(
-        stream_with_context(client.cryptor.decrypt_stream(backend_response.raw)),
-        status=backend_response.status_code,
-        headers=dict(backend_response.headers),
-        content_type=backend_response.headers.get("Content-Type")
-    )
+    # Only decrypt if the response is successful and content type is as expected
+    content_type = backend_response.headers.get("Content-Type", "")
+    if backend_response.status_code <= 210 and "application/octet-stream" in content_type:
+        return FlaskResponse(
+            stream_with_context(client.cryptor.decrypt_stream(backend_response.raw)),
+            status=backend_response.status_code,
+            headers=dict(backend_response.headers),
+            content_type=content_type
+        )
+    else:
+        # Return the raw content if not a valid stream or error occurred
+        return backend_response.content, backend_response.status_code, backend_response.headers.items()
 
 @app.route("/resultstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
@@ -388,6 +397,16 @@ def stream_handler_post() -> FlaskResponse:
 
     client: NodeClient = app.config.get("SERVER_IO")
     pubkey_base64 = request.headers.get("X-Public-Key")
+    if not pubkey_base64:
+        log.error("Missing X-Public-Key header in request.")
+        return {"msg": "Missing X-Public-Key header"}, HTTPStatus.BAD_REQUEST
+
+    log.info("Received public key: %s", pubkey_base64)
+
+    headers = {}
+    for h in ["Authorization", "Content-Type", "Content-Length"]:
+        if h in request.headers:
+            headers[h] = request.headers[h]
     log.info("Received public key: %s", pubkey_base64)
 
     headers = {}
@@ -422,7 +441,7 @@ def stream_handler_post() -> FlaskResponse:
             request.args,
             headers,
         )
-        return backend_response.content, backend_response.status_code, backend_response.headers.items()
+        return backend_response.content, backend_response.status_code, dict(backend_response.headers)
     return FlaskResponse(backend_response.content, status=backend_response.status_code, headers=dict(backend_response.headers))
 
 
