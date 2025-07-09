@@ -507,11 +507,9 @@ class Nodes(NodeBase):
         # save the node in the database now that keycloak account is setup
         node.save()
 
-        # Return the node information to the user. Manually return the api_key
-        # to the user as the hashed key is not returned
+        # Return the node information to the user. Manually include the api_key
+        # to the user if the keycloak account was just created.
         node_json = node_schema.dump(node)
-        # only include API key if it is the password for a keycloak account that was
-        # just created
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
