@@ -14,7 +14,7 @@ from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.common.enums import ArgumentType
+from vantage6.common.enum import AlgorithmArgumentType
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
@@ -109,12 +109,12 @@ class AllowedArgumentValueSchema(HATEOASModelSchema):
 
     def _convert_value_type(self, obj, result):
         """Helper method to convert value type based on argument type"""
-        if obj.argument.type_ == ArgumentType.INTEGER.value:
+        if obj.argument.type_ == AlgorithmArgumentType.INTEGER.value:
             try:
                 result["value"] = int(result["value"])
             except (ValueError, TypeError):
                 pass
-        elif obj.argument.type_ == ArgumentType.FLOAT.value:
+        elif obj.argument.type_ == AlgorithmArgumentType.FLOAT.value:
             try:
                 result["value"] = float(result["value"])
             except (ValueError, TypeError):

@@ -6,7 +6,7 @@ from functools import wraps
 from dataclasses import dataclass
 
 from vantage6.common.globals import ContainerEnvNames
-
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.algorithm.tools.util import info
 
 
@@ -78,5 +78,7 @@ def metadata(func: callable) -> callable:
             token=token,
         )
         return func(metadata, *args, **kwargs)
+
+    decorator.vantage6_decorated_type = DecoratorType.METADATA
 
     return decorator

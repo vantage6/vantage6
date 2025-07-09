@@ -7,10 +7,10 @@ from copy import deepcopy
 
 import pandas as pd
 
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
-from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 module_name = __name__.split(".")[1]
 
@@ -115,7 +115,6 @@ class MockAlgorithmClient:
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )
-                df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
@@ -240,9 +239,15 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method_fn, "wrapped_in_algorithm_client_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.ALGORITHM_CLIENT
+                ):
                     mocked_kwargs["mock_client"] = client_copy
-                if getattr(method_fn, "wrapped_in_data_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.DATAFRAME
+                ):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]

@@ -9,7 +9,7 @@ querying it from the nodes is slow. Also, it allows for flexible preprocessing o
 data and storing the final result reliably so that it can be easily reused.
 
 A session is started by extracting data from one or more of the node's databases to a
-dataframe. Subsequently, as many preprocessing steps as necessary can be performed on 
+dataframe. Subsequently, as many preprocessing steps as necessary can be performed on
 the dataframe. When the data is preprocessed and ready to be used,
 as many computations can be done on the data as you wish. It is
 also possible to preprocess the data further after computation tasks have been executed.
@@ -56,9 +56,9 @@ provide the following features:
   remove columns, or filter rows. The latest version of the dataframe is used in the
   computation tasks. The dataframe keeps track of the last task that modified it.
 - Dataframes can have different permission scopes. You can create dataframes that are
-  for your own use, but you can also share them with other users in your 
-  organization or with the entire collaboration. Users with the permission to share 
-  sessions with the organization or collaboration may also be able see, modify and 
+  for your own use, but you can also share them with other users in your
+  organization or with the entire collaboration. Users with the permission to share
+  sessions with the organization or collaboration may also be able see, modify and
   delete your own dataframes. In other words, scoping a dataframe to yourself is
   not a way to keep the dataframe private, but it is only shared with users with higher
   permissions. Dataframes with an organization or collaboration scope are shared with
@@ -135,11 +135,11 @@ source data.
 
 .. note::
 
-  The user interface does not require you to know how these actions are triggered, but 
-  the API endpoints used are as follows: ``compute`` tasks can be triggered ``/task`` 
-  endpoint, and ``data extraction`` and ``preprocessing`` actions are triggered with the 
-  ``/session`` endpoints. In the Python client, the three actions are represented by 
-  ``client.task.create()``, ``client.dataframe.create()`` and 
+  The user interface does not require you to know how these actions are triggered, but
+  the API endpoints used are as follows: ``compute`` tasks can be triggered ``/task``
+  endpoint, and ``data extraction`` and ``preprocessing`` actions are triggered with the
+  ``/session`` endpoints. In the Python client, the three actions are represented by
+  ``client.task.create()``, ``client.dataframe.create()`` and
   ``client.dataframe.preprocess()``, respectively.
 
 
@@ -171,25 +171,25 @@ There are three senarions:
 
     rectangle "(1) Data Extraction" as data_extraction
     rectangle "(2) Compute 1" as compute_1
-    rectangle "(3) Pre-processing 1" as pre_processing_1
+    rectangle "(3) Pre-processing 1" as preprocessing_1
     rectangle "(4) Compute 2" as compute_2
     rectangle "(5) Compute 3" as compute_3
-    rectangle "(6) Pre-processing 2" as pre_processing_2
-    rectangle "(7) Pre-processing 3" as pre_processing_3
+    rectangle "(6) Pre-processing 2" as preprocessing_2
+    rectangle "(7) Pre-processing 3" as preprocessing_3
     rectangle "(8) Compute 4" as compute_4
 
-    data_extraction --> pre_processing_1
+    data_extraction --> preprocessing_1
     data_extraction --> compute_1
-    compute_1 --> pre_processing_2
+    compute_1 --> preprocessing_2
 
-    pre_processing_1 --> compute_2
-    pre_processing_1 --> compute_3
+    preprocessing_1 --> compute_2
+    preprocessing_1 --> compute_3
 
-    compute_3 --> pre_processing_3
+    compute_3 --> preprocessing_3
 
-    pre_processing_1 --> pre_processing_2
-    pre_processing_2 --> pre_processing_3
-    pre_processing_3 --> compute_4
+    preprocessing_1 --> preprocessing_2
+    preprocessing_2 --> preprocessing_3
+    preprocessing_3 --> compute_4
 
 
 
