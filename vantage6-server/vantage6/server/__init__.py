@@ -390,7 +390,6 @@ class ServerApp(Vantage6App):
             # simple for now: check every hour
             time.sleep(3600)
 
-    # TODO Ensure that we can still couple a remote store - create issue for this
     def couple_algorithm_stores(self) -> None:
         """Couple algorithm stores to the server.
 
