@@ -251,6 +251,18 @@ class DatabaseInputSchema(_NameDescriptionSchema):
     multiple = fields.Boolean(required=False, default=False)
 
 
+class _MixedBaseTypeField(fields.Field):
+    """
+    Field that can be used to validate a field that can be str, int or float
+    """
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+            return value
+        else:
+            raise ValidationError("Values should be str, int or float")
+
+
 class ArgumentInputSchema(_NameDescriptionSchema):
     """
     Schema for the input of an argument.
@@ -258,6 +270,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
     display_name = fields.String()
     type_ = fields.String(required=True, data_key="type")
+    allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
     default_value = fields.String()
     conditional_on = fields.String()
@@ -323,8 +336,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                 " be specified"
             )
         # if default value is given, validate that it matches the type
+        type_ = data.get("type_")
         if default := data.get("default_value"):
-            type_ = data.get("type_")
             if (
                 type_ == ArgumentType.INTEGER.value
                 or type_ == ArgumentType.ORGANIZATION.value
@@ -401,6 +414,29 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"floats, while the argument type {type_} requires a JSON array"
                         " of floats"
                     ) from exc
+
+        # if there are allowed values, validate that they are of the correct type
+        if data.get("allowed_values"):
+            if type_ == ArgumentType.INTEGER.value:
+                desired_type = int
+            elif type_ == ArgumentType.FLOAT.value:
+                desired_type = float
+            else:
+                desired_type = str
+            for value in data.get("allowed_values"):
+                try:
+                    desired_type(value)
+                except (ValueError, TypeError):
+                    raise ValidationError(
+                        f"Allowed values should be of type {desired_type} because the "
+                        f"argument type is {type_}"
+                    )
+
+        # if there are both allowed values and a default value, validate that the
+        # default value is one of the allowed values
+        if data.get("default_value") and data.get("allowed_values"):
+            if data.get("default_value") not in data.get("allowed_values"):
+                raise ValidationError("Default value is not one of the allowed values")
 
 
 class UIVisualizationInputSchema(_NameDescriptionSchema):

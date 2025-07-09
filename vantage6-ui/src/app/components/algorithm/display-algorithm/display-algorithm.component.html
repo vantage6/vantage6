@@ -128,6 +128,10 @@
                           <b>{{ "algorithm.function.argument.type" | translate }}</b>
                           <span>{{ argument.type || "-" }}</span>
                         </div>
+                        <div *ngIf="isArgumentWithAllowedValues(argument.type)" class="data-list__item">
+                          <b>{{ "algorithm.function.argument.allowed_values" | translate }}</b>
+                          <span>{{ argument.allowed_values.join(', ') }}</span>
+                        </div>
                         <div class="data-list__item data-list__item--big">
                           <b>{{ "general.description" | translate }}</b>
                           <span>{{ argument.description || "-" }}</span>

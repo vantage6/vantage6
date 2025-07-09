@@ -299,6 +299,10 @@ class Users(UserBase):
                             for col in g.user.organization.collaborations
                             for org in col.organizations
                         ]
+                        # include the organization of the user: in case the organization
+                        # is not part of any collaboration they would otherwise not be
+                        # visible
+                        + [g.user.organization_id]
                     )
                 )
             elif self.r.v_org.can():

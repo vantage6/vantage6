@@ -31,6 +31,14 @@ from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common import Vantage6App
+from vantage6.common.globals import (
+    PING_INTERVAL_SECONDS,
+    AuthStatus,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+)
+from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common import Vantage6App
+from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.cli.context.server import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.permission import PermissionManager
@@ -68,6 +76,7 @@ class ServerApp(Vantage6App):
 
         super().__init__(ctx, SERVER_MODULE_NAME)
 
+        self.metrics = Metrics(labels=["node_id", "platform", "os"])
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
@@ -94,6 +103,12 @@ class ServerApp(Vantage6App):
         log.debug("Starting thread to set node status")
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
+
+        start_prometheus_exporter(
+            port=self.ctx.config.get(
+                "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+            )
+        )
 
         log.info("Initialization done")
 
@@ -158,9 +173,8 @@ class ServerApp(Vantage6App):
                 always_connect=True,
             )
 
-        # FIXME: temporary fix to get socket object into the namespace class
-        DefaultSocketNamespace.socketio = socketio
-        socketio.on_namespace(DefaultSocketNamespace("/tasks"))
+        namespace = DefaultSocketNamespace("/tasks", socketio, self.metrics)
+        socketio.on_namespace(namespace)
 
         return socketio
 
