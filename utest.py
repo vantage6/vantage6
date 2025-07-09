@@ -25,7 +25,9 @@ def run():
     args = parser.parse_args()
 
     # If no specific tests are selected, run all by default
-    if not any([args.common, args.cli, args.algorithm_store, args.server, args.node, args.all]):
+    if not any(
+        [args.common, args.cli, args.algorithm_store, args.server, args.node, args.all]
+    ):
         args.all = True
 
     success = True
