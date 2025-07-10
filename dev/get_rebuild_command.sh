@@ -15,15 +15,23 @@ elif [ $# -gt 1 ]; then
     exit 1
 fi
 
-# check if arg is equal to server, node, store, or ui
-image_to_build=$1
-if [[ "$image_to_build" == "--server" || "$image_to_build" == "--node" || "$image_to_build" == "--store" || "$image_to_build" == "--ui" ]]; then
-    # remove the -- from the arg
-    image_name=${image_to_build#--}
-    echo "devspace build --profile build-$image_name-only"
-    exit 0
-else
-    echo "Invalid argument: $image_to_build" >&2
-    echo "Valid arguments are: --server, --node, --store, --ui" >&2
-    exit 1
-fi
+# Use case statement to handle different image types
+case "$1" in
+    --server)
+        echo "devspace build --profile build-server-only"
+        ;;
+    --node)
+        echo "devspace build --profile build-node-only"
+        ;;
+    --store)
+        echo "devspace build --profile build-store-only"
+        ;;
+    --ui)
+        echo "devspace build --profile build-ui-only"
+        ;;
+    *)
+        echo "Invalid argument: $1" >&2
+        echo "Valid arguments are: --server, --node, --store, --ui" >&2
+        exit 1
+        ;;
+esac

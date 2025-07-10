@@ -67,6 +67,6 @@ profiles:
     path: images
     value:
       ui:
-        image: "${UI_IMAGE}"
+        image: ${UI_IMAGE}
         dockerfile: docker/ui_dev.Dockerfile
         context: .
