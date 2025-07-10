@@ -11,7 +11,7 @@ if [ $# -eq 0 ]; then
     exit 0
 elif [ $# -gt 1 ]; then
     echo "Please provide only one argument." >&2
-    echo "Usage: ./dev/get_rebuild_command.sh [--server|--node|--store|--ui]" >&2
+    echo "Usage: $0 [--server|--node|--store|--ui]" >&2
     exit 1
 fi
 
