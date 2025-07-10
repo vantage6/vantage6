@@ -117,6 +117,8 @@ ui:
   image: harbor2.vantage6.ai/infrastructure/ui:latest
   # Service port for the UI
   port: 7600
+  # keycloak realm
+  keycloakRealm: vantage6
   # keycloak client
   keycloakClient: public_client
   # keycloak public URL
