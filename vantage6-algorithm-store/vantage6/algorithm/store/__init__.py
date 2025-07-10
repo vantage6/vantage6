@@ -256,7 +256,6 @@ class AlgorithmStoreApp(Vantage6App):
         # add whitelisted server and root user from config file if they do not exist
         if root_user := self.ctx.config.get("root_user", {}):
             root_username = root_user.get("username")
-            root_email = root_user.get("email")
             root_organization = root_user.get("organization_id")
             if root_username:
 
@@ -272,7 +271,6 @@ class AlgorithmStoreApp(Vantage6App):
 
                     root_user = db.User(
                         username=root_username,
-                        email=root_email,
                         organization_id=root_organization,
                         roles=[root],
                     )

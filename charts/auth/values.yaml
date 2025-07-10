@@ -57,9 +57,6 @@ keycloak:
                 config:
                   claim.name: vantage6_client_type
                   claim.value: user
-                  introspection.token.claim: true
-                  userinfo.token.claim: true
-                  id.token.claim: true
                   access.token.claim: true
           - clientId: backend-admin-client
             publicClient: false

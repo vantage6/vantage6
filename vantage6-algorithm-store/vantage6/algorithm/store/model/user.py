@@ -15,8 +15,6 @@ class User(Base):
     ----------
     username : str
         Username
-    email : str
-        Email address
     organization_id : int
         Id of the organization to which the user belongs
     keycloak_id : str
@@ -32,7 +30,6 @@ class User(Base):
     # fields
     # link with the v6 server. This is a temporary solution
     username = Column(String)
-    email = Column(String)
     organization_id = Column(Integer)
     keycloak_id = Column(String)
 
