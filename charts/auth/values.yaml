@@ -39,6 +39,9 @@ keycloak:
               realm-management:
                 - view-users
                 - manage-users
+                - view-clients
+                - manage-clients
+                - create-client
         clients:
           - clientId: public_client
             publicClient: true
