@@ -39,9 +39,6 @@ def cli_server_new(
         namespace=namespace,
     )
 
-    # TODO: pull the chart and use it
-    server_chart = get_server_chart()
-
     name = prompt_config_name(name)
 
     # check if name is allowed for docker volume, else exit
@@ -67,9 +64,7 @@ def cli_server_new(
 
     # create config in ctx location
     try:
-        cfg_file = configuration_wizard(
-            InstanceType.SERVER, name, system_folders, server_chart
-        )
+        cfg_file = configuration_wizard(InstanceType.SERVER, name, system_folders)
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
         exit(1)

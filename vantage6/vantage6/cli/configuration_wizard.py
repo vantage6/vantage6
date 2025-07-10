@@ -1,27 +1,25 @@
 import os
-import yaml
 from pathlib import Path
 from typing import Any
 
 import questionary as q
 
-from vantage6.common import generate_apikey
-from vantage6.common.globals import (
-    DATABASE_TYPES,
-    InstanceType,
-    NodePolicy,
-    Ports,
-    DEFAULT_API_PATH,
-    RequiredNodeEnvVars,
-)
-from vantage6.common.client.node_client import NodeClient
-from vantage6.common.context import AppContext
-from vantage6.common import error, warning, info
-from vantage6.cli.context import select_context_class
 from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,
+)
+from vantage6.cli.context import select_context_class
+from vantage6.common import error, generate_apikey, info, warning
+from vantage6.common.client.node_client import NodeClient
+from vantage6.common.context import AppContext
+from vantage6.common.globals import (
+    DATABASE_TYPES,
+    DEFAULT_API_PATH,
+    InstanceType,
+    NodePolicy,
+    Ports,
+    RequiredNodeEnvVars,
 )
 
 
@@ -375,7 +373,6 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
 # questions, and adjust the order of questions
 def server_configuration_questionaire(
     instance_name: str,
-    chart_path: str,
 ) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
@@ -384,22 +381,14 @@ def server_configuration_questionaire(
     ----------
     instance_name : str
         Name of the server instance
-    chart_path : str
-        Path to the Helm chart directory
 
     Returns
     -------
     dict[str, Any]
         dictionary with Helm values for the server configuration
     """
-    # Load defaults from Helm chart
+    # Get active kube namespace
     cli_config = CliConfig()
-    chart_path = cli_config.get_default_chart(chart_type="server")
-    values_path = Path(chart_path) / "values.yaml"
-    with open(values_path, "r") as f:
-        helm_defaults = yaml.safe_load(f)
-
-    # get active kube namespace
     kube_namespace = cli_config.get_last_namespace()
 
     # Initialize config with basic structure
@@ -408,23 +397,17 @@ def server_configuration_questionaire(
     # Basic server configuration - always configure these
     config["server"]["description"] = q.text(
         "Enter a human-readable description:",
-        default=helm_defaults.get("server", {}).get(
-            "description", f"Vantage6 server {instance_name}"
-        ),
+        default=f"Vantage6 server {instance_name}",
     ).unsafe_ask()
 
     # Server URL configuration - important for external access
-    default_base_url = helm_defaults.get("server", {}).get(
-        "baseUrl", "http://localhost:7601"
-    )
     config["server"]["baseUrl"] = q.text(
-        "What is the server URL that users will connect to?", default=default_base_url
+        "What is the server URL that users will connect to?",
+        default="http://localhost:7601",
     ).unsafe_ask()
 
-    # API path - use helm chart default
-    config["server"]["apiPath"] = helm_defaults.get("server", {}).get(
-        "apiPath", DEFAULT_API_PATH
-    )
+    # API path - use a default value
+    config["server"]["apiPath"] = DEFAULT_API_PATH
 
     # === Configure devspace.yaml equivalent options ===
 
@@ -467,73 +450,43 @@ def server_configuration_questionaire(
 
         config["database"]["k8sNodeName"] = k8s_node_name
 
-    # === Keycloak configuration (from devspace.yaml env vars) ===
+    # === Keycloak configuration ===
     configure_keycloak = q.confirm(
         "Do you want to configure Keycloak authentication settings?", default=True
     ).unsafe_ask()
 
     if configure_keycloak:
-        # KEYCLOAK_URL
-        default_kc_url = helm_defaults.get("server", {}).get(
-            "keycloakUrl",
-            f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local",
-        )
         config["server"]["keycloakUrl"] = q.text(
-            "Keycloak server URL (internal cluster URL):", default=default_kc_url
+            "Keycloak server URL (internal cluster URL):",
+            default=f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local",
         ).unsafe_ask()
 
-        # KEYCLOAK_REALM
-        default_realm = helm_defaults.get("server", {}).get("keycloakRealm", "vantage6")
         config["server"]["keycloakRealm"] = q.text(
-            "Keycloak realm:", default=default_realm
+            "Keycloak realm:", default="vantage6"
         ).unsafe_ask()
 
-        # KEYCLOAK_ADMIN_USERNAME
-        default_admin_user = helm_defaults.get("server", {}).get(
-            "keycloakAdminUsername", "admin"
-        )
         config["server"]["keycloakAdminUsername"] = q.text(
-            "Keycloak admin username:", default=default_admin_user
+            "Keycloak admin username:", default="admin"
         ).unsafe_ask()
 
-        # KEYCLOAK_ADMIN_PASSWORD
-        default_admin_pass = helm_defaults.get("server", {}).get(
-            "keycloakAdminPassword", "admin"
-        )
         config["server"]["keycloakAdminPassword"] = q.password(
-            "Keycloak admin password:", default=default_admin_pass
+            "Keycloak admin password:", default="admin"
         ).unsafe_ask()
 
-        # KEYCLOAK_BACKEND_CLIENT
-        default_backend_client = helm_defaults.get("server", {}).get(
-            "keycloakUserClient", "backend-user-client"
-        )
         config["server"]["keycloakUserClient"] = q.text(
-            "Keycloak backend client ID:", default=default_backend_client
+            "Keycloak backend client ID:", default="backend-user-client"
         ).unsafe_ask()
 
-        # KEYCLOAK_BACKEND_CLIENT_SECRET
-        default_backend_secret = helm_defaults.get("server", {}).get(
-            "keycloakUserClientSecret", "myuserclientsecret"
-        )
         config["server"]["keycloakUserClientSecret"] = q.password(
-            "Keycloak backend client secret:", default=default_backend_secret
+            "Keycloak backend client secret:", default="myuserclientsecret"
         ).unsafe_ask()
 
-        # KEYCLOAK_ADMIN_CLIENT
-        default_admin_client = helm_defaults.get("server", {}).get(
-            "keycloakAdminClient", "backend-admin-client"
-        )
         config["server"]["keycloakAdminClient"] = q.text(
-            "Keycloak admin client ID:", default=default_admin_client
+            "Keycloak admin client ID:", default="backend-admin-client"
         ).unsafe_ask()
 
-        # KEYCLOAK_ADMIN_CLIENT_SECRET
-        default_admin_client_secret = helm_defaults.get("server", {}).get(
-            "keycloakAdminClientSecret", "myadminclientsecret"
-        )
         config["server"]["keycloakAdminClientSecret"] = q.password(
-            "Keycloak admin client secret:", default=default_admin_client_secret
+            "Keycloak admin client secret:", default="myadminclientsecret"
         ).unsafe_ask()
 
     # === UI configuration ===
@@ -542,54 +495,38 @@ def server_configuration_questionaire(
     ).unsafe_ask()
 
     if configure_ui:
-        # KEYCLOAK_PUBLIC_URL
-        default_public_url = helm_defaults.get("ui", {}).get(
-            "keycloakPublicUrl", "http://localhost:8080"
-        )
         config["ui"]["keycloakPublicUrl"] = q.text(
-            "Keycloak public URL (accessible from browser):", default=default_public_url
+            "Keycloak public URL (accessible from browser):",
+            default="http://localhost:8080",
         ).unsafe_ask()
 
-        # KEYCLOAK_FRONTEND_CLIENT
-        default_frontend_client = helm_defaults.get("ui", {}).get(
-            "keycloakClient", "public_client"
-        )
         config["ui"]["keycloakClient"] = q.text(
-            "Keycloak frontend client ID:", default=default_frontend_client
+            "Keycloak frontend client ID:", default="public_client"
         ).unsafe_ask()
 
-        # Copy keycloak realm to UI if configured
         if "keycloakRealm" in config.get("server", {}):
             config["ui"]["keycloakRealm"] = config["server"]["keycloakRealm"]
 
     # === Common server settings ===
 
-    # Server image
-    default_server_image = helm_defaults.get("server", {}).get(
-        "image", "harbor2.vantage6.ai/infrastructure/server:latest"
-    )
     config["server"]["image"] = q.text(
-        "Server Docker image:", default=default_server_image
+        "Server Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/server:latest",
     ).unsafe_ask()
 
-    # UI image
-    default_ui_image = helm_defaults.get("ui", {}).get(
-        "image", "harbor2.vantage6.ai/infrastructure/ui:latest"
-    )
     config["ui"]["image"] = q.text(
-        "UI Docker image:", default=default_ui_image
+        "UI Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/ui:latest",
     ).unsafe_ask()
 
-    # Logging level
     log_level = q.select(
         "Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default=helm_defaults.get("server", {}).get("logging", {}).get("level", "INFO"),
+        default="INFO",
     ).unsafe_ask()
 
     config["server"]["logging"] = {"level": log_level}
 
-    # JWT secret configuration
     use_constant_jwt = q.confirm(
         "Do you want a constant JWT secret? (Recommended for development)", default=True
     ).unsafe_ask()
@@ -597,7 +534,6 @@ def server_configuration_questionaire(
     if use_constant_jwt:
         config["server"]["jwt"] = {"secret": generate_apikey()}
 
-    # External RabbitMQ configuration
     use_external_rabbitmq = q.confirm(
         "Do you want to use an external RabbitMQ server? (If no, RabbitMQ will be deployed in the cluster)",
         default=False,
@@ -673,7 +609,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
 
 
 def configuration_wizard(
-    type_: InstanceType, instance_name: str, system_folders: bool, chart_path: str = ""
+    type_: InstanceType,
+    instance_name: str,
+    system_folders: bool,
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -703,7 +641,6 @@ def configuration_wizard(
         conf_manager = ServerConfigurationManager
         config = server_configuration_questionaire(
             instance_name=instance_name,
-            chart_path=chart_path,
         )
     else:
         conf_manager = ServerConfigurationManager
