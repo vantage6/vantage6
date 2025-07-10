@@ -48,10 +48,8 @@ class NodeClient(ClientBase):
         self.kc_openid = KeycloakOpenID(
             server_url=self.auth_url,
             realm_name=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_REALM.value),
-            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT.value),
-            client_secret_key=os.environ.get(
-                RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
-            ),
+            client_id=f"{self.node_account_name}-node-client",
+            client_secret_key=self.api_key,
         )
         self.token_validity_period = None
 
@@ -87,11 +85,7 @@ class NodeClient(ClientBase):
     def obtain_new_token(self) -> None:
         """Get a new token."""
         self.log.debug("Obtaining new token")
-        token = self.kc_openid.token(
-            grant_type="client_credentials",
-            client_id=self.keycloak_client_id,
-            client_secret_key=self.api_key,
-        )
+        token = self.kc_openid.token(grant_type="client_credentials")
         self._access_token = token["access_token"]
         decoded_token = self.kc_openid.decode_token(self._access_token)
         self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]

@@ -494,7 +494,9 @@ class Nodes(NodeBase):
         # otherwise verify that the node exists in keycloak
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             try:
-                keycloak_id, api_key = self._create_node_in_keycloak(name)
+                keycloak_id, keycloak_client_id, api_key = (
+                    self._create_node_in_keycloak(name)
+                )
             except Exception as e:
                 msg = f"Error creating keycloak account for node {name}: {e}"
                 log.error(msg)
@@ -502,6 +504,7 @@ class Nodes(NodeBase):
         else:
             keycloak_id = get_keycloak_id_for_user(name)
         node.keycloak_id = keycloak_id
+        node.keycloak_client_id = keycloak_client_id
 
         # save the node in the database now that keycloak account is setup
         node.save()
@@ -524,9 +527,10 @@ class Nodes(NodeBase):
               The client id and the api key.
         """
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        client_name = f"{name}-node-client"
         keycloak_client_id = keycloak_admin.create_client(
             {
-                "clientId": f"{name}-node-client",
+                "clientId": client_name,
                 "publicClient": False,
                 "enabled": True,
                 "serviceAccountsEnabled": True,
@@ -545,8 +549,9 @@ class Nodes(NodeBase):
                 ],
             }
         )
+        client_id = keycloak_admin.get_user_id(f"service-account-{client_name}")
         secret = keycloak_admin.get_client_secrets(keycloak_client_id)
-        return keycloak_client_id, secret["value"]
+        return client_id, keycloak_client_id, secret["value"]
 
 
 class NodeCurrent(NodeBase):
