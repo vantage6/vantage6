@@ -13,8 +13,6 @@ node:
   # Keycloak configuration
   keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
-  keycloakClient: node-client
-  keycloakClientSecret: mynodeclientsecret
 
   server:
     # TODO set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
