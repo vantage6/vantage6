@@ -111,7 +111,11 @@ class TestResources(TestResourceBase):
 
     @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
     def test_node_without_id(self, mock_create_node_in_keycloak):
-        mock_create_node_in_keycloak.return_value = str(uuid.uuid1())
+        mock_create_node_in_keycloak.return_value = (
+            str(uuid.uuid1()),  # keycloak id
+            str(uuid.uuid1()),  # keycloak client id
+            str(uuid.uuid1()),  # api key
+        )
 
         # GET
         rule = Rule.get_by_("node", Scope.GLOBAL, Operation.VIEW)
@@ -2188,7 +2192,11 @@ class TestResources(TestResourceBase):
 
     @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
     def test_create_node_permissions(self, mock_create_node_in_keycloak):
-        mock_create_node_in_keycloak.return_value = str(uuid.uuid1())
+        mock_create_node_in_keycloak.return_value = (
+            str(uuid.uuid1()),  # keycloak id
+            str(uuid.uuid1()),  # keycloak client id
+            str(uuid.uuid1()),  # api key
+        )
 
         org = Organization(name=str(uuid.uuid1()))
         col = Collaboration(organizations=[org])
