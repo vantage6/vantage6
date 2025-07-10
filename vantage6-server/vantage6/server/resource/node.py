@@ -483,7 +483,6 @@ class Nodes(NodeBase):
             }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
-        api_key = generate_apikey()
         node = db.Node(
             name=name,
             collaboration=collaboration,
@@ -495,7 +494,7 @@ class Nodes(NodeBase):
         # otherwise verify that the node exists in keycloak
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             try:
-                keycloak_id = self._create_node_in_keycloak(name, api_key)
+                keycloak_id, api_key = self._create_node_in_keycloak(name)
             except Exception as e:
                 msg = f"Error creating keycloak account for node {name}: {e}"
                 log.error(msg)
@@ -514,21 +513,40 @@ class Nodes(NodeBase):
             node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
-    def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
+    def _create_node_in_keycloak(self, name: str) -> tuple[str, str]:
+        """
+        Create a node in Keycloak and return the client id and the api key.
+        The api key is the client secret of the client.
+
+        Returns
+        -------
+            tuple[str, str]:
+              The client id and the api key.
+        """
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-        keycloak_id = keycloak_admin.create_user(
+        keycloak_client_id = keycloak_admin.create_client(
             {
-                "username": name,
-                "email": f"dummy-node-account-{name}@vantage6.ai".replace(" ", ""),
+                "clientId": f"{name}-node-client",
+                "publicClient": False,
                 "enabled": True,
-                "firstName": name,
-                "lastName": "Node",
-                "credentials": [
-                    {"type": "password", "value": api_key, "temporary": False}
+                "serviceAccountsEnabled": True,
+                "standardFlowEnabled": False,
+                "protocolMappers": [
+                    {
+                        "name": "vantage6_client_type",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-hardcoded-claim-mapper",
+                        "config": {
+                            "claim.name": "vantage6_client_type",
+                            "claim.value": "node",
+                            "access.token.claim": True,
+                        },
+                    }
                 ],
             }
         )
-        return keycloak_id
+        secret = keycloak_admin.get_client_secrets(keycloak_client_id)
+        return keycloak_client_id, secret["value"]
 
 
 class NodeCurrent(NodeBase):
@@ -671,7 +689,7 @@ class Node(NodeBase):
 
     def _delete_node_in_keycloak(self, node: db.Node) -> None:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-        keycloak_admin.delete_user(node.keycloak_id)
+        keycloak_admin.delete_client(node.keycloak_id)
 
     @with_user_or_node
     def patch(self, id):

@@ -40,6 +40,7 @@ class NodeClient(ClientBase):
         # self.name = None
         self.collaboration_id = None
         self.whoami = None
+        self.keycloak_client_id = None
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
@@ -87,13 +88,9 @@ class NodeClient(ClientBase):
         """Get a new token."""
         self.log.debug("Obtaining new token")
         token = self.kc_openid.token(
-            grant_type="password",
-            username=self.node_account_name,
-            password=self.api_key,
-            client_id=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_CLIENT.value),
-            client_secret_key=os.environ.get(
-                RequiredNodeEnvVars.KEYCLOAK_CLIENT_SECRET.value
-            ),
+            grant_type="client_credentials",
+            client_id=self.keycloak_client_id,
+            client_secret_key=self.api_key,
         )
         self._access_token = token["access_token"]
         decoded_token = self.kc_openid.decode_token(self._access_token)
