@@ -68,12 +68,6 @@ vars:
   KEYCLOAK_ADMIN_PASSWORD:
     source: env
     default: admin
-  KEYCLOAK_NODE_CLIENT:
-    source: env
-    default: node-client
-  KEYCLOAK_NODE_CLIENT_SECRET:
-    source: env
-    default: mynodeclientsecret
   DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
@@ -228,6 +222,9 @@ deployments:
                       realm-management:
                         - view-users
                         - manage-users
+                        - view-clients
+                        - manage-clients
+                        - create-client
                 # turn off TOTP / MFA in dev environment
                 requiredActions:
                   - alias: CONFIGURE_TOTP
@@ -325,8 +322,6 @@ deployments:
           numberOfNodes: ${NUMBER_OF_NODES}
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
-          keycloakClient: ${KEYCLOAK_NODE_CLIENT}
-          keycloakClientSecret: ${KEYCLOAK_NODE_CLIENT_SECRET}
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:

@@ -516,15 +516,15 @@ class Nodes(NodeBase):
             node_json["api_key"] = api_key
         return node_json, HTTPStatus.CREATED  # 201
 
-    def _create_node_in_keycloak(self, name: str) -> tuple[str, str]:
+    def _create_node_in_keycloak(self, name: str) -> tuple[str, str, str]:
         """
         Create a node in Keycloak and return the client id and the api key.
         The api key is the client secret of the client.
 
         Returns
         -------
-            tuple[str, str]:
-              The client id and the api key.
+            tuple[str, str, str]:
+              The keycloak id, the keycloak client id and the api key.
         """
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         client_name = f"{name}-node-client"
