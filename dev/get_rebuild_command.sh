@@ -19,7 +19,7 @@ fi
 image_to_build=$1
 if [[ "$image_to_build" == "--server" || "$image_to_build" == "--node" || "$image_to_build" == "--store" || "$image_to_build" == "--ui" ]]; then
     # remove the -- from the arg
-    image_name=$(echo "$image_to_build" | sed 's/^--//')
+    image_name=${image_to_build#--}
     echo "devspace build --profile build-$image_name-only"
     exit 0
 else
