@@ -15,26 +15,23 @@ keycloak:
         realm: vantage6
         enabled: true
         requiredActions:
-        - alias: CONFIGURE_TOTP
-          name: Configure OTP
-          providerId: CONFIGURE_TOTP
-          enabled: true
-          # by setting defaultAction to true, the user will be prompted to configure
-          # OTP on first login
-          defaultAction: true
-          priority: 10
+          - alias: CONFIGURE_TOTP
+            name: Configure OTP
+            providerId: CONFIGURE_TOTP
+            enabled: true
+            # by setting defaultAction to true, the user will be prompted to configure
+            # OTP on first login
+            defaultAction: true
+            priority: 10
         users:
           - username: admin
             enabled: true
-            emailVerified: true
-            # Note that email, firstName and lastName are set to fully initialize the
-            # user in the database.
-            email: admin@vantage6.org
-            firstName: Admin
-            lastName: Admin
             credentials:
               - type: password
                 value: admin
+            requiredActions:
+              - CONFIGURE_TOTP
+              - UPDATE_PASSWORD
           - username: service-account-backend-admin-client
             enabled: true
             serviceAccountClientId: backend-admin-client

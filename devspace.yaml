@@ -204,12 +204,37 @@ deployments:
       values:
         service:
           type: ClusterIP
-        postgresql:
-          enabled: true
-          auth:
-            postgresPassword: postgres
-            password: keycloak
-            database: keycloak
+        keycloak:
+          keycloakConfigCli:
+            configuration:
+              realm:
+                # Overwrite users: for dev environment, initialize admin user fully and
+                # turn off MFA, so we don't need to configure OTP and setup account on
+                # first login.
+                users:
+                  - username: admin
+                    enabled: true
+                    emailVerified: true
+                    email: admin@vantage6.org
+                    firstName: Admin
+                    lastName: Admin
+                    credentials:
+                      - type: password
+                        value: admin
+                  - username: service-account-backend-admin-client
+                    enabled: true
+                    serviceAccountClientId: backend-admin-client
+                    clientRoles:
+                      realm-management:
+                        - view-users
+                        - manage-users
+                # turn off TOTP / MFA in dev environment
+                requiredActions:
+                  - alias: CONFIGURE_TOTP
+                    name: Configure OTP
+                    providerId: CONFIGURE_TOTP
+                    enabled: true
+                    defaultAction: false
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
@@ -370,7 +395,8 @@ dev:
         bindAddress: localhost
       - port: 7602:7602
         bindAddress: ${PORTS_BIND_ADDRESS}
-
+    logs:
+      enabled: true
     sync:
     - path: ./vantage6/:/vantage6/vantage6/
       disableDownload: true
@@ -410,6 +436,8 @@ dev:
         bindAddress: localhost
       - port: 7600:80
         bindAddress: ${PORTS_BIND_ADDRESS}
+    logs:
+      enabled: true
 
   # Where as we could hot-reload the server code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
