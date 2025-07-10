@@ -13,6 +13,7 @@ import questionary as q
 
 import docker
 from vantage6.common import error, info, warning
+from vantage6.common.globals import DEFAULT_CHART_REPO
 
 
 def check_config_name_allowed(name: str) -> None:
@@ -130,3 +131,69 @@ def switch_context_and_namespace(
 
     except subprocess.CalledProcessError as e:
         error(f"Failed to set Kubernetes context or namespace: {e}")
+
+
+def helm_install(
+    release_name: str,
+    chart_name: str,
+    values_file: str | None = None,
+) -> None:
+    """
+    Manage the `helm install` command.
+
+    Parameters
+    ----------
+    release_name : str
+        The name of the Helm release.
+    chart_name : str
+        The name of the Helm chart.
+    values_file : str, optional
+        A single values file to use with the `-f` flag.
+    """
+    # Input validation
+    for param, param_name in [
+        (release_name, "release name"),
+        (chart_name, "chart name"),
+    ]:
+        if not re.match("^[a-zA-Z0-9_.-]+$", param):
+            error(
+                f"Invalid {param_name}: {param}. Use only alphanumeric"
+                f" characters, dashes, underscores, or dots."
+            )
+            return
+
+    if values_file and not os.path.isfile(values_file):
+        error(f"Helm chart values file does not exist: {values_file}")
+        return
+
+    # Create the command
+    command = [
+        "helm",
+        "install",
+        release_name,
+        chart_name,
+        "--repo",
+        DEFAULT_CHART_REPO,
+        "--devel",  # ensure using latest version including pre-releases
+    ]
+
+    if values_file:
+        command.extend(["-f", values_file])
+
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        info(
+            f"Successfully installed release '{release_name}' using chart '{chart_name}'."
+        )
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to install release '{release_name}': {e.stderr}")
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and available in the PATH."
+        )
