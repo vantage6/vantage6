@@ -86,6 +86,14 @@ following commands:
    * - ``devspace run rebuild``
      - Rebuild all infrastructure Docker images for this project
 
+By default, ``devspace run rebuild`` will build all images. You can rebuild specific
+images by passing the ``--server``, ``--node``, ``--store`` or ``--ui`` flag. For
+example, if you want to rebuild only the server image, you can run:
+
+.. code-block:: bash
+
+    devspace run rebuild --server
+
 Using the development environment
 --------------------------------
 
