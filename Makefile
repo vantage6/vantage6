@@ -182,16 +182,20 @@ ui-image:
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
+CHARTS := auth common node store server
+
 helm-charts:
-	helm package charts/common -d charts/
-	helm package charts/node -d charts/
-	helm package charts/store -d charts/
-	helm package charts/server -d charts/
+    # Update the Helm chart dependencies, package them and clean up the chart deps 
+	for chart in $(CHARTS); do \
+		helm dependency update charts/$$chart; \
+		helm package charts/$$chart -d charts/; \
+		rm -rf charts/$$chart/charts; \
+	done
+    # Push Helm charts to registry
 	$(if ${_condition_push},\
-		helm push charts/common-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/node-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/store-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/server-*.tgz oci://harbor2.vantage6.ai/infra-charts,\
+		for chart in $(CHARTS); do \
+			helm push charts/$$chart-*.tgz oci://harbor2.vantage6.ai/infra-charts; \
+		done,\
 		@echo "Skipping push to registry")
 
 rebuild:
