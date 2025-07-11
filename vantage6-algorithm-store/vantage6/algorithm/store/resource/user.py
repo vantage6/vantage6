@@ -310,7 +310,7 @@ class Users(AlgorithmStoreResources):
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
 
-        # TODO find email and organization id from keycloak - issue #1994 and #1995
+        # TODO find organization id from keycloak - issue #1994
         # server_response, status_code = request_from_store_to_v6_server(
         #     url=f"{server.url}/user",
         #     params={"username": data["username"]},
@@ -322,7 +322,6 @@ class Users(AlgorithmStoreResources):
         #     return {
         #         "msg": f"User '{data['username']}' not found in the Vantage6 server."
         #     }, HTTPStatus.BAD_REQUEST
-        # user_email = server_response.json()["data"][0].get("email")
         # user_org = server_response.json()["data"][0]["organization"]["id"]
 
         # process the required roles. It is only possible to assign roles with
@@ -339,7 +338,6 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            # email=user_email,
             # organization_id=user_org,
             # v6_server_id=server.id,
             keycloak_id=user_id,
@@ -406,10 +404,6 @@ class User(AlgorithmStoreResources):
                     items:
                       type: integer
                     description: User's roles
-                  email:
-                    type: string
-                    description: User's email address. Do not combine this option with
-                      the update_email option.
 
         parameters:
           - in: path
@@ -423,8 +417,7 @@ class User(AlgorithmStoreResources):
           200:
             description: Ok
           400:
-            description: User cannot be updated to contents of request body,
-              e.g. due to duplicate email address.
+            description: User cannot be updated to contents of request body
           404:
             description: User not found
           401:
@@ -448,9 +441,6 @@ class User(AlgorithmStoreResources):
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
-
-        if email := data.get("email"):
-            user.email = email
 
         if "roles" in data:
             # validate that these roles exist

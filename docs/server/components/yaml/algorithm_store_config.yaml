@@ -126,8 +126,6 @@ dev:
 root_user:
   # username of the vantage6 user you want to make root in the algorithm store
   username: admin
-  # email of the vantage6 user you want to make root in the algorithm store
-  email: root@organization.com
   # id of the organization the user belongs to
   organization_id: 1
 
