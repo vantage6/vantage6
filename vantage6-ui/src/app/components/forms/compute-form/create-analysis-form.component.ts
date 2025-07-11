@@ -25,7 +25,7 @@ import {
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { CreateTaskInput, Task, TaskDatabaseType } from 'src/app/models/api/task.models';
+import { CreateTaskInput, Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
@@ -253,12 +253,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   async setupRepeatTask(taskID: string): Promise<void> {
     this.isLoadingColumns = true;
-    this.repeatedTask = await this.taskService.getTask(Number(taskID));
+    this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
     if (!this.repeatedTask) {
       return;
     }
-
     this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString());
+    await this.handleSessionChange(this.repeatedTask.session.id.toString());
 
     // set study step
     if (this.repeatedTask.study?.id) {
@@ -293,15 +293,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
 
-    // Note: the database step is not setup here because the database child
-    // component may not yet be initialized when we get here. Instead, we
-    // setup the database step in the database child component when it is
-    // initialized in the function handleDatabaseStepInitialized().
-    // However, we need to be sure that the database child component is initialized
-    // because we need the columns to be loaded before we set up the parameters, so we
-    // wait for that to happen
-    while (!this.isLoadingColumns) {
-      await new Promise((f) => setTimeout(f, 200));
+    // set database step
+    if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+      this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
+    }
+
+    // set dataframe step
+    if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+      this.dataframeForm.controls.dataframeId.setValue(this.repeatedTask.databases[0].dataframe_id?.toString() || '');
+      await this.handleDataframeChange(this.repeatedTask.databases[0].dataframe_id?.toString() || '');
     }
 
     // set parameter step
@@ -480,7 +480,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (this.shouldShowDataframeStep) {
       const ids = this.dataframeForm.controls.dataframeId.value;
       formCreateOutput.dataframes = [
-        (Array.isArray(ids) ? ids : [ids]).map(id => ({
+        (Array.isArray(ids) ? ids : [ids]).map((id) => ({
           dataframe_id: id,
           type: TaskDatabaseType.Dataframe
         }))
@@ -647,9 +647,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   // compare function for mat-select
-  compareIDsForSelection(id1: number | string, id2: number | string): boolean {
+  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
     // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
     // organization object from the collaboration
+    if (Array.isArray(id2)) {
+      id2 = id2[0];
+    }
     if (typeof id1 === 'number') {
       id1 = id1.toString();
     }
@@ -800,18 +803,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
     // set columns if dataframe is selected
     this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
-      this.columns = [];
-      let dataframe = null;
-      if (Array.isArray(dataframeID) && dataframeID.length > 0) {
-        // For multi-select, use the first selected dataframe to get columns
-        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
-      } else if (dataframeID) {
-        // For single select
-        dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
-      }
-      if (dataframe) {
-        this.setColumns(dataframe);
-      }
+      this.handleDataframeChange(dataframeID);
     });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
@@ -902,6 +894,24 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.function = selectedFunction;
   }
 
+  private async handleDataframeChange(dataframeID: string): Promise<void> {
+    this.columns = [];
+    let dataframe = null;
+    if (Array.isArray(dataframeID) && dataframeID.length > 0) {
+      // For multi-select, use the first selected dataframe to get columns
+      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
+    } else if (dataframeID) {
+      // For single select
+      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+    }
+    if (dataframe) {
+      this.setColumns(dataframe);
+    }
+
+    // Set loading columns to false after columns are loaded
+    this.isLoadingColumns = false;
+  }
+
   private async getOnlineNode(): Promise<BaseNode | null> {
     //Get all nodes for chosen collaboration
     const nodes = await this.getNodes();
@@ -987,5 +997,4 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (!this.isFirstDatabaseMultiple()) return false;
     return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
   }
-
 }

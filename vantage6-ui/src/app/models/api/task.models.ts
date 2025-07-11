@@ -95,7 +95,10 @@ export interface Task {
 
 export interface TaskDBOutput {
   label: string;
-  parameters?: string;
+  position: number;
+  dataframe_id?: number;
+  dataframe_name?: string;
+  type: TaskDatabaseType;
 }
 
 export interface TaskRun {

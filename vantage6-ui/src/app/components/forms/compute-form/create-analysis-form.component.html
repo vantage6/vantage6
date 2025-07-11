@@ -187,10 +187,8 @@
           <form class="form" [formGroup]="dataframeForm">
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
             <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMultiple() ? 's' : '' }}</mat-label>
-              <mat-select
-                formControlName="dataframeId"
-                [multiple]="isFirstDatabaseMultiple()">
+              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMultiple() ? "s" : "" }}</mat-label>
+              <mat-select formControlName="dataframeId" [compareWith]="compareIDsForSelection" [multiple]="isFirstDatabaseMultiple()">
                 <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
                   {{ dataframe.name }}
                 </mat-option>
