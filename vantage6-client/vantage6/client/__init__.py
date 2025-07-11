@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 import sys
-import itertools
 import threading
 import os
 import subprocess
 import webbrowser
 import urllib.parse as urlparse
 import logging
-import time
 from typing import List
 
 from pathlib import Path
@@ -22,11 +20,10 @@ from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
-from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.client.utils import LogLevel
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
-from vantage6.client.utils import LogLevel
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
@@ -1290,10 +1287,11 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            password: str,
+            password: str = None,
             organization: int = None,
             roles: list = [],
             rules: list = [],
+            is_service_account: bool = False,
         ) -> dict:
             """Create new user
 
@@ -1302,17 +1300,22 @@ class UserClient(ClientBase):
             username : str
                 Used to login to the service. This can not be changed
                 later.
-            password : str
-                Password of the new user
-            organization : int
-                Organization `id` this user should belong to
-            roles : list of ints
+            password : str | None
+                Password of the new user. Required, unless is_service_account is True or
+                if the server doesn't manage its own users and nodes in Keycloak (
+                contact your administrator to know if this is the case)
+            organization : int | None
+                Organization `id` this user should belong to. If not provided, the user
+                will be created in the organization of the current user.
+            roles : list[int] | None
                 Role ids that are assigned to this user. Note that you
                 can only assign roles if you own the rules within this
                 role.
-            rules : list of ints
+            rules : list[int] | None
                 Rule ids that are assigned to this user. Note that you
                 can only assign rules that you own
+            is_service_account: bool, optional
+                Whether the user is a service account. Default is False.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1328,11 +1331,13 @@ class UserClient(ClientBase):
             """
             user_data = {
                 "username": username,
-                "password": password,
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
+                "is_service_account": is_service_account,
             }
+            if password:
+                user_data["password"] = password
             return self.parent.request("user", json=user_data, method="post")
 
         def delete(self, id_: int) -> None:
