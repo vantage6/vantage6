@@ -1,10 +1,11 @@
 <ng-container *ngIf="!isLoading; else loading">
+  <app-alert *ngIf="!setPasswords" label="{{ 'user-create.setting-service-account' | translate }}"></app-alert>
   <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.username" | translate }}</mat-label>
       <input matInput type="text" formControlName="username" />
     </mat-form-field>
-    <div *ngIf="!isEdit && manageUsersAndNodes">
+    <div *ngIf="!isEdit && setPasswords">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ "user.password" | translate }}</mat-label>
         <input matInput type="password" formControlName="password" />

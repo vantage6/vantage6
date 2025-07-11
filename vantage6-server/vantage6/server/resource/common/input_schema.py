@@ -348,6 +348,7 @@ class UserInputSchema(Schema):
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
+    is_service_account = fields.Boolean(required=False, load_default=False)
 
     @validates("username")
     def validate_username(self, username: str):

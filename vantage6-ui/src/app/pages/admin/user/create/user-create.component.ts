@@ -19,12 +19,16 @@ import { ServerConfigService } from 'src/app/services/server-config.service';
   imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, UserFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class UserCreateComponent extends BaseCreateComponent {
+  isCreateServiceAccount: boolean = false;
+
   constructor(
     private router: Router,
     private userService: UserService,
     private serverConfigService: ServerConfigService
   ) {
     super();
+    // if the route includes 'service-account', set isServiceAccount to true
+    this.isCreateServiceAccount = this.router.url.includes('service-account');
   }
 
   async handleSubmit(userForm: ResourceForm): Promise<void> {
@@ -32,10 +36,15 @@ export class UserCreateComponent extends BaseCreateComponent {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userCreate: UserCreate = (({ passwordRepeat, ...data }) => data)(userForm as UserForm);
     // don't send password if user doesn't have to be created in keycloak
-    if (!(await this.serverConfigService.doesKeycloakManageUsersAndNodes())) {
+    if (this.isCreateServiceAccount) {
+      userCreate.is_service_account = true;
+      delete userCreate.password;
+    } else if (!(await this.serverConfigService.doesKeycloakManageUsersAndNodes())) {
       delete userCreate.password;
     }
+    console.log('userCreate', userCreate);
     const user = await this.userService.createUser(userCreate);
+    console.log('user', user);
     if (user.id) {
       this.router.navigate([routePaths.users]);
     } else {

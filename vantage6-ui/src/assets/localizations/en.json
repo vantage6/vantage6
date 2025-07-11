@@ -771,7 +771,9 @@
     "filter-placeholder": "Filter by organization"
   },
   "user-create": {
-    "title": "Create user"
+    "title": "Create user",
+    "service-account": "Create service account user",
+    "setting-service-account": "You are setting up a service account user. This user will get a generated secret that should be stored securely. The user should only be used for automated tasks."
   },
   "user-read": {
     "title": "User",

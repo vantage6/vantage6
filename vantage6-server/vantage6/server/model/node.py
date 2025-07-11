@@ -43,7 +43,6 @@ class Node(Authenticatable):
     name = Column(String, unique=True)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
-    keycloak_client_id = Column(String)
 
     # relationships
     collaboration = relationship("Collaboration", back_populates="nodes")

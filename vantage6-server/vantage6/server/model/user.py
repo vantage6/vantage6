@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, ForeignKey, select
+from sqlalchemy import Column, String, Integer, ForeignKey, select, Boolean
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import DatabaseSessionManager
@@ -21,6 +21,8 @@ class User(Authenticatable):
         Username of the user
     organization_id : int
         Foreign key to the organization to which the user belongs
+    is_service_account : bool
+        Whether the user is a service account. Default is False.
 
     Relationships
     -------------
@@ -47,6 +49,7 @@ class User(Authenticatable):
     # fields
     username = Column(String, unique=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
+    is_service_account = Column(Boolean, default=False)
 
     # relationships
     organization = relationship("Organization", back_populates="users")

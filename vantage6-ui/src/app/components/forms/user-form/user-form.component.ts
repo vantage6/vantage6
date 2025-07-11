@@ -48,8 +48,10 @@ import { ServerConfigService } from 'src/app/services/server-config.service';
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
+  @Input() isServiceAccount: boolean = false;
   organizations: (BaseOrganization | Organization)[] = [];
   manageUsersAndNodes: boolean = true;
+  setPasswords: boolean = true;
 
   form = this.fb.nonNullable.group(
     {
@@ -109,8 +111,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.isLoading = false;
   }
 
-  private togglePasswordValidators(createInKeycloak: boolean): void {
-    if (createInKeycloak) {
+  private togglePasswordValidators(needsPassword: boolean): void {
+    if (needsPassword) {
       this.form.controls.password.enable();
       this.form.controls.passwordRepeat.enable();
     } else {
@@ -151,7 +153,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     }
 
     this.manageUsersAndNodes = await this.serverConfigService.doesKeycloakManageUsersAndNodes();
-    this.togglePasswordValidators(this.manageUsersAndNodes);
+    this.setPasswords = this.manageUsersAndNodes && !this.isServiceAccount;
+    this.togglePasswordValidators(this.setPasswords);
 
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();

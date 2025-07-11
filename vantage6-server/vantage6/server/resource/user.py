@@ -15,6 +15,9 @@ from vantage6.backend.common.resource.error_handling import (
     handle_exceptions,
 )
 from vantage6.backend.common.auth import (
+    KeycloakServiceAccount,
+    create_service_account_in_keycloak,
+    delete_service_account_in_keycloak,
     get_keycloak_admin_client,
     get_keycloak_id_for_user,
 )
@@ -399,11 +402,17 @@ class Users(UserBase):
         if db.User.username_exists(data["username"]):
             return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
 
-        if self.config.get("keycloak", {}).get(
-            "manage_users_and_nodes", True
-        ) and not data.get("password"):
+        if (
+            self.config.get("keycloak", {}).get("manage_users_and_nodes", True)
+            and not data.get("password")
+            and not data.get("is_service_account")
+        ):
             raise ValidationError(
                 "Password is required if the user has to be created in Keycloak"
+            )
+        elif data.get("is_service_account") and data.get("password"):
+            raise ValidationError(
+                "Password should not be provided if the user is a service account"
             )
 
         # check if the organization has been provided, if this is the case the
@@ -457,8 +466,15 @@ class Users(UserBase):
 
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
+        keycloak_service_account: KeycloakServiceAccount | None = None
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            keycloak_id = self._create_user_in_keycloak(data)
+            if data.get("is_service_account"):
+                keycloak_service_account = create_service_account_in_keycloak(
+                    f"{data['username']}-user-client"
+                )
+                keycloak_id = keycloak_service_account.user_id
+            else:
+                keycloak_id = self._create_user_in_keycloak(data)
         else:
             keycloak_id = get_keycloak_id_for_user(data["username"])
 
@@ -468,10 +484,19 @@ class Users(UserBase):
             roles=roles,
             rules=rules,
             organization_id=organization_id,
+            is_service_account=data.get("is_service_account", False),
+            keycloak_client_id=(
+                keycloak_service_account.client_id if keycloak_service_account else None
+            ),
         )
         user.save()
 
-        return user_schema.dump(user), HTTPStatus.CREATED
+        json_response = user_schema.dump(user)
+        if keycloak_service_account:
+            # share the client secret with the user so that they can login with it
+            json_response["client_secret"] = keycloak_service_account.client_secret
+
+        return json_response, HTTPStatus.CREATED
 
     def _create_user_in_keycloak(self, data):
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
@@ -837,7 +862,10 @@ class User(UserBase):
                     task.delete()
 
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            self._delete_user_in_keycloak(user)
+            if user.is_service_account:
+                delete_service_account_in_keycloak(user.keycloak_client_id)
+            else:
+                self._delete_user_in_keycloak(user)
         else:
             log.info("User id=%s will not be deleted from Keycloak", id)
 
