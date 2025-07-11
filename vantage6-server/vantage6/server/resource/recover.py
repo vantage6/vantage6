@@ -123,13 +123,11 @@ class ResetAPIKey(ServicesResources):
 
         # all good, change API key
         log.info("Successful API key reset for node %s", id_)
-        api_key = generate_apikey()
-        self._change_api_key_in_keycloak(node, api_key)
+        api_key = self._change_api_key_in_keycloak(node)
         return {"api_key": api_key}, HTTPStatus.OK
 
     @staticmethod
-    def _change_api_key_in_keycloak(node: db.Node, api_key: str):
+    def _change_api_key_in_keycloak(node: db.Node):
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-        keycloak_admin.set_user_password(
-            user_id=node.keycloak_id, password=api_key, temporary=False
-        )
+        new_secret = keycloak_admin.generate_client_secrets(node.keycloak_client_id)
+        return new_secret["value"]
