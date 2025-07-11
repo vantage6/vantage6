@@ -10,7 +10,7 @@ from vantage6.cli.configuration_manager import (
     ServerConfigurationManager,
 )
 from vantage6.cli.context import select_context_class
-from vantage6.common import error, generate_apikey, info, warning
+from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
@@ -369,8 +369,6 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     return config
 
 
-# TODO: This questionnaire is only asking for the options in devspace.yaml. Need to add/remove
-# questions, and adjust the order of questions
 def server_configuration_questionaire(
     instance_name: str,
 ) -> dict[str, Any]:
@@ -394,131 +392,39 @@ def server_configuration_questionaire(
     # Initialize config with basic structure
     config = {"server": {}, "database": {}, "ui": {}}
 
-    # Basic server configuration - always configure these
+    # === Server settings ===
     config["server"]["description"] = q.text(
         "Enter a human-readable description:",
         default=f"Vantage6 server {instance_name}",
     ).unsafe_ask()
-
-    # Server URL configuration - important for external access
-    config["server"]["baseUrl"] = q.text(
-        "What is the server URL that users will connect to?",
-        default="http://localhost:7601",
-    ).unsafe_ask()
-
-    # API path - use a default value
-    config["server"]["apiPath"] = DEFAULT_API_PATH
-
-    # === Configure devspace.yaml equivalent options ===
-
-    # 1. HOST_URI (from devspace.yaml: "What is the ip address of your host machine?")
-    host_uri = q.text(
-        "What is the ip address of your host machine? (How containers reach the host)",
-        default="host.docker.internal",
-    ).unsafe_ask()
-
-    config["server"]["dev"] = {
-        "host_uri": host_uri,
-        "drop_all": "True",  # Development setting
-    }
-
-    # 2. Database configuration
-    use_external_db = q.confirm(
-        "Do you want to use an external database? (If no, PostgreSQL will be deployed in the cluster)",
-        default=False,
-    ).unsafe_ask()
-
-    if use_external_db:
-        db_uri = q.text(
-            "Enter the database URI (e.g., postgresql://user:password@host:port/database):"
-        ).unsafe_ask()
-        config["server"]["database_uri"] = db_uri
-    else:
-        # SERVER_DATABASE_MOUNT_PATH (from devspace.yaml)
-        db_mount_path = q.text(
-            "Where is your server database located on the host machine?",
-            default=f"{Path.cwd()}/dev/.db/db_pv_server",
-        ).unsafe_ask()
-
-        config["database"]["volumePath"] = db_mount_path
-
-        # K8S_NODE_NAME (from devspace.yaml)
-        k8s_node_name = q.text(
-            "What is the name of the k8s node where the databases are running?",
-            default="docker-desktop",
-        ).unsafe_ask()
-
-        config["database"]["k8sNodeName"] = k8s_node_name
-
-    # === Keycloak configuration ===
-    configure_keycloak = q.confirm(
-        "Do you want to configure Keycloak authentication settings?", default=True
-    ).unsafe_ask()
-
-    if configure_keycloak:
-        config["server"]["keycloakUrl"] = q.text(
-            "Keycloak server URL (internal cluster URL):",
-            default=f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local",
-        ).unsafe_ask()
-
-        config["server"]["keycloakRealm"] = q.text(
-            "Keycloak realm:", default="vantage6"
-        ).unsafe_ask()
-
-        config["server"]["keycloakAdminUsername"] = q.text(
-            "Keycloak admin username:", default="admin"
-        ).unsafe_ask()
-
-        config["server"]["keycloakAdminPassword"] = q.password(
-            "Keycloak admin password:", default="admin"
-        ).unsafe_ask()
-
-        config["server"]["keycloakUserClient"] = q.text(
-            "Keycloak backend client ID:", default="backend-user-client"
-        ).unsafe_ask()
-
-        config["server"]["keycloakUserClientSecret"] = q.password(
-            "Keycloak backend client secret:", default="myuserclientsecret"
-        ).unsafe_ask()
-
-        config["server"]["keycloakAdminClient"] = q.text(
-            "Keycloak admin client ID:", default="backend-admin-client"
-        ).unsafe_ask()
-
-        config["server"]["keycloakAdminClientSecret"] = q.password(
-            "Keycloak admin client secret:", default="myadminclientsecret"
-        ).unsafe_ask()
-
-    # === UI configuration ===
-    configure_ui = q.confirm(
-        "Do you want to configure UI settings?", default=True
-    ).unsafe_ask()
-
-    if configure_ui:
-        config["ui"]["keycloakPublicUrl"] = q.text(
-            "Keycloak public URL (accessible from browser):",
-            default="http://localhost:8080",
-        ).unsafe_ask()
-
-        config["ui"]["keycloakClient"] = q.text(
-            "Keycloak frontend client ID:", default="public_client"
-        ).unsafe_ask()
-
-        if "keycloakRealm" in config.get("server", {}):
-            config["ui"]["keycloakRealm"] = config["server"]["keycloakRealm"]
-
-    # === Common server settings ===
 
     config["server"]["image"] = q.text(
         "Server Docker image:",
         default="harbor2.vantage6.ai/infrastructure/server:latest",
     ).unsafe_ask()
 
+    # === UI settings ===
     config["ui"]["image"] = q.text(
         "UI Docker image:",
         default="harbor2.vantage6.ai/infrastructure/ui:latest",
     ).unsafe_ask()
 
+    # === Database settings ===
+    config["database"]["volumePath"] = q.text(
+        "Where is your server database located on the host machine?",
+        default=f"{Path.cwd()}/dev/.db/db_pv_server",
+    ).unsafe_ask()
+
+    config["database"]["k8sNodeName"] = q.text(
+        "What is the name of the k8s node where the databases are running?",
+        default="docker-desktop",
+    ).unsafe_ask()
+
+    # === Keycloak settings ===
+    keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
+    config["server"]["keycloakUrl"] = keycloak_url
+
+    # === Other settings ===
     log_level = q.select(
         "Which level of logging would you like?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -526,24 +432,6 @@ def server_configuration_questionaire(
     ).unsafe_ask()
 
     config["server"]["logging"] = {"level": log_level}
-
-    use_constant_jwt = q.confirm(
-        "Do you want a constant JWT secret? (Recommended for development)", default=True
-    ).unsafe_ask()
-
-    if use_constant_jwt:
-        config["server"]["jwt"] = {"secret": generate_apikey()}
-
-    use_external_rabbitmq = q.confirm(
-        "Do you want to use an external RabbitMQ server? (If no, RabbitMQ will be deployed in the cluster)",
-        default=False,
-    ).unsafe_ask()
-
-    if use_external_rabbitmq:
-        rabbitmq_uri = q.text(
-            "Enter the RabbitMQ URI (e.g., amqp://user:password@host:port/vhost):"
-        ).unsafe_ask()
-        config["server"]["rabbitmq_uri"] = rabbitmq_uri
 
     return config
 
