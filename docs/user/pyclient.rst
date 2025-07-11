@@ -176,6 +176,24 @@ object, and authenticating
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)
 
+.. note::
+
+   If you are using a service account, the authentication process is a bit different:
+
+   .. code:: python
+
+      # instead of client.authenticate(), you need to initialize the service account
+      # and then authenticate with it
+      client.initialize_service_account(
+         client_secret="<my-client-secret>",
+         username="<my-username>"
+      )
+      client.authenticate_service_account()
+
+   You get the client secret in a downloaded file when you create a service account in
+   the User Interface. If you create a service account via the Python client or API,
+   the client secret is returned in the JSON response.
+
 .. _creating-organization:
 
 Creating an organization
