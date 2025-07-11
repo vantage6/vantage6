@@ -41,7 +41,7 @@ def cli_server_new(
 
     name = prompt_config_name(name)
 
-    # check if name is allowed for docker volume, else exit
+    # check if name is valid
     check_config_name_allowed(name)
 
     # check that this config does not exist

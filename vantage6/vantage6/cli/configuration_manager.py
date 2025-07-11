@@ -20,7 +20,7 @@ class ServerConfiguration(Configuration):
     validators.
     """
 
-    # TODO: explore how to validate helm values.yaml files
+    # TODO: explore how to validate helm values.yaml files, see issue 2105
     VALIDATORS = {}
 
 
