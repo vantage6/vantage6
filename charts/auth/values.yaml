@@ -8,12 +8,24 @@ keycloak:
   auth:
     adminUser: admin
     adminPassword: admin
+  # Custom theme configuration
+  extraVolumes:
+    - name: custom-themes
+      # TODO host path may not be the best way to do this (?!)
+      hostPath:
+        path: /run/desktop/mnt/host/wsl/home/bart/vantage6/vantage6-main/charts/auth/themes/vantage6-theme
+        type: Directory
+  extraVolumeMounts:
+    - name: custom-themes
+      mountPath: /opt/keycloak/themes/vantage6-theme
+      readOnly: true
   keycloakConfigCli:
     enabled: true
     configuration:
       realm:
         realm: vantage6
         enabled: true
+        loginTheme: vantage6-theme
         requiredActions:
           - alias: CONFIGURE_TOTP
             name: Configure OTP
