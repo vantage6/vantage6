@@ -773,7 +773,12 @@
   "user-create": {
     "title": "Create user",
     "service-account": "Create service account user",
-    "setting-service-account": "You are setting up a service account user. This user will get a generated secret that should be stored securely. The user should only be used for automated tasks."
+    "setting-service-account": "You are setting up a service account user. This user will get a generated secret that should be stored securely. The user should only be used for automated tasks.",
+    "service-account-download-dialog": {
+      "title": "Service Account Created",
+      "message": "The service account has been created successfully. The credentials have been downloaded.",
+      "security-message": "Important: Keep these credentials secure and do not share them. They provide access to your organization's data."
+    }
   },
   "user-read": {
     "title": "User",

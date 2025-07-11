@@ -323,9 +323,7 @@ class UserClient(ClientBase):
         token = self.kc_openid.token(grant_type="client_credentials")
         self._access_token = token["access_token"]
 
-        self.log.debug(
-            "Authenticated with service account %s", self.service_account_client_name
-        )
+        self.log.info("Succesfully authenticated!")
 
     def obtain_new_token(self):
         """Refresh the token"""

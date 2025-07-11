@@ -28,6 +28,7 @@ export interface BaseUser {
   organization: BaseLink;
   roles: string;
   permissions?: UserPermissions;
+  client_secret?: string;
 }
 
 export interface User {
