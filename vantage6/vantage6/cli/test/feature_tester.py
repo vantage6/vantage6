@@ -17,7 +17,7 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 @click.option(
     "--auth-url",
     type=str,
-    default="http://localhost:8080",
+    default="http://localhost:7680",
     help="URL of the authentication server (Keycloak)",
 )
 @click.option(

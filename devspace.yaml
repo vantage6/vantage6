@@ -49,7 +49,7 @@ vars:
     default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
   KEYCLOAK_PUBLIC_URL:
     source: env
-    default: http://localhost:8080
+    default: http://localhost:7680
   KEYCLOAK_REALM:
     source: env
     default: vantage6
@@ -345,7 +345,7 @@ dev:
     labelSelector:
       app.kubernetes.io/instance: vantage6-auth
     ports:
-      - port: 8080:8080
+      - port: 7680:7680
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be

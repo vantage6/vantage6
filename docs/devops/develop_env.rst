@@ -103,7 +103,7 @@ Once the development environment is running, it will spin up the following servi
 - Server (http://localhost:7601/server)
 - One or more nodes (as indicated by the ``NUMBER_OF_NODES`` variable)
 - Algorithm store (http://localhost:7602)
-- Authentication (Keycloak), including the admin interface (http://localhost:8080)
+- Authentication (Keycloak), including the admin interface (http://localhost:7680)
 - PostgreSQL databases to support the server, store and keycloak services
 
 The following user is created to authenticate with:
