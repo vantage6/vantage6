@@ -69,6 +69,11 @@ class UserClient(ClientBase):
         self.auth_realm = auth_realm
         self.auth_client = auth_client
 
+        # service account settings
+        self.is_service_account = False
+        self.service_account_client_name = None
+        self.service_account_client_secret = None
+
         # attach sub-clients
         self.util = self.Util(self)
         self.collaboration = self.Collaboration(self)
@@ -205,7 +210,7 @@ class UserClient(ClientBase):
         server_thread.start()
 
         # Open browser for login
-        print("opening browser for login")
+        self.log.info("Opening browser for login")
         # Try to open browser with different methods
         try:
             # Check if we're in WSL
@@ -225,7 +230,7 @@ class UserClient(ClientBase):
                 webbrowser.open(auth_url)
         except Exception as e:
             self.log.error("Error opening browser: %s", e)
-            print(f"Please open this URL in your browser: {auth_url}")
+            self.log.error(f"Please open this URL in your browser: {auth_url}")
 
         # Wait for callback
         server_thread.join()
@@ -262,10 +267,77 @@ class UserClient(ClientBase):
         # is enabled
         self.cryptor = DummyCryptor()
 
+    def initialize_service_account(
+        self,
+        client_secret: str,
+        username: str | None = None,
+        client_name: str | None = None,
+    ):
+        """
+        Initialize a service account
+
+        Parameters
+        ----------
+        client_secret : str
+            The client secret of the service account
+        username : str, optional
+            The username of the service account. Ignored if client_name is provided.
+        client_name : str, optional
+            The name of the client. If not provided, it will be generated from the
+            username. If provided, the username will be ignored. Username is usually
+            easier to provide for a user.
+        """
+        if not username and not client_name:
+            self.log.error("Either username or client_name must be provided!")
+            return
+
+        self.is_service_account = True
+        self.service_account_client_secret = client_secret
+        self.service_account_client_name = client_name
+
+        if not self.service_account_client_name:
+            self.service_account_client_name = f"{username}-user-client"
+
+        self.kc_openid = KeycloakOpenID(
+            server_url=self.auth_url,
+            realm_name=self.auth_realm,
+            client_id=self.service_account_client_name,
+            client_secret_key=self.service_account_client_secret,
+        )
+
+    def authenticate_service_account(self) -> None:
+        """Authenticate as a service account
+
+        It also collects some additional info about your service account.
+
+        """
+        if not self.is_service_account:
+            self.log.error("Service account not initialized!")
+            self.log.error("Run `initialize_service_account` first!")
+            return
+
+        self.log.info(
+            "Authenticating with service account %s", self.service_account_client_name
+        )
+
+        token = self.kc_openid.token(grant_type="client_credentials")
+        self._access_token = token["access_token"]
+
+        self.log.debug(
+            "Authenticated with service account %s", self.service_account_client_name
+        )
+
     def obtain_new_token(self):
         """Refresh the token"""
-        self.log.info("Refreshing token")
 
+        if self.is_service_account:
+            self.authenticate_service_account()
+        else:
+            self.obtain_new_token_interactive()
+
+    def obtain_new_token_interactive(self):
+        """Obtain a new token for a non-service account user"""
+        self.log.info("Refreshing token")
         assert self._refresh_token, "Refresh token not found, did you authenticate?"
 
         try:
