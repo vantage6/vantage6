@@ -12,35 +12,40 @@ from vantage6.cli.globals import (
 )
 from vantage6.common import info, warning
 
-"""
-The config.yaml has following structure:
-
----
-kube:
-  last_context: <last_used_k8s_context>
-  last_namespace: <last_used_k8s_namespace>
----
-
-`kube` is the Kubernetes context and namespace used last time by the CLI operations.
-"""
-
 
 class CliConfig:
     """
     A class to manage CLI configuration for Kubernetes context and namespace.
 
-    Attributes:
-        config_path (PathLike): Path to the configuration file.
-        _cached_config (dict | None): Cached configuration data.
-        _cached_mtime (float | None): Last modification time of the configuration file.
+    The CLI configuration is stored in a `config.yaml` file located at the path
+    specified by `DEFAULT_CLI_CONFIG_FILE`.
+
+    The `config.yaml` file has the following structure:
+
+    ```yaml
+    kube:
+      last_context: <last_used_k8s_context>
+      last_namespace: <last_used_k8s_namespace>
+    ```
+
+    Attributes
+    ----------
+    config_path : PathLike
+        Path to the configuration file.
+    _cached_config : dict or None
+        Cached configuration data.
+    _cached_mtime : float or None
+        Last modification time of the configuration file.
     """
 
     def __init__(self, config_path: str | PathLike = DEFAULT_CLI_CONFIG_FILE) -> None:
         """
         Initialize the CliConfig object.
 
-        Args:
-            config_path: Path to the configuration file.
+        Parameters
+        ----------
+        config_path : str or PathLike, optional
+            Path to the configuration file.
         """
         self.config_path: PathLike = Path(config_path)
         self._cached_config: dict | None = None
@@ -50,8 +55,10 @@ class CliConfig:
         """
         Load the configuration from the file.
 
-        Returns:
-            dict: The loaded configuration data.
+        Returns
+        -------
+        dict
+            The loaded configuration data.
         """
         if self.config_path.exists():
             with open(self.config_path, "r") as config_file:
@@ -62,8 +69,10 @@ class CliConfig:
         """
         Save the configuration to the file.
 
-        Args:
-            config: The configuration data to save.
+        Parameters
+        ----------
+        config : dict
+            The configuration data to save.
         """
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.config_path, "w") as config_file:
@@ -86,8 +95,10 @@ class CliConfig:
         """
         Get the last used Kubernetes context.
 
-        Returns:
-            str | None: The last used Kubernetes context, or None if not set.
+        Returns
+        -------
+        str or None
+            The last used Kubernetes context, or None if not set.
         """
         self._reload_cache_lazy()
         return self._cached_config.get("kube", {}).get("last_context")
@@ -96,8 +107,10 @@ class CliConfig:
         """
         Set the Kubernetes context.
 
-        Args:
-            context: The Kubernetes context to set.
+        Parameters
+        ----------
+        context : str
+            The Kubernetes context to set.
         """
         config = self._load_config()
         if "kube" not in config:
@@ -112,8 +125,10 @@ class CliConfig:
         """
         Get the last used Kubernetes namespace.
 
-        Returns:
-            str | None: The last used Kubernetes namespace, or None if not set.
+        Returns
+        -------
+        str or None
+            The last used Kubernetes namespace, or None if not set.
         """
         self._reload_cache_lazy()
         return self._cached_config.get("kube", {}).get("last_namespace")
@@ -122,8 +137,10 @@ class CliConfig:
         """
         Set the Kubernetes namespace.
 
-        Args:
-            namespace: The Kubernetes namespace to set.
+        Parameters
+        ----------
+        namespace : str
+            The Kubernetes namespace to set.
         """
         config = self._load_config()
         if "kube" not in config:
@@ -153,12 +170,17 @@ class CliConfig:
         """
         Get the active Kubernetes context and namespace.
 
-        Args:
-            context: The Kubernetes context to use.
-            namespace: The Kubernetes namespace to use.
+        Parameters
+        ----------
+        context : str or None
+            The Kubernetes context to use.
+        namespace : str or None
+            The Kubernetes namespace to use.
 
-        Returns:
-            tuple[str, str]: A tuple containing the active context and namespace.
+        Returns
+        -------
+        tuple[str, str]
+            A tuple containing the active context and namespace.
         """
         if not context:
             _, active_context = config.list_kube_config_contexts()
@@ -177,9 +199,12 @@ class CliConfig:
         """
         Compare active settings with last used settings.
 
-        Args:
-            context: The Kubernetes context to use.
-            namespace: The Kubernetes namespace to use.
+        Parameters
+        ----------
+        context : str or None, optional
+            The Kubernetes context to use.
+        namespace : str or None, optional
+            The Kubernetes namespace to use.
         """
 
         active_context, active_namespace = self.get_active_settings(context, namespace)
