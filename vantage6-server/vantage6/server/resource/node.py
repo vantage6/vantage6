@@ -3,7 +3,6 @@ import logging
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
-from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 from sqlalchemy import select
 
@@ -14,7 +13,6 @@ from vantage6.server.resource import ServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.backend.common.auth import (
     delete_service_account_in_keycloak,
-    get_keycloak_admin_client,
     KeycloakServiceAccount,
     create_service_account_in_keycloak,
     get_service_account_in_keycloak,
