@@ -470,7 +470,7 @@ class Users(UserBase):
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             if data.get("is_service_account"):
                 keycloak_service_account = create_service_account_in_keycloak(
-                    f"{data['username']}-user-client"
+                    f"{data['username']}-user-client", is_node=False
                 )
                 keycloak_id = keycloak_service_account.user_id
             else:
