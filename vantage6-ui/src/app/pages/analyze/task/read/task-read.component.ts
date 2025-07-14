@@ -365,8 +365,20 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   handleRepeat(): void {
-    if (!this.task) return;
-    this.router.navigate([routePaths.taskCreateRepeat, this.task.id]);
+    if (!this.task || this.task.runs.length === 0) return;
+    const taskType = this.task.runs[0].action;
+    if (taskType === AlgorithmStepType.FederatedCompute || taskType === AlgorithmStepType.CentralCompute) {
+      this.router.navigate([routePaths.taskCreateRepeat, this.task.id, taskType]);
+    } else if (taskType === AlgorithmStepType.DataExtraction) {
+      this.router.navigate([routePaths.dataframeCreateRepeat.replace(':sessionId', this.task.session.id.toString()), this.task.id]);
+    } else if (taskType === AlgorithmStepType.Preprocessing) {
+      this.router.navigate([
+        routePaths.sessionDataframePreprocessRepeat
+          .replace(':dfId', (this.task.databases[0].dataframe_id || -1).toString())
+          .replace(':sessionId', this.task.session.id.toString()),
+        this.task.id
+      ]);
+    }
   }
 
   handleTaskKill(): void {

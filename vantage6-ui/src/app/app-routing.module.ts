@@ -114,6 +114,14 @@ export const routes: Routes = [
         canActivate: [authenticationGuard]
       },
       {
+        path: routerConfig.dataframeCreateRepeat,
+        component: DataframeCreateComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session.dataframes.add']]
+        }
+      },
+      {
         path: routerConfig.dataframeCreate,
         component: DataframeCreateComponent,
         canActivate: [authenticationGuard, chosenCollaborationGuard()],
@@ -156,6 +164,14 @@ export const routes: Routes = [
       {
         path: routerConfig.sessionDataframe,
         component: DataframeReadComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
+        }
+      },
+      {
+        path: routerConfig.sessionDataframePreprocessRepeat,
+        component: DataframePreprocessComponent,
         canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]

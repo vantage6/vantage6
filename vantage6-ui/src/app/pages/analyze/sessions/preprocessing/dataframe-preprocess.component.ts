@@ -24,15 +24,6 @@ export class DataframePreprocessComponent implements OnInit, OnDestroy {
   algorithmStepType = AlgorithmStepType;
 
   title: string = '';
-  availableSteps: AvailableSteps = {
-    session: false,
-    study: false,
-    function: true,
-    database: false,
-    dataframe: false,
-    parameter: true
-  };
-
   destroy$ = new Subject();
 
   public sessionId?: string;

@@ -525,7 +525,8 @@ class DataframeInitInputSchema(Schema):
         # environment variables.
         if not re.match(r"^[a-zA-Z0-9-_]+$", name):
             raise ValidationError(
-                "Name must contain only letters, numbers, hyphens and underscores"
+                "Dataframe name must contain only letters, numbers, hyphens and "
+                "underscores"
             )
 
 

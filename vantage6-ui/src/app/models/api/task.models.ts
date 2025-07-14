@@ -2,6 +2,7 @@ import { BaseLink } from './base.model';
 import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
 import { NodeStatus } from './node.model';
+import { AlgorithmStepType } from './session.models';
 
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
@@ -95,7 +96,10 @@ export interface Task {
 
 export interface TaskDBOutput {
   label: string;
-  parameters?: string;
+  position: number;
+  dataframe_id?: number;
+  dataframe_name?: string;
+  type: TaskDatabaseType;
 }
 
 export interface TaskRun {
@@ -103,6 +107,7 @@ export interface TaskRun {
   status: TaskStatus;
   input: string;
   node: RunNode;
+  action: AlgorithmStepType;
   assigned_at: string;
   started_at?: string;
   finished_at?: string;
