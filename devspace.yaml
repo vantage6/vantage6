@@ -346,9 +346,9 @@ dev:
       app.kubernetes.io/instance: vantage6-auth
     ports:
       - port: 7680:7680
-         bindAddress: localhost
+        bindAddress: localhost
       - port: 7680:7680
-         bindAddress: ${PORTS_BIND_ADDRESS}
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be
