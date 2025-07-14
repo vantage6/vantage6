@@ -338,7 +338,7 @@ class SessionBase(ServicesResources):
             "collaboration_id": session.collaboration_id,
             "study_id": session.study_id,
             "session_id": session.id,
-            "name": f"Session initialization: {session.name}",
+            "name": f"Session initialization ({session.name})",
             "description": description,
             "image": image,
             "method": method,

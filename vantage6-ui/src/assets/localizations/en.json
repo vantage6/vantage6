@@ -205,6 +205,7 @@
         "function-placeholder": "Provide your search term here",
         "name": "Provide a suitable name for your task",
         "df-name": "Provide a suitable name for the dataframe created by this task",
+        "df-name-warning": "The dataframe name is not filled in for repeating data extraction tasks. Please provide a unique name for the dataframe.",
         "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
         "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations."

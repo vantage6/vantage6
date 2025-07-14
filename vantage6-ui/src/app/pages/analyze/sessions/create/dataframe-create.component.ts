@@ -24,14 +24,6 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   algorithmStepType = AlgorithmStepType;
 
   title: string = '';
-  availableSteps: AvailableSteps = {
-    session: false,
-    study: false,
-    function: true,
-    database: true,
-    dataframe: false,
-    parameter: true
-  };
 
   destroy$ = new Subject();
 

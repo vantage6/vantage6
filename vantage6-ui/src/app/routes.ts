@@ -38,6 +38,7 @@ export const routePaths = {
   taskCreateRepeat: '/analyze/create/task/repeat',
   task: '/analyze/tasks',
   dataframeCreate: '/analyze/sessions/dataframe/create',
+  dataframeCreateRepeat: '/analyze/sessions/dataframe/create/:sessionId/repeat',
   sessions: '/analyze/sessions',
   sessionCreate: '/analyze/sessions/create',
   sessionEdit: '/analyze/sessions/edit',
@@ -45,6 +46,7 @@ export const routePaths = {
   sessionTaskCreate: '/analyze/sessions/:sessionId/tasks/create',
   sessionDataframe: '/analyze/sessions/:sessionId/dataframe',
   sessionDataframePreprocess: '/analyze/sessions/:sessionId/dataframe/:dfId/preprocess',
+  sessionDataframePreprocessRepeat: '/analyze/sessions/:sessionId/dataframe/:dfId/preprocess/repeat',
   algorithms: '/analyze/algorithms',
   algorithm: '/analyze/algorithms',
   templateTaskCreate: '/analyze/template-tasks/create',
@@ -61,7 +63,7 @@ export const routePaths = {
   algorithmReviewSubmit: '/store/review/submit',
   myPendingAlgorithms: '/store/pending/algorithms',
   communityStore: '/communitystore',
-  communityStoreAlgorithms: '/communitystore/algorithm',
+  communityStoreAlgorithms: '/communitystore/algorithm'
 };
 
 export const routerConfig = {
@@ -107,6 +109,7 @@ export const routerConfig = {
   taskCreateRepeat: 'create/task/repeat/:id',
   task: 'tasks/:id',
   dataframeCreate: 'sessions/dataframe/create/:sessionId',
+  dataframeCreateRepeat: 'sessions/dataframe/create/:sessionId/repeat/:id',
   sessions: 'sessions',
   sessionCreate: 'sessions/create',
   sessionEdit: 'sessions/edit/:id',
@@ -114,6 +117,7 @@ export const routerConfig = {
   sessionTaskCreate: 'sessions/:sessionId/tasks/create',
   sessionDataframe: 'sessions/:sessionId/dataframe/:dfId',
   sessionDataframePreprocess: 'sessions/:sessionId/dataframe/:dfId/preprocess',
+  sessionDataframePreprocessRepeat: 'sessions/:sessionId/dataframe/:dfId/preprocess/repeat/:taskId',
   algorithms: 'algorithms',
   algorithm: 'algorithms/:id/:algo_store_id',
   templateTaskCreate: 'template-tasks/create',

@@ -113,7 +113,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframe?: Dataframe | null = null;
 
-  @Input() availableSteps: AvailableSteps = {
+  @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
+  @Output() public onCancel: EventEmitter<void> = new EventEmitter();
+
+  @ViewChild('stepper') private myStepper: MatStepper | null = null;
+
+  availableSteps: AvailableSteps = {
     session: false,
     study: false,
     function: false,
@@ -121,11 +126,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     dataframe: false,
     parameter: false
   };
-
-  @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
-  @Output() public onCancel: EventEmitter<void> = new EventEmitter();
-
-  @ViewChild('stepper') private myStepper: MatStepper | null = null;
 
   destroy$ = new Subject();
   routes = routePaths;
@@ -155,6 +155,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
+  showWarningUniqueDFName: boolean = false;
   repeatedTask: Task | null = null;
 
   sessionForm = this.fb.nonNullable.group({
@@ -197,7 +198,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.isTaskRepeat = this.router.url.startsWith(routePaths.taskCreateRepeat);
+    this.setAvailableTaskSteps(this.allowedTaskTypes || []);
+
+    this.isTaskRepeat = this.router.url.includes('/repeat/');
 
     this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
       if (initialized && !this.isDataInitialized) {
@@ -251,26 +254,53 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return db.multiple === true;
   }
 
+  private setAvailableTaskSteps(allowedTaskTypes: AlgorithmStepType[]): void {
+    if (allowedTaskTypes.length > 0) {
+      this.availableSteps = {
+        session:
+          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
+        study: allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
+        function: true,
+        database: allowedTaskTypes.includes(AlgorithmStepType.DataExtraction),
+        dataframe:
+          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) ||
+          allowedTaskTypes.includes(AlgorithmStepType.CentralCompute) ||
+          allowedTaskTypes.includes(AlgorithmStepType.Preprocessing),
+        parameter: true
+      };
+    }
+  }
+
   async setupRepeatTask(taskID: string): Promise<void> {
     this.isLoadingColumns = true;
     this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
     if (!this.repeatedTask) {
       return;
     }
-    this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString());
+    this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString(), { emitEvent: false });
     await this.handleSessionChange(this.repeatedTask.session.id.toString());
 
     // set study step
     if (this.repeatedTask.study?.id) {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString(), { emitEvent: false });
       await this.handleStudyChange(this.repeatedTask.study.id);
     } else {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString(), {
+        emitEvent: false
+      });
       await this.handleStudyChange(null);
     }
 
     // set algorithm step
-    this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
+    this.showWarningUniqueDFName = false;
+    if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
+      // don't set task name for data extraction tasks - it will be used as the name
+      // of the created dataframe and that must be unique for the session
+      this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
+    } else {
+      this.showWarningUniqueDFName = true;
+    }
+
     this.functionForm.controls.description.setValue(this.repeatedTask.description);
     let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
     if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
