@@ -2,14 +2,13 @@ import logging
 import json
 import uuid
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.common.serialization import serialize
 from vantage6.common.enum import TaskStatus
-from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import session as db_session
+from vantage6.backend.common.auth import KeycloakServiceAccount
 from vantage6.server.model import (
     Rule,
     Role,
@@ -22,7 +21,6 @@ from vantage6.server.model import (
     AlgorithmStore,
     Study,
     Session,
-    Dataframe,
 )
 from vantage6.server.model.rule import Scope, Operation
 from vantage6.server._version import __version__
@@ -109,12 +107,12 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
+    @patch("vantage6.server.resource.node.create_service_account_in_keycloak")
     def test_node_without_id(self, mock_create_node_in_keycloak):
-        mock_create_node_in_keycloak.return_value = (
-            str(uuid.uuid1()),  # keycloak id
-            str(uuid.uuid1()),  # keycloak client id
-            str(uuid.uuid1()),  # api key
+        mock_create_node_in_keycloak.return_value = KeycloakServiceAccount(
+            client_id=str(uuid.uuid1()),
+            client_secret=str(uuid.uuid1()),
+            user_id=str(uuid.uuid1()),
         )
 
         # GET
@@ -2190,12 +2188,12 @@ class TestResources(TestResourceBase):
         # cleanup
         node.delete()
 
-    @patch("vantage6.server.resource.node.Nodes._create_node_in_keycloak")
+    @patch("vantage6.server.resource.node.create_service_account_in_keycloak")
     def test_create_node_permissions(self, mock_create_node_in_keycloak):
-        mock_create_node_in_keycloak.return_value = (
-            str(uuid.uuid1()),  # keycloak id
-            str(uuid.uuid1()),  # keycloak client id
-            str(uuid.uuid1()),  # api key
+        mock_create_node_in_keycloak.return_value = KeycloakServiceAccount(
+            client_id=str(uuid.uuid1()),
+            client_secret=str(uuid.uuid1()),
+            user_id=str(uuid.uuid1()),
         )
 
         org = Organization(name=str(uuid.uuid1()))
@@ -2312,7 +2310,7 @@ class TestResources(TestResourceBase):
         for resource in Node.get()[::-1][:3]:
             resource.delete()
 
-    @patch("vantage6.server.resource.node.Node._delete_node_in_keycloak")
+    @patch("vantage6.server.resource.node.delete_service_account_in_keycloak")
     def test_delete_node_permissions(self, mock_delete_node_in_keycloak):
         mock_delete_node_in_keycloak.return_value = None
 

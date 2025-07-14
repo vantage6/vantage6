@@ -19,6 +19,7 @@ export const routePaths = {
   role: '/admin/roles',
   users: '/admin/users',
   userCreate: '/admin/users/create',
+  userCreateServiceAccount: '/admin/users/create/service-account',
   userEdit: '/admin/users/edit',
   user: '/admin/users',
   nodes: '/admin/nodes',
@@ -61,7 +62,7 @@ export const routePaths = {
   algorithmReviewSubmit: '/store/review/submit',
   myPendingAlgorithms: '/store/pending/algorithms',
   communityStore: '/communitystore',
-  communityStoreAlgorithms: '/communitystore/algorithm',
+  communityStoreAlgorithms: '/communitystore/algorithm'
 };
 
 export const routerConfig = {
@@ -88,6 +89,7 @@ export const routerConfig = {
   roleCreate: 'roles/create',
   users: 'users',
   userCreate: 'users/create',
+  userCreateServiceAccount: 'users/create/service-account',
   userEdit: 'users/edit/:id',
   user: 'users/:id',
   nodes: 'nodes',

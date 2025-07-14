@@ -349,6 +349,14 @@ export const routes: Routes = [
         }
       },
       {
+        path: routerConfig.userCreateServiceAccount,
+        component: UserCreateComponent,
+        canActivate: [authenticationGuard],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-create.service-account']]
+        }
+      },
+      {
         path: routerConfig.userCreate,
         component: UserCreateComponent,
         canActivate: [authenticationGuard],

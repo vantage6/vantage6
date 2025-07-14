@@ -1,4 +1,7 @@
 <app-page-header title="{{ 'user-list.title' | translate }}">
+  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreateServiceAccount">
+    <mat-icon>add</mat-icon>{{ "user-create.service-account" | translate }}
+  </button>
   <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreate">
     <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
   </button>

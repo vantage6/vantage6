@@ -28,6 +28,7 @@ export interface BaseUser {
   organization: BaseLink;
   roles: string;
   permissions?: UserPermissions;
+  client_secret?: string;
 }
 
 export interface User {
@@ -49,6 +50,7 @@ export interface UserForm {
   organization_id: number;
   roles?: number[];
   rules?: number[];
+  is_service_account?: boolean;
 }
 
 export interface UserPermissions {
@@ -57,6 +59,6 @@ export interface UserPermissions {
   rules: number[];
 }
 
-export type UserCreate = Pick<UserForm, 'username' | 'password' | 'organization_id' | 'roles'>;
+export type UserCreate = Pick<UserForm, 'username' | 'password' | 'organization_id' | 'roles' | 'is_service_account'>;
 
 export type UserEdit = Pick<UserForm, 'username' | 'roles'>;
