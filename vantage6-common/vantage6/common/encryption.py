@@ -428,6 +428,8 @@ class RSACryptor(CryptorBase):
         if len(header_parts) != 3:
             raise ValueError("Header format is invalid — expected three parts separated by '$'.")
         encrypted_key_b64, iv_b64, _ = header_parts
+        encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
+        iv_bytes = self.str_to_bytes(iv_b64)
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
         try:
             shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
@@ -441,9 +443,7 @@ class RSACryptor(CryptorBase):
         decrypted = decryptor.update(body) + decryptor.finalize()
 
         return decrypted
-        decrypted = decryptor.update(body) + decryptor.finalize()
 
-        return decrypted
 
 
     def _crypt_stream(self, stream, key, iv, chunk_size=8192):
