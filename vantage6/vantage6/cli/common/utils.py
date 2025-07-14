@@ -177,6 +177,6 @@ def attach_logs(*labels: list[str]) -> None:
     labels : list[str]
         The labels to attach to
     """
-    command = ["devspace", "logs", "--follow", "--label-selector", ",".join(labels)]
+    command = ["kubectl", "logs", "--follow", "--selector", ",".join(labels)]
     process = Popen(command, stdout=None, stderr=None)
     process.wait()
