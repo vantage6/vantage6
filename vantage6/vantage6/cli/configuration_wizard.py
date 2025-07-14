@@ -529,12 +529,12 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         open_algos_policy = "public"
     else:
         is_open_to_whitelist = q.confirm(
-            "Do you want to allow all users of whitelisted vantage6 servers to access "
+            "Do you want to allow all authenticated users to access "
             "the algorithms in the store? If not allowing this, you will have to assign"
             " the appropriate permissions to each user individually.",
             default=True,
         ).unsafe_ask()
-        open_algos_policy = "whitelisted" if is_open_to_whitelist else "private"
+        open_algos_policy = "authenticated" if is_open_to_whitelist else "private"
     config["policies"]["algorithm_view"] = open_algos_policy
 
     return config

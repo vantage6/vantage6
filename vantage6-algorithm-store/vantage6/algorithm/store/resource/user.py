@@ -262,7 +262,7 @@ class Users(AlgorithmStoreResources):
                 properties:
                   username:
                     type: string
-                    description: Username unique to the whitelisted server
+                    description: Username to add to allow setting permissions
                   roles:
                     type: array
                     items:

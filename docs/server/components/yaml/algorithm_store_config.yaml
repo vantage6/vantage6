@@ -63,7 +63,7 @@ debug:
 policies:
   # Set who is allowed to view the algorithms in the store. Possible values are:
   # - "public": everyone can view the algorithms
-  # - "whitelisted": only users from whitelisted servers can view the algorithms
+  # - "authenticated": users with a token valid for this store can view the algorithms
   # - "private": only users with explicit permission in the algorithm store can view the
   #   algorithms
   algorithm_view: "public"

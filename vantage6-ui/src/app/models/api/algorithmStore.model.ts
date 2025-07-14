@@ -53,6 +53,6 @@ export interface StorePolicies {
 
 export enum AlgorithmViewPolicies {
   PUBLIC = 'public',
-  WHITELISTED = 'whitelisted',
+  AUTHENTICATED = 'authenticated',
   PRIVATE = 'private'
 }

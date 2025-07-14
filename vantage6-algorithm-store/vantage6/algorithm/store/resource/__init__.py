@@ -101,8 +101,7 @@ def _authorize_user(
 
 def with_authentication() -> callable:
     """
-    Decorator to verify that the user is authenticated with a whitelisted
-    vantage6 server.
+    Decorator to verify that the user is authenticated from the linked Keycloak service.
 
     Returns
     -------
@@ -195,11 +194,11 @@ def with_permission_to_view_algorithms() -> callable:
                 or request_args.get("invalidated")
             )
 
-            # TODO v5+ remove this deprecated policy "algorithms_open"
-            anyone_can_view = policies.get("algorithms_open", False)
+            # if the algorithm is public and approved, allow access
             if (
-                anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
-            ) and request_approved:
+                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
+                and request_approved
+            ):
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
@@ -207,12 +206,10 @@ def with_permission_to_view_algorithms() -> callable:
             if status != HTTPStatus.OK:
                 return user_or_error, status
 
-            # check if all authenticated users have permission to view algorithms
-            # TODO v5+ remove this deprecated policy
-            any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
+            # if user is authenticated an anyone with token can view algorithms, allow
             if (
-                any_user_can_view
-                or algorithm_view_policy == AlgorithmViewPolicies.WHITELISTED
+                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED
+                and request_approved
             ):
                 return fn(self, *args, **kwargs)
 

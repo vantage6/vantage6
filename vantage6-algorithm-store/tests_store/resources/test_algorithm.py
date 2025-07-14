@@ -59,45 +59,41 @@ class TestAlgorithmResources(TestResources):
         # cleanup
         policy.delete()
 
-    # @patch("vantage6.algorithm.store.resource._authenticate")
-    # def test_view_algorithm_decorator_whitelisted(self, authenticate_mock):
-    #     """
-    #     Test the @with_permission_to_view_algorithms decorator when the policy is set to
-    #     whitelisted.
-    #     """
-    #     # create policy
-    #     policy = Policy(
-    #         key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.WHITELISTED
-    #     )
-    #     policy.save()
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_view_algorithm_decorator_whitelisted(self, authenticate_mock):
+        """
+        Test the @with_permission_to_view_algorithms decorator when the policy is set to
+        whitelisted.
+        """
+        # create policy
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.AUTHENTICATED
+        )
+        policy.save()
 
-    #     self.register_user(authenticate_mock=authenticate_mock, auth=False)
-    #     # test without required authorization header
-    #     rv = self.app.get("/api/algorithm")
-    #     self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
+        # test without required authorization header
+        rv = self.app.get("/api/algorithm")
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
-    #     # Now use all required headers and test if the endpoint is protected if no
-    #     # servers are whitelisted
-    #     headers["Authorization"] = "mock"
-    #     rv = self.app.get("/api/algorithm")
-    #     self.assertEqual(rv.status_code, HTTPStatus.FORBIDDEN)
+        # if the user is authenticated, the endpoint should be accessible
+        self.register_user(authenticate_mock=authenticate_mock, auth=True)
+        rv = self.app.get("/api/algorithm")
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
 
-    #     # whitelist the server
-    #     whitelisted_server = self.register_server()
+        # test if endpoint is not accessible if user is requesting non-approved
+        # algorithms
+        for arg in [
+            "awaiting_reviewer_assignment",
+            "under_review",
+            "in_review_process",
+            "invalidated",
+        ]:
+            rv = self.app.get(f"/api/algorithm?{arg}=1")
+            self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
 
-    #     # verify returned status when server is not found
-    #     validate_token_mock.return_value = MockResponse(), HTTPStatus.NOT_FOUND
-    #     rv = self.app.get("/api/algorithm")
-    #     self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
-
-    #     # if token validation is successful, the endpoint should be accessible
-    #     validate_token_mock.return_value = MockResponse(), HTTPStatus.OK
-    #     rv = self.app.get("/api/algorithm")
-    #     self.assertEqual(rv.status_code, HTTPStatus.OK)
-
-    #     # cleanup
-    #     policy.delete()
-    #     whitelisted_server.delete()
+        # cleanup
+        policy.delete()
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_view_algorithm_decorator_private(self, authenticate_mock):
