@@ -105,7 +105,7 @@ from vantage6.client import Client
 
 client = Client(
   server_url='http://127.0.0.1:7601/api',
-  auth_url='http://127.0.0.1:7680',
+  auth_url='http://127.0.0.1:8080',
   log_level='debug'
 )
 client.authenticate()
