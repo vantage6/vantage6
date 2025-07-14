@@ -106,6 +106,10 @@ def prompt_config_name(name: str | None) -> None:
 def switch_context_and_namespace(
     context: str | None = None, namespace: str | None = None
 ) -> None:
+    # input validation
+    _validate_input(context, "context name", allow_none=True)
+    _validate_input(namespace, "namespace name", allow_none=True)
+
     try:
         if context:
             subprocess.run(
