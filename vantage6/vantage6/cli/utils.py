@@ -197,3 +197,32 @@ def helm_install(
         error(
             "Helm command not found. Please ensure Helm is installed and available in the PATH."
         )
+def _validate_input(
+    value: str | None, field_name: str, allow_none: bool = False
+) -> None:
+    """
+    Validate input for subprocess commands.
+
+    Parameters
+    ----------
+    value : str | None
+        The value to validate.
+    field_name : str
+        The name of the field being validated, used for error messages.
+    allow_none : bool, optional
+        Whether None is allowed as a valid value. Defaults to False.
+
+    Raises
+    ------
+    SystemExit
+        If the input is invalid.
+    """
+    if allow_none and value is None:
+        return
+
+    if not isinstance(value, str) or not re.match("^[a-zA-Z0-9_.-]+$", value):
+        error(
+            f"Invalid {field_name}: {value}. Use only alphanumeric characters, "
+            "dashes, underscores, or dots."
+        )
+        exit(1)
