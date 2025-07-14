@@ -146,7 +146,7 @@ def start_port_forward(
     ip: str | None,
     context: str | None = None,
     namespace: str | None = None,
-) -> subprocess.Popen | None:
+) -> None:
     """
     Port forward a kubernetes service.
 
@@ -164,11 +164,6 @@ def start_port_forward(
         The Kubernetes context to use.
     namespace : str | None
         The Kubernetes namespace to use.
-
-    Returns
-    -------
-    subprocess.Popen | None
-        The background process object if successful, None if failed.
     """
     # Input validation
     _validate_input(service_name, "service name")
@@ -247,6 +242,7 @@ def start_port_forward(
         process = subprocess.Popen(
             command,
             stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             start_new_session=True,  # Start in new session to detach from parent
         )
 
