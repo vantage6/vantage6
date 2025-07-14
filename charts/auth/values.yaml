@@ -12,17 +12,31 @@ keycloak:
     enabled: true
     configuration:
       realm:
+        # Keycloak realm name
         realm: vantage6
         enabled: true
+
+        # access token lifespan in seconds
+        accessTokenLifespan: 300
+        # sso session idle timeout in seconds. With default settings, this value
+        # controls the time before the refresh token expires. Note that if setting this
+        # to >3600, you probably also need to set ssoSessionMaxLifespan and/or
+        # clientSessionIdleTimeout and/or clientSessionMaxLifespan to higher values.
+        ssoSessionIdleTimeout: 1800
+
+        # required actions for users. By setting defaultAction to true for configuring
+        # OTP, the user will be prompted to configure OTP on first login.
         requiredActions:
           - alias: CONFIGURE_TOTP
             name: Configure OTP
             providerId: CONFIGURE_TOTP
             enabled: true
-            # by setting defaultAction to true, the user will be prompted to configure
-            # OTP on first login
             defaultAction: true
             priority: 10
+
+        # users to be created in the realm. This initializes the realm with a default
+        # admin user. It also initializes the service account for the backend admin
+        # client to give it the necessary permissions to manage the realm.
         users:
           - username: admin
             enabled: true
@@ -42,6 +56,9 @@ keycloak:
                 - view-clients
                 - manage-clients
                 - create-client
+
+        # clients to be created in the realm. This initializes the realm with a default
+        # public client and a backend admin client.
         clients:
           - clientId: public_client
             publicClient: true
@@ -49,6 +66,8 @@ keycloak:
               - "*"
             webOrigins:
               - "*"
+            # The public client is only for users, not for nodes. Therefore, map a
+            # constant claim to indicate the that the client is a user.
             protocolMappers:
               - name: vantage6_client_type
                 protocol: openid-connect

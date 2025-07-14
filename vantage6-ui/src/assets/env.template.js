@@ -9,5 +9,6 @@
   window["env"]["auth_url"] = "${AUTH_URL}";
   window["env"]["keycloak_realm"] = "${KEYCLOAK_REALM}";
   window["env"]["keycloak_client"] = "${KEYCLOAK_CLIENT}";
+  window["env"]["refresh_token_validity_seconds"] = "${REFRESH_TOKEN_VALIDITY_SECONDS}";
   window["env"]["community_store_url"] = "${COMMUNITY_STORE_URL}";
 })(this);

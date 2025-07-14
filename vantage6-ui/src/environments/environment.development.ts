@@ -7,6 +7,7 @@ const env: EnvironmentConfig = {
   auth_url: (window as any).env?.auth_url || 'http://localhost:7680',
   keycloak_realm: (window as any).env?.keycloak_realm || 'vantage6',
   keycloak_client: (window as any).env?.keycloak_client || 'public_client',
+  refresh_token_validity_seconds: (window as any).env?.refresh_token_validity_seconds || 1800,
   community_store_url: (window as any).env?.community_store_url || 'https://store.cotopaxi.vantage6.ai/api'
 };
 
