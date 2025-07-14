@@ -208,6 +208,54 @@ def helm_install(
         error(
             "Helm command not found. Please ensure Helm is installed and available in the PATH."
         )
+
+
+def helm_uninstall(
+    release_name: str,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> None:
+    """
+    Manage the `helm uninstall` command.
+
+    Parameters
+    ----------
+    release_name : str
+        The name of the Helm release to uninstall.
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+    """
+    # Input validation
+    _validate_input(release_name, "release name")
+    _validate_input(context, "context name", allow_none=True)
+    _validate_input(namespace, "namespace name", allow_none=True)
+
+    # Create the command
+    command = ["helm", "uninstall", release_name]
+
+    if context:
+        command.extend(["--kube-context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+
+    try:
+        subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        info(f"Successfully uninstalled release '{release_name}'.")
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to uninstall release '{release_name}': {e.stderr}")
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and available in the PATH."
+        )
+
+
 def _validate_input(
     value: str | None, field_name: str, allow_none: bool = False
 ) -> None:
