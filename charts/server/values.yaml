@@ -125,4 +125,4 @@ ui:
   # keycloak client
   keycloakClient: public_client
   # keycloak public URL
-  keycloakPublicUrl: http://localhost:8080
+  keycloakPublicUrl: http://localhost:7680
