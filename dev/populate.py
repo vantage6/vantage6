@@ -67,7 +67,7 @@ dev_data_dir.mkdir(exist_ok=True)
 # user is present.
 client = Client(
     server_url="http://localhost:7601/server",
-    auth_url="http://localhost:7680",
+    auth_url="http://localhost:8080",
     log_level="error",
 )
 print("Waiting for authentication...")
