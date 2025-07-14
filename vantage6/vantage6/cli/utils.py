@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from os import PathLike
 from pathlib import Path
 
 import questionary as q
@@ -140,7 +141,9 @@ def switch_context_and_namespace(
 def helm_install(
     release_name: str,
     chart_name: str,
-    values_file: str | None = None,
+    values_file: str | PathLike | None = None,
+    context: str | None = None,
+    namespace: str | None = None,
 ) -> None:
     """
     Manage the `helm install` command.
@@ -153,22 +156,22 @@ def helm_install(
         The name of the Helm chart.
     values_file : str, optional
         A single values file to use with the `-f` flag.
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
     """
     # Input validation
-    for param, param_name in [
-        (release_name, "release name"),
-        (chart_name, "chart name"),
-    ]:
-        if not re.match("^[a-zA-Z0-9_.-]+$", param):
-            error(
-                f"Invalid {param_name}: {param}. Use only alphanumeric"
-                f" characters, dashes, underscores, or dots."
-            )
-            return
+    _validate_input(release_name, "release name")
+    _validate_input(chart_name, "chart name")
 
-    if values_file and not os.path.isfile(values_file):
+    values_file = Path(values_file) if values_file else None
+    if values_file and not values_file.is_file():
         error(f"Helm chart values file does not exist: {values_file}")
         return
+
+    _validate_input(context, "context name", allow_none=True)
+    _validate_input(namespace, "namespace name", allow_none=True)
 
     # Create the command
     command = [
@@ -182,15 +185,19 @@ def helm_install(
     ]
 
     if values_file:
-        command.extend(["-f", values_file])
+        command.extend(["-f", str(values_file)])
+
+    if context:
+        command.extend(["--kube-context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
 
     try:
         subprocess.run(
             command,
+            stdout=subprocess.DEVNULL,
             check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
         )
         info(
             f"Successfully installed release '{release_name}' using chart '{chart_name}'."
