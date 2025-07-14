@@ -174,25 +174,7 @@ class AlgorithmStoreApp(Vantage6App):
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():
-            # TODO v5+ remove this deprecated policy in favour of 'algorithm_view'
-            if policy == "algorithms_open":
-                db.Policy(
-                    key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
-                ).save()
-                log.warning(
-                    "Policy 'algorithms_open' will be deprecated in v5.0. Please use "
-                    "'algorithm_view' instead."
-                )
-            elif policy == "algorithms_open_to_whitelisted":
-                db.Policy(
-                    key=StorePolicies.ALGORITHM_VIEW,
-                    value=AlgorithmViewPolicies.WHITELISTED,
-                ).save()
-                log.warning(
-                    "Policy 'algorithms_open_to_whitelisted' will be deprecated in v5.0"
-                    ". Please use 'algorithm_view' instead."
-                )
-            elif policy in [
+            if policy in [
                 StorePolicies.ALLOWED_REVIEWERS,
                 StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
             ]:
@@ -253,7 +235,7 @@ class AlgorithmStoreApp(Vantage6App):
         """
         self._add_default_roles(get_default_roles(), db)
 
-        # add whitelisted server and root user from config file if they do not exist
+        # add root user from config file if they do not exist
         if root_user := self.ctx.config.get("root_user", {}):
             root_username = root_user.get("username")
             root_organization = root_user.get("organization_id")

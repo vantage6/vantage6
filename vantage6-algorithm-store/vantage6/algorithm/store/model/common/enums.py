@@ -70,7 +70,7 @@ class DefaultStorePolicies(Enum):
     Enum for the default values of the policies of the algorithm store.
     """
 
-    ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
+    ALGORITHM_VIEW = AlgorithmViewPolicies.AUTHENTICATED.value
     MIN_REVIEWERS = 2
     ASSIGN_REVIEW_OWN_ALGORITHM = False
     MIN_REVIEWING_ORGANIZATIONS = 2

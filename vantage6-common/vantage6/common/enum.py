@@ -18,7 +18,7 @@ class AlgorithmViewPolicies(str, Enum):
     """Enum for available algorithm view policies"""
 
     PUBLIC = "public"
-    WHITELISTED = "whitelisted"
+    AUTHENTICATED = "authenticated"
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
 
 

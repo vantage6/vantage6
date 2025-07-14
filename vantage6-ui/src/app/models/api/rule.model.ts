@@ -19,7 +19,6 @@ export enum StoreResourceType {
   ALGORITHM = 'algorithm',
   USER = 'user',
   ROLE = 'role',
-  VANTAGE6_SERVER = 'vantage6_server',
   REVIEW = 'review',
   ANY = '*'
 }

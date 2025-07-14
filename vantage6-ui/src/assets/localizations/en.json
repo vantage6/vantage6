@@ -687,7 +687,7 @@
     "allowed_review_assigners": "Users allowed to assign reviews (extra check on top of permission)",
     "algorithm_view-values": {
       "public": "Everyone",
-      "whitelisted": "Any user from whitelisted servers",
+      "authenticated": "Any authenticated user",
       "private": "Only users with explicit permission"
     }
   },
@@ -738,7 +738,6 @@
       "study": "Study",
       "session": "Session",
       "algorithm": "Algorithm",
-      "vantage6_server": "Whitelisted server",
       "review": "Review"
     },
     "scope": {
