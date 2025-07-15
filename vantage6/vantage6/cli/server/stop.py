@@ -21,7 +21,6 @@ def cli_server_stop(
     """
     Stop an running server.
     """
-    info("Stopping server...")
     cli_config = CliConfig()
 
     context, namespace = cli_config.compare_changes_config(
@@ -30,6 +29,7 @@ def cli_server_stop(
     )
 
     # uninstall the helm release
+    info("Stopping server...")
     release_name = f"{ctx.name}-{ctx.instance_type}"
     helm_uninstall(
         release_name=release_name,
@@ -45,3 +45,5 @@ def cli_server_stop(
     stop_port_forward(
         service_name=f"{release_name}-vantage6-frontend-service",
     )
+
+    info("Server stopped successfully.")
