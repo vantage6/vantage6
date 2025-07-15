@@ -160,7 +160,7 @@ def collapse(
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def group_statistics(
     df: pd.DataFrame,
     group_columns: list[str],
