@@ -38,9 +38,13 @@ from vantage6.node.globals import (
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
     TASK_START_TIMEOUT_SECONDS,
+    K8S_EVENT_STREAM_LOOP_TIMEOUT,
 )
 from vantage6.node.util import get_parent_id
 from vantage6.node.k8s.run_io import RunIO
+from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
+    compute_job_pod_run_status,
+)
 from vantage6.node.k8s.exceptions import (
     PermanentAlgorithmStartFail,
     DataFrameNotFound,
@@ -94,6 +98,15 @@ class ContainerManager:
         self.task_job_label_selector = ",".join(
             [f"{k}={v}" for k, v in self.task_job_labels.items()]
         )
+
+        # whether to share or not algorithm logs with the server
+        # TODO: config loading could be centralized in a class, then validate,
+        # set defaults, warn about dangers, etc
+        self.share_algorithm_logs = self.ctx.config.get("share_algorithm_logs", True)
+        if self.share_algorithm_logs:
+            self.log.warning(
+                "Algorithm logs and errors will be shared with the server."
+            )
 
     def ensure_task_namespace(self) -> bool:
         """
@@ -506,24 +519,12 @@ class ContainerManager:
         )
         self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
 
-        # Wait till the job is up and running. The job is considered to be running
-        # when the POD created by the job reports at least a 'Running' state. The states
-        # that a POD can report:
-        #                      - Succeeded
-        #                     /
-        # Pending - Running ---- Failed
-        #                     \
-        #                      - Unknown
-        #
-
         # Kubernetes will automatically retry the job ``backoff_limit`` times. According
         # to the Pod's backoff failure policy, it will have a failed status only after
         # the last failed retry.
-        start_time = time.time()
 
-        # Wait until the POD is running. This method is blocking until the POD is
-        # running or a timeout is reached.
-        # TODO even though the timeout is reached, the POD could still be running
+        # Wait until the POD is running. The following method is blocking until the POD is
+        # running or
         # TODO we could make this non-blocking by keeping track of the started jobs
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
@@ -534,82 +535,109 @@ class ContainerManager:
         # stackoverflow.com/questions/57563359/how-to-properly-update-the-status-of-a-job
         # kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-
         # policy
-        while True:
 
-            pods = self.core_api.list_namespaced_pod(
-                namespace=self.task_namespace,
-                label_selector=f"app={run_io.container_name}",
-            )
+        status = self.__wait_until_pod_running(
+            label=f"app={run_io.container_name}",
+        )
 
-            if pods.items:
-
-                # The container was created and has at least the `pending` state. Wait
-                # until it reports either an `active` or `failed` state.
-                self.log.info(
-                    "Job POD (label %s) with %s items created successfully in %s "
-                    "namespace. Waiting until it is running...",
-                    run_io.container_name,
-                    len(pods.items),
-                    self.task_namespace,
-                )
-                status = self.__wait_until_pod_running(
-                    label=f"app={run_io.container_name}"
-                )
-                self.log.info(
-                    "[Algorithm job run %s requested by org %s] Job POD (label %s) is now running!",
-                    run_id,
-                    init_org_id,
-                    run_io.container_name,
-                )
-
-                return status
-
-            elif time.time() - start_time > TASK_START_TIMEOUT_SECONDS:
-                self.log.error(
-                    "[Algorithm job run %s requested by org %s] Time out waiting for Job POD (label %s) to start.",
-                    run_id,
-                    init_org_id,
-                    run_io.container_name,
-                )
-                return RunStatus.UNKNOWN_ERROR
-
-            time.sleep(1)
+        return status
 
     def __wait_until_pod_running(self, label: str) -> RunStatus:
-        """
-        Wait until the POD created by a job is running.
+        """"
+        This method monitors the status of a Kubernetes POD created by a job and 
+        waits until it transitions to a 'Running' state or another terminal state 
+        (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
+        After the timeout, this method will have additional status-event waiting windows
+        only if the reason for such timeout is an (large) image that is already being pulled.
+
+                               - Succeeded
+                              /
+        Pending - Running ------ Failed
+                              \
+                               - Unknown
 
         Parameters
-        ----------
-        label: str
-            Label of the POD for this run (kubernetes job)
-
+        ----------                                                                 
+        label : str
+            Label selector to identify the POD associated with the job.
 
         Returns
         -------
         RunStatus
-            Status of the run
+            The status of the run:
+            - RunStatus.ACTIVE: If the pod is already with a Running status
+            - RunStatus.FAILED: If the pod reported a Failed status
+            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
+            - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
+            - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.            
         """
-        # Start watching for events on the pod
+
+        # Wait until the POD is created
         w = watch.Watch()
 
-        for event in w.stream(
-            func=self.core_api.list_namespaced_pod,
-            namespace=self.task_namespace,
-            label_selector=label,
-            # TODO v5+ this timeout should be as a global. Is 120 seconds a good value?
-            timeout_seconds=120,
-        ):
-            pod_phase = event["object"].status.phase
+        try:
 
-            # TODO we need to also check for the 'Failed' status, we could have
-            # missed that event.
-            if pod_phase == "Running":
-                w.stop()
-                return RunStatus.ACTIVE
+            while True:
+                # Non-busy waiting for status changes on the job POD through K8S' event stream watch. This
+                # inner for loop will process events until a terminal status is identifed (Running, Failed,
+                # Succeded) or timeout_seconds is reached.
+                #
+                # Given that after the timeout the status would be uncertain, the job pod status is
+                # checked (directly) again to decide whether a new stream-watch iteration is performed
+                # (e.g, an image may be too large), or an error is reported.
+                for event in w.stream(
+                    func=self.core_api.list_namespaced_pod,
+                    namespace=self.task_namespace,
+                    label_selector=label,
+                    timeout_seconds=K8S_EVENT_STREAM_LOOP_TIMEOUT,
+                ):
 
-        # This point is reached after timeout
-        return RunStatus.UNKNOWN_ERROR
+                    pod = event["object"]
+
+                    pod_phase: RunStatus = compute_job_pod_run_status(
+                        pod=pod,
+                        label=label,
+                        log=self.log,
+                        task_namespace=self.task_namespace,
+                    )
+
+                    if pod_phase != RunStatus.INITIALIZING:
+                        return pod_phase
+
+                # POD event-watch TIMEOUT (timeout_seconds) was reached.
+                self.log.debug(
+                    "Job (label %s, namespace %s) event stream timeout reached. Checking the cause...",
+                    label,
+                    self.task_namespace,
+                )
+
+                # Getting the POD again to check its post-timeout status
+                # Note on using container_statuses[0]: The job pods always use a single container, container_statuses will always have a single element
+                pod = self.core_api.list_namespaced_pod(
+                    namespace=self.task_namespace, label_selector=label
+                ).items[0]
+
+                pod_phase: RunStatus = compute_job_pod_run_status(
+                    pod=pod,
+                    label=label,
+                    log=self.log,
+                    task_namespace=self.task_namespace,
+                )
+
+                # Another iteration on the outher loop is performed if the pod is pending for reasons other than
+                # missing/invalid Docker image (which is reported as INITIALIZING).
+                if pod_phase != RunStatus.INITIALIZING:
+                    return pod_phase
+
+                self.log.debug(
+                    "Job (label %s, namespace %s) still pulling the (probably large) docker image. Waiting again for a new status update...",
+                    label,
+                    self.task_namespace,
+                )
+
+        finally:
+            w.stop()
 
     def _create_run_mount(
         self,

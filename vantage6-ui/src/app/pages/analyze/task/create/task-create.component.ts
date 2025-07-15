@@ -25,15 +25,6 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
 
   destroy$ = new Subject();
 
-  availableSteps: AvailableSteps = {
-    session: true,
-    study: true,
-    function: true,
-    database: false,
-    dataframe: true,
-    parameter: true
-  };
-
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,

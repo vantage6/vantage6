@@ -225,32 +225,6 @@ class OrganizationInputSchema(_NameValidationSchema):
     public_key = fields.String()
 
 
-class PortInputSchema(Schema):
-    """Schema for validating input for a creating a port."""
-
-    port = fields.Integer(required=True)
-    run_id = fields.Integer(required=True, validate=Range(min=1))
-    label = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT), allow_none=True)
-
-    @validates("port")
-    def validate_port(self, port):
-        """
-        Validate the port in the input.
-
-        Parameters
-        ----------
-        port : int
-            Port to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the port is not valid.
-        """
-        if not 1 <= port <= 65535:
-            raise ValidationError("Port must be between 1 and 65535")
-
-
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
     """Schema for validating input for resetting an API key."""
 
@@ -371,12 +345,10 @@ class UserInputSchema(Schema):
 
     username = fields.String(required=True, validate=Length(min=3, max=MAX_LEN_NAME))
     password = fields.String()
-    email = fields.Email(required=True)
-    firstname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
-    lastname = fields.String(validate=Length(max=_MAX_LEN_STR_SHORT))
     organization_id = fields.Integer(validate=Range(min=1))
     roles = fields.List(fields.Integer(validate=Range(min=1)))
     rules = fields.List(fields.Integer(validate=Range(min=1)))
+    is_service_account = fields.Boolean(required=False, load_default=False)
 
     @validates("username")
     def validate_username(self, username: str):
@@ -413,16 +385,17 @@ class UserInputSchema(Schema):
         _validate_password(password)
 
 
+class UserEditInputSchema(UserInputSchema):
+    """Schema for validating input for editing a user."""
+
+    class Meta:
+        fields = ("roles", "rules")
+
+
 class UserDeleteInputSchema(Schema):
     """Schema for validating input for deleting a user."""
 
     delete_dependents = fields.Boolean()
-
-
-class VPNConfigUpdateInputSchema(Schema):
-    """Schema for validating input for updating a VPN configuration."""
-
-    vpn_config = fields.String(required=True)
 
 
 class ColumnNameInputSchema(Schema):
@@ -552,7 +525,8 @@ class DataframeInitInputSchema(Schema):
         # environment variables.
         if not re.match(r"^[a-zA-Z0-9-_]+$", name):
             raise ValidationError(
-                "Name must contain only letters, numbers, hyphens and underscores"
+                "Dataframe name must contain only letters, numbers, hyphens and "
+                "underscores"
             )
 
 

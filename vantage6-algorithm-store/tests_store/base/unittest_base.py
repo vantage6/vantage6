@@ -2,6 +2,10 @@ import os
 import unittest
 from unittest.mock import Mock
 from http import HTTPStatus
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+from unittest.mock import patch
 
 from vantage6.common.globals import InstanceType
 from vantage6.backend.common import test_context
@@ -14,6 +18,21 @@ from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
+
+# Generate a mock RSA key pair for testing
+MOCK_PRIVATE_KEY = rsa.generate_private_key(
+    public_exponent=65537, key_size=2048, backend=default_backend()
+)
+MOCK_PUBLIC_KEY = MOCK_PRIVATE_KEY.public_key()
+MOCK_PRIVATE_KEY_PEM = MOCK_PRIVATE_KEY.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption(),
+)
+MOCK_PUBLIC_KEY_PEM = MOCK_PUBLIC_KEY.public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo,
+)
 
 
 class TestResources(unittest.TestCase):
@@ -32,14 +51,25 @@ class TestResources(unittest.TestCase):
         os.environ["KEYCLOAK_REALM"] = "dummy-keycloak-realm"
         os.environ["KEYCLOAK_ADMIN_USERNAME"] = "dummy-keycloak-admin-username"
         os.environ["KEYCLOAK_ADMIN_PASSWORD"] = "dummy-keycloak-admin-password"
-        os.environ["KEYCLOAK_USER_CLIENT"] = "dummy-keycloak-user-client"
-        os.environ["KEYCLOAK_USER_CLIENT_SECRET"] = "dummy-keycloak-user-client-secret"
         os.environ["KEYCLOAK_ADMIN_CLIENT"] = "dummy-keycloak-admin-client"
         os.environ["KEYCLOAK_ADMIN_CLIENT_SECRET"] = (
             "dummy-keycloak-admin-client-secret"
         )
 
-        cls.server = AlgorithmStoreApp(ctx)
+        # Mock the Keycloak public key fetch
+        with patch(
+            "vantage6.algorithm.store.AlgorithmStoreApp._get_keycloak_public_key"
+        ) as mock_get_key:
+            mock_get_key.return_value = MOCK_PUBLIC_KEY_PEM.decode()
+            # create server instance. Patch the start_background_task method
+            # to prevent the server from starting a ping/pong thread that will
+            # prevent the tests from starting
+            server = AlgorithmStoreApp(ctx)
+            # Configure JWT for container tokens
+            server.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
+            server.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM
+
+        cls.server = server
         cls.server.app.testing = True
         cls.app = cls.server.app.test_client()
 

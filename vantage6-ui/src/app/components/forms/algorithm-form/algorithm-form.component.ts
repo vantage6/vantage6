@@ -1,5 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ValidationErrors,
+  Validators,
+  ReactiveFormsModule,
+  FormControl
+} from '@angular/forms';
 import {
   MatExpansionPanel,
   MatAccordion,
@@ -21,7 +30,7 @@ import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialo
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { isTruthy } from 'src/app/helpers/utils.helper';
-import { isListTypeArgument } from 'src/app/helpers/algorithm.helper';
+import { isArgumentWithAllowedValues, isListTypeArgument } from 'src/app/helpers/algorithm.helper';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -36,6 +45,7 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { AlgorithmStepType } from 'src/app/models/api/session.models';
+import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -70,7 +80,8 @@ import { AlgorithmStepType } from 'src/app/models/api/session.models';
     MatProgressSpinner,
     TitleCasePipe,
     KeyValuePipe,
-    TranslateModule
+    TranslateModule,
+    MatChipFormComponent
   ]
 })
 export class AlgorithmFormComponent implements OnInit, AfterViewInit {
@@ -83,6 +94,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   argumentType = ArgumentType;
   isTruthy = isTruthy;
   isListTypeArgument = isListTypeArgument;
+  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   isEdit: boolean = false;
   isLoading: boolean = true;
@@ -118,7 +130,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       conditional_operator: [''],
       conditional_value: [''],
       conditionalValueNull: [false],
-      is_frontend_only: [false]
+      is_frontend_only: [false],
+      allowed_values: [[]]
     },
     { validators: this.conditionalFieldsValidator.bind(this) }
   );
@@ -249,6 +262,16 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       ?.value.type;
   }
 
+  hasDefaultValueChanges(hasDefaultValue: boolean, defaultValueControl: FormControl<string>): void {
+    if (!hasDefaultValue) {
+      defaultValueControl.setValue('');
+    }
+  }
+
+  hasAllowedValues(type: string, allowedValues: string[] | undefined): boolean {
+    return this.isArgumentWithAllowedValues(type) && allowedValues !== undefined && allowedValues.length > 0;
+  }
+
   addDatabase(functionFormGroup: FormGroup): void {
     (functionFormGroup.controls['databases'] as FormArray).push(this.getDatabaseForm());
   }
@@ -333,6 +356,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           argumentFormGroup.controls['display_name'].setValue(arg.display_name);
           argumentFormGroup.controls['description'].setValue(arg.description);
           argumentFormGroup.controls['type'].setValue(arg.type);
+          argumentFormGroup.controls['allowed_values'].setValue(arg.allowed_values);
           argumentFormGroup.controls['is_frontend_only'].setValue(arg.is_frontend_only);
           argumentFormGroup.controls['has_default_value'].setValue(arg.has_default_value);
           argumentFormGroup.controls['is_default_value_null'].setValue(arg.default_value === null);
@@ -504,7 +528,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
         conditional_operator: [''],
         conditional_value: [''],
         conditionalValueNull: [false],
-        is_frontend_only: [false]
+        is_frontend_only: [false],
+        allowed_values: [[]]
       },
       { validators: this.conditionalFieldsValidator.bind(this) }
     );

@@ -2,7 +2,6 @@
 
 import jwt
 import json as json_lib
-import time
 
 from typing import Any
 
@@ -10,7 +9,6 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common.serialization import serialize
-from vantage6.algorithm.tools.util import info
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -43,7 +41,10 @@ class AlgorithmClient(ClientBase):
         super().__init__(*args, **kwargs)
 
         # obtain the identity from the token
-        jwt_payload = jwt.decode(token, options={"verify_signature": False})
+        jwt_payload = jwt.decode(
+            token,
+            options={"verify_signature": False},
+        )
 
         container_identity = jwt_payload["sub"]
 
@@ -65,7 +66,6 @@ class AlgorithmClient(ClientBase):
         self.run = self.Run(self)
         self.result = self.Result(self)
         self.task = self.Task(self)
-        self.vpn = self.VPN(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.study = self.Study(self)
@@ -134,13 +134,7 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        status = self.task.get(task_id).get("status")
-        while not RunStatus.has_finished(status):
-            info(f"Waiting for results of task {task_id}...")
-            time.sleep(interval)
-            status = self.task.get(task_id).get("status")
-        info("Done!")
-
+        self.wait_for_task_completion(self.request, task_id, interval, False)
         return self.result.from_task(task_id)
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
@@ -399,171 +393,6 @@ class AlgorithmClient(ClientBase):
                 method="post",
                 json=json_body,
             )
-
-    class VPN(ClientBase.SubClient):
-        """
-        A VPN client for the algorithm container.
-
-        It provides functions to obtain the IP addresses of other containers.
-        """
-
-        def get_addresses(
-            self,
-            only_children: bool = False,
-            only_parent: bool = False,
-            only_siblings: bool = False,
-            only_self: bool = False,
-            include_children: bool = False,
-            include_parent: bool = False,
-            label: str = None,
-        ) -> list[dict]:
-            """
-            Get information about the VPN IP addresses and ports of other
-            algorithm containers involved in the current task. These addresses
-            can be used to send VPN communication to.
-
-            Multiple ports may be exposed for a single algorithm run, so it
-            is possible that multiple ports are returned for a single IP.
-
-            Parameters
-            ----------
-            only_children : bool, optional
-                Only return the IP addresses of the children of the current
-                task, by default False. Incompatible with other only_*
-                parameters.
-            only_parent : bool, optional
-                Only return the IP address of the parent of the current task,
-                by default False. Incompatible with other only_*
-                parameters.
-            only_siblings: bool, optional
-                Only return the IP addresses of the siblings of the current
-                task, by default False. Incompatible with other only_*
-                parameters.
-            only_self: bool, optional
-                Only return the IP address of the current task, by default
-                False. Incompatible with other only_* parameters.
-            include_children : bool, optional
-                Include the IP addresses of the children of the current task,
-                by default False. Incompatible with only_parent, superseded
-                by only_children.
-            include_parent : bool, optional
-                Include the IP address of the parent of the current task, by
-                default False. Incompatible with only_children, superseded by
-                only_parent.
-            label : str, optional
-                The label of the port you are interested in, which is set
-                in the algorithm Dockerfile. If this parameter is set, only
-                the ports with this label will be returned.
-
-            Returns
-            -------
-            list[dict]
-                List of dictionaries with algorithm addresses. Each dictionary
-                contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
-                instead.
-            """
-            # Only pass the parameters if they are not the default value - this
-            # prevents that they are interpreted as string, which goes wrong
-            # for 'False' or 'None' values in the proxy server
-            params = {}
-            if only_children:
-                params["only_children"] = 1
-            if only_parent:
-                params["only_parent"] = 1
-            if only_siblings:
-                params["only_siblings"] = 1
-            if only_self:
-                params["only_self"] = 1
-            if include_children:
-                params["include_children"] = 1
-            if include_parent:
-                params["include_parent"] = 1
-            if label:
-                params["label"] = label
-
-            results = self.parent.request("vpn/algorithm/addresses", params=params)
-
-            if "addresses" not in results:
-                return {"message": "Obtaining VPN addresses failed!"}
-
-            return results["addresses"]
-
-        def get_parent_address(self) -> dict:
-            """
-            Get the IP address and port number of the parent of the current
-            algorithm run.
-
-            Multiple ports may be exposed for a single algorithm run, so it
-            is possible that multiple ports are returned for a single IP.
-
-            Returns
-            -------
-            list[dict]
-                List of dictionaries with algorithm addresses. Each dictionary
-                contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
-                instead.
-            """
-            return self.get_addresses(only_parent=True)
-
-        def get_child_addresses(self) -> list[dict]:
-            """
-            Get the IP addresses and port numbers of the children of the
-            current algorithm run.
-
-            Multiple ports may be exposed for a single algorithm run, so it
-            is possible that multiple ports are returned for a single IP.
-
-            Returns
-            -------
-            list[dict]
-                List of dictionaries with algorithm addresses. Each dictionary
-                contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
-                instead.
-            """
-            return self.get_addresses(only_children=True)
-
-        def get_sibling_addresses(self) -> list[dict]:
-            """
-            Get the IP addresses and port numbers of the siblings of the
-            current algorithm run.
-
-            Multiple ports may be exposed for a single algorithm run, so it
-            is possible that multiple ports are returned for a single IP.
-
-            Returns
-            -------
-            list[dict]
-                List of dictionaries with algorithm addresses. Each dictionary
-                contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
-                instead.
-            """
-            return self.get_addresses(only_siblings=True)
-
-        def get_own_address(self) -> dict:
-            """
-            Get the IP address and port number of the current algorithm run.
-
-            Multiple ports may be exposed for a single algorithm run, so it
-            is possible that multiple ports are returned for a single IP.
-
-            Returns
-            -------
-            list[dict]
-                List of dictionaries with algorithm addresses. Each dictionary
-                contains the keys 'ip', 'port', 'label', 'organization_id',
-                'task_id', and 'parent_id'. If obtaining the VPN addresses from
-                the server fails, a dictionary with a 'message' key is returned
-                instead.
-            """
-            return self.get_addresses(only_self=True)
 
     class Organization(ClientBase.SubClient):
         """

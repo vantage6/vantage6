@@ -176,13 +176,31 @@ object, and authenticating
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)
 
+.. note::
+
+   If you are using a service account, the authentication process is a bit different:
+
+   .. code:: python
+
+      # instead of client.authenticate(), you need to initialize the service account
+      # and then authenticate with it
+      client.initialize_service_account(
+         client_secret="<my-client-secret>",
+         username="<my-username>"
+      )
+      client.authenticate_service_account()
+
+   You get the client secret in a downloaded file when you create a service account in
+   the User Interface. If you create a service account via the Python client or API,
+   the client secret is returned in the JSON response.
+
 .. _creating-organization:
 
 Creating an organization
 """"""""""""""""""""""""
 
 After you have authenticated, you can start generating resources. The following
-also assumes that you have a login on the Vantage6 server that has the
+also assumes that you have a login on the vantage6 server that has the
 permissions to create a new organization. Regular end-users typically do
 not have these permissions (typically only administrators do); they may skip
 this part.
@@ -239,7 +257,7 @@ Creating a collaboration
 
 Here, we assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`. We
-also assume that you have a login on the Vantage6 server that has the
+also assume that you have a login on the vantage6 server that has the
 permissions to create a new collaboration (regular end-users typically
 do not have these permissions, this is typically only for
 administrators).
@@ -392,7 +410,6 @@ us create a task that runs the central part of the
 .. code:: python
 
    input_ = {
-       'method': 'central_average',
        'kwargs': {'column_name': 'age'}
    }
 
@@ -402,6 +419,7 @@ us create a task that runs the central part of the
       name="an-awesome-task",
       image="harbor2.vantage6.ai/demo/average",
       description='',
+      method='central_average',
       input_=input_,
       databases=[
          {'label': 'default'}
@@ -445,16 +463,18 @@ central part of the algorithm will normally do:
 .. code:: python
 
    input_ = {
-       'method': 'partial_average',
        'kwargs': {'column_name': 'age'},
    }
 
-   average_task = client.task.create(collaboration=1,
-                                     organizations=[2,3],
-                                     name="an-awesome-task",
-                                     image="harbor2.vantage6.ai/demo/average",
-                                     description='',
-                                     input_=input_)
+   average_task = client.task.create(
+      collaboration=1,
+      organizations=[2,3],
+      name="an-awesome-task",
+      image="harbor2.vantage6.ai/demo/average",
+      description='',
+      method='partial_average',
+      input_=input_
+   )
 
 Note that when running the partial algorithm, you should run it on all organizations
 that you want to get the results from. In this example, we run the partial algorithm

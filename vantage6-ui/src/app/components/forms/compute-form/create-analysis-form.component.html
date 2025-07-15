@@ -131,6 +131,10 @@
               <div class="field-description" *ngIf="!isDataExtractionStep()">
                 {{ "task-create.step-function.description.name" | translate }}
               </div>
+              <app-alert
+                *ngIf="showWarningUniqueDFName"
+                label="{{ 'task-create.step-function.description.df-name-warning' | translate }}"
+              ></app-alert>
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ "task.name" | translate }}</mat-label>
                 <input matInput type="text" formControlName="taskName" />
@@ -187,10 +191,8 @@
           <form class="form" [formGroup]="dataframeForm">
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
             <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMultiple() ? 's' : '' }}</mat-label>
-              <mat-select
-                formControlName="dataframeId"
-                [multiple]="isFirstDatabaseMultiple()">
+              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMultiple() ? "s" : "" }}</mat-label>
+              <mat-select formControlName="dataframeId" [compareWith]="compareIDsForSelection" [multiple]="isFirstDatabaseMultiple()">
                 <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
                   {{ dataframe.name }}
                 </mat-option>
@@ -236,6 +238,11 @@
                       [multiple]="argument.type === argumentType.ColumnList"
                     >
                       <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
+                    </mat-select>
+                    <mat-select *ngIf="shouldShowAllowedValuesDropdown(argument)" [formControlName]="argument.name">
+                      <mat-option *ngFor="let allowed_value of argument.allowed_values" [value]="allowed_value">{{
+                        allowed_value
+                      }}</mat-option>
                     </mat-select>
                     <mat-select
                       *ngIf="shouldShowOrganizationDropdown(argument)"

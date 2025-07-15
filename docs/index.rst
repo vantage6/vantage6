@@ -102,6 +102,7 @@ Index
    self
    introduction/introduction
    introduction/quickstart
+   introduction/communitystore
 
 .. toctree::
    :numbered: 3

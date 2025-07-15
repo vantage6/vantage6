@@ -4,12 +4,6 @@ from typing import Any
 
 import questionary as q
 
-from vantage6.cli.config import CliConfig
-from vantage6.cli.configuration_manager import (
-    NodeConfigurationManager,
-    ServerConfigurationManager,
-)
-from vantage6.cli.context import select_context_class
 from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
@@ -21,6 +15,13 @@ from vantage6.common.globals import (
     Ports,
     RequiredNodeEnvVars,
 )
+
+from vantage6.cli.config import CliConfig
+from vantage6.cli.configuration_manager import (
+    NodeConfigurationManager,
+    ServerConfigurationManager,
+)
+from vantage6.cli.context import select_context_class
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
@@ -475,7 +476,6 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     }
 
     # ask about openness of the algorithm store
-    config["policies"] = {"allow_localhost": False}
     is_open = q.confirm(
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",
@@ -485,12 +485,12 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         open_algos_policy = "public"
     else:
         is_open_to_whitelist = q.confirm(
-            "Do you want to allow all users of whitelisted vantage6 servers to access "
+            "Do you want to allow all authenticated users to access "
             "the algorithms in the store? If not allowing this, you will have to assign"
             " the appropriate permissions to each user individually.",
             default=True,
         ).unsafe_ask()
-        open_algos_policy = "whitelisted" if is_open_to_whitelist else "private"
+        open_algos_policy = "authenticated" if is_open_to_whitelist else "private"
     config["policies"]["algorithm_view"] = open_algos_policy
 
     return config

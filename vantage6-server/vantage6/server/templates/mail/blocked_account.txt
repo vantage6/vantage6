@@ -1,4 +1,4 @@
-Dear {{firstname}},
+Dear {{username}},
 
 After {{number_of_allowed_attempts}} failed login attempts your user account
 has been blocked.

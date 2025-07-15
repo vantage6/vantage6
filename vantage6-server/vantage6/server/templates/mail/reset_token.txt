@@ -1,4 +1,4 @@
-Dear {{firstname}},
+Dear {{username}},
 
 To reset your {{reset_type}} use the following token:
 

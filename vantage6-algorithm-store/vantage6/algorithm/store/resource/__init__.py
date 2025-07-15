@@ -1,22 +1,18 @@
-import os
 import logging
-import requests
+
 from functools import wraps
 from http import HTTPStatus
-from flask import Response, request, current_app, g
+from flask import request, g
 from flask_mail import Mail
-from flask_principal import Identity, identity_changed
 from flask_restful import Api
-from keycloak import KeycloakOpenID
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
-from vantage6.algorithm.store import PermissionManager
-from vantage6.algorithm.store.model.rule import Operation
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.algorithm.store.model.user import User
-from vantage6.backend.common.permission import RuleNeed
-from vantage6.backend.common.globals import RequiredServerEnvVars
 from vantage6.backend.common.services_resources import BaseServicesResources
+from vantage6.algorithm.store import PermissionManager
+from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
 )
@@ -57,28 +53,8 @@ def _authenticate(*args, **kwargs) -> tuple[User | dict, HTTPStatus]:
         Tuple containing a user object or a dict with an error message, and a status
         code.
     """
-    msg = "Missing Authorization header"
-    if not request.headers.get("Authorization"):
-        log.warning(msg)
-        return {"msg": msg}, HTTPStatus.UNAUTHORIZED
-
-    keycloak_openid = KeycloakOpenID(
-        server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-        client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_USER_CLIENT.value),
-        realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
-        client_secret_key=os.environ.get(
-            RequiredServerEnvVars.KEYCLOAK_USER_CLIENT_SECRET.value
-        ),
-    )
-
-    try:
-        token = request.headers["Authorization"].split(" ")[1]
-        decoded_token = keycloak_openid.decode_token(token)
-    except Exception as e:
-        log.exception("Error decoding token: %s", e)
-        return {"msg": "Invalid token"}, HTTPStatus.UNAUTHORIZED
-
-    identity = decoded_token["sub"]
+    verify_jwt_in_request()
+    identity = get_jwt_identity()
 
     if not (user := User.get_by_keycloak_id(keycloak_id=identity)):
         return {"msg": "User not registered at store"}, HTTPStatus.UNAUTHORIZED
@@ -109,22 +85,7 @@ def _authorize_user(
         Tuple containing an error message and status code if the user is not
         authorized, None otherwise.
     """
-    # TODO v5+ ensure this block is necessary - seems to be replace by custom user.can()
-    # if the user is registered, load the rules
-    auth_identity = Identity(user.id)
-    for rule in user.rules:
-        auth_identity.provides.add(
-            RuleNeed(name=rule.name, operation=rule.operation, scope=None)
-        )
-    for role in user.roles:
-        for rule in role.rules:
-            auth_identity.provides.add(
-                RuleNeed(name=rule.name, operation=rule.operation, scope=None)
-            )
-    identity_changed.send(current_app._get_current_object(), identity=auth_identity)
-
     g.user = user
-
     if not user.can(resource, operation):
         msg = (
             f"You are not allowed to perform the operation '{operation}' on resource "
@@ -140,8 +101,7 @@ def _authorize_user(
 
 def with_authentication() -> callable:
     """
-    Decorator to verify that the user is authenticated with a whitelisted
-    vantage6 server.
+    Decorator to verify that the user is authenticated from the linked Keycloak service.
 
     Returns
     -------
@@ -234,11 +194,11 @@ def with_permission_to_view_algorithms() -> callable:
                 or request_args.get("invalidated")
             )
 
-            # TODO v5+ remove this deprecated policy "algorithms_open"
-            anyone_can_view = policies.get("algorithms_open", False)
+            # if the algorithm is public and approved, allow access
             if (
-                anyone_can_view or algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
-            ) and request_approved:
+                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
+                and request_approved
+            ):
                 return fn(self, *args, **kwargs)
 
             # not everyone has permission: authenticate with server
@@ -246,12 +206,10 @@ def with_permission_to_view_algorithms() -> callable:
             if status != HTTPStatus.OK:
                 return user_or_error, status
 
-            # check if all authenticated users have permission to view algorithms
-            # TODO v5+ remove this deprecated policy
-            any_user_can_view = policies.get("algorithms_open_to_whitelisted", False)
+            # if user is authenticated an anyone with token can view algorithms, allow
             if (
-                any_user_can_view
-                or algorithm_view_policy == AlgorithmViewPolicies.WHITELISTED
+                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED
+                and request_approved
             ):
                 return fn(self, *args, **kwargs)
 

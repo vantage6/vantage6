@@ -18,7 +18,7 @@ class AlgorithmViewPolicies(str, Enum):
     """Enum for available algorithm view policies"""
 
     PUBLIC = "public"
-    WHITELISTED = "whitelisted"
+    AUTHENTICATED = "authenticated"
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
 
 
@@ -193,3 +193,20 @@ class TaskStatusQueryOptions(EnumBase):
     OPEN = "open"
     WAITING = "waiting"
     FINISHED = "finished"
+
+
+class AlgorithmArgumentType(EnumBase):
+    """Enum for argument types"""
+
+    COLUMN = "column"
+    COLUMNS = "column_list"
+    STRING = "string"
+    STRINGS = "string_list"
+    INTEGER = "integer"
+    INTEGERS = "integer_list"
+    FLOAT = "float"
+    FLOATS = "float_list"
+    BOOLEAN = "boolean"
+    JSON = "json"
+    ORGANIZATION = "organization"
+    ORGANIZATIONS = "organization_list"

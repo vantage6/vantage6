@@ -137,19 +137,6 @@ support-image:
 	@echo "Building support images"
 	@echo "All support images are also tagged with `latest`"
 	make support-alpine-image
-	make support-vpn-client-image
-	make support-vpn-configurator-image
-	make support-ssh-tunnel-image
-	make support-squid-image
-
-support-squid-image:
-	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/squid:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/squid.Dockerfile \
-		$(if ${_condition_push},--push .,.)
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
@@ -158,33 +145,6 @@ support-alpine-image:
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/alpine:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
-support-vpn-client-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-client:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/vpn-client.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
-support-vpn-configurator-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-configurator:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/vpn-configurator.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
-support-ssh-tunnel-image:
-	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/ssh-tunnel.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 image:
@@ -222,16 +182,20 @@ ui-image:
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
+CHARTS := auth common node store server
+
 helm-charts:
-	helm package charts/common -d charts/
-	helm package charts/node -d charts/
-	helm package charts/store -d charts/
-	helm package charts/server -d charts/
+    # Update the Helm chart dependencies, package them and clean up the chart deps 
+	for chart in $(CHARTS); do \
+		helm dependency update charts/$$chart; \
+		helm package charts/$$chart -d charts/; \
+		rm -rf charts/$$chart/charts; \
+	done
+    # Push Helm charts to registry
 	$(if ${_condition_push},\
-		helm push charts/common-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/node-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/store-*.tgz oci://harbor2.vantage6.ai/infra-charts && \
-		helm push charts/server-*.tgz oci://harbor2.vantage6.ai/infra-charts,\
+		for chart in $(CHARTS); do \
+			helm push charts/$$chart-*.tgz oci://harbor2.vantage6.ai/infra-charts; \
+		done,\
 		@echo "Skipping push to registry")
 
 rebuild:
@@ -281,8 +245,13 @@ publish:
 	cd vantage6-server && make publish
 	cd vantage6-algorithm-store && make publish
 
+# Default test subpackages if none specified
+TEST_SUBPACKAGES ?= common,cli,algorithm-store,server
+
 test:
-	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
+	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
+
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.

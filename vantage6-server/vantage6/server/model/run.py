@@ -53,8 +53,6 @@ class Run(Base):
         Task that was executed
     organization : :class:`.~vantage6.server.model.organization.Organization`
         Organization that executed the task
-    ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
-        List of ports that are part of this result
     """
 
     # fields
@@ -73,7 +71,6 @@ class Run(Base):
     # relationships
     task = relationship("Task", back_populates="runs")
     organization = relationship("Organization", back_populates="runs")
-    ports = relationship("AlgorithmPort", back_populates="run")
 
     @validates("action")
     def validate_action(self, _, action):

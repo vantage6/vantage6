@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 import sys
-import itertools
 import threading
 import os
 import subprocess
 import webbrowser
 import urllib.parse as urlparse
 import logging
-import time
-
 from typing import List
+
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -22,10 +20,10 @@ from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
-from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.enum import AlgorithmStepType
+from vantage6.client.utils import LogLevel
 from vantage6.common.client.client_base import ClientBase
 from vantage6.client.filter import post_filtering
-from vantage6.client.utils import LogLevel
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
 from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
@@ -70,6 +68,11 @@ class UserClient(ClientBase):
 
         self.auth_realm = auth_realm
         self.auth_client = auth_client
+
+        # service account settings
+        self.is_service_account = False
+        self.service_account_client_name = None
+        self.service_account_client_secret = None
 
         # attach sub-clients
         self.util = self.Util(self)
@@ -207,7 +210,7 @@ class UserClient(ClientBase):
         server_thread.start()
 
         # Open browser for login
-        print("opening browser for login")
+        self.log.info("Opening browser for login")
         # Try to open browser with different methods
         try:
             # Check if we're in WSL
@@ -227,7 +230,7 @@ class UserClient(ClientBase):
                 webbrowser.open(auth_url)
         except Exception as e:
             self.log.error("Error opening browser: %s", e)
-            print(f"Please open this URL in your browser: {auth_url}")
+            self.log.error(f"Please open this URL in your browser: {auth_url}")
 
         # Wait for callback
         server_thread.join()
@@ -241,7 +244,7 @@ class UserClient(ClientBase):
 
         user = self.request("user/me")
         user_id = user.get("id")
-        user_name = user.get("firstname")
+        user_name = user.get("username")
         type_ = "user"
         organization_id = user.get("organization").get("id")
         organization = self.request(f"organization/{organization_id}")
@@ -264,10 +267,75 @@ class UserClient(ClientBase):
         # is enabled
         self.cryptor = DummyCryptor()
 
+    def initialize_service_account(
+        self,
+        client_secret: str,
+        username: str | None = None,
+        client_name: str | None = None,
+    ):
+        """
+        Initialize a service account
+
+        Parameters
+        ----------
+        client_secret : str
+            The client secret of the service account
+        username : str, optional
+            The username of the service account. Ignored if client_name is provided.
+        client_name : str, optional
+            The name of the client. If not provided, it will be generated from the
+            username. If provided, the username will be ignored. Username is usually
+            easier to provide for a user.
+        """
+        if not username and not client_name:
+            self.log.error("Either username or client_name must be provided!")
+            return
+
+        self.is_service_account = True
+        self.service_account_client_secret = client_secret
+        self.service_account_client_name = client_name
+
+        if not self.service_account_client_name:
+            self.service_account_client_name = f"{username}-user-client"
+
+        self.kc_openid = KeycloakOpenID(
+            server_url=self.auth_url,
+            realm_name=self.auth_realm,
+            client_id=self.service_account_client_name,
+            client_secret_key=self.service_account_client_secret,
+        )
+
+    def authenticate_service_account(self) -> None:
+        """Authenticate as a service account
+
+        It also collects some additional info about your service account.
+
+        """
+        if not self.is_service_account:
+            self.log.error("Service account not initialized!")
+            self.log.error("Run `initialize_service_account` first!")
+            return
+
+        self.log.info(
+            "Authenticating with service account %s", self.service_account_client_name
+        )
+
+        token = self.kc_openid.token(grant_type="client_credentials")
+        self._access_token = token["access_token"]
+
+        self.log.info("Succesfully authenticated!")
+
     def obtain_new_token(self):
         """Refresh the token"""
-        self.log.info("Refreshing token")
 
+        if self.is_service_account:
+            self.authenticate_service_account()
+        else:
+            self.obtain_new_token_interactive()
+
+    def obtain_new_token_interactive(self):
+        """Obtain a new token for a non-service account user"""
+        self.log.info("Refreshing token")
         assert self._refresh_token, "Refresh token not found, did you authenticate?"
 
         try:
@@ -325,22 +393,8 @@ class UserClient(ClientBase):
         # from being printed on a single line)
         prev_level = self.log.level
         self.log.setLevel(logging.WARN)
-
-        animation = itertools.cycle(["|", "/", "-", "\\"])
-        t = time.time()
-
-        while not RunStatus.has_finished(self.task.get(task_id).get("status")):
-            frame = next(animation)
-            sys.stdout.write(
-                f"\r{frame} Waiting for task {task_id} ({int(time.time()-t)}s)"
-            )
-            sys.stdout.flush()
-            time.sleep(interval)
-        sys.stdout.write("\rDone!                  ")
-
-        # Re-enable logging
+        self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-
         result = self.request("result", params={"task_id": task_id})
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
@@ -724,7 +778,6 @@ class UserClient(ClientBase):
             collaboration: int = None,
             study: int = None,
             is_online: bool = None,
-            ip: str = None,
             last_seen_from: str = None,
             last_seen_till: str = None,
             page: int = 1,
@@ -745,8 +798,6 @@ class UserClient(ClientBase):
                 Filter by study id
             is_online: bool, optional
                 Filter on whether nodes are online or not
-            ip: str, optional
-                Filter by node VPN IP address
             last_seen_from: str, optional
                 Filter if node has been online since date (format: yyyy-mm-dd)
             last_seen_till: str, optional
@@ -779,6 +830,7 @@ class UserClient(ClientBase):
             """
             if collaboration is None:
                 collaboration = self.parent.collaboration_id
+
             params = {
                 "page": page,
                 "per_page": per_page,
@@ -786,7 +838,6 @@ class UserClient(ClientBase):
                 "organization_id": organization,
                 "collaboration_id": collaboration,
                 "study_id": study,
-                "ip": ip,
                 "last_seen_from": last_seen_from,
                 "last_seen_till": last_seen_till,
             }
@@ -859,7 +910,7 @@ class UserClient(ClientBase):
             name : str, optional
                 New node name, by default None
             clear_ip : bool, optional
-                Clear the VPN IP address of the node, by default None
+                Clear the internal IP address of the node, by default None
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the node. Default is None.
@@ -1152,9 +1203,6 @@ class UserClient(ClientBase):
             self,
             username: str = None,
             organization: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            email: str = None,
             role: int = None,
             rule: int = None,
             last_seen_from: str = None,
@@ -1170,12 +1218,6 @@ class UserClient(ClientBase):
                 Filter by username (with LIKE operator)
             organization: int, optional
                 Filter by organization id
-            firstname: str, optional
-                Filter by firstname (with LIKE operator)
-            lastname: str, optional
-                Filter by lastname (with LIKE operator)
-            email: str, optional
-                Filter by email (with LIKE operator)
             role: int, optional
                 Show only users that have this role id
             rule: int, optional
@@ -1214,9 +1256,6 @@ class UserClient(ClientBase):
                 "per_page": per_page,
                 "username": username,
                 "organization_id": organization,
-                "firstname": firstname,
-                "lastname": lastname,
-                "email": email,
                 "role_id": role,
                 "rule_id": rule,
                 "last_seen_from": last_seen_from,
@@ -1271,12 +1310,8 @@ class UserClient(ClientBase):
         def update(
             self,
             id_: int = None,
-            firstname: str = None,
-            lastname: str = None,
-            organization: int = None,
             rules: list = None,
             roles: list = None,
-            email: str = None,
         ) -> dict:
             """Update user details
 
@@ -1287,21 +1322,12 @@ class UserClient(ClientBase):
             ----------
             id_ : int
                 User `id` from the user you want to update
-            firstname : str
-                Your first name
-            lastname : str
-                Your last name
-            organization : int
-                Organization id of the organization you want to be part
-                of. This can only done by super-users.
             rules : list of ints
                 USE WITH CAUTION! Rule ids that should be assigned to
                 this user. All previous assigned rules will be removed!
             roles : list of ints
                 USE WITH CAUTION! Role ids that should be assigned to
                 this user. All previous assigned roles will be removed!
-            email : str
-                New email from the user
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1319,12 +1345,8 @@ class UserClient(ClientBase):
                 id_ = self.parent.whoami.id_
 
             data = {
-                "firstname": firstname,
-                "lastname": lastname,
-                "organization_id": organization,
                 "rules": rules,
                 "roles": roles,
-                "email": email,
             }
             data = self._clean_update_data(data)
 
@@ -1335,13 +1357,11 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            firstname: str,
-            lastname: str,
-            password: str,
-            email: str,
+            password: str = None,
             organization: int = None,
             roles: list = [],
             rules: list = [],
+            is_service_account: bool = False,
         ) -> dict:
             """Create new user
 
@@ -1350,23 +1370,22 @@ class UserClient(ClientBase):
             username : str
                 Used to login to the service. This can not be changed
                 later.
-            firstname : str
-                Firstname of the new user
-            lastname : str
-                Lastname of the new user
-            password : str
-                Password of the new user
-            email : str
-                Email address of the new user
-            organization : int
-                Organization `id` this user should belong to
-            roles : list of ints
+            password : str | None
+                Password of the new user. Required, unless is_service_account is True or
+                if the server doesn't manage its own users and nodes in Keycloak (
+                contact your administrator to know if this is the case)
+            organization : int | None
+                Organization `id` this user should belong to. If not provided, the user
+                will be created in the organization of the current user.
+            roles : list[int] | None
                 Role ids that are assigned to this user. Note that you
                 can only assign roles if you own the rules within this
                 role.
-            rules : list of ints
+            rules : list[int] | None
                 Rule ids that are assigned to this user. Note that you
                 can only assign rules that you own
+            is_service_account: bool, optional
+                Whether the user is a service account. Default is False.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the user. Default is None.
@@ -1382,14 +1401,13 @@ class UserClient(ClientBase):
             """
             user_data = {
                 "username": username,
-                "firstname": firstname,
-                "lastname": lastname,
-                "password": password,
-                "email": email,
                 "organization_id": organization,
                 "roles": roles,
                 "rules": rules,
+                "is_service_account": is_service_account,
             }
+            if password:
+                user_data["password"] = password
             return self.parent.request("user", json=user_data, method="post")
 
         def delete(self, id_: int) -> None:

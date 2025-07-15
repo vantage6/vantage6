@@ -32,7 +32,6 @@ data:
       use_console: true
     policies:
       algorithm_view: {{ .Values.store.policies.algorithmView }}
-      allow_localhost: {{ .Values.store.policies.allowLocalhost }}
       min_reviewers: {{ .Values.store.policies.minReviewers }}
       min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
       assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
@@ -42,6 +41,6 @@ data:
       review_own_algorithm: {{ .Values.store.policies.dev.review_own_algorithm }}
     port: {{ .Values.store.internal.port }}
     root_user:
-      username: {{ .Values.store.vantage6Server.rootUser }}
+      username: {{ .Values.store.keycloakAdminUsername }}
       v6_server_uri: {{ .Values.store.vantage6Server.uri }}
     uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}

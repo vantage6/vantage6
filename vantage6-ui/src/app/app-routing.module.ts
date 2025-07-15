@@ -58,8 +58,30 @@ import { DataframeCreateComponent } from './pages/analyze/sessions/create/datafr
 import { DataframeReadComponent } from './pages/analyze/sessions/read/dataframe-read/dataframe-read.component';
 import { DataframePreprocessComponent } from './pages/analyze/sessions/preprocessing/dataframe-preprocess.component';
 import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-create.component';
+import { CommunityStoreComponent } from './layouts/community-store/community-store.component';
+import { AlgorithmReadPublicComponent } from './pages/store/algorithm/read-public/algorithm-read-public.component';
+import { AlgorithmListPublicComponent } from './pages/store/algorithm/list-public/algorithm-list-public.component';
 
 export const routes: Routes = [
+  {
+    path: 'communitystore',
+    component: CommunityStoreComponent,
+    children: [
+      {
+        path: '',
+        redirectTo: routePaths.communityStoreAlgorithms,
+        pathMatch: 'full'
+      },
+      {
+        path: routerConfig.communityStoreAlgorithm,
+        component: AlgorithmReadPublicComponent
+      },
+      {
+        path: routerConfig.communityStoreAlgorithms,
+        component: AlgorithmListPublicComponent
+      }
+    ]
+  },
   {
     path: '',
     component: LayoutDefaultComponent,
@@ -90,6 +112,14 @@ export const routes: Routes = [
         path: routerConfig.keyUpload,
         component: UploadPrivateKeyComponent,
         canActivate: [authenticationGuard]
+      },
+      {
+        path: routerConfig.dataframeCreateRepeat,
+        component: DataframeCreateComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session.dataframes.add']]
+        }
       },
       {
         path: routerConfig.dataframeCreate,
@@ -134,6 +164,14 @@ export const routes: Routes = [
       {
         path: routerConfig.sessionDataframe,
         component: DataframeReadComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
+        }
+      },
+      {
+        path: routerConfig.sessionDataframePreprocessRepeat,
+        component: DataframePreprocessComponent,
         canActivate: [authenticationGuard, chosenCollaborationGuard()],
         data: {
           crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
@@ -324,6 +362,14 @@ export const routes: Routes = [
         canActivate: [authenticationGuard],
         data: {
           crumbs: [['user-list.title']]
+        }
+      },
+      {
+        path: routerConfig.userCreateServiceAccount,
+        component: UserCreateComponent,
+        canActivate: [authenticationGuard],
+        data: {
+          crumbs: [['user-list.title', routePaths.users], ['user-create.service-account']]
         }
       },
       {

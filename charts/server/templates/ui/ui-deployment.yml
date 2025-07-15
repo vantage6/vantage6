@@ -34,3 +34,7 @@ spec:
           value: {{ .Values.ui.keycloakRealm | quote }}
         - name: KEYCLOAK_CLIENT
           value: {{ .Values.ui.keycloakClient | quote }}
+        # set the length of the refresh token. This is the time before keycloak-angular
+        # automatically logs out the user.
+        - name: REFRESH_TOKEN_VALIDITY_SECONDS
+          value: "1800" # 30 minutes - the keycloak default

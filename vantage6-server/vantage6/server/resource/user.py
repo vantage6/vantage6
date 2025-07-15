@@ -11,7 +11,15 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
+    UnauthorizedError,
     handle_exceptions,
+)
+from vantage6.backend.common.auth import (
+    KeycloakServiceAccount,
+    create_service_account_in_keycloak,
+    delete_service_account_in_keycloak,
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
 )
 from vantage6.server import db
 from vantage6.server.permission import (
@@ -25,10 +33,10 @@ from vantage6.server.resource import (
     with_user,
     ServicesResources,
 )
-from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.input_schema import (
     UserDeleteInputSchema,
     UserInputSchema,
+    UserEditInputSchema,
 )
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
@@ -106,7 +114,6 @@ def permissions(permissions: PermissionManager) -> None:
     add(S.GLOBAL, P.EDIT, description="Edit any user")
     add(S.COLLABORATION, P.EDIT, description="Edit any user in your collaborations")
     add(S.ORGANIZATION, P.EDIT, description="Edit users from your organization")
-    add(S.OWN, P.EDIT, description="Edit your own info")
     add(S.GLOBAL, P.DELETE, description="Delete any user")
     add(S.COLLABORATION, P.DELETE, description="Delete any user in your collaborations")
     add(S.ORGANIZATION, P.DELETE, description="Delete users from your organization")
@@ -118,6 +125,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 user_schema = UserSchema()
 user_input_schema = UserInputSchema()
+user_edit_input_schema = UserEditInputSchema()
 user_schema_with_permissions = UserWithPermissionDetailsSchema()
 user_delete_input_schema = UserDeleteInputSchema()
 
@@ -167,33 +175,6 @@ class Users(UserBase):
             schema:
               type: integer
             description: Collaboration id
-          - in: query
-            name: firstname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: lastname
-            schema:
-              type: string
-            description: >-
-              Name to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
-          - in: query
-            name: email
-            schema:
-              type: string
-            description: >-
-              Email to match with a LIKE operator. \n
-              * The percent sign (%) represents zero, one, or multiple
-              characters\n
-              * underscore sign (_) represents one, single character
           - in: query
             name: role_id
             schema:
@@ -249,9 +230,8 @@ class Users(UserBase):
         q = select(db.User)
 
         # filter by any field of this endpoint
-        for param in ["username", "firstname", "lastname", "email"]:
-            if param in args:
-                q = q.filter(getattr(db.User, param).like(args[param]))
+        if "username" in args:
+            q = q.filter(db.User.username.like(args["username"]))
         if "organization_id" in args:
             if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
@@ -322,6 +302,10 @@ class Users(UserBase):
                             for col in g.user.organization.collaborations
                             for org in col.organizations
                         ]
+                        # include the organization of the user: in case the organization
+                        # is not part of any collaboration they would otherwise not be
+                        # visible
+                        + [g.user.organization_id]
                     )
                 )
             elif self.r.v_org.can():
@@ -371,12 +355,6 @@ class Users(UserBase):
                   username:
                     type: string
                     description: Unique username
-                  firstname:
-                    type: string
-                    description: First name
-                  lastname:
-                    type: string
-                    description: Last name
                   password:
                     type: string
                     description: Password
@@ -393,15 +371,12 @@ class Users(UserBase):
                     items:
                       type: integer
                     description: Extra rules for the user on top of the roles
-                  email:
-                    type: string
-                    description: Email address
 
         responses:
           201:
             description: Ok
           400:
-            description: Username or email already exists or password is missing when
+            description: Username already exists or password is missing when
               the user has to be created in Keycloak
           401:
             description: Unauthorized
@@ -427,14 +402,17 @@ class Users(UserBase):
         if db.User.username_exists(data["username"]):
             return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
 
-        if db.User.exists("email", data["email"]):
-            return {"msg": "email already exists."}, HTTPStatus.BAD_REQUEST
-
-        if self.config.get("keycloak", {}).get(
-            "manage_users_and_nodes", True
-        ) and not data.get("password"):
+        if (
+            self.config.get("keycloak", {}).get("manage_users_and_nodes", True)
+            and not data.get("password")
+            and not data.get("is_service_account")
+        ):
             raise ValidationError(
                 "Password is required if the user has to be created in Keycloak"
+            )
+        elif data.get("is_service_account") and data.get("password"):
+            raise ValidationError(
+                "Password should not be provided if the user is a service account"
             )
 
         # check if the organization has been provided, if this is the case the
@@ -488,34 +466,44 @@ class Users(UserBase):
 
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
+        keycloak_service_account: KeycloakServiceAccount | None = None
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            keycloak_id = self._create_user_in_keycloak(data)
+            if data.get("is_service_account"):
+                keycloak_service_account = create_service_account_in_keycloak(
+                    f"{data['username']}-user-client", is_node=False
+                )
+                keycloak_id = keycloak_service_account.user_id
+            else:
+                keycloak_id = self._create_user_in_keycloak(data)
         else:
-            keycloak_id = self._verify_user_in_keycloak(data)
+            keycloak_id = get_keycloak_id_for_user(data["username"])
 
         user = db.User(
             username=data["username"],
-            firstname=data["firstname"],
-            lastname=data["lastname"],
             keycloak_id=keycloak_id,
             roles=roles,
             rules=rules,
             organization_id=organization_id,
-            email=data["email"],
+            is_service_account=data.get("is_service_account", False),
+            keycloak_client_id=(
+                keycloak_service_account.client_id if keycloak_service_account else None
+            ),
         )
         user.save()
 
-        return user_schema.dump(user), HTTPStatus.CREATED
+        json_response = user_schema.dump(user)
+        if keycloak_service_account:
+            # share the client secret with the user so that they can login with it
+            json_response["client_secret"] = keycloak_service_account.client_secret
+
+        return json_response, HTTPStatus.CREATED
 
     def _create_user_in_keycloak(self, data):
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         return keycloak_admin.create_user(
             {
                 "username": data["username"],
-                "email": data["email"],
                 "enabled": True,
-                "firstName": data["firstname"],
-                "lastName": data["lastname"],
                 "credentials": [
                     {
                         "type": "password",
@@ -525,13 +513,6 @@ class Users(UserBase):
                 ],
             }
         )
-
-    def _verify_user_in_keycloak(self, data):
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.get_user_id(data["username"])
-        if keycloak_id is None:
-            raise BadRequestError("User does not exist in Keycloak")
-        return keycloak_id
 
 
 class CurrentUser(UserBase):
@@ -654,18 +635,6 @@ class User(UserBase):
             application/json:
               schema:
                 properties:
-                  username:
-                    type: string
-                    description: Unique username
-                  firstname:
-                    type: string
-                    description: First name
-                  lastname:
-                    type: string
-                    description: Last name
-                  email:
-                    type: string
-                    description: Email address
                   roles:
                     type: array
                     items:
@@ -688,9 +657,8 @@ class User(UserBase):
         responses:
           200:
             description: Ok
-          400:
-            description: User cannot be updated to contents of request body,
-              e.g. due to duplicate email address.
+          500:
+            description: Error updating user in database
           404:
             description: User not found
           401:
@@ -707,51 +675,25 @@ class User(UserBase):
 
         data = request.get_json(silent=True)
         # validate request body
+        if data.get("password"):
+            return {
+                "msg": "You cannot change your password here!"
+            }, HTTPStatus.BAD_REQUEST
         try:
-            data = user_input_schema.load(data, partial=True)
+            data = user_edit_input_schema.load(data, partial=True)
         except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
-        if data.get("password"):
-            return {
-                "msg": "You cannot change your password here!"
-            }, HTTPStatus.BAD_REQUEST
-
         # check permissions
-        if not (self.r.e_own.can() and user == g.user) and not self.r.allowed_for_org(
-            P.EDIT, user.organization_id
-        ):
+        if not self.r.allowed_for_org(P.EDIT, user.organization_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        # update user and check for unique constraints
-        if data.get("username") is not None:
-            if user.username != data["username"]:
-                if db.User.exists("username", data["username"]):
-                    return {
-                        "msg": "User with that username already exists"
-                    }, HTTPStatus.BAD_REQUEST
-                elif user.id != g.user.id:
-                    return {
-                        "msg": "You cannot change the username of another user"
-                    }, HTTPStatus.BAD_REQUEST
-            user.username = data["username"]
-        if data.get("firstname") is not None:
-            user.firstname = data["firstname"]
-        if data.get("lastname") is not None:
-            user.lastname = data["lastname"]
-        if data.get("email") is not None:
-            if user.email != data["email"] and db.User.exists("email", data["email"]):
-                return {
-                    "msg": "User with that email already exists."
-                }, HTTPStatus.BAD_REQUEST
-            user.email = data["email"]
-
-        # request parser is awefull with lists
+        # request parser is awful with lists
         if "roles" in data:
             # validate that these roles exist
             roles = []
@@ -813,7 +755,12 @@ class User(UserBase):
             # validate that user is not deleting rules they do not have
             # themselves
             deleted_rules = [r for r in user.rules if r not in rules]
-            self.permissions.check_user_rules(deleted_rules)
+            try:
+                self.permissions.check_user_rules(deleted_rules)
+            except UnauthorizedError as e:
+                return {
+                    "msg": "You cannot delete rules you do not have! " + str(e)
+                }, HTTPStatus.UNAUTHORIZED
 
             user.rules = rules
 
@@ -824,7 +771,7 @@ class User(UserBase):
             user.session.rollback()
             return {
                 "msg": "User could not be updated with those parameters."
-            }, HTTPStatus.BAD_REQUEST
+            }, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return user_schema.dump(user), HTTPStatus.OK
 
@@ -915,7 +862,10 @@ class User(UserBase):
                     task.delete()
 
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            self._delete_user_in_keycloak(user)
+            if user.is_service_account:
+                delete_service_account_in_keycloak(user.keycloak_client_id)
+            else:
+                self._delete_user_in_keycloak(user)
         else:
             log.info("User id=%s will not be deleted from Keycloak", id)
 
@@ -924,7 +874,7 @@ class User(UserBase):
         return {"msg": f"user id={id} is removed from the database"}, HTTPStatus.OK
 
     def _delete_user_in_keycloak(self, user):
-        keycloak_admin = getKeyCloakAdminClient()
+        keycloak_admin = get_keycloak_admin_client()
         try:
             keycloak_admin.delete_user(user.keycloak_id)
         except KeycloakDeleteError as exc:

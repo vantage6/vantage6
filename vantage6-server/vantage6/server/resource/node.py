@@ -3,19 +3,20 @@ import logging
 from http import HTTPStatus
 from flask import g, request
 from flask_restful import Api
-from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 from sqlalchemy import select
 
-from vantage6.backend.common.resource.error_handling import (
-    BadRequestError,
-    handle_exceptions,
-)
-from vantage6.common import generate_apikey
+from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.common.globals import AuthStatus
 from vantage6.server.resource import with_user_or_node, with_user, with_node
 from vantage6.server.resource import ServicesResources
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.backend.common.auth import (
+    delete_service_account_in_keycloak,
+    KeycloakServiceAccount,
+    create_service_account_in_keycloak,
+    get_service_account_in_keycloak,
+)
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
@@ -23,7 +24,6 @@ from vantage6.server.permission import (
     PermissionManager,
 )
 from vantage6.server import db
-from vantage6.server.resource.common.auth_helper import getKeyCloakAdminClient
 from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
@@ -483,7 +483,6 @@ class Nodes(NodeBase):
             }, HTTPStatus.BAD_REQUEST
 
         # Ok we're good to go!
-        api_key = generate_apikey()
         node = db.Node(
             name=name,
             collaboration=collaboration,
@@ -495,49 +494,31 @@ class Nodes(NodeBase):
         # otherwise verify that the node exists in keycloak
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             try:
-                keycloak_id = self._create_node_in_keycloak(name, api_key)
+                keycloak_service_account: KeycloakServiceAccount = (
+                    create_service_account_in_keycloak(
+                        f"{name}-node-client", is_node=True
+                    )
+                )
             except Exception as e:
                 msg = f"Error creating keycloak account for node {name}: {e}"
                 log.error(msg)
                 return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
         else:
-            keycloak_id = self._verify_node_in_keycloak(name)
-        node.keycloak_id = keycloak_id
+            keycloak_service_account: KeycloakServiceAccount = (
+                get_service_account_in_keycloak(f"{name}-node-client")
+            )
+        node.keycloak_id = keycloak_service_account.user_id
+        node.keycloak_client_id = keycloak_service_account.client_id
 
         # save the node in the database now that keycloak account is setup
         node.save()
 
-        # Return the node information to the user. Manually return the api_key
-        # to the user as the hashed key is not returned
+        # Return the node information to the user. Manually include the api_key
+        # to the user if the keycloak account was just created.
         node_json = node_schema.dump(node)
-        # only include API key if it is the password for a keycloak account that was
-        # just created
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            node_json["api_key"] = api_key
+            node_json["api_key"] = keycloak_service_account.client_secret
         return node_json, HTTPStatus.CREATED  # 201
-
-    def _create_node_in_keycloak(self, name: str, api_key: str) -> str:
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.create_user(
-            {
-                "username": name,
-                "email": f"dummy-node-account-{name}@vantage6.ai".replace(" ", ""),
-                "enabled": True,
-                "firstName": name,
-                "lastName": "Node",
-                "credentials": [
-                    {"type": "password", "value": api_key, "temporary": False}
-                ],
-            }
-        )
-        return keycloak_id
-
-    def _verify_node_in_keycloak(self, node_name: str) -> str:
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_id = keycloak_admin.get_user_id(node_name)
-        if keycloak_id is None:
-            raise BadRequestError("User does not exist in Keycloak")
-        return keycloak_id
 
 
 class NodeCurrent(NodeBase):
@@ -671,16 +652,12 @@ class Node(NodeBase):
             }, HTTPStatus.UNAUTHORIZED
 
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            self._delete_node_in_keycloak(node)
+            delete_service_account_in_keycloak(node.keycloak_client_id)
         else:
             log.info("Node id=%s will not be deleted from Keycloak", id)
 
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK
-
-    def _delete_node_in_keycloak(self, node: db.Node) -> None:
-        keycloak_admin: KeycloakAdmin = getKeyCloakAdminClient()
-        keycloak_admin.delete_user(node.keycloak_id)
 
     @with_user_or_node
     def patch(self, id):
@@ -721,10 +698,10 @@ class Node(NodeBase):
                     description: Node name
                   ip:
                     type: string
-                    description: The node's VPN IP address
+                    description: The node's internal IP address
                   clear_ip:
                     type: boolean
-                    description: Clear the node's VPN IP address
+                    description: Clear the node's internal IP address
 
         responses:
           200:

@@ -1,14 +1,11 @@
 from __future__ import annotations
-import bcrypt
 
-from sqlalchemy import Column, String, Integer, ForeignKey, select
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, String, Integer, ForeignKey, select, Boolean
+from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Rule, Scope
-from vantage6.server.model.common.utils import validate_password
-from vantage6.server.hashedpassword import HashedPassword
 
 
 class User(Authenticatable):
@@ -22,14 +19,10 @@ class User(Authenticatable):
     ----------
     username : str
         Username of the user
-    firstname : str
-        First name of the user
-    lastname : str
-        Last name of the user
-    email : str
-        Email address of the user
     organization_id : int
         Foreign key to the organization to which the user belongs
+    is_service_account : bool
+        Whether the user is a service account. Default is False.
 
     Relationships
     -------------
@@ -55,10 +48,8 @@ class User(Authenticatable):
 
     # fields
     username = Column(String, unique=True)
-    firstname = Column(String)
-    lastname = Column(String)
-    email = Column(String, unique=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
+    is_service_account = Column(Boolean, default=False)
 
     # relationships
     organization = relationship("Organization", back_populates="users")
@@ -124,31 +115,6 @@ class User(Authenticatable):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(select(cls).order_by(cls.id)).first()
-        session.commit()
-        return result
-
-    @classmethod
-    def get_by_email(cls, email: str) -> User:
-        """
-        Get a user by their email
-
-        Parameters
-        ----------
-        email: str
-            Email of the user
-
-        Returns
-        -------
-        User
-            User with the given email
-
-        Raises
-        ------
-        NoResultFound
-            If no user with the given email exists
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.scalars(select(cls).filter_by(email=email)).one()
         session.commit()
         return result
 

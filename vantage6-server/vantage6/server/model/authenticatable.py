@@ -24,6 +24,7 @@ class Authenticatable(Base):
     keycloak_id = Column(String)
     last_seen = Column(DateTime)
     status = Column(String)
+    keycloak_client_id = Column(String, nullable=True)
 
     @staticmethod
     def hash(secret: str) -> str:

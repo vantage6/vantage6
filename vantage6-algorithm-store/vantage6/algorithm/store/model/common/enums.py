@@ -10,23 +10,6 @@ class Partitioning(str, Enum):
     VERTICAL = "vertical"
 
 
-class ArgumentType(str, Enum):
-    """Enum for argument types"""
-
-    COLUMN = "column"
-    COLUMNS = "column_list"
-    STRING = "string"
-    STRINGS = "string_list"
-    INTEGER = "integer"
-    INTEGERS = "integer_list"
-    FLOAT = "float"
-    FLOATS = "float_list"
-    BOOLEAN = "boolean"
-    JSON = "json"
-    ORGANIZATION = "organization"
-    ORGANIZATIONS = "organization_list"
-
-
 class VisualizationType(str, Enum):
     """Enum for visualization types"""
 
@@ -87,7 +70,7 @@ class DefaultStorePolicies(Enum):
     Enum for the default values of the policies of the algorithm store.
     """
 
-    ALGORITHM_VIEW = AlgorithmViewPolicies.WHITELISTED.value
+    ALGORITHM_VIEW = AlgorithmViewPolicies.AUTHENTICATED.value
     MIN_REVIEWERS = 2
     ASSIGN_REVIEW_OWN_ALGORITHM = False
     MIN_REVIEWING_ORGANIZATIONS = 2

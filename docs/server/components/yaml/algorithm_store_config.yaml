@@ -63,7 +63,7 @@ debug:
 policies:
   # Set who is allowed to view the algorithms in the store. Possible values are:
   # - "public": everyone can view the algorithms
-  # - "whitelisted": only users from whitelisted servers can view the algorithms
+  # - "authenticated": users with a token valid for this store can view the algorithms
   # - "private": only users with explicit permission in the algorithm store can view the
   #   algorithms
   algorithm_view: "public"
@@ -126,8 +126,6 @@ dev:
 root_user:
   # username of the vantage6 user you want to make root in the algorithm store
   username: admin
-  # email of the vantage6 user you want to make root in the algorithm store
-  email: root@organization.com
   # id of the organization the user belongs to
   organization_id: 1
 

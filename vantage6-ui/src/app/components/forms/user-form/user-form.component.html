@@ -1,14 +1,11 @@
 <ng-container *ngIf="!isLoading; else loading">
+  <app-alert *ngIf="!setPasswords" label="{{ 'user-create.setting-service-account' | translate }}"></app-alert>
   <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.username" | translate }}</mat-label>
       <input matInput type="text" formControlName="username" />
     </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.email" | translate }}</mat-label>
-      <input matInput type="text" formControlName="email" />
-    </mat-form-field>
-    <div *ngIf="!isEdit && manageUsersAndNodes">
+    <div *ngIf="!isEdit && setPasswords">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ "user.password" | translate }}</mat-label>
         <input matInput type="password" formControlName="password" />
@@ -21,14 +18,6 @@
         <mat-error *ngIf="form.hasError('compare')">{{ "password.validation.compare" | translate }}</mat-error>
       </mat-form-field>
     </div>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.first-name" | translate }}</mat-label>
-      <input matInput type="text" formControlName="firstname" />
-    </mat-form-field>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "user.last-name" | translate }}</mat-label>
-      <input matInput type="text" formControlName="lastname" />
-    </mat-form-field>
     <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.organization" | translate }}</mat-label>
       <mat-select formControlName="organization_id">

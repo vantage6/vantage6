@@ -7,10 +7,10 @@ from copy import deepcopy
 
 import pandas as pd
 
+from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.tools.wrappers import load_data
 from vantage6.algorithm.tools.util import info
-from vantage6.algorithm.tools.preprocessing import preprocess_data
 
 module_name = __name__.split(".")[1]
 
@@ -115,7 +115,6 @@ class MockAlgorithmClient:
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )
-                df = preprocess_data(df, dataset.get("preprocessing", []))
                 org_data.append(df)
             self.datasets_per_org[org_id] = org_data
 
@@ -192,10 +191,11 @@ class MockAlgorithmClient:
 
             Parameters
             ----------
+            method : str
+                The name of the method that should be called.
             input_ : dict
-                The input data that is passed to the algorithm. This should at
-                least  contain the key 'method' which is the name of the method
-                that should be called. Other keys depend on the algorithm.
+                The input data that is passed to the algorithm. Should contain the
+                arguments to the called function.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
             name : str, optional
@@ -240,9 +240,15 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if getattr(method_fn, "wrapped_in_algorithm_client_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.ALGORITHM_CLIENT
+                ):
                     mocked_kwargs["mock_client"] = client_copy
-                if getattr(method_fn, "wrapped_in_data_decorator", False):
+                if (
+                    getattr(method_fn, "vantage6_decorated_type", None)
+                    == DecoratorType.DATAFRAME
+                ):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
@@ -543,78 +549,3 @@ class MockAlgorithmClient:
                 "nodes": f"/api/node?collaboration_id={collab_id}",
                 "organizations": f"/api/organization?collaboration_id={collab_id}",
             }
-
-    # TODO implement the get_addresses method before using this part
-    # class VPN(SubClient):
-    #     """
-    #     VPN subclient for the MockAlgorithmClient
-    #     """
-    #     def get_addresses(
-    #         self, only_children: bool = False, only_parent: bool = False,
-    #         include_children: bool = False, include_parent: bool = False,
-    #         label: str = None
-    #     ) -> list[dict] | dict:
-    #         """
-    #         Mock VPN IP addresses and ports of other algorithm containers in
-    #         the current task.
-
-    #         Parameters
-    #         ----------
-    #         only_children : bool, optional
-    #             Only return the IP addresses of the children of the current
-    #             task, by default False. Incompatible with only_parent.
-    #         only_parent : bool, optional
-    #             Only return the IP address of the parent of the current task,
-    #             by default False. Incompatible with only_children.
-    #         include_children : bool, optional
-    #             Include the IP addresses of the children of the current task,
-    #             by default False. Incompatible with only_parent, superseded
-    #             by only_children.
-    #         include_parent : bool, optional
-    #             Include the IP address of the parent of the current task, by
-    #             default False. Incompatible with only_children, superseded by
-    #             only_parent.
-    #         label : str, optional
-    #             The label of the port you are interested in, which is set
-    #             in the algorithm Dockerfile. If this parameter is set, only
-    #             the ports with this label will be returned.
-
-    #         Returns
-    #         -------
-    #         list[dict] | dict
-    #             List of dictionaries containing the IP address and port number,
-    #             and other information to identify the containers. If obtaining
-    #             the VPN addresses from the server fails, a dictionary with a
-    #             'message' key is returned instead.
-    #         """
-    #         pass
-
-    #     def get_parent_address(self) -> dict:
-    #         """
-    #         Get the IP address and port number of the parent of the current
-    #         task.
-
-    #         Returns
-    #         -------
-    #         dict
-    #             Dictionary containing the IP address and port number, and other
-    #             information to identify the containers. If obtaining the VPN
-    #             addresses from the server fails, a dictionary with a 'message'
-    #             key is returned instead.
-    #         """
-    #         return self.get_addresses(only_parent=True)
-
-    #     def get_child_addresses(self) -> list[dict]:
-    #         """
-    #         Get the IP addresses and port numbers of the children of the
-    #         current task.
-
-    #         Returns
-    #         -------
-    #         List[dict]
-    #             List of dictionaries containing the IP address and port number,
-    #             and other information to identify the containers. If obtaining
-    #             the VPN addresses from the server fails, a dictionary with a
-    #             'message' key is returned instead.
-    #         """
-    #         return self.get_addresses(only_children=True)

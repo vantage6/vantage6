@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
-import os
 from http import HTTPStatus
 
-from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from flask import request, g
@@ -14,7 +12,7 @@ from marshmallow import ValidationError
 from vantage6.common import logger_name
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.backend.common.globals import RequiredServerEnvVars
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.permission import Operation as P, PermissionManager
 from vantage6.algorithm.store.model.user import User as db_User
@@ -264,7 +262,7 @@ class Users(AlgorithmStoreResources):
                 properties:
                   username:
                     type: string
-                    description: Username unique to the whitelisted server
+                    description: Username to add to allow setting permissions
                   roles:
                     type: array
                     items:
@@ -295,9 +293,8 @@ class Users(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # check if the user already exists in keycloak
-        keycloak_admin_client = self._get_keycloak_admin_client()
         try:
-            user_id = keycloak_admin_client.get_user_id(request.json["username"])
+            user_id = get_keycloak_id_for_user(request.json["username"])
         except Exception:
             return {
                 "msg": f"User {request.json['username']} not found: cannot register "
@@ -313,7 +310,7 @@ class Users(AlgorithmStoreResources):
         # 1. the user executing this request is in the same v6 server
         # 2. They are allowed to see the user in the v6 server
 
-        # TODO find email and organization id from keycloak - issue #1994 and #1995
+        # TODO find organization id from keycloak - issue #1994
         # server_response, status_code = request_from_store_to_v6_server(
         #     url=f"{server.url}/user",
         #     params={"username": data["username"]},
@@ -325,7 +322,6 @@ class Users(AlgorithmStoreResources):
         #     return {
         #         "msg": f"User '{data['username']}' not found in the Vantage6 server."
         #     }, HTTPStatus.BAD_REQUEST
-        # user_email = server_response.json()["data"][0].get("email")
         # user_org = server_response.json()["data"][0]["organization"]["id"]
 
         # process the required roles. It is only possible to assign roles with
@@ -342,7 +338,6 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            # email=user_email,
             # organization_id=user_org,
             # v6_server_id=server.id,
             keycloak_id=user_id,
@@ -352,25 +347,6 @@ class Users(AlgorithmStoreResources):
         user.save()
 
         return user_output_schema.dump(user), HTTPStatus.CREATED
-
-    @staticmethod
-    def _get_keycloak_admin_client():
-        """Get the keycloak admin client"""
-        keycloak_openid = KeycloakOpenIDConnection(
-            server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-            username=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_USERNAME.value
-            ),
-            password=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_PASSWORD.value
-            ),
-            client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
-            realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
-            client_secret_key=os.environ.get(
-                RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
-            ),
-        )
-        return KeycloakAdmin(connection=keycloak_openid)
 
 
 class User(AlgorithmStoreResources):
@@ -428,10 +404,6 @@ class User(AlgorithmStoreResources):
                     items:
                       type: integer
                     description: User's roles
-                  email:
-                    type: string
-                    description: User's email address. Do not combine this option with
-                      the update_email option.
 
         parameters:
           - in: path
@@ -445,8 +417,7 @@ class User(AlgorithmStoreResources):
           200:
             description: Ok
           400:
-            description: User cannot be updated to contents of request body,
-              e.g. due to duplicate email address.
+            description: User cannot be updated to contents of request body
           404:
             description: User not found
           401:
@@ -470,9 +441,6 @@ class User(AlgorithmStoreResources):
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
-
-        if email := data.get("email"):
-            user.email = email
 
         if "roles" in data:
             # validate that these roles exist

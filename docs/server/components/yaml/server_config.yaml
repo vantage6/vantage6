@@ -186,3 +186,23 @@ dev:
   # hostname `host.docker.internal` to refer to the host machine. On Linux, you
   # should normally use http://172.17.0.1.
   host_uri: http://host.docker.internal
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects the metrics from the nodes.
+# 2. The Prometheus server (running as a separate Docker container), which scrapes the metrics exposed by the Prometheus exporter and stores them.
+# The exporter is started by default when the server starts. The Prometheus server can be started separately.
+prometheus:
+  # Set to true to start the Prometheus server when starting the server
+  start_with_server: false
+  # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+  # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
+  # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
+  exporter_port: 7603
+
+# algorithm stores to be coupled to the server on startup
+algorithm_stores:
+  - name: cotopaxi
+    url: https://store.cotopaxi.vantage6.ai/api
+  - name: local store
+    url: http://localhost:7602/api

@@ -1,14 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import {
-  BaseTask,
-  CreateTask,
-  GetTaskParameters,
-  KillTask,
-  Task,
-  TaskLazyProperties,
-  TaskResult
-} from 'src/app/models/api/task.models';
+import { BaseTask, CreateTask, GetTaskParameters, KillTask, Task, TaskLazyProperties, TaskResult } from 'src/app/models/api/task.models';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
 import { isTaskFinished } from 'src/app/helpers/task.helper';

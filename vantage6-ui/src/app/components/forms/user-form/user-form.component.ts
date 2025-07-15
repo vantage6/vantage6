@@ -48,17 +48,16 @@ import { ServerConfigService } from 'src/app/services/server-config.service';
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
+  @Input() isServiceAccount: boolean = false;
   organizations: (BaseOrganization | Organization)[] = [];
   manageUsersAndNodes: boolean = true;
+  setPasswords: boolean = true;
 
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
-      email: ['', [Validators.required]],
       password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
-      firstname: '',
-      lastname: '',
       organization_id: [NaN as number, [Validators.required]],
       roles: [{ value: [] as number[], disabled: true }],
       rules: [{ value: [] as number[], disabled: true }]
@@ -101,9 +100,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
-      this.form.controls.email.setValue(this.user.email);
-      this.form.controls.firstname.setValue(this.user.firstname);
-      this.form.controls.lastname.setValue(this.user.lastname);
       this.form.controls.organization_id.setValue(this.user.organization?.id || NaN);
       this.form.controls.roles.setValue(this.userRoles.map((role) => role.id));
     }
@@ -115,8 +111,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     this.isLoading = false;
   }
 
-  private togglePasswordValidators(createInKeycloak: boolean): void {
-    if (createInKeycloak) {
+  private togglePasswordValidators(needsPassword: boolean): void {
+    if (needsPassword) {
       this.form.controls.password.enable();
       this.form.controls.passwordRepeat.enable();
     } else {
@@ -157,7 +153,8 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     }
 
     this.manageUsersAndNodes = await this.serverConfigService.doesKeycloakManageUsersAndNodes();
-    this.togglePasswordValidators(this.manageUsersAndNodes);
+    this.setPasswords = this.manageUsersAndNodes && !this.isServiceAccount;
+    this.togglePasswordValidators(this.setPasswords);
 
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();

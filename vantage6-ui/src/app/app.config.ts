@@ -74,7 +74,7 @@ export const provideKeycloakAngular = () =>
     features: [
       withAutoRefreshToken({
         onInactivityTimeout: 'logout',
-        sessionTimeout: 60000
+        sessionTimeout: Number(environment.refresh_token_validity_seconds) * 1000
       })
     ],
     providers: [

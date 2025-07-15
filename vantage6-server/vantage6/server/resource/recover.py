@@ -3,8 +3,10 @@ from http import HTTPStatus
 
 from flask import request
 from flask_restful import Api
+from keycloak import KeycloakAdmin
 from marshmallow import ValidationError
 
+from vantage6.backend.common.auth import get_keycloak_admin_client
 from vantage6.common import logger_name, generate_apikey
 from vantage6.server import db
 from vantage6.server.model.rule import Operation
@@ -29,7 +31,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Dictionary with services required for the resource endpoints
     """
     path = "/".join([api_base, module_name])
-    log.info(f'Setting up "{path}" and subdirectories')
+    log.info('Setting up "%s" and subdirectories', path)
     api.add_resource(
         ResetAPIKey,
         path + "/node",
@@ -120,9 +122,12 @@ class ResetAPIKey(ServicesResources):
             }, HTTPStatus.UNAUTHORIZED
 
         # all good, change API key
-        log.info(f"Successful API key reset for node {id}")
-        api_key = generate_apikey()
-        node.api_key = api_key
-        node.save()
-
+        log.info("Successful API key reset for node %s", id_)
+        api_key = self._change_api_key_in_keycloak(node)
         return {"api_key": api_key}, HTTPStatus.OK
+
+    @staticmethod
+    def _change_api_key_in_keycloak(node: db.Node):
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        new_secret = keycloak_admin.generate_client_secrets(node.keycloak_client_id)
+        return new_secret["value"]
