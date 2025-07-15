@@ -4,12 +4,6 @@ from typing import Any
 
 import questionary as q
 
-from vantage6.cli.config import CliConfig
-from vantage6.cli.configuration_manager import (
-    NodeConfigurationManager,
-    ServerConfigurationManager,
-)
-from vantage6.cli.context import select_context_class
 from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
@@ -21,6 +15,13 @@ from vantage6.common.globals import (
     Ports,
     RequiredNodeEnvVars,
 )
+
+from vantage6.cli.config import CliConfig
+from vantage6.cli.configuration_manager import (
+    NodeConfigurationManager,
+    ServerConfigurationManager,
+)
+from vantage6.cli.context import select_context_class
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:

@@ -1,13 +1,14 @@
 import click
 from colorama import Fore, Style
 
+from vantage6.common import ensure_config_dir_writable, error, info
+from vantage6.common.globals import InstanceType
+
 from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_wizard import configuration_wizard
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
-from vantage6.common import ensure_config_dir_writable, error, info
-from vantage6.common.globals import InstanceType
 
 
 @click.command()
