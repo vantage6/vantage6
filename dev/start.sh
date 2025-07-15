@@ -41,6 +41,3 @@ else
   echo "Skipping populating vantage6 server. The server is already populated: found marker '${POPULATE_MARKER}'."
   devspace run-pipeline all-without-populate ${PROFILE_FLAG}
 fi
-
-
-

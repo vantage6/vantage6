@@ -5,6 +5,51 @@ keycloak:
       postgresPassword: postgres
       password: keycloak
       database: keycloak
+
+    # Add sidecar container to configure password policy after Keycloak is ready
+  sidecars:
+    - name: configure-password-policy
+      image: curlimages/curl:latest
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Keycloak to be ready..."
+          until curl -f -s http://localhost:8080; do
+            echo "Keycloak not ready yet, waiting..."
+            sleep 5
+          done
+
+          echo "Keycloak is ready, configuring password policy..."
+
+          # Wait a bit more for the realm to be fully initialized
+          sleep 10
+
+          # Get admin token
+          TOKEN=$(curl -s -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "username=admin&password=admin&grant_type=password&client_id=admin-cli" \
+            http://localhost:8080/realms/master/protocol/openid-connect/token | \
+            grep -o '"access_token":"[^"]*"' | sed 's/"access_token":"//;s/"$//')
+
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "Failed to get admin token"
+            exit 1
+          fi
+
+          # Configure password policy for the vantage6 realm
+          curl -s -X PUT \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "passwordPolicy": "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
+            }' \
+            http://localhost:8080/admin/realms/vantage6
+
+          echo "Password policy configured successfully"
+
+          echo "Sleeping infinitely to avoid restart loops"
+          sleep infinity
   auth:
     adminUser: admin
     adminPassword: admin
