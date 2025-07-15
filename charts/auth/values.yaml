@@ -24,6 +24,10 @@ keycloak:
         # clientSessionIdleTimeout and/or clientSessionMaxLifespan to higher values.
         ssoSessionIdleTimeout: 1800
 
+        # do not allow users to edit their username - this would lead to problems with
+        # syncing the user between keycloak and vantage6 server/store
+        editUsernameAllowed: false
+
         # required actions for users. By setting defaultAction to true for configuring
         # OTP, the user will be prompted to configure OTP on first login.
         requiredActions:
