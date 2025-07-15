@@ -7,10 +7,11 @@ import yaml
 from colorama import Fore, Style
 from kubernetes import config
 
+from vantage6.common import info, warning
+
 from vantage6.cli.globals import (
     DEFAULT_CLI_CONFIG_FILE,
 )
-from vantage6.common import info, warning
 
 
 class CliConfig:

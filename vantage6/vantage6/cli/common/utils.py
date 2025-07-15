@@ -1,14 +1,15 @@
 import enum
+from subprocess import Popen
+from typing import Iterable
+
+import click
+import docker
 import questionary as q
 from colorama import Fore, Style
-import click
-from typing import Iterable
-import docker
-from subprocess import Popen
 
+from vantage6.common import error, warning
+from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
-from vantage6.common import warning, error
-from vantage6.common.globals import APPNAME, InstanceType, STRING_ENCODING
 from vantage6.cli.context import select_context_class
 
 

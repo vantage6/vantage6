@@ -13,9 +13,10 @@ from pathlib import Path
 
 import questionary as q
 
-import docker
 from vantage6.common import error, info, warning
 from vantage6.common.globals import DEFAULT_CHART_REPO
+
+import docker
 
 
 def check_config_name_allowed(name: str) -> None:
