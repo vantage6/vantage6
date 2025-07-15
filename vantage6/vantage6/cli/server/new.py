@@ -1,12 +1,14 @@
 import click
 from colorama import Fore, Style
 
-from vantage6.common import info, error, ensure_config_dir_writable
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.context.server import ServerContext
-from vantage6.cli.configuration_wizard import configuration_wizard
-from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
+from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
+
+from vantage6.cli.config import CliConfig
+from vantage6.cli.configuration_wizard import configuration_wizard
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 @click.command()
@@ -17,13 +19,30 @@ from vantage6.common.globals import InstanceType
 @click.option(
     "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
 )
-def cli_server_new(name: str, system_folders: bool) -> None:
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option(
+    "--namespace",
+    default=None,
+    help="Kubernetes namespace to use",
+)
+def cli_server_new(
+    name: str,
+    system_folders: bool,
+    namespace: str,
+    context: str,
+) -> None:
     """
     Create a new server configuration.
     """
+    cli_config = CliConfig()
+    context, namespace = cli_config.compare_changes_config(
+        context=context,
+        namespace=namespace,
+    )
+
     name = prompt_config_name(name)
 
-    # check if name is allowed for docker volume, else exit
+    # check if name is valid
     check_config_name_allowed(name)
 
     # check that this config does not exist

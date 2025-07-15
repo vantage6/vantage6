@@ -24,6 +24,9 @@ DEFAULT_ALGO_STORE_IMAGE = f"infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
 
 DEFAULT_ALPINE_IMAGE = "infrastructure/alpine:latest"
 
+#  CHART GLOBALS
+DEFAULT_CHART_REPO = "https://harbor2.vantage6.ai/chartrepo/infrastructure"
+
 #
 #   COMMON GLOBALS
 #
