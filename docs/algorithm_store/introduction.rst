@@ -21,6 +21,11 @@ This store is maintained by the vantage6 community and allows you to easily reus
 algorithms developed by others. You can also create your own algorithm store.
 This allows you to create a private algorithm store, which is only available to your
 own collaborations.
+If you would like to contribute to the community store, you should first check the
+`production-ready algorithm guidelines <https://docs.vantage6.ai/en/main/algorithms/review_guidelines.html>`_
+to see if you meet the requirements. If you do, you can send an email to
+`Frank Martin <f.martin@iknl.nl>`_ to aquire and account and upload your algorithm. The algorithm
+will go through a review process before it is added to the community store.
 
 .. # TODO add link to creating algorithm store
 .. TODO add links to an architectural page where algorithm store is explained
