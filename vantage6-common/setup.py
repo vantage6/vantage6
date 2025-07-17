@@ -47,6 +47,7 @@ setup(
         "dev": [
             "black",
             "pre-commit",
+            "ruff",
         ]
     },
     package_data={
