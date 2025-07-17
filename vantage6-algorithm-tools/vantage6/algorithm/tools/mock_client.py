@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 from typing import Any
 from importlib import import_module
@@ -275,9 +276,9 @@ class MockAlgorithmClient:
                 self.parent.runs.append(
                     {
                         "id": self.last_result_id,
-                        "started_at": "2021-01-01T00:00:00.000000",
-                        "assigned_at": "2021-01-01T00:00:00.000000",
-                        "finished_at": "2021-01-01T00:00:00.000000",
+                        "started_at": datetime.now().isoformat(),
+                        "assigned_at": datetime.now().isoformat(),
+                        "finished_at": datetime.now().isoformat(),
                         "log": "mock_log",
                         "ports": [],
                         "status": "completed",

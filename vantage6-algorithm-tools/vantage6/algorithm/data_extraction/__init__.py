@@ -4,8 +4,8 @@ import os
 from sqlalchemy import create_engine
 from SPARQLWrapper import SPARQLWrapper, CSV
 
-from vantage6.algorithm.tools.exceptions import DataReadError
 from vantage6.common import info, error
+from vantage6.algorithm.tools.exceptions import DataReadError
 from vantage6.algorithm.decorator.action import data_extraction
 
 _SPARQL_RETURN_FORMAT = CSV
