@@ -16,4 +16,3 @@ class DecoratorType(Enum):
     CENTRAL = "central"
     ALGORITHM_CLIENT = "algorithm_client"
     METADATA = "metadata"
-    SOURCE_DATABASE = "source_database"

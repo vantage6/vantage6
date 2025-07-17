@@ -8,7 +8,7 @@ from enum import Enum
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
-from typing import Any
+from typing import Any, OrderedDict
 
 import click
 import questionary as q
@@ -66,20 +66,39 @@ class Function:
         self.signature = signature(func)
         self.docstring = func.__doc__
         self.json = None
+        self.step_type = None
 
     def prepare_json(self) -> None:
         """Convert the function to a JSON format"""
+        self.step_type = self._get_step_type()
         function_json = {
             "name": self.name,
             "display_name": self._pretty_print_name(self.name),
             "standalone": True,
             "description": self._extract_headline_of_docstring(),
-            "step_type": self._get_step_type(),
+            "step_type": self.step_type,
             "ui_visualizations": [],
             "arguments": [],
             "databases": [],
         }
-        for name, param in self.signature.parameters.items():
+
+        parameters = OrderedDict(self.signature.parameters)
+
+        # if the function is a data extraction function, the first argument is a dict
+        # with database connection details. This argument should not be added to the
+        # function json. Instead, a database should be added to the function json.
+        if self.step_type == AlgorithmStepType.DATA_EXTRACTION.value:
+            function_json["databases"].append(
+                {
+                    "name": "Database",
+                    "description": "Database to extract data from",
+                }
+            )
+            # remove database connection details from the signature
+            parameters.popitem(last=False)
+
+        # add the arguments to the function json
+        for name, param in parameters.items():
             arg_json, arg_type = self._get_argument_json(name, param)
             if arg_json is None:
                 continue
@@ -435,7 +454,9 @@ def _get_functions_from_file(file_path: str) -> None:
 
     # get the functions from the algorithm module
     import_members = get_members_from_module(module)
-    import_functions = [m for m in import_members if isfunction(m)]
+    import_functions = [
+        m for m in import_members if isfunction(m) and _is_decorated_func(m)
+    ]
     import_modules = [m for m in import_members if ismodule(m)]
 
     # add the functions from the imported modules (only 1 level deep). This is so that

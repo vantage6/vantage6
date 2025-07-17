@@ -131,7 +131,8 @@ Another useful decorator is the ``@algorithm_client`` decorator:
 
     import pandas as pd
     from vantage6.client.algorithm_client import AlgorithmClient
-    from vantage6.algorithm.tools.decorators import algorithm_client, data
+    from vantage6.algorithm.decorator.algorithm_client import algorithm_client
+    from vantage6.algorithm.decorator.data import dataframe
 
     @dataframe(1)
     @algorithm_client
