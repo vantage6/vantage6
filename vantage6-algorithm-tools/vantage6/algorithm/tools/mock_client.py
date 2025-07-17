@@ -9,7 +9,7 @@ import pandas as pd
 
 from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
-from vantage6.algorithm.tools.wrappers import load_data
+from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 from vantage6.algorithm.tools.util import info
 
 module_name = __name__.split(".")[1]
@@ -109,9 +109,9 @@ class MockAlgorithmClient:
                 if isinstance(db, pd.DataFrame) or isinstance(db, dict):
                     df = db
                 else:
-                    df = load_data(
+                    df = load_mock_data(
                         database_uri=dataset.get("database"),
-                        db_type=dataset.get("db_type"),
+                        database_type=dataset.get("db_type"),
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )

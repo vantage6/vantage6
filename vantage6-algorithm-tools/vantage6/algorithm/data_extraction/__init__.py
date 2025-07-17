@@ -33,6 +33,10 @@ def read_csv(connection_details: dict) -> pd.DataFrame:
     DataReadError
         If the CSV file cannot be read.
     """
+    return _read_csv(connection_details)
+
+
+def _read_csv(connection_details: dict) -> pd.DataFrame:
     info(f"Reading CSV file from {connection_details['uri']}")
 
     try:
@@ -69,6 +73,10 @@ def read_parquet(connection_details: dict) -> pd.DataFrame:
     DataReadError
         If the Parquet file cannot be read.
     """
+    return _read_parquet(connection_details)
+
+
+def _read_parquet(connection_details: dict) -> pd.DataFrame:
     info(f"Reading Parquet file from {connection_details['uri']}")
     try:
         df = pd.read_parquet(connection_details["uri"])
@@ -106,6 +114,12 @@ def read_excel(connection_details: dict, sheet_name: str | None = None) -> pd.Da
     DataReadError
         If the Excel file cannot be read or the sheet name is not found.
     """
+    return _read_excel(connection_details, sheet_name)
+
+
+def _read_excel(
+    connection_details: dict, sheet_name: str | None = None
+) -> pd.DataFrame:
     info(f"Reading Excel file from {connection_details['uri']}")
     if sheet_name:
         info(f"Selecting sheet: {sheet_name}")
@@ -150,6 +164,10 @@ def read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
     DataReadError
         If the SPARQL query cannot be executed.
     """
+    return _read_sparql_database(connection_details, query)
+
+
+def _read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
     info(f"Reading SPARQL data from {connection_details['uri']}")
     sparql = SPARQLWrapper(
         connection_details["uri"], returnFormat=_SPARQL_RETURN_FORMAT
@@ -232,6 +250,10 @@ def read_sql_database(connection_details: dict, query: str) -> pd.DataFrame:
     DataReadError
         If the SQL query cannot be executed.
     """
+    return _read_sql_database(connection_details, query)
+
+
+def _read_sql_database(connection_details: dict, query: str) -> pd.DataFrame:
     info(f"Reading SQL data from {connection_details['uri']}")
     engine = create_engine(_sqldb_uri_preprocess(connection_details["uri"]))
 
