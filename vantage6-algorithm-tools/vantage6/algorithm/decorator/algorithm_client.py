@@ -76,7 +76,7 @@ def _algorithm_client() -> callable:
             return func(client, *args, **kwargs)
 
         # set attribute that this function is wrapped in an algorithm client
-        decorator.vantage6_decorated_type = DecoratorType.ALGORITHM_CLIENT
+        decorator.vantage6_algorithm_client_decorated = True
         return decorator
 
     return protection_decorator

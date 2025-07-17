@@ -124,7 +124,8 @@ def _run_algorithm_method(
         exit(1)
 
     # check if the method is decorated with a vantage6 decorator. If it is not,
-    # we need to raise an error.
+    # we need to raise an error. It is important to check this, because the decorator
+    # gives the algorithm function access to certain data sources.
     if not is_vantage6_algorithm_func(method_fn):
         error(
             f"Method '{method}' is not decorated with a vantage6 decorator. All "
