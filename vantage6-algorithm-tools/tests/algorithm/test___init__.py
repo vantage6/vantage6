@@ -6,8 +6,6 @@ from unittest.mock import patch, MagicMock
 from vantage6.algorithm.client import AlgorithmClient
 
 
-
-
 class TestAlgorithmClient(unittest.TestCase):
     @patch('requests.get')
     @patch('time.sleep', return_value=None)

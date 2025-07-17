@@ -837,7 +837,7 @@ class ServerApp:
 
     def __node_status_worker(self) -> None:
         """
-        Set node status to offline if they haven't send a ping message in a
+        Set node status to offline if they haven't sent a ping message in a
         while.
         """
         # start periodic check if nodes are responsive
@@ -859,8 +859,8 @@ class ServerApp:
                     if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception:
-                log.exception("Node-status thread had an exception")
+            except Exception as e:
+                log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):

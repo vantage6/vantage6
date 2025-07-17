@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from vantage6.vantage6.cli.globals import PACKAGE_FOLDER
+from vantage6.cli.globals import PACKAGE_FOLDER
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.context import AppContext

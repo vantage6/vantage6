@@ -197,6 +197,7 @@ class UserClient(ClientBase):
             return
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
+        #TODO: Rename and refactor this function to retrieve_results, or someting similar.
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.
@@ -221,6 +222,15 @@ class UserClient(ClientBase):
         self.log.setLevel(prev_level)
         result = self.request("result", params={"task_id": task_id})
         self.log.info(f"--> Task {task_id} completed. Streaming results...")
+        result = self._aggregate_results(result, task_id)
+        result = self.result._decrypt_result(result, is_single_result=False)
+        return result
+    
+    def _aggregate_results(self, result, task_id: int) -> dict:
+        """
+        Aggregate results from the server.
+
+        """
         for item in result["data"]:
             url = f"{self.base_path}/resultstream/{item['result']}"
             headers = self.headers
@@ -237,9 +247,8 @@ class UserClient(ClientBase):
                         self.log.error(f"Response: {response.text}")
             except requests.RequestException as e:
                 self.log.error(f"An error occurred while streaming result: {e}")
-        result = self.result._decrypt_result(result, is_single_result=False)
         return result
-
+        
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 

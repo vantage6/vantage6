@@ -130,29 +130,44 @@ class AlgorithmClient(ClientBase):
         """
         return NotImplementedError("Algorithm containers cannot refresh their token!")
 
-    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+
+    def wait_for_results(self, task_id: int, interval: float = 1) -> None:
         """
-        Poll the central server until results are available and then return
-        them.
+        TODO: Check if this function can be removed in the future, as it is not used
+        anymore. Otherwise rename to retrieve_results.
+        Retrieve results for a specific task.
 
         Parameters
         ----------
         task_id: int
-            ID of the task for which the results should be obtained.
-        interval: float
-            Interval in seconds to wait between checking server for results.
+            ID of the task for which results should be retrieved.
 
         Returns
         -------
         list
             List of task results.
         """
+        self._wait_for_results(task_id, interval)
+        result = self.request("result", params={"task_id": task_id})
+        base_url = super().generate_path_to("resultstream", False)
+        output = self._aggregate_results(result, base_url, task_id)
+
+        return output
+    
+    def _wait_for_results(self, task_id: int, interval: float = 1) -> None:
+        """
+        Poll the central server until results are available.
+        """
         self.log.debug(f"Waiting for results for task_id {task_id}...")
         while not has_task_finished(self.task.get(task_id).get("status")):
             time.sleep(interval)
 
-        result = self.request("result", params={"task_id": task_id})
-        base_url = super().generate_path_to("resultstream", False)
+        return True
+
+    def _aggregate_results(self, result, base_url, task_id) -> list:
+        """ 
+        Aggregate results from the result stream.
+        """
         output = []
         for item in result["data"]:
             url = f"{base_url}/{str(uuid.UUID(item['result']))}"
