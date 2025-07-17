@@ -6,14 +6,12 @@ from SPARQLWrapper import SPARQLWrapper, CSV
 
 from vantage6.algorithm.tools.exceptions import DataReadError
 from vantage6.common import info, error
-from vantage6.algorithm.decorator import source_database
 from vantage6.algorithm.decorator.action import data_extraction
 
 _SPARQL_RETURN_FORMAT = CSV
 
 
 @data_extraction
-@source_database
 def read_csv(connection_details: dict) -> pd.DataFrame:
     """
     Extract data from a CSV database to yield a dataframe.
@@ -53,7 +51,6 @@ def _read_csv(connection_details: dict) -> pd.DataFrame:
 
 
 @data_extraction
-@source_database
 def read_parquet(connection_details: dict) -> pd.DataFrame:
     """
     Extract data from a Parquet database to yield a dataframe.
@@ -92,7 +89,6 @@ def _read_parquet(connection_details: dict) -> pd.DataFrame:
 
 
 @data_extraction
-@source_database
 def read_excel(connection_details: dict, sheet_name: str | None = None) -> pd.DataFrame:
     """
     Extract data from an Excel database to yield a dataframe.
@@ -142,7 +138,6 @@ def _read_excel(
 
 
 @data_extraction
-@source_database
 def read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
     """
     Extract data from a SPARQL database to yield a dataframe.
@@ -228,7 +223,6 @@ def _sqldb_uri_preprocess(database_uri: str) -> str:
 
 
 @data_extraction
-@source_database
 def read_sql_database(connection_details: dict, query: str) -> pd.DataFrame:
     """
     Extract data from a SQL database to yield a dataframe.
