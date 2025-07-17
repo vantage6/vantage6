@@ -107,7 +107,7 @@ def data_extraction(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorated_type = DecoratorType.PREPROCESSING
+    wrapper.vantage6_decorated_type = DecoratorType.DATA_EXTRACTION
     return wrapper
 
 
