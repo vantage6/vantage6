@@ -18,7 +18,7 @@ You need to have the following installed:
   - `devspace <https://www.devspace.sh/docs/getting-started/installation>`_ - to run the
     development environment
   - `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`_ - to manage the
-    kubernetes cluster. It usually comes with your kubernetes distribution. supported
+    kubernetes cluster. It usually comes with your kubernetes distribution. Supported
     distributions for the development environment are `microk8s <https://microk8s.io/>`_,
     `minikube <https://minikube.sigs.k8s.io/>`_ and
     `Docker Desktop <https://docs.docker.com/desktop/>`_.
@@ -26,25 +26,32 @@ You need to have the following installed:
 .. warning::
 
     If you are using WSL, it may not be possible to open a browser window to
-    authenticate from the command line.
+    authenticate from the command line. There are multiple ways to fix this. 
+    `This StackOverflow question <https://superuser.com/questions/1262977/open-browser-in-host-system-from-windows-subsystem-for-linux>`_
+    has some solutions.
 
 Finally, to run the development environment, you need to clone the
 `vantage6 repository <https://github.com/vantage6/vantage6>`_ and navigate to the
 main directory.
 
-Configuring the development environment
+First time running the development environment
 ----------------------------------
 
-You can configure the development environment by running any ``devspace`` command. The
-first command that you run will prompt you to enter a number of variables to configure
-the development environment. For example, you can run the environment with:
+To run the development environment for the first time, execute these commands:
 
 .. code-block:: bash
 
     cd /path/to/vantage6/repository
+
+    # Recommended but optional: don't use the default kubernetes namespace. 
+    kubectl config set-context --current --namespace=vantage6
+
+    # Run the development environment
     devspace run start-dev
 
-Take particular note of setting up the following variables:
+The first time you run the development environment, you will be asked to enter a number
+of variables to configure the development environment. Take particular note of setting 
+up the following variables:
 
   - ``HOST_URI``: this is the ip address of your host machine. If you are using Docker
     k8s (which comes with Docker Desktop), this should be ``host.docker.internal``. If
