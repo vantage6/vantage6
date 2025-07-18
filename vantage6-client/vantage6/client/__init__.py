@@ -1959,6 +1959,7 @@ class UserClient(ClientBase):
                 try:
                     label_input = db.get("label")
                 except AttributeError:
+                    # pylint: disable=raise-missing-from
                     raise ValueError(
                         "Each database should be specified as a dict with at least "
                         "a 'label' key. Alternatively, a single str can be passed "

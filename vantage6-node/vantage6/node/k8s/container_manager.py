@@ -14,6 +14,7 @@ from kubernetes.client.rest import ApiException
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
+from vantage6.common.dataclass import TaskDB
 from vantage6.common.globals import (
     DEFAULT_ALPINE_IMAGE,
     DEFAULT_DOCKER_REGISTRY,
@@ -298,14 +299,15 @@ class ContainerManager:
                 ]:
                     env[key.replace(f"DATABASE_{label.upper()}_", "")] = os.environ[key]
 
-            databases[label] = {
-                "uri": uri,
-                "local_uri": local_uri,
-                "is_file": db_is_file,
-                "is_dir": db_is_dir,
-                "type": db_type,
-                "env": env,
-            }
+            databases[label] = TaskDB(
+                label=label,
+                uri=uri,
+                local_uri=local_uri,
+                is_file=db_is_file,
+                is_dir=db_is_dir,
+                type=db_type,
+                env=env,
+            )
 
         self.log.debug("Databases: %s", databases)
         return databases
@@ -544,8 +546,8 @@ class ContainerManager:
 
     def __wait_until_pod_running(self, label: str) -> RunStatus:
         """"
-        This method monitors the status of a Kubernetes POD created by a job and 
-        waits until it transitions to a 'Running' state or another terminal state 
+        This method monitors the status of a Kubernetes POD created by a job and
+        waits until it transitions to a 'Running' state or another terminal state
         (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
         After the timeout, this method will have additional status-event waiting windows
         only if the reason for such timeout is an (large) image that is already being pulled.
@@ -557,7 +559,7 @@ class ContainerManager:
                                - Unknown
 
         Parameters
-        ----------                                                                 
+        ----------
         label : str
             Label selector to identify the POD associated with the job.
 
@@ -570,7 +572,7 @@ class ContainerManager:
             - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
             - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
-            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.            
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.
         """
 
         # Wait until the POD is created
@@ -798,30 +800,28 @@ class ContainerManager:
             # TODO v5+ if the validate function above raises error, this is somehow
             # still reached?!
             source_database = databases_to_use[0]
-            db = self.databases[source_database["label"]]
-            if db["is_file"] or db["is_dir"]:
+            db: TaskDB = self.databases[source_database["label"]]
+            if db.is_file or db.is_dir:
                 db_volume, db_mount = self._create_run_mount(
                     volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
-                    host_path=db["uri"],
-                    mount_path=db["local_uri"],
-                    type_="File" if db["is_file"] else "Directory",
+                    host_path=db.uri,
+                    mount_path=db.local_uri,
+                    type_="File" if db.is_file else "Directory",
                     read_only=True,
                 )
                 volumes.append(db_volume)
                 vol_mounts.append(db_mount)
 
-            environment_variables[ContainerEnvNames.DATABASE_URI.value] = db[
-                "local_uri"
-            ]
-            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db["type"]
+            environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
 
             # additional environment variables for the database. These will be stored
             # as {PREFIX}{KEY}=value in the container. These are read by the
             # `@source_database` decorator in the (data extraction) algorithm.
-            if "env" in db:
-                for key in db["env"]:
+            if db.env:
+                for key in db.env:
                     env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
-                    secrets[env_key] = db["env"][key]
+                    secrets[env_key] = db.env[key]
 
         else:
             # In the other cases (preprocessing, compute, ...) we are dealing with a
@@ -964,10 +964,10 @@ class ContainerManager:
 
         source_database = databases_to_use[0]
 
-        if source_database["type"] != "source":
+        if source_database["type"] != TaskDatabaseType.SOURCE.value:
             self.log.error(
                 "The database used in the data extraction step must be of type "
-                "'source'."
+                f"'{TaskDatabaseType.SOURCE.value}'."
             )
             ok = False
 
