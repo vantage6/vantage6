@@ -18,6 +18,10 @@ from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.tools import DecoratorType
 from vantage6.common import error, info, warning
 from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
+from vantage6.common.algorithm_function import (
+    get_vantage6_decorator_type,
+    is_vantage6_algorithm_func,
+)
 from vantage6.algorithm.preprocessing.algorithm_json_data import (
     PREPROCESSING_FUNCTIONS_JSON_DATA,
 )
@@ -319,7 +323,7 @@ class Function:
 
     def _get_step_type(self) -> str:
         """Get the step type of the function"""
-        decorator_type = _get_vantage6_decorator_type(self.func)
+        decorator_type = get_vantage6_decorator_type(self.func)
         if decorator_type == DecoratorType.FEDERATED:
             return AlgorithmStepType.FEDERATED_COMPUTE.value
         elif decorator_type == DecoratorType.CENTRAL:
@@ -455,7 +459,7 @@ def _get_functions_from_file(file_path: str) -> None:
     # get the functions from the algorithm module
     import_members = get_members_from_module(module)
     import_functions = [
-        m for m in import_members if isfunction(m) and _is_decorated_func(m)
+        m for m in import_members if isfunction(m) and is_vantage6_algorithm_func(m)
     ]
     import_modules = [m for m in import_members if ismodule(m)]
 
@@ -468,7 +472,7 @@ def _get_functions_from_file(file_path: str) -> None:
             [
                 m
                 for m in second_level_import_members
-                if isfunction(m) and _is_decorated_func(m)
+                if isfunction(m) and is_vantage6_algorithm_func(m)
             ]
         )
 
@@ -523,14 +527,3 @@ def _get_current_json_location(current_json: str) -> None:
         raise FileNotFoundError(f"File {current_json} does not exist")
 
     return current_json
-
-
-def _is_decorated_func(func: callable) -> bool:
-    """Check if the function is decorated with a vantage6 decorator, which all
-    functions being called in vantage6 algorithm should be"""
-    return _get_vantage6_decorator_type(func) is not None
-
-
-def _get_vantage6_decorator_type(func: callable) -> str:
-    """Get the vantage6 decorator type of the function"""
-    return getattr(func, "vantage6_decorated_type", None)

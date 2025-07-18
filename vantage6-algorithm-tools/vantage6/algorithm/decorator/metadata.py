@@ -79,6 +79,6 @@ def metadata(func: callable) -> callable:
         )
         return func(metadata, *args, **kwargs)
 
-    decorator.vantage6_decorated_type = DecoratorType.METADATA
+    decorator.vantage6_metadata_decorated = DecoratorType.METADATA
 
     return decorator

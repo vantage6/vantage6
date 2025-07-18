@@ -241,15 +241,9 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if (
-                    getattr(method_fn, "vantage6_decorated_type", None)
-                    == DecoratorType.ALGORITHM_CLIENT
-                ):
+                if getattr(method_fn, "vantage6_algorithm_client_decorated", False):
                     mocked_kwargs["mock_client"] = client_copy
-                if (
-                    getattr(method_fn, "vantage6_decorated_type", None)
-                    == DecoratorType.DATAFRAME
-                ):
+                if getattr(method_fn, "vantage6_dataframe_decorated", False):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
