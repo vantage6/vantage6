@@ -1,29 +1,41 @@
-import os
-from threading import Thread
-import time
-import docker
+from __future__ import annotations
+
 import enum
+import os
+import re
+import subprocess
+import time
+from os import PathLike
+from pathlib import Path
+from threading import Thread
+
+import docker
+from colorama import Fore, Style
 from docker.client import DockerClient
 from docker.models.containers import Container
-from colorama import Fore, Style
 from sqlalchemy.engine.url import make_url
 
 from vantage6.common import error, info, warning
 from vantage6.common.context import AppContext
+from vantage6.common.docker.addons import check_docker_running, pull_image
 from vantage6.common.globals import (
+    APPNAME,
     DEFAULT_ALGO_STORE_IMAGE,
+    DEFAULT_CHART_REPO,
+    DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
     InstanceType,
-    APPNAME,
-    DEFAULT_DOCKER_REGISTRY,
 )
-from vantage6.common.docker.addons import check_docker_running, pull_image
-from vantage6.cli.context import AlgorithmStoreContext, ServerContext
+
 from vantage6.cli.common.utils import print_log_worker
-from vantage6.cli.utils import check_config_name_allowed
-from vantage6.cli.globals import ServerGlobals, AlgoStoreGlobals
+from vantage6.cli.context import AlgorithmStoreContext, ServerContext
+from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
+from vantage6.cli.utils import (
+    _validate_input,
+    check_config_name_allowed,
+)
 
 
 def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
@@ -304,3 +316,200 @@ def attach_logs(container: Container, type_: InstanceType) -> None:
                 f"with {Fore.RED}v6 {type_} stop{Style.RESET_ALL}"
             )
             exit(0)
+
+
+def helm_install(
+    release_name: str,
+    chart_name: str,
+    values_file: str | PathLike | None = None,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> None:
+    """
+    Manage the `helm install` command.
+
+    Parameters
+    ----------
+    release_name : str
+        The name of the Helm release.
+    chart_name : str
+        The name of the Helm chart.
+    values_file : str, optional
+        A single values file to use with the `-f` flag.
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+    """
+    # Input validation
+    _validate_input(release_name, "release name")
+    _validate_input(chart_name, "chart name")
+
+    values_file = Path(values_file) if values_file else None
+    if values_file and not values_file.is_file():
+        error(f"Helm chart values file does not exist: {values_file}")
+        return
+
+    _validate_input(context, "context name", allow_none=True)
+    _validate_input(namespace, "namespace name", allow_none=True)
+
+    # Create the command
+    command = [
+        "helm",
+        "install",
+        release_name,
+        chart_name,
+        "--repo",
+        DEFAULT_CHART_REPO,
+        "--devel",  # ensure using latest version including pre-releases
+    ]
+
+    if values_file:
+        command.extend(["-f", str(values_file)])
+
+    if context:
+        command.extend(["--kube-context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+
+    try:
+        subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        info(
+            f"Successfully installed release '{release_name}' using chart '{chart_name}'."
+        )
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to install release '{release_name}': {e.stderr}")
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and available in the PATH."
+        )
+
+
+def start_port_forward(
+    service_name: str,
+    service_port: int,
+    port: int,
+    ip: str | None,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> None:
+    """
+    Port forward a kubernetes service.
+
+    Parameters
+    ----------
+    service_name : str
+        The name of the Kubernetes service to port forward.
+    service_port : int
+        The port on the service to forward.
+    port : int
+        The port to listen on.
+    ip : str | None
+        The IP address to listen on. If None, defaults to localhost.
+    context : str | None
+        The Kubernetes context to use.
+    namespace : str | None
+        The Kubernetes namespace to use.
+    """
+    # Input validation
+    _validate_input(service_name, "service name")
+    if not isinstance(service_port, int) or service_port <= 0:
+        error(f"Invalid service port: {service_port}. Must be a positive integer.")
+        return
+
+    if not isinstance(port, int) or port <= 0:
+        error(f"Invalid local port: {port}. Must be a positive integer.")
+        return
+
+    if ip and not re.match(
+        r"^(localhost|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$", ip
+    ):
+        error(f"Invalid IP address: {ip}. Must be a valid IPv4 address or 'localhost'.")
+        return
+
+    _validate_input(context, "context name", allow_none=True)
+    _validate_input(namespace, "namespace name", allow_none=True)
+
+    # Check if the service is ready before starting port forwarding
+    info(f"Waiting for service '{service_name}' to become ready...")
+    start_time = time.time()
+    timeout = 300  # seconds
+    while time.time() - start_time < timeout:
+        try:
+            result = (
+                subprocess.check_output(
+                    [
+                        "kubectl",
+                        "get",
+                        "endpoints",
+                        service_name,
+                        "-o",
+                        "jsonpath={.subsets[*].addresses[*].ip}",
+                    ]
+                )
+                .decode()
+                .strip()
+            )
+
+            if result:
+                info(f"Service '{service_name}' is ready.")
+                break
+        except subprocess.CalledProcessError:
+            pass  # ignore and retry
+
+        time.sleep(2)
+    else:
+        error(
+            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} seconds."
+        )
+        return
+
+    # Create the port forwarding command
+    if not ip:
+        ip = "localhost"
+
+    command = [
+        "kubectl",
+        "port-forward",
+        "--address",
+        ip,
+        f"service/{service_name}",
+        f"{port}:{service_port}",
+    ]
+
+    if context:
+        command.extend(["--context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+
+    # Start the port forwarding process
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            start_new_session=True,  # Start in new session to detach from parent
+        )
+
+        # Give the process a moment to start and check if it's still running
+        time.sleep(1)
+        if process.poll() is not None:
+            # Process has already terminated
+            e = process.stderr.read().decode() if process.stderr else "Unknown error"
+            error(f"Failed to start port forwarding: {e}")
+            return
+
+        info(
+            f"Port forwarding started: {ip}:{port} -> {service_name}:{service_port} "
+            f"(PID: {str(process.pid)})"
+        )
+        return
+    except Exception as e:
+        error(f"Failed to start port forwarding: {e}")
+        return

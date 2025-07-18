@@ -5,11 +5,12 @@ from vantage6.common import info
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     attach_logs,
+    helm_install,
+    start_port_forward,
 )
 from vantage6.cli.common.utils import attach_logs
 from vantage6.cli.config import CliConfig
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.utils import helm_install, start_port_forward
 
 
 @click.command()
