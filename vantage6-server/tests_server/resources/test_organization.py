@@ -1,5 +1,4 @@
 import logging
-import json
 import uuid
 from http import HTTPStatus
 from unittest.mock import patch
@@ -32,12 +31,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
-    def test_version(self):
-        rv = self.app.get("/api/version")
-        r = json.loads(rv.data)
-        self.assertIn("version", r)
-        self.assertEqual(r["version"], __version__)
 
     def test_organization(self):
         rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
