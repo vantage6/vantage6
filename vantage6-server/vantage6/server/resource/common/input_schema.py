@@ -311,6 +311,7 @@ class TaskInputSchema(_NameValidationSchema):
 
         # create task database objects. This will raise validation errors if the
         # databases are not valid.
+        # pylint: disable=expression-not-assigned
         [CreateTaskDB.from_dict(db) for sublist in databases for db in sublist]
 
 

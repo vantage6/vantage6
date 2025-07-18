@@ -9,8 +9,6 @@ from io import BytesIO, StringIO
 from click.testing import CliRunner
 from docker.errors import APIError
 
-from vantage6.common.dataclass import TaskDatabase
-from vantage6.common.enum import DatabaseType
 from vantage6.common.globals import Ports
 from vantage6.cli.globals import APPNAME
 from vantage6.common import STRING_ENCODING
