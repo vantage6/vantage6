@@ -71,7 +71,6 @@ vars:
   DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
-
   # Main entrypoint for development (`devspace dev`). This starts all server components
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
@@ -145,22 +144,22 @@ pipelines:
       run_dependencies --all --pipeline purge
 
 hooks:
-# Execute the hook in a golang shell (cross operating system compatible)
-- name: "create-tasks-folder"
-  command: |
-    echo "Creating tasks folder"
-    python dev/create_mount_directory.py ${TASK_DIRECTORY}
-  events: ["before:deploy:vantage6-node"]
-- name: "create-server-database-folder"
-  command: |
-    echo "Creating server database folder"
-    python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
-  events: ["before:deploy:vantage6-server"]
-- name: "create-store-database-folder"
-  command: |
-    echo "Creating algorithm store database folder"
-    python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
-  events: ["before:deploy:vantage6-store"]
+  # Execute the hook in a golang shell (cross operating system compatible)
+  - name: "create-tasks-folder"
+    command: |
+      echo "Creating tasks folder"
+      python dev/create_mount_directory.py ${TASK_DIRECTORY}
+    events: ["before:deploy:vantage6-node"]
+  - name: "create-server-database-folder"
+    command: |
+      echo "Creating server database folder"
+      python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
+    events: ["before:deploy:vantage6-server"]
+  - name: "create-store-database-folder"
+    command: |
+      echo "Creating algorithm store database folder"
+      python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
+    events: ["before:deploy:vantage6-store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -190,7 +189,6 @@ images:
 # image tags that are built by DevSpace (see `.devspace/cache.yaml`). To disable this,
 # set `updateImageTags: false` in the deployment.
 deployments:
-
   vantage6-auth:
     helm:
       chart:
@@ -325,11 +323,11 @@ deployments:
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
-            - name: default
-              uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
-              type: csv
-              volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
-              originalName: ${NODE_TEST_DATABASE_NAME}
+              - name: default
+                uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
+                type: csv
+                volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
+                originalName: ${NODE_TEST_DATABASE_NAME}
             serviceBased: []
           k8sNodeName: ${K8S_NODE_NAME}
           persistence:
@@ -354,21 +352,21 @@ dev:
     labelSelector:
       component: vantage6-server
     sync:
-    - path: ./vantage6/:/vantage6/vantage6/
-      disableDownload: true
-    - path: ./vantage6-common/:/vantage6/vantage6-common/
-      disableDownload: true
-    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
-      disableDownload: true
-    - path: ./vantage6-server/:/vantage6/vantage6-server/
-      disableDownload: true
-      startContainer: true
+      - path: ./vantage6/:/vantage6/vantage6/
+        disableDownload: true
+      - path: ./vantage6-common/:/vantage6/vantage6-common/
+        disableDownload: true
+      - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
+        disableDownload: true
+      - path: ./vantage6-server/:/vantage6/vantage6-server/
+        disableDownload: true
+        startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
     ports:
-    - port: 7601:7601
-      bindAddress: localhost
-    - port: 7601:7601
-      bindAddress: ${PORTS_BIND_ADDRESS}
+      - port: 7601:7601
+        bindAddress: localhost
+      - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
     logs:
       enabled: true
 
@@ -393,15 +391,15 @@ dev:
     logs:
       enabled: true
     sync:
-    - path: ./vantage6/:/vantage6/vantage6/
-      disableDownload: true
-    - path: ./vantage6-common/:/vantage6/vantage6-common/
-      disableDownload: true
-    - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
-      disableDownload: true
-    - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
-      disableDownload: true
-      startContainer: true
+      - path: ./vantage6/:/vantage6/vantage6/
+        disableDownload: true
+      - path: ./vantage6-common/:/vantage6/vantage6-common/
+        disableDownload: true
+      - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
+        disableDownload: true
+      - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
+        disableDownload: true
+        startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
   vantage6-store-db:
@@ -419,13 +417,13 @@ dev:
     imageSelector: ${UI_IMAGE}
     command: ["/app/startup/dev_startup.sh"]
     sync:
-    # Ideally we'd include the entire dir vantage6-ui/ but that leads to issues
-    # with the node_modules dir, as well as with the JSON files. Changing these
-    # usually requires image rebuild so it's not a big deal, but also not ideal.
-    - path: ./vantage6-ui/src/:/app/src/
-      disableDownload: true
-    - path: ./vantage6-ui/startup/:/app/startup/
-      disableDownload: true
+      # Ideally we'd include the entire dir vantage6-ui/ but that leads to issues
+      # with the node_modules dir, as well as with the JSON files. Changing these
+      # usually requires image rebuild so it's not a big deal, but also not ideal.
+      - path: ./vantage6-ui/src/:/app/src/
+        disableDownload: true
+      - path: ./vantage6-ui/startup/:/app/startup/
+        disableDownload: true
     ports:
       - port: 7600:80
         bindAddress: localhost
@@ -448,25 +446,25 @@ dev:
       - name: "DATABASE_DEFAULT_TYPE"
         value: "csv"
     sync:
-    - path: ./vantage6/:/vantage6/vantage6/
-      disableDownload: true
-      onUpload:
-        restartContainer: true
-    - path: ./vantage6-common/:/vantage6/vantage6-common/
-      disableDownload: true
-      onUpload:
-        restartContainer: true
-    - path: ./vantage6-node/:/vantage6/vantage6-node/
-      disableDownload: true
-      onUpload:
-        restartContainer: true
-    # It is possible to manually add nodes. You need to put the configuration files in
-    # the `dev/.data` directory. The `dev_start.py` script will then start the nodes.
-    - path: ./dev/.data/:/mnt/config/
-      disableDownload: true
-      startContainer: true
-      onUpload:
-        restartContainer: true
+      - path: ./vantage6/:/vantage6/vantage6/
+        disableDownload: true
+        onUpload:
+          restartContainer: true
+      - path: ./vantage6-common/:/vantage6/vantage6-common/
+        disableDownload: true
+        onUpload:
+          restartContainer: true
+      - path: ./vantage6-node/:/vantage6/vantage6-node/
+        disableDownload: true
+        onUpload:
+          restartContainer: true
+      # It is possible to manually add nodes. You need to put the configuration files in
+      # the `dev/.data` directory. The `dev_start.py` script will then start the nodes.
+      - path: ./dev/.data/:/mnt/config/
+        disableDownload: true
+        startContainer: true
+        onUpload:
+          restartContainer: true
     logs:
       enabled: true
 
