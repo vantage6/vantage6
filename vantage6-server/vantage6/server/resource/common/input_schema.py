@@ -5,6 +5,7 @@ from marshmallow import Schema, fields, ValidationError, validates, validates_sc
 from marshmallow.validate import Length, Range, OneOf
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.model.rule import Scope
 from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
@@ -308,29 +309,10 @@ class TaskInputSchema(_NameValidationSchema):
                 "Databases must be a list of lists of dictionaries or None"
             )
 
-        for database in [db for sublist in databases for db in sublist]:
-            if "type" not in database:
-                raise ValidationError("Each database must have a 'type' key")
-
-            allowed_keys = {"label", "type", "dataframe_id"}
-            if not set(database.keys()).issubset(set(allowed_keys)):
-                raise ValidationError(
-                    f"Database {database} contains unknown keys. Allowed keys "
-                    f"are {allowed_keys}."
-                )
-
-            if database["type"] == TaskDatabaseType.DATAFRAME and not database.get(
-                "dataframe_id"
-            ):
-                raise ValidationError(
-                    "Database of type 'dataframe' must have a 'dataframe_id' key"
-                )
-            elif database["type"] != TaskDatabaseType.DATAFRAME and not database.get(
-                "label"
-            ):
-                raise ValidationError(
-                    f"Database of type '{database['type']}' must have a 'label' key"
-                )
+        # create task database objects. This will raise validation errors if the
+        # databases are not valid.
+        # pylint: disable=expression-not-assigned
+        [CreateTaskDB.from_dict(db) for sublist in databases for db in sublist]
 
 
 class TokenAlgorithmInputSchema(Schema):

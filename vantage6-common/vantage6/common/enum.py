@@ -58,6 +58,23 @@ class TaskDatabaseType(EnumBase):
     DATAFRAME = "dataframe"
 
 
+class DatabaseType(EnumBase):
+    """Enum to represent the type of database"""
+
+    CSV = "csv"
+    EXCEL = "excel"
+    SPARQL = "sparql"
+    PARQUET = "parquet"
+    SQL = "sql"
+    OMOP = "omop"
+    OTHER = "other"
+    FOLDER = "folder"
+
+    def is_file_based(self) -> bool:
+        """Check if the database type is file-based"""
+        return self in [self.CSV, self.EXCEL, self.PARQUET, self.FOLDER]
+
+
 class TaskStatus(EnumBase):
     """Enum to represent the status of a task"""
 

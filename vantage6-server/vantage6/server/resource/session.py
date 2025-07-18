@@ -11,6 +11,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
+from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.permission import (
     Scope as S,
     Operation as P,
@@ -292,7 +293,7 @@ class SessionBase(ServicesResources):
         image: str,
         method: str,
         organizations: dict,
-        databases: list[list[dict]],
+        databases: list[CreateTaskDB],
         action: AlgorithmStepType,
         dataframe: db.Dataframe,
         description="",

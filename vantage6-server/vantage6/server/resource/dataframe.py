@@ -20,6 +20,7 @@ from vantage6.server.resource.common.input_schema import (
 from vantage6.server.resource.common.output_schema import (
     DataframeSchema,
 )
+from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.resource.session import SessionBase
 from vantage6.server.model import DataframeToBeDeletedAtNode
 from vantage6.server.websockets import send_delete_dataframe_event
@@ -287,8 +288,13 @@ class SessionDataframes(SessionBase):
                 image=extraction_details["image"],
                 method=extraction_details["method"],
                 organizations=extraction_details["organizations"],
-                # TODO FM 10-7-2024: we should make a custom type for this
-                databases=[[{"label": source_db_label, "type": "source"}]],
+                databases=[
+                    [
+                        CreateTaskDB(
+                            label=source_db_label, type=TaskDatabaseType.SOURCE
+                        ).to_dict()
+                    ]
+                ],
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
