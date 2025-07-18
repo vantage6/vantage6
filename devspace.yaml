@@ -160,6 +160,10 @@ hooks:
       echo "Creating algorithm store database folder"
       python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
     events: ["before:deploy:vantage6-store"]
+  - name: "check-storage-enabled-microk8s"
+    command: |
+      dev/check_microk8s_storage_enabled.sh
+    events: ["before:deploy:vantage6-auth"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
