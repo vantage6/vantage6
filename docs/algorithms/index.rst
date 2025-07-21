@@ -12,7 +12,7 @@ in the :ref:`classic-algo-tutorial`, an FL algorithm is build from scratch.
 
 .. warning::
 
-    Note that the classic tutorial not outdated, and the commands may be
+    Note that the classic tutorial is outdated, and the commands may be
     wrong. Nevertheless, the concepts are still valid and the tutorial is
     still useful to get a grasp of the vantage6 framework.
 
