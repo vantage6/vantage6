@@ -750,7 +750,7 @@ class Tasks(TaskBase):
             else:
                 # no need to determine hash if we don't look it up in a store
                 image_with_hash = image
-        elif g.container:
+        else:  # this is a container task
             parent = db.Task.get(g.container["task_id"])
             store = parent.algorithm_store
             image_with_hash = parent.image
