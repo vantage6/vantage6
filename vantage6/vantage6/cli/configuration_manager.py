@@ -20,17 +20,8 @@ class ServerConfiguration(Configuration):
     validators.
     """
 
-    VALIDATORS = {
-        "description": Use(str),
-        "ip": Use(str),
-        "port": Use(int),
-        Optional("api_path"): str,
-        "uri": Use(str),
-        "allow_drop_all": Use(bool),
-        "logging": {**LOGGING_VALIDATORS, "file": Use(str)},
-        Optional("server_name"): str,
-        Optional("runs_data_cleanup_days"): Use(int),
-    }
+    # TODO: explore how to validate helm values.yaml files, see issue 2105
+    VALIDATORS = {}
 
 
 class NodeConfiguration(Configuration):

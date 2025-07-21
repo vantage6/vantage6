@@ -1,25 +1,27 @@
 import os
 from pathlib import Path
+from typing import Any
 
 import questionary as q
 
-from vantage6.common import generate_apikey
+from vantage6.common import error, info, warning
+from vantage6.common.client.node_client import NodeClient
+from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     DATABASE_TYPES,
+    DEFAULT_API_PATH,
     InstanceType,
     NodePolicy,
     Ports,
-    DEFAULT_API_PATH,
     RequiredNodeEnvVars,
 )
-from vantage6.common.client.node_client import NodeClient
-from vantage6.common.context import AppContext
-from vantage6.common import error, warning, info
-from vantage6.cli.context import select_context_class
+
+from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_manager import (
     NodeConfigurationManager,
     ServerConfigurationManager,
 )
+from vantage6.cli.context import select_context_class
 
 
 def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
@@ -368,115 +370,69 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     return config
 
 
-def server_configuration_questionaire(instance_name: str) -> dict:
+def server_configuration_questionaire(
+    instance_name: str,
+) -> dict[str, Any]:
     """
-    Questionary to generate a config file for the server instance.
+    Kubernetes-specific questionnaire to generate Helm values for server.
 
     Parameters
     ----------
     instance_name : str
-        Name of the server instance.
+        Name of the server instance
 
     Returns
     -------
-    dict
-        Dictionary with the new server configuration
+    dict[str, Any]
+        dictionary with Helm values for the server configuration
     """
+    # Get active kube namespace
+    cli_config = CliConfig()
+    kube_namespace = cli_config.get_last_namespace()
 
-    config = _get_common_server_config(InstanceType.SERVER, instance_name)
+    # Initialize config with basic structure
+    config = {"server": {}, "database": {}, "ui": {}}
 
-    constant_jwt_secret = q.confirm("Do you want a constant JWT secret?").unsafe_ask()
-    if constant_jwt_secret:
-        config["jwt_secret_key"] = generate_apikey()
-
-    is_mfa = q.confirm("Do you want to enforce two-factor authentication?").unsafe_ask()
-    if is_mfa:
-        config["two_factor_auth"] = is_mfa
-
-    current_server_url = f"http://localhost:{config['port']}{config['api_path']}"
-    config["server_url"] = q.text(
-        "What is the server url exposed to the users? If you are running a"
-        " development server running locally, this is the same as the "
-        "server url. If you are running a production server, this is the "
-        "url that users will connect to.",
-        default=current_server_url,
+    # === Server settings ===
+    config["server"]["description"] = q.text(
+        "Enter a human-readable description:",
+        default=f"Vantage6 server {instance_name}",
     ).unsafe_ask()
 
-    is_add_vpn = q.confirm(
-        "Do you want to add a VPN server?", default=False
+    config["server"]["image"] = q.text(
+        "Server Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/server:latest",
     ).unsafe_ask()
-    if is_add_vpn:
-        vpn_config = q.unsafe_prompt(
-            [
-                {
-                    "type": "text",
-                    "name": "url",
-                    "message": "VPN server URL:",
-                },
-                {
-                    "type": "text",
-                    "name": "portal_username",
-                    "message": "VPN portal username:",
-                },
-                {
-                    "type": "password",
-                    "name": "portal_userpass",
-                    "message": "VPN portal password:",
-                },
-                {
-                    "type": "text",
-                    "name": "client_id",
-                    "message": "VPN client username:",
-                },
-                {
-                    "type": "password",
-                    "name": "client_secret",
-                    "message": "VPN client password:",
-                },
-                {
-                    "type": "text",
-                    "name": "redirect_url",
-                    "message": "Redirect url (should be local address of server)",
-                    "default": "http://localhost",
-                },
-            ]
-        )
-        config["vpn_server"] = vpn_config
 
-    is_add_rabbitmq = q.confirm(
-        "Do you want to add a RabbitMQ message queue?"
+    # === UI settings ===
+    config["ui"]["image"] = q.text(
+        "UI Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/ui:latest",
     ).unsafe_ask()
-    if is_add_rabbitmq:
-        rabbit_uri = q.text(message="Enter the URI for your RabbitMQ:").unsafe_ask()
-        run_rabbit_locally = q.confirm(
-            "Do you want to run RabbitMQ locally? (Use only for testing)"
-        ).unsafe_ask()
-        config["rabbitmq"] = {
-            "uri": rabbit_uri,
-            "start_with_server": run_rabbit_locally,
-        }
 
-    # add algorithm stores to this server
-    is_add_community_store = q.confirm(
-        "Do you want to make the algorithms from the community algorithm store "
-        "available to your users?"
+    # === Database settings ===
+    config["database"]["volumePath"] = q.text(
+        "Where is your server database located on the host machine?",
+        default=f"{Path.cwd()}/dev/.db/db_pv_server",
     ).unsafe_ask()
-    algorithm_stores = []
-    if is_add_community_store:
-        algorithm_stores.append(
-            {"name": "Community store", "url": "https://store.cotopaxi.vantage6.ai"}
-        )
-    add_more_stores = q.confirm(
-        "Do you want to add more algorithm stores?", default=False
+
+    config["database"]["k8sNodeName"] = q.text(
+        "What is the name of the k8s node where the databases are running?",
+        default="docker-desktop",
     ).unsafe_ask()
-    while add_more_stores:
-        store_name = q.text(message="Enter the name of the store:").unsafe_ask()
-        store_url = q.text(message="Enter the URL of the store:").unsafe_ask()
-        algorithm_stores.append({"name": store_name, "url": store_url})
-        add_more_stores = q.confirm(
-            "Do you want to add more algorithm stores?", default=False
-        ).unsafe_ask()
-    config["algorithm_stores"] = algorithm_stores
+
+    # === Keycloak settings ===
+    keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
+    config["server"]["keycloakUrl"] = keycloak_url
+
+    # === Other settings ===
+    log_level = q.select(
+        "Which level of logging would you like?",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    ).unsafe_ask()
+
+    config["server"]["logging"] = {"level": log_level}
 
     return config
 
@@ -541,7 +497,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
 
 
 def configuration_wizard(
-    type_: InstanceType, instance_name: str, system_folders: bool
+    type_: InstanceType,
+    instance_name: str,
+    system_folders: bool,
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -569,7 +527,9 @@ def configuration_wizard(
         config = node_configuration_questionaire(dirs, instance_name)
     elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(instance_name)
+        config = server_configuration_questionaire(
+            instance_name=instance_name,
+        )
     else:
         conf_manager = ServerConfigurationManager
         config = algo_store_configuration_questionaire(instance_name)

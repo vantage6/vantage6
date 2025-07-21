@@ -39,6 +39,8 @@ from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.cli.algostore.files import cli_algo_store_files
 from vantage6.cli.algostore.list import cli_algo_store_configuration_list
 from vantage6.cli.algostore.remove import cli_algo_store_remove
+from vantage6.cli.use.context import cli_use_context
+from vantage6.cli.use.namespace import cli_use_namespace
 
 
 # Define the server group
@@ -146,6 +148,19 @@ cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
 cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 
 
+# Add the use group
+@click.group(name="use")
+def cli_use() -> None:
+    """
+    Manage Kubernetes context and namespace.
+    """
+
+
+# Define the commands for the use group
+cli_use.add_command(cli_use_context, name="context")
+cli_use.add_command(cli_use_namespace, name="namespace")
+
+
 # Define the overall group
 @click.group(name="cli", context_settings={"show_default": True})
 def cli_complete() -> None:
@@ -164,3 +179,4 @@ cli_complete.add_command(cli_dev)
 cli_complete.add_command(cli_algorithm)
 cli_complete.add_command(cli_test)
 cli_complete.add_command(cli_algo_store)
+cli_complete.add_command(cli_use)

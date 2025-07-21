@@ -5,11 +5,11 @@ pandas DataFrames, such as selecting and filtering rows and columns.
 
 import pandas as pd
 from vantage6.algorithm.decorator.action import preprocessing
-from vantage6.algorithm.decorator.data import data
+from vantage6.algorithm.decorator.data import dataframe
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     """
     Select rows from the data based on a query. It uses the
@@ -77,7 +77,7 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def filter_range(
     df: pd.DataFrame,
     column: str,
@@ -161,7 +161,7 @@ def filter_range(
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Select specific columns from a DataFrame.
@@ -217,7 +217,7 @@ def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Drop specified columns from the DataFrame.
@@ -266,7 +266,7 @@ def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
 
 
 @preprocessing
-@data(1)
+@dataframe(1)
 def filter_by_date(
     df: pd.DataFrame,
     column: str,

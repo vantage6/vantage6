@@ -1,0 +1,19 @@
+target-version = "py310"
+line-length = 88          # Same as Black
+
+[lint]
+extend-select = ["I"]     # Enable linting for imports
+
+[lint.isort]
+known-first-party = ["vantage6"]
+known-third-party = ["docker"]
+force-single-line = false
+combine-as-imports = true
+section-order = ["future", "standard-library", "third-party", "v6-common", "v6-client", "v6-algo-tools", "v6-cli", "v6-backend-common", "first-party", "local-folder"]
+
+[lint.isort.sections]
+v6-common = ["vantage6.common"]
+v6-client = ["vantage6.client"]  
+v6-algo-tools = ["vantage6.algorithm.tools"]
+v6-cli = ["vantage6.cli"]
+v6-backend-common = ["vantage6.backend.common"]

@@ -823,7 +823,7 @@ class Node:
         labels = []
         types = {}
         for label, db_info in self.k8s_container_manager.databases.items():
-            type_ = db_info.get("type")
+            type_ = db_info.type
             labels.append(label)
             types[f"db_type_{label}"] = type_
 

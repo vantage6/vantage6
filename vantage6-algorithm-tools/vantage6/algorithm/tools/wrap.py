@@ -7,6 +7,7 @@ import pyarrow.parquet as pq
 from typing import Any
 
 from vantage6.common import serialization
+from vantage6.common.algorithm_function import is_vantage6_algorithm_func
 from vantage6.common.client import deserialization
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
@@ -120,6 +121,17 @@ def _run_algorithm_method(
         error(f"Method '{method}' not found!\n")
         if log_traceback:
             error(traceback.print_exc())
+        exit(1)
+
+    # check if the method is decorated with a vantage6 decorator. If it is not,
+    # we need to raise an error. It is important to check this, because the decorator
+    # gives the algorithm function access to certain data sources.
+    if not is_vantage6_algorithm_func(method_fn):
+        error(
+            f"Method '{method}' is not decorated with a vantage6 decorator. All "
+            "algorithm functions should have a decorator such as @federated, "
+            "@central, @preprocessing, @data_extraction, etc."
+        )
         exit(1)
 
     # get the args and kwargs input for this function.

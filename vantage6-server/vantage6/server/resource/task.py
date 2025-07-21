@@ -15,6 +15,7 @@ from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskDatabaseType
 from vantage6.common.encryption import DummyCryptor
 from vantage6.server import db
 from vantage6.server.algo_store_communication import request_algo_store
+from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
@@ -820,13 +821,15 @@ class Tasks(TaskBase):
         # all new modification tasks will depend on it. The `depends_on_ids` parameter
         # is set by the session endpoints.
         dependent_tasks = []
-        for database in [db for sublist in databases for db in sublist]:
+        for database in [
+            CreateTaskDB.from_dict(db) for sublist in databases for db in sublist
+        ]:
             # add last modification task to dependent tasks
-            if database["type"] == TaskDatabaseType.DATAFRAME:
-                df = db.Dataframe.get(database["dataframe_id"])
+            if database.type == TaskDatabaseType.DATAFRAME:
+                df = db.Dataframe.get(database.dataframe_id)
                 if not df:
                     return {
-                        "msg": f"Dataframe '{database['label']}' not found!"
+                        "msg": f"Dataframe '{database.label}' not found!"
                     }, HTTPStatus.NOT_FOUND
 
                 if not df.ready:
@@ -908,12 +911,12 @@ class Tasks(TaskBase):
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            for database in database_group:
+            for database in [CreateTaskDB.from_dict(db) for db in database_group]:
                 task_db = db.TaskDatabase(
                     task_id=task.id,
-                    label=database.get("label"),
-                    type_=database.get("type"),
-                    dataframe_id=database.get("dataframe_id"),
+                    label=database.label,
+                    type_=database.type,
+                    dataframe_id=database.dataframe_id,
                     position=idx,
                 )
                 task_db.save()

@@ -245,6 +245,25 @@ command:
 
 You may need to run ``pre-commit autoupdate`` to update the pre-commit hook.
 
+
+
+Code style - Ruff [WIP]
+^^^^^^^^^^^^^^^^^^^^^^^
+
+We use `Ruff <https://docs.astral.sh/ruff/>`_ to lint and format our code. As
+described by Ruff, it is a `drop-in replacement <https://docs.astral.sh/ruff/
+faq/#is-the-ruff-linter-compatible-with-black>`_ for Black.
+
+You can install Ruff by running ``pip install ruff`` in your virtual environment. 
+To automatically enable Ruff, we recommend that you install the `Ruff` extension
+from Astral Software in the VSCode marketplace. By enabling the option 
+'format on save' you can then automatically format your code in the proper style
+when you save a file.
+
+The configuration for Ruff is located in the file ``.ruff.toml`` in the root of 
+the repository.
+
+
 Unit tests & coverage
 ^^^^^^^^^^^^^^^^^^^^^
 You can execute unit tests using the ``test`` command in the Makefile:
