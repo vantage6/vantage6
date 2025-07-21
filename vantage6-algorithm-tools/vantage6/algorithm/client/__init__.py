@@ -145,8 +145,7 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        while not has_task_finished(self.task.get(task_id).get("status")):
-            time.sleep(interval)
+        self.wait_for_task_completion(self.request, task_id, interval, False)
 
         result = self.request("result", params={"task_id": task_id})
         base_url = super().generate_path_to("resultstream", False)
