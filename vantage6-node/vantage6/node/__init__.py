@@ -425,13 +425,6 @@ class Node:
                     },
                 )
 
-        # For some reason, if the key 'input' consists of JSON, it is
-        # automatically marshalled? This causes trouble, so we'll serialize it
-        # again.
-        # FIXME: should probably find & fix the root cause?
-        if type(run_to_execute["input"]) == dict:
-            run_to_execute["input"] = json.dumps(run_to_execute["input"])
-
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
         task_status = self.k8s_container_manager.run(
