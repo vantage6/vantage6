@@ -210,7 +210,13 @@ class Node:
         """
         Periodically send system metadata to the server.
         """
-        report_interval = self.config.get("report_interval_seconds", 45)
+        if not self.config.get("prometheus", {}).get("enabled", False):
+            self.log.info("Prometheus is not enabled, skipping metadata worker")
+            return
+
+        report_interval = self.config.get("prometheus", {}).get(
+            "report_interval_seconds", 45
+        )
 
         while True:
             try:

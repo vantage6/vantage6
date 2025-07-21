@@ -186,11 +186,12 @@ class ServerApp:
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
 
-        start_prometheus_exporter(
-            port=self.ctx.config.get(
-                "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+        if self.ctx.config.get("prometheus", {}).get("enabled", False):
+            start_prometheus_exporter(
+                port=self.ctx.config.get(
+                    "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+                )
             )
-        )
 
         log.info("Initialization done")
 
