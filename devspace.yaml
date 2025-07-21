@@ -221,7 +221,7 @@ deployments:
                     lastName: Admin
                     credentials:
                       - type: password
-                        value: admin
+                        value: Admin123!
                   - username: service-account-backend-admin-client
                     enabled: true
                     serviceAccountClientId: backend-admin-client
