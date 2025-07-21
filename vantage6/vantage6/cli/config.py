@@ -7,10 +7,11 @@ import yaml
 from colorama import Fore, Style
 from kubernetes import config
 
+from vantage6.common import info, warning
+
 from vantage6.cli.globals import (
     DEFAULT_CLI_CONFIG_FILE,
 )
-from vantage6.common import info, warning
 
 
 class CliConfig:
@@ -195,7 +196,7 @@ class CliConfig:
         self,
         context: str | None = None,
         namespace: str | None = None,
-    ) -> None:
+    ) -> tuple[str, str]:
         """
         Compare active settings with last used settings.
 
@@ -205,6 +206,11 @@ class CliConfig:
             The Kubernetes context to use.
         namespace : str or None, optional
             The Kubernetes namespace to use.
+
+        Returns
+        -------
+        tuple[str, str]
+            A tuple containing the active context and namespace.
         """
 
         active_context, active_namespace = self.get_active_settings(context, namespace)

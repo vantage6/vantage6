@@ -1,5 +1,4 @@
 import logging
-import signal
 import pathlib
 import re
 import json
@@ -9,16 +8,10 @@ from http import HTTPStatus
 import requests
 from requests.auth import HTTPBasicAuth
 
-import docker
-from docker.client import DockerClient
-from docker.models.containers import Container
-from docker.models.volumes import Volume
-from docker.models.networks import Network
 from docker.utils import parse_repository_tag
 from docker.auth import resolve_repository_name
 
 from vantage6.common import logger_name
-from vantage6.common.globals import APPNAME
 
 log = logging.getLogger(logger_name(__name__))
 

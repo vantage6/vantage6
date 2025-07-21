@@ -9,11 +9,10 @@ import re
 import subprocess
 from pathlib import Path
 
+import docker
 import questionary as q
 
-import docker
 from vantage6.common import error, info, warning
-from vantage6.common.globals import DEFAULT_CHART_REPO
 
 
 def check_config_name_allowed(name: str) -> None:
@@ -106,6 +105,10 @@ def prompt_config_name(name: str | None) -> None:
 def switch_context_and_namespace(
     context: str | None = None, namespace: str | None = None
 ) -> None:
+    # input validation
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+
     try:
         if context:
             subprocess.run(
@@ -133,67 +136,32 @@ def switch_context_and_namespace(
         error(f"Failed to set Kubernetes context or namespace: {e}")
 
 
-def helm_install(
-    release_name: str,
-    chart_name: str,
-    values_file: str | None = None,
+def validate_input_cmd_args(
+    value: str | None, field_name: str, allow_none: bool = False
 ) -> None:
     """
-    Manage the `helm install` command.
+    Validate input for subprocess commands.
 
     Parameters
     ----------
-    release_name : str
-        The name of the Helm release.
-    chart_name : str
-        The name of the Helm chart.
-    values_file : str, optional
-        A single values file to use with the `-f` flag.
-    """
-    # Input validation
-    for param, param_name in [
-        (release_name, "release name"),
-        (chart_name, "chart name"),
-    ]:
-        if not re.match("^[a-zA-Z0-9_.-]+$", param):
-            error(
-                f"Invalid {param_name}: {param}. Use only alphanumeric"
-                f" characters, dashes, underscores, or dots."
-            )
-            return
+    value : str | None
+        The value to validate.
+    field_name : str
+        The name of the field being validated, used for error messages.
+    allow_none : bool, optional
+        Whether None is allowed as a valid value. Defaults to False.
 
-    if values_file and not os.path.isfile(values_file):
-        error(f"Helm chart values file does not exist: {values_file}")
+    Raises
+    ------
+    SystemExit
+        If the input is invalid.
+    """
+    if allow_none and value is None:
         return
 
-    # Create the command
-    command = [
-        "helm",
-        "install",
-        release_name,
-        chart_name,
-        "--repo",
-        DEFAULT_CHART_REPO,
-        "--devel",  # ensure using latest version including pre-releases
-    ]
-
-    if values_file:
-        command.extend(["-f", values_file])
-
-    try:
-        subprocess.run(
-            command,
-            check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        info(
-            f"Successfully installed release '{release_name}' using chart '{chart_name}'."
-        )
-    except subprocess.CalledProcessError as e:
-        error(f"Failed to install release '{release_name}': {e.stderr}")
-    except FileNotFoundError:
+    if not isinstance(value, str) or not re.match("^[a-zA-Z0-9_.-]+$", value):
         error(
-            "Helm command not found. Please ensure Helm is installed and available in the PATH."
+            f"Invalid {field_name}: {value}. Use only alphanumeric characters, "
+            "dashes, underscores, or dots."
         )
+        exit(1)
