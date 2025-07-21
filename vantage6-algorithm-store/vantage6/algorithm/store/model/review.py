@@ -1,5 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import Column, Text, Integer, ForeignKey
+import datetime
+from sqlalchemy import Column, Text, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
@@ -28,11 +29,23 @@ class Review(Base):
     # fields
     algorithm_id = Column(Integer, ForeignKey("algorithm.id"))
     reviewer_id = Column(Integer, ForeignKey("user.id"))
+    requested_by_id = Column(Integer, ForeignKey("user.id"))
+    requested_at = Column(
+        DateTime, default=datetime.datetime.now(datetime.timezone.utc)
+    )
+    submitted_at = Column(DateTime)
     status = Column(Text, default=ReviewStatus.UNDER_REVIEW.value)
     comment = Column(Text)
 
     # relationships
-    reviewer = relationship("User", back_populates="reviews")
+    reviewer = relationship(
+        "User", foreign_keys="Review.reviewer_id", back_populates="reviews"
+    )
+    requested_by = relationship(
+        "User",
+        foreign_keys="Review.requested_by_id",
+        back_populates="requested_reviews",
+    )
     algorithm = relationship("Algorithm", back_populates="reviews")
 
     def is_review_finished(self) -> bool:
