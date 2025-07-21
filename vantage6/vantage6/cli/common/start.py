@@ -291,6 +291,8 @@ def mount_database(
     return mount, environment_vars
 
 
+# TODO v5+ remove this function, it is replaced by the `attach_logs` function in
+# `vantage6.cli.common.utils`
 def attach_logs(container: Container, type_: InstanceType) -> None:
     """
     Attach container logs to the console if specified.

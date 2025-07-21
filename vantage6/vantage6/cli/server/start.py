@@ -4,7 +4,6 @@ from vantage6.common import info
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
-    attach_logs,
     helm_install,
     start_port_forward,
 )
