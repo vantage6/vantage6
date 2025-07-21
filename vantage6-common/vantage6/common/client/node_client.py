@@ -104,22 +104,22 @@ class NodeClient(ClientBase):
         # set variable to sleep between refreshes - so that we have about 20 attempts
         # before the token expires
         interval_between_refreshes = period_start_refresh / 20
-        # maximum time to keep attempting to refresh the token
-        max_time_to_keep_attempting_refresh = 3600
+        token_expired = False
         while True:
             # get the time until the token expires
             expiry_time = self.kc_openid.decode_token(self.token)["exp"]
             time_until_expiry = expiry_time - time.time()
             if time_until_expiry < period_start_refresh:
-                if time_until_expiry < 0:
+                if time_until_expiry < 0 and not token_expired:
+                    token_expired = True
                     self.log.error("Token has expired. Some requests may have failed!")
-                    if time_until_expiry < -max_time_to_keep_attempting_refresh:
-                        self.log.critical("Giving up on refreshing token - exiting!")
-                        break
+                    # if token expires, keycloak service is down, or internet connection
+                    # of the node is down. We keep on trying to refresh the token but
+                    # not too often.
+                    interval_between_refreshes = 60  # 1 minute
                 try:
-                    # For service accounts, we need to get a new token instead of
-                    # refreshing
                     self.obtain_new_token()
+                    token_expired = False
                 except Exception as e:
                     self.log.error("Getting new token failed: %s", e)
                     # sleep for a bit and then try again. The server might be
