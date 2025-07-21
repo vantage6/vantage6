@@ -144,7 +144,7 @@ Central function
 
 .. code:: python
 
-  from vantage6.algorithm.tools.decorators import algorithm_client
+  from vantage6.algorithm.decorator.algorithm_client import algorithm_client
   from vantage6.algorithm.client import AlgorithmClient
   # info and error can be used to log algorithm events
   from vantage6.algorithm.tools.util import info, error

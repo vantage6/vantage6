@@ -158,7 +158,7 @@ def dataframe(*sources: str | int) -> callable:
             return func(*args, **kwargs)
 
         # set attribute that this function is wrapped in a data decorator
-        decorator.vantage6_decorated_type = DecoratorType.DATAFRAME
+        decorator.vantage6_dataframe_decorated = True
         return decorator
 
     return protection_decorator

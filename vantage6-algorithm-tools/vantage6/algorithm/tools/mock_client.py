@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 from typing import Any
 from importlib import import_module
@@ -9,7 +10,7 @@ import pandas as pd
 
 from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
-from vantage6.algorithm.tools.wrappers import load_data
+from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 from vantage6.algorithm.tools.util import info
 
 module_name = __name__.split(".")[1]
@@ -109,9 +110,9 @@ class MockAlgorithmClient:
                 if isinstance(db, pd.DataFrame) or isinstance(db, dict):
                     df = db
                 else:
-                    df = load_data(
+                    df = load_mock_data(
                         database_uri=dataset.get("database"),
-                        db_type=dataset.get("db_type"),
+                        database_type=dataset.get("db_type"),
                         query=dataset.get("query"),
                         sheet_name=dataset.get("sheet_name"),
                     )
@@ -240,15 +241,9 @@ class MockAlgorithmClient:
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
-                if (
-                    getattr(method_fn, "vantage6_decorated_type", None)
-                    == DecoratorType.ALGORITHM_CLIENT
-                ):
+                if getattr(method_fn, "vantage6_algorithm_client_decorated", False):
                     mocked_kwargs["mock_client"] = client_copy
-                if (
-                    getattr(method_fn, "vantage6_decorated_type", None)
-                    == DecoratorType.DATAFRAME
-                ):
+                if getattr(method_fn, "vantage6_dataframe_decorated", False):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
@@ -275,9 +270,9 @@ class MockAlgorithmClient:
                 self.parent.runs.append(
                     {
                         "id": self.last_result_id,
-                        "started_at": "2021-01-01T00:00:00.000000",
-                        "assigned_at": "2021-01-01T00:00:00.000000",
-                        "finished_at": "2021-01-01T00:00:00.000000",
+                        "started_at": datetime.now().isoformat(),
+                        "assigned_at": datetime.now().isoformat(),
+                        "finished_at": datetime.now().isoformat(),
                         "log": "mock_log",
                         "ports": [],
                         "status": "completed",

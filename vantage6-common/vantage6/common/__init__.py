@@ -339,27 +339,6 @@ def is_ip_address(ip: str) -> bool:
         return False
 
 
-def get_database_config(databases: list, label: str) -> dict | None:
-    """Get database configuration from config file
-
-    Parameters
-    ----------
-    databases: list[dict]
-        List of database configurations
-    label: str
-        Label of database configuration to retrieve
-
-    Returns
-    -------
-    Dict | None
-        Database configuration, or None if not found
-    """
-    for database in databases:
-        if database["label"] == label:
-            return database
-    return None
-
-
 def generate_apikey() -> str:
     """Creates random api_key using uuid.
 

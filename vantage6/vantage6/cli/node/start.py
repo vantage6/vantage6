@@ -9,7 +9,8 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.cli.common.start import pull_infra_image
-from vantage6.common import warning, error, info, debug, get_database_config
+from vantage6.common import warning, error, info, debug
+from vantage6.common.dataclass import TaskDB
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -213,29 +214,25 @@ def cli_node_start(
 
     # only mount the DB if it is a file
     info("Setting up databases")
-    db_labels = [db["label"] for db in ctx.databases]
-    for label in db_labels:
+    dbs = [TaskDB.from_dict(db) for db in ctx.databases]
+    for db in dbs:
         # check that label contains only valid characters
-        if not label.isidentifier():
+        if not db.label.isidentifier():
             error(
-                f"Database label {Fore.RED}{label}{Style.RESET_ALL} contains"
+                f"Database label {Fore.RED}{db.label}{Style.RESET_ALL} contains"
                 " invalid characters. Only letters, numbers, and underscores"
                 " are allowed, and it cannot start with a number."
             )
             exit(1)
 
-        db_config = get_database_config(ctx.databases, label)
-        uri = db_config["uri"]
-        db_type = db_config["type"]
-
         info(
-            f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
-            f"{Fore.GREEN}{label}:{uri}{Style.RESET_ALL}"
+            f"  Processing {Fore.GREEN}{db.type}{Style.RESET_ALL} database "
+            f"{Fore.GREEN}{db.label}:{db.uri}{Style.RESET_ALL}"
         )
-        label_capitals = label.upper()
+        label_capitals = db.label.upper()
 
         try:
-            db_file_exists = Path(uri).exists()
+            db_file_exists = Path(db.uri).exists()
         except Exception:
             # If the database uri cannot be parsed, it is definitely not a
             # file. In case of http servers or sql servers, checking the path
@@ -243,22 +240,22 @@ def cli_node_start(
             # we catch all exceptions here.
             db_file_exists = False
 
-        if db_type in ["folder", "csv", "parquet", "excel"] and not db_file_exists:
+        if db.type.is_file_based() and not db_file_exists:
             error(
-                f"Database {Fore.RED}{uri}{Style.RESET_ALL} not found. Databases of "
-                f"type '{db_type}' must be present on the harddrive. Please update "
+                f"Database {Fore.RED}{db.uri}{Style.RESET_ALL} not found. Databases of "
+                f"type '{db.type}' must be present on the harddrive. Please update "
                 "your node configuration file."
             )
             exit(1)
 
         if not db_file_exists and not force_db_mount:
             debug("  - non file-based database added")
-            env[f"{label_capitals}_DATABASE_URI"] = uri
+            env[f"{label_capitals}_DATABASE_URI"] = db.uri
         else:
             debug("  - file-based database added")
-            suffix = Path(uri).suffix
-            env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
-            mounts.append((f"/mnt/{label}{suffix}", str(uri)))
+            suffix = Path(db.uri).suffix
+            env[f"{label_capitals}_DATABASE_URI"] = f"{db.label}{suffix}"
+            mounts.append((f"/mnt/{db.label}{suffix}", str(db.uri)))
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = (

@@ -14,13 +14,15 @@ from vantage6.common import (
 )
 from vantage6.common.globals import APPNAME
 
-from vantage6.common.globals import VPN_CONFIG_FILE
-
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.utils import check_if_docker_daemon_is_running, remove_file
 from vantage6.cli.node.common import select_node, find_running_node_names
+
+# TODO v5+ remove this - just a dummy to prevent import issues from v4 CLI
+# from vantage6.common.globals import VPN_CONFIG_FILE
+VPN_CONFIG_FILE = "vpn.conf"
 
 
 @click.command()
