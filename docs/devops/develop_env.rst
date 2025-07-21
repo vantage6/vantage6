@@ -10,6 +10,13 @@ The development environment is a `devspace <https://www.devspace.sh/>`_ environm
 that runs a local kubernetes environment with all the services that make up a vantage6
 infrastructure running in containers.
 
+.. warning::
+
+    If you are using Windows, you need to have the
+    `Windows Subsystem for Linux <https://learn.microsoft.com/en-us/windows/wsl/install>`_
+    (WSL) installed, and call the development environment from within WSL. The
+    development environment is not supported on Windows itself.
+
 Requirements
 ------------
 
@@ -26,7 +33,7 @@ You need to have the following installed:
 .. warning::
 
     If you are using WSL, it may not be possible to open a browser window to
-    authenticate from the command line. There are multiple ways to fix this. 
+    authenticate from the command line. There are multiple ways to fix this.
     `This StackOverflow question <https://superuser.com/questions/1262977/open-browser-in-host-system-from-windows-subsystem-for-linux>`_
     has some solutions.
 
@@ -43,14 +50,14 @@ To run the development environment for the first time, execute these commands:
 
     cd /path/to/vantage6/repository
 
-    # Recommended but optional: don't use the default kubernetes namespace. 
+    # Recommended but optional: don't use the default kubernetes namespace.
     kubectl config set-context --current --namespace=vantage6
 
     # Run the development environment
     devspace run start-dev
 
 The first time you run the development environment, you will be asked to enter a number
-of variables to configure the development environment. Take particular note of setting 
+of variables to configure the development environment. Take particular note of setting
 up the following variables:
 
   - ``HOST_URI``: this is the ip address of your host machine. If you are using Docker

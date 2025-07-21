@@ -76,6 +76,13 @@ pipelines:
   # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
   dev:
     run: |-
+      if ! command -v uname >/dev/null 2>&1; then
+        echo "--------------------------------"
+        echo "Error: This script must be run in a Unix-like shell (Bash/sh)."
+        echo "Windows OS is not supported! Please use WSL2 if you are on Windows."
+        echo "--------------------------------"
+        exit 1
+      fi
       dev/start.sh ${POPULATE_MARKER}
 
   populate:
