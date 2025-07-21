@@ -7,7 +7,6 @@ import os
 import base64
 import click
 import appdirs
-import ipaddress
 import typing
 import uuid
 
@@ -317,26 +316,6 @@ def get_config_path(dirs: appdirs.AppDirs, system_folders: bool = False) -> str:
         return config_dir
     else:
         return dirs.user_config_dir
-
-
-def is_ip_address(ip: str) -> bool:
-    """
-    Test if input IP address is a valid IP address
-
-    Parameters
-    ----------
-    ip: str
-        IP address to validate
-
-    Returns
-    -------
-    bool: whether or not IP address is valid
-    """
-    try:
-        _ = ipaddress.ip_address(ip)
-        return True
-    except Exception:
-        return False
 
 
 def generate_apikey() -> str:
