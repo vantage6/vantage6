@@ -302,7 +302,7 @@ class NodeClient(ClientBase):
         response = self.request(f"collaboration/{self.collaboration_id}")
         return response.get("encrypted") == 1
 
-    def set_task_start_time(self, id_: int) -> None:
+    def set_run_start_time(self, id_: int) -> None:
         """
         Sets the start time of the task at the central server.
 
