@@ -414,7 +414,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.study && this.studyForm.invalid) ||
       (this.availableSteps.function && this.functionForm.invalid) ||
       (this.availableSteps.database && this.databaseForm.invalid) ||
-      (this.availableSteps.dataframe && this.dataframeForm.invalid) ||
+      (this.availableSteps.dataframe && this.dataframeForm.invalid && this.shouldShowDataframeStep) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
     );
   }
