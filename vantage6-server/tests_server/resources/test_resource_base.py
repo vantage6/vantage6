@@ -15,7 +15,7 @@ from flask import Response as BaseResponse
 from flask.testing import FlaskClient
 from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from vantage6.backend.common.test_context import TestContext
 from vantage6.server.globals import PACKAGE_FOLDER
@@ -33,7 +33,6 @@ from vantage6.server.model import (
     Run,
     Rule,
 )
-
 
 # Generate a mock RSA key pair for testing
 MOCK_PRIVATE_KEY = rsa.generate_private_key(
@@ -84,21 +83,21 @@ class TestResourceBase(unittest.TestCase):
         os.environ["KEYCLOAK_ADMIN_CLIENT_SECRET"] = (
             "dummy-keycloak-admin-client-secret"
         )
-
-        # Mock the Keycloak public key fetch
-        with patch(
-            "vantage6.server.ServerApp._get_keycloak_public_key"
-        ) as mock_get_key:
+        # Patch Keycloak public key fetch and SocketIO background task
+        with (
+            patch("vantage6.server.ServerApp._get_keycloak_public_key") as mock_get_key,
+            patch.object(
+                SocketIO, "start_background_task"
+            ) as mock_start_background_task,
+            patch("vantage6.server.Metrics", MagicMock()),
+        ):
             mock_get_key.return_value = MOCK_PUBLIC_KEY_PEM.decode()
-            # create server instance. Patch the start_background_task method
-            # to prevent the server from starting a ping/pong thread that will
-            # prevent the tests from starting
-            with patch.object(SocketIO, "start_background_task"):
-                server = ServerApp(ctx)
-                # Configure JWT for container tokens
-                server.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
-                server.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM
-        cls.server = server
+            mock_start_background_task.return_value = None
+            server = ServerApp(ctx)
+            # Configure JWT for container tokens
+            server.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
+            server.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM
+            cls.server = server
 
         server.app.testing = True
         cls.app = server.app.test_client()
@@ -226,9 +225,10 @@ class TestResourceBase(unittest.TestCase):
             task.save()
 
         headers = self.login_node(node)
-        with patch("flask_jwt_extended.get_jwt") as mock_get_token, patch(
-            "flask_jwt_extended.get_jwt_identity"
-        ) as mock_get_identity:
+        with (
+            patch("flask_jwt_extended.get_jwt") as mock_get_token,
+            patch("flask_jwt_extended.get_jwt_identity") as mock_get_identity,
+        ):
             mock_get_token.return_value = {
                 "sub": node.keycloak_id,
                 "vantage6_client_type": "node",
