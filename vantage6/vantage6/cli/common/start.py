@@ -33,7 +33,7 @@ from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 from vantage6.cli.utils import (
-    _validate_input,
+    validate_input_cmd_args,
     check_config_name_allowed,
 )
 
@@ -344,16 +344,16 @@ def helm_install(
         The Kubernetes namespace to use.
     """
     # Input validation
-    _validate_input(release_name, "release name")
-    _validate_input(chart_name, "chart name")
+    validate_input_cmd_args(release_name, "release name")
+    validate_input_cmd_args(chart_name, "chart name")
 
     values_file = Path(values_file) if values_file else None
     if values_file and not values_file.is_file():
         error(f"Helm chart values file does not exist: {values_file}")
         return
 
-    _validate_input(context, "context name", allow_none=True)
-    _validate_input(namespace, "namespace name", allow_none=True)
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
     # Create the command
     command = [
@@ -419,7 +419,7 @@ def start_port_forward(
         The Kubernetes namespace to use.
     """
     # Input validation
-    _validate_input(service_name, "service name")
+    validate_input_cmd_args(service_name, "service name")
     if not isinstance(service_port, int) or service_port <= 0:
         error(f"Invalid service port: {service_port}. Must be a positive integer.")
         return
@@ -434,8 +434,8 @@ def start_port_forward(
         error(f"Invalid IP address: {ip}. Must be a valid IPv4 address or 'localhost'.")
         return
 
-    _validate_input(context, "context name", allow_none=True)
-    _validate_input(namespace, "namespace name", allow_none=True)
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
     # Check if the service is ready before starting port forwarding
     info(f"Waiting for service '{service_name}' to become ready...")
