@@ -1,6 +1,6 @@
 .. _smtp-server:
 
-SMTP server
+Mailserver
 ===========
 
 Some features of the server require an SMTP server to send emails. For example,
