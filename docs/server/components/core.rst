@@ -13,8 +13,6 @@ and the users.
 Communication with the vantage6 core is managed through a RESTful API and
 socketIO server.
 
-
-
 .. _server-configure:
 
 Configure
