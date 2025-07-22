@@ -3,20 +3,6 @@
 Deployment
 ==========
 
-Algorithm store
----------------
-
-.. _install-algostore:
-
-.. |instance-type| replace:: algorithm store
-.. |requirements-link| replace:: :ref:`requirements <algorithm-store-requirements>`
-.. |image| replace:: ``harbor2.vantage6.ai/infrastructure/algorithm-store``
-.. |image-old| replace:: ``harbor2.vantage6.ai/infrastructure/algorithm-store:<VERSION>``
-.. |deployment-link| replace:: :ref:`deployment <algorithm-store-deployment>`
-
-.. include:: ../common/install.rst
-
-
 .. _core-deployment:
 
 Core
@@ -257,3 +243,16 @@ of a docker-compose file that can be used to deploy the algorithm store.
         command: ["/bin/bash", "-c", "/vantage6/vantage6-algorithm-store/server.sh"]
 
 .. TODO How to deploy on Azure app service
+
+Algorithm store
+---------------
+
+.. _install-algostore:
+
+.. |instance-type| replace:: algorithm store
+.. |requirements-link| replace:: :ref:`requirements <algorithm-store-requirements>`
+.. |image| replace:: ``harbor2.vantage6.ai/infrastructure/algorithm-store``
+.. |image-old| replace:: ``harbor2.vantage6.ai/infrastructure/algorithm-store:<VERSION>``
+.. |deployment-link| replace:: :ref:`deployment <algorithm-store-deployment>`
+
+.. include:: ../common/install.rst
