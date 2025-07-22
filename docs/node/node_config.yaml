@@ -296,7 +296,11 @@ share_config: true
 # NOTE: It's recommented to set this to false when using real data
 share_algorithm_logs: false
 
-# Interval (in seconds) at which the node sends system metadata to the server.
-# This should align with the Prometheus scrape_interval to avoid stale data.
-report_interval_seconds: 45
+# Prometheus settings, for sending system metadata to the server.
+prometheus:
+  # Whether or not to enable Prometheus reporting. Default is false.
+  enabled: false
 
+  # Interval (in seconds) at which the node sends system metadata to the server.
+  # This should align with the Prometheus scrape_interval to avoid stale data.
+  report_interval_seconds: 45
