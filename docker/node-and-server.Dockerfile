@@ -16,8 +16,7 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 RUN apt update -y
 RUN apt upgrade -y
 
-# # Fix DB issue
-RUN apt install python-psycopg2 -y
+# Fix DB issue
 RUN pip install psycopg2-binary
 
 # copy source
