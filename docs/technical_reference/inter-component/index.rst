@@ -10,4 +10,3 @@ different vantage6 components.
 
    socket
    encryption
-   vpn

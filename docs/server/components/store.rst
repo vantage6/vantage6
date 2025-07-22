@@ -388,3 +388,5 @@ researchers) can only execute their actions after logging into vantage6. Note th
 user may fulfill several roles: a store
 manager may also be an algorithm reviewer. There are however some restrictions,
 that can be set up in the :ref:`algorithm store policies <algorithm-store-policies>`.
+
+.. include:: ./policies.rst
