@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bookworm
 
-LABEL version="4.11"
+LABEL version="4.12"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
 # slim bookworm does not have gcc installed
