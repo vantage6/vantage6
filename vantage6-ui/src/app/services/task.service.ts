@@ -37,22 +37,19 @@ export class TaskService {
     const task: Task = { ...result, init_org: undefined, init_user: undefined };
     await getLazyProperties(result, task, lazyProperties, this.apiService);
 
-    //Handle base64 input
+    //Handle base64 input arguments
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const input: any = this.getDecodedInput(task.runs[0].input);
-      // TODO this may not always true: what if different runs have different inputs?
-      if (input) {
-        task.input = {
-          parameters: input.kwargs
-            ? Object.keys(input.kwargs).map((key) => {
-                return {
-                  label: key,
-                  value: input.kwargs[key] || ''
-                };
-              })
-            : []
-        };
+      const arguments: any = this.getDecodedArguments(task.runs[0].arguments);
+      if (arguments) {
+        task.arguments = arguments
+          ? Object.keys(arguments).map((key) => {
+              return {
+                label: key,
+                value: arguments[key] || ''
+              };
+            })
+          : [];
       }
     }
     if (Array.isArray(task.results) && task.results.length > 0) {
@@ -118,22 +115,22 @@ export class TaskService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getDecodedInput(taskRunInput: string): any {
-    let decryptedInput = '';
+  private getDecodedArguments(taskRunArguments: string): any {
+    let decryptedArguments = '';
     const isEncrypted = this.chosenCollaborationService.isEncrypted();
     try {
-      decryptedInput = isEncrypted ? this.encryptionService.decryptData(taskRunInput) : atob(taskRunInput);
+      decryptedArguments = isEncrypted ? this.encryptionService.decryptData(taskRunArguments) : atob(taskRunArguments);
     } catch (error) {
-      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
+      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-arguments'));
       return;
     }
-    // decode input
-    let decodedInput;
+    // decode arguments
+    let decodedArguments;
     try {
-      decodedInput = JSON.parse(decryptedInput);
+      decodedArguments = JSON.parse(decryptedArguments);
     } catch (error) {
-      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-input'));
+      this.snackBarService.showMessage(this.translateService.instant('task.alert-failed-read-arguments'));
     }
-    return decodedInput;
+    return decodedArguments;
   }
 }

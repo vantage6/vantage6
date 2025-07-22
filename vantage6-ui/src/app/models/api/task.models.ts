@@ -61,7 +61,7 @@ export interface BaseTask {
   session: BaseLink;
   image: string;
   method: string;
-  input: TaskInput;
+  arguments: object;
   init_org: BaseLink;
   init_user: BaseLink;
   algorithm_store?: BaseLink;
@@ -81,7 +81,7 @@ export interface Task {
   session: BaseLink;
   image: string;
   method: string;
-  input: TaskInput;
+  arguments: TaskParameter[];
   init_org?: BaseOrganization;
   init_user?: BaseUser;
   runs: TaskRun[];
@@ -105,7 +105,7 @@ export interface TaskDBOutput {
 export interface TaskRun {
   id: number;
   status: TaskStatus;
-  input: string;
+  arguments: TaskParameter[];
   node: RunNode;
   action: AlgorithmStepType;
   assigned_at: string;
@@ -122,10 +122,6 @@ export interface RunNode {
   id: number;
   name: string;
   status?: NodeStatus | null;
-}
-
-interface TaskInput {
-  parameters: TaskParameter[];
 }
 
 export interface TaskParameter {
@@ -165,9 +161,5 @@ export interface KillTask {
 
 export interface CreateTaskOrganization {
   id: number;
-  input: string;
-}
-
-export interface CreateTaskInput {
-  kwargs: object;
+  arguments: string;
 }

@@ -95,8 +95,9 @@ the environment variables described in the :ref:`algo-env-vars` section.
 The available file mounts are:
 
 *Input*
-    The input file contains the user defined input. The user specifies this
-    when a task is created.
+    The input file contains the user defined input. Usually, this consists of the
+    algorithm method that should be called together with its arguments. The user
+    specifies this when a task is created.
 
 *Output*
     The algorithm writes its output to this file. When the docker

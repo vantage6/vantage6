@@ -143,7 +143,7 @@ class ResultSchema(HATEOASModelSchema):
             "status",
             "organization",
             "log",
-            "input",
+            "arguments",
         )
 
     run = fields.Method("make_run_link")

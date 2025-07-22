@@ -377,12 +377,12 @@ class ServerApp(Vantage6App):
         # NOTE/TODO: this is a very simple implementation, horizonal scaling is
         # not being taken into account. We'd probably only need one worker per
         # database, not per server instance (for example).
-        include_input = self.ctx.config.get("runs_data_cleanup_include_input", False)
+        include_args = self.ctx.config.get("runs_data_cleanup_include_args", False)
         while True:
             try:
                 cleanup.cleanup_runs_data(
                     self.ctx.config.get("runs_data_cleanup_days"),
-                    include_input=include_input,
+                    include_args=include_args,
                 )
             except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")

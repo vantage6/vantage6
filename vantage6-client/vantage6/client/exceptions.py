@@ -1,6 +1,6 @@
 class DeserializationException(Exception):
     """
-    Exception raised when deserialization of algorithm input or result fails.
+    Exception raised when deserialization of algorithm input arguments or result fails.
     """
 
     pass

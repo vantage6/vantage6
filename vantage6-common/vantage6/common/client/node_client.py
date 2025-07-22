@@ -212,7 +212,7 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                run["input"] = self.parent._decrypt_input(run["input"])
+                run["arguments"] = self.parent._decrypt_data(run["arguments"])
 
             return run_data
 

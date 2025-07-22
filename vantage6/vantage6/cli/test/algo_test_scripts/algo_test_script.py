@@ -1,13 +1,13 @@
 import logging
-import algo_test_arguments as arguments
 import json
 import sys
 
-import vantage6.common.task_status as task_status
+from vantage6.common.enum import TaskStatus
 
 from vantage6.client import Client
 from vantage6.common import error
 from vantage6.common.globals import Ports
+import vantage6.cli.test.algo_test_scripts.algo_test_arguments as arguments
 
 
 def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algorithm"):
@@ -33,9 +33,9 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
 
     try:
         # check if the task has failed
-        assert not task_status.has_task_failed(client.task.get(task_id)["status"])
+        assert client.task.get(task_id)["status"] != TaskStatus.FAILED.value
 
-        logging.info(f"Task for {algo_name} completed successfully.")
+        logging.info("Task for %s completed successfully.", algo_name)
 
     except AssertionError:
         error(
@@ -56,9 +56,12 @@ def run_test(custom_args: dict | None = None):
         the arguments from the `arguments` module will be used.
     """
     # Create a client and authenticate
-    client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
+    client = Client(
+        server_url=f"http://localhost:{Ports.DEV_SERVER.value}/api",
+        auth_url="http://localhost:8080",
+    )
     try:
-        client.authenticate("dev_admin", "password")
+        client.authenticate()
     except ConnectionError:
         error(
             "Could not connect to the server. Please check if a dev network is running."

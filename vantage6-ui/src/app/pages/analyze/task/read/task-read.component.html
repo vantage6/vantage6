@@ -92,7 +92,7 @@
     </mat-card-header>
     <mat-card-content>
       <div *ngFor="let result of task.results">
-        <ng-container *ngIf="result.decoded_result && task.input; else resultDownload">
+        <ng-container *ngIf="result.decoded_result && task.arguments; else resultDownload">
           <b *ngIf="function?.step_type !== algorithmStepType.CentralCompute">{{ getRunForResult(result.id)?.node?.name }}</b>
           <app-visualize-result
             [result]="result.decoded_result"
@@ -108,7 +108,8 @@
         <ng-template #resultDownload>
           <ng-container *ngIf="result.result">
             <div *ngIf="result.decoded_result">
-              <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-input-visualization' | translate }}"> </app-alert>
+              <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-arguments-visualization' | translate }}">
+              </app-alert>
               <p>{{ displayTextResult(result.decoded_result) }}</p>
             </div>
             <app-alert *ngIf="!result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
@@ -196,24 +197,24 @@
           <b>{{ "task.algorithm" | translate }}</b>
           <span>{{ algorithm?.name || "-" }}</span>
         </div>
-        <div class="data-list__item" *ngIf="task.input">
+        <div class="data-list__item" *ngIf="task.arguments">
           <b>{{ "task.function" | translate }}</b>
           <span>{{ (function?.display_name ?? task.method) || "-" }}</span>
         </div>
       </div>
-      <ng-container *ngIf="task.input?.parameters">
+      <ng-container *ngIf="task.arguments">
         <h4 class="data-list__header">{{ "task.parameters" | translate }}</h4>
         <div class="data-list">
-          <div class="data-list__item" *ngFor="let parameter of task?.input?.parameters">
+          <div class="data-list__item" *ngFor="let parameter of task?.arguments">
             <b>{{ getParameterDisplayName(parameter) }}</b>
             <span>{{ getParameterValueAsString(parameter) }}</span>
           </div>
         </div>
       </ng-container>
-      <app-alert *ngIf="!task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
+      <app-alert *ngIf="!task.arguments" label="{{ 'task.alert-failed-read-arguments-function' | translate }}"> </app-alert>
       <br />
-      <button *ngIf="!task.input && task.runs[0]?.input" mat-flat-button color="primary" (click)="downloadInput(task.runs[0])">
-        {{ "task-read.card-results.actions.download-input" | translate }}
+      <button *ngIf="!task.arguments && task.runs[0]?.arguments" mat-flat-button color="primary" (click)="downloadArguments(task.runs[0])">
+        {{ "task-read.card-results.actions.download-arguments" | translate }}
       </button>
     </mat-card-content>
   </mat-card>

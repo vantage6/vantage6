@@ -122,8 +122,8 @@ class DiagnosticRunner:
             description="VPN Diagnostic test",
             image=DIAGNOSTICS_IMAGE,
             method="vpn_features",
-            input_={
-                "kwargs": {"other_nodes": self.organization_ids},
+            arguments={
+                "other_nodes": self.organization_ids,
             },
             organizations=self.organization_ids,
         )

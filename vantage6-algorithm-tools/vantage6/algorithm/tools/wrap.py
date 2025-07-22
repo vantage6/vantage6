@@ -23,14 +23,11 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     Data is received in the form of files, whose location should be
     specified in the following environment variables:
 
-    - ``INPUT_FILE``: input arguments for the algorithm. This file should be
+    - ``INPUT_FILE``: contains function arguments for the algorithm. This file should be
       encoded in JSON format.
     - ``OUTPUT_FILE``: location where the results of the algorithm should
       be stored
     - ``DATABASE_URI``: uri of the database that the user requested
-
-    The wrapper expects the input file to be a json file. Any other file
-    format will result in an error.
 
     Parameters
     ----------
@@ -58,14 +55,17 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     # read input from the mounted input file.
     input_file = os.environ[ContainerEnvNames.INPUT_FILE.value]
 
-    info(f"Reading input file {input_file}")
-    input_data = load_input(input_file)
+    info(f"Reading function arguments from file {input_file}")
+    arguments = load_input(input_file)
 
     # make the actual call to the method/function
     method = os.environ[ContainerEnvNames.ALGORITHM_METHOD.value]
     info("Dispatching ...")
     output = _run_algorithm_method(
-        method=method, input_data=input_data, module=module, log_traceback=log_traceback
+        method=method,
+        arguments=arguments,
+        module=module,
+        log_traceback=log_traceback,
     )
 
     # write output from the method to mounted output file. Which will be
@@ -79,7 +79,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
 def _run_algorithm_method(
     method: str,
     module: str,
-    input_data: dict | None = None,
+    arguments: dict | None = None,
     log_traceback: bool = True,
 ) -> Any:
     """
@@ -91,9 +91,8 @@ def _run_algorithm_method(
         The name of the method that should be called.
     module : str
         The module that contains the algorithm.
-    input_data : dict | None
-        The input data that is passed to the algorithm. This contains the
-        parameters for the method.
+    arguments : dict | None
+        Arguments for the algorithm method.
     log_traceback: bool, optional
         Whether to print the full error message from algorithms or not, by
         default False. Algorithm developers should set this to False if
@@ -134,13 +133,9 @@ def _run_algorithm_method(
         )
         exit(1)
 
-    # get the args and kwargs input for this function.
-    args = input_data.get("args", [])
-    kwargs = input_data.get("kwargs", {})
-
     # try to run the method
     try:
-        result = method_fn(*args, **kwargs)
+        result = method_fn(**arguments)
     except Exception as exc:
         error(f"Error encountered while calling {method}: {exc}")
         if log_traceback:
@@ -150,19 +145,19 @@ def _run_algorithm_method(
     return result
 
 
-def load_input(input_file: str) -> Any:
+def load_input(input_file: str) -> dict:
     """
-    Load the input from the input file.
+    Load the function arguments from the input file.
 
     Parameters
     ----------
     input_file : str
-        File containing the input
+        File containing the input function arguments
 
     Returns
     -------
-    input_data : Any
-        Input data for the algorithm
+    arguments : dict
+        Arguments for the algorithm method
 
     Raises
     ------
@@ -171,15 +166,15 @@ def load_input(input_file: str) -> Any:
     """
     with open(input_file, "rb") as fp:
         try:
-            input_data = deserialization.deserialize(fp)
+            arguments = deserialization.deserialize(fp)
         except DeserializationError as exc:
             raise DeserializationError("Could not deserialize input") from exc
         except json.decoder.JSONDecodeError as exc:
-            msg = "Algorithm input file does not contain vaild JSON data!"
+            msg = "Algorithm input arguments file does not contain vaild JSON data!"
             error(msg)
-            error("Please check that the task input is JSON serializable.")
+            error("Please check that the task input arguments are JSON serializable.")
             raise DeserializationError(msg) from exc
-    return input_data
+    return arguments
 
 
 def _write_output(output: Any, output_file: str) -> None:

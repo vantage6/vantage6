@@ -220,7 +220,8 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       if (this.task.algorithm_store) {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
-        // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
+        // Please note, the function cannot be set if the input arguments cannot be decoded. This will result in NO
+        // visualization and information about the function.
         this.function = this.algorithm?.functions.find((_) => _.name === this.task?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
@@ -438,10 +439,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return parameter_str;
   }
 
-  downloadInput(run: TaskRun): void {
-    const filename = `vantage6_input_${run.id}.txt`;
-    const textInput = run.input || '';
-    this.fileService.downloadTxtFile(textInput, filename);
+  downloadArguments(run: TaskRun): void {
+    const filename = `vantage6_arguments_${run.id}.txt`;
+    const textArguments = JSON.stringify(run.arguments) || '';
+    this.fileService.downloadTxtFile(textArguments, filename);
   }
 
   downloadResult(result: TaskResult): void {

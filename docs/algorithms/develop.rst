@@ -154,10 +154,9 @@ Central function
       # Run partial function.
       task = client.task.create(
          method="my_partial_function",
-         input_={
-            # Method name should match the name of the partial function used/created
-            "args": args,
-            "kwargs": kwargs
+         arguments={
+            "function_argument_1": "value_1",
+            "function_argument_2": "value_2"
          },
          organizations=[1, 2]
       )
@@ -309,10 +308,9 @@ execution result. For example, to test the average algorithm, the script could l
         client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
         client.authenticate("dev_admin", "password")
 
-        input_ = {
-            "method": "central_average",
-            "args": [],
-            "kwargs": {"column_name": "Age"},
+        method = "central_average"
+        arguments = {
+            "column_name": "Age",
         }
 
         # create the task
@@ -322,7 +320,8 @@ execution result. For example, to test the average algorithm, the script could l
             name="test_average_task",
             image="harbor2.vantage6.ai/demo/average",
             description="",
-            input_=input_,
+            method=method,
+            arguments=arguments,
             databases=[{"label": "olympic_athletes"}],
         )
 
@@ -340,7 +339,7 @@ directly to the command:
 
 .. code:: bash
 
-   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'input_': {'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
+   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'arguments': {'column_name': 'my_column'}, 'databases': [{'label': 'db_label'}]}"
 
 After running, the network will be stopped and removed unless you specify otherwise by setting
 ``--keep true`` in the command.

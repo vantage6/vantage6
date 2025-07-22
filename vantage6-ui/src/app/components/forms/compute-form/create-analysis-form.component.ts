@@ -25,7 +25,7 @@ import {
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { CreateTaskInput, Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
+import { Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
 import { Router, RouterLink } from '@angular/router';
@@ -43,7 +43,6 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
-import { environment } from 'src/environments/environment';
 import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
@@ -335,7 +334,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
 
     // set parameter step
-    for (const parameter of this.repeatedTask.input?.parameters || []) {
+    for (const parameter of this.repeatedTask.arguments || []) {
       const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
       // check if value is an object
       if (!argument) {
@@ -351,7 +350,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         const controls = this.getFormArrayControls(argument);
         let isFirst = true;
         for (const value of parameter.value) {
-          if (!isFirst) controls.push(this.getNewControlForInputList(argument));
+          if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
           controls[controls.length - 1].setValue(value);
           isFirst = false;
         }
@@ -435,10 +434,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   async submitTask(): Promise<void> {
-    // setup input for task. Parse string to JSON if needed
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // setup arguments for task. Parse string to JSON if needed
     if (!this.function) return;
-    const kwargs: any = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const arguments: any = {};
     this.function.arguments.forEach((arg) => {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
@@ -446,34 +445,31 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
           if (arg.is_frontend_only || (arg.has_default_value && value === null)) {
             return; // note that within .forEach, return is like continue
           } else if (arg.type === ArgumentType.Json) {
-            kwargs[arg.name] = JSON.parse(value);
+            arguments[arg.name] = JSON.parse(value);
           } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
-            kwargs[arg.name] = Number(value);
+            arguments[arg.name] = Number(value);
           } else if (
             arg.type === ArgumentType.FloatList ||
             arg.type === ArgumentType.IntegerList ||
             arg.type === ArgumentType.OrganizationList
           ) {
-            kwargs[arg.name] = value.map((_: string) => Number(_));
+            arguments[arg.name] = value.map((_: string) => Number(_));
           } else {
-            kwargs[arg.name] = value;
+            arguments[arg.name] = value;
           }
         }
       });
     });
-    const input: CreateTaskInput = {
-      kwargs: kwargs
-    };
 
     const selectedOrganizations = Array.isArray(this.functionForm.controls.organizationIDs.value)
       ? this.functionForm.controls.organizationIDs.value
       : [this.functionForm.controls.organizationIDs.value];
-    // encrypt the input for each organization
-    const inputPerOrg: { [key: string]: string } = {};
-    const inputStringified = btoa(JSON.stringify(input)) || '';
+    // encrypt the arguments for each organization
+    const argumentsPerOrg: { [key: string]: string } = {};
+    const argumentsStringified = btoa(JSON.stringify(arguments)) || '';
     for (const organizationID of selectedOrganizations) {
-      const org_input = await this.encryptionService.encryptData(inputStringified, Number(organizationID));
-      inputPerOrg[organizationID] = org_input;
+      const org_arguments = await this.encryptionService.encryptData(argumentsStringified, Number(organizationID));
+      argumentsPerOrg[organizationID] = org_arguments;
     }
 
     let image = this.algorithm?.image || '';
@@ -493,7 +489,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),
-          input: inputPerOrg[organizationID] || ''
+          arguments: argumentsPerOrg[organizationID] || ''
         };
       })
     };
@@ -621,7 +617,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   addInputFieldForArg(argument: Argument): void {
-    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForInputList(argument));
+    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
   }
 
   removeInputFieldForArg(argument: Argument, index: number): void {
@@ -630,7 +626,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      const initialControl = argument.has_default_value ? [] : [this.getNewControlForInputList(argument)];
+      const initialControl = argument.has_default_value ? [] : [this.getNewControlForArgumentList(argument)];
       this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
@@ -640,7 +636,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction) || false;
   }
 
-  private getNewControlForInputList(argument: Argument): AbstractControl {
+  private getNewControlForArgumentList(argument: Argument): AbstractControl {
     if (argument.type === this.argumentType.IntegerList) {
       return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);
     } else if (argument.type === this.argumentType.FloatList) {

@@ -33,12 +33,10 @@ from vantage6.node.globals import (
     ENV_VARS_NOT_SETTABLE_BY_NODE,
     DEFAULT_PROXY_SERVER_PORT,
     DATABASE_BASE_PATH,
-    TASK_FILES_ROOT,
     JOB_POD_OUTPUT_PATH,
     JOB_POD_INPUT_PATH,
     JOB_POD_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
-    TASK_START_TIMEOUT_SECONDS,
     K8S_EVENT_STREAM_LOOP_TIMEOUT,
 )
 from vantage6.node.util import get_parent_id
@@ -317,7 +315,7 @@ class ContainerManager:
         run_id: int,
         task_info: dict,
         image: str,
-        docker_input: bytes,
+        function_arguments: bytes,
         session_id: int,
         token: str,
         databases_to_use: list[dict],
@@ -334,8 +332,8 @@ class ContainerManager:
             Dictionary with task information *** Includes parent-algorithm id
         image: str
             Docker image name
-        docker_input: bytes
-            Input that can be read by docker container
+        function_arguments: bytes
+            Base64-encoded arguments that can be read by the function
         session_id: int
             ID of the session
         token: str
@@ -394,7 +392,7 @@ class ContainerManager:
         try:
             _volumes, _volume_mounts, env_vars, secrets = self._create_volume_mounts(
                 run_io=run_io,
-                docker_input=docker_input,
+                function_arguments=function_arguments,
                 databases_to_use=databases_to_use,
             )
         except PermanentAlgorithmStartFail as e:
@@ -688,7 +686,7 @@ class ContainerManager:
     def _create_volume_mounts(
         self,
         run_io: RunIO,
-        docker_input: bytes,
+        function_arguments: bytes,
         databases_to_use: list[dict],
     ) -> Tuple[
         list[k8s_client.V1Volume],
@@ -703,8 +701,8 @@ class ContainerManager:
         ----------
         run_io: RunIO
             RunIO object that contains information about the run
-        docker_input: bytes
-            Input that can be read by the algorithm container
+        function_arguments: bytes
+            Base64-encoded arguments that can be read by the function
         databases_to_use: list[dict]
             Metadata of the databases to use.
 
@@ -738,7 +736,7 @@ class ContainerManager:
 
         # Create algorithm's input and output files before creating volume mounts with
         # them (relative to the node's file system: POD or host)
-        input_file_path, output_file_path = run_io.create_files(docker_input, b"")
+        input_file_path, output_file_path = run_io.create_files(function_arguments, b"")
 
         # Create the volumes and corresponding volume mounts for the input and output
         # files.

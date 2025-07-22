@@ -83,8 +83,8 @@ new user:
    #        Docker image name which contains the algorithm
    #    description : str
    #        Human readable description
-   #    input : dict
-   #        Algorithm input
+   #    arguments : dict
+   #        Arguments for the algorithm method
    #    database: str, optional
    #        Name of the database to use. This should match the key
    #        in the node configuration files. If not specified the
@@ -409,8 +409,8 @@ us create a task that runs the central part of the
 
 .. code:: python
 
-   input_ = {
-       'kwargs': {'column_name': 'age'}
+   arguments = {
+       'column_name': 'age'
    }
 
    average_task = client.task.create(
@@ -420,13 +420,13 @@ us create a task that runs the central part of the
       image="harbor2.vantage6.ai/demo/average",
       description='',
       method='central_average',
-      input_=input_,
+      arguments=arguments,
       databases=[
          {'label': 'default'}
       ]
    )
 
-Note that the ``kwargs`` we specified in the ``input_`` are specific to
+Note that the ``arguments`` we defined are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
 defined, and will compute the average over the column with that name.
 Furthermore, note that here we created a task for collaboration with id
@@ -462,8 +462,8 @@ central part of the algorithm will normally do:
 
 .. code:: python
 
-   input_ = {
-       'kwargs': {'column_name': 'age'},
+   arguments = {
+       'column_name': 'age'
    }
 
    average_task = client.task.create(
@@ -473,7 +473,7 @@ central part of the algorithm will normally do:
       image="harbor2.vantage6.ai/demo/average",
       description='',
       method='partial_average',
-      input_=input_
+      arguments=arguments
    )
 
 Note that when running the partial algorithm, you should run it on all organizations

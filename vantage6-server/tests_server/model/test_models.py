@@ -219,7 +219,7 @@ class TestRunModel(TestModelBase):
         org = Organization(name=str(uuid.uuid4()))
         org.save()
         task = Task(name="unit_task")
-        run = Run(task=task, organization=org, input="something")
+        run = Run(task=task, organization=org, arguments="something")
         run.save()
         self.assertEqual(run, run)
 

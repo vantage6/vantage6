@@ -1,14 +1,14 @@
 """Encryption between organizations
 
-Module to provide async encrpytion between organizations. All input and
+Module to provide async encrpytion between organizations. All input arguments and
 result fields should be encrypted when communicating to the central
 server.
 
-All incomming messages (input/results) should be encrypted using the
+All incomming messages (input arguments/results) should be encrypted using the
 public key of this organization. This way we can decrypt them using our
 private key.
 
-In the case we are sending messages (input/results) we need to encrypt
+In the case we are sending messages (input arguments/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
 """

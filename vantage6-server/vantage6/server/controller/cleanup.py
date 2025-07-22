@@ -11,9 +11,9 @@ module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
-def cleanup_runs_data(days: int, include_input: bool = False):
+def cleanup_runs_data(days: int, include_args: bool = False):
     """
-    Clear the `result` and (optionally) `input` field for `Run` instances older
+    Clear the `result` and (optionally) `arguments` field for `Run` instances older
     than the specified number of days.
 
     Parameters
@@ -42,14 +42,14 @@ def cleanup_runs_data(days: int, include_input: bool = False):
             ).all()
             for run in runs:
                 run.result = ""
-                if include_input:
-                    run.input = ""
+                if include_args:
+                    run.arguments = ""
                 run.cleanup_at = datetime.now(timezone.utc)
-                log.info(f"Cleared result for Run ID {run.id}.")
+                log.info("Cleared result for Run ID %s.", run.id)
 
         log.info(
             "Cleanup job completed successfully, deleted %d old run results.", len(runs)
         )
     except Exception as e:
-        log.error(f"Failed to cleanup old run results: {e}")
+        log.error("Failed to cleanup old run results: %s", e)
         raise

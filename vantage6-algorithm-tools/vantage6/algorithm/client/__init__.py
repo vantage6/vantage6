@@ -325,8 +325,8 @@ class AlgorithmClient(ClientBase):
 
         def create(
             self,
-            input_: dict,
             method: str,
+            arguments: dict | None = None,
             organizations: list[int] = None,
             name: str = "subtask",
             description: str = None,
@@ -340,11 +340,11 @@ class AlgorithmClient(ClientBase):
 
             Parameters
             ----------
-            input_ : dict
-                Input to the task. This dictionary usually contains the algorithm method
-                to call and the arguments to pass to the method.
             method: str
                 The name of the method (from the algorithm's image) to be executed
+            arguments: dict | None
+                Arguments for the algorithm method. The dictionary should contain
+                the same keys as the arguments of the algorithm method.
             organizations : list[int]
                 List of organization IDs that should execute the task.
             name: str, optional
@@ -357,6 +357,8 @@ class AlgorithmClient(ClientBase):
             dict
                 Dictionary containing information on the created task
             """
+            if arguments is None:
+                arguments = {}
             if not organizations:
                 organizations = []
             self.parent.log.debug(f"Creating new subtask for {organizations}")
@@ -365,12 +367,14 @@ class AlgorithmClient(ClientBase):
                 description or f"task from container on node_id={self.parent.node_id}"
             )
 
-            # serializing input. Note that the input is not encrypted here, but
-            # in the proxy server (self.parent.request())
-            serialized_input = bytes_to_base64s(serialize(input_))
+            # serializing algorithm arguments. Note that the arguments are not encrypted
+            # here, but in the proxy server (self.parent.request())
+            serialized_arguments = bytes_to_base64s(serialize(arguments))
             organization_json_list = []
             for org_id in organizations:
-                organization_json_list.append({"id": org_id, "input": serialized_input})
+                organization_json_list.append(
+                    {"id": org_id, "arguments": serialized_arguments}
+                )
 
             json_body = {
                 "name": name,
