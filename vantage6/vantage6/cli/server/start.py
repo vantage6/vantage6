@@ -153,9 +153,9 @@ def cli_server_start(
     ):
         info("Starting Prometheus container")
         _start_prometheus(ctx, prometheus_image, server_network_mgr)
-    elif ctx.config.get("prometheus"):
+    elif ctx.config.get("prometheus", {}).get("enabled"):
         info(
-            "Prometheus is provided in the config file as external service. "
+            "Prometheus is enabled but is set not to be started by vantage6. "
             "Assuming this service is up and running."
         )
     else:
