@@ -56,7 +56,6 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
   algorithm: Algorithm | null = null;
   reviews: StoreReview[] = [];
   reviewers: StoreUser[] = [];
-  requestedBy: StoreUser | null = null;
   developer: StoreUser | null = null;
   loggedInUser: BaseUser | null = null;
   store: AlgorithmStore | null = null;
