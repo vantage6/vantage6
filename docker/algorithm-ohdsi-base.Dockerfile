@@ -20,7 +20,7 @@ RUN apt-get install -y build-essential libcurl4-gnutls-dev libxml2-dev \
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key \
                             '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7'
 RUN add-apt-repository \
-    'deb http://cloud.r-project.org/bin/linux/debian bullseye-cran40/'
+    'deb http://cloud.r-project.org/bin/linux/debian bookworm-cran40/'
 
 RUN apt-get update
 RUN apt-get install -y r-base

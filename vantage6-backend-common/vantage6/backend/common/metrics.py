@@ -2,6 +2,8 @@ import logging
 from typing import Any, Type
 from prometheus_client import Gauge, start_http_server
 
+log = logging.getLogger(__name__)
+
 
 class Metric:
     """
@@ -117,9 +119,9 @@ def start_prometheus_exporter(port: int = 9100) -> None:
     """
     Start the Prometheus exporter to expose metrics.
     """
-    logging.info("Initializing Prometheus exporter...")
+    log.info("Initializing Prometheus exporter...")
     try:
         start_http_server(port)
-        logging.info(f"Prometheus exporter started on port {port}")
+        log.info("Prometheus exporter started on port %s", port)
     except Exception as e:
-        logging.error(f"Failed to start Prometheus exporter: {e}")
+        log.error("Failed to start Prometheus exporter: %s", e)
