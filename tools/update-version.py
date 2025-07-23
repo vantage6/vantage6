@@ -189,6 +189,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
         Path("../charts/node/Chart.yaml"),
         Path("../charts/store/Chart.yaml"),
         Path("../charts/server/Chart.yaml"),
+        Path("../charts/auth/Chart.yaml"),
     ]
     if spec == "final":
         new_version = version
