@@ -2,8 +2,8 @@ apiVersion: v2
 name: auth
 description: A Helm chart to deploy a keycloak server to authenticate vantage6 users and nodes
 type: application
-version: "5.0.0-a.23"
-appVersion: "5.0.0-a.23"
+version: "5.0.0-a.24"
+appVersion: "5.0.0-a.24"
 dependencies:
   - name: keycloak
     version: "5.0.0-a.23"
