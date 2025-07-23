@@ -1,0 +1,62 @@
+name: azure-development
+services:
+  ui:
+    image: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+    ports:
+      - "8000:80"
+    environment:
+      - SERVER_URL=http://localhost:7601
+      - API_PATH=/api
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: "azurite"
+    hostname: azurite
+    restart: always
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite_data:/data
+  azurite-init:
+    image: mcr.microsoft.com/azure-cli
+    depends_on:
+      - azurite
+    entrypoint: >
+      /bin/sh -c "
+      echo Waiting for Azurite...;
+      sleep 3;
+      az storage container create --name test-container --connection-string 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;';
+      "
+  vantage6-server:
+    build:
+      context: .
+      dockerfile: ./docker/node-and-server.Dockerfile
+    ports:
+      - "7601:7601"
+    volumes:
+      - ./.configs/azurite.yaml:/mnt/config.yaml
+    command:
+      [
+        "uwsgi",
+        "--http", ":7601",
+        "--gevent", "1000",
+        "--http-websockets",
+        "--http-chunked-input",
+        "--http-keepalive",
+        "--post-buffering", "0",
+        "--buffer-size", "65535",
+        "--master",
+        "--callable", "app",
+        "--disable-logging",
+        "--wsgi-file", "/vantage6/vantage6-server/vantage6/server/wsgi.py",
+        "--pyargv", "/mnt/config.yaml"
+      ]
+  local-registry:
+    image: registry:2
+    container_name: local-registry
+    ports:
+      - "5000:5000"
+      
+volumes:
+  azurite_data:
