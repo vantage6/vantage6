@@ -155,7 +155,7 @@ class ServerApp:
                     client_secret=self.ctx.config["large_result_store"]["client_secret"]
                 )
                 self.blob_service_client = BlobServiceClient(
-                    account_url = f"https://{self.ctx.config['large_result_store']['storage_account_name']}.blob.core.windows.net/",
+                    account_url=f"https://{self.ctx.config['large_result_store']['storage_account_name']}.blob.core.windows.net/",
                     credential=credential,
                 )
                 self.storage_adapter = AzureStorageService(
