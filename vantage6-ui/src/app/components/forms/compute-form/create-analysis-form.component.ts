@@ -437,7 +437,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     // setup arguments for task. Parse string to JSON if needed
     if (!this.function) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const arguments: any = {};
+    const arguments_: any = {};
     this.function.arguments.forEach((arg) => {
       Object.keys(this.parameterForm.controls).forEach((control) => {
         if (control === arg.name) {
@@ -445,17 +445,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
           if (arg.is_frontend_only || (arg.has_default_value && value === null)) {
             return; // note that within .forEach, return is like continue
           } else if (arg.type === ArgumentType.Json) {
-            arguments[arg.name] = JSON.parse(value);
+            arguments_[arg.name] = JSON.parse(value);
           } else if (arg.type === ArgumentType.Float || arg.type === ArgumentType.Integer) {
-            arguments[arg.name] = Number(value);
+            arguments_[arg.name] = Number(value);
           } else if (
             arg.type === ArgumentType.FloatList ||
             arg.type === ArgumentType.IntegerList ||
             arg.type === ArgumentType.OrganizationList
           ) {
-            arguments[arg.name] = value.map((_: string) => Number(_));
+            arguments_[arg.name] = value.map((_: string) => Number(_));
           } else {
-            arguments[arg.name] = value;
+            arguments_[arg.name] = value;
           }
         }
       });
@@ -466,7 +466,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       : [this.functionForm.controls.organizationIDs.value];
     // encrypt the arguments for each organization
     const argumentsPerOrg: { [key: string]: string } = {};
-    const argumentsStringified = btoa(JSON.stringify(arguments)) || '';
+    const argumentsStringified = btoa(JSON.stringify(arguments_)) || '';
     for (const organizationID of selectedOrganizations) {
       const org_arguments = await this.encryptionService.encryptData(argumentsStringified, Number(organizationID));
       argumentsPerOrg[organizationID] = org_arguments;

@@ -61,7 +61,7 @@ export interface BaseTask {
   session: BaseLink;
   image: string;
   method: string;
-  arguments: object;
+  arguments: TaskParameter[];
   init_org: BaseLink;
   init_user: BaseLink;
   algorithm_store?: BaseLink;
@@ -105,7 +105,7 @@ export interface TaskDBOutput {
 export interface TaskRun {
   id: number;
   status: TaskStatus;
-  arguments: TaskParameter[];
+  arguments: string;
   node: RunNode;
   action: AlgorithmStepType;
   assigned_at: string;

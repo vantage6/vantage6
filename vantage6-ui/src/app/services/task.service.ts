@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
-import { BaseTask, CreateTask, GetTaskParameters, KillTask, Task, TaskLazyProperties, TaskResult } from 'src/app/models/api/task.models';
+import {
+  BaseTask,
+  CreateTask,
+  GetTaskParameters,
+  KillTask,
+  Task,
+  TaskLazyProperties,
+  TaskParameter,
+  TaskResult
+} from 'src/app/models/api/task.models';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { getLazyProperties } from 'src/app/helpers/api.helper';
 import { isTaskFinished } from 'src/app/helpers/task.helper';
@@ -40,13 +49,13 @@ export class TaskService {
     //Handle base64 input arguments
     if (Array.isArray(task.runs) && task.runs.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const arguments: any = this.getDecodedArguments(task.runs[0].arguments);
-      if (arguments) {
-        task.arguments = arguments
-          ? Object.keys(arguments).map((key) => {
+      const arguments_: any = this.getDecodedArguments(task.runs[0].arguments);
+      if (arguments_) {
+        task.arguments = arguments_
+          ? Object.keys(arguments_).map((key: string) => {
               return {
                 label: key,
-                value: arguments[key] || ''
+                value: arguments_[key] || ''
               };
             })
           : [];
