@@ -1,5 +1,4 @@
 from azure.storage.blob import BlobServiceClient
-from azure.identity import ClientSecretCredential
 import logging
 from vantage6.common import logger_name
 
@@ -7,21 +6,16 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 class AzureStorageService:
-    def __init__(self, tenant_id: str, client_id: str, client_secret: str, storage_account_name: str, container_name: str):
-        log.info("Initializing AzureStorageService with storage_account_name: %s, container_name: %s",
-                  storage_account_name, container_name)
-        if not all([tenant_id, client_id, client_secret, storage_account_name, container_name]):
-            raise ValueError("All parameters must be provided and non-empty.")
-        credential = ClientSecretCredential(
-            tenant_id=tenant_id,
-            client_id=client_id,
-            client_secret=client_secret,
-        )
-        self.blob_service_client = BlobServiceClient(
-            account_url=f"https://{storage_account_name}.blob.core.windows.net/",
-            credential=credential,
-        )
+    def __init__(self, container_name:str, blob_service_client:BlobServiceClient = None, connection_string: str = None):
         self.container_name = container_name
+
+        if connection_string:
+            self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        elif blob_service_client:
+            self.blob_service_client = blob_service_client
+        else:
+            raise ValueError("Either 'connection_string' or 'blob_service_client' must be provided.")            
+
         self.container_client = self.blob_service_client.get_container_client(container_name)
 
 

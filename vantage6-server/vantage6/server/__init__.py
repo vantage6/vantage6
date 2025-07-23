@@ -78,6 +78,8 @@ from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 from vantage6.server.service.azure_storage_service import AzureStorageService
+from azure.identity import ClientSecretCredential
+from azure.storage.blob import BlobServiceClient
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -141,20 +143,30 @@ class ServerApp:
 
         # Setup storage adapter
         self.storage_adapter = None
-        if self.ctx.config.get("large_result_store") \
-            and self.ctx.config["large_result_store"].get("tenant_id") \
+        if self.ctx.config.get("large_result_store") and self.ctx.config["large_result_store"].get("type") == "azure_blob_storage":
+            log.info("Using Azure Blob Storage as large result store")
+            if self.ctx.config["large_result_store"].get("tenant_id") \
             and self.ctx.config["large_result_store"].get("client_id") \
             and self.ctx.config["large_result_store"].get("client_secret") \
-            and self.ctx.config["large_result_store"].get("storage_account_name") \
-            and self.ctx.config["large_result_store"].get("type") == "azure_blob_storage":
-            log.info("Using Azure Blob Storage as large result store")
-            self.storage_adapter = AzureStorageService(
-                tenant_id=self.ctx.config["large_result_store"]["tenant_id"],
-                client_id=self.ctx.config["large_result_store"]["client_id"],
-                client_secret=self.ctx.config["large_result_store"]["client_secret"],
-                storage_account_name=self.ctx.config["large_result_store"]["storage_account_name"],
-                container_name=self.ctx.config["large_result_store"]["container_name"],
-            )
+            and self.ctx.config["large_result_store"].get("storage_account_name"):
+                credential = ClientSecretCredential(
+                    tenant_id=self.ctx.config["large_result_store"]["tenant_id"],
+                    client_id=self.ctx.config["large_result_store"]["client_id"],
+                    client_secret=self.ctx.config["large_result_store"]["client_secret"]
+                )
+                self.blob_service_client = BlobServiceClient(
+                    account_url=f"https://{self.ctx.config['large_result_store']['storage_account_name']}.blob.core.windows.net/",
+                    credential=credential,
+                )
+                self.storage_adapter = AzureStorageService(
+                    blob_service_client=self.blob_service_client,
+                    container_name=self.ctx.config["large_result_store"]["container_name"],
+                )
+            elif self.ctx.config["large_result_store"].get("connection_string"):
+                self.storage_adapter = AzureStorageService(
+                    connection_string=self.ctx.config["large_result_store"]["connection_string"],
+                    container_name=self.ctx.config["large_result_store"]["container_name"],
+                )
         else:
             log.info("Not using a large result store")
         # setup the permission manager for the API endpoints
