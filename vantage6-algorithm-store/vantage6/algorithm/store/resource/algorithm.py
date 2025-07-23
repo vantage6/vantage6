@@ -335,13 +335,13 @@ class Algorithms(AlgorithmBaseResource):
             # more specific error
             if g.session.scalars(q_with_digest).first():
                 q = q_with_digest
-            elif g.session.scalars(q).first():
+            elif not_digest_match := g.session.scalars(q).first():
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
                     "store. The currently approved version of this algorithm has "
-                    f"digest '{q.first().digest}'. Please include this digest if you"
-                    f"want to use that image."
+                    f"digest '{not_digest_match.digest}'. Please include this digest if"
+                    " you want to use that image."
                 }, HTTPStatus.BAD_REQUEST
 
         # paginate results

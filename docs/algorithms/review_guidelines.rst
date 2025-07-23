@@ -71,7 +71,7 @@ but are not limited to:
 
     - Are all the subtasks that are created actually necessary for the
       execution of the algorithm?
-    - Are all of the input arguments required to properly execute the algorithm?
+    - Are all of the function arguments required to properly execute the algorithm?
     - Does the algorithm properly output the results? Is a part of the desired
       result missing or are data shared that are not necessary to share?
     - Could the compute time be reduced by a more efficient implementation of

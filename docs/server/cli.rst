@@ -191,7 +191,8 @@ runs is given below.
 - **Environment variables**: Reports the environment variables that are set in the algorithm
   container by the node instance. For example the location of the input,
   token and output files.
-- **Input file**: Reports the contents of the input file. You can verify that the input
+- **Input file**: Reports the contents of the input file, usually the algorithm method
+  and its arguments. You can verify that the input
   set by the client is actually received by the algorithm.
 - **Output file**: Writes 'test' to the output file and reads it back.
 - **Token file**: Prints the contents of the token file. It should contain a JWT that you
@@ -203,8 +204,8 @@ runs is given below.
 - **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach the
   central server from the algorithm container. This is needed as parent containers
   need to be able to create child containers (=subtasks). The local proxy also
-  handles encryption/decryption of the input and results as the algorithm container
-  is not allowed to know the private key.
+  handles encryption/decryption of the algorithm arguments and results as the algorithm
+  container is not allowed to know the private key.
 - **Subtask creation**: Creates a subtask (using the local proxy) and waits for the result.
 - **Isolation test**: Checks if the algorithm container is isolated such that it can not
   reach the internet. It tests this by trying to reach google.nl, so make sure

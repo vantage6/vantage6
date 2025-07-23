@@ -21,7 +21,9 @@ from vantage6.common.globals import (
 class NodeClient(ClientBase):
     """Node interface to the central server."""
 
-    def __init__(self, node_account_name: str, api_key: str, *args, **kwargs):
+    def __init__(
+        self, node_account_name: str, api_key: str, server_url: str, auth_url: str
+    ):
         """
         Initialize the node client.
 
@@ -31,8 +33,12 @@ class NodeClient(ClientBase):
             The name of the node account.
         api_key : str
             The api key of the node.
+        server_url : str
+            The url of the server to connect to.
+        auth_url : str
+            The url of the authentication server.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(server_url=server_url, auth_url=auth_url)
 
         self.node_account_name = node_account_name
         self.api_key = api_key
@@ -212,7 +218,7 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                run["input"] = self.parent._decrypt_input(run["input"])
+                run["arguments"] = self.parent._decrypt_data(run["arguments"])
 
             return run_data
 

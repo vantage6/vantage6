@@ -162,7 +162,7 @@ Algorithm wrappers
 
 The vantage6 :ref:`wrappers <wrapper-concepts>` are used to simplify the
 interaction between the algorithm and the node. The wrappers are responsible
-for reading the input data from the data source and supplying it to the algorithm.
+for translating user input to call the right algorithm method with the right arguments.
 They also take care of writing the results back to the data source.
 
 As algorithm developer, you do not have to worry about the wrappers. The main

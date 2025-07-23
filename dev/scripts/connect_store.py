@@ -69,6 +69,8 @@ def connect_store(client: Client, dev_dir: Path) -> str:
         functions=function_metadata,
     )
 
+    # TODO: v5+ get this json data by downloading it from the github repo - that ensures
+    # that the data is always up to date.
     summary += "Creating Network Diagnostics algorithm\n"
     client.algorithm.create(
         name="Network Diagnostics",

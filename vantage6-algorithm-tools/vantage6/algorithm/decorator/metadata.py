@@ -6,7 +6,7 @@ from functools import wraps
 from dataclasses import dataclass
 
 from vantage6.common.globals import ContainerEnvNames
-from vantage6.algorithm.tools import DecoratorType
+from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.algorithm.tools.util import info
 
 
@@ -79,6 +79,6 @@ def metadata(func: callable) -> callable:
         )
         return func(metadata, *args, **kwargs)
 
-    decorator.vantage6_metadata_decorated = DecoratorType.METADATA
+    decorator.vantage6_metadata_decorated = DecoratorStepType.METADATA
 
     return decorator

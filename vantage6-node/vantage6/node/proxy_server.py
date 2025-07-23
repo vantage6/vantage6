@@ -214,7 +214,7 @@ def proxy_task():
         Response from the vantage6 server
     """
     # We need the server io for the decryption of the results
-    client: NodeClient = app.config.get("SERVER_IO")
+    client: NodeClient | None = app.config.get("SERVER_IO")
     if not client:
         log.error(
             "Task proxy request received but proxy server was not "
@@ -225,14 +225,16 @@ def proxy_task():
             HTTPStatus.INTERNAL_SERVER_ERROR,
         )
 
-    # All requests from algorithms are unencrypted. We encrypt the input
+    # All requests from algorithms are unencrypted. We encrypt the input arguments
     # field for a specific organization(s) specified by the algorithm
     data = request.get_json()
     organizations = data.get("organizations")
 
     if not organizations:
         log.error("No organizations found in proxy request..")
-        return {"msg": "Organizations missing from input"}, HTTPStatus.BAD_REQUEST
+        return {
+            "msg": "Organizations missing from input arguments"
+        }, HTTPStatus.BAD_REQUEST
 
     try:
         headers = {"Authorization": request.headers["Authorization"]}
@@ -241,27 +243,28 @@ def proxy_task():
 
     log.debug("%s organizations", len(organizations))
 
-    # For every organization we need to encrypt the input field. This is done
+    # For every organization we need to encrypt the input arguments field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
-    # For every organization the public key is retrieved an the input is
+    # For every organization the public key is retrieved so that the input arguments are
     # encrypted specifically for them.
-    def encrypt_input(organization: dict) -> dict:
+    def encrypt_function_args(organization: dict) -> dict:
         """
-        Encrypt the input for a specific organization by using its private key.
-        This method is run as background
+        Encrypt the input arguments for a specific organization by using its private
+        key.
 
         Parameters
         ----------
         organization : dict
-            Input as specified by the client (algorithm in this case)
+            Input arguments as specified by the client (algorithm in this case) per
+            organization
 
         Returns
         -------
         dict
-            Modified organization dictionary in which the `input` key is
-            contains encrypted input
+            Modified organization dictionary in which the `arguments` key
+            contains encrypted function arguments
         """
-        input_ = organization.get("input", {})
+        arguments = organization.get("arguments", {})
         organization_id = organization.get("id")
 
         # retrieve public key of the organization
@@ -271,18 +274,20 @@ def proxy_task():
         )
         public_key = response.json().get("public_key")
 
-        # Encrypt the input field
         client: NodeClient = app.config.get("SERVER_IO")
-        organization["input"] = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_), public_key
+        organization["arguments"] = client.cryptor.encrypt_bytes_to_str(
+            base64s_to_bytes(arguments), public_key
         )
 
-        log.debug("Input succesfully encrypted for organization %s!", organization_id)
+        log.debug(
+            "Function arguments succesfully encrypted for organization %s!",
+            organization_id,
+        )
         return organization
 
     if client.is_encrypted_collaboration():
         log.debug("Applying end-to-end encryption")
-        data["organizations"] = [encrypt_input(o) for o in organizations]
+        data["organizations"] = [encrypt_function_args(o) for o in organizations]
 
     # Attempt to send the task to the central server
     try:

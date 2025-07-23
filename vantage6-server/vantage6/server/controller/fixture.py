@@ -148,7 +148,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
             for organization in collaboration.organizations:
                 run = db.Run(
                     task=task,
-                    input=bytes_to_base64s(serialize({"a": "b"})),
+                    arguments=bytes_to_base64s(serialize({"a": "b"})),
                     organization=organization,
                     status=RunStatus.PENDING,
                 )

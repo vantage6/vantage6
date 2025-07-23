@@ -68,7 +68,7 @@ class TestClient(TestCase):
             dbs_out = UserClient.Task._parse_arg_databases(dbs_in)
 
     @staticmethod
-    def post_task_on_mock_client(input_) -> dict[str, any]:
+    def post_task_on_mock_client(method: str, arguments: dict) -> dict[str, any]:
         mock_requests = MagicMock()
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
@@ -82,7 +82,8 @@ class TestClient(TestCase):
                 image=TASK_IMAGE,
                 collaboration_id=COLLABORATION_ID,
                 organization_ids=ORGANIZATION_IDS,
-                input_=input_,
+                method=method,
+                arguments=arguments,
             )
 
             # In a request.post call, json is provided with the keyword
@@ -90,9 +91,9 @@ class TestClient(TestCase):
             # arguments followed by a dict with positional arguments
             post_content = mock_requests.post.call_args[1]["json"]
 
-            post_input = post_content["organizations"][0]["input"]
+            post_arguments = post_content["organizations"][0]["arguments"]
 
-        return post_input
+        return post_arguments
 
     @staticmethod
     def _receive_results_on_mock_client(mock_result):

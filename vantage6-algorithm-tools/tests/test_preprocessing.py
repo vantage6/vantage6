@@ -260,11 +260,9 @@ class TestPreprocessing(unittest.TestCase):
 
         org_ids = [org["id"] for org in mockclient.organization.list()]
 
-        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
             method="execute",
             organizations=org_ids,
-            input_=input_,
         )
 
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
@@ -423,11 +421,9 @@ class TestPreprocessing(unittest.TestCase):
 
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
             method="execute",
             organizations=org_ids,
-            input_=input_,
         )
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 
@@ -515,11 +511,9 @@ class TestPreprocessing(unittest.TestCase):
         ]
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
             method="execute",
             organizations=org_ids,
-            input_=input_,
         )
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
         assert result.to_json() == (
@@ -633,11 +627,9 @@ class TestPreprocessing(unittest.TestCase):
         ]
         mockclient = MockAlgorithmClient(datasets=datasets, module="mock_package")
         org_ids = [org["id"] for org in mockclient.organization.list()]
-        input_ = {"kwargs": {}}
         child_task = mockclient.task.create(
             method="execute",
             organizations=org_ids,
-            input_=input_,
         )
         result = pd.read_json(mockclient.result.get(id_=child_task.get("id")))
 

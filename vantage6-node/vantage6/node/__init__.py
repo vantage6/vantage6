@@ -432,7 +432,7 @@ class Node:
             run_id=run_id,
             task_info=task,
             image=task["image"],
-            docker_input=run_to_execute["input"],
+            function_arguments=run_to_execute["arguments"],
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),

@@ -23,17 +23,17 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result",
-            input="input",
+            arguments="arguments",
             log="log should be preserved",
             status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, include_args=True)
         self.session.refresh(run)
         self.assertEqual(run.result, "")
-        self.assertEqual(run.input, "")
+        self.assertEqual(run.arguments, "")
         self.assertEqual(run.log, "log should be preserved")
         self.assertIsNotNone(run.cleanup_at)
 
@@ -42,16 +42,16 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result",
-            input="input",
+            arguments="arguments",
             status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, include_args=True)
         self.session.refresh(run)
         self.assertEqual(run.result, "result")
-        self.assertEqual(run.input, "input")
+        self.assertEqual(run.arguments, "arguments")
         self.assertIsNone(run.cleanup_at)
 
     def test_no_cleanup_non_completed_run(self):
@@ -59,33 +59,33 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result",
-            input="input",
+            arguments="arguments",
             status=RunStatus.FAILED,  # Not COMPLETED, so ineligible
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, include_args=True)
         self.session.refresh(run)
         self.assertEqual(run.result, "result")
-        self.assertEqual(run.input, "input")
+        self.assertEqual(run.arguments, "arguments")
         self.assertIsNone(run.cleanup_at)
 
-    def test_cleanup_without_clearing_input(self):
+    def test_cleanup_without_clearing_arguments(self):
         # Eligible: completed > 30 days ago
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=40),
             result="result",
-            input="input",
+            arguments="arguments",
             status=RunStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=False)
+        cleanup.cleanup_runs_data(30, include_args=False)
         self.session.refresh(run)
         self.assertEqual(run.result, "")
-        self.assertEqual(run.input, "input")
+        self.assertEqual(run.arguments, "arguments")
         self.assertIsNotNone(run.cleanup_at)
 
 
@@ -103,37 +103,37 @@ class TestCleanupRunsCount(unittest.TestCase):
         run0 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result0",
-            input="input0",
+            arguments="arguments0",
             status=RunStatus.COMPLETED,
         )
         run1 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=200),
             result="result1",
-            input="input1",
+            arguments="arguments1",
             status=RunStatus.COMPLETED,
         )
         run2 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result2",
-            input="input2",
+            arguments="arguments2",
             status=RunStatus.COMPLETED,
         )
         run3 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result3",
-            input="input3",
+            arguments="arguments3",
             status=RunStatus.PENDING,
         )
         run4 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result4",
-            input="input4",
+            arguments="arguments4",
             status=RunStatus.FAILED,
         )
         run5 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result5",
-            input="input5",
+            arguments="arguments5",
             status=RunStatus.ACTIVE,
         )
         self.session.add_all([run0, run1, run2, run3, run4, run5])
@@ -145,8 +145,8 @@ class TestCleanupRunsCount(unittest.TestCase):
         # Insert runs into db
         runs = self.create_runs()
 
-        # clean up result and input from runs older than 30 days
-        cleanup.cleanup_runs_data(30, include_input=True)
+        # clean up result and arguments from runs older than 30 days
+        cleanup.cleanup_runs_data(30, include_args=True)
 
         # db has been changed, refresh objects
         for run in runs:
@@ -164,15 +164,15 @@ class TestCleanupRunsCount(unittest.TestCase):
         self.assertEqual(len(cleaned_runs), 2)
         self.assertEqual(len(remaining_runs), 4)
 
-        # Verify that cleaned runs have their result and input cleared, and
+        # Verify that cleaned runs have their result and arguments cleared, and
         # cleanup_at set
         for run in cleaned_runs:
             self.assertEqual(run.result, "")
-            self.assertEqual(run.input, "")
+            self.assertEqual(run.arguments, "")
             self.assertIsNotNone(run.cleanup_at)
 
         # Verify that runs that should not have been cleaned up keep their
-        # result and input
+        # result and arguments
         for i in range(2, 6):
             self.assertEqual(runs[i].result, f"result{i}")
-            self.assertEqual(runs[i].input, f"input{i}")
+            self.assertEqual(runs[i].arguments, f"arguments{i}")

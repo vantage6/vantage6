@@ -70,7 +70,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         label: str,
         image: str,
         method: str,
-        input_: dict,
+        arguments: dict,
         session: int | None = None,
         store: int | None = None,
         name: str | None = None,
@@ -88,9 +88,9 @@ class DataFrameSubClient(ClientBase.SubClient):
             source database.
         method: str
             The method from the algorithm's image to be used for creating the dataframe
-        input_: dict
-            The input for the dataframe creation. It should include
-            the arguments of the given method (kwargs)
+        arguments: dict
+            Arguments for the algorithm method. The dictionary should contain
+            the same keys as the arguments of the algorithm method.
         name: str
             Name that can be used in within the session
         session : int, optional
@@ -133,17 +133,17 @@ class DataFrameSubClient(ClientBase.SubClient):
         orgs = self.parent.organization.list(**params)
         organizations = [(o["id"], o["public_key"]) for o in orgs["data"]]
 
-        serialized_input = serialize(input_)
+        serialized_arguments = serialize(arguments)
 
-        # Encrypt the input per organization using that organization's
+        # Encrypt the input arguments per organization using that organization's
         # public key.
         organization_json_list = []
         for org_id, pub_key in organizations:
             organization_json_list.append(
                 {
                     "id": org_id,
-                    "input": self.parent.cryptor.encrypt_bytes_to_str(
-                        serialized_input, pub_key
+                    "arguments": self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_arguments, pub_key
                     ),
                 }
             )
@@ -172,7 +172,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering(iterable=False)
-    def preprocess(self, id_: int, image: str, method: str, input_: dict) -> dict:
+    def preprocess(self, id_: int, image: str, method: str, arguments: dict) -> dict:
         """
         Modify a dataframe in a session.
 
@@ -192,8 +192,9 @@ class DataFrameSubClient(ClientBase.SubClient):
             The name of the image that will be used to preprocess the dataframe.
         method: str
             Method on the algorithm image to be used to preprocess the dataframe
-        input_: dict
-            The input for the dataframe preprocessing.
+        arguments: dict
+            Arguments for the algorithm method. The dictionary should contain
+            the same keys as the arguments of the algorithm method.
 
         Returns
         -------
@@ -222,16 +223,17 @@ class DataFrameSubClient(ClientBase.SubClient):
         organizations = [(o["id"], o["public_key"]) for o in org["data"]]
 
         # Data will be serialized in JSON.
-        serialized_input = serialize(input_)
+        serialized_arguments = serialize(arguments)
 
-        # Encrypt the input per organization using that organization's public key.
+        # Encrypt the input arguments per organization using that organization's public
+        # key.
         organization_json_list = []
         for org_id, pub_key in organizations:
             organization_json_list.append(
                 {
                     "id": org_id,
-                    "input": self.parent.cryptor.encrypt_bytes_to_str(
-                        serialized_input, pub_key
+                    "arguments": self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_arguments, pub_key
                     ),
                 }
             )

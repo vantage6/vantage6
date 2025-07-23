@@ -73,7 +73,7 @@
   "upload-key": {
     "title": "Upload encryption key",
     "description": "The collaboration that you selected is encrypted. Upload your private key to decrypt the encrypted data.",
-    "description-part-two": "Your private key will be used to decrypt the data locally, and does not leave your browser. Uploading an incorrect key will allow you to continue to view some task metadata, but not the task's input and results.",
+    "description-part-two": "Your private key will be used to decrypt the data locally, and does not leave your browser. Uploading an incorrect key will allow you to continue to view some task metadata, but not the task's input arguments and results.",
     "file-label": "Upload PEM file"
   },
   "chosen-collaboration-alert": {
@@ -171,9 +171,9 @@
     "filter-function": "Filter function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
-    "alert-failed-read-input": "Failed to parse input.",
-    "alert-failed-read-input-function": "Failed to parse input, therefore, information about the function cannot be displayed.",
-    "alert-failed-read-input-visualization": "Failed to parse input, therefore, no visualization can be displayed.",
+    "alert-failed-read-arguments": "Failed to parse function arguments.",
+    "alert-failed-read-arguments-function": "Failed to parse function arguments, therefore, information about the function cannot be displayed.",
+    "alert-failed-read-arguments-visualization": "Failed to parse function arguments, therefore, no visualization can be displayed.",
     "alert-failed-read-encrypted-result": "Result was not successfully decoded and decrypted. Please use your private key locally to decrypt the results, and then perform base64 decoding.",
     "alert-failed-read-result": "Result was not successfully decoded. Please perform base64 decoding locally to get the results."
   },
@@ -274,7 +274,7 @@
         "download-json": "Download JSON",
         "download-csv": "Download CSV",
         "download-result": "Download result",
-        "download-input": "Download input"
+        "download-arguments": "Download function arguments"
       }
     },
     "card-algorithm": {

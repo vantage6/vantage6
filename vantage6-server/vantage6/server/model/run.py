@@ -19,13 +19,15 @@ class Run(Base):
     A Run is the description of a :class:`.~vantage6.server.model.task.Task` as
     executed by a Node.
 
-    The input and result fields will be encrypted and can be only read by the
+    The arguments and result fields will be encrypted and can be only read by the
     intended receiver of the message.
 
     Attributes
     ----------
-    input : str
-        Input data of the task
+    arguments : str
+        Function arguments to call the algorithm function with. The arguments are
+        encoded, and depending on the collaboration-level settings, also encrypted
+        for the organization that is executing the task.
     task_id : int
         Id of the task that was executed
     organization_id : int
@@ -56,7 +58,7 @@ class Run(Base):
     """
 
     # fields
-    input = Column(Text)
+    arguments = Column(Text)
     task_id = Column(Integer, ForeignKey("task.id"))
     organization_id = Column(Integer, ForeignKey("organization.id"))
     result = Column(Text)

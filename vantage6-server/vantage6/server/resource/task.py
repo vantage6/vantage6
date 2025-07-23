@@ -860,15 +860,15 @@ class Tasks(TaskBase):
         # Filter that we did not end up with duplicates because of various conditions
         dependent_tasks = list(set(dependent_tasks))
 
-        # check that the input is valid. If the collaboration is encrypted, it
-        # should not be possible to read the input, and we should not save it
-        # to the database as it may be sensitive information. Vice versa, if
+        # check that the input for function arguments is valid. If the collaboration is
+        # encrypted, it should not be possible to read the arguments, and we should not
+        # save it to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
-        # send encrypted input.
-        is_valid_input, error_msg = Tasks._check_input_encryption(
+        # send encrypted function arguments.
+        function_args_valid, error_msg = Tasks._check_arguments_encryption(
             organizations_json_list, collaboration
         )
-        if not is_valid_input:
+        if not function_args_valid:
             return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
 
         # permissions ok, create task record and TaskDatabase records
@@ -926,20 +926,16 @@ class Tasks(TaskBase):
 
         # now we need to create results for the nodes to fill. Each node
         # receives their instructions from a result, not from the task itself
-        log.debug(f"Assigning task to {len(organizations_json_list)} nodes.")
+        log.debug("Assigning task to %s nodes.", len(organizations_json_list))
         for org in organizations_json_list:
             organization = db.Organization.get(org["id"])
-            log.debug(f"Assigning task to '{organization.name}'.")
-            input_ = org.get("input")
-            # FIXME: legacy input from the client, could be removed at some
-            # point
-            if isinstance(input_, dict):
-                input_ = json.dumps(input_).encode(STRING_ENCODING)
+            log.debug("Assigning task to '%s'.", organization.name)
+            arguments = org.get("arguments")
             # Create run
             run = db.Run(
                 task=task,
                 organization=organization,
-                input=input_,
+                arguments=arguments,
                 status=RunStatus.PENDING,
                 action=action,
             )
@@ -955,20 +951,20 @@ class Tasks(TaskBase):
         )
 
         # add some logging
-        log.info(f"New task for collaboration '{task.collaboration.name}'")
+        log.info("New task for collaboration '%s'", task.collaboration.name)
         if g.user:
-            log.debug(f" created by: '{g.user.username}'")
+            log.debug(" created by: '%s'", g.user.username)
         else:
             log.debug(
-                f" created by container on node_id="
-                f"{g.container['node_id']}"
-                f" for (parent) task_id={g.container['task_id']}"
+                " created by container on node_id=%s for (parent) task_id=%s",
+                g.container["node_id"],
+                g.container["task_id"],
             )
 
-        log.debug(f" url: '{url_for('task_with_id', id=task.id)}'")
-        log.debug(f" name: '{task.name}'")
-        log.debug(f" image: '{task.image}'")
-        log.debug(f" session ID: '{task.session_id}'")
+        log.debug(" url: '%s'", url_for("task_with_id", id=task.id))
+        log.debug(" name: '%s'", task.name)
+        log.debug(" image: '%s'", task.image)
+        log.debug(" session ID: '%s'", task.session_id)
 
         return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
@@ -979,9 +975,10 @@ class Tasks(TaskBase):
         # check that node id is indeed part of the collaboration
         if not container["collaboration_id"] == collaboration_id:
             log.warning(
-                f"Container attempts to create a task outside "
-                f"collaboration_id={container['collaboration_id']} in "
-                f"collaboration_id={collaboration_id}!"
+                "Container attempts to create a task for collaboration_id=%s in "
+                "collaboration_id=%s!",
+                container["collaboration_id"],
+                collaboration_id,
             )
             return False
 
@@ -1046,55 +1043,58 @@ class Tasks(TaskBase):
         return has_limitations
 
     @staticmethod
-    def _check_input_encryption(
+    def _check_arguments_encryption(
         organizations_json_list: list[dict], collaboration: db.Collaboration
     ) -> tuple[bool, str]:
         """
-        Check if the input encryption status matches the expected status for
-        the collaboration. Also, check that if the input is not encrypted, it
-        can be read as a string.
+        Check if the function arguments encryption status matches the expected status
+        for the collaboration. Also, check that if the function arguments are not
+        encrypted, they can be read as a string.
 
         Parameters
         ----------
         organizations_json_list : list[dict]
-            List of organizations which contains the input per organization.
+            List of organizations which contains the encrypted function arguments per
+            organization.
         collaboration : db.Collaboration
             Collaboration object.
 
         Returns
         -------
         bool
-            True if the input is encrypted.
+            True if the function arguments are encrypted.
         str
-            Error message if the input is valid.
+            Error message if the function arguments are valid.
         """
         dummy_cryptor = DummyCryptor()
         for org in organizations_json_list:
-            input_ = org.get("input")
-            if input_ is None:
+            arguments = org.get("arguments")
+            if arguments is None:
                 continue
-            decrypted_input = dummy_cryptor.decrypt_str_to_bytes(input_)
-            is_input_readable = False
+            decrypted_arguments = dummy_cryptor.decrypt_str_to_bytes(arguments)
+            are_arguments_readable = False
             try:
-                decrypted_input.decode(STRING_ENCODING)
-                is_input_readable = True
+                decrypted_arguments.decode(STRING_ENCODING)
+                are_arguments_readable = True
             except UnicodeDecodeError:
                 pass
 
-            if collaboration.encrypted and is_input_readable:
+            if collaboration.encrypted and are_arguments_readable:
                 return (
                     False,
                     (
-                        "Your collaboration requires encryption, but input is not "
-                        "encrypted! Please encrypt your input before sending it."
+                        "Your collaboration requires encryption, but function arguments"
+                        " are not encrypted! Please encrypt your function arguments "
+                        "before sending them."
                     ),
                 )
-            elif not collaboration.encrypted and not is_input_readable:
+            elif not collaboration.encrypted and not are_arguments_readable:
                 return False, (
-                    "Your task's input cannot be parsed. Your input should be "
-                    "a base64 encoded JSON string. Note that if you are using "
-                    "the user interface or Python client, this should be done "
-                    "for you. Also, make sure not to encrypt your input, "
+                    "Your task's function arguments cannot be parsed. Your function "
+                    "arguments should be a base64 encoded JSON string. Note that if "
+                    "you are using the user interface or Python client, this should "
+                    "be done for you. Also, make sure not to encrypt your function "
+                    "arguments, as your collaboration is set to not use encryption."
                     "as your collaboration is set to not use encryption."
                 )
         return True, ""

@@ -42,11 +42,11 @@ class UserClient(ClientBase):
 
     def __init__(
         self,
-        *args,
+        server_url: str,
+        auth_url: str,
         auth_realm: str = "vantage6",
         auth_client: str = "public_client",
         log_level="info",
-        **kwargs,
     ) -> None:
         """Create user client
 
@@ -54,6 +54,10 @@ class UserClient(ClientBase):
 
         Parameters
         ----------
+        server_url : str
+            The url of the server to connect to.
+        auth_url : str
+            The url of the authentication server.
         auth_realm : str, optional
             The Keycloak realm to use for authentication, by default 'vantage6'
         auth_client : str, optional
@@ -61,7 +65,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(*args, **kwargs)
+        super(UserClient, self).__init__(server_url=server_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
@@ -1775,7 +1779,7 @@ class UserClient(ClientBase):
             image: str,
             description: str,
             method: str,
-            input_: dict | None = None,
+            arguments: dict | None = None,
             session: int | None = None,
             collaboration: int | None = None,
             study: int | None = None,
@@ -1798,8 +1802,9 @@ class UserClient(ClientBase):
                 Human readable description
             method : str
                 Name of the method to be called
-            input_ : dict, optional
-                Algorithm input parameters
+            arguments : dict, optional
+                Arguments for the algorithm method. The dictionary should contain
+                the same keys as the arguments of the algorithm method.
             session : int, optional
                 ID of the session to which this task belongs. If not set, the
                 session id of the client needs to be set. Default is None.
@@ -1870,9 +1875,9 @@ class UserClient(ClientBase):
             databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.
-            serialized_input = serialize(input_)
+            serialized_arguments = serialize(arguments)
 
-            # Encrypt the input per organization using that organization's
+            # Encrypt the input arguments per organization using that organization's
             # public key.
             organization_json_list = []
             for org_id in organizations:
@@ -1882,8 +1887,8 @@ class UserClient(ClientBase):
                 organization_json_list.append(
                     {
                         "id": org_id,
-                        "input": self.parent.cryptor.encrypt_bytes_to_str(
-                            serialized_input, pub_key
+                        "arguments": self.parent.cryptor.encrypt_bytes_to_str(
+                            serialized_arguments, pub_key
                         ),
                     }
                 )
@@ -2043,8 +2048,8 @@ class UserClient(ClientBase):
             params = {"include": "task"} if include_task else {}
             run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
-            # decrypt input
-            run = self._decrypt_input(run_data=run, is_single_run=True)
+            # decrypt input arguments
+            run = self._decrypt_input_arguments(run_data=run, is_single_run=True)
 
             return run
 
@@ -2131,8 +2136,8 @@ class UserClient(ClientBase):
             # get runs from the API
             runs = self.parent.request(endpoint="run", params=params)
 
-            # decrypt input data
-            runs = self._decrypt_input(run_data=runs, is_single_run=False)
+            # decrypt input arguments
+            runs = self._decrypt_input_arguments(run_data=runs, is_single_run=False)
 
             return runs
 
@@ -2178,14 +2183,14 @@ class UserClient(ClientBase):
                 params["task_id"] = task_id
             runs = self.parent.request(endpoint="run", params=params)
 
-            # decrypt input data
-            runs = self._decrypt_input(run_data=runs, is_single_run=False)
+            # decrypt input arguments
+            runs = self._decrypt_input_arguments(run_data=runs, is_single_run=False)
 
             return runs
 
-        def _decrypt_input(self, run_data: dict, is_single_run: bool) -> dict:
+        def _decrypt_input_arguments(self, run_data: dict, is_single_run: bool) -> dict:
             """
-            Wrapper function to decrypt and deserialize the input of one or
+            Wrapper function to decrypt and deserialize the input arguments of one or
             more runs
 
             Parameters
@@ -2198,10 +2203,10 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Data on the algorithm run(s) with decrypted input
+                Data on the algorithm run(s) with decrypted input arguments
             """
             return self.parent._decrypt_field(
-                data=run_data, field="input", is_single_resource=is_single_run
+                data=run_data, field="arguments", is_single_resource=is_single_run
             )
 
     class Result(ClientBase.SubClient):
@@ -2251,8 +2256,7 @@ class UserClient(ClientBase):
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
-            Wrapper function to decrypt and deserialize the input of one or
-            more runs
+            Wrapper function to decrypt and deserialize the results of one or more runs
 
             Parameters
             ----------
@@ -2264,7 +2268,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Data on the algorithm run(s) with decrypted input
+                Data on the algorithm run(s) with decrypted results
             """
             return self.parent._decrypt_field(
                 data=result_data, field="result", is_single_resource=is_single_result

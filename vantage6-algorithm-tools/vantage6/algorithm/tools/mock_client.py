@@ -8,7 +8,6 @@ from copy import deepcopy
 
 import pandas as pd
 
-from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 from vantage6.algorithm.tools.util import info
@@ -39,11 +38,9 @@ class MockAlgorithmClient:
         depending on the database type:
         - query: str (required for SQL/Sparql databases)
         - sheet_name: str (optional for Excel databases)
-        - preprocessing: dict (optional, see the documentation for
-            preprocessing for more information)
 
-        Note that if the database is a pandas DataFrame, the type and
-        input_data keys are not required.
+        Note that if the database is a pandas DataFrame, the db_type and
+        other database keys are not required.
     module : str
         The name of the module that contains the algorithm.
     collaboration_id : int, optional
@@ -183,7 +180,7 @@ class MockAlgorithmClient:
             self,
             method: str,
             organizations: list[int],
-            input_: dict | None = None,
+            arguments: dict | None = None,
             name: str = "mock",
             description: str = "mock",
         ) -> int:
@@ -194,11 +191,11 @@ class MockAlgorithmClient:
             ----------
             method : str
                 The name of the method that should be called.
-            input_ : dict
-                The input data that is passed to the algorithm. Should contain the
-                arguments to the called function.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
+            arguments : dict | None
+                Arguments for the algorithm method. The dictionary should contain
+                the same keys as the arguments of the algorithm method.
             name : str, optional
                 The name of the task, by default "mock"
             description : str, optional
@@ -214,17 +211,12 @@ class MockAlgorithmClient:
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."
                 )
+            if not arguments:
+                arguments = {}
 
+            # get algorithm function from module
             module = import_module(self.parent.module_name)
-
-            # extract method from lib and input
             method_fn = getattr(module, method)
-
-            # get input
-            if not input_:
-                input_ = {}
-            args = input_.get("args", [])
-            kwargs = input_.get("kwargs", {})
 
             new_task_id = len(self.parent.tasks) + 1
 
@@ -248,7 +240,7 @@ class MockAlgorithmClient:
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
 
-                result = method_fn(*args, **kwargs, **mocked_kwargs)
+                result = method_fn(**arguments, **mocked_kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(
@@ -276,7 +268,7 @@ class MockAlgorithmClient:
                         "log": "mock_log",
                         "ports": [],
                         "status": "completed",
-                        "input": json.dumps(input_),
+                        "arguments": json.dumps(arguments),
                         "results": {
                             "id": self.last_result_id,
                             "link": f"/api/result/{self.last_result_id}",

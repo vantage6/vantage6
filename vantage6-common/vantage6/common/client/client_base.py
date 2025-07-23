@@ -76,7 +76,7 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str, auth_url: str) -> None:
+    def __init__(self, server_url: str, auth_url: str | None = None) -> None:
         """Basic setup for the client
 
         Parameters
@@ -387,7 +387,7 @@ class ClientBase(object):
         """
         return
 
-    def _decrypt_input(self, input_: str) -> bytes:
+    def _decrypt_data(self, encrypted_data: str) -> bytes:
         """Helper to decrypt the input of an algorithm run
 
         Keys are replaced, but object reference remains intact: changes are
@@ -395,13 +395,13 @@ class ClientBase(object):
 
         Parameters
         ----------
-        input_: str
-            The encrypted algorithm input
+        encrypted_data: str
+            The encrypted algorithm data
 
         Returns
         -------
         bytes
-            The decrypted algorithm run input
+            The decrypted algorithm run data
 
         Raises
         ------
@@ -414,19 +414,19 @@ class ClientBase(object):
             # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
-            input_ = cryptor.decrypt_str_to_bytes(input_)
+            data = cryptor.decrypt_str_to_bytes(encrypted_data)
 
         except Exception as e:
             self.log.exception(e)
 
-        return input_
+        return data
 
     def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
         """
         Wrapper function to decrypt and deserialize the a field of one or more
         resources
 
-        This can be used to decrypt and deserialize input and results of
+        This can be used to decrypt and deserialize data of algorithm runs.
         algorithm runs.
 
         Parameters
@@ -441,11 +441,11 @@ class ClientBase(object):
         Returns
         -------
         dict
-            Data on the algorithm run(s) with decrypted input
+            Decrypted data on the algorithm run(s)
         """
 
         def _decrypt_and_decode(value: str, field: str):
-            decrypted = self._decrypt_input(value)
+            decrypted = self._decrypt_data(value)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got" " %s.",

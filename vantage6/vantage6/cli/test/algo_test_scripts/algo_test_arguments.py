@@ -4,10 +4,9 @@ average = {
     "name": "test_average_task",
     "image": "harbor2.vantage6.ai/demo/average",
     "description": "",
-    "input_": {
-        "method": "central_average",
-        "args": [],
-        "kwargs": {"column_name": "Age"},
+    "method": "central_average",
+    "arguments": {
+        "column_name": "Age",
     },
     "databases": [{"label": "olympic_athletes"}],
 }
@@ -18,14 +17,11 @@ kaplan_meier = {
     "name": "test_average_task",
     "image": "harbor2.vantage6.ai/algorithms/kaplan-meier",
     "description": "",
-    "input_": {
-        "method": "kaplan_meier_central",
-        "args": [],
-        "kwargs": {
-            "time_column_name": "days",
-            "censor_column_name": "censor",
-            "organizations_to_include": [1, 2, 3],
-        },
+    "method": "kaplan_meier_central",
+    "arguments": {
+        "time_column_name": "days",
+        "censor_column_name": "censor",
+        "organizations_to_include": [1, 2, 3],
     },
     "databases": [{"label": "kaplan_meier_test"}],
 }
