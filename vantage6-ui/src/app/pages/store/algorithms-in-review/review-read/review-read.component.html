@@ -30,6 +30,18 @@
           <b>{{ "algorithm-in-review.status" | translate }}</b>
           <span>{{ review.status || "-" }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-review.card-per-review.requested-at" | translate }}</b>
+          <span>{{ review.requested_at || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-review.card-per-review.requested-by" | translate }}</b>
+          <span>{{ review.requested_by?.username || "-" }}</span>
+        </div>
+        <div class="data-list__item">
+          <b>{{ "algorithm-review.card-per-review.submitted-at" | translate }}</b>
+          <span>{{ review.submitted_at || "-" }}</span>
+        </div>
         <div class="data-list__item data-list__item--big">
           <b>{{ "algorithm.code-url" | translate }}</b>
           <div *ngIf="algorithm && algorithm.code_url">

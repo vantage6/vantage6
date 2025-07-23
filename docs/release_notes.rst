@@ -1,6 +1,39 @@
 Release notes
 =============
 
+4.12.0
+-----
+
+*22 July 2025*
+
+- **Security**
+
+  - Update to latest Debian 12 base image to fix security vulnerabilities
+    (`PR#2158 <https://github.com/vantage6/vantage6/pull/2158>`_).
+
+- **Feature**
+
+  - For algorithm store reviews, track when reviews are requested and submitted and by
+    whom they are requested (`Issue#2151 <https://github.com/vantage6/vantage6/issues/2151>`_,
+    `PR#2152 <https://github.com/vantage6/vantage6/pull/2152>`_).
+
+- **Change**
+
+  - Make running Prometheus service optional at both nodes and server
+    (`Issue#2107 <https://github.com/vantage6/vantage6/issues/2107>`_,
+    `PR#2153 <https://github.com/vantage6/vantage6/pull/2153>`_).
+  - Use latest version of Squid proxy image
+    (`PR#2159 <https://github.com/vantage6/vantage6/pull/2159>`_).
+  - Change installation process of psycopg2 as the old one was not working anymore
+    (`PR#2160 <https://github.com/vantage6/vantage6/pull/2160>`_).
+
+- **Bugfix**
+
+  - Tasks with number as name were leading to internal server errors. Now there is a
+    proper error message (`Issue#2113 <https://github.com/vantage6/vantage6/issues/2113>`_,
+    `PR#2154 <https://github.com/vantage6/vantage6/pull/2154>`_).
+
+
 4.11.0
 -----
 

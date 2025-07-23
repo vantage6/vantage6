@@ -1,9 +1,9 @@
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bookworm
 
 LABEL version="5.0"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
-# slim buster does not have gcc installed
+# slim bookworm does not have gcc installed
 # libdev is needed for arm compilation
 RUN apt-get update \
     && apt-get install -y gcc python3-dev libffi-dev

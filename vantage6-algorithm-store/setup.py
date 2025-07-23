@@ -31,7 +31,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "flask==3.1.0",
+        "flask==3.1.1",
         "flask-cors==6.0.0",
         "Flask-JWT-Extended==4.7.1",
         "Flask-Principal==0.4.0",

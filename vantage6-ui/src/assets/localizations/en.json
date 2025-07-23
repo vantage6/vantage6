@@ -509,7 +509,10 @@
       "title": "Review by {{reviewer}}",
       "reviewer": "Reviewer",
       "reviewer-server": "Server that reviewer belongs to",
-      "comment": "Reviewer comments"
+      "comment": "Reviewer comments",
+      "requested-at": "Review requested at",
+      "requested-by": "Review requested by",
+      "submitted-at": "Review submitted at"
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the review by '{{reviewer}}'?",

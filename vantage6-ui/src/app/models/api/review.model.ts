@@ -1,10 +1,6 @@
 import { Algorithm } from './algorithm.model';
 import { StoreUser } from './store-user.model';
 
-export enum ReviewLazyProperties {
-  Algorithm = 'algorithm'
-}
-
 export enum ReviewStatus {
   UnderReview = 'under review',
   Approved = 'approved',
@@ -22,6 +18,9 @@ export interface StoreReview {
   status: ReviewStatus;
   algorithm_id: number;
   reviewer: StoreUser;
+  requested_at?: string;
+  requested_by?: StoreUser;
+  submitted_at?: string;
   comment?: string;
   algorithm?: Algorithm;
 }

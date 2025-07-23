@@ -167,4 +167,5 @@ class ReviewOutputSchema(HATEOASModelSchema):
         model = Review
 
     reviewer = fields.Nested("UserOutputSchema")
+    requested_by = fields.Nested("UserOutputSchema")
     algorithm_id = fields.Integer(data_key="algorithm_id")

@@ -38,7 +38,12 @@ class User(Base):
     rules = relationship("Rule", back_populates="users", secondary="UserPermission")
 
     algorithms = relationship("Algorithm", back_populates="developer")
-    reviews = relationship("Review", back_populates="reviewer")
+    reviews = relationship(
+        "Review", foreign_keys="Review.reviewer_id", back_populates="reviewer"
+    )
+    requested_reviews = relationship(
+        "Review", foreign_keys="Review.requested_by_id", back_populates="requested_by"
+    )
 
     def __repr__(self) -> str:
         """
