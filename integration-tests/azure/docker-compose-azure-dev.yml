@@ -30,33 +30,20 @@ services:
       "
   vantage6-server:
     build:
-      context: .
+      context: ../../.
       dockerfile: ./docker/node-and-server.Dockerfile
     ports:
       - "7601:7601"
     volumes:
-      - ./.configs/azurite.yaml:/mnt/config.yaml
-    command:
-      [
-        "uwsgi",
-        "--http", ":7601",
-        "--gevent", "1000",
-        "--http-websockets",
-        "--http-chunked-input",
-        "--http-keepalive",
-        "--post-buffering", "0",
-        "--buffer-size", "65535",
-        "--master",
-        "--callable", "app",
-        "--disable-logging",
-        "--wsgi-file", "/vantage6/vantage6-server/vantage6/server/wsgi.py",
-        "--pyargv", "/mnt/config.yaml"
-      ]
+      - ./azurite.yaml:/mnt/config.yaml
+      - ./test-entities.yaml:/mnt/import.yaml
+      - ./server-entrypoint.sh:/server-entrypoint.sh
+    entrypoint: ["/bin/bash", "/server-entrypoint.sh"]
   local-registry:
     image: registry:2
     container_name: local-registry
     ports:
       - "5000:5000"
-      
+
 volumes:
   azurite_data:
