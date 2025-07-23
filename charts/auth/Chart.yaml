@@ -6,5 +6,5 @@ version: "5.0.0-a.24"
 appVersion: "5.0.0-a.24"
 dependencies:
   - name: keycloak
-    version: "5.0.0-a.23"
+    version: "24.6.1"
     repository: https://charts.bitnami.com/bitnami
