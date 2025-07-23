@@ -219,9 +219,10 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
 
             # Update version
             content = re.sub(
-                r'version: "[\d.]+(-\w+(\.\d+)?)?"',
+                r'^version: "[\d.]+(-\w+(\.\d+)?)?"',
                 f'version: "{new_version}"',
                 content,
+                flags=re.MULTILINE,
             )
 
             # Update common dependency version if it exists
