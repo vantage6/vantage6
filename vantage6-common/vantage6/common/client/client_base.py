@@ -76,7 +76,7 @@ class ClientBase(object):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str, auth_url: str) -> None:
+    def __init__(self, server_url: str, auth_url: str | None = None) -> None:
         """Basic setup for the client
 
         Parameters

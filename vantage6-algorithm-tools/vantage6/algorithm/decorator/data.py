@@ -5,7 +5,6 @@ from functools import wraps
 
 from vantage6.common.globals import ContainerEnvNames, DATAFRAME_MULTIPLE_KEYWORD
 from vantage6.algorithm.tools.util import info, error, warn
-from vantage6.algorithm.tools import DecoratorType
 
 
 def _get_user_dataframes() -> list[str]:

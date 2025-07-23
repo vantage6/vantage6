@@ -42,11 +42,11 @@ class UserClient(ClientBase):
 
     def __init__(
         self,
-        *args,
+        server_url: str,
+        auth_url: str,
         auth_realm: str = "vantage6",
         auth_client: str = "public_client",
         log_level="info",
-        **kwargs,
     ) -> None:
         """Create user client
 
@@ -54,6 +54,10 @@ class UserClient(ClientBase):
 
         Parameters
         ----------
+        server_url : str
+            The url of the server to connect to.
+        auth_url : str
+            The url of the authentication server.
         auth_realm : str, optional
             The Keycloak realm to use for authentication, by default 'vantage6'
         auth_client : str, optional
@@ -61,7 +65,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(*args, **kwargs)
+        super(UserClient, self).__init__(server_url=server_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)

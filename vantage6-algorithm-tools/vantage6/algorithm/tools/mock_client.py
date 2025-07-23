@@ -8,7 +8,6 @@ from copy import deepcopy
 
 import pandas as pd
 
-from vantage6.algorithm.tools import DecoratorType
 from vantage6.common.globals import AuthStatus
 from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 from vantage6.algorithm.tools.util import info

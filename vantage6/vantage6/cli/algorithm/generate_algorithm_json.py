@@ -15,7 +15,7 @@ import questionary as q
 import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.tools import DecoratorType
+from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.common import error, info, warning
 from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
 from vantage6.common.algorithm_function import (
@@ -324,13 +324,13 @@ class Function:
     def _get_step_type(self) -> str:
         """Get the step type of the function"""
         decorator_type = get_vantage6_decorator_type(self.func)
-        if decorator_type == DecoratorType.FEDERATED:
+        if decorator_type == DecoratorStepType.FEDERATED:
             return AlgorithmStepType.FEDERATED_COMPUTE.value
-        elif decorator_type == DecoratorType.CENTRAL:
+        elif decorator_type == DecoratorStepType.CENTRAL:
             return AlgorithmStepType.CENTRAL_COMPUTE.value
-        elif decorator_type == DecoratorType.PREPROCESSING:
+        elif decorator_type == DecoratorStepType.PREPROCESSING:
             return AlgorithmStepType.PREPROCESSING.value
-        elif decorator_type == DecoratorType.DATA_EXTRACTION:
+        elif decorator_type == DecoratorStepType.DATA_EXTRACTION:
             return AlgorithmStepType.DATA_EXTRACTION.value
         else:
             warning(

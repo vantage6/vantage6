@@ -31,4 +31,4 @@ def get_vantage6_decorator_type(func: callable) -> str | None:
         The vantage6 decorator type of the function, or None if the function is not
         decorated with a vantage6 decorator
     """
-    return getattr(func, "vantage6_decorated_step_type", None)
+    return getattr(func, "vantage6_decorator_step_type", None)
