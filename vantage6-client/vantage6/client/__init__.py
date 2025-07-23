@@ -904,7 +904,7 @@ class UserClient(ClientBase):
             return self.parent.request("node", method="post", json=body)
 
         @post_filtering(iterable=False)
-        def update(self, id_: int, name: str = None, clear_ip: bool = None) -> dict:
+        def update(self, id_: int, name: str = None) -> dict:
             """Update node information
 
             Parameters
@@ -913,8 +913,6 @@ class UserClient(ClientBase):
                 Id of the node you want to update
             name : str, optional
                 New node name, by default None
-            clear_ip : bool, optional
-                Clear the internal IP address of the node, by default None
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the node. Default is None.
@@ -928,7 +926,7 @@ class UserClient(ClientBase):
             dict
                 Containing the meta-data of the updated node
             """
-            data = {"name": name, "clear_ip": clear_ip}
+            data = {"name": name}
             data = self._clean_update_data(data)
             return self.parent.request(
                 f"node/{id_}",

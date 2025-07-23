@@ -212,11 +212,6 @@ class Nodes(NodeBase):
               type: string
             description: Node status ('online', 'offline')
           - in: query
-            name: ip
-            schema:
-              type: string
-            description: Node IP address
-          - in: query
             name: last_seen_from
             schema:
               type: date (yyyy-mm-dd)
@@ -322,9 +317,8 @@ class Nodes(NodeBase):
                 )
             )
 
-        for param in ["status", "ip"]:
-            if param in args:
-                q = q.filter(getattr(db.Node, param) == args[param])
+        if "status" in args:
+            q = q.filter(db.Node.status == args["status"])
         if "name" in args:
             q = q.filter(db.Node.name.like(args["name"]))
 
@@ -696,12 +690,6 @@ class Node(NodeBase):
                   name:
                     type: string
                     description: Node name
-                  ip:
-                    type: string
-                    description: The node's internal IP address
-                  clear_ip:
-                    type: boolean
-                    description: Clear the node's internal IP address
 
         responses:
           200:
@@ -754,13 +742,6 @@ class Node(NodeBase):
                     "msg": f"Node name '{name}' already exists!"
                 }, HTTPStatus.BAD_REQUEST
             node.name = name
-
-        # update node IP address if it is given
-        ip = data.get("ip")
-        if ip:
-            node.ip = ip
-        elif data.get("clear_ip"):
-            node.ip = None
 
         node.save()
         return node_schema.dump(node), HTTPStatus.OK

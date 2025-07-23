@@ -42,7 +42,6 @@ class TestResources(TestResourceBase):
             "id",
             "type",
             "last_seen",
-            "ip",
         ]
         for node in nodes:
             for key in expected_fields:
@@ -87,7 +86,6 @@ class TestResources(TestResourceBase):
             "id",
             "type",
             "last_seen",
-            "ip",
         ]
         for key in expected_fields:
             self.assertIn(key, result)
@@ -544,22 +542,6 @@ class TestResources(TestResourceBase):
             f"/api/node/{node.id}", headers=headers, json={"collaboration_id": col.id}
         )
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
-
-        # try to patch the node's internal network IP address
-        rule = Rule.get_by_("node", Scope.GLOBAL, Operation.EDIT)
-        headers = self.get_user_auth_header(org2, rules=[rule])
-        results = self.app.patch(
-            f"/api/node/{node.id}", headers=headers, json={"ip": "0.0.0.0"}
-        )
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(results.json["ip"], "0.0.0.0")
-
-        # try to clear the node's internal network IP address - this should work
-        results = self.app.patch(
-            f"/api/node/{node.id}", headers=headers, json={"clear_ip": True}
-        )
-        self.assertEqual(results.status_code, HTTPStatus.OK)
-        self.assertEqual(results.json["ip"], None)
 
         # collaboration permission - inside the collaboration
         rule = Rule.get_by_("node", Scope.COLLABORATION, Operation.EDIT)

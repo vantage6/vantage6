@@ -1,10 +1,9 @@
-import ipaddress
 import re
 
 from marshmallow import Schema, fields, ValidationError, validates, validates_schema
 from marshmallow.validate import Length, Range, OneOf
 
-from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.model.rule import Scope
 from vantage6.backend.common.resource.input_schema import (
@@ -191,28 +190,6 @@ class NodeInputSchema(_NameValidationSchema):
     name = fields.String(required=False)
     collaboration_id = fields.Integer(required=True, validate=Range(min=1))
     organization_id = fields.Integer(validate=Range(min=1))
-    ip = fields.String()
-    clear_ip = fields.Boolean()
-
-    @validates("ip")
-    def validate_ip(self, ip: str):
-        """
-        Validate IP address in request body.
-
-        Parameters
-        ----------
-        ip : str
-            IP address to validate.
-
-        Raises
-        ------
-        ValidationError
-            If the IP address is not valid.
-        """
-        try:
-            ipaddress.ip_address(ip)
-        except ValueError as exc:
-            raise ValidationError(f"IP address {ip} is not a valid IP address") from exc
 
 
 class OrganizationInputSchema(_NameValidationSchema):

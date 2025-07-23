@@ -276,7 +276,6 @@ class MockAlgorithmClient:
                         },
                         "node": {
                             "id": org_id,
-                            "ip": None,
                             "name": "mock_node",
                             "status": AuthStatus.ONLINE.value,
                         },

@@ -122,7 +122,7 @@ class Node:
 
         # Authenticate with the server, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
-        self.queue = queue.Queue()
+        self.runs_queue = queue.Queue()
         self.log.debug("Authenticating")
         self.authenticate()
 
@@ -318,13 +318,13 @@ class Node:
         assert self.client.cryptor, "Encrpytion has not been setup"
 
         # request open tasks from the server
-        task_results = self.client.run.list(
+        runs_to_execute = self.client.run.list(
             state=TaskStatusQueryOptions.OPEN.value, include_task=True
         )
 
         # add the tasks to the queue
-        self.__add_tasks_to_queue(task_results)
-        self.log.info("Received %s tasks", self.queue._qsize())
+        self.__add_task_runs_to_queue(runs_to_execute)
+        self.log.info("Received %s tasks", self.runs_queue._qsize())
 
     def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
@@ -337,14 +337,14 @@ class Node:
             Task identifier
         """
         # fetch open algorithm runs for this node
-        task_runs = self.client.run.list(
+        runs_to_execute = self.client.run.list(
             include_task=True, state=TaskStatusQueryOptions.OPEN.value, task_id=task_id
         )
 
         # add the tasks to the queue
-        self.__add_tasks_to_queue(task_runs)
+        self.__add_task_runs_to_queue(runs_to_execute)
 
-    def __add_tasks_to_queue(self, task_results: list[dict]) -> None:
+    def __add_task_runs_to_queue(self, runs_to_execute: list[dict]) -> None:
         """
         Add a task to the queue.
 
@@ -354,52 +354,53 @@ class Node:
             A list of dictionaries with information required to run the
             algorithm
         """
-        for task_result in task_results:
+        for run_to_execute in runs_to_execute:
             try:
-                if not self.k8s_container_manager.is_running(task_result["id"]):
-                    self.queue.put(task_result)
+                if not self.k8s_container_manager.is_running(run_to_execute["id"]):
+                    self.runs_queue.put(run_to_execute)
                 else:
                     self.log.info(
-                        f"Not starting task {task_result['task']['id']} - "
-                        f"{task_result['task']['name']} as it is already "
-                        "running"
+                        "Not starting task %s - %s as it is already running",
+                        run_to_execute["task"]["id"],
+                        run_to_execute["task"]["name"],
                     )
             except Exception:
                 self.log.exception("Error while syncing task queue")
 
-    def __start_task(self, task_incl_run: dict) -> None:
+    def __start_task(self, run_to_execute: dict) -> None:
         """
         Start the docker image and notify the server that the task has been
         started.
 
         Parameters
         ----------
-        task_incl_run : dict
+        run_to_execute : dict
             A dictionary with information required to run the algorithm
         """
-        task = task_incl_run["task"]
-        self.log.info("Starting task {id} - {name}".format(**task))
+        task = run_to_execute["task"]
+        self.log.info("Starting task %s - %s", task["id"], task["name"])
 
         # notify that we are processing this task
-        task_id = task_incl_run["id"]
-        self.client.set_task_start_time(task_id)
+        run_id = run_to_execute["id"]
+
+        self.client.set_run_start_time(run_id)
 
         # each algorithm container has its own purpose annotated by the action
         try:
-            container_action = AlgorithmStepType(task_incl_run["action"])
+            container_action = AlgorithmStepType(run_to_execute["action"])
         except ValueError:
             self.log.error(
-                f"Unrecognized action {task_incl_run['action']}. Cancelling task."
+                "Unrecognized action %s. Cancelling task.", run_to_execute["action"]
             )
             self.client.run.patch(
-                id_=task_id,
+                id_=run_id,
                 data={
                     "status": RunStatus.FAILED,
                     "finished_at": datetime.datetime.now().isoformat(),
-                    "log": f"Unrecognized action {task_incl_run['action']}",
+                    "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
-            self.__emit_algorithm_status_change(task, task_incl_run, RunStatus.FAILED)
+            self.__emit_algorithm_status_change(task, run_to_execute, RunStatus.FAILED)
             return
 
         # Only compute containers need a token as they are the only ones that should
@@ -417,7 +418,7 @@ class Node:
                     "Container token could not be obtained: %s", token.get("msg")
                 )
                 self.client.run.patch(
-                    id_=task_incl_run["id"],
+                    id_=run_id,
                     data={
                         "status": RunStatus.FAILED,
                         "log": "Could not obtain algorithm container token",
@@ -428,10 +429,10 @@ class Node:
         # __docker.active_tasks
         task_status = self.k8s_container_manager.run(
             action=container_action,
-            run_id=task_id,
+            run_id=run_id,
             task_info=task,
             image=task["image"],
-            function_arguments=task_incl_run["arguments"],
+            function_arguments=run_to_execute["arguments"],
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
@@ -446,15 +447,15 @@ class Node:
             update["finished_at"] = datetime.datetime.now(
                 datetime.timezone.utc
             ).isoformat()
-        self.client.run.patch(id_=task_id, data=update)
+        self.client.run.patch(id_=run_id, data=update)
 
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(task, task_incl_run, task_status)
+        self.__emit_algorithm_status_change(task, run_id, task_status)
 
     def __emit_algorithm_status_change(
-        self, task: dict, run: dict, status: RunStatus
+        self, task: dict, run_id: int, status: RunStatus
     ) -> None:
         """
         Emit a socket event to alert everyone of task status change.
@@ -463,6 +464,8 @@ class Node:
         ----------
         task_id : dict
             Task metadata
+        run_id : int
+            Run ID
         status : RunStatus
             Task status
         """
@@ -481,7 +484,7 @@ class Node:
             data={
                 "node_id": self.client.whoami.id_,
                 "status": status,
-                "run_id": run["id"],
+                "run_id": run_id,
                 "task_id": task["id"],
                 "collaboration_id": self.client.collaboration_id,
                 "organization_id": self.client.whoami.organization_id,
@@ -722,9 +725,9 @@ class Node:
         try:
             while True:
                 self.log.info("Waiting for new tasks....")
-                taskresult = self.queue.get()
+                run_to_execute = self.runs_queue.get()
                 self.log.info("New task received")
-                self.__start_task(taskresult)
+                self.__start_task(run_to_execute)
 
         except (KeyboardInterrupt, InterruptedError):
             self.log.info("Node is interrupted, shutting down...")

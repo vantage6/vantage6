@@ -20,7 +20,6 @@ class Authenticatable(Base):
         "polymorphic_identity": "authenticatable",
         "polymorphic_on": type,
     }
-    ip = Column(String)
     keycloak_id = Column(String)
     last_seen = Column(DateTime)
     status = Column(String)
