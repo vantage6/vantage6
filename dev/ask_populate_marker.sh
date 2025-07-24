@@ -5,6 +5,16 @@
 
 POPULATE_MARKER=$1
 
+# check if the --repopulate flag is provided
+for arg in "$@"; do
+    if [ "$arg" = "--repopulate" ]; then
+        rm -f "${POPULATE_MARKER}"
+        echo "Repopulating the server..." >&2
+        echo "true"
+        exit 0
+    fi
+done
+
 # Validate that the POPULATE_MARKER argument is provided
 if [ -z "${POPULATE_MARKER}" ]; then
   echo "Error: POPULATE_MARKER argument is required." >&2

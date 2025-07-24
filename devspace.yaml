@@ -482,7 +482,7 @@ commands:
   # This will put all components in development mode. This is the main entrypoint
   # for development.
   start-dev:
-    description: "Start the development environment"
+    description: "Start the development environment. Use --repopulate to repopulate the server."
     command: |
       if ! command -v uname >/dev/null 2>&1; then
         echo "--------------------------------"
@@ -491,7 +491,7 @@ commands:
         echo "--------------------------------"
         exit 1
       fi
-      POPULATE=$(./dev/ask_populate_marker.sh $POPULATE_MARKER)
+      POPULATE=$(./dev/ask_populate_marker.sh $POPULATE_MARKER "$@")
       $(./dev/get_start_command.sh $POPULATE $POPULATE_MARKER "$@")
 
   # This will remove all running k8s resources from the development mode.
