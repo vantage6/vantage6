@@ -511,4 +511,4 @@ commands:
   rebuild:
     description: "Rebuild images for this project (use --server, --node, --store, --ui for specific images)"
     command: |
-      echo $(./dev/get_rebuild_command.sh "$@")
+      $(./dev/get_rebuild_command.sh "$@")
