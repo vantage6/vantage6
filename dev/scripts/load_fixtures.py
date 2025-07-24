@@ -29,7 +29,7 @@ def create_fixtures(
 
     # Track creation details
     creation_details = {
-        "organizations": {"created": [], "existing": []},
+        "organizations": {"created": [], "existing": [], "root_org_patched": []},
         "users": {"created": [], "existing": []},
         "nodes": {"created": [], "existing": []},
         "collaborations": {"created": [], "existing": []},
@@ -47,6 +47,16 @@ def create_fixtures(
         name = f"org_{i}"
         if org := next(iter(client.organization.list(name=name)["data"]), None):
             creation_details["organizations"]["existing"].append(
+                {"name": name, "domain": org["domain"]}
+            )
+            organizations.append(org)
+        elif i == 1:
+            # Patch the root organization so that admin user is also in the org
+            org = client.organization.update(
+                id_=1,
+                name=name,
+            )
+            creation_details["organizations"]["root_org_patched"].append(
                 {"name": name, "domain": org["domain"]}
             )
             organizations.append(org)
@@ -179,6 +189,8 @@ def create_fixtures(
 
     summary += f"\nOrganizations: {len(creation_details['organizations']['created'])} "
     summary += f"created, {len(creation_details['organizations']['existing'])} existing"
+    summary += f", {len(creation_details['organizations']['root_org_patched'])} root "
+    summary += "org patched"
     if creation_details["organizations"]["created"]:
         summary += "\n  Created:"
         for org in creation_details["organizations"]["created"]:
@@ -186,6 +198,10 @@ def create_fixtures(
     if creation_details["organizations"]["existing"]:
         summary += "\n  Existing:"
         for org in creation_details["organizations"]["existing"]:
+            summary += f"\n    - {org['name']} ({org['domain']})"
+    if creation_details["organizations"]["root_org_patched"]:
+        summary += "\n  Root org patched:"
+        for org in creation_details["organizations"]["root_org_patched"]:
             summary += f"\n    - {org['name']} ({org['domain']})"
 
     summary += f"\n\nUsers: {len(creation_details['users']['created'])} created, "
