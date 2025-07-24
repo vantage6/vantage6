@@ -538,7 +538,7 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-            self.log.debug("Returning response with code %s and data: %s", code, data)
+            log.debug("Returning response with code %s and data: %s", code, data)
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):

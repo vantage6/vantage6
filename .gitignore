@@ -22,3 +22,4 @@ docs/function-docs/_autosummary
 
 # UI build files
 **/node_modules/
+large-data-test/

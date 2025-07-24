@@ -159,8 +159,7 @@ class AlgorithmClient(ClientBase):
         Poll the central server until results are available.
         """
         self.log.debug(f"Waiting for results for task_id {task_id}...")
-        while not has_task_finished(self.task.get(task_id).get("status")):
-            time.sleep(interval)
+        self.wait_for_task_completion(self.request, task_id, interval, False)
 
         return True
 
