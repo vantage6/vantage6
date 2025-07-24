@@ -7,6 +7,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
+from vantage6.client import Client
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
@@ -19,20 +20,21 @@ def clear_dev_folder(dev_dir: Path, name: str) -> None:
 
 
 def create_fixtures(
-    client,
-    number_of_nodes,
-    task_directory,
-    task_namespace,
-    node_starting_port_number,
-    dev_dir,
+    client: Client,
+    number_of_nodes: int,
+    task_directory: str,
+    task_namespace: str,
+    node_starting_port_number: int,
+    dev_dir: Path,
 ) -> str:
 
     # Track creation details
     creation_details = {
-        "organizations": {"created": [], "existing": []},
+        "organizations": {"created": [], "existing": [], "root_org_patched": []},
         "users": {"created": [], "existing": []},
         "nodes": {"created": [], "existing": []},
         "collaborations": {"created": [], "existing": []},
+        "sessions": {"created": []},
         "dev_folders_cleared": [],
     }
 
@@ -47,6 +49,16 @@ def create_fixtures(
         name = f"org_{i}"
         if org := next(iter(client.organization.list(name=name)["data"]), None):
             creation_details["organizations"]["existing"].append(
+                {"name": name, "domain": org["domain"]}
+            )
+            organizations.append(org)
+        elif i == 1:
+            # Patch the root organization so that admin user is also in the org
+            org = client.organization.update(
+                id_=1,
+                name=name,
+            )
+            creation_details["organizations"]["root_org_patched"].append(
                 {"name": name, "domain": org["domain"]}
             )
             organizations.append(org)
@@ -109,6 +121,16 @@ def create_fixtures(
                 }
             )
             users.append(user)
+
+    # create collaboration session
+    session = client.session.create(
+        collaboration=col_1["id"],
+        name="session (collaboration scope)",
+        scope="collaboration",
+    )
+    creation_details["sessions"]["created"].append(
+        {"name": "session (collaboration scope)", "id": session["id"]}
+    )
 
     # Create nodes
     for i in range(1, number_of_nodes + 1):
@@ -179,6 +201,8 @@ def create_fixtures(
 
     summary += f"\nOrganizations: {len(creation_details['organizations']['created'])} "
     summary += f"created, {len(creation_details['organizations']['existing'])} existing"
+    summary += f", {len(creation_details['organizations']['root_org_patched'])} root "
+    summary += "org patched"
     if creation_details["organizations"]["created"]:
         summary += "\n  Created:"
         for org in creation_details["organizations"]["created"]:
@@ -186,6 +210,10 @@ def create_fixtures(
     if creation_details["organizations"]["existing"]:
         summary += "\n  Existing:"
         for org in creation_details["organizations"]["existing"]:
+            summary += f"\n    - {org['name']} ({org['domain']})"
+    if creation_details["organizations"]["root_org_patched"]:
+        summary += "\n  Root org patched:"
+        for org in creation_details["organizations"]["root_org_patched"]:
             summary += f"\n    - {org['name']} ({org['domain']})"
 
     summary += f"\n\nUsers: {len(creation_details['users']['created'])} created, "
@@ -229,6 +257,12 @@ def create_fixtures(
         summary += "\n  Existing:"
         for collab in creation_details["collaborations"]["existing"]:
             summary += f"\n    - {collab['name']} (ID: {collab['id']})"
+
+    summary += f"\n\nSessions: {len(creation_details['sessions']['created'])} created"
+    if creation_details["sessions"]["created"]:
+        summary += "\n  Created:"
+        for session in creation_details["sessions"]["created"]:
+            summary += f"\n    - {session['name']} (ID: {session['id']})"
 
     if creation_details["dev_folders_cleared"]:
         summary += (
