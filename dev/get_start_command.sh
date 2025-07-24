@@ -11,13 +11,14 @@ ARGS=("$@")
 populate=${ARGS[0]}
 POPULATE_MARKER=${ARGS[1]}
 
-# remove the populate marker from the args
+# remove the populate args from the args so that the rest can be passed to devspace
 ARGS=${ARGS[@]:2}
 
 if [ "$populate" = "true" ]; then
   echo "Running devspace pipeline with populating the server..." >&2
-  touch "${POPULATE_MARKER}"
   echo "devspace run-pipeline all-with-populate ${ARGS}"
+  # Note that we don't create the marker file here because it is created by the
+  # devspace pipeline when the populate script has successfully run.
 else
   echo "Running devspace pipeline without populating the server..." >&2
   # Create the marker file to prevent asking the user again

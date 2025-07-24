@@ -77,7 +77,8 @@ pipelines:
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
         --task-namespace $TASK_NAMESPACE \
-        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
+        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER \
+        --populate-marker $POPULATE_MARKER
 
   all-without-populate:
     run: |-
