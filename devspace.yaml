@@ -71,26 +71,14 @@ vars:
   DEVSPACE_ENV_FILE: ".devspace/.env"
 
 pipelines:
-  # Main entrypoint for development (`devspace dev`). This starts all server components
-  # and the nodes. Make sure that you have run `devspace run-pipeline init` before.
-  dev:
-    run: |-
-      if ! command -v uname >/dev/null 2>&1; then
-        echo "--------------------------------"
-        echo "Error: This script must be run in a Unix-like shell (Bash/sh)."
-        echo "Windows OS is not supported! Please use WSL2 if you are on Windows."
-        echo "--------------------------------"
-        exit 1
-      fi
-      dev/start.sh ${POPULATE_MARKER}
-
   populate:
     run: |-
       python dev/populate.py \
         --number-of-nodes $NUMBER_OF_NODES \
         --task-directory $TASK_DIRECTORY \
         --task-namespace $TASK_NAMESPACE \
-        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER
+        --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER \
+        --populate-marker $POPULATE_MARKER
 
   all-without-populate:
     run: |-
@@ -211,6 +199,9 @@ deployments:
           keycloakConfigCli:
             configuration:
               realm:
+                # overwrite password policy - we don't need to enforce a password policy
+                # for dev environment
+                passwordPolicy: ""
                 # Overwrite users: for dev environment, initialize admin user fully and
                 # turn off MFA, so we don't need to configure OTP and setup account on
                 # first login.
@@ -223,7 +214,9 @@ deployments:
                     lastName: Admin
                     credentials:
                       - type: password
-                        value: Admin123!
+                        # note that for the dev env, we also overwrite the password in
+                        # the values.yaml file (this pw is easier)
+                        value: admin
                   - username: service-account-backend-admin-client
                     enabled: true
                     serviceAccountClientId: backend-admin-client
@@ -490,7 +483,16 @@ commands:
   # for development.
   start-dev:
     description: "Start the development environment"
-    command: devspace dev
+    command: |
+      if ! command -v uname >/dev/null 2>&1; then
+        echo "--------------------------------"
+        echo "Error: This script must be run in a Unix-like shell (Bash/sh)."
+        echo "Windows OS is not supported! Please use WSL2 if you are on Windows."
+        echo "--------------------------------"
+        exit 1
+      fi
+      POPULATE=$(./dev/ask_populate_marker.sh $POPULATE_MARKER)
+      $(./dev/get_start_command.sh $POPULATE $POPULATE_MARKER "$@")
 
   # This will remove all running k8s resources from the development mode.
   stop-dev:
