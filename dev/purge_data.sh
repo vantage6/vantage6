@@ -61,13 +61,29 @@ done
 echo "Deleting ${POPULATE_MARKER}"
 rm -f "$POPULATE_MARKER" || { echo "Failed to delete $POPULATE_MARKER"; }
 
-echo "Deleting all data in ${TASK_DIRECTORY}"
-rm -rf "${TASK_DIRECTORY}/"* || { echo "Failed to delete data in $TASK_DIRECTORY"; }
+delete_all_in_dir() {
+  local dir="$1"
+  echo "Deleting all data in ${dir}"
 
-echo "Deleting all data in ${SERVER_DATABASE_MOUNT_PATH}"
-rm -rf "${SERVER_DATABASE_MOUNT_PATH}/"* || { echo "Failed to delete data in $SERVER_DATABASE_MOUNT_PATH"; }
+  need_sudo=0
+  for item in "$dir"/*; do
+    if [ ! -w "$item" ]; then
+      need_sudo=1
+      break
+    fi
+  done
 
-echo "Deleting all data in ${STORE_DATABASE_MOUNT_PATH}"
-rm -rf "${STORE_DATABASE_MOUNT_PATH}/"* || { echo "Failed to delete data in $STORE_DATABASE_MOUNT_PATH"; }
+  # Check if directory is writable by current user
+  if [ $need_sudo -eq 0 ]; then
+    rm -rf "${dir}/"* || { echo "Failed to delete data in $dir"; }
+  else
+    echo "Directory $dir is not writable, attempting to use sudo to empty it..."
+    sudo rm -rf "${dir}/"* || { echo "Failed to delete data in $dir (even with sudo)"; }
+  fi
+}
+
+delete_all_in_dir "$TASK_DIRECTORY"
+delete_all_in_dir "$SERVER_DATABASE_MOUNT_PATH"
+delete_all_in_dir "$STORE_DATABASE_MOUNT_PATH"
 
 echo "Purge completed successfully."
