@@ -128,7 +128,6 @@ def create_fixtures(
         name="session (collaboration scope)",
         scope="collaboration",
     )
-    print(f"==> Session created: {session}")
     creation_details["sessions"]["created"].append(
         {"name": "session (collaboration scope)", "id": session["id"]}
     )
