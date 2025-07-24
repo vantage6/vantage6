@@ -250,6 +250,7 @@
     "alert-no-algorithms": "You cannot create an analysis because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
     "alert-no-node-config": "The node '{{name}}' does not share its configuration, nor does any other node that is online. This is required to determine the available databases. Please contact the node administrator.",
     "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm function requires one or more. Please contact the node administrator so that they might add them.",
+    "alert-no-dataframes-in-session": "The selected session does not contain any dataframes yet. Most analyses require a dataframe to be created first.",
     "alert-no-dataframes": "The selected session does not contain any dataframes, while this algorithm function requires one or more. Please initialize your session by creating a dataframe."
   },
   "task-read": {

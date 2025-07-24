@@ -63,6 +63,7 @@ import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
+import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
 
 @Component({
   selector: 'app-create-form',
@@ -72,6 +73,7 @@ import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
   imports: [
     PageHeaderComponent,
     AlertComponent,
+    AlertWithButtonComponent,
     MatCard,
     MatCardContent,
     MatIcon,
@@ -150,6 +152,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
   hasLoadedColumns: boolean = false;
+  hasLoadedDataframes: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -849,6 +852,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   private async handleSessionChange(sessionID: string): Promise<void> {
+    this.hasLoadedDataframes = false;
     this.session = this.sessions?.find((session) => session.id === Number(sessionID)) || null;
     this.studyForm.controls.studyOrCollabID.reset();
     this.isStudyCompleted = false;
@@ -861,6 +865,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
+      this.hasLoadedDataframes = true;
     }
     this.updateStudyFormValidation();
     this.clearFunctionStep();
