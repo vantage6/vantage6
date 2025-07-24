@@ -7,6 +7,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
+from vantage6.client import Client
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
@@ -19,12 +20,12 @@ def clear_dev_folder(dev_dir: Path, name: str) -> None:
 
 
 def create_fixtures(
-    client,
-    number_of_nodes,
-    task_directory,
-    task_namespace,
-    node_starting_port_number,
-    dev_dir,
+    client: Client,
+    number_of_nodes: int,
+    task_directory: str,
+    task_namespace: str,
+    node_starting_port_number: int,
+    dev_dir: Path,
 ) -> str:
 
     # Track creation details
@@ -33,6 +34,7 @@ def create_fixtures(
         "users": {"created": [], "existing": []},
         "nodes": {"created": [], "existing": []},
         "collaborations": {"created": [], "existing": []},
+        "sessions": {"created": []},
         "dev_folders_cleared": [],
     }
 
@@ -119,6 +121,17 @@ def create_fixtures(
                 }
             )
             users.append(user)
+
+    # create collaboration session
+    session = client.session.create(
+        collaboration=col_1["id"],
+        name="session (collaboration scope)",
+        scope="collaboration",
+    )
+    print(f"==> Session created: {session}")
+    creation_details["sessions"]["created"].append(
+        {"name": "session (collaboration scope)", "id": session["id"]}
+    )
 
     # Create nodes
     for i in range(1, number_of_nodes + 1):
@@ -245,6 +258,12 @@ def create_fixtures(
         summary += "\n  Existing:"
         for collab in creation_details["collaborations"]["existing"]:
             summary += f"\n    - {collab['name']} (ID: {collab['id']})"
+
+    summary += f"\n\nSessions: {len(creation_details['sessions']['created'])} created"
+    if creation_details["sessions"]["created"]:
+        summary += "\n  Created:"
+        for session in creation_details["sessions"]["created"]:
+            summary += f"\n    - {session['name']} (ID: {session['id']})"
 
     if creation_details["dev_folders_cleared"]:
         summary += (

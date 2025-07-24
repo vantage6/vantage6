@@ -4,6 +4,7 @@ Script to populate the server with basic fixtures.
 
 import argparse
 import time
+import traceback
 from pathlib import Path
 
 from vantage6.client import Client
@@ -134,5 +135,5 @@ try:
 except Exception as e:
     print("=" * 80)
     print("Failed to populate server")
-    print(f"Error: {str(e)}")
+    print(traceback.format_exc())
     print("=" * 80)
