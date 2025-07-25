@@ -91,7 +91,7 @@ class Session(Base):
             True if the session is ready, False otherwise
         """
         for dataframe in self.dataframes:
-            if not dataframe.ready:
+            if not dataframe.ready():
                 return False
 
         return True

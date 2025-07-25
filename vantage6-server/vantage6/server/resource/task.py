@@ -10,6 +10,11 @@ from http import HTTPStatus
 from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    ForbiddenError,
+    handle_exceptions,
+)
 from vantage6.common.globals import STRING_ENCODING, NodePolicy
 from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskDatabaseType
 from vantage6.common.encryption import DummyCryptor
@@ -583,23 +588,24 @@ class Tasks(TaskBase):
 
         tags: ["Task"]
         """
-        try:
-            request.get_json()
-        except Exception:
-            return {"msg": "Request body is incorrect"}, HTTPStatus.BAD_REQUEST
-        return self.post_task(
-            request.get_json(),
+        data = request.get_json(silent=True)
+        log.warning(f"data: {data}")
+        return Tasks.post_task(
+            data,
             self.socketio,
             self.r,
+            should_be_compute=True,
         )
 
     # TODO this function should be refactored to make it more readable
+    @handle_exceptions
     @staticmethod
     def post_task(
         data: dict,
         socketio: SocketIO,
         rules: RuleCollection,
         action: AlgorithmStepType | None = None,
+        should_be_compute: bool = False,
     ):
         """
         Create new task and algorithm runs. Send the task to the nodes.
@@ -618,9 +624,11 @@ class Tasks(TaskBase):
             Action to performed by the task
         """
         # validate request body
+        log.info(f"data: {data}")
         try:
             data = task_input_schema.load(data)
         except ValidationError as e:
+            log.exception(e)
             return {
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
@@ -749,59 +757,15 @@ class Tasks(TaskBase):
             ):
                 return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
-        # get the algorithm store
-        algorithm = None
-        if g.user:
-            store_id = data.get("store_id")
-            store = None
-            if store_id:
-                store = db.AlgorithmStore.get(store_id)
-                if not store:
-                    return {
-                        "msg": f"Algorithm store id={store_id} not found!"
-                    }, HTTPStatus.BAD_REQUEST
-                # check if the store is part of the collaboration
-                if (
-                    not store.is_for_all_collaborations()
-                    and store.collaboration_id != collaboration_id
-                ):
-                    return {
-                        "msg": (
-                            "The algorithm store is not part of the collaboration "
-                            "to which the task is posted."
-                        )
-                    }, HTTPStatus.FORBIDDEN
-                # get the algorithm from the algorithm store
-                try:
-                    algorithm = Tasks._get_algorithm_from_store(
-                        store=store, image=image
-                    )
-                    image = algorithm["image"]
-                    digest = algorithm["digest"]
-                except Exception as e:
-                    log.exception("Error while getting image from store: %s", e)
-                    return {"msg": str(e)}, HTTPStatus.BAD_REQUEST
-
-                if digest:
-                    image_with_hash = f"{image}@{digest}"
-                else:
-                    # hash lookup in store was unsuccessful, use image without hash, but
-                    # also set store to None as it was not successfully looked up
-                    image_with_hash = image
-                    store = None
-            else:
-                # no need to determine hash if we don't look it up in a store
-                image_with_hash = image
-        else:  # ( we are dealing with g.container)
-            parent = db.Task.get(g.container["task_id"])
-            store = parent.algorithm_store
-            image_with_hash = parent.image
+        image_with_hash, store, algorithm = Tasks.__get_algorithm(
+            data, collaboration_id, image
+        )
 
         # Obtain the user requested database or dataframes
         databases = data.get("databases", [[]])
 
         # check the action of the task
-        action = Tasks.__check_action(data, action, algorithm)
+        action = Tasks.__check_action(data, action, algorithm, should_be_compute)
 
         # A task can be dependent on one or more other task(s). There are three cases:
         #
@@ -834,6 +798,18 @@ class Tasks(TaskBase):
 
                 if not df.ready:
                     dependent_tasks.append(df.last_session_task)
+
+            # If dataframe extraction failed, we cannot create tasks for that dataframe
+            if (
+                action != AlgorithmStepType.DATA_EXTRACTION
+                and not Tasks._data_extract_succeeded(df)
+            ):
+                return {
+                    "msg": (
+                        "The dataframe you selected was not properly created! "
+                        "Cannot create this task because the dataframe is not ready."
+                    )
+                }, HTTPStatus.BAD_REQUEST
 
         # These `depends_on_ids` are the task ids supplied by the session endpoints.
         # However they can also be user defined, although this has no use case yet.
@@ -1010,6 +986,80 @@ class Tasks(TaskBase):
         return True
 
     @staticmethod
+    def __get_algorithm(
+        data: dict, collaboration_id: int, image: str
+    ) -> tuple[str, db.AlgorithmStore, dict]:
+        # get the algorithm store
+        algorithm = None
+        if g.user:
+            store_id = data.get("store_id")
+            store = None
+            if store_id:
+                store = db.AlgorithmStore.get(store_id)
+                if not store:
+                    raise BadRequestError(f"Algorithm store id={store_id} not found!")
+                # check if the store is part of the collaboration
+                if (
+                    not store.is_for_all_collaborations()
+                    and store.collaboration_id != collaboration_id
+                ):
+                    raise ForbiddenError(
+                        "The algorithm store is not part of the collaboration "
+                        "to which the task is posted."
+                    )
+                # get the algorithm from the algorithm store
+                try:
+                    algorithm = Tasks._get_algorithm_from_store(
+                        store=store, image=image
+                    )
+                    image = algorithm["image"]
+                    digest = algorithm["digest"]
+                except Exception as e:
+                    log.exception("Error while getting image from store: %s", e)
+                    raise BadRequestError(str(e))
+
+                if digest:
+                    image_with_hash = f"{image}@{digest}"
+                else:
+                    # hash lookup in store was unsuccessful, use image without hash, but
+                    # also set store to None as it was not successfully looked up
+                    image_with_hash = image
+                    store = None
+            else:
+                # no need to determine hash if we don't look it up in a store
+                image_with_hash = image
+        else:  # ( we are dealing with g.container)
+            parent = db.Task.get(g.container["task_id"])
+            store = parent.algorithm_store
+            image_with_hash = parent.image
+
+        return image_with_hash, store, algorithm
+
+    @staticmethod
+    def _data_extract_succeeded(dataframe: db.Dataframe) -> bool:
+        """
+        Check if at least one dataframe extraction run succeeded.
+
+        Parameters
+        ----------
+        dataframe : db.Dataframe
+            Dataframe to check.
+
+        Returns
+        -------
+        bool
+            True if the dataframe extraction succeeded, False otherwise.
+        """
+        return any(
+            [
+                run.status == RunStatus.COMPLETED.value
+                for task in dataframe.tasks
+                for run in task.runs
+                if run.action == AlgorithmStepType.DATA_EXTRACTION
+            ]
+        )
+
+    @staticmethod
     def _node_doesnt_allow_user_task(node_configs: list[db.NodeConfig]) -> bool:
         """
         Checks if the node allows user to create task.
@@ -1145,7 +1195,10 @@ class Tasks(TaskBase):
 
     @staticmethod
     def __check_action(
-        request_data: dict, action: AlgorithmStepType | None, algorithm: dict | None
+        request_data: dict,
+        action: AlgorithmStepType | None,
+        algorithm: dict | None,
+        should_be_compute: bool,
     ) -> AlgorithmStepType:
         """
         Check if the action of the task matches the action in the algorithm store. If
@@ -1159,6 +1212,8 @@ class Tasks(TaskBase):
             Action to be performed.
         algorithm : dict | None
             Algorithm object from algorithm store.
+        should_be_compute : bool
+            Whether the task should be a compute task.
 
         Raises
         ------
@@ -1169,7 +1224,6 @@ class Tasks(TaskBase):
         method = request_data["method"]
         if not action:
             action = request_data.get("action")
-        # note that input validation ensures that method is present
         store_action = None
         if algorithm:
             algo_func = next(
@@ -1178,18 +1232,32 @@ class Tasks(TaskBase):
             store_action = algo_func["step_type"] if algo_func else None
 
         if action and store_action and action != store_action:
-            raise Exception(
+            raise BadRequestError(
                 f"Action {action} does not match the action type in the "
                 f"algorithm store: {store_action}"
             )
         elif not action and not store_action:
-            raise Exception(
+            raise BadRequestError(
                 "No action type provided. Please provide an action that is one of: "
                 f"{AlgorithmStepType.list()}"
             )
 
         elif not action:
             action = store_action
+
+        if should_be_compute and not AlgorithmStepType.is_compute(action):
+            msg = f"A {action.value} task cannot be created in this endpoint."
+            if action.value == AlgorithmStepType.DATA_EXTRACTION.value:
+                msg += (
+                    " Please use the dataframe endpoint to create a dataframe "
+                    "extraction task."
+                )
+            elif action.value == AlgorithmStepType.PREPROCESSING.value:
+                msg += (
+                    " Please use the dataframe endpoint to create a preprocessing "
+                    "task."
+                )
+            raise BadRequestError(msg)
 
         return action
 
