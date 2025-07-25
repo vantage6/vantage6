@@ -124,6 +124,7 @@
   },
   "dataframe-read": {
     "title": "Dataframe {{name}}",
+    "not-ready-despite-extraction": "The data extraction task to produce this dataframe failed. The dataframe cannot be used for analyses.",
     "columns": {
       "title": "Dataframe columns",
       "no-columns": "No columns are available for this dataframe.",

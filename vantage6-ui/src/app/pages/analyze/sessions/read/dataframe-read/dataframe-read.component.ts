@@ -14,8 +14,8 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
-import { BaseTask, GetTaskParameters } from 'src/app/models/api/task.models';
+import { AlgorithmStepType, Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
+import { BaseTask, GetTaskParameters, TaskStatus } from 'src/app/models/api/task.models';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -67,6 +67,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   currentPageColumnTable: number = 1;
   columnAlerts: string[] = [];
 
+  dataframeTasks: BaseTask[] = [];
   dataframeTasksTable: TableData | undefined;
   currentPageTaskTable: number = 1;
   getDataframeTasksParameters: GetTaskParameters = {};
@@ -194,6 +195,10 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
     this.setDataframeColumnsTablePage();
   }
 
+  dataframeNotReadyDespiteExtraction(): boolean {
+    return this.dataframeTasks.length > 0 && !this.dataframe?.ready;
+  }
+
   private setDataframeColumnsTablePage() {
     const pageSize = 10;
     if (this.dataframeColumnsTable) {
@@ -256,6 +261,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
     const dataframeTasks = await this.taskService.getPaginatedTasks(this.currentPageTaskTable, {
       dataframe_id: this.dataframe?.id
     });
+    this.dataframeTasks = dataframeTasks.data;
     this.paginationTaskTable = dataframeTasks.links;
 
     this.dataframeTasksTable = {
@@ -270,7 +276,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
           chipTypeProperty: 'statusType'
         }
       ],
-      rows: dataframeTasks.data.map((task) => {
+      rows: this.dataframeTasks.map((task) => {
         return {
           id: task.id.toString(),
           columnData: {
