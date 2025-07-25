@@ -196,7 +196,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   }
 
   dataframeNotReadyDespiteExtraction(): boolean {
-    return this.dataframeTasks.length > 0 && !this.dataframe?.ready;
+    return this.dataframeTasks.length > 0 && !this.dataframe?.ready && this.dataframeTasks[0].status === TaskStatus.Failed;
   }
 
   private setDataframeColumnsTablePage() {
