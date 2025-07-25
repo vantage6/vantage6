@@ -605,7 +605,7 @@ class Tasks(TaskBase):
         rules: RuleCollection,
         action: AlgorithmStepType | None = None,
         should_be_compute: bool = False,
-    ):
+    ) -> tuple[dict, HTTPStatus]:
         """
         Create new task and algorithm runs. Send the task to the nodes.
 
@@ -621,6 +621,13 @@ class Tasks(TaskBase):
             Configuration dictionary
         action : AlgorithmStepType
             Action to performed by the task
+        should_be_compute : bool
+            Whether the task should be a compute task. Default is False.
+
+        Returns
+        -------
+        tuple[dict, HTTPStatus]
+            Tuple containing the response and the HTTP status code.
         """
         # validate request body
         try:
