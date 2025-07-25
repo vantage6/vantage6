@@ -8,6 +8,7 @@ store to a vantage6 server.
 """
 
 import os
+
 from gevent import monkey
 
 # This is a workaround for readthedocs
@@ -21,35 +22,30 @@ import logging
 
 from flask import current_app
 from flask_principal import Identity, identity_changed
-from http import HTTPStatus
-from werkzeug.exceptions import HTTPException
-from flask import Flask, request, send_from_directory, Request
-from flask_cors import CORS
-from flask_marshmallow import Marshmallow
-from flask_principal import Principal
-from pathlib import Path
 
 from vantage6.common import logger_name
+from vantage6.common.enum import StorePolicies
 from vantage6.common.globals import DEFAULT_API_PATH
-from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+
 from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.permission import RuleNeed
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager, Database
-from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
+from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+
 from vantage6.algorithm.store import db
-from vantage6.algorithm.store.default_roles import get_default_roles, DefaultRole
+
+# make sure the version is available
+from vantage6.algorithm.store._version import __version__  # noqa: F401
+from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.globals import (
     RESOURCES,
     RESOURCES_PATH,
     SERVER_MODULE_NAME,
 )
-
+from vantage6.algorithm.store.model.base import Base, Database, DatabaseSessionManager
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
 from vantage6.algorithm.store.permission import PermissionManager
-
-# make sure the version is available
-from vantage6.algorithm.store._version import __version__  # noqa: F401
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -240,7 +236,6 @@ class AlgorithmStoreApp(Vantage6App):
             root_username = root_user.get("username")
             root_organization = root_user.get("organization_id")
             if root_username:
-
                 # if the user does not exist already, add it
                 root_user = db.User.get_by_username(root_username)
                 if not root_user:

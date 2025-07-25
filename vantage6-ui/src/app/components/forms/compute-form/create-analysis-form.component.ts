@@ -258,8 +258,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   dataFrameNotReadyForAllSelectedOrganizations(): boolean {
     if (!this.dataframe) return false;
-    const selectedOrganizations = this.functionForm.controls.organizationIDs.value;
+    let selectedOrganizations = this.functionForm.controls.organizationIDs.value;
     if (!selectedOrganizations) return false;
+    if (!Array.isArray(selectedOrganizations)) {
+      selectedOrganizations = [selectedOrganizations];
+    }
     const selectedOrganizationsNotReady = selectedOrganizations.filter((org) => !this.dataframe?.organizations_ready.includes(Number(org)));
     this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
       (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''

@@ -16,6 +16,8 @@ import { PageHeaderComponent } from '../../../../components/page-header/page-hea
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CollaborationFormComponent } from '../../../../components/forms/collaboration-form/collaboration-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-collaboration-edit',
@@ -50,6 +52,48 @@ export class CollaborationEditComponent implements OnInit {
   }
 
   async handleSubmit(collaborationForm: CollaborationForm) {
+    if (!this.collaboration) return;
+
+    let content = '';
+    const encryptionChanged = this.collaboration.encrypted !== collaborationForm.encrypted;
+    if (encryptionChanged) {
+      content += this.translateService.instant('collaboration-edit.confirm-dialog.changing-encryption');
+    }
+
+    const organizationsRemoved = this.collaboration.organizations.filter(
+      (organization) => !collaborationForm.organizations?.map((form_org) => form_org.id).includes(organization.id)
+    );
+    if (organizationsRemoved.length > 0) {
+      if (content.length > 0) {
+        content += '\n\n';
+      }
+      content += this.translateService.instant('collaboration-edit.confirm-dialog.removing-organizations');
+    }
+
+    if (content.length === 0) {
+      // no changes to the collaboration we need to warn the user for, so just execute the edit
+      await this.executeEdit(collaborationForm);
+    } else {
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        data: {
+          title: this.translateService.instant('collaboration-edit.confirm-dialog.title'),
+          content: content,
+          confirmButtonText: this.translateService.instant('general.edit'),
+          confirmButtonType: 'primary',
+          cancelButtonText: this.translateService.instant('general.cancel'),
+          cancelButtonType: 'default'
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(async (result) => {
+        if (result === ConfirmDialogOption.PRIMARY) {
+          await this.executeEdit(collaborationForm);
+        }
+      });
+    }
+  }
+
+  async executeEdit(collaborationForm: CollaborationForm) {
     if (!this.collaboration) return;
 
     this.isSubmitting = true;

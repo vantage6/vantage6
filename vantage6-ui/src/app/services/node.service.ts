@@ -68,7 +68,7 @@ export class NodeService {
   async deleteNode(collaboration: BaseCollaboration | Collaboration, organizationID: number): Promise<void> {
     const nodes = await this.getNodes({ organization_id: organizationID.toString(), collaboration_id: collaboration.id.toString() });
     const nodeID = nodes[0].id;
-    await this.apiService.deleteForApi(`/node/${nodeID}`);
+    await this.apiService.deleteForApi(`/node/${nodeID}?delete_dependents=true`);
   }
 
   async editNode(nodeID: string, nodeEdit: NodeEdit): Promise<BaseNode> {

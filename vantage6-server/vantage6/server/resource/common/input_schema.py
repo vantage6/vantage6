@@ -1,17 +1,19 @@
 import re
 
-from marshmallow import Schema, fields, ValidationError, validates, validates_schema
-from marshmallow.validate import Length, Range, OneOf
+from marshmallow import Schema, ValidationError, fields, validates, validates_schema
+from marshmallow.validate import Length, OneOf, Range
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.server.dataclass import CreateTaskDB
-from vantage6.server.model.rule import Scope
+
 from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
     MAX_LEN_STR_LONG,
     validate_name,
 )
+
+from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.model.common.utils import validate_password
+from vantage6.server.model.rule import Scope
 
 _MAX_LEN_STR_SHORT = 128
 
@@ -351,10 +353,22 @@ class UserEditInputSchema(UserInputSchema):
         fields = ("roles", "rules")
 
 
-class UserDeleteInputSchema(Schema):
-    """Schema for validating input for deleting a user."""
+class DeleteDependentsInputSchema(Schema):
+    """Schema for validating input for deleting a user or node with dependents."""
 
     delete_dependents = fields.Boolean()
+
+
+class UserDeleteInputSchema(DeleteDependentsInputSchema):
+    """Schema for validating input for deleting a user."""
+
+    pass
+
+
+class NodeDeleteInputSchema(DeleteDependentsInputSchema):
+    """Schema for validating input for deleting a node."""
+
+    pass
 
 
 class ColumnNameInputSchema(Schema):
