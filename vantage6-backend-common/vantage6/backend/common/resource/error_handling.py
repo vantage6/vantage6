@@ -50,6 +50,20 @@ class BadRequestError(Exception):
         self.status_code = HTTPStatus.BAD_REQUEST
 
 
+class ForbiddenError(Exception):
+    """
+    Exception raised for forbidden errors.
+
+    Attributes:
+        message (str): Explanation of the error.
+        status_code (HTTPStatus): HTTP status code for the error.
+    """
+
+    def __init__(self, message):
+        self.message = message
+        self.status_code = HTTPStatus.FORBIDDEN
+
+
 class InternalServerError(Exception):
     """
     Exception raised for internal server errors.
@@ -69,6 +83,7 @@ def handle_exceptions(func):
             UnauthorizedError,
             NotFoundError,
             BadRequestError,
+            ForbiddenError,
             InternalServerError,
         ) as e:
             return {"msg": e.message}, e.status_code

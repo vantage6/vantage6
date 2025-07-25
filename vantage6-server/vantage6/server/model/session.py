@@ -83,7 +83,8 @@ class Session(Base):
 
     def is_ready(self) -> bool:
         """
-        Are all dataframes ready to be used by compute tasks?
+        Does the session contain at least one dataframe ready to be used by compute
+        tasks?
 
         Returns
         -------
@@ -91,10 +92,10 @@ class Session(Base):
             True if the session is ready, False otherwise
         """
         for dataframe in self.dataframes:
-            if not dataframe.ready:
-                return False
+            if dataframe.ready():
+                return True
 
-        return True
+        return False
 
     @staticmethod
     def name_exists(name: str, collaboration: "Collaboration") -> bool:

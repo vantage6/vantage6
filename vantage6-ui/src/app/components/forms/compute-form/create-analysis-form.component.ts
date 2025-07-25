@@ -63,6 +63,7 @@ import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
+import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
 
 @Component({
   selector: 'app-create-form',
@@ -72,6 +73,7 @@ import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
   imports: [
     PageHeaderComponent,
     AlertComponent,
+    AlertWithButtonComponent,
     MatCard,
     MatCardContent,
     MatIcon,
@@ -144,12 +146,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
   availableDatabases: Database[] = [];
+  organizationNamesWithNonReadyDataframes: string[] = [];
 
   columns: string[] = [];
   isStudyCompleted: boolean = false;
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
   hasLoadedColumns: boolean = false;
+  hasLoadedDataframes: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -246,6 +250,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
+  }
+
+  get allDataframesNotReady(): boolean {
+    return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
+  }
+
+  dataFrameNotReadyForAllSelectedOrganizations(): boolean {
+    if (!this.dataframe) return false;
+    const selectedOrganizations = this.functionForm.controls.organizationIDs.value;
+    if (!selectedOrganizations) return false;
+    const selectedOrganizationsNotReady = selectedOrganizations.filter((org) => !this.dataframe?.organizations_ready.includes(Number(org)));
+    this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
+      (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''
+    );
+    return selectedOrganizationsNotReady.length > 0;
   }
 
   isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
@@ -849,6 +868,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   private async handleSessionChange(sessionID: string): Promise<void> {
+    this.hasLoadedDataframes = false;
     this.session = this.sessions?.find((session) => session.id === Number(sessionID)) || null;
     this.studyForm.controls.studyOrCollabID.reset();
     this.isStudyCompleted = false;
@@ -861,6 +881,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
+      // filter dataframes that are not ready - they cannot be used for analyses
+      this.dataframes = this.dataframes.filter((df) => df.ready);
+      this.hasLoadedDataframes = true;
     }
     this.updateStudyFormValidation();
     this.clearFunctionStep();
@@ -922,16 +945,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async handleDataframeChange(dataframeID: string): Promise<void> {
     this.columns = [];
-    let dataframe = null;
     if (Array.isArray(dataframeID) && dataframeID.length > 0) {
       // For multi-select, use the first selected dataframe to get columns
-      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
+      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
     } else if (dataframeID) {
       // For single select
-      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
     }
-    if (dataframe) {
-      this.setColumns(dataframe);
+    if (this.dataframe) {
+      this.setColumns(this.dataframe);
     }
 
     // Set loading columns to false after columns are loaded

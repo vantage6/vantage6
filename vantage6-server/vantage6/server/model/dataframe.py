@@ -74,12 +74,36 @@ class Dataframe(Base):
             return False
 
         # Since all session tasks are ran sequentially, we can check if the last task
-        # is finished to determine if the dataframe is ready. Note that we do not care
-        # wether the task completed successfully or not as we are only interested to
-        # know wether a dataframe modification is in progress.
+        # is finished to determine if the dataframe is ready. Note that we only care
+        # for data extraction tasks wether the task completed successfully or not. There
+        # must be at least one data extraction run that completed successfully for the
+        # dataframe to be ready. For preprocessing tasks, we only care if the task is
+        # finished, because then there is already a dataframe available.
         return all(
             [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
+        ) and any(
+            [
+                run.status == RunStatus.COMPLETED.value
+                for run in self.last_session_task.runs
+                if run.action == AlgorithmStepType.DATA_EXTRACTION
+            ]
         )
+
+    def organizations_ready(self) -> list[int]:
+        """
+        Get the organizations for which the dataframe is ready.
+
+        Returns
+        -------
+        list[int]
+            List of organization IDs that are ready to compute on this dataframe
+        """
+        return [
+            run.organization_id
+            for run in self.last_session_task.runs
+            if run.status == RunStatus.COMPLETED.value
+            and run.action == AlgorithmStepType.DATA_EXTRACTION
+        ]
 
     @staticmethod
     def name_exists(name: str) -> bool:

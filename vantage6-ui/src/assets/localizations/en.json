@@ -124,6 +124,7 @@
   },
   "dataframe-read": {
     "title": "Dataframe {{name}}",
+    "not-ready-despite-extraction": "The data extraction task to produce this dataframe failed. The dataframe cannot be used for analyses.",
     "columns": {
       "title": "Dataframe columns",
       "no-columns": "No columns are available for this dataframe.",
@@ -190,6 +191,7 @@
   },
   "task-create": {
     "title": "Create analysis",
+    "alert-dataframes-not-ready": "None of the dataframes in the selected session are ready to use. Most likely, the data extraction task to produce them failed. You can only use this session to create tasks that do not use data.",
     "step-session": "Select session",
     "step-study": {
       "title": "Select study",
@@ -222,7 +224,8 @@
     },
     "step-dataframe": {
       "title": "Select dataframe",
-      "create-new-df": "Create dataframe"
+      "create-new-df": "Create dataframe",
+      "alert-dataframe-not-ready-for-all-selected-organizations": "The selected dataframe is not properly created for selected organizations: {{organizations}}. Please deselect these organization or create a new dataframe that also supports them."
     },
     "step-preprocessing": {
       "title": "Extend data",
@@ -250,7 +253,8 @@
     "alert-no-algorithms": "You cannot create an analysis because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
     "alert-no-node-config": "The node '{{name}}' does not share its configuration, nor does any other node that is online. This is required to determine the available databases. Please contact the node administrator.",
     "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm function requires one or more. Please contact the node administrator so that they might add them.",
-    "alert-no-dataframes": "The selected session does not contain any dataframes, while this algorithm function requires one or more. Please initialize your session by creating a dataframe."
+    "alert-no-dataframes-in-session": "The selected session does not contain any dataframes yet. Most analyses require a dataframe to be created first.",
+    "alert-no-dataframes": "The selected session does not contain any ready-to-use dataframes, while this algorithm function requires one or more. Please initialize your session by creating a dataframe."
   },
   "task-read": {
     "title": "Analysis",

@@ -27,6 +27,22 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <app-alert-with-button
+              *ngIf="hasLoadedDataframes && dataframes.length === 0"
+              class="node-alert"
+              label="{{ 'task-create.alert-no-dataframes-in-session' | translate }}"
+              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+              [isSuccessAlert]="false"
+            ></app-alert-with-button>
+            <app-alert-with-button
+              *ngIf="allDataframesNotReady"
+              class="node-alert"
+              label="{{ 'task-create.alert-dataframes-not-ready' | translate }}"
+              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+              [isSuccessAlert]="false"
+            ></app-alert-with-button>
             <div>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>
@@ -198,11 +214,25 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <app-alert-with-button
+              *ngIf="dataFrameNotReadyForAllSelectedOrganizations()"
+              class="node-alert"
+              label="{{
+                'task-create.step-dataframe.alert-dataframe-not-ready-for-all-selected-organizations'
+                  | translate: { organizations: organizationNamesWithNonReadyDataframes.join(', ') }
+              }}"
+              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+              [isSuccessAlert]="false"
+            ></app-alert-with-button>
             <div *ngIf="dataframes.length === 0">
-              <app-alert class="node-alert" label="{{ 'task-create.alert-no-dataframes' | translate }}"></app-alert>
-              <button mat-flat-button color="primary" [routerLink]="[routes.dataframeCreate, session?.id]">
-                <mat-icon>add</mat-icon>{{ "task-create.step-dataframe.create-new-df" | translate }}
-              </button>
+              <app-alert-with-button
+                class="node-alert"
+                label="{{ 'task-create.alert-no-dataframes' | translate }}"
+                buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+                buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+                [isSuccessAlert]="false"
+              ></app-alert-with-button>
             </div>
             <div>
               <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
