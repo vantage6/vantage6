@@ -589,7 +589,6 @@ class Tasks(TaskBase):
         tags: ["Task"]
         """
         data = request.get_json(silent=True)
-        log.warning(f"data: {data}")
         return Tasks.post_task(
             data,
             self.socketio,
@@ -624,11 +623,9 @@ class Tasks(TaskBase):
             Action to performed by the task
         """
         # validate request body
-        log.info(f"data: {data}")
         try:
             data = task_input_schema.load(data)
         except ValidationError as e:
-            log.exception(e)
             return {
                 "msg": "Request body is incorrect",
                 "errors": e.messages,
