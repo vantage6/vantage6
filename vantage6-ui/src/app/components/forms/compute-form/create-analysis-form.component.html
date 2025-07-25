@@ -35,6 +35,14 @@
               buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
               [isSuccessAlert]="false"
             ></app-alert-with-button>
+            <app-alert-with-button
+              *ngIf="allDataframesNotReady"
+              class="node-alert"
+              label="{{ 'task-create.alert-dataframes-not-ready' | translate }}"
+              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+              [isSuccessAlert]="false"
+            ></app-alert-with-button>
             <div>
               <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
             </div>

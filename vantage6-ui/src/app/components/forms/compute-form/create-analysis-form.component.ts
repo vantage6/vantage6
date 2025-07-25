@@ -251,6 +251,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
   }
 
+  get allDataframesNotReady(): boolean {
+    return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
+  }
+
   isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
     if (!db) return false;
     return db.multiple === true;
@@ -865,6 +869,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
+      // filter dataframes that are not ready - they cannot be used for analyses
+      this.dataframes = this.dataframes.filter((df) => df.ready);
       this.hasLoadedDataframes = true;
     }
     this.updateStudyFormValidation();
