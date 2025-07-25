@@ -104,6 +104,7 @@ export interface Dataframe {
   last_session_task: BaseTask;
   columns: DataframeColumn[];
   ready: boolean;
+  organizations_ready: number[];
   session: BaseLink;
 }
 

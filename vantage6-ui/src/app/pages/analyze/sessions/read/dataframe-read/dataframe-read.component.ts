@@ -14,7 +14,7 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { AlgorithmStepType, Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
+import { Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
 import { BaseTask, GetTaskParameters, TaskStatus } from 'src/app/models/api/task.models';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';

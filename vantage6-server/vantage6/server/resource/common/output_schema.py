@@ -493,3 +493,4 @@ class DataframeSchema(HATEOASModelSchema):
     last_session_task = fields.Nested("TaskSchema", many=False)
     columns = fields.Nested("ColumnSchema", many=True)
     ready = fields.Function(lambda obj: obj.ready())
+    organizations_ready = fields.Function(lambda obj: obj.organizations_ready())

@@ -796,17 +796,9 @@ class Tasks(TaskBase):
                 if not df.ready:
                     dependent_tasks.append(df.last_session_task)
 
-            # If dataframe extraction failed, we cannot create tasks for that dataframe
-            if (
-                action != AlgorithmStepType.DATA_EXTRACTION
-                and not Tasks._data_extract_succeeded(df)
-            ):
-                return {
-                    "msg": (
-                        "The dataframe you selected was not properly created! "
-                        "Cannot create this task because the dataframe is not ready."
-                    )
-                }, HTTPStatus.BAD_REQUEST
+            # If dataframe extraction is not ready for each org, don't create task
+            if action != AlgorithmStepType.DATA_EXTRACTION:
+                Tasks.__check_data_extract_ready_for_requested_orgs(df, org_ids)
 
         # These `depends_on_ids` are the task ids supplied by the session endpoints.
         # However they can also be user defined, although this has no use case yet.
@@ -1033,7 +1025,9 @@ class Tasks(TaskBase):
         return image_with_hash, store, algorithm
 
     @staticmethod
-    def _data_extract_succeeded(dataframe: db.Dataframe) -> bool:
+    def __check_data_extract_ready_for_requested_orgs(
+        dataframe: db.Dataframe, org_ids: list[int]
+    ) -> bool:
         """
         Check if at least one dataframe extraction run succeeded.
 
@@ -1041,20 +1035,23 @@ class Tasks(TaskBase):
         ----------
         dataframe : db.Dataframe
             Dataframe to check.
+        org_ids : list[int]
+            List of organization IDs that task is requested for.
 
         Returns
         -------
         bool
             True if the dataframe extraction succeeded, False otherwise.
         """
-        return any(
-            [
-                run.status == RunStatus.COMPLETED.value
-                for task in dataframe.tasks
-                for run in task.runs
-                if run.action == AlgorithmStepType.DATA_EXTRACTION
-            ]
-        )
+        org_ids_succeeded = dataframe.organizations_ready()
+        org_ids_not_succeeded = set(org_ids) - set(org_ids_succeeded)
+        if org_ids_not_succeeded:
+            raise BadRequestError(
+                "The dataframe you selected is not present for the following "
+                f"organizations: {', '.join(str(i) for i in org_ids_not_succeeded)}. "
+                "Cannot create a task if the dataframe is not present for all requested"
+                " organizations."
+            )
 
     @staticmethod
     def _node_doesnt_allow_user_task(node_configs: list[db.NodeConfig]) -> bool:

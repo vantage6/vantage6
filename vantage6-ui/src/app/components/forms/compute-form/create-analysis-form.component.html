@@ -214,6 +214,17 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <app-alert-with-button
+              *ngIf="dataFrameNotReadyForAllSelectedOrganizations()"
+              class="node-alert"
+              label="{{
+                'task-create.step-dataframe.alert-dataframe-not-ready-for-all-selected-organizations'
+                  | translate: { organizations: organizationNamesWithNonReadyDataframes.join(', ') }
+              }}"
+              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+              [isSuccessAlert]="false"
+            ></app-alert-with-button>
             <div *ngIf="dataframes.length === 0">
               <app-alert-with-button
                 class="node-alert"

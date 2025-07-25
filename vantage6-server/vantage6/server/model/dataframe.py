@@ -89,6 +89,22 @@ class Dataframe(Base):
             ]
         )
 
+    def organizations_ready(self) -> list[int]:
+        """
+        Get the organizations for which the dataframe is ready.
+
+        Returns
+        -------
+        list[int]
+            List of organization IDs that are ready to compute on this dataframe
+        """
+        return [
+            run.organization_id
+            for run in self.last_session_task.runs
+            if run.status == RunStatus.COMPLETED.value
+            and run.action == AlgorithmStepType.DATA_EXTRACTION
+        ]
+
     @staticmethod
     def name_exists(name: str) -> bool:
         """

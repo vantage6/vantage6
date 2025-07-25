@@ -224,7 +224,8 @@
     },
     "step-dataframe": {
       "title": "Select dataframe",
-      "create-new-df": "Create dataframe"
+      "create-new-df": "Create dataframe",
+      "alert-dataframe-not-ready-for-all-selected-organizations": "The selected dataframe is not properly created for selected organizations: {{organizations}}. Please deselect these organization or create a new dataframe that also supports them."
     },
     "step-preprocessing": {
       "title": "Extend data",

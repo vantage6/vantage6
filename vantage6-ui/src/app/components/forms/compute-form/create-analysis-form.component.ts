@@ -146,6 +146,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
   availableDatabases: Database[] = [];
+  organizationNamesWithNonReadyDataframes: string[] = [];
 
   columns: string[] = [];
   isStudyCompleted: boolean = false;
@@ -253,6 +254,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get allDataframesNotReady(): boolean {
     return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
+  }
+
+  dataFrameNotReadyForAllSelectedOrganizations(): boolean {
+    if (!this.dataframe) return false;
+    const selectedOrganizations = this.functionForm.controls.organizationIDs.value;
+    if (!selectedOrganizations) return false;
+    const selectedOrganizationsNotReady = selectedOrganizations.filter((org) => !this.dataframe?.organizations_ready.includes(Number(org)));
+    this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
+      (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''
+    );
+    return selectedOrganizationsNotReady.length > 0;
   }
 
   isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
@@ -933,16 +945,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async handleDataframeChange(dataframeID: string): Promise<void> {
     this.columns = [];
-    let dataframe = null;
     if (Array.isArray(dataframeID) && dataframeID.length > 0) {
       // For multi-select, use the first selected dataframe to get columns
-      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
+      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
     } else if (dataframeID) {
       // For single select
-      dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
     }
-    if (dataframe) {
-      this.setColumns(dataframe);
+    if (this.dataframe) {
+      this.setColumns(this.dataframe);
     }
 
     // Set loading columns to false after columns are loaded
