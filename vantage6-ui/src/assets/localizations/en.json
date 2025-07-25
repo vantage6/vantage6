@@ -932,5 +932,12 @@
     "welcome": "Welcome",
     "introduction": "The community store is a place where you can find algorithms that are shared by members of the vantage6 community. More information about vantage6 can be found on ",
     "community-store": "Community Store"
+  },
+  "collaboration-edit": {
+    "confirm-dialog": {
+      "title": "Are you sure you want to edit this collaboration?",
+      "changing-encryption": "You are changing the encryption status of this collaboration. Adding encryption will require all organizations to provide their nodes with an encryption key. Data on existing tasks will not change its encryption status and will also no longer be automatically readable by vantage6 as the assumption on encryption of their results will be wrong.",
+      "removing-organizations": "You are removing organizations from this collaboration. This will also delete dataframes on the nodes of the removed organizations. This data cannot be recovered."
+    }
   }
 }

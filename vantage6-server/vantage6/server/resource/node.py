@@ -1,32 +1,40 @@
 import logging
-
 from http import HTTPStatus
+
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
 
-from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.common.globals import AuthStatus
-from vantage6.server.resource import with_user_or_node, with_user, with_node
-from vantage6.server.resource import ServicesResources
-from vantage6.backend.common.resource.pagination import Pagination
+
 from vantage6.backend.common.auth import (
-    delete_service_account_in_keycloak,
     KeycloakServiceAccount,
     create_service_account_in_keycloak,
+    delete_service_account_in_keycloak,
     get_service_account_in_keycloak,
 )
+from vantage6.backend.common.resource.error_handling import handle_exceptions
+from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.server import db
 from vantage6.server.permission import (
-    RuleCollection,
-    Scope as S,
     Operation as P,
     PermissionManager,
+    RuleCollection,
+    Scope as S,
 )
-from vantage6.server import db
+from vantage6.server.resource import (
+    ServicesResources,
+    with_node,
+    with_user,
+    with_user_or_node,
+)
+from vantage6.server.resource.common.input_schema import (
+    NodeDeleteInputSchema,
+    NodeInputSchema,
+)
 from vantage6.server.resource.common.output_schema import NodeSchema
-from vantage6.server.resource.common.input_schema import NodeInputSchema
-
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -146,6 +154,7 @@ def permissions(permissions: PermissionManager) -> None:
 # ------------------------------------------------------------------------------
 node_schema = NodeSchema()
 node_input_schema = NodeInputSchema()
+node_delete_input_schema = NodeDeleteInputSchema()
 
 
 class NodeBase(ServicesResources):
@@ -278,7 +287,7 @@ class Nodes(NodeBase):
             if not self.r.allowed_for_org(P.VIEW, int(args["organization_id"])):
                 return {
                     "msg": "You lack the permission view nodes from the "
-                    f'organization with id {args["organization_id"]}!'
+                    f"organization with id {args['organization_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.organization_id == args["organization_id"])
 
@@ -426,7 +435,7 @@ class Nodes(NodeBase):
         collaboration = db.Collaboration.get(data["collaboration_id"])
         if not collaboration:
             return {
-                "msg": f"collaboration id={data['collaboration_id']} " "does not exist"
+                "msg": f"collaboration id={data['collaboration_id']} does not exist"
             }, HTTPStatus.NOT_FOUND  # 404
 
         org_id = (
@@ -450,7 +459,7 @@ class Nodes(NodeBase):
 
         # we need to check that the organization belongs to the
         # collaboration
-        if not (organization in collaboration.organizations):
+        if organization not in collaboration.organizations:
             return {
                 "msg": f"The organization id={org_id} is not part of "
                 f"collabotation id={collaboration.id}. Add it first!"
@@ -621,7 +630,13 @@ class Node(NodeBase):
               type: integer
               minimum: 1
             description: Node id
-            required: tr
+            required: true
+          - in: query
+            name: delete_dependents
+            schema:
+              type: boolean
+            description: If set to true, the node will be deleted along with
+              the dataframe columns associated with this node. By default False.
 
         responses:
           200:
@@ -636,6 +651,15 @@ class Node(NodeBase):
 
         tags: ["Node"]
         """
+        params = request.args
+        try:
+            params = node_delete_input_schema.load(params)
+        except ValidationError as e:
+            return {
+                "msg": "Request body is incorrect",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
+
         node = db.Node.get(id)
         if not node:
             return {"msg": f"Node id={id} not found"}, HTTPStatus.NOT_FOUND
@@ -645,10 +669,28 @@ class Node(NodeBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        # delete keycloak account
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             delete_service_account_in_keycloak(node.keycloak_client_id)
         else:
             log.info("Node id=%s will not be deleted from Keycloak", id)
+
+        # delete node columns
+        if node.columns:
+            if not params.get("delete_dependents", False):
+                return {
+                    "msg": f"Node has {len(node.columns)} columns."
+                    " Please delete those first, or set the "
+                    "`delete_dependents` parameter to true to delete them "
+                    "automatically together with this node."
+                }, HTTPStatus.BAD_REQUEST
+            else:
+                for column in node.columns:
+                    column.delete()
+
+        # delete node config
+        for shared_config in node.config:
+            shared_config.delete()
 
         node.delete()
         return {"msg": f"Successfully deleted node id={id}"}, HTTPStatus.OK

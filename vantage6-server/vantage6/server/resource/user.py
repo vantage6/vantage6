@@ -1,19 +1,15 @@
 import logging
-import sqlalchemy.exc
-
 from http import HTTPStatus
+
+import sqlalchemy.exc
 from flask import g, request
 from flask_restful import Api
-from marshmallow import ValidationError
 from keycloak import KeycloakAdmin, KeycloakDeleteError
+from marshmallow import ValidationError
 from sqlalchemy import select
 
 from vantage6.common import logger_name
-from vantage6.backend.common.resource.error_handling import (
-    BadRequestError,
-    UnauthorizedError,
-    handle_exceptions,
-)
+
 from vantage6.backend.common.auth import (
     KeycloakServiceAccount,
     create_service_account_in_keycloak,
@@ -21,29 +17,34 @@ from vantage6.backend.common.auth import (
     get_keycloak_admin_client,
     get_keycloak_id_for_user,
 )
+from vantage6.backend.common.resource.error_handling import (
+    BadRequestError,
+    UnauthorizedError,
+    handle_exceptions,
+)
+from vantage6.backend.common.resource.pagination import Pagination
+
 from vantage6.server import db
 from vantage6.server.permission import (
-    Scope as S,
     Operation as P,
     PermissionManager,
     RuleCollection,
+    Scope as S,
 )
 from vantage6.server.resource import (
+    ServicesResources,
     get_org_ids_from_collabs,
     with_user,
-    ServicesResources,
 )
 from vantage6.server.resource.common.input_schema import (
     UserDeleteInputSchema,
-    UserInputSchema,
     UserEditInputSchema,
+    UserInputSchema,
 )
-from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
     UserSchema,
     UserWithPermissionDetailsSchema,
 )
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
