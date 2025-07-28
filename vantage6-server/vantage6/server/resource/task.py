@@ -1,43 +1,44 @@
-import logging
-import json
 import datetime
+import json
+import logging
+from http import HTTPStatus
 
 from flask import g, request, url_for
 from flask_restful import Api
 from flask_socketio import SocketIO
 from marshmallow import ValidationError
-from http import HTTPStatus
 from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
+
+from vantage6.common.encryption import DummyCryptor
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.common.globals import STRING_ENCODING, NodeConfigKey, NodePolicy
 
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
     ForbiddenError,
     handle_exceptions,
 )
-from vantage6.common.globals import STRING_ENCODING, NodePolicy
-from vantage6.common.enum import RunStatus, AlgorithmStepType, TaskDatabaseType
-from vantage6.common.encryption import DummyCryptor
+from vantage6.backend.common.resource.pagination import Pagination
+
 from vantage6.server import db
 from vantage6.server.algo_store_communication import request_algo_store
 from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.permission import (
+    Operation as P,
+    PermissionManager,
     RuleCollection,
     Scope as S,
-    PermissionManager,
-    Operation as P,
 )
-from vantage6.server.resource import only_for, ServicesResources, with_user
+from vantage6.server.resource import ServicesResources, only_for, with_user
+from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.server.resource.common.output_schema import (
     TaskSchema,
     TaskWithResultSchema,
-    TaskWithRunSchema,
     TaskWithRunAndResultSchema,
+    TaskWithRunSchema,
 )
-from vantage6.server.resource.common.input_schema import TaskInputSchema
-from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
-
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -404,7 +405,7 @@ class Tasks(TaskBase):
             init_user = db.User.get(init_user_id)
             if not init_user:
                 return {
-                    "msg": f"User id={init_user_id} does not " "exist!"
+                    "msg": f"User id={init_user_id} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.allowed_for_org(P.VIEW, init_user.organization_id) and not (
                 self.r.v_own.can() and g.user and init_user.id == g.user.id
@@ -435,7 +436,7 @@ class Tasks(TaskBase):
             parent = db.Task.get(parent_id)
             if not parent:
                 return {
-                    "msg": f'Parent task id={args["parent_id"]} does not ' "exist!"
+                    "msg": f"Parent task id={args['parent_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, parent.collaboration_id):
                 return {
@@ -452,7 +453,7 @@ class Tasks(TaskBase):
             ).first()
             if not task_in_job:
                 return {
-                    "msg": f'Job id={args["job_id"]} does not exist!'
+                    "msg": f"Job id={args['job_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, task_in_job.collaboration_id):
                 return {
@@ -471,7 +472,7 @@ class Tasks(TaskBase):
             run = db.Run.get(run_id)
             if not run:
                 return {
-                    "msg": f'Run id={args["run_id"]} does not exist!'
+                    "msg": f"Run id={args['run_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, run.collaboration_id):
                 return {
@@ -806,12 +807,15 @@ class Tasks(TaskBase):
             # If dataframe extraction is not ready for each org, don't create task
             if action != AlgorithmStepType.DATA_EXTRACTION:
                 Tasks.__check_data_extract_ready_for_requested_orgs(df, org_ids)
+            else:
+                Tasks.__check_database_label_exists(
+                    database.label, org_ids, collaboration_id
+                )
 
         # These `depends_on_ids` are the task ids supplied by the session endpoints.
         # However they can also be user defined, although this has no use case yet.
         dependent_task_ids = data.get("depends_on_ids", [])
         for dependent_task_id in dependent_task_ids:
-
             dependent_task = db.Task.get(dependent_task_id)
 
             if not dependent_task:
@@ -878,7 +882,6 @@ class Tasks(TaskBase):
 
         # save the databases that the task uses
         for idx, database_group in enumerate(databases):
-
             # TODO task.id is only set here because in between creating the
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
@@ -1030,6 +1033,43 @@ class Tasks(TaskBase):
             image_with_hash = parent.image
 
         return image_with_hash, store, algorithm
+
+    @staticmethod
+    def __check_database_label_exists(
+        label: str, org_ids: list[int], collaboration_id: int
+    ) -> bool:
+        """
+        Check if the database label exists, if node configuration is shared for that.
+
+        Parameters
+        ----------
+        label : str
+            Label of the database.
+        org_ids : list[int]
+            List of organization IDs that task is requested for.
+        collaboration_id : int
+            ID of the collaboration.
+
+        Raises
+        ------
+        BadRequestError
+            If the database label does not exist for any of the organizations.
+        """
+        for org_id in org_ids:
+            node = db.Node.get_by_org_and_collab(org_id, collaboration_id)
+            if not node.config:
+                continue
+
+            db_labels_available = [
+                config.value
+                for config in node.config
+                if config.key == NodeConfigKey.DATABASE_LABELS
+            ]
+            if label not in db_labels_available:
+                raise BadRequestError(
+                    f"The database label '{label}' does not exist for organization "
+                    f"{org_id}."
+                )
 
     @staticmethod
     def __check_data_extract_ready_for_requested_orgs(
@@ -1255,8 +1295,7 @@ class Tasks(TaskBase):
                 )
             elif action.value == AlgorithmStepType.PREPROCESSING.value:
                 msg += (
-                    " Please use the dataframe endpoint to create a preprocessing "
-                    "task."
+                    " Please use the dataframe endpoint to create a preprocessing task."
                 )
             raise BadRequestError(msg)
 
@@ -1334,7 +1373,7 @@ class Task(TaskBase):
             and not (self.r.v_own.can() and g.user and task.init_user_id == g.user.id)
         ):
             return {
-                "msg": "You lack the permission to view results for this " "task!"
+                "msg": "You lack the permission to view results for this task!"
             }, HTTPStatus.UNAUTHORIZED
 
         return schema.dump(task, many=False), HTTPStatus.OK

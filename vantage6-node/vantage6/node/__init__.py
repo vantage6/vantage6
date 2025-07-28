@@ -28,30 +28,32 @@ import logging
 import os
 import queue
 import sys
-import time
 import threading
-import requests.exceptions
-import psutil
-import pynvml
-
+import time
 from pathlib import Path
 from threading import Thread
 
-from keycloak import KeycloakAuthenticationError
+import psutil
+import pynvml
 import requests.exceptions
 from gevent.pywsgi import WSGIServer
+from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
 
-from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
+    NodeConfigKey,
     NodePolicy,
     RequiredNodeEnvVars,
 )
 from vantage6.common.log import get_file_logger
+
+from vantage6.cli.context.node import NodeContext
+
+from vantage6.node import proxy_server
 
 # make sure the version is available
 from vantage6.node._version import __version__  # noqa: F401
@@ -63,7 +65,6 @@ from vantage6.node.globals import (
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
-from vantage6.node import proxy_server
 
 
 # ------------------------------------------------------------------------------
@@ -781,7 +782,7 @@ class Node:
         # return killed_algos
         # TODO (HC) Implement using k8s container manager
         print(
-            f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent = 4)}"
+            f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent=4)}"
         )
         return []
 
@@ -805,17 +806,21 @@ class Node:
         encryption_config = self.config.get("encryption")
         if encryption_config:
             if encryption_config.get("enabled") is not None:
-                config_to_share["encryption"] = str(encryption_config.get("enabled"))
+                config_to_share[NodeConfigKey.ENCRYPTION] = str(
+                    encryption_config.get("enabled")
+                )
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
-        config_to_share["allowed_algorithms"] = policies.get(
+        config_to_share[NodeConfigKey.ALLOWED_ALGORITHMS] = policies.get(
             NodePolicy.ALLOWED_ALGORITHMS, "all"
         )
         if policies.get(NodePolicy.ALLOWED_USERS) is not None:
-            config_to_share["allowed_users"] = policies.get(NodePolicy.ALLOWED_USERS)
+            config_to_share[NodeConfigKey.ALLOWED_USERS] = policies.get(
+                NodePolicy.ALLOWED_USERS
+            )
         if policies.get(NodePolicy.ALLOWED_ORGANIZATIONS) is not None:
-            config_to_share["allowed_orgs"] = policies.get(
+            config_to_share[NodeConfigKey.ALLOWED_ORGANIZATIONS] = policies.get(
                 NodePolicy.ALLOWED_ORGANIZATIONS
             )
 
@@ -829,8 +834,8 @@ class Node:
             labels.append(label)
             types[f"db_type_{label}"] = type_
 
-        config_to_share["database_labels"] = labels
-        config_to_share["database_types"] = types
+        config_to_share[NodeConfigKey.DATABASE_LABELS] = labels
+        config_to_share[NodeConfigKey.DATABASE_TYPES] = types
 
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")

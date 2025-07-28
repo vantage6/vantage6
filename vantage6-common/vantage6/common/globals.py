@@ -72,6 +72,17 @@ class NodePolicy(str, Enum):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
+class NodeConfigKey(str, Enum):
+    """Enum containing the keys of the node configuration"""
+
+    ENCRYPTION = "encryption"
+    ALLOWED_ALGORITHMS = "allowed_algorithms"
+    ALLOWED_ORGANIZATIONS = "allowed_orgs"
+    ALLOWED_USERS = "allowed_users"
+    DATABASE_LABELS = "database_labels"
+    DATABASE_TYPES = "database_types"
+
+
 class Ports(int, Enum):
     """Enum containing the default ports used by the vantage6 components"""
 

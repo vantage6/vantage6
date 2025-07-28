@@ -1,20 +1,22 @@
 import os
 import unittest
-from unittest.mock import Mock
 from http import HTTPStatus
+from unittest.mock import Mock, patch
+
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
-from unittest.mock import patch
 
 from vantage6.common.globals import InstanceType
+
 from vantage6.backend.common import test_context
-from vantage6.algorithm.store.default_roles import get_default_roles
-from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.base import DatabaseSessionManager, Database
+
 from vantage6.algorithm.store import AlgorithmStoreApp
+from vantage6.algorithm.store.default_roles import get_default_roles
 from vantage6.algorithm.store.globals import PACKAGE_FOLDER
+from vantage6.algorithm.store.model.base import Database, DatabaseSessionManager
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
@@ -85,11 +87,18 @@ class TestResources(unittest.TestCase):
     @classmethod
     def tearDown(cls):
         # delete resources from database
-        # pylint: disable=expression-not-assigned
-        [p.delete() for p in Policy.get()]
-        [u.delete() for u in User.get()]
-        [r.delete() for r in Role.get()]
-        [r.delete() for r in Review.get()]
+        policies_to_delete = Policy.get()
+        for p in policies_to_delete:
+            p.delete()
+        users_to_delete = User.get()
+        for u in users_to_delete:
+            u.delete()
+        roles_to_delete = Role.get()
+        for r in roles_to_delete:
+            r.delete()
+        reviews_to_delete = Review.get()
+        for r in reviews_to_delete:
+            r.delete()
 
         # unset session.session
         DatabaseSessionManager.clear_session()
