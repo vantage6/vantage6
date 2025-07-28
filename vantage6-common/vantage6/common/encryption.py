@@ -117,7 +117,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return self.str_to_bytes(data.decode('utf-8'))
 
-    def encrypt_stream(self, stream, chunk_size=8192):
+    def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=8192):
         """
         Base64-encode a stream, yielding encoded chunks.
 
@@ -125,6 +125,8 @@ class CryptorBase(metaclass=Singleton):
         ----------
         stream : file-like
             The input stream to encode (must support .read()).
+        pubkey_base64s : str
+            Ignored.
         chunk_size : int
             The size of chunks to read and encode.
 
@@ -133,6 +135,7 @@ class CryptorBase(metaclass=Singleton):
         bytes
             Base64-encoded data chunks.
         """
+        import base64
 
         buffer = b""
         while True:
