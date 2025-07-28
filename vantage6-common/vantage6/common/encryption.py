@@ -187,18 +187,7 @@ class CryptorBase(metaclass=Singleton):
             yield decoded
         # Decode any remaining data in the buffer
         if buffer:
-            # Pad buffer to a multiple of 4 for base64 decoding
-            padding_len = (-len(buffer)) % 4
-            if padding_len:
-                buffer += b'=' * padding_len
-            try:
-                decoded = base64.b64decode(buffer)
-                yield decoded
-            except Exception as e:
-                self.log.error(f"Failed to decode base64 buffer: {e}")
-                raise
-            padded_buffer = buffer + b'=' * padding_len
-            decoded = base64.b64decode(padded_buffer)
+            decoded = base64.b64decode(buffer)
             yield decoded
     
 
