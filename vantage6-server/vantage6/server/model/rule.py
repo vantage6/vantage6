@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from enum import Enum as Enumerate
 
-from sqlalchemy import Column, Text, String, Enum, select
+from sqlalchemy import Column, Enum, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -26,12 +28,14 @@ class Scope(str, Enumerate):
     COLLABORATION = "col"
     GLOBAL = "glo"
 
-    # TODO this list gives the *names* of the scopes, not the values. That is confusing.
-    # Should we rename it?
     @classmethod
     def list(cls) -> list[str]:
         """
-        List all available scopes.
+        List the names of the available scopes.
+
+        Note: this list gives the *names* of the scopes, not the values. It is only in
+        handling API input/output and should therefore give full names instead of
+        abbreviations.
 
         Returns
         -------
@@ -39,6 +43,25 @@ class Scope(str, Enumerate):
             List of all available scopes
         """
         return [scope.name.lower() for scope in cls]
+
+    @classmethod
+    def get_name_from_value(cls, value: str) -> str | None:
+        """
+        Get the name of a scope from its value.
+
+        This is used to generate the full names for API output.
+
+        Parameters
+        ----------
+        value : str
+            Value of the scope
+
+        Returns
+        -------
+        str | None
+            Name of the scope or None if no scope with the given value exists
+        """
+        return next((scope.name.lower() for scope in cls if scope.value == value), None)
 
 
 class Rule(Base):
