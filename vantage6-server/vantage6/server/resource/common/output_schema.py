@@ -1,17 +1,20 @@
-import logging
 import base64
+import logging
 
-from marshmallow import fields
 from flask import url_for
+from marshmallow import fields
 
-from vantage6.server import db
 from vantage6.common import logger_name
 from vantage6.common.globals import STRING_ENCODING
-from vantage6.server.model import User
+
 from vantage6.backend.common.resource.output_schema import (
     BaseHATEOASModelSchema,
     create_one_to_many_link,
 )
+
+from vantage6.server import db
+from vantage6.server.model import User
+from vantage6.server.model.rule import Scope
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -458,6 +461,7 @@ class SessionSchema(HATEOASModelSchema):
         lambda obj: create_one_to_many_link(obj, link_to="task", link_from="session_id")
     )
     study = fields.Method("study")
+    scope = fields.Function(lambda obj: Scope.get_name_from_value(obj.scope))
 
     dataframes = fields.Function(
         lambda obj: create_one_to_many_link(

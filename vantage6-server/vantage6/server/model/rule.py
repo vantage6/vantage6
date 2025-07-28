@@ -40,6 +40,23 @@ class Scope(str, Enumerate):
         """
         return [scope.name.lower() for scope in cls]
 
+    @classmethod
+    def get_name_from_value(cls, value: str) -> str | None:
+        """
+        Get the name of a scope from its value.
+
+        Parameters
+        ----------
+        value : str
+            Value of the scope
+
+        Returns
+        -------
+        str | None
+            Name of the scope or None if no scope with the given value exists
+        """
+        return next((scope.name.lower() for scope in cls if scope.value == value), None)
+
 
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.
