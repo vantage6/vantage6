@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
-from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
+from vantage6.algorithm.client.mock_client import MockAlgorithmClient
 from vantage6.algorithm.preprocessing.filtering import select_rows
 
 

@@ -4,7 +4,7 @@ from functools import wraps
 
 from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.tools.mock_client import MockAlgorithmClient
+from vantage6.algorithm.client.mock_client import MockAlgorithmClient
 from vantage6.algorithm.tools.util import error
 
 
