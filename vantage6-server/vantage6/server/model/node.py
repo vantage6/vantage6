@@ -1,12 +1,13 @@
 from __future__ import annotations
-import bcrypt
 
+import bcrypt
+from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, ForeignKey, select
 
 from vantage6.common.globals import AuthStatus
-from vantage6.server.model.base import DatabaseSessionManager
+
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.base import DatabaseSessionManager
 
 
 class Node(Authenticatable):
@@ -70,6 +71,20 @@ class Node(Authenticatable):
         result = session.scalars(
             select(cls).filter_by(status=AuthStatus.ONLINE.value)
         ).all()
+        session.commit()
+        return result
+
+    @classmethod
+    def get_by_org_and_collab(cls, organization_id: int, collaboration_id: int) -> Node:
+        """
+        Get a node by organization and collaboration.
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.scalar(
+            select(cls).filter_by(
+                organization_id=organization_id, collaboration_id=collaboration_id
+            )
+        )
         session.commit()
         return result
 

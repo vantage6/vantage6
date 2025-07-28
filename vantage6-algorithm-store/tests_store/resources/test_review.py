@@ -1,15 +1,15 @@
-from http import HTTPStatus
 import unittest
+from http import HTTPStatus
 from unittest.mock import patch
 
-from vantage6.algorithm.store.model import Policy
 from vantage6.common.enum import StorePolicies
+
+from tests_store.base.unittest_base import TestResources
+from vantage6.algorithm.store.model import Policy
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.rule import Rule, Operation
-
-from tests_store.base.unittest_base import TestResources
+from vantage6.algorithm.store.model.rule import Operation, Rule
 
 USERNAME = "test_user"
 REVIEWER_USERNAME_1 = "reviewer_user_1"
@@ -76,7 +76,9 @@ class TestReviewResources(TestResources):
         self.assertEqual(len(response.json["data"]), 1)
 
         # cleanup
-        [r.delete() for r in Review.get()]
+        reviews_to_delete = Review.get()
+        for r in reviews_to_delete:
+            r.delete()
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_review_view_single(self, authenticate_mock):
@@ -251,8 +253,8 @@ class TestReviewResources(TestResources):
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
-        # check that if algorithm status is updated to awaiting review if only review
-        # is deleted
+        # check that if algorithm status is updated to awaiting review if only
+        # review is deleted
         algorithm.status = AlgorithmStatus.UNDER_REVIEW
         algorithm.save()
         response = self.app.delete(f"/api/review/{review.id}")
@@ -526,8 +528,8 @@ class TestReviewResources(TestResources):
             response.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
         )
 
-        # assign a new reviewer from the same organization of the first one and check that
-        # the status is still awaiting reviewer assignment
+        # assign a new reviewer from the same organization of the first one and
+        # check that the status is still awaiting reviewer assignment
         json_body["reviewer_id"] = reviewer_3.id
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -546,8 +548,8 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["status"], AlgorithmStatus.UNDER_REVIEW.value)
 
-        # check that the status changes back to awaiting reviewer assignment if the reviewer
-        # is removed, even if one of the reviews has been submitted.
+        # check that the status changes back to awaiting reviewer assignment if
+        # the reviewer is removed, even if one of the reviews has been submitted.
 
         self.app.post(f"/api/review/{review_id}/approve", json={})
         response = self.app.delete(f"/api/review/{review_id}")
@@ -559,8 +561,8 @@ class TestReviewResources(TestResources):
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_reviewer_assigners_policy(self, authenticate_mock):
-        """Test that only users with the assign_review_own_algorithm policy can assign
-        themselves to review an algorithm"""
+        """Test that only users with the assign_review_own_algorithm policy can
+        assign themselves to review an algorithm"""
 
         self.register_user(
             username="assigner_user_2",

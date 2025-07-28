@@ -1,38 +1,37 @@
 """Python client for user to communicate with the vantage6 server"""
 
 from __future__ import annotations
-import sys
-import threading
+
+import logging
 import os
 import subprocess
-import webbrowser
+import sys
+import threading
 import urllib.parse as urlparse
-import logging
-from typing import List
-
-from pathlib import Path
+import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+from typing import List
 
 import pyfiglet
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
-from vantage6.common.globals import APPNAME, AuthStatus
-from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
-from vantage6.common.serialization import serialize
-from vantage6.common.enum import AlgorithmStepType
-from vantage6.client.utils import LogLevel
 from vantage6.common.client.client_base import ClientBase
-from vantage6.client.filter import post_filtering
-from vantage6.client.subclients.study import StudySubClient
-from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
-from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
-from vantage6.client.subclients.session import SessionSubClient
-from vantage6.client.subclients.dataframe import DataFrameSubClient
+from vantage6.common.encryption import DummyCryptor, RSACryptor
+from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
+from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.serialization import serialize
 
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401
-
+from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.dataframe import DataFrameSubClient
+from vantage6.client.subclients.session import SessionSubClient
+from vantage6.client.subclients.store.algorithm import AlgorithmSubClient
+from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubClient
+from vantage6.client.subclients.study import StudySubClient
+from vantage6.client.utils import LogLevel
 
 module_name = __name__.split(".")[1]
 
@@ -454,7 +453,7 @@ class UserClient(ClientBase):
             self.parent.cryptor.private_key = private_key
 
             self.parent.log.info(
-                "--> Encrypting the client and uploading " "the public key"
+                "--> Encrypting the client and uploading the public key"
             )
             self.parent.setup_encryption(file_)
 
@@ -1421,7 +1420,7 @@ class UserClient(ClientBase):
                 Id of the user you want to delete
             """
             res = self.parent.request(f"user/{id_}", method="delete")
-            self.parent.log.info(f'--> {res.get("msg")}')
+            self.parent.log.info(f"--> {res.get('msg')}")
 
     class Role(ClientBase.SubClient):
         @post_filtering()
@@ -1614,7 +1613,7 @@ class UserClient(ClientBase):
                 roles that are attached to you, you might lose access!
             """
             res = self.parent.request(f"role/{role}", method="delete")
-            self.parent.log.info(f'--> {res.get("msg")}')
+            self.parent.log.info(f"--> {res.get('msg')}")
 
     class Task(ClientBase.SubClient):
         @post_filtering(iterable=False)
@@ -1950,7 +1949,7 @@ class UserClient(ClientBase):
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [[{"label": databases}]]
+                databases = [[{"label": databases, "type": TaskDatabaseType.SOURCE}]]
 
             # It is common to only specify a single level of databases, we assume
             # that its not a multiple databases argument and convert it so that every
@@ -1974,7 +1973,7 @@ class UserClient(ClientBase):
                     )
                 if not label_input or not isinstance(label_input, str):
                     raise ValueError(
-                        "Each database should have a 'label' key with a string" "value."
+                        "Each database should have a 'label' key with a string value."
                     )
                 # Labels will become part of env var names in algo container,
                 # some chars are not allowed in some shells.
