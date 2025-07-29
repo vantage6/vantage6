@@ -149,7 +149,7 @@ class DiagnosticRunner:
         # TODO should we have the option to combine these in one request? Seems
         # like it would be more efficient
         # TODO ensure that we get all pages of results
-        results = self.client.wait_for_results(task_id=task_id)["data"]
+        results = self.client.retrieve_results(task_id=task_id)["data"]
         runs = self.client.run.from_task(task_id=task_id)["data"]
         print("\n")
         for res in results:

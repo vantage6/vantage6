@@ -131,7 +131,7 @@ class AlgorithmClient(ClientBase):
         return NotImplementedError("Algorithm containers cannot refresh their token!")
 
 
-    def wait_for_results(self, task_id: int, interval: float = 1) -> None:
+    def retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
         TODO: Check if this function can be removed in the future, as it is not used
         anymore. Otherwise rename to retrieve_results.
@@ -147,14 +147,14 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        self._wait_for_results(task_id, interval)
+        self._retrieve_results(task_id, interval)
         result = self.request("result", params={"task_id": task_id})
-        base_url = super().generate_path_to("resultstream", False)
+        base_url = super().generate_path_to("blobstream", False)
         output = self._aggregate_results(result, base_url, task_id)
 
         return output
     
-    def _wait_for_results(self, task_id: int, interval: float = 1) -> None:
+    def _retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
         Poll the central server until results are available.
         """
@@ -427,32 +427,28 @@ class AlgorithmClient(ClientBase):
                         "Content-Type": "application/octet-stream",
                         "X-Public-Key": pub_key,
                     }
-                    url = self.parent.generate_path_to("resultstream", False)
-                    self.parent.log.debug(f"Uploading input to resultstream: {url}")
-
-                    def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                        for i in range(0, len(result), chunk_size):
-                            yield result[i:i + chunk_size]
-
+                    url = self.parent.generate_path_to("blobstream", False)
+                    self.parent.log.debug(f"Uploading input to blobstream: {url}")
+                    
                     try:
-                        response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                        response = requests.post(url, data=self.chunked_result_stream(serialized_input), headers=headers)
                     except Exception as e:
-                        self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
-                        raise requests.RequestException("Error occurred while uploading input to resultstream")
+                        self.parent.log.error(f"Error occurred while uploading input to blobstream: {e}")
+                        raise requests.RequestException("Error occurred while uploading input to blobstream")
 
                     if not (200 <= response.status_code < 300):
                         self.parent.log.error(
-                            f"Failed to upload input to resultstream: {response.text}"
+                            f"Failed to upload input to blobstream: {response.text}"
                         )
-                        raise RuntimeError("Failed to upload input to resultstream")
+                        raise RuntimeError("Failed to upload input to blobstream")
 
                     result_uuid_response = response.json()
                     result_uuid = result_uuid_response.get("uuid")
                     if not result_uuid:
-                        self.parent.log.error("Failed to get UUID from resultstream response")
-                        raise RuntimeError("Failed to get UUID from resultstream response")
+                        self.parent.log.error("Failed to get UUID from blobstream response")
+                        raise RuntimeError("Failed to get UUID from blobstream response")
                     self.parent.log.info(
-                        f"Input uploaded to resultstream with UUID: {result_uuid}"
+                        f"Input uploaded to blobstream with UUID: {result_uuid}"
                     )
                     organization_json_list.append(
                         {

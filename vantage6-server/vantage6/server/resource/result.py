@@ -39,8 +39,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        ResultStream,
-        api_base + "/resultstream",
+        BlobStream,
+        api_base + "/blobstream",
         endpoint="result_stream_without_id",
         methods=("POST",),
         resource_class_kwargs=services,
@@ -48,8 +48,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         
 
     api.add_resource(
-        ResultStream,
-        api_base + "/resultstream/<string:id>",
+        BlobStream,
+        api_base + "/blobstream/<string:id>",
         endpoint="result_stream_with_id",
         methods=("GET",),
         resource_class_kwargs=services,
@@ -92,7 +92,7 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class ResultStreamBase(ServicesResources):
+class BlobStreamBase(ServicesResources):
     """Base class for run resources"""
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
@@ -100,9 +100,9 @@ class ResultStreamBase(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
-class ResultStream(ResultStreamBase):
+class BlobStream(BlobStreamBase):
     """
-    Resource for /api/resultstream/<id> (GET and POST)
+    Resource for /api/blobstream/<id> (GET and POST)
     This resource allows for streaming large results from the storage adapter.
     """
 

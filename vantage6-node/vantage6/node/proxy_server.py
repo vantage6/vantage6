@@ -347,7 +347,7 @@ def proxy_results(id_: int) -> Response:
     return result, response.status_code
 
 
-@app.route("/resultstream/<string:id>", methods=["GET"])
+@app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
     log.info("Proxy stream handler called with id: %s", id)
     headers = {}
@@ -355,7 +355,7 @@ def stream_handler(id: str) -> FlaskResponse:
             if h in request.headers:
                 headers[h] = request.headers[h]
     method = get_method(request.method)
-    url = f"{server_url}/resultstream/{id}"
+    url = f"{server_url}/blobstream/{id}"
     log.info("Making proxied request to %s", url)
 
     backend_response = method(url, stream=True, params=request.args, headers=headers)
@@ -391,7 +391,7 @@ def stream_handler(id: str) -> FlaskResponse:
         # Return the raw content if not a valid stream or error occurred
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
 
-@app.route("/resultstream", methods=["POST"])
+@app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
     log.info("Proxy stream POST handler called")
 
@@ -414,7 +414,7 @@ def stream_handler_post() -> FlaskResponse:
         if h in request.headers:
             headers[h] = request.headers[h]
 
-    url = f"{server_url}/resultstream"
+    url = f"{server_url}/blobstream"
     log.info("Making proxied POST request to %s", url)
 
     encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)

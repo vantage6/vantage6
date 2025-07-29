@@ -202,7 +202,7 @@ class NodeClient(ClientBase):
                     continue
 
                 uuid_obj = uuid.UUID(input_value)
-                url = self.parent.generate_path_to("resultstream", False)
+                url = self.parent.generate_path_to("blobstream", False)
                 url = f"{url}/{str(uuid_obj)}"
                 self.parent.log.info(f"Retrieving input data for url: {url}")
                 headers = {
@@ -289,15 +289,11 @@ class NodeClient(ClientBase):
                     "Content-Type": "application/octet-stream",
                 }
                 
-                url = self.parent.generate_path_to("resultstream", False)
+                url = self.parent.generate_path_to("blobstream", False)
                 self.parent.log.debug(f"Making request: {url}")
 
-                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                    for i in range(0, len(result), chunk_size):
-                        yield result[i:i + chunk_size]
-
                 try:
-                    response = requests.post(url, data=chunked_result_stream(data["result"]), headers=headers)
+                    response = requests.post(url, data=self.chunked_result_stream(data["result"]), headers=headers)
                 except requests.RequestException as e:
                     self.parent.log.error(f"Failed to upload result to server: {e}")
                     return

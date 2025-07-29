@@ -29,7 +29,7 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
     """
     task = client.task.create(**task_args)
     task_id = task["id"]
-    client.wait_for_results(task_id)
+    client.retrieve_results(task_id)
 
     try:
         # check if the task has failed

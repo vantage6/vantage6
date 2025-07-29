@@ -10,7 +10,7 @@ class TestAlgorithmClient(unittest.TestCase):
     @patch('requests.get')
     @patch('time.sleep', return_value=None)
     @patch('vantage6.common.task_status.has_task_finished', side_effect=[False, True])
-    def test_wait_for_results(self, mock_has_task_finished, mock_sleep, mock_requests_get):
+    def test_retrieve_results(self, mock_has_task_finished, mock_sleep, mock_requests_get):
         # Mock the response from the server
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -33,7 +33,7 @@ class TestAlgorithmClient(unittest.TestCase):
       
 
         # Call the method under test
-        results = client_instance.wait_for_results(task_id=1, interval=0.1)
+        results = client_instance.retrieve_results(task_id=1, interval=0.1)
         print(results)
         # Assertions
         
@@ -48,7 +48,7 @@ class TestAlgorithmClient(unittest.TestCase):
         mock_parent = MagicMock()
         mock_parent.request.side_effect = [
             {"public_key": "mock_public_key"},  # For organization public key
-            {"uuid": "mock_uuid"},             # For resultstream response
+            {"uuid": "mock_uuid"},             # For blobstream response
             {"task_id": 123}                    # For task creation response
         ]
         mock_parent.image = "mock_image"
@@ -57,7 +57,7 @@ class TestAlgorithmClient(unittest.TestCase):
         mock_parent.study_id = None
         mock_parent.store_id = None
         mock_parent.token = "mock_token"
-        mock_parent.generate_path_to.return_value = "http://mock_resultstream_url"
+        mock_parent.generate_path_to.return_value = "http://mock_blobstream_url"
 
         # Create an instance of AlgorithmClient with the mocked parent
         valid_mock_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOnsibmFtZSI6Ik1vY2sgVXNlciIsImlkIjoxMjN9LCJleHAiOjE2ODk5OTk5OTl9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
