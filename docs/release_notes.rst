@@ -1,6 +1,16 @@
 Release notes
 =============
 
+4.12.1
+-----
+
+*29 July 2025*
+
+- **Bugfix**
+
+  - Fix error in algorithm store during startup with horizontal scaling
+    (`PR#2193 <https://github.com/vantage6/vantage6/pull/2193>`_)
+
 4.12.0
 -----
 
