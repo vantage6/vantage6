@@ -116,7 +116,7 @@ class CryptorBase(metaclass=Singleton):
             The decrypted data.
         """
         return self.str_to_bytes(data.decode('utf-8'))
-         
+
     def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=8192):
         """
         Base64-encode a stream, yielding encoded chunks.
@@ -371,9 +371,13 @@ class RSACryptor(CryptorBase):
         encryptor = cipher.encryptor()
         encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
 
-        pubkey = load_pem_public_key(
-            base64s_to_bytes(pubkey_base64s), backend=default_backend()
-        )
+        try:
+            pubkey = load_pem_public_key(
+                base64s_to_bytes(pubkey_base64s), backend=default_backend()
+            )
+        except Exception as e:
+            self.log.error(f"Failed to load public key: {e}")
+            raise ValueError("Invalid public key provided for encryption.") from e
 
         encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
@@ -412,21 +416,26 @@ class RSACryptor(CryptorBase):
 
         header_bytes = data[:sep_indices[1] + 1]
         header_str = header_bytes.decode("utf-8")
-        encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
+        header_parts = header_str.split(SEPARATOR, 2)
+        if len(header_parts) != 3:
+            raise ValueError("Header format is invalid — expected three parts separated by '$'.")
+        encrypted_key_b64, iv_b64, _ = header_parts
         encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
         iv_bytes = self.str_to_bytes(iv_b64)
-
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
         try:
             shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
         except UnicodeDecodeError:
             pass
+        if len(shared_key) != 32:
+            raise ValueError(f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256.")
         body = data[sep_indices[1] + 1:]
         cipher = Cipher(algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend())
         decryptor = cipher.decryptor()
         decrypted = decryptor.update(body) + decryptor.finalize()
 
         return decrypted
+
 
 
     def _crypt_stream(self, stream, key, iv, chunk_size=8192):
@@ -449,6 +458,7 @@ class RSACryptor(CryptorBase):
         bytes
             Processed data chunks.
         """
+        self.log.debug("Processing stream with AES-CTR encryption/decryption")
         cipher = Cipher(
             algorithms.AES(key), modes.CTR(iv), backend=default_backend()
         )
@@ -470,6 +480,8 @@ class RSACryptor(CryptorBase):
         """
         Encrypt a stream using hybrid RSA/AES encryption.
 
+        A 32-byte (256-bit) random key is generated for AES-256 encryption.
+
         Parameters
         ----------
         stream : file-like
@@ -486,10 +498,14 @@ class RSACryptor(CryptorBase):
         """
         shared_key = os.urandom(32)
         iv_bytes = os.urandom(16)
-
-        pubkey = load_pem_public_key(
-            base64s_to_bytes(pubkey_base64s), backend=default_backend()
-        )
+        self.log.debug("Encrypting stream with hybrid RSA/AES encryption")
+        try:
+            pubkey = load_pem_public_key(
+                base64s_to_bytes(pubkey_base64s), backend=default_backend()
+            )
+        except Exception as e:
+            self.log.error(f"Failed to load public key: {e}")
+            raise ValueError("Invalid public key provided for encryption.") from e
         encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
 
         encrypted_key_b64 = self.bytes_to_str(encrypted_key_bytes)
@@ -499,7 +515,6 @@ class RSACryptor(CryptorBase):
         header_bytes = header_str.encode("utf-8")
 
         yield header_bytes
-
         yield from self._crypt_stream(stream, shared_key, iv_bytes, chunk_size)
 
     def decrypt_stream(self, stream, chunk_size=8192):
@@ -518,6 +533,7 @@ class RSACryptor(CryptorBase):
         bytes
             Decrypted data chunks.
         """
+        self.log.debug(f"Decrypting stream with hybrid RSA/AES decryption (stream={type(stream).__name__})")
         sep_count = 0
         header_bytes = b""
         while sep_count < 2:

@@ -381,7 +381,9 @@ class Reviews(ReviewBase):
 
         # all checks OK, create the review
         review = db.Review(
-            algorithm_id=data["algorithm_id"], reviewer_id=data["reviewer_id"]
+            algorithm_id=data["algorithm_id"],
+            reviewer_id=data["reviewer_id"],
+            requested_by_id=g.user.id,
         )
         review.save()
 
@@ -733,6 +735,7 @@ class ReviewApprove(ReviewUpdateResources):
 
         # update the review status to 'approved'
         review.status = ReviewStatus.APPROVED
+        review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
         review.save()
@@ -823,6 +826,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # update the review status to 'rejected'
         review.status = ReviewStatus.REJECTED
+        review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
         review.save()

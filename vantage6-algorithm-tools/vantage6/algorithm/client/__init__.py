@@ -1,5 +1,6 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
+from cmath import log
 import jwt
 import json
 import time
@@ -9,6 +10,7 @@ from typing import Any
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.serialization import serialize
+from vantage6.common.task_status import has_task_finished
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -128,27 +130,43 @@ class AlgorithmClient(ClientBase):
         """
         return NotImplementedError("Algorithm containers cannot refresh their token!")
 
-    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+
+    def wait_for_results(self, task_id: int, interval: float = 1) -> None:
         """
-        Poll the central server until results are available and then return
-        them.
+        TODO: Check if this function can be removed in the future, as it is not used
+        anymore. Otherwise rename to retrieve_results.
+        Retrieve results for a specific task.
 
         Parameters
         ----------
         task_id: int
-            ID of the task for which the results should be obtained.
-        interval: float
-            Interval in seconds to wait between checking server for results.
+            ID of the task for which results should be retrieved.
 
         Returns
         -------
         list
             List of task results.
         """
-        self.wait_for_task_completion(self.request, task_id, interval, False)
-
+        self._wait_for_results(task_id, interval)
         result = self.request("result", params={"task_id": task_id})
         base_url = super().generate_path_to("resultstream", False)
+        output = self._aggregate_results(result, base_url, task_id)
+
+        return output
+    
+    def _wait_for_results(self, task_id: int, interval: float = 1) -> None:
+        """
+        Poll the central server until results are available.
+        """
+        self.log.debug(f"Waiting for results for task_id {task_id}...")
+        self.wait_for_task_completion(self.request, task_id, interval, False)
+
+        return True
+
+    def _aggregate_results(self, result, base_url, task_id) -> list:
+        """ 
+        Aggregate results from the result stream.
+        """
         output = []
         for item in result["data"]:
             url = f"{base_url}/{str(uuid.UUID(item['result']))}"
@@ -160,6 +178,7 @@ class AlgorithmClient(ClientBase):
             try:
                 with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
                     if response.status_code == 200:
+                        self.log.debug(f"Successfully streamed result for task_id {task_id}.")
                         for chunk in response.iter_content(chunk_size=8192):
                             output_result += chunk
                     else:
@@ -415,7 +434,12 @@ class AlgorithmClient(ClientBase):
                         for i in range(0, len(result), chunk_size):
                             yield result[i:i + chunk_size]
 
-                    response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                    try:
+                        response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
+                    except Exception as e:
+                        self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
+                        raise requests.RequestException("Error occurred while uploading input to resultstream")
+
                     if not (200 <= response.status_code < 300):
                         self.parent.log.error(
                             f"Failed to upload input to resultstream: {response.text}"
