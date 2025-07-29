@@ -426,7 +426,10 @@
       "title": "Review by {{reviewer}}",
       "reviewer": "Reviewer",
       "reviewer-server": "Server that reviewer belongs to",
-      "comment": "Reviewer comments"
+      "comment": "Reviewer comments",
+      "requested-at": "Review requested at",
+      "requested-by": "Review requested by",
+      "submitted-at": "Review submitted at"
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the review by '{{reviewer}}'?",
@@ -556,7 +559,7 @@
     "title": "Create study"
   },
   "store-role-create": {
-    "title":"Add a new role to the algorithm store"
+    "title": "Add a new role to the algorithm store"
   },
   "algorithm-store-add": {
     "title": "Add algorithm store to your collaboration",

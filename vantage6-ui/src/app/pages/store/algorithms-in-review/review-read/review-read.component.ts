@@ -26,24 +26,24 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-review-read',
-    templateUrl: './review-read.component.html',
-    styleUrl: './review-read.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        MarkdownComponent,
-        NgFor,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-review-read',
+  templateUrl: './review-read.component.html',
+  styleUrl: './review-read.component.scss',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MarkdownComponent,
+    NgFor,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class ReviewReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -219,11 +219,12 @@ class ServerApp:
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
 
-        start_prometheus_exporter(
-            port=self.ctx.config.get(
-                "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+        if self.ctx.config.get("prometheus", {}).get("enabled", False):
+            start_prometheus_exporter(
+                port=self.ctx.config.get(
+                    "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+                )
             )
-        )
 
         log.info("Initialization done")
 
@@ -537,18 +538,20 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-
+            log.debug("Returning response with code %s and data: %s", code, data)
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
-            # Don't attempt json conversion if it's already a response. Should be done more elegantly
+            # Don't attempt json conversion if it's already a response.
+            # TODO: Should be done more elegantly
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
 
             resp = make_response(json.dumps(data), code)
-            resp.headers.extend(headers or {})
+            if isinstance(headers, dict):
+                resp.headers.extend(headers)
             return resp
 
     def configure_jwt(self):
@@ -717,13 +720,16 @@ class ServerApp:
             "storage_adapter": self.storage_adapter,
             **services
         }
-
         for res in RESOURCES:
-            module = importlib.import_module("vantage6.server.resource." + res)
-            if res in ["result"]:
-                module.setup(self.api, self.ctx.config["api_path"], result_services)
-            else:
-                module.setup(self.api, self.ctx.config["api_path"], services)
+            try:
+                module = importlib.import_module("vantage6.server.resource." + res)
+                if res in ["result"]:
+                    module.setup(self.api, self.ctx.config["api_path"], result_services)
+                else:
+                    module.setup(self.api, self.ctx.config["api_path"], services)
+            except Exception as e:
+                log.error(f"Failed to import or set up resource '{res}': {e}")
+                log.debug("Exception details:", exc_info=True)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see
@@ -844,7 +850,7 @@ class ServerApp:
 
     def __node_status_worker(self) -> None:
         """
-        Set node status to offline if they haven't send a ping message in a
+        Set node status to offline if they haven't sent a ping message in a
         while.
         """
         # start periodic check if nodes are responsive
@@ -866,8 +872,8 @@ class ServerApp:
                     if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception:
-                log.exception("Node-status thread had an exception")
+            except Exception as e:
+                log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):

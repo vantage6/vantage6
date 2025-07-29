@@ -32,9 +32,13 @@ class AzureStorageService:
         """
         Store data as a blob in Azure Blob Storage.
         """
-        log.debug(f"Storing blob: {blob_name} in container: {self.container_name}")
+        log.debug(f"Storing blob: {blob_name} in container: {self.container_name} (size: {len(data)} bytes)")
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
-        blob_client.upload_blob(data, overwrite=True)
+        try:
+            blob_client.upload_blob(data, overwrite=True)
+        except Exception as e:
+            log.error(f"Failed to upload blob '{blob_name}': {e}")
+            raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
 
     def delete_blob(self, blob_name: str) -> None:
         """
@@ -44,9 +48,10 @@ class AzureStorageService:
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
         blob_client.delete_blob()
 
-    def stream_blob(self, blob_name: str) -> bytes:
+    def stream_blob(self, blob_name: str):
         """
         Stream a blob from Azure Blob Storage.
+        Returns a StorageStreamDownloader object.
         """
         log.debug(f"Streaming blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
