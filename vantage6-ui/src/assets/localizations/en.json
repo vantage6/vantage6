@@ -844,5 +844,8 @@
     "welcome": "Welcome",
     "introduction": "The community store is a place where you can find algorithms that are shared by members of the vantage6 community. More information about vantage6 can be found on ",
     "community-store": "Community Store"
+  },
+  "error": {
+    "algorithmStoreNotAvailable": "Algorithm store '{{name}}' is not available"
   }
 }
