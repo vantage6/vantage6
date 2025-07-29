@@ -1227,7 +1227,13 @@ class ContainerManager:
             # Check if any of the jobs is completed
             for job in finished_jobs:
                 # Create helper object to process the output of the job
-                run_io = RunIO.from_dict(job.metadata.annotations, self.client)
+                run_io = RunIO.from_dict(
+                    job.metadata.annotations,
+                    self.client,
+                    task_dir_extension=self.ctx.config.get("dev", {}).get(
+                        "task_dir_extension"
+                    ),
+                )
                 results, status = (
                     run_io.process_output()
                     if job.status.succeeded

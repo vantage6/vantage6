@@ -72,7 +72,7 @@ class RunIO:
             self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
 
     @classmethod
-    def from_dict(cls, data: dict, client: NodeClient):
+    def from_dict(cls, data: dict, client: NodeClient, task_dir_extension: str = None):
         # TODO validate that the keys are present
         return cls(
             run_id=int(data["run_id"]),
@@ -84,6 +84,7 @@ class RunIO:
                 "db_label": data.get("df_label"),
             },
             client=client,
+            task_dir_extension=task_dir_extension,
         )
 
     @property
@@ -143,22 +144,13 @@ class RunIO:
         str
             Path to the created file
         """
-        print()
-        print()
-        print()
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
+        self.log.debug("Creating file %s for run %s", filename, self.run_id)
 
         relative_path = Path(str(self.run_id)) / filename
-        file_path = Path(TASK_FILES_ROOT) / relative_path
+        file_path = Path(self.run_folder) / filename
 
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
-        print("Directory", file_dir)
-        print("Directory", file_dir)
         with open(file_path, "wb") as file_:
             file_.write(content)
 
@@ -182,7 +174,8 @@ class RunIO:
                 table = pq.read_table(self.output_file)
             except Exception as e:
                 self.log.exception(
-                    "Error reading output file for run ID %s, session ID %s, action %s. Exception: %s",
+                    "Error reading output file for run ID %s, session ID %s, action %s."
+                    " Exception: %s",
                     self.run_id,
                     self.session_id,
                     self.action,
