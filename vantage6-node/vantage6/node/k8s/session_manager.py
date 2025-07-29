@@ -1,14 +1,14 @@
+import datetime
 import logging
 import os
-import datetime
-
 from pathlib import Path
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pandas as pd
 
 from vantage6.common import logger_name
+
 from vantage6.node.globals import TASK_FILES_ROOT
 
 
@@ -17,12 +17,16 @@ class SessionFileManager:
     Class to manage session state on the node.
     """
 
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, task_dir_extension: str = None):
         """
         Parameters
         ----------
         session_id: str
             ID of the session
+        task_dir_extension: str, optional
+            Extension to the directory to put the run files in. This is used to prevent
+            that nodes use the same task directory in a development environment.
+            Defaults to None.
         """
         self.log = logging.getLogger(logger_name(__name__))
         self.session_id = session_id
@@ -31,7 +35,14 @@ class SessionFileManager:
         self.session_state_file_name = "session_state.parquet"
 
         self.session_folder = os.path.join("sessions", self.session_name)
-        self.local_session_folder = os.path.join(TASK_FILES_ROOT, self.session_folder)
+        if task_dir_extension:
+            self.local_session_folder = os.path.join(
+                TASK_FILES_ROOT, task_dir_extension, self.session_folder
+            )
+        else:
+            self.local_session_folder = os.path.join(
+                TASK_FILES_ROOT, self.session_folder
+            )
         os.makedirs(self.local_session_folder, exist_ok=True)
         self.session_state_file = os.path.join(
             self.local_session_folder, self.session_state_file_name

@@ -1,29 +1,26 @@
+# This up-front import of concurrent.futures.thread prevents the issue described on
+# https://github.com/vantage6/vantage6/issues/1950 which happens when pyarrow is unable
+# to lazy-loading concurrent.futures.thread
+# TODO This is a provisional solution, as this (random, difficult to reproduce) error
+# requires further exploration
+# pylint: disable=unused-import
+import concurrent.futures.thread  # noqa: F401
 import logging
-import datetime
 import os
-
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pandas as pd
 
-# This up-front import prevents the issue described on https://github.com/vantage6/vantage6/issues/1950
-# which happens when pyarrow is unable to lazy-loading concurrent.futures.thread
-# Ignoring F401: “module imported but unused”
-# TODO This is a provisional solution, as this (random, difficult to reproduce) error requires further exploration
-# pylint: disable=unused-import
-import concurrent.futures.thread  # noqa: F401
-
-from vantage6.node.globals import TASK_FILES_ROOT
-from vantage6.common.enum import RunStatus, AlgorithmStepType
 from vantage6.common import logger_name
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.enum import AlgorithmStepType, RunStatus
+
+from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.node.k8s.session_manager import SessionFileManager
 
 
 class RunIO:
-
     def __init__(
         self,
         run_id: int,
@@ -31,6 +28,7 @@ class RunIO:
         action: AlgorithmStepType,
         client: NodeClient,
         dataframe_details: dict = None,
+        task_dir_extension: str = None,
     ):
         """
         Responsible for the IO files between the node and the algorithm.
@@ -48,12 +46,16 @@ class RunIO:
         dataframe_details: dict, optional
             Details of the dataframe that is being used in the run. Required for
             actions that update the session state.
+        task_dir_extension: str, optional
+            Extension to the directory to put the run files in. This is used to prevent
+            that nodes use the same task directory in a development environment.
+            Defaults to None.
         """
 
         self.log = logging.getLogger(logger_name(__name__))
         self.run_id = run_id
         self.session_id = session_id
-        self.session_file_manager = SessionFileManager(session_id)
+        self.session_file_manager = SessionFileManager(session_id, task_dir_extension)
         self.session_name = self.session_file_manager.session_name
         self.action = action
         self.df_name = dataframe_details.get("name") if dataframe_details else None
@@ -62,10 +64,15 @@ class RunIO:
         self.client = client
 
         # This run needs its own directory to store the IO files
-        self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
+        if task_dir_extension:
+            self.run_folder = os.path.join(
+                TASK_FILES_ROOT, task_dir_extension, str(self.run_id)
+            )
+        else:
+            self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
 
     @classmethod
-    def from_dict(cls, data: dict, client: NodeClient):
+    def from_dict(cls, data: dict, client: NodeClient, task_dir_extension: str = None):
         # TODO validate that the keys are present
         return cls(
             run_id=int(data["run_id"]),
@@ -77,6 +84,7 @@ class RunIO:
                 "db_label": data.get("df_label"),
             },
             client=client,
+            task_dir_extension=task_dir_extension,
         )
 
     @property
@@ -136,9 +144,10 @@ class RunIO:
         str
             Path to the created file
         """
-        self.log.debug(f"Creating file {filename} for run {self.run_id}")
+        self.log.debug("Creating file %s for run %s", filename, self.run_id)
+
         relative_path = Path(str(self.run_id)) / filename
-        file_path = Path(TASK_FILES_ROOT) / relative_path
+        file_path = Path(self.run_folder) / filename
 
         file_dir = Path(file_path).parent
         file_dir.mkdir(parents=True, exist_ok=True)
@@ -165,7 +174,8 @@ class RunIO:
                 table = pq.read_table(self.output_file)
             except Exception as e:
                 self.log.exception(
-                    "Error reading output file for run ID %s, session ID %s, action %s. Exception: %s",
+                    "Error reading output file for run ID %s, session ID %s, action %s."
+                    " Exception: %s",
                     self.run_id,
                     self.session_id,
                     self.action,

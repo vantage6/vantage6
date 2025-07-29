@@ -4,6 +4,7 @@ from socketio import ClientNamespace
 
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
+
 from vantage6.node.k8s.session_manager import SessionFileManager
 
 
@@ -70,8 +71,7 @@ class NodeTaskNamespace(ClientNamespace):
             self.log.info(f"New task has been added task_id={task_id}")
         else:
             self.log.critical(
-                "Node reference is not set in socket namespace; cannot create "
-                "new task!"
+                "Node reference is not set in socket namespace; cannot create new task!"
             )
 
     def on_algorithm_status_change(self, data: dict):
@@ -185,7 +185,12 @@ class NodeTaskNamespace(ClientNamespace):
         Action to be taken when a dataframe is instructed to be deleted.
         """
         self.log.info("Received instruction to delete dataframe: %s", data["df_name"])
-        session_file_manager = SessionFileManager(data["session_id"])
+        session_file_manager = SessionFileManager(
+            data["session_id"],
+            task_dir_extension=self.node_worker_ref.ctx.config.get("dev", {}).get(
+                "task_dir_extension"
+            ),
+        )
         session_file_manager.delete_dataframe_file(data["df_name"])
         # send back a socket event to the server to indicate that the dataframe has been
         # deleted

@@ -3,10 +3,12 @@ Development script to connect the server to the local store.
 """
 
 import json
-
 from pathlib import Path
 
+import requests
+
 from vantage6.common.enum import AlgorithmStepType
+
 from vantage6.client import Client
 
 
@@ -54,9 +56,21 @@ def connect_store(client: Client, dev_dir: Path) -> str:
         summary += f"Removing existing algorithm {algorithms[0]['name']}\n"
         client.algorithm.delete(id_=algorithms[0]["id"])
 
-    with open(dev_dir / "v6-session-basic-algorithm-store.json", "r") as f:
-        algorithm_store = json.load(f)
-        function_metadata = algorithm_store["functions"]
+    # Download the algorithm store from the github repo. This ensures that the data is
+    # always up to date.
+    try:
+        url = (
+            "https://raw.githubusercontent.com/vantage6/v6-session-basics/"
+            "main/algorithm_store.json"
+        )
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        algorithm_json = response.json()
+        function_metadata = algorithm_json["functions"]
+    except requests.exceptions.RequestException as e:
+        # Fallback to local file if download fails
+        print(f"Warning: Could not download algorithm store from GitHub: {e}")
+        print("Not putting the algorithm in the store.")
 
     summary += "Creating Session Basics algorithm\n"
     client.algorithm.create(
@@ -66,7 +80,7 @@ def connect_store(client: Client, dev_dir: Path) -> str:
         vantage6_version="5.0.0",
         code_url="https://github.com/vantage6-ai/v6-session-basics",
         partitioning="horizontal",
-        functions=function_metadata,
+        functions=function_metadata or [],
     )
 
     # TODO: v5+ get this json data by downloading it from the github repo - that ensures
@@ -110,7 +124,9 @@ def connect_store(client: Client, dev_dir: Path) -> str:
             },
             {
                 "name": "central_network_diagnostics",
-                "display_name": "Get the network diagnostics performed on all the nodes",
+                "display_name": (
+                    "Get the network diagnostics performed on all the nodes"
+                ),
                 "standalone": True,
                 "description": (
                     "Get the network diagnostics performed on all the nodes within a "
