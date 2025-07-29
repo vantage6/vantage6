@@ -7,11 +7,11 @@ import time
 import traceback
 from pathlib import Path
 
-from vantage6.client import Client
-
+from scripts.connect_store import connect_store
 from scripts.delete_fixtures import delete_fixtures
 from scripts.load_fixtures import create_fixtures
-from scripts.connect_store import connect_store
+
+from vantage6.client import Client
 
 #
 # Arguments
@@ -96,7 +96,6 @@ print("Waiting for the admin user to be present...")
 attempt = 1
 while attempt <= max_attempts:
     try:
-
         users = client.user.list(fields=("name"))
         if len(users) > 0:
             print("Admin user found!")

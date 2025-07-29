@@ -2,9 +2,11 @@
 Development script to populate the server
 """
 
+import traceback
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
+from scripts.utils import replace_wsl_path
 
 from vantage6.client import Client
 
@@ -180,6 +182,7 @@ def create_fixtures(
 
                 # also make sure the task directory exists
                 task_dir = Path(f"{task_directory}/node_{i}")
+                task_dir = replace_wsl_path(task_dir)
                 task_dir.mkdir(parents=True, exist_ok=True)
 
                 # Create .env file for the node
@@ -199,6 +202,7 @@ def create_fixtures(
                 )
 
             except Exception as e:
+                traceback.print_exc()
                 print(f"Error creating node {name}: {str(e)}")
 
     # Build detailed summary string
