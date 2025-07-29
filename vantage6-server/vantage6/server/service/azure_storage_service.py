@@ -1,6 +1,7 @@
 from azure.storage.blob import BlobServiceClient
 import logging
 from vantage6.common import logger_name
+from typing import IO, Union
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -28,17 +29,17 @@ class AzureStorageService:
         stream = blob_client.download_blob()
         return stream.readall()
 
-    def store_blob(self, blob_name: str, data: bytes) -> None:
-        """
-        Store data as a blob in Azure Blob Storage.
-        """
-        log.debug(f"Storing blob: {blob_name} in container: {self.container_name} (size: {len(data)} bytes)")
-        blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
-        try:
-            blob_client.upload_blob(data, overwrite=True)
-        except Exception as e:
-            log.error(f"Failed to upload blob '{blob_name}': {e}")
-            raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
+    def store_blob(self, blob_name: str, data: Union[IO, bytes]) -> None:
+            """
+            Store data as a blob in Azure Blob Storage.
+            """
+            log.debug(f"Storing blob: {blob_name} in container: {self.container_name}")
+            blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
+            try:
+                blob_client.upload_blob(data, overwrite=True)
+            except Exception as e:
+                log.error(f"Failed to upload blob '{blob_name}': {e}")
+                raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
 
     def delete_blob(self, blob_name: str) -> None:
         """

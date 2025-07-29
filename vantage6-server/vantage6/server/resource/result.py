@@ -146,6 +146,8 @@ class ResultStream(ResultStreamBase):
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding
         try:
+            # Unfortunately, in the case of streams smaller than one chunk, reverse proxies like nginx will automatically remove the chunked transfer encoding.
+            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi to a different server might solve this issue.
             if is_chunked:
                 stream = UwsgiChunkedStream()
                 self.storage_adapter.store_blob(result_uuid, stream)
