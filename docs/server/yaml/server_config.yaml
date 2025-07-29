@@ -218,3 +218,21 @@ prometheus:
   # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
   # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
   exporter_port: 7603
+
+# Settings for the large result store. By default, the server uses a database to store all inputs and results.
+# Adding this will set Vantage6 to use blob storage rather than the database for both inputs and results.
+large_result_store:
+  # Type of the large result store. Currently, only "azure_blob_storage" is supported.
+  type: "azure_blob_storage"
+  # The name of the Blob Storage container to use for storing large results.
+  container_name: test-container
+  # Connection string to the Storage account. Mostly useful for testing purposes, such as connecting to Azurite.
+  # The example connection string uses the default account name and key for Azurite.
+  connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
+  # Credentials for accessing the Blob Storage. If provided, these will be used instead of the connection string.
+  # tenant_id, client_id, and client_secret are required for authentication.
+  tenant_id: "your-tenant-id"
+  client_id: "your-client-id"
+  client_secret: "your-client-secret"
+  # Name of the storage account.
+  storage_account_name: "your-storage-account-name"
