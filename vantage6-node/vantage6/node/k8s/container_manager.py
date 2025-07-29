@@ -1,58 +1,58 @@
+import base64
 import logging
 import os
-import time
 import re
-import base64
-
-from itertools import groupby
-from typing import Tuple
-from pathlib import Path
+import time
 import uuid
+from itertools import groupby
+from pathlib import Path
+from typing import Tuple
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client.rest import ApiException
 
-from vantage6.cli.context.node import NodeContext
 from vantage6.common import logger_name
+from vantage6.common.client.node_client import NodeClient
 from vantage6.common.dataclass import TaskDB
-from vantage6.common.globals import (
-    DEFAULT_ALPINE_IMAGE,
-    DEFAULT_DOCKER_REGISTRY,
-    NodePolicy,
-    ContainerEnvNames,
-    STRING_ENCODING,
-    ENV_VAR_EQUALS_REPLACEMENT,
-)
-from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.common.docker.addons import (
     get_digest,
     get_image_name_wo_tag,
 )
-from vantage6.common.client.node_client import NodeClient
-from vantage6.node.globals import (
-    ENV_VARS_NOT_SETTABLE_BY_NODE,
-    DEFAULT_PROXY_SERVER_PORT,
-    DATABASE_BASE_PATH,
-    JOB_POD_OUTPUT_PATH,
-    JOB_POD_INPUT_PATH,
-    JOB_POD_SESSION_FOLDER_PATH,
-    TASK_START_RETRIES,
-    K8S_EVENT_STREAM_LOOP_TIMEOUT,
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.common.globals import (
+    DEFAULT_ALPINE_IMAGE,
+    DEFAULT_DOCKER_REGISTRY,
+    ENV_VAR_EQUALS_REPLACEMENT,
+    STRING_ENCODING,
+    ContainerEnvNames,
+    NodePolicy,
 )
-from vantage6.node.util import get_parent_id
-from vantage6.node.k8s.run_io import RunIO
+
+from vantage6.cli.context.node import NodeContext
+
+from vantage6.node.globals import (
+    DATABASE_BASE_PATH,
+    DEFAULT_PROXY_SERVER_PORT,
+    ENV_VARS_NOT_SETTABLE_BY_NODE,
+    JOB_POD_INPUT_PATH,
+    JOB_POD_OUTPUT_PATH,
+    JOB_POD_SESSION_FOLDER_PATH,
+    K8S_EVENT_STREAM_LOOP_TIMEOUT,
+    TASK_START_RETRIES,
+)
+from vantage6.node.k8s.data_classes import KilledRun, Result, ToBeKilled
+from vantage6.node.k8s.exceptions import (
+    DataFrameNotFound,
+    PermanentAlgorithmStartFail,
+)
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_job_pod_run_status,
 )
-from vantage6.node.k8s.exceptions import (
-    PermanentAlgorithmStartFail,
-    DataFrameNotFound,
-)
-from vantage6.node.k8s.data_classes import Result, ToBeKilled, KilledRun
+from vantage6.node.k8s.run_io import RunIO
+from vantage6.node.util import get_parent_id
 
 
 class ContainerManager:
-
     def __init__(self, ctx: NodeContext, client: NodeClient):
         """
         Initialization of ``ContainerManager`` that handles communication with the
@@ -259,7 +259,6 @@ class ContainerManager:
 
         databases = {}
         for label in db_labels:
-
             # The URI on the host system. This can either be a path to a file or folder
             # or an address to a service.
             uri_env_var = f"DATABASE_{label.upper()}_URI"
@@ -365,6 +364,7 @@ class ContainerManager:
             action,
             self.client,
             df_details,
+            task_dir_extension=self.ctx.config.get("dev", {}).get("task_dir_extension"),
         )
 
         # Verify that an allowed image is used
@@ -577,7 +577,6 @@ class ContainerManager:
         w = watch.Watch()
 
         try:
-
             while True:
                 # Non-busy waiting for status changes on the job POD through K8S' event stream watch. This
                 # inner for loop will process events until a terminal status is identifed (Running, Failed,
@@ -592,7 +591,6 @@ class ContainerManager:
                     label_selector=label,
                     timeout_seconds=K8S_EVENT_STREAM_LOOP_TIMEOUT,
                 ):
-
                     pod = event["object"]
 
                     pod_phase: RunStatus = compute_job_pod_run_status(
@@ -788,7 +786,6 @@ class ContainerManager:
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
         if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
-
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
@@ -1210,7 +1207,6 @@ class ContainerManager:
         # failed) other statuses (pending/running/unknown) are ignored
         completed_job = False
         while not completed_job:
-
             # Get all jobs from the task namespace for this node
             jobs = self.batch_api.list_namespaced_job(
                 self.task_namespace, label_selector=self.task_job_label_selector
@@ -1230,7 +1226,6 @@ class ContainerManager:
 
             # Check if any of the jobs is completed
             for job in finished_jobs:
-
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(job.metadata.annotations, self.client)
                 results, status = (

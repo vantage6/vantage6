@@ -6,8 +6,9 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from vantage6.cli.globals import PACKAGE_FOLDER, APPNAME
 from vantage6.client import Client
+
+from vantage6.cli.globals import APPNAME, PACKAGE_FOLDER
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
@@ -27,7 +28,6 @@ def create_fixtures(
     node_starting_port_number: int,
     dev_dir: Path,
 ) -> str:
-
     # Track creation details
     creation_details = {
         "organizations": {"created": [], "existing": [], "root_org_patched": []},
@@ -167,7 +167,8 @@ def create_fixtures(
                         "logging": {"file": f"node_{i}.log"},
                         "port": 7601,
                         "server_url": "http://vantage6-server-vantage6-server-service",
-                        "task_dir": task_directory,
+                        "task_dir": f"{task_directory}/node_{i}",
+                        "task_dir_extension": f"node_{i}",
                         "api_path": "/server",
                         "task_namespace": task_namespace,
                         "node_proxy_port": node_starting_port_number + (i - 1),
@@ -176,6 +177,10 @@ def create_fixtures(
                 config_file = node_dev_dir / f"node_org_{i}.yaml"
                 with open(config_file, "w") as f:
                     f.write(node_config)
+
+                # also make sure the task directory exists
+                task_dir = Path(f"{task_directory}/node_{i}")
+                task_dir.mkdir(parents=True, exist_ok=True)
 
                 # Create .env file for the node
                 env_file = node_dev_dir / ".env"
