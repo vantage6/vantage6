@@ -198,7 +198,7 @@ def data_extraction(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.DATA_EXTRACTION
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.DATA_EXTRACTION.value
     return wrapper
 
 
@@ -215,7 +215,7 @@ def preprocessing(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.PREPROCESSING
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.PREPROCESSING.value
     return wrapper
 
 
@@ -228,7 +228,7 @@ def federated(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.FEDERATED
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.FEDERATED.value
     return wrapper
 
 
@@ -241,5 +241,5 @@ def central(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.CENTRAL
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.CENTRAL.value
     return wrapper

@@ -325,13 +325,13 @@ class Function:
     def _get_step_type(self) -> str:
         """Get the step type of the function"""
         decorator_type = get_vantage6_decorator_type(self.func)
-        if decorator_type == DecoratorStepType.FEDERATED:
+        if decorator_type == DecoratorStepType.FEDERATED.value:
             return AlgorithmStepType.FEDERATED_COMPUTE.value
-        elif decorator_type == DecoratorStepType.CENTRAL:
+        elif decorator_type == DecoratorStepType.CENTRAL.value:
             return AlgorithmStepType.CENTRAL_COMPUTE.value
-        elif decorator_type == DecoratorStepType.PREPROCESSING:
+        elif decorator_type == DecoratorStepType.PREPROCESSING.value:
             return AlgorithmStepType.PREPROCESSING.value
-        elif decorator_type == DecoratorStepType.DATA_EXTRACTION:
+        elif decorator_type == DecoratorStepType.DATA_EXTRACTION.value:
             return AlgorithmStepType.DATA_EXTRACTION.value
         else:
             warning(
