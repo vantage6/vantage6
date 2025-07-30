@@ -415,7 +415,7 @@ class ContainerManager:
             "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
         )
 
-        if action == AlgorithmStepType.CENTRAL_COMPUTE:
+        if action == AlgorithmStepType.CENTRAL_COMPUTE.value:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
@@ -785,7 +785,7 @@ class ContainerManager:
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
-        if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
+        if run_io.action == AlgorithmStepType.DATA_EXTRACTION.value:
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.

@@ -805,7 +805,7 @@ class Tasks(TaskBase):
                     dependent_tasks.append(df.last_session_task)
 
             # If dataframe extraction is not ready for each org, don't create task
-            if action != AlgorithmStepType.DATA_EXTRACTION:
+            if action != AlgorithmStepType.DATA_EXTRACTION.value:
                 Tasks.__check_data_extract_ready_for_requested_orgs(df, org_ids)
             else:
                 Tasks.__check_database_label_exists(

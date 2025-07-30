@@ -1,11 +1,18 @@
-from http import HTTPStatus
 import datetime
 import unittest
+from http import HTTPStatus
 from unittest.mock import patch
 
-from vantage6.common.enum import AlgorithmArgumentType
-from vantage6.algorithm.store.model.argument import Argument
+from vantage6.common.enum import (
+    AlgorithmArgumentType,
+    AlgorithmStepType,
+    AlgorithmViewPolicies,
+    StorePolicies,
+)
+
+from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
+from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.common.enums import (
     AlgorithmStatus,
     Partitioning,
@@ -13,13 +20,11 @@ from vantage6.algorithm.store.model.common.enums import (
 )
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.review import Review
+from vantage6.algorithm.store.model.rule import Operation, Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.algorithm import AlgorithmBaseResource
-from vantage6.algorithm.store.model.policy import Policy
-from vantage6.algorithm.store.model.algorithm import Algorithm
-from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.common.enum import AlgorithmStepType, StorePolicies, AlgorithmViewPolicies
 
 from ..base.unittest_base import TestResources
 
@@ -262,7 +267,7 @@ class TestAlgorithmResources(TestResources):
         json_data = {
             "name": "test_algorithm",
             "description": "test_description",
-            "partitioning": Partitioning.HORIZONTAL,
+            "partitioning": Partitioning.HORIZONTAL.value,
             "code_url": "https://my-url.com",
             "vantage6_version": "6.6.6",
             "image": "some-image",
@@ -270,14 +275,14 @@ class TestAlgorithmResources(TestResources):
             "functions": [
                 {
                     "name": "test_function",
-                    "step_type": AlgorithmStepType.CENTRAL_COMPUTE,
+                    "step_type": AlgorithmStepType.CENTRAL_COMPUTE.value,
                     "databases": [
                         {"name": "test_database", "description": "test_description"}
                     ],
                     "arguments": [
                         {
                             "name": "test_argument",
-                            "type": AlgorithmArgumentType.STRING,
+                            "type": AlgorithmArgumentType.STRING.value,
                             "allowed_values": ["A"],
                         }
                     ],
@@ -296,7 +301,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.status_code, HTTPStatus.CREATED)
         self.assertEqual(rv.json["name"], "test_algorithm")
         self.assertEqual(rv.json["description"], "test_description")
-        self.assertEqual(rv.json["partitioning"], Partitioning.HORIZONTAL)
+        self.assertEqual(rv.json["partitioning"], Partitioning.HORIZONTAL.value)
         self.assertEqual(rv.json["code_url"], "https://my-url.com")
         self.assertEqual(rv.json["vantage6_version"], "6.6.6")
         self.assertEqual(rv.json["image"], "some-image")
@@ -316,7 +321,7 @@ class TestAlgorithmResources(TestResources):
         )
         self.assertEqual(
             rv.json["functions"][0]["arguments"][0]["type"],
-            AlgorithmArgumentType.STRING,
+            AlgorithmArgumentType.STRING.value,
         )
 
         self.assertEqual(
@@ -337,7 +342,7 @@ class TestAlgorithmResources(TestResources):
 
         self.assertEqual(rv.json["digest"], "some-digest")
         self.assertEqual(
-            rv.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+            rv.json["status"], AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
         )
         self.assertEqual(rv.json["approved_at"], None)
         self.assertEqual(rv.json["invalidated_at"], None)
@@ -349,7 +354,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test_argument",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
                 "has_default_value": True,
                 "default_value": 1,
             }
@@ -375,11 +380,11 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
             },
             {
                 "name": "test",
-                "type": AlgorithmArgumentType.FLOAT,
+                "type": AlgorithmArgumentType.FLOAT.value,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data)
@@ -389,7 +394,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
                 "has_default_value": True,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
@@ -397,7 +402,7 @@ class TestAlgorithmResources(TestResources):
             },
             {
                 "name": "conditional",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
             },
         ]
         rv = self.app.post("/api/algorithm", json=json_data)
@@ -423,14 +428,14 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
                 "conditional_value": "test",
             },
             {
                 "name": "conditional",
-                "type": AlgorithmArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING.value,
                 "conditional_on": "dependent",
                 "conditional_operator": "==",
                 "conditional_value": "test",
@@ -462,7 +467,7 @@ class TestAlgorithmResources(TestResources):
         algorithm = Algorithm(
             name="test_algorithm",
             description="test_description",
-            partitioning=Partitioning.HORIZONTAL,
+            partitioning=Partitioning.HORIZONTAL.value,
             code_url="https://my-url.com",
             vantage6_version="6.6.6",
             image="some-image",
@@ -537,7 +542,7 @@ class TestAlgorithmResources(TestResources):
                     arguments=[
                         Argument(
                             name="test_argument",
-                            type_=AlgorithmArgumentType.STRING,
+                            type_=AlgorithmArgumentType.STRING.value,
                             allowed_values=[AllowedArgumentValue(value="A")],
                         )
                     ],
@@ -616,11 +621,11 @@ class TestAlgorithmResources(TestResources):
         response = self.app.post(f"/api/algorithm/{algorithm.id}/invalidate")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         updated_algo = Algorithm.get(algorithm.id)
-        self.assertEqual(updated_algo.status, AlgorithmStatus.REMOVED)
+        self.assertEqual(updated_algo.status, AlgorithmStatus.REMOVED.value)
         self.assertNotEqual(updated_algo.invalidated_at, None)
 
         # check that the review is also dropped
-        self.assertEqual(Review.get(review_id).status, ReviewStatus.DROPPED)
+        self.assertEqual(Review.get(review_id).status, ReviewStatus.DROPPED.value)
 
     @patch("vantage6.algorithm.store.resource.algorithm.get_digest")
     def test_get_image_digest(self, get_digest_mock):

@@ -1,20 +1,20 @@
 import os
-import pyarrow as pa
-import pandas as pd
-
-from typing import Any
 from functools import wraps
+from typing import Any
+
+import pandas as pd
+import pyarrow as pa
+
+from vantage6.common import error, info
+from vantage6.common.enum import AlgorithmStepType
+from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools import DecoratorStepType
-from vantage6.common import info, error
-from vantage6.common.globals import ContainerEnvNames
-from vantage6.common.enum import AlgorithmStepType
-from vantage6.algorithm.tools.util import get_env_var
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
     SessionError,
 )
-from vantage6.algorithm.tools.util import get_action
+from vantage6.algorithm.tools.util import get_action, get_env_var
 
 
 def _exit_if_action_mismatch(function_action: AlgorithmStepType):
@@ -75,7 +75,6 @@ def _convert_to_parquet(data: Any) -> pa.Table:
     """
     info("Converting algorithm output to a Parquet Table.")
     match type(data):
-
         case pd.DataFrame:
             try:
                 data = pa.Table.from_pandas(data)
@@ -96,7 +95,6 @@ def _convert_to_parquet(data: Any) -> pa.Table:
 
 
 def data_extraction(func: callable) -> callable:
-
     @wraps(func)
     def wrapper(
         *args, mock_uri: str | None = None, mock_type: str | None = None, **kwargs
@@ -172,7 +170,7 @@ def data_extraction(func: callable) -> callable:
 
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION)
+        _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION.value)
 
         connection_details = {}
 
@@ -209,10 +207,9 @@ def preprocessing(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING)
+        _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING.value)
 
         result = func(*args, **kwargs)
 
@@ -227,7 +224,7 @@ def federated(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE.value)
         result = func(*args, **kwargs)
         return result
 
@@ -240,7 +237,7 @@ def central(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE)
+        _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE.value)
         result = func(*args, **kwargs)
         return result
 

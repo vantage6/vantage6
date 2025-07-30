@@ -1,10 +1,11 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, ForeignKey, String, select
+from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enum import RunStatus, TaskStatus, AlgorithmStepType
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
+
 import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
@@ -85,7 +86,7 @@ class Dataframe(Base):
             [
                 run.status == RunStatus.COMPLETED.value
                 for run in self.last_session_task.runs
-                if run.action == AlgorithmStepType.DATA_EXTRACTION
+                if run.action == AlgorithmStepType.DATA_EXTRACTION.value
             ]
         )
 
@@ -102,7 +103,7 @@ class Dataframe(Base):
             run.organization_id
             for run in self.last_session_task.runs
             if run.status == RunStatus.COMPLETED.value
-            and run.action == AlgorithmStepType.DATA_EXTRACTION
+            and run.action == AlgorithmStepType.DATA_EXTRACTION.value
         ]
 
     @staticmethod

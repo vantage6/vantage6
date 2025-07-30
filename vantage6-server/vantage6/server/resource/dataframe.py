@@ -1,28 +1,30 @@
 import logging
-
-from flask import request, g
-from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import select
-from names_generator import generate_name
+
+from flask import g, request
+from flask_restful import Api
 from marshmallow import ValidationError
+from names_generator import generate_name
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
-from vantage6.server import db
+
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.server.resource import only_for, with_user, with_node
+
+from vantage6.server import db
+from vantage6.server.dataclass import CreateTaskDB
+from vantage6.server.model import DataframeToBeDeletedAtNode
+from vantage6.server.resource import only_for, with_node, with_user
 from vantage6.server.resource.common.input_schema import (
     DataframeInitInputSchema,
-    DataframePreprocessingInputSchema,
     DataframeNodeUpdateSchema,
+    DataframePreprocessingInputSchema,
 )
 from vantage6.server.resource.common.output_schema import (
     DataframeSchema,
 )
-from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.resource.session import SessionBase
-from vantage6.server.model import DataframeToBeDeletedAtNode
 from vantage6.server.websockets import send_delete_dataframe_event
 
 module_name = logger_name(__name__)
@@ -87,7 +89,6 @@ dataframe_node_update_schema = DataframeNodeUpdateSchema()
 
 
 class SessionDataframes(SessionBase):
-
     @only_for(("user", "node"))
     def get(self, session_id):
         """view all dataframes in a session
@@ -296,7 +297,7 @@ class SessionDataframes(SessionBase):
                     ]
                 ],
                 description=description,
-                action=AlgorithmStepType.DATA_EXTRACTION,
+                action=AlgorithmStepType.DATA_EXTRACTION.value,
                 dataframe=dataframe,
                 store_id=extraction_details.get("store_id"),
             )
@@ -315,7 +316,6 @@ class SessionDataframes(SessionBase):
 
 
 class SessionDataframe(SessionBase):
-
     @with_user
     def get(self, id):
         """View specific dataframe
@@ -465,7 +465,6 @@ class SessionDataframe(SessionBase):
 
 
 class DataframePreprocessing(SessionBase):
-
     @with_user
     def post(self, id):
         """Add a preprocessing step to a dataframe
@@ -589,7 +588,7 @@ class DataframePreprocessing(SessionBase):
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
-            action=AlgorithmStepType.PREPROCESSING,
+            action=AlgorithmStepType.PREPROCESSING.value,
             image=preprocessing_task["image"],
             method=preprocessing_task["method"],
             organizations=preprocessing_task["organizations"],
@@ -608,7 +607,6 @@ class DataframePreprocessing(SessionBase):
 
 
 class DataframeColumns(SessionBase):
-
     @with_node
     def post(self, id):
         """Nodes report their column names
