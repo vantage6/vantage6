@@ -8,6 +8,7 @@ from vantage6.algorithm.store.model import (
     Algorithm,
     Argument,
     Database,
+    DatabaseLock,
     Function,
     Permission,
     Role,

@@ -319,12 +319,22 @@ class AlgorithmStoreApp:
         config: dict
             Configuration object containing the policies
         """
-        # delete old policies from the database
-        # pylint: disable=expression-not-assigned
+        # Generate a unique process identifier
+        process_id = f"{os.getpid()}_{socket.gethostname()}"
+        lock_name = "policy_setup"
+
+        # Try to acquire the database lock for policy setup
+        if not db.DatabaseLock.acquire_lock(lock_name, process_id, timeout_seconds=30):
+            log.warning("Could not acquire policy setup lock, skipping policy setup")
+            return
+
         try:
-            [p.delete() for p in db.Policy.get()]
-        except sqlalchemy.orm.exc.ObjectDeletedError:
-            log.warning("Policy table is locked, skipping policy deletion")
+            # delete old policies from the database
+            # pylint: disable=expression-not-assigned
+            try:
+                [p.delete() for p in db.Policy.get()]
+            except sqlalchemy.orm.exc.ObjectDeletedError:
+                log.warning("Policy table is locked, skipping policy deletion")
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():
@@ -386,8 +396,8 @@ class AlgorithmStoreApp:
         # simultaneously, it is possible that this function is run at the same time as
         # well. That may lead to double policies in the database. To prevent this, we
         # remove non-unique policies from the database.
-        # TODO a more elegant solution would be to claim the policy table on the
-        # database for this entire function, or so. Check if doable.
+        # This is now handled by the database lock mechanism above, but we keep this
+        # cleanup as an additional safety measure.
         db_policies = db.Policy.get()
         unique_policies = set()
         for policy in db_policies:
@@ -395,6 +405,9 @@ class AlgorithmStoreApp:
                 policy.delete()
             else:
                 unique_policies.add((policy.key, policy.value))
+        finally:
+            # Always release the lock, even if an exception occurred
+            db.DatabaseLock.release_lock(lock_name, process_id)
 
     def setup_disable_review(self) -> None:
         """
