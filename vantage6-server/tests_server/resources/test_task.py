@@ -612,14 +612,14 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Test with global permissions
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Test with organization permissions (should fail for other organizations)
         rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
@@ -631,7 +631,7 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Cleanup
         task.delete()

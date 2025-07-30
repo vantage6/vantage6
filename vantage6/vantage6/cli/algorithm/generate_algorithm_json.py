@@ -1,9 +1,8 @@
-import os
-import sys
 import importlib
 import inspect
 import json
-
+import os
+import sys
 from enum import Enum
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
@@ -11,17 +10,19 @@ from types import ModuleType, UnionType
 from typing import Any, OrderedDict
 
 import click
-import questionary as q
 import pandas as pd
+import questionary as q
 
-from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.common import error, info, warning
-from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
 from vantage6.common.algorithm_function import (
     get_vantage6_decorator_type,
     is_vantage6_algorithm_func,
 )
+from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
+
+from vantage6.algorithm.tools import DecoratorStepType
+
+from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.preprocessing.algorithm_json_data import (
     PREPROCESSING_FUNCTIONS_JSON_DATA,
 )
@@ -106,7 +107,7 @@ class Function:
             arg_json, arg_type = self._get_argument_json(name, param)
             if arg_json is None:
                 continue
-            elif arg_type == FunctionArgumentType.DATAFRAME:
+            elif arg_type == FunctionArgumentType.DATAFRAME.value:
                 function_json["databases"].append(arg_json)
             else:
                 function_json["arguments"].append(arg_json)
@@ -208,7 +209,7 @@ class Function:
             return {
                 "name": name if name != "df" else "Data to use",
                 "description": self._extract_parameter_description(name),
-            }, FunctionArgumentType.DATAFRAME
+            }, FunctionArgumentType.DATAFRAME.value
         else:
             # This is a regular function parameter
             arg_json = {
@@ -222,7 +223,7 @@ class Function:
             }
             if param.default != inspect.Parameter.empty:
                 arg_json["default"] = param.default
-            return arg_json, FunctionArgumentType.PARAMETER
+            return arg_json, FunctionArgumentType.PARAMETER.value
 
     def _add_frontend_argument(
         self, template_json: dict, frontend_argument: str
@@ -334,8 +335,7 @@ class Function:
             return AlgorithmStepType.DATA_EXTRACTION.value
         else:
             warning(
-                f"Unsupported decorator type: {decorator_type} for function "
-                f"{self.name}"
+                f"Unsupported decorator type: {decorator_type} for function {self.name}"
             )
             return None
 

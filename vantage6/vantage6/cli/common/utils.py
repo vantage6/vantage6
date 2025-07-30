@@ -112,7 +112,7 @@ def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
             in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25} System ")
+        click.echo(f"{config.name:25}{status:25} System ")
 
     # user folders
     configs, f2 = ctx_class.available_configurations(system_folders=False)
@@ -123,11 +123,11 @@ def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
             in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25} User   ")
+        click.echo(f"{config.name:25}{status:25} User   ")
 
     click.echo("-" * 85)
     if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")
 
 
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:
