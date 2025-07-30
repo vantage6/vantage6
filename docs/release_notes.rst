@@ -4,7 +4,7 @@ Release notes
 4.12.1
 -----
 
-*29 July 2025*
+*30 July 2025*
 
 - **Bugfix**
 
