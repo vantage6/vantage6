@@ -93,7 +93,11 @@ def permissions(permissions: PermissionManager):
 # Resources / API's
 # ------------------------------------------------------------------------------
 class BlobStreamBase(ServicesResources):
-    """Base class for run resources"""
+    """
+    Base class for run resources that require a storage adapter. 
+    This class provides methods for streaming large results from the storage adapter, 
+    in this case Azure Blob Storage.
+    """
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
@@ -102,8 +106,8 @@ class BlobStreamBase(ServicesResources):
 
 class BlobStream(BlobStreamBase):
     """
-    Resource for /api/blobstream/<id> (GET and POST)
-    This resource allows for streaming large results from the storage adapter.
+    Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
+    This resource allows for streaming large results from Azure Blob Storage.
     """
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
@@ -162,12 +166,23 @@ class BlobStream(BlobStreamBase):
 
     
 class UwsgiChunkedStream:
+    """
+    A stream for reading data in chunks from uwsgi.
+    This is useful for handling large uploads without loading everything into memory at once.
+    """
+    #TODO: Using uwsgi in python in combination with flask is not very stable. Need to find an other solution to stream large data files.
     def __init__(self, chunk_size=4096):
+        """
+        Initialize the UwsgiChunkedStream.
+        """
         self.chunk_size = chunk_size
         self._buffer = b""
         self._eof = False
 
     def read(self, size=-1):
+        """
+        Read data from the stream.
+        """
         log.info(f"Reading with size: {size}")
         if size < 0:
             chunks = [self._buffer]

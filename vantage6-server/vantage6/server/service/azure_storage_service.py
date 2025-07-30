@@ -7,7 +7,22 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 class AzureStorageService:
+    """
+    A service for managing Azure Blob Storage.
+    """
+    
     def __init__(self, container_name:str, blob_service_client:BlobServiceClient = None, connection_string: str = None):
+        """Initialize the AzureStorageService.
+
+        Args:
+            container_name (str): The name of the Azure Blob Storage container.
+            blob_service_client (BlobServiceClient, optional): An existing BlobServiceClient instance. Defaults to None.
+            connection_string (str, optional): The connection string for the Azure Blob Storage account. Defaults to None.
+
+        Raises:
+            ValueError: If neither blob_service_client nor connection_string is provided.
+        """
+
         self.container_name = container_name
 
         if connection_string:
@@ -22,7 +37,7 @@ class AzureStorageService:
 
     def get_blob(self, blob_name: str) -> bytes:
         """
-        Retrieve a blob from Azure Blob Storage.
+        Retrieve a blob from Azure Blob Storage by its name.
         """
         log.debug(f"Retrieving blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
@@ -30,20 +45,20 @@ class AzureStorageService:
         return stream.readall()
 
     def store_blob(self, blob_name: str, data: Union[IO, bytes]) -> None:
-            """
-            Store data as a blob in Azure Blob Storage.
-            """
-            log.debug(f"Storing blob: {blob_name} in container: {self.container_name}")
-            blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
-            try:
-                blob_client.upload_blob(data, overwrite=True)
-            except Exception as e:
-                log.error(f"Failed to upload blob '{blob_name}': {e}")
-                raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
+        """
+        Store data as a blob in Azure Blob Storage.
+        """
+        log.debug(f"Storing blob: {blob_name} in container: {self.container_name}")
+        blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)
+        try:
+            blob_client.upload_blob(data, overwrite=True)
+        except Exception as e:
+            log.error(f"Failed to upload blob '{blob_name}': {e}")
+            raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
 
     def delete_blob(self, blob_name: str) -> None:
         """
-        Delete a blob from Azure Blob Storage.
+        Delete a blob from Azure Blob Storage by its name.
         """
         log.debug(f"Deleting blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(container=self.container_name, blob=blob_name)

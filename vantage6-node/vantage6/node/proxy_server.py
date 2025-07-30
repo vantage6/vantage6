@@ -349,6 +349,20 @@ def proxy_results(id_: int) -> Response:
 
 @app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
+    """ 
+    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server. 
+    Parameters
+    ----------
+    id : str
+        The id of the blob to be streamed.  
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing the streamed blob data.
+        If the blob is successfully streamed, it returns a response with the content type set to "application/octet-stream" and the content disposition set to attachment.
+        If an error occurs, it returns an error message with the appropriate HTTP status code.
+    """
+    
     log.info("Proxy stream handler called with id: %s", id)
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
@@ -393,6 +407,13 @@ def stream_handler(id: str) -> FlaskResponse:
 
 @app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
+    """
+    Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing if the blob was successfully streamed to the server.
+    """    
     log.info("Proxy stream POST handler called")
 
     client: NodeClient = app.config.get("SERVER_IO")
