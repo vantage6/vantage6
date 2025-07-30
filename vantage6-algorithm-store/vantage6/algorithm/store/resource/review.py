@@ -748,7 +748,7 @@ class ReviewApprove(ReviewUpdateResources):
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
         if (
-            algorithm.status == AlgorithmStatus.UNDER_REVIEW
+            algorithm.status == AlgorithmStatus.UNDER_REVIEW.value
             and algorithm.are_all_reviews_approved()
         ):
             algorithm.approve()

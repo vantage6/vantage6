@@ -142,7 +142,8 @@ class TestReviewResources(TestResources):
 
         # create algorithm
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT, developer=developer
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+            developer=developer,
         )
         algorithm.save()
 
@@ -188,14 +189,14 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # check that review cannot be assigned if algorithm is not awaiting review
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.save()
         json_body["reviewer_id"] = another_reviewer.id
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # check that you can assign a second reviewer
-        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
         algorithm.save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -248,19 +249,21 @@ class TestReviewResources(TestResources):
         review.save()
 
         # check that deleting reviews for currently approved algorithms is not allowed
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that if algorithm status is updated to awaiting review if only
         # review is deleted
-        algorithm.status = AlgorithmStatus.UNDER_REVIEW
+        algorithm.status = AlgorithmStatus.UNDER_REVIEW.value
         algorithm.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
+        self.assertEqual(
+            algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
         review = None  # update deleted sqlalchemy object to prevent warnings
 
         # set policy to require one review and one organization
@@ -270,18 +273,20 @@ class TestReviewResources(TestResources):
         # check that if there are two reviews, one of which is approved and the other is
         # deleted, the algorithm status is updated to approved
         approved_review = Review(
-            status=ReviewStatus.APPROVED, algorithm=algorithm, reviewer=reviewer
+            status=ReviewStatus.APPROVED.value, algorithm=algorithm, reviewer=reviewer
         )
         approved_review.save()
         # re-create review again
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=algorithm,
+            reviewer=reviewer,
         )
         review.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_review_approve(self, authenticate_mock):
@@ -289,9 +294,13 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create algorithm
-        current_algorithm = Algorithm(status=AlgorithmStatus.APPROVED, image="image")
+        current_algorithm = Algorithm(
+            status=AlgorithmStatus.APPROVED.value, image="image"
+        )
         current_algorithm.save()
-        new_algorithm = Algorithm(status=AlgorithmStatus.UNDER_REVIEW, image="image")
+        new_algorithm = Algorithm(
+            status=AlgorithmStatus.UNDER_REVIEW.value, image="image"
+        )
         new_algorithm.save()
 
         # check that approving a review without authentication fails
@@ -311,11 +320,13 @@ class TestReviewResources(TestResources):
 
         # create reviews
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=new_algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=new_algorithm,
+            reviewer=reviewer,
         )
         review.save()
         another_review = Review(
-            status=ReviewStatus.UNDER_REVIEW,
+            status=ReviewStatus.UNDER_REVIEW.value,
             algorithm=new_algorithm,
             reviewer=another_reviewer,
         )
@@ -326,11 +337,11 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # check that approving review fails if it was already approved or rejected
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -341,13 +352,13 @@ class TestReviewResources(TestResources):
 
         # approve the second review so that the first one can be approved with the
         # side-effects of the algorithm status being updated
-        another_review.status = ReviewStatus.APPROVED
+        another_review.status = ReviewStatus.APPROVED.value
         another_review.save()
 
         # check that approving a review with authentication succeeds, and that the
         # algorithm status is updated to approved
         body_ = {"comment": "Awesome algorithm!"}
-        review.status = ReviewStatus.UNDER_REVIEW
+        review.status = ReviewStatus.UNDER_REVIEW.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json=body_)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -355,10 +366,10 @@ class TestReviewResources(TestResources):
         self.assertEqual(review.comment, body_["comment"])
         self.assertEqual(review.status, ReviewStatus.APPROVED.value)
         algorithm = Algorithm.get(new_algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED.value)
         # check also that old algorithm is replaced by the new one
         current_algorithm = Algorithm.get(current_algorithm.id)
-        self.assertEqual(current_algorithm.status, AlgorithmStatus.REPLACED)
+        self.assertEqual(current_algorithm.status, AlgorithmStatus.REPLACED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_review_reject(self, authenticate_mock):
@@ -368,9 +379,13 @@ class TestReviewResources(TestResources):
         )
 
         # create algorithm
-        current_algorithm = Algorithm(status=AlgorithmStatus.APPROVED, image="image")
+        current_algorithm = Algorithm(
+            status=AlgorithmStatus.APPROVED.value, image="image"
+        )
         current_algorithm.save()
-        new_algorithm = Algorithm(status=AlgorithmStatus.UNDER_REVIEW, image="image")
+        new_algorithm = Algorithm(
+            status=AlgorithmStatus.UNDER_REVIEW.value, image="image"
+        )
         new_algorithm.save()
 
         # check that rejecting a review without authentication fails
@@ -390,11 +405,13 @@ class TestReviewResources(TestResources):
 
         # create reviews
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=new_algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=new_algorithm,
+            reviewer=reviewer,
         )
         review.save()
         another_review = Review(
-            status=ReviewStatus.UNDER_REVIEW,
+            status=ReviewStatus.UNDER_REVIEW.value,
             algorithm=new_algorithm,
             reviewer=another_reviewer,
         )
@@ -405,11 +422,11 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # check that rejecting review fails if it was already approved or rejected
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -420,13 +437,13 @@ class TestReviewResources(TestResources):
 
         # approve the second review so that the first one can be rejected with the
         # side-effects of the algorithm status being updated
-        another_review.status = ReviewStatus.APPROVED
+        another_review.status = ReviewStatus.APPROVED.value
         another_review.save()
 
         # check that rejecting a review with authentication succeeds, and that the
         # algorithm status is updated to rejected
         body_ = {"comment": "Not good enough!"}
-        review.status = ReviewStatus.UNDER_REVIEW
+        review.status = ReviewStatus.UNDER_REVIEW.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json=body_)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -434,10 +451,10 @@ class TestReviewResources(TestResources):
         self.assertEqual(review.comment, body_["comment"])
         self.assertEqual(review.status, ReviewStatus.REJECTED.value)
         algorithm = Algorithm.get(new_algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.REJECTED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.REJECTED.value)
         # check also that old algorithm is still present
         current_algorithm = Algorithm.get(current_algorithm.id)
-        self.assertEqual(current_algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(current_algorithm.status, AlgorithmStatus.APPROVED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_algorithm_status_update_to_under_review(self, authenticate_mock):
@@ -455,7 +472,7 @@ class TestReviewResources(TestResources):
         # create algorithm
         dev = self.register_user(username="algo_dev")
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
             image="image",
             developer=dev,
         )
@@ -572,7 +589,7 @@ class TestReviewResources(TestResources):
 
         # create algorithm
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
             image="image",
             developer=dev,
         )

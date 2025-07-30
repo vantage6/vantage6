@@ -141,7 +141,8 @@ class TestAlgorithmResources(TestResources):
 
         # Create an algorithm
         algorithm = Algorithm(
-            name="test_algorithm", status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+            name="test_algorithm",
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
         )
         algorithm.save()
 
@@ -152,13 +153,13 @@ class TestAlgorithmResources(TestResources):
         policy.save()
 
         num_approved = len(
-            [a for a in Algorithm.get() if a.status == AlgorithmStatus.APPROVED]
+            [a for a in Algorithm.get() if a.status == AlgorithmStatus.APPROVED.value]
         )
         num_awaiting_review = len(
             [
                 a
                 for a in Algorithm.get()
-                if a.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+                if a.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
             ]
         )
         # test if the endpoint is accessible. Only approved algorithms should be
@@ -171,7 +172,7 @@ class TestAlgorithmResources(TestResources):
         )
 
         # now approve the algorithm and verify that it is returned
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.save()
         result = self.app.get("/api/algorithm")
         self.assertEqual(result.status_code, HTTPStatus.OK)
@@ -179,7 +180,7 @@ class TestAlgorithmResources(TestResources):
 
         # check that by authenticating we can see the awaiting_reviewer_assignment
         # algorithms
-        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
         algorithm.save()
         user = self.register_user(
             user_rules=[Rule.get_by_("algorithm", Operation.VIEW)],
@@ -491,7 +492,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(response.json["description"], "new_description")
 
         # check that algorithm cannot be updated if it is approved
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
         response = self.app.patch(
@@ -509,11 +510,13 @@ class TestAlgorithmResources(TestResources):
 
         # check that algorithm cannot be updated if at least one review has been
         # completed
-        algorithm.status = AlgorithmStatus.UNDER_REVIEW
+        algorithm.status = AlgorithmStatus.UNDER_REVIEW.value
         algorithm.invalidated_at = None
         algorithm.save()
         review = Review(
-            algorithm_id=algorithm.id, reviewer_id=user.id, status=ReviewStatus.APPROVED
+            algorithm_id=algorithm.id,
+            reviewer_id=user.id,
+            status=ReviewStatus.APPROVED.value,
         )
         review.save()
         response = self.app.patch(
@@ -597,7 +600,8 @@ class TestAlgorithmResources(TestResources):
 
         # Create a mock algorithm
         algorithm = Algorithm(
-            name="test_algorithm", reviews=[Review(status=ReviewStatus.UNDER_REVIEW)]
+            name="test_algorithm",
+            reviews=[Review(status=ReviewStatus.UNDER_REVIEW.value)],
         )
         algorithm.save()
         review_id = algorithm.reviews[0].id

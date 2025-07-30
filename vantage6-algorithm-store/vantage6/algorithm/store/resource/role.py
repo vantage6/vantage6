@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
-
 from http import HTTPStatus
+
 from flask.globals import request
 from flask_restful import Api
 from sqlalchemy import select
 
-from vantage6.algorithm.store.default_roles import DefaultRole
-from vantage6.algorithm.store.resource import with_permission
+from vantage6.common import logger_name
+
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.input_schema import RoleInputSchema
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
     can_delete_dependents,
@@ -21,16 +22,16 @@ from vantage6.backend.common.resource.role import (
     validate_request_body,
     validate_user_exists,
 )
-from vantage6.common import logger_name
-from vantage6.algorithm.store.permission import PermissionManager
+
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.default_roles import DefaultRole
 from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.permission import PermissionManager
+from vantage6.algorithm.store.resource import AlgorithmStoreResources, with_permission
 from vantage6.algorithm.store.resource.schema.output_schema import (
     RoleOutputSchema,
     RuleOutputSchema,
 )
-from vantage6.algorithm.store import db
-from vantage6.algorithm.store.resource import AlgorithmStoreResources
-from vantage6.backend.common.resource.pagination import Pagination
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -92,7 +93,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_output_schema = RoleOutputSchema()
 rule_schema = RuleOutputSchema()
-role_input_schema = RoleInputSchema(default_roles=[role for role in DefaultRole])
+role_input_schema = RoleInputSchema(default_roles=DefaultRole.list())
 
 
 class Roles(AlgorithmStoreResources):

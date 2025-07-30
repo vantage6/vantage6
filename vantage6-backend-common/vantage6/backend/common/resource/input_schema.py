@@ -1,5 +1,6 @@
 from typing import List
-from marshmallow import Schema, fields, validates, ValidationError
+
+from marshmallow import Schema, ValidationError, fields, validates
 from marshmallow.validate import Length, Range
 
 MAX_LEN_NAME = 128
@@ -76,7 +77,7 @@ class RoleInputSchema(_NameValidationSchema):
         ValidationError
             If the role name is one of the default roles.
         """
-        if name in self.default_roles:
+        if name in self.default_roles.list():
             raise ValidationError("Role name cannot be one of the default roles")
 
 

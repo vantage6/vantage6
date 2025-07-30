@@ -72,7 +72,12 @@ class DatabaseType(EnumBase):
 
     def is_file_based(self) -> bool:
         """Check if the database type is file-based"""
-        return self in [self.CSV, self.EXCEL, self.PARQUET, self.FOLDER]
+        return self in [
+            self.CSV.value,
+            self.EXCEL.value,
+            self.PARQUET.value,
+            self.FOLDER.value,
+        ]
 
 
 class TaskStatus(EnumBase):
@@ -199,14 +204,13 @@ class RunStatus(EnumBase):
         """Return a list of all the status values where run is not completed"""
 
         return [
-            cls.PENDING,
+            cls.PENDING.value,
             cls.INITIALIZING.value,
             cls.ACTIVE.value,
         ]
 
 
 class TaskStatusQueryOptions(EnumBase):
-
     OPEN = "open"
     WAITING = "waiting"
     FINISHED = "finished"

@@ -1,22 +1,24 @@
 import logging
-
 from functools import wraps
 from http import HTTPStatus
-from flask import request, g
+
+from flask import g, request
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_mail import Mail
 from flask_restful import Api
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.model.user import User
+
 from vantage6.backend.common.services_resources import BaseServicesResources
+
 from vantage6.algorithm.store import PermissionManager
-from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.model.common.enums import (
     DefaultStorePolicies,
 )
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.user import User
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -196,7 +198,7 @@ def with_permission_to_view_algorithms() -> callable:
 
             # if the algorithm is public and approved, allow access
             if (
-                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
+                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC.value
                 and request_approved
             ):
                 return fn(self, *args, **kwargs)
@@ -208,7 +210,7 @@ def with_permission_to_view_algorithms() -> callable:
 
             # if user is authenticated an anyone with token can view algorithms, allow
             if (
-                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED
+                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED.value
                 and request_approved
             ):
                 return fn(self, *args, **kwargs)

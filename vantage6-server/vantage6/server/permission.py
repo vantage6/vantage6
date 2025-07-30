@@ -1,14 +1,16 @@
 import logging
 
 from flask import g
-from vantage6.server import db
 
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
+from vantage6.common import logger_name
+
+from vantage6.backend.common.permission import PermissionManagerBase, RuleCollectionBase
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
+
+from vantage6.server import db
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
-from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.common import logger_name
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -252,7 +254,7 @@ class PermissionManager(PermissionManagerBase):
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            self.default_roles.NODE, resource, operation, scope
+            self.default_roles.NODE.value, resource, operation, scope
         )
 
     def assign_rule_to_container(
@@ -271,7 +273,7 @@ class PermissionManager(PermissionManagerBase):
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            self.default_roles.CONTAINER, resource, operation, scope
+            self.default_roles.CONTAINER.value, resource, operation, scope
         )
 
     def assign_rule_to_fixed_role(
@@ -308,7 +310,7 @@ class PermissionManager(PermissionManagerBase):
         if rule not in role.rules:
             role.rules.append(rule)
             role.save()
-            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+            log.info(f"Rule ({rule_params}) added to {fixedrole} role!")
 
     def get_new_collection(self, name: str) -> RuleCollection:
         """
