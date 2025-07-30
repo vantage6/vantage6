@@ -342,9 +342,8 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert self.config_manager, (
-            "Log file unkown as configuration manager not initialized"
-        )
+        assert self.config_manager, "Log file unkown. Initialize configuration manager"
+
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
