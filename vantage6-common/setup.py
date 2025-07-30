@@ -1,9 +1,9 @@
 import codecs
 import os
-
 from os import path
-from setuptools import find_namespace_packages, setup
 from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
 
 # get current directory
 here = Path(path.abspath(path.dirname(__file__)))
@@ -29,7 +29,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/vantage6/vantage6",
     packages=find_namespace_packages(),
-    python_requires=">=3.10",
+    python_requires=">=3.13",
     install_requires=[
         "appdirs==1.4.4",
         "click==8.1.3",

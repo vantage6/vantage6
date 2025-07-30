@@ -1,24 +1,24 @@
 import datetime as dt
 import logging
-
 from functools import wraps
 
+import jwt
 from flask import current_app, g, request
-from flask_restful import Api
-from flask_mail import Mail
 from flask_jwt_extended import (
     get_jwt,
     get_jwt_identity,
     verify_jwt_in_request,
 )
+from flask_mail import Mail
 from flask_principal import Identity, identity_changed
+from flask_restful import Api
 from flask_socketio import SocketIO
 
-
-import jwt
-from vantage6.backend.common.permission import RuleNeed
 from vantage6.common import logger_name
+
+from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.services_resources import BaseServicesResources
+
 from vantage6.server import db
 from vantage6.server.default_roles import DefaultRole
 from vantage6.server.model.authenticatable import Authenticatable
@@ -82,7 +82,7 @@ class ServicesResources(BaseServicesResources):
 
         Returns
         -------
-        Union[db.Authenticatable, dict]
+        db.Authenticatable | dict
             Authenticatable object or dict. Authenticatable object is either a
             user or node. Dict is for a container.
         """
@@ -209,9 +209,7 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
     if g.type not in types:
         # FIXME BvB 23-10-19: user gets a 500 error, would be better to
         # get an error message with 400 code
-        msg = (
-            f"{g.type}s are not allowed to access {request.url} " f"({request.method})"
-        )
+        msg = f"{g.type}s are not allowed to access {request.url} ({request.method})"
         log.warning(msg)
         raise Exception(msg)
 

@@ -1,38 +1,38 @@
 import logging
-from typing import Union
-import sqlalchemy as sa
+from http import HTTPStatus
 
+import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
-from http import HTTPStatus
 from marshmallow import ValidationError
-from sqlalchemy import desc, or_, and_, select
+from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.sql.selectable import Select
 
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus, TaskStatusQueryOptions, AlgorithmStepType
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
+
+from vantage6.backend.common.resource.pagination import Pagination
+
 from vantage6.server import db
+from vantage6.server.model import Collaboration, Node, Organization, Run as db_Run, Task
 from vantage6.server.permission import (
-    RuleCollection,
-    PermissionManager,
-    Scope as S,
     Operation as P,
+    PermissionManager,
+    RuleCollection,
+    Scope as S,
 )
 from vantage6.server.resource import (
-    with_node,
-    only_for,
     ServicesResources,
+    only_for,
+    with_node,
 )
 from vantage6.server.resource.common.input_schema import RunInputSchema
-from vantage6.server.utils import parse_datetime
-from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.common.output_schema import (
+    ResultSchema,
     RunSchema,
     RunTaskIncludedSchema,
-    ResultSchema,
 )
-from vantage6.server.model import Run as db_Run, Node, Task, Collaboration, Organization
-
+from vantage6.server.utils import parse_datetime
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -113,7 +113,7 @@ def permissions(permissions: PermissionManager):
         operation=P.VIEW,
         assign_to_container=True,
         assign_to_node=True,
-        description="view runs of your organizations " "collaborations",
+        description="view runs of your organizations collaborations",
     )
     add(
         scope=S.ORGANIZATION,
@@ -161,7 +161,7 @@ class MultiRunBase(RunBase):
             if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
                     "msg": "You lack the permission to view runs for "
-                    f'organization id={args["organization_id"]}!'
+                    f"organization id={args['organization_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db_Run.organization_id == args["organization_id"])
 
@@ -169,14 +169,14 @@ class MultiRunBase(RunBase):
             task = db.Task.get(args["task_id"])
             if not task:
                 return {
-                    "msg": f'Task id={args["task_id"]} does not exist!'
+                    "msg": f"Task id={args['task_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.allowed_for_org(P.VIEW, task.init_org_id) and not (
                 self.r.v_own.can() and g.user.id == task.init_user_id
             ):
                 return {
                     "msg": "You lack the permission to view runs for "
-                    f'task id={args["task_id"]}!'
+                    f"task id={args['task_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db_Run.task_id == args["task_id"])
 
@@ -184,12 +184,12 @@ class MultiRunBase(RunBase):
             node = db.Node.get(args["node_id"])
             if not node:
                 return {
-                    "msg": f'Node id={args["node_id"]} does not exist!'
+                    "msg": f"Node id={args['node_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             elif not self.r.can_for_col(P.VIEW, node.collaboration_id):
                 return {
                     "msg": "You lack the permission to view runs for "
-                    f'node id={args["node_id"]}!'
+                    f"node id={args['node_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.Node.id == args.get("node_id")).filter(
                 db.Collaboration.id == db.Node.collaboration_id
@@ -228,7 +228,7 @@ class MultiRunBase(RunBase):
             if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
                 return {
                     "msg": "You lack the permission to view runs for "
-                    f'collaboration id={args["collaboration_id"]}!'
+                    f"collaboration id={args['collaboration_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(Collaboration.id == args["collaboration_id"])
 
@@ -516,7 +516,7 @@ class Results(MultiRunBase):
 class SingleRunBase(RunBase):
     """Base class for resources that return a single run or result"""
 
-    def get_single_run(self, id) -> Union[db_Run, tuple]:
+    def get_single_run(self, id) -> db_Run | tuple:
         """
         Set up a query to retrieve a single algorithm run
 
@@ -527,7 +527,7 @@ class SingleRunBase(RunBase):
 
         Returns
         -------
-        sa.orm.query.Query or tuple
+        db.Run | tuple
             An algorithm Run object, or a tuple with a message and HTTP error
             code if the Run could not be retrieved
         """
@@ -747,7 +747,6 @@ class Run(SingleRunBase):
             if dependent_task.required_by:
                 for deeper_dependent_task in dependent_task.required_by:
                     if deeper_dependent_task not in dependent_tasks:
-
                         # Skip the mark as failed for tasks that are compute tasks, as
                         # these might still be able to run.
                         if AlgorithmStepType.is_compute(deeper_dependent_task.action):

@@ -1,9 +1,9 @@
 import codecs
 import os
-
 from os import path
-from setuptools import setup, find_namespace_packages
 from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
 
 # get current directory
 here = Path(path.abspath(path.dirname(__file__)))
@@ -29,7 +29,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/vantage6/vantage6",
     packages=find_namespace_packages(),
-    python_requires=">=3.10",
+    python_requires=">=3.13",
     install_requires=[
         "flask==3.1.1",
         "flask-mail==0.9.1",
@@ -39,7 +39,7 @@ setup(
         "sqlalchemy==2.0.37",
         "python-keycloak==5.5.0",
         "prometheus-client==0.21.1",
-        f'vantage6-common == {version_ns["__version__"]}',
+        f"vantage6-common == {version_ns['__version__']}",
     ],
     extras_require={"dev": ["coverage==6.4.4"]},
     package_data={

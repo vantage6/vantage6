@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import logging
 import importlib
+import logging
 from abc import ABC, abstractmethod
-
-from collections import namedtuple
 from enum import EnumMeta
+from typing import NamedTuple
 
 from flask_principal import Permission
 
@@ -16,7 +15,7 @@ from vantage6.backend.common.permission_models import RuleInterface
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
-RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
+RuleNeed = NamedTuple("RuleNeed", [("name", str), ("scope", str), ("operation", str)])
 
 
 class RuleCollectionBase(ABC, dict):

@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bookworm
+FROM python:3.13-slim-bookworm
 
 LABEL version="5.0"
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"

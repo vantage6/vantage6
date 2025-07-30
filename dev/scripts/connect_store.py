@@ -2,7 +2,6 @@
 Development script to connect the server to the local store.
 """
 
-import json
 from pathlib import Path
 
 import requests

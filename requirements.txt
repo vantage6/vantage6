@@ -36,9 +36,11 @@ marshmallow==3.20.2
 marshmallow-sqlalchemy==1.4.0
 mistune==2.0.4
 names_generator==0.2.0
-numpy==1.24.2
+numpy==2.3.0
 oauthlib==3.2.2
+setuptools==80.9.0
 pandas>=1.5.3
+psutil==7.0.0
 parso==0.8.3
 pickleshare==0.7.5
 prompt-toolkit==3.0.36
