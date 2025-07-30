@@ -39,7 +39,7 @@ def get_default_roles() -> list[dict]:
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
-        "name": DefaultRole.ROOT,
+        "name": DefaultRole.ROOT.value,
         "description": "Super role",
         "rules": Rule.get(),
     }
@@ -51,14 +51,14 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("review", Operation.VIEW),
     ]
     VIEWER_ROLE = {
-        "name": DefaultRole.VIEWER,
+        "name": DefaultRole.VIEWER.value,
         "description": "Can view algorithm store resources",
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
     REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("review", Operation.EDIT)]
     REVIEWER_ROLE = {
-        "name": DefaultRole.REVIEWER,
+        "name": DefaultRole.REVIEWER.value,
         "description": "Can view resources and review algorithms",
         "rules": REVIEWER_RULES,
     }
@@ -72,7 +72,7 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("role", Operation.DELETE),
     ]
     STORE_MANAGER = {
-        "name": DefaultRole.STORE_MANAGER,
+        "name": DefaultRole.STORE_MANAGER.value,
         "description": "Can view resources and manage users and roles.",
         "rules": STORE_MANAGER,
     }
@@ -85,7 +85,7 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("review", Operation.DELETE),
     ]
     ALGORITHM_MANAGER = {
-        "name": DefaultRole.ALGORITHM_MANAGER,
+        "name": DefaultRole.ALGORITHM_MANAGER.value,
         "description": "Can view store resources and manage algorithms and reviews.",
         "rules": ALGORITHM_MANAGER_RULES,
     }
@@ -95,7 +95,7 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("algorithm", Operation.EDIT),
     ]
     DEVELOPER_ROLE = {
-        "name": DefaultRole.DEVELOPER,
+        "name": DefaultRole.DEVELOPER.value,
         "description": "Can view store resources and create new algorithms.",
         "rules": DEVELOPER_RULES,
     }

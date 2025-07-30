@@ -278,7 +278,7 @@ def _validate_container_token():
     auth_identity = Identity(claims["sub"])
 
     # Add container role permissions
-    for rule in db.Role.get_by_name(DefaultRole.CONTAINER).rules:
+    for rule in db.Role.get_by_name(DefaultRole.CONTAINER.value).rules:
         auth_identity.provides.add(
             RuleNeed(
                 name=rule.name,

@@ -25,10 +25,10 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create a few reviews
-        r1 = Review(status=ReviewStatus.UNDER_REVIEW)
-        r2 = Review(status=ReviewStatus.APPROVED)
-        r3 = Review(status=ReviewStatus.REJECTED)
-        r4 = Review(status=ReviewStatus.DROPPED)
+        r1 = Review(status=ReviewStatus.UNDER_REVIEW.value)
+        r2 = Review(status=ReviewStatus.APPROVED.value)
+        r3 = Review(status=ReviewStatus.REJECTED.value)
+        r4 = Review(status=ReviewStatus.DROPPED.value)
         # pylint: disable=expression-not-assigned
         [r.save() for r in [r1, r2, r3, r4]]
 
@@ -86,7 +86,7 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create a review
-        review = Review(status=ReviewStatus.UNDER_REVIEW)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value)
         review.save()
 
         # check that getting reviews without authentication fails
@@ -156,7 +156,7 @@ class TestReviewResources(TestResources):
             "/api/review",
             json={
                 **json_body,
-                "status": ReviewStatus.APPROVED,
+                "status": ReviewStatus.APPROVED.value,
             },
         )
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -214,10 +214,10 @@ class TestReviewResources(TestResources):
 
         # create algorithm and review
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
         )
         algorithm.save()
-        review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value, algorithm=algorithm)
         review.save()
 
         # check that deleting a review without authentication fails
@@ -244,7 +244,7 @@ class TestReviewResources(TestResources):
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         # re-create review
-        review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value, algorithm=algorithm)
         review.save()
 
         # check that deleting reviews for currently approved algorithms is not allowed

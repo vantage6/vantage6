@@ -1,11 +1,10 @@
 import logging
 from http import HTTPStatus
 
-import sqlalchemy as sa
 from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
-from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import desc, select
 from sqlalchemy.sql.selectable import Select
 
 from vantage6.common import logger_name

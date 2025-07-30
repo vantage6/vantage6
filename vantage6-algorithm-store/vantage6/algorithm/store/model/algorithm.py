@@ -1,5 +1,6 @@
 import datetime
-from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, select
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -82,8 +83,8 @@ class Algorithm(Base):
             True if the algorithm is being reviewed, False otherwise
         """
         return self.status not in [
-            AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
-            AlgorithmStatus.UNDER_REVIEW,
+            AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+            AlgorithmStatus.UNDER_REVIEW.value,
         ]
 
     def are_all_reviews_approved(self) -> bool:
@@ -95,13 +96,15 @@ class Algorithm(Base):
         bool
             True if all reviews are approved, False otherwise
         """
-        return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
+        return all(
+            [review.status == ReviewStatus.APPROVED.value for review in self.reviews]
+        )
 
     def approve(self) -> None:
         """
         Approve the algorithm, and invalidate all other algorithms with the same image.
         """
-        self.status = AlgorithmStatus.APPROVED
+        self.status = AlgorithmStatus.APPROVED.value
         self.approved_at = datetime.datetime.now(datetime.timezone.utc)
         self.save()
 
@@ -114,7 +117,7 @@ class Algorithm(Base):
             ) or other_version.id == self.id:
                 continue
             other_version.invalidated_at = self.approved_at
-            other_version.status = AlgorithmStatus.REPLACED
+            other_version.status = AlgorithmStatus.REPLACED.value
             other_version.save()
 
     @classmethod

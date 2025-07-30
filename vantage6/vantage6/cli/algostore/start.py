@@ -7,6 +7,8 @@ from vantage6.common.globals import (
     InstanceType,
     Ports,
 )
+
+from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
@@ -17,7 +19,6 @@ from vantage6.cli.common.start import (
     pull_infra_image,
 )
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.common.decorator import click_insert_context
 
 
 @click.command()
@@ -27,13 +28,12 @@ from vantage6.cli.common.decorator import click_insert_context
 @click.option(
     "--keep/--auto-remove",
     default=False,
-    help="Keep image after algorithm store has been stopped. Useful " "for debugging",
+    help="Keep image after algorithm store has been stopped. Useful for debugging",
 )
 @click.option(
     "--mount-src",
     default="",
-    help="Override vantage6 source code in container with the source"
-    " code in this path",
+    help="Override vantage6 source code in container with the source code in this path",
 )
 @click.option(
     "--attach/--detach",

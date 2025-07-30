@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 from http import HTTPStatus
 

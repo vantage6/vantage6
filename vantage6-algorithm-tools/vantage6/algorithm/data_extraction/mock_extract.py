@@ -1,12 +1,14 @@
 from enum import Enum
 from typing import Callable
+
 import pandas as pd
 
 from vantage6.common import error, info
+
 from vantage6.algorithm.data_extraction import (
     _read_csv,
-    _read_parquet,
     _read_excel,
+    _read_parquet,
     _read_sparql_database,
     _read_sql_database,
 )
@@ -74,11 +76,11 @@ def load_mock_data(
         "uri": database_uri,
         "type": database_type,
     }
-    if database_type == MockDatabaseType.EXCEL:
+    if database_type == MockDatabaseType.EXCEL.value:
         return loader(connection_details, sheet_name=sheet_name)
     elif (
-        database_type == MockDatabaseType.SPARQL
-        or database_type == MockDatabaseType.SQL
+        database_type == MockDatabaseType.SPARQL.value
+        or database_type == MockDatabaseType.SQL.value
     ):
         if not query:
             error(f"Query is required for {database_type} databases.")

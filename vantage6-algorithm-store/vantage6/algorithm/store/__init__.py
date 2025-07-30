@@ -218,7 +218,10 @@ class AlgorithmStoreApp(Vantage6App):
         """
         # set all algorithms that are under review or awaiting review to approved
         for algorithm in db.Algorithm.get_by_algorithm_status(
-            [AlgorithmStatus.UNDER_REVIEW, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT]
+            [
+                AlgorithmStatus.UNDER_REVIEW.value,
+                AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+            ]
         ):
             algorithm.approve()
 
@@ -244,7 +247,7 @@ class AlgorithmStoreApp(Vantage6App):
                         "this point that the user exists at the given vantage6 server."
                     )
 
-                    root = db.Role.get_by_name(DefaultRole.ROOT)
+                    root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
                     root_user = db.User(
                         username=root_username,
