@@ -13,9 +13,7 @@ from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 from vantage6.backend.common.services_resources import BaseServicesResources
 
 from vantage6.algorithm.store import PermissionManager
-from vantage6.algorithm.store.model.common.enums import (
-    DefaultStorePolicies,
-)
+from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.rule import Operation
 from vantage6.algorithm.store.model.user import User

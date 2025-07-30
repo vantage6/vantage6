@@ -325,7 +325,7 @@ class Reviews(ReviewBase):
             return {
                 "msg": "You are not allowed to assign reviews due to the policy set "
                 "by the administrator of this store."
-            }, HTTPStatus.UNAUTHORIZED
+            }, HTTPStatus.FORBIDDEN
 
         # check if the developer is the review assigner and if this is allowed
         if (

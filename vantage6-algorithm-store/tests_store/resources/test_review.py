@@ -641,7 +641,7 @@ class TestReviewResources(TestResources):
                 "reviewer_id": reviewer_2.id,
             },
         )
-        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # add assigner 2 to the allowed assigners list
         Policy(
@@ -651,7 +651,7 @@ class TestReviewResources(TestResources):
         # verify that the assigner 2 (returned by the mocked token validation)
         # cannot assign a review, as they are not in the allowed reviewers policy
         response = self.app.post("/api/review", json=json_body)
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # add the assigner to the allowed reviewers policy and verify that
         # the assigner can now assign a review

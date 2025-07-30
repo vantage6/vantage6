@@ -73,8 +73,10 @@ class Policy(Base):
         ).one_or_none()
         session.commit()
         if result is None:
-            return DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
-        return result.value.lower() == "true" or result.value == "1"
+            value = DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
+        else:
+            value = result.value
+        return value.lower() == "true" or value == "1"
 
     @classmethod
     def get_minimum_reviewing_orgs(cls) -> int:
@@ -93,7 +95,7 @@ class Policy(Base):
         ).one_or_none()
         session.commit()
         if result is None:
-            return DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value
+            return int(DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
         return int(result.value)
 
     @classmethod

@@ -1,21 +1,24 @@
 from enum import Enum
 
+# Note: List is used instead of regular list, because EnumBase already contains list()
+from typing import List
+
 
 class EnumBase(str, Enum):
     """Base class for all enums"""
 
     @classmethod
-    def list(cls) -> list[str]:
+    def list(cls) -> List[str]:
         """Return a list of all the enum values"""
         return [status.value for status in cls]
 
     @classmethod
-    def names(cls) -> list[str]:
+    def names(cls) -> List[str]:
         """Return a list of all the enum names"""
         return [status.name.lower() for status in cls]
 
     @classmethod
-    def items(cls) -> list[tuple[str, str]]:
+    def items(cls) -> List[tuple[str, str]]:
         """Return a list of (name, value) tuples for all enum members"""
         return [(status.name.lower(), status.value) for status in cls]
 

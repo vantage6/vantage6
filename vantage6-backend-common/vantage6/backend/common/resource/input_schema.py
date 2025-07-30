@@ -77,7 +77,7 @@ class RoleInputSchema(_NameValidationSchema):
         ValidationError
             If the role name is one of the default roles.
         """
-        if name in self.default_roles.list():
+        if name in self.default_roles:
             raise ValidationError("Role name cannot be one of the default roles")
 
 

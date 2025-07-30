@@ -179,7 +179,7 @@ class AlgorithmStoreApp(Vantage6App):
                     continue
                 for value in policy_value:
                     db.Policy(key=policy, value=value).save()
-            elif policy not in [p.value for p in StorePolicies]:
+            elif policy not in StorePolicies.list():
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
             elif isinstance(policy_value, list):

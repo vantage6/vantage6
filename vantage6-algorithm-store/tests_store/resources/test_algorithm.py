@@ -43,6 +43,7 @@ class TestAlgorithmResources(TestResources):
         # Create a policy that allows viewing algorithms for everyone
         policy = Policy(
             key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.PUBLIC.value,
         )
         policy.save()
 
