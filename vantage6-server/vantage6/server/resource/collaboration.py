@@ -1,34 +1,32 @@
 import logging
-
 from http import HTTPStatus
 
-from flask import request, g
+from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
-from http import HTTPStatus
 from sqlalchemy import select
 
-from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.server import db
+from vantage6.server.permission import (
+    Operation as P,
+    PermissionManager,
+    RuleCollection,
+    Scope as S,
+)
+from vantage6.server.resource import ServicesResources, only_for, with_user
 from vantage6.server.resource.common.input_schema import (
     CollaborationAddNodeSchema,
     CollaborationChangeOrganizationSchema,
     CollaborationInputSchema,
 )
-from vantage6.server.permission import (
-    RuleCollection,
-    Scope as S,
-    Operation as P,
-    PermissionManager,
-)
 from vantage6.server.resource.common.output_schema import (
     CollaborationSchema,
     CollaborationWithOrgsSchema,
-    OrganizationSchema,
     NodeSchemaSimple,
+    OrganizationSchema,
 )
-from vantage6.server.resource import with_user, only_for, ServicesResources
-
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -119,7 +117,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(
         scope=S.COLLABORATION,
         operation=P.EDIT,
-        description="edit any collaboration that your organization " "participates in",
+        description="edit any collaboration that your organization participates in",
     )
 
     add(scope=S.GLOBAL, operation=P.CREATE, description="create a new collaboration")
@@ -128,8 +126,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(
         scope=S.COLLABORATION,
         operation=P.DELETE,
-        description="delete any collaboration that your organization "
-        "participates in",
+        description="delete any collaboration that your organization participates in",
     )
 
 
@@ -530,7 +527,7 @@ class Collaboration(CollaborationBase):
         # check if collaboration exists
         if not collaboration:
             return {
-                "msg": f"collaboration having collaboration_id={id} " "can not be found"
+                "msg": f"collaboration having collaboration_id={id} can not be found"
             }, HTTPStatus.NOT_FOUND  # 404
 
         # verify permissions
@@ -727,7 +724,7 @@ class CollaborationOrganization(ServicesResources):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {
-                "msg": f"collaboration having collaboration_id={id} can " "not be found"
+                "msg": f"collaboration having collaboration_id={id} can not be found"
             }, HTTPStatus.NOT_FOUND
 
         # verify permissions
@@ -807,7 +804,7 @@ class CollaborationOrganization(ServicesResources):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {
-                "msg": f"Collaboration with collaboration_id={id} can " "not be found"
+                "msg": f"Collaboration with collaboration_id={id} can not be found"
             }, HTTPStatus.NOT_FOUND
 
         # validate request body
@@ -899,7 +896,7 @@ class CollaborationNode(ServicesResources):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {
-                "msg": f"collaboration having collaboration_id={id} can " "not be found"
+                "msg": f"collaboration having collaboration_id={id} can not be found"
             }, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_col(P.EDIT, collaboration.id):
@@ -923,7 +920,7 @@ class CollaborationNode(ServicesResources):
 
         if node in collaboration.nodes:
             return {
-                "msg": f"node id={data['id']} is already in collaboration " f"id={id}"
+                "msg": f"node id={data['id']} is already in collaboration id={id}"
             }, HTTPStatus.BAD_REQUEST
         elif node.organization not in collaboration.organizations:
             return {
@@ -985,7 +982,7 @@ class CollaborationNode(ServicesResources):
         collaboration = db.Collaboration.get(id)
         if not collaboration:
             return {
-                "msg": f"collaboration having collaboration_id={id} can " "not be found"
+                "msg": f"collaboration having collaboration_id={id} can not be found"
             }, HTTPStatus.NOT_FOUND
 
         if not self.r.can_for_col(P.EDIT, collaboration.id):
@@ -1000,11 +997,11 @@ class CollaborationNode(ServicesResources):
 
         if node not in collaboration.nodes:
             return {
-                "msg": f"node id={data['id']} is not part of " f"collaboration id={id}"
+                "msg": f"node id={data['id']} is not part of collaboration id={id}"
             }, HTTPStatus.BAD_REQUEST
 
         collaboration.nodes.remove(node)
         collaboration.save()
         return {
-            "msg": f"node id={data['id']} removed from collaboration " f"id={id}"
+            "msg": f"node id={data['id']} removed from collaboration id={id}"
         }, HTTPStatus.OK

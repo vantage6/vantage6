@@ -46,7 +46,7 @@ class RuleCollectionBase(ABC, dict):
         attribute_name = operation
         if scope:
             attribute_name += f"_{scope}"
-        self.__setattr__(f"{attribute_name}", permission)
+        self.__setattr__(attribute_name, permission)
 
 
 class PermissionManagerBase(ABC):

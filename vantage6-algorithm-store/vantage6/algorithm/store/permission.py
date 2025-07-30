@@ -20,13 +20,13 @@ class RuleCollection(RuleCollectionBase):
     permissions of the algorithm store
     """
 
-    def has_permission(self, operation: Operation) -> bool:
+    def has_permission(self, operation: str) -> bool:
         """
         Check if the user has the permission fo a certain operation
 
         Parameters
         ----------
-        operation: Operation
+        operation: str
             Operation to check
 
         Returns
@@ -34,7 +34,7 @@ class RuleCollection(RuleCollectionBase):
         bool
             True if the entity has at least the scope, False otherwise
         """
-        perm = getattr(self, operation.value, None)
+        perm = getattr(self, operation, None)
 
         if perm and perm.can():
             return True
