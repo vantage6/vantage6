@@ -1,6 +1,6 @@
 from pathlib import Path
-from enum import Enum
 
+from vantage6.common.enum import EnumBase
 from vantage6.common.globals import APPNAME
 
 #
@@ -27,7 +27,7 @@ RESOURCES = [
 RESOURCES_PATH = "vantage6.algorithm.store.resource"
 
 
-class ConditionalArgComparator(str, Enum):
+class ConditionalArgComparator(EnumBase):
     """Enum containing allowed comparators for conditional arguments"""
 
     EQUALS = "=="

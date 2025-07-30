@@ -42,7 +42,7 @@ class TestAlgorithmResources(TestResources):
 
         # Create a policy that allows viewing algorithms for everyone
         policy = Policy(
-            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+            key=StorePolicies.ALGORITHM_VIEW.value,
         )
         policy.save()
 
@@ -72,7 +72,8 @@ class TestAlgorithmResources(TestResources):
         """
         # create policy
         policy = Policy(
-            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.AUTHENTICATED
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.AUTHENTICATED.value,
         )
         policy.save()
 
@@ -108,8 +109,8 @@ class TestAlgorithmResources(TestResources):
         """
         # create resources
         policy = Policy(
-            key=StorePolicies.ALGORITHM_VIEW,
-            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION,
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION.value,
         )
         policy.save()
 
@@ -148,7 +149,8 @@ class TestAlgorithmResources(TestResources):
 
         # Create a policy that allows viewing algorithms for everyone
         policy = Policy(
-            key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.PUBLIC.value,
         )
         policy.save()
 

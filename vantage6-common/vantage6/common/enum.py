@@ -23,12 +23,22 @@ class AlgorithmViewPolicies(str, Enum):
 
 
 class EnumBase(str, Enum):
-    """Base class for all enums in this module"""
+    """Base class for all enums"""
 
     @classmethod
     def list(cls) -> list[str]:
         """Return a list of all the enum values"""
-        return [status.value.lower() for status in cls]
+        return [status.value for status in cls]
+
+    @classmethod
+    def names(cls) -> list[str]:
+        """Return a list of all the enum names"""
+        return [status.name for status in cls]
+
+    @classmethod
+    def items(cls) -> list[tuple[str, str]]:
+        """Return a list of (name, value) tuples for all enum members"""
+        return [(status.name, status.value) for status in cls]
 
 
 class AlgorithmStepType(EnumBase):

@@ -1,9 +1,10 @@
 from sqlalchemy import Column, String, select
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
-from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
 from vantage6.common.enum import StorePolicies
+
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
+from vantage6.algorithm.store.model.user import User
 
 
 class Policy(Base):
@@ -48,7 +49,7 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS)
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS.value)
         ).one_or_none()
         session.commit()
         if result is None:
@@ -68,7 +69,7 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
+            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value)
         ).one_or_none()
         session.commit()
         if result is None:
@@ -87,7 +88,7 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
         ).one_or_none()
         session.commit()
         if result is None:

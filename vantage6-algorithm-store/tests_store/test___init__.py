@@ -24,7 +24,7 @@ class TestAlgorithmStoreApp(TestResources):
         # Create a mock configuration
         config = {
             "policies": {
-                StorePolicies.ALGORITHM_VIEW: AlgorithmViewPolicies.PUBLIC,
+                StorePolicies.ALGORITHM_VIEW.value: AlgorithmViewPolicies.PUBLIC.value,
                 "non_existing_policy": "value",
             },
         }

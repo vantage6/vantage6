@@ -1,12 +1,13 @@
-from http import HTTPStatus
 import unittest
+from http import HTTPStatus
 from unittest.mock import patch
+
+from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
 from tests_store.base.unittest_base import TestResources
 from vantage6.algorithm.store.model.common.enums import PublicPolicies
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.resource.policy import PoliciesBase
-from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
 
 class TestPolicyResources(TestResources):
@@ -17,10 +18,11 @@ class TestPolicyResources(TestResources):
         # Create policies
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(key=StorePolicies.MIN_REVIEWERS, value="2"),
-            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value="False"),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value="2"),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
         ]
         # pylint: disable=expression-not-assigned
         [p.save() for p in policies]
@@ -45,7 +47,8 @@ class TestPolicyResources(TestResources):
         # Check that the policies are present and correct
         policies = response.json
         self.assertEqual(
-            policies[StorePolicies.ALGORITHM_VIEW], AlgorithmViewPolicies.PUBLIC
+            policies[StorePolicies.ALGORITHM_VIEW.value],
+            AlgorithmViewPolicies.PUBLIC.value,
         )
 
     def test_public_policies_view(self):
@@ -58,7 +61,8 @@ class TestPolicyResources(TestResources):
         # Check that the public policies are present and correct
         policies = response.json
         self.assertEqual(
-            policies[PublicPolicies.ALGORITHM_VIEW], AlgorithmViewPolicies.PUBLIC
+            policies[PublicPolicies.ALGORITHM_VIEW.value],
+            AlgorithmViewPolicies.PUBLIC.value,
         )
 
         # check that non-public policies are not present
@@ -70,7 +74,7 @@ class TestPolicyResources(TestResources):
         policies = [
             Policy(
                 key=StorePolicies.ALGORITHM_VIEW.value,
-                value=AlgorithmViewPolicies.PUBLIC,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
         ]
         include_defaults = True
@@ -90,7 +94,7 @@ class TestPolicyResources(TestResources):
         policies = [
             Policy(
                 key=StorePolicies.ALGORITHM_VIEW.value,
-                value=AlgorithmViewPolicies.PUBLIC,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
@@ -107,7 +111,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -122,7 +126,7 @@ class TestPolicyResources(TestResources):
             policies, include_defaults, include_private
         )
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -134,7 +138,8 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_private_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
@@ -151,7 +156,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -164,7 +169,8 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_boolean_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="0"),
@@ -180,7 +186,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "allowed_review_assigners": 1,
@@ -192,7 +198,8 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_list_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
@@ -208,7 +215,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "allowed_review_assigners": 1,

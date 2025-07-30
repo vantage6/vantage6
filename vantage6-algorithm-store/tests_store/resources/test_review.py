@@ -179,7 +179,7 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # allow self review and check that the developer can assign now a review
-        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value=True).save()
+        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value=True).save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
@@ -267,8 +267,8 @@ class TestReviewResources(TestResources):
         review = None  # update deleted sqlalchemy object to prevent warnings
 
         # set policy to require one review and one organization
-        Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()
-        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value=1).save()
+        Policy(key=StorePolicies.MIN_REVIEWERS.value, value=1).save()
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=1).save()
 
         # check that if there are two reviews, one of which is approved and the other is
         # deleted, the algorithm status is updated to approved
@@ -464,10 +464,10 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # register policy for minimum reviewers
-        Policy(key=StorePolicies.MIN_REVIEWERS, value="2").save()
+        Policy(key=StorePolicies.MIN_REVIEWERS.value, value="2").save()
 
         # register policy for minimum reviewing organizations
-        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value="2").save()
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value="2").save()
 
         # create algorithm
         dev = self.register_user(username="algo_dev")
@@ -625,10 +625,28 @@ class TestReviewResources(TestResources):
 
         # register policy for allowed assigners
         reviewer_1_ref = reviewer_1.username
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_1_ref).save()
+        Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=reviewer_1_ref).save()
 
         # register policy for allowed reviewers
-        Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS, value=reviewer_1_ref).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=reviewer_1_ref
+        ).save()
+
+        # verify that the assigner 2 (returned by the mocked token validation)
+        # cannot assign reviews because they are not in the allowed assigners list
+        response = self.app.post(
+            "/api/review",
+            json={
+                "algorithm_id": algorithm.id,
+                "reviewer_id": reviewer_2.id,
+            },
+        )
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+
+        # add assigner 2 to the allowed assigners list
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=reviewer_2.username
+        ).save()
 
         # verify that the assigner 2 (returned by the mocked token validation)
         # cannot assign a review, as they are not in the allowed reviewers policy
@@ -638,7 +656,7 @@ class TestReviewResources(TestResources):
         # add the assigner to the allowed reviewers policy and verify that
         # the assigner can now assign a review
         Policy(
-            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value,
             value=assigner_2.username,
         ).save()
         response = self.app.post("/api/review", json=json_body)
@@ -652,7 +670,9 @@ class TestReviewResources(TestResources):
 
         # add the reviewer to the allowed reviewers policy and verify that
         # a review can now be assigned
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_2.username).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEWERS.value, value=reviewer_2.username
+        ).save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 

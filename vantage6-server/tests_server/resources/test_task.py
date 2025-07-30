@@ -196,7 +196,7 @@ class TestResources(TestResourceBase):
         task.save()
         res = Run(
             task=task,
-            status=RunStatus.PENDING,
+            status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )
         res.save()
@@ -322,7 +322,7 @@ class TestResources(TestResourceBase):
         parent_res = Run(
             organization=org,
             task=parent_task,
-            status=RunStatus.PENDING,
+            status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )
         parent_res.save()

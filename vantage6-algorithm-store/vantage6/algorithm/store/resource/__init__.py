@@ -182,7 +182,8 @@ def with_permission_to_view_algorithms() -> callable:
             policies = Policy.get_as_dict()
             # check if everyone has permission to view algorithms
             algorithm_view_policy = policies.get(
-                StorePolicies.ALGORITHM_VIEW, DefaultStorePolicies.ALGORITHM_VIEW.value
+                StorePolicies.ALGORITHM_VIEW.value,
+                DefaultStorePolicies.ALGORITHM_VIEW.value,
             )
 
             # check if user is trying to view algorithms that are not approved by review

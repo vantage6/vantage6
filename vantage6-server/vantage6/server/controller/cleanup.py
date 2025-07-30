@@ -1,9 +1,10 @@
 import logging
-
 from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 
 from vantage6.common.enum import RunStatus
+
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
 
@@ -36,8 +37,8 @@ def cleanup_runs_data(days: int, include_args: bool = False):
             runs = session.scalars(
                 select(Run).filter(
                     Run.finished_at < threshold_date,
-                    Run.cleanup_at == None,
-                    Run.status == RunStatus.COMPLETED,
+                    Run.cleanup_at is None,
+                    Run.status == RunStatus.COMPLETED.value,
                 )
             ).all()
             for run in runs:

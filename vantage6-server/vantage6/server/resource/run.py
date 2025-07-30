@@ -709,7 +709,7 @@ class Run(SingleRunBase):
                 log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")
                 # Also mark all dependent runs as failed
                 for dependent_run in dependent_task.runs:
-                    dependent_run.status = RunStatus.DEPENDED_ON_FAILED_TASK
+                    dependent_run.status = RunStatus.DEPENDED_ON_FAILED_TASK.value
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 

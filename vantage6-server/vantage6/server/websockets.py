@@ -1,8 +1,8 @@
+import datetime as dt
 import logging
 from socket import SocketIO
-import jwt
-import datetime as dt
 
+import jwt
 from flask import request, session
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_socketio import Namespace, emit, join_room, leave_room
@@ -10,15 +10,16 @@ from flask_socketio import Namespace, emit, join_room, leave_room
 from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus
 from vantage6.common.globals import AuthStatus
+
 from vantage6.backend.common.metrics import Metrics
+
 from vantage6.server import db
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.dataframe_to_be_deleted_at_node import (
     DataframeToBeDeletedAtNode,
 )
 from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.model.base import DatabaseSessionManager
-
 
 ALL_NODES_ROOM = "all_nodes"
 
@@ -136,8 +137,7 @@ class DefaultSocketNamespace(Namespace):
         session.rooms.append(ALL_NODES_ROOM)
         session.rooms.append(f"collaboration_{node.collaboration_id}")
         session.rooms.append(
-            f"collaboration_{node.collaboration_id}_organization_"
-            f"{node.organization_id}"
+            f"collaboration_{node.collaboration_id}_organization_{node.organization_id}"
         )
 
     @staticmethod
@@ -167,7 +167,7 @@ class DefaultSocketNamespace(Namespace):
             # relevant to their own node
             for collab in user.organization.collaborations:
                 session.rooms.append(
-                    f"collaboration_{collab.id}_organization_" f"{user.organization.id}"
+                    f"collaboration_{collab.id}_organization_{user.organization.id}"
                 )
 
     def _send_dataframe_deletion_instructions(self, node: Authenticatable) -> None:
@@ -293,7 +293,7 @@ class DefaultSocketNamespace(Namespace):
         # notify nodes that there is a new task available if there are tasks dependent
         # on this one
         dependent_tasks = run.task.required_by
-        if status == RunStatus.COMPLETED and dependent_tasks:
+        if status == RunStatus.COMPLETED.value and dependent_tasks:
             self.log.debug(
                 f"{len(dependent_tasks)} dependent tasks ready to be executed"
             )

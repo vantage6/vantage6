@@ -790,7 +790,7 @@ class Tasks(TaskBase):
         # is set by the session endpoints.
         dependent_tasks = []
         for database in [
-            CreateTaskDB.from_dict(db) for sublist in databases for db in sublist
+            CreateTaskDB.from_dict(db_) for sublist in databases for db_ in sublist
         ]:
             # add last modification task to dependent tasks
             if database.type == TaskDatabaseType.DATAFRAME:
@@ -910,7 +910,7 @@ class Tasks(TaskBase):
                 task=task,
                 organization=organization,
                 arguments=arguments,
-                status=RunStatus.PENDING,
+                status=RunStatus.PENDING.value,
                 action=action,
             )
             run.save()
