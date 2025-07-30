@@ -320,7 +320,7 @@ class Reviews(ReviewBase):
             }, HTTPStatus.BAD_REQUEST
         # check if a policy exist that allow the user to assign a review
         if not Policy.search_user_in_policy(
-            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value
+            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS
         ):
             return {
                 "msg": "You are not allowed to assign reviews due to the policy set "
@@ -354,7 +354,7 @@ class Reviews(ReviewBase):
         # a different dev policy is set
 
         elif not Policy.search_user_in_policy(
-            reviewer, StorePolicies.ALLOWED_REVIEWERS.value
+            reviewer, StorePolicies.ALLOWED_REVIEWERS
         ):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms, "

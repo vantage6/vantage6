@@ -78,7 +78,7 @@ def get_running_servers(
     return [server.name for server in running_servers]
 
 
-def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
+def get_server_configuration_list(instance_type: InstanceType) -> None:
     """
     Print list of available server configurations.
 

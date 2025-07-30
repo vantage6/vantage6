@@ -2,21 +2,19 @@
 Common functionality used in multiple vantage6 components.
 """
 
-from enum import Enum
-import os
 import base64
-import click
-import appdirs
+import os
 import typing
 import uuid
 
-from colorama import init, Fore, Style
-
-from vantage6.common.globals import APPNAME, STRING_ENCODING
+import appdirs
+import click
+from colorama import Fore, Style, init
 
 # make sure the version is available
 from vantage6.common._version import __version__  # noqa: F401
-
+from vantage6.common.enum import EnumBase
+from vantage6.common.globals import APPNAME, STRING_ENCODING
 
 # init colorstuff
 init()
@@ -356,10 +354,8 @@ def split_rabbitmq_uri(rabbit_uri: str) -> dict:
     }
 
 
-def validate_required_env_vars(env_vars: Enum) -> None:
+def validate_required_env_vars(env_vars: EnumBase) -> None:
     """Validate that the required environment variables are set."""
-    for env_var in env_vars:
-        if not os.environ.get(env_var.value):
-            raise ValueError(
-                f"Required environment variable '{env_var.value}' is not set"
-            )
+    for env_var in env_vars.list():
+        if not os.environ.get(env_var):
+            raise ValueError(f"Required environment variable '{env_var}' is not set")

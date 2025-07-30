@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import os.path
-
 from pathlib import Path
 
 from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
+
+from vantage6.cli._version import __version__
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli._version import __version__
 
 
 class NodeContext(AppContext):
@@ -40,12 +40,7 @@ class NodeContext(AppContext):
         logger_prefix: str = "",
     ):
         super().__init__(
-            InstanceType.NODE,
-            instance_name,
-            system_folders,
-            config_file,
-            print_log_header,
-            logger_prefix,
+            InstanceType.NODE, instance_name, system_folders=system_folders
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
@@ -133,7 +128,7 @@ class NodeContext(AppContext):
         Path
             Path to the data folder
         """
-        return AppContext.type_data_folder(InstanceType.NODE.value, system_folders)
+        return AppContext.type_data_folder(InstanceType.NODE, system_folders)
 
     @property
     def databases(self) -> dict:

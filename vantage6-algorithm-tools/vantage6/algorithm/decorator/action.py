@@ -170,7 +170,7 @@ def data_extraction(func: callable) -> callable:
 
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION.value)
+        _exit_if_action_mismatch(AlgorithmStepType.DATA_EXTRACTION)
 
         connection_details = {}
 
@@ -198,7 +198,7 @@ def data_extraction(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.DATA_EXTRACTION.value
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.DATA_EXTRACTION
     return wrapper
 
 
@@ -209,13 +209,13 @@ def preprocessing(func: callable) -> callable:
     def wrapper(*args, **kwargs) -> callable:
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
-        _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING.value)
+        _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING)
 
         result = func(*args, **kwargs)
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.PREPROCESSING.value
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.PREPROCESSING
     return wrapper
 
 
@@ -224,11 +224,11 @@ def federated(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE.value)
+        _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE)
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.FEDERATED.value
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.FEDERATED
     return wrapper
 
 
@@ -237,9 +237,9 @@ def central(func: callable) -> callable:
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> callable:
-        _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE.value)
+        _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE)
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.CENTRAL.value
+    wrapper.vantage6_decorator_step_type = DecoratorStepType.CENTRAL
     return wrapper

@@ -1,13 +1,14 @@
 import logging
 
-from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
 from vantage6.common import logger_name
-from vantage6.algorithm.store.model.role import Role
 
+from vantage6.backend.common.permission import PermissionManagerBase, RuleCollectionBase
 from vantage6.backend.common.resource.error_handling import (
     UnauthorizedError,
 )
+
+from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Operation, Rule
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -66,7 +67,7 @@ class PermissionManager(PermissionManagerBase):
             role.save()
 
         rule = Rule.get_by_(name=resource, operation=operation)
-        rule_params = f"{resource},{operation}"
+        rule_params = f"{resource},{operation.value}"
 
         if not rule:
             log.error(f"Rule ({rule_params}) not found!")
@@ -74,7 +75,7 @@ class PermissionManager(PermissionManagerBase):
         if rule not in role.rules:
             role.rules.append(rule)
             role.save()
-            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+            log.info(f"Rule ({rule_params}) added to {fixedrole} role!")
 
     def register_rule(
         self, resource: str, operation: Operation, description=None
@@ -101,7 +102,9 @@ class PermissionManager(PermissionManagerBase):
         # roles and users
         rule = Rule.get_by_(name=resource, operation=operation)
         if not rule:
-            rule = Rule(name=resource, operation=operation, description=description)
+            rule = Rule(
+                name=resource, operation=operation.value, description=description
+            )
             rule.save()
             log.debug(
                 "New auth rule '%s' with operation=%s is stored in the DB",

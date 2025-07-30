@@ -1,15 +1,15 @@
 import unittest
-
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+from vantage6.common.globals import InstanceType, NodePolicy
 
 from vantage6.cli.configuration_wizard import (
-    node_configuration_questionaire,
-    server_configuration_questionaire,
     configuration_wizard,
+    node_configuration_questionaire,
     select_configuration_questionaire,
+    server_configuration_questionaire,
 )
-from vantage6.common.globals import InstanceType, NodePolicy
 
 module_path = "vantage6.cli.configuration_wizard"
 
@@ -70,8 +70,8 @@ class WizardTest(unittest.TestCase):
         for key in keys:
             self.assertIn(key, config)
         nested_keys = [
-            ["policies", NodePolicy.ALLOWED_ALGORITHMS],
-            ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES],
+            ["policies", NodePolicy.ALLOWED_ALGORITHMS.value],
+            ["policies", NodePolicy.ALLOWED_ALGORITHM_STORES.value],
         ]
         for nesting in nested_keys:
             current_config = config

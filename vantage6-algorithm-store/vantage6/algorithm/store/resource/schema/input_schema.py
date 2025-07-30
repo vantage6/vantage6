@@ -39,23 +39,14 @@ class AlgorithmInputSchema(_NameDescriptionSchema):
     """
 
     image = fields.String(required=True)
-    partitioning = fields.String(required=True)
+    partitioning = fields.String(
+        required=True, validate=validate.OneOf(Partitioning.list())
+    )
     vantage6_version = fields.String(required=True)
     code_url = fields.String(required=True)
     documentation_url = fields.String()
     submission_comments = fields.String()
     functions = fields.Nested("FunctionInputSchema", many=True, required=True)
-
-    @validates("partitioning")
-    def validate_partitioning(self, value):
-        """
-        Validate that the partitioning is one of the allowed values.
-        """
-        types = [p.value for p in Partitioning]
-        if value not in types:
-            raise ValidationError(
-                f"Partitioning '{value}' is not one of the allowed values {types}"
-            )
 
 
 class AlgorithmPatchInputSchema(AlgorithmInputSchema):
@@ -71,23 +62,14 @@ class FunctionInputSchema(_NameDescriptionSchema):
     Schema for the input of a function.
     """
 
-    step_type = fields.String(required=True)
+    step_type = fields.String(
+        required=True, validate=validate.OneOf(AlgorithmStepType.list())
+    )
     display_name = fields.String(required=False)
     standalone = fields.Boolean(required=False)
     databases = fields.Nested("DatabaseInputSchema", many=True)
     arguments = fields.Nested("ArgumentInputSchema", many=True)
     ui_visualizations = fields.Nested("UIVisualizationInputSchema", many=True)
-
-    @validates("step_type")
-    def validate_step_type(self, value: str) -> None:
-        """
-        Validate that the step type is one of the allowed values.
-        """
-        types = [f.value for f in AlgorithmStepType]
-        if value not in types:
-            raise ValidationError(
-                f"Function step type '{value}' is not one of the allowed values {types}"
-            )
 
     @validates_schema
     def validate_conditional_arguments(self, data, **kwargs):

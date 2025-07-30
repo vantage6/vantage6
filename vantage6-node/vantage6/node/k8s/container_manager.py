@@ -194,8 +194,8 @@ class ContainerManager:
         """
         policies = config.get("policies", {})
         if not policies or (
-            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+            not policies.get(NodePolicy.ALLOWED_ALGORITHMS.value)
+            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES.value)
         ):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
@@ -415,7 +415,7 @@ class ContainerManager:
             "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
         )
 
-        if action == AlgorithmStepType.CENTRAL_COMPUTE.value:
+        if action == AlgorithmStepType.CENTRAL_COMPUTE:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
@@ -512,7 +512,8 @@ class ContainerManager:
         )
 
         self.log.info(
-            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for task_id=%s.",
+            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for"
+            " task_id=%s.",
             run_id,
             init_org_id,
             task_id,
@@ -523,8 +524,8 @@ class ContainerManager:
         # to the Pod's backoff failure policy, it will have a failed status only after
         # the last failed retry.
 
-        # Wait until the POD is running. The following method is blocking until the POD is
-        # running or
+        # Wait until the POD is running. The following method is blocking until the POD
+        # is running or
         # TODO we could make this non-blocking by keeping track of the started jobs
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
@@ -548,7 +549,8 @@ class ContainerManager:
         waits until it transitions to a 'Running' state or another terminal state
         (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
         After the timeout, this method will have additional status-event waiting windows
-        only if the reason for such timeout is an (large) image that is already being pulled.
+        only if the reason for such timeout is an (large) image that is already being
+        pulled.
 
                                - Succeeded
                               /
@@ -567,10 +569,13 @@ class ContainerManager:
             The status of the run:
             - RunStatus.ACTIVE: If the pod is already with a Running status
             - RunStatus.FAILED: If the pod reported a Failed status
-            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
-            - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
+            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or
+              problematic Docker image.
+            - RunStatus.CRASHED: If the pod is still in pending status but has reported
+              a runtime crash.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
-            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job
+              pod is reported as Succeded shortly after being created.
         """
 
         # Wait until the POD is created
@@ -578,13 +583,15 @@ class ContainerManager:
 
         try:
             while True:
-                # Non-busy waiting for status changes on the job POD through K8S' event stream watch. This
-                # inner for loop will process events until a terminal status is identifed (Running, Failed,
-                # Succeded) or timeout_seconds is reached.
+                # Non-busy waiting for status changes on the job POD through K8S' event
+                # stream watch. This inner for loop will process events until a terminal
+                # status is identifed (Running, Failed, Succeded) or timeout_seconds is
+                # reached.
                 #
-                # Given that after the timeout the status would be uncertain, the job pod status is
-                # checked (directly) again to decide whether a new stream-watch iteration is performed
-                # (e.g, an image may be too large), or an error is reported.
+                # Given that after the timeout the status would be uncertain, the job
+                # pod status is checked (directly) again to decide whether a new
+                # stream-watch iteration is performed (e.g, an image may be too large),
+                # or an error is reported.
                 for event in w.stream(
                     func=self.core_api.list_namespaced_pod,
                     namespace=self.task_namespace,
@@ -605,13 +612,15 @@ class ContainerManager:
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
                 self.log.debug(
-                    "Job (label %s, namespace %s) event stream timeout reached. Checking the cause...",
+                    "Job (label %s, namespace %s) event stream timeout reached. "
+                    "Checking the cause...",
                     label,
                     self.task_namespace,
                 )
 
                 # Getting the POD again to check its post-timeout status
-                # Note on using container_statuses[0]: The job pods always use a single container, container_statuses will always have a single element
+                # Note on using container_statuses[0]: The job pods always use a single
+                # container, container_statuses will always have a single element
                 pod = self.core_api.list_namespaced_pod(
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
@@ -623,13 +632,15 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outher loop is performed if the pod is pending for reasons other than
-                # missing/invalid Docker image (which is reported as INITIALIZING).
+                # Another iteration on the outher loop is performed if the pod is
+                # pending for reasons other than missing/invalid Docker image (which is
+                # reported as INITIALIZING).
                 if pod_phase != RunStatus.INITIALIZING:
                     return pod_phase
 
                 self.log.debug(
-                    "Job (label %s, namespace %s) still pulling the (probably large) docker image. Waiting again for a new status update...",
+                    "Job (label %s, namespace %s) still pulling the (probably large) "
+                    "docker image. Waiting again for a new status update...",
                     label,
                     self.task_namespace,
                 )
@@ -785,7 +796,7 @@ class ContainerManager:
         # TODO bind other input data types
         # TODO include only the ones given in the 'databases_to_use parameter
         # TODO distinguish between the different actions
-        if run_io.action == AlgorithmStepType.DATA_EXTRACTION.value:
+        if run_io.action == AlgorithmStepType.DATA_EXTRACTION:
             # In case we are dealing with a file based database, we need to create an
             # additional volume mount for the database file. In case it is an URI the
             # URI should be reachable from the container.
@@ -808,7 +819,7 @@ class ContainerManager:
                 vol_mounts.append(db_mount)
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
-            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type.value
 
             # additional environment variables for the database. These will be stored
             # as {PREFIX}{KEY}=value in the container. These are read by the
@@ -898,7 +909,9 @@ class ContainerManager:
             If any requested df name is not found in the session folder.
         """
 
-        if not all(df["type"] == TaskDatabaseType.DATAFRAME for df in databases_to_use):
+        if not all(
+            df["type"] == TaskDatabaseType.DATAFRAME.value for df in databases_to_use
+        ):
             self.log.error(
                 "All databases used in the algorithm must be of type '%s'.",
                 TaskDatabaseType.DATAFRAME.value,
@@ -961,8 +974,8 @@ class ContainerManager:
 
         if source_database["type"] != TaskDatabaseType.SOURCE.value:
             self.log.error(
-                "The database used in the data extraction step must be of type "
-                f"'{TaskDatabaseType.SOURCE.value}'."
+                "The database used in the data extraction step must be of type '%s'.",
+                TaskDatabaseType.SOURCE.value,
             )
             ok = False
 
@@ -995,15 +1008,15 @@ class ContainerManager:
             Whether the image is allowed or not
         """
         # check if algorithm matches any of the regex cases
-        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS.value)
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES.value)
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
 
         # check if user or their organization is allowed
-        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
-        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, [])
+        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS.value, [])
+        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS.value, [])
         if allowed_users or allowed_orgs:
             is_allowed = self.client.check_user_allowed_to_send_task(
                 allowed_users,

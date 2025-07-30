@@ -101,13 +101,13 @@ class TaskStatus(EnumBase):
     WAITING = "awaiting"
 
     @classmethod
-    def has_finished(cls, status) -> bool:
+    def has_finished(cls, status: str) -> bool:
         """
         Check if task has finished
 
         Parameters
         ----------
-        status: TaskStatus | str
+        status: str
             The status of the task
 
         Returns
@@ -153,36 +153,36 @@ class RunStatus(EnumBase):
     UNEXPECTED_OUTPUT = "unexpected output"
 
     @classmethod
-    def has_failed(cls, status) -> bool:
+    def has_failed(cls, status: str) -> bool:
         """
-        Check if task has failed to run to completion
+        Check if run has failed to complete
 
         Parameters
         ----------
-        status: RunStatus | str
+        status: str
             The status of the task
 
         Returns
         -------
         bool
-            True if task has failed, False otherwise
+            True if run has failed, False otherwise
         """
         return status in cls.failed_statuses()
 
     @classmethod
-    def has_finished(cls, status) -> bool:
+    def has_finished(cls, status: str) -> bool:
         """
-        Check if task has finished or failed
+        Check if run has finished or failed
 
         Parameters
         ----------
-        status: RunStatus | str
-            The status of the task
+        status: str
+            The status of the run
 
         Returns
         -------
         bool
-            True if task has finished or failed, False otherwise
+            True if run has finished or failed, False otherwise
         """
         return status in cls.finished_statuses()
 
@@ -221,6 +221,8 @@ class RunStatus(EnumBase):
 
 
 class TaskStatusQueryOptions(EnumBase):
+    """Enum for different options for querying task statuses"""
+
     OPEN = "open"
     WAITING = "waiting"
     FINISHED = "finished"

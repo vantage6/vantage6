@@ -13,10 +13,6 @@ class DefaultRole(EnumBase):
     ALGORITHM_MANAGER = "Algorithm Manager"
     VIEWER = "Viewer"
 
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
-
 
 def get_default_roles() -> list[dict]:
     """

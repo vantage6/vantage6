@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from enum import Enum as Enumerate
-
 from sqlalchemy import Column, Enum, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
+from vantage6.common.enum import EnumBase
+
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
-class Operation(str, Enumerate):
+class Operation(EnumBase):
     """Enumerator of all available operations"""
 
     VIEW = "v"
@@ -20,29 +20,13 @@ class Operation(str, Enumerate):
     RECEIVE = "r"
 
 
-class Scope(str, Enumerate):
+class Scope(EnumBase):
     """Enumerator of all available scopes"""
 
     OWN = "own"
     ORGANIZATION = "org"
     COLLABORATION = "col"
     GLOBAL = "glo"
-
-    @classmethod
-    def list(cls) -> list[str]:
-        """
-        List the names of the available scopes.
-
-        Note: this list gives the *names* of the scopes, not the values. It is only in
-        handling API input/output and should therefore give full names instead of
-        abbreviations.
-
-        Returns
-        -------
-        list[str]
-            List of all available scopes
-        """
-        return [scope.name.lower() for scope in cls]
 
     @classmethod
     def get_name_from_value(cls, value: str) -> str | None:

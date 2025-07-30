@@ -10,7 +10,12 @@ from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
 from vantage6.common.encryption import DummyCryptor
-from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
+from vantage6.common.enum import (
+    AlgorithmStepType,
+    RunStatus,
+    TaskDatabaseType,
+    TaskStatus,
+)
 from vantage6.common.globals import STRING_ENCODING, NodeConfigKey, NodePolicy
 
 from vantage6.backend.common.resource.error_handling import (
@@ -619,8 +624,9 @@ class Tasks(TaskBase):
             Rule collection instance
         config : dict
             Configuration dictionary
-        action : AlgorithmStepType
-            Action to performed by the task
+        action : AlgorithmStepType | None
+            Action to performed by the task. If not provided, the action will be
+            inferred from the algorithm.
         should_be_compute : bool
             Whether the task should be a compute task. Default is False.
 
@@ -804,7 +810,7 @@ class Tasks(TaskBase):
                     dependent_tasks.append(df.last_session_task)
 
             # If dataframe extraction is not ready for each org, don't create task
-            if action != AlgorithmStepType.DATA_EXTRACTION.value:
+            if action != AlgorithmStepType.DATA_EXTRACTION:
                 Tasks.__check_data_extract_ready_for_requested_orgs(df, org_ids)
             else:
                 Tasks.__check_database_label_exists(
@@ -885,11 +891,11 @@ class Tasks(TaskBase):
             # task and using the ID here, there are other database operations
             # that silently update the task.id (i.e. next_job_id() and
             # db.Task.get()). Task.id should be updated explicitly instead.
-            for database in [CreateTaskDB.from_dict(db) for db in database_group]:
+            for database in [CreateTaskDB.from_dict(db_) for db_ in database_group]:
                 task_db = db.TaskDatabase(
                     task_id=task.id,
                     label=database.label,
-                    type_=database.type,
+                    type_=database.type.value,
                     dataframe_id=database.dataframe_id,
                     position=idx,
                 )
@@ -911,7 +917,7 @@ class Tasks(TaskBase):
                 organization=organization,
                 arguments=arguments,
                 status=RunStatus.PENDING.value,
-                action=action,
+                action=action.value,
             )
             run.save()
 
@@ -972,7 +978,7 @@ class Tasks(TaskBase):
                 return False
 
         # check that parent task is not completed yet
-        if RunStatus.has_finished(db.Task.get(container["task_id"]).status):
+        if TaskStatus.has_finished(db.Task.get(container["task_id"]).status):
             log.warning(
                 "Container from node=%s attempts to start sub-task for a completed "
                 "task=%s",
@@ -1062,7 +1068,7 @@ class Tasks(TaskBase):
             db_labels_available = [
                 config.value
                 for config in node.config
-                if config.key == NodeConfigKey.DATABASE_LABELS
+                if config.key == NodeConfigKey.DATABASE_LABELS.value
             ]
             if label not in db_labels_available:
                 raise BadRequestError(
@@ -1116,7 +1122,7 @@ class Tasks(TaskBase):
         """
         has_limitations = False
         for config_option in node_configs:
-            if config_option.key == NodePolicy.ALLOWED_USERS:
+            if config_option.key == NodePolicy.ALLOWED_USERS.value:
                 has_limitations = True
                 # TODO expand when we allow also usernames, like orgs below
                 if g.user.id == int(config_option.value):
@@ -1263,18 +1269,20 @@ class Tasks(TaskBase):
         """
         method = request_data["method"]
         if not action:
-            action = request_data.get("action")
+            action = AlgorithmStepType(request_data.get("action"))
         store_action = None
         if algorithm:
             algo_func = next(
                 (f for f in algorithm["functions"] if f["name"] == method), None
             )
-            store_action = algo_func["step_type"] if algo_func else None
+            store_action = (
+                AlgorithmStepType(algo_func["step_type"]) if algo_func else None
+            )
 
         if action and store_action and action != store_action:
             raise BadRequestError(
-                f"Action {action} does not match the action type in the "
-                f"algorithm store: {store_action}"
+                f"Action {action.value} does not match the action type in the "
+                f"algorithm store: {store_action.value}"
             )
         elif not action and not store_action:
             raise BadRequestError(
@@ -1287,12 +1295,12 @@ class Tasks(TaskBase):
 
         if should_be_compute and not AlgorithmStepType.is_compute(action):
             msg = f"A {action.value} task cannot be created in this endpoint."
-            if action.value == AlgorithmStepType.DATA_EXTRACTION.value:
+            if action == AlgorithmStepType.DATA_EXTRACTION:
                 msg += (
                     " Please use the dataframe endpoint to create a dataframe "
                     "extraction task."
                 )
-            elif action.value == AlgorithmStepType.PREPROCESSING.value:
+            elif action == AlgorithmStepType.PREPROCESSING:
                 msg += (
                     " Please use the dataframe endpoint to create a preprocessing task."
                 )
@@ -1432,7 +1440,7 @@ class Task(TaskBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # kill the task if it is still running
-        if not RunStatus.has_finished(task.status):
+        if not TaskStatus.has_finished(task.status):
             kill_task(task, self.socketio)
 
         # retrieve runs that belong to this task

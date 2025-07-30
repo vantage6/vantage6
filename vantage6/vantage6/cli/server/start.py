@@ -1,6 +1,7 @@
 import click
 
 from vantage6.common import info
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
@@ -27,7 +28,7 @@ from vantage6.cli.context.server import ServerContext
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 def cli_server_start(
     ctx: ServerContext,
     context: str,

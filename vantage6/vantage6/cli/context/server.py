@@ -108,7 +108,7 @@ class ServerContext(BaseServerContext):
         """
         return super().from_external_config_file(
             path,
-            ServerType.V6SERVER.value,
+            ServerType.V6SERVER,
             ServerGlobals.CONFIG_NAME_ENV_VAR.value,
             system_folders,
         )

@@ -219,8 +219,8 @@ class AlgorithmStoreApp(Vantage6App):
         # set all algorithms that are under review or awaiting review to approved
         for algorithm in db.Algorithm.get_by_algorithm_status(
             [
-                AlgorithmStatus.UNDER_REVIEW.value,
-                AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+                AlgorithmStatus.UNDER_REVIEW,
+                AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
             ]
         ):
             algorithm.approve()

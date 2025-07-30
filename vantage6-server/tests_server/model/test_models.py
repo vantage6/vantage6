@@ -1,24 +1,24 @@
-import logging
 import datetime
+import logging
 import uuid
 
 from sqlalchemy.exc import IntegrityError
 
-from .test_model_base import TestModelBase
-
 from vantage6.backend.common import session
-from vantage6.server.model import (
-    User,
-    Organization,
-    Collaboration,
-    Task,
-    Run,
-    Node,
-    Rule,
-    Role,
-)
-from vantage6.server.model.rule import Scope, Operation
 
+from vantage6.server.model import (
+    Collaboration,
+    Node,
+    Organization,
+    Role,
+    Rule,
+    Run,
+    Task,
+    User,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_model_base import TestModelBase
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
@@ -296,7 +296,9 @@ class TestTaskModel(TestModelBase):
 
 class TestRuleModel(TestModelBase):
     def test_read(self):
-        rule = Rule(name="some-name", operation=Operation.CREATE, scope=Scope.GLOBAL)
+        rule = Rule(
+            name="some-name", operation=Operation.CREATE.value, scope=Scope.GLOBAL
+        )
         rule.save()
 
         rules = Rule.get()

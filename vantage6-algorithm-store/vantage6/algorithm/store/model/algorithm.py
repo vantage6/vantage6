@@ -3,6 +3,8 @@ import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
+from vantage6.common.enum import EnumBase
+
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 
@@ -163,9 +165,9 @@ class Algorithm(Base):
         result = session.scalars(
             select(cls)
             .where(
-                cls.status.in_(state)
-                if isinstance(state, list)
-                else cls.status == state
+                cls.status.in_(
+                    [s.value for s in state] if isinstance(state, list) else state.value
+                )
             )
             .order_by(cls.id)
         ).all()

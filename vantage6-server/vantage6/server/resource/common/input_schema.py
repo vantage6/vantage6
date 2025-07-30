@@ -218,7 +218,7 @@ class RunInputSchema(Schema):
     finished_at = fields.DateTime()
     log = fields.String()
     result = fields.String()
-    status = fields.String(validate=OneOf([s.value for s in RunStatus]))
+    status = fields.String(validate=OneOf(RunStatus.list()))
 
 
 class TaskInputSchema(_NameValidationSchema):
@@ -239,7 +239,7 @@ class TaskInputSchema(_NameValidationSchema):
     databases = fields.List(fields.List(fields.Dict()), allow_none=True)
     session_id = fields.Integer(validate=Range(min=1), required=True)
     dataframe_id = fields.Integer(validate=Range(min=1))
-    action = fields.String(validate=OneOf([s.value for s in AlgorithmStepType]))
+    action = fields.String(validate=OneOf(AlgorithmStepType.list()))
 
     @validates_schema
     def validate_schema(self, data: dict, **kwargs) -> None:

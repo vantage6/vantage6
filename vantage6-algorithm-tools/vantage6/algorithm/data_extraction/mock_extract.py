@@ -69,7 +69,7 @@ def load_mock_data(
             f"Unknown database type '{database_type}' for database {database_uri}."
             " Please check the node configuration."
         )
-        info(f"Available mock database types: {', '.join(MockDatabaseType)}")
+        info(f"Available mock database types: {', '.join(MockDatabaseType.list())}")
         exit(1)
 
     connection_details = {

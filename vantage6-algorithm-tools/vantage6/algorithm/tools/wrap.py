@@ -198,10 +198,7 @@ def _write_output(output: Any, output_file: str) -> None:
     """
     action = get_action()
 
-    if action in [
-        AlgorithmStepType.DATA_EXTRACTION.value,
-        AlgorithmStepType.PREPROCESSING.value,
-    ]:
+    if action in [AlgorithmStepType.DATA_EXTRACTION, AlgorithmStepType.PREPROCESSING]:
         # If the action is data extraction or preprocessing, the output should be a
         # parquet table. In this case, the output file should contain the parquet data.
         # It is important that we do not alter this format as it would complicate

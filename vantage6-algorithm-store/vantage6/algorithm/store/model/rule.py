@@ -52,7 +52,7 @@ class Rule(Base, RuleInterface):
     users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, operation: str) -> Rule | None:
+    def get_by_(cls, name: str, operation: Operation) -> Rule | None:
         """
         Get a rule by its name and operation.
 
@@ -60,8 +60,8 @@ class Rule(Base, RuleInterface):
         ----------
         name : str
             Name of the resource on which the rule acts, e.g. 'algorithm'
-        operation : str
-            Operation of the rule, e.g. 'view'
+        operation : Operation
+            Operation of the rule, e.g. Operation.VIEW
 
         Returns
         -------
@@ -74,7 +74,7 @@ class Rule(Base, RuleInterface):
             result = session.scalars(
                 select(cls).filter_by(
                     name=name,
-                    operation=operation,
+                    operation=operation.value,
                 )
             ).first()
             session.commit()

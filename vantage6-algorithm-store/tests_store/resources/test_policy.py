@@ -67,7 +67,7 @@ class TestPolicyResources(TestResources):
 
         # check that non-public policies are not present
         for policy in StorePolicies:
-            if policy not in [p.value for p in PublicPolicies]:
+            if policy not in PublicPolicies.list():
                 self.assertNotIn(policy, policies)
 
     def test_policies_to_dict(self):

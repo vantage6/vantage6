@@ -33,8 +33,8 @@ from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 from vantage6.cli.utils import (
-    validate_input_cmd_args,
     check_config_name_allowed,
+    validate_input_cmd_args,
 )
 
 
@@ -65,11 +65,11 @@ def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type={type_}"}
+        filters={"label": f"{APPNAME}-type={type_.value}"}
     )
     for server in running_servers:
-        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-{type_}":
-            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} " "is already running")
+        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-{type_.value}":
+            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} is already running")
             exit(1)
     return docker_client
 

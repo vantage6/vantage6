@@ -1,16 +1,18 @@
+import os.path
+import time
 from pathlib import Path
 from threading import Thread
-import time
-import os.path
 
 import click
 import docker
-
 from colorama import Fore, Style
 
-from vantage6.cli.common.start import pull_infra_image
-from vantage6.common import warning, error, info, debug
+from vantage6.common import debug, error, info, warning
 from vantage6.common.dataclass import TaskDB
+from vantage6.common.docker.addons import (
+    check_docker_running,
+    remove_container_if_exists,
+)
 from vantage6.common.globals import (
     APPNAME,
     DEFAULT_DOCKER_REGISTRY,
@@ -18,17 +20,14 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE_WO_TAG,
     InstanceType,
 )
-from vantage6.common.docker.addons import (
-    remove_container_if_exists,
-    check_docker_running,
-)
 
+from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.context.node import NodeContext
+from vantage6.cli.common.start import pull_infra_image
 from vantage6.cli.common.utils import print_log_worker
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils import check_config_name_allowed
-from vantage6.cli import __version__
 
 
 @click.command()
@@ -41,18 +40,17 @@ from vantage6.cli import __version__
 @click.option(
     "--force-db-mount",
     is_flag=True,
-    help="Always mount node databases; skip the check if they are " "existing files.",
+    help="Always mount node databases; skip the check if they are existing files.",
 )
 @click.option(
     "--attach/--detach",
     default=False,
-    help="Show node logs on the current console after starting the " "node",
+    help="Show node logs on the current console after starting the node",
 )
 @click.option(
     "--mount-src",
     default="",
-    help="Override vantage6 source code in container with the source"
-    " code in this path",
+    help="Override vantage6 source code in container with the source code in this path",
 )
 @click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
 def cli_node_start(
@@ -117,9 +115,7 @@ def cli_node_start(
                     f":{major_minor}"
                 )
             except Exception:
-                warning(
-                    "Could not determine server version. Using default " "node image"
-                )
+                warning("Could not determine server version. Using default node image")
 
             if major_minor and not __version__.startswith(major_minor):
                 warning(
@@ -226,7 +222,7 @@ def cli_node_start(
             exit(1)
 
         info(
-            f"  Processing {Fore.GREEN}{db.type}{Style.RESET_ALL} database "
+            f"  Processing {Fore.GREEN}{db.type.value}{Style.RESET_ALL} database "
             f"{Fore.GREEN}{db.label}:{db.uri}{Style.RESET_ALL}"
         )
         label_capitals = db.label.upper()
@@ -243,8 +239,8 @@ def cli_node_start(
         if db.type.is_file_based() and not db_file_exists:
             error(
                 f"Database {Fore.RED}{db.uri}{Style.RESET_ALL} not found. Databases of "
-                f"type '{db.type}' must be present on the harddrive. Please update "
-                "your node configuration file."
+                f"type '{db.type.value}' must be present on the harddrive. Please "
+                "update your node configuration file."
             )
             exit(1)
 
@@ -283,9 +279,7 @@ def cli_node_start(
     # we won't accept overwrites of existing env vars
     env_overwrites = extra_env.keys() & env.keys()
     if env_overwrites:
-        error(
-            "Cannot overwrite existing node environment variables: " f"{env_overwrites}"
-        )
+        error(f"Cannot overwrite existing node environment variables: {env_overwrites}")
         exit(1)
     env.update(extra_env)
 

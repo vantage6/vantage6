@@ -1,12 +1,13 @@
 import unittest
-
 from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 
-from vantage6.server.model.run import Run
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.controller import cleanup
 from vantage6.common.enum import RunStatus
+
+from vantage6.server.controller import cleanup
+from vantage6.server.model.base import Database, DatabaseSessionManager
+from vantage6.server.model.run import Run
 
 
 class TestCleanupRunsIsolated(unittest.TestCase):
@@ -25,7 +26,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             result="result",
             arguments="arguments",
             log="log should be preserved",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         self.session.add(run)
         self.session.commit()
@@ -43,7 +44,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result",
             arguments="arguments",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         self.session.add(run)
         self.session.commit()
@@ -60,7 +61,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result",
             arguments="arguments",
-            status=RunStatus.FAILED,  # Not COMPLETED, so ineligible
+            status=RunStatus.FAILED.value,  # Not COMPLETED, so ineligible
         )
         self.session.add(run)
         self.session.commit()
@@ -77,7 +78,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=40),
             result="result",
             arguments="arguments",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         self.session.add(run)
         self.session.commit()
@@ -104,37 +105,37 @@ class TestCleanupRunsCount(unittest.TestCase):
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result0",
             arguments="arguments0",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         run1 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=200),
             result="result1",
             arguments="arguments1",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         run2 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result2",
             arguments="arguments2",
-            status=RunStatus.COMPLETED,
+            status=RunStatus.COMPLETED.value,
         )
         run3 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result3",
             arguments="arguments3",
-            status=RunStatus.PENDING,
+            status=RunStatus.PENDING.value,
         )
         run4 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result4",
             arguments="arguments4",
-            status=RunStatus.FAILED,
+            status=RunStatus.FAILED.value,
         )
         run5 = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result5",
             arguments="arguments5",
-            status=RunStatus.ACTIVE,
+            status=RunStatus.ACTIVE.value,
         )
         self.session.add_all([run0, run1, run2, run3, run4, run5])
         self.session.commit()

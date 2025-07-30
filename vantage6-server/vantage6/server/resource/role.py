@@ -1,10 +1,12 @@
 import logging
-
 from http import HTTPStatus
-from flask.globals import request
+
 from flask import g
+from flask.globals import request
 from flask_restful import Api
 from sqlalchemy import or_, select
+
+from vantage6.common import logger_name
 
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
@@ -13,6 +15,7 @@ from vantage6.backend.common.resource.error_handling import (
     handle_exceptions,
 )
 from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
+from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
     can_delete_dependents,
@@ -25,22 +28,21 @@ from vantage6.backend.common.resource.role import (
     validate_request_body,
     validate_user_exists,
 )
+
 from vantage6.server import db
-from vantage6.server.resource import (
-    get_org_ids_from_collabs,
-    with_user,
-    ServicesResources,
-)
-from vantage6.common import logger_name
+from vantage6.server.default_roles import DefaultRole
+from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.permission import (
+    Operation as P,
     PermissionManager,
     RuleCollection,
-    Operation as P,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.server.resource import (
+    ServicesResources,
+    get_org_ids_from_collabs,
+    with_user,
+)
 from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
-from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.server.default_roles import DefaultRole
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -136,7 +138,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(
         scope=Scope.COLLABORATION,
         operation=Operation.DELETE,
-        description="Delete a role from any organization in your " "collaborations",
+        description="Delete a role from any organization in your collaborations",
     )
     add(
         scope=Scope.ORGANIZATION,
@@ -457,7 +459,7 @@ class Role(RoleBase):
             self.rule_collection.allowed_for_org(P.VIEW, role.organization_id)
             or role in g.user.roles
             or (
-                role.name in [role for role in DefaultRole]
+                role.name in DefaultRole.list()
                 and self.rule_collection.has_at_least_scope(Scope.ORGANIZATION, P.VIEW)
             )
         )

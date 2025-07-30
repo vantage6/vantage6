@@ -302,7 +302,7 @@ class PermissionManager(PermissionManagerBase):
             role.save()
 
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
-        rule_params = f"{resource},{scope},{operation}"
+        rule_params = f"{resource},{scope},{operation.value}"
 
         if not rule:
             log.error(f"Rule ({rule_params}) not found!")
@@ -366,7 +366,10 @@ class PermissionManager(PermissionManagerBase):
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         if not rule:
             rule = Rule(
-                name=resource, operation=operation, scope=scope, description=description
+                name=resource,
+                operation=operation.value,
+                scope=scope,
+                description=description,
             )
             rule.save()
             log.debug(

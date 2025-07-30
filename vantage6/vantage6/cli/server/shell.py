@@ -4,15 +4,16 @@ import click
 import docker
 from colorama import Fore, Style
 
-from vantage6.common import info, error, debug as debug_msg
+from vantage6.common import debug as debug_msg, error, info
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.context.server import ServerContext
+
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.context.server import ServerContext
 
 
 @click.command()
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 def cli_server_shell(ctx: ServerContext) -> None:
     """
     Run an iPython shell within a running server. This can be used to modify

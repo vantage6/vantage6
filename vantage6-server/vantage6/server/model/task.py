@@ -2,19 +2,20 @@ import datetime
 
 from sqlalchemy import (
     Column,
-    String,
+    DateTime,
     ForeignKey,
     Integer,
-    sql,
-    DateTime,
-    select,
-    func,
+    String,
     case,
+    func,
+    select,
+    sql,
 )
-from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import backref, relationship
 
-from vantage6.common.enum import TaskStatus, RunStatus
+from vantage6.common.enum import RunStatus, TaskStatus
+
 import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
@@ -206,7 +207,6 @@ class Task(Base):
 
     @status.expression
     def status(cls):
-
         failed_case = case(
             [(models.Run.status.in_(RunStatus.failed_statuses()), 1)],
             else_=0,
@@ -229,6 +229,7 @@ class Task(Base):
     def is_open(self) -> bool:
         """
         Whether a task fulfills conditions for TaskStatusQueryOptions.OPEN
+
         Returns
         -------
         bool
@@ -257,6 +258,7 @@ class Task(Base):
     def is_waiting(self) -> bool:
         """
         Whether a task fulfills conditions for TaskStatusQueryOptions.WAITING
+
         Returns
         -------
         bool

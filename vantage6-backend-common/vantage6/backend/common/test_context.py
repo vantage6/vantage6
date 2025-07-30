@@ -1,7 +1,8 @@
 from __future__ import annotations
-from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.common.context import AppContext
+from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli.configuration_manager import TestingConfigurationManager
 
 
@@ -42,11 +43,11 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        if instance_type == InstanceType.SERVER:
+        if instance_type == InstanceType.SERVER.value:
             return (
                 package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
             )
-        elif instance_type == InstanceType.ALGORITHM_STORE:
+        elif instance_type == InstanceType.ALGORITHM_STORE.value:
             return (
                 package_folder
                 / APPNAME

@@ -184,8 +184,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         error(f"Could not authenticate with server: {e}")
         error("Please check (1) your API key and (2) if your server is online")
         warning(
-            "If you continue, you should provide your collaboration "
-            "settings manually."
+            "If you continue, you should provide your collaboration settings manually."
         )
         if q.confirm("Do you want to abort?", default=True).unsafe_ask():
             exit(0)
@@ -452,7 +451,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     dict
         Dictionary with the new server configuration
     """
-    config = _get_common_server_config(InstanceType.ALGORITHM_STORE, instance_name)
+    config = _get_common_server_config(
+        InstanceType.ALGORITHM_STORE.value, instance_name
+    )
 
     default_v6_server_uri = (
         f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"

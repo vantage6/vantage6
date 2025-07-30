@@ -10,8 +10,9 @@ more.
 
 from colorama import Fore, Style
 
-from vantage6.common.globals import InstanceType
 from vantage6.common import error
+from vantage6.common.globals import InstanceType
+
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext

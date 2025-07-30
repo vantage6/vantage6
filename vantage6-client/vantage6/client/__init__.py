@@ -19,7 +19,7 @@ from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.encryption import DummyCryptor, RSACryptor
-from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
+from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.serialization import serialize
 
@@ -139,14 +139,15 @@ class UserClient(ClientBase):
 
         # set log level
         level = level.upper()
-        if level not in [lvl.value for lvl in LogLevel]:
+        if level not in LogLevel.list():
             default_lvl = LogLevel.DEBUG.value
             logger.setLevel(default_lvl)
-            logger.warn(
-                f"You set unknown log level {level}. Available levels are: "
-                f"{', '.join([lvl.value for lvl in LogLevel])}. "
+            logger.warning(
+                "You set unknown log level %s. Available levels are: %s",
+                level,
+                ", ".join(LogLevel.list()),
             )
-            logger.warn(f"Log level now set to {default_lvl}.")
+            logger.warning("Log level now set to %s.", default_lvl)
         else:
             logger.setLevel(level)
         return logger
@@ -1784,7 +1785,7 @@ class UserClient(ClientBase):
             study: int | None = None,
             store: int | None = None,
             databases: list[list[dict]] | list[dict] | None = None,
-            action: AlgorithmStepType | None = None,
+            action: str | None = None,
         ) -> dict:
             """Create a new task
 
@@ -1821,7 +1822,7 @@ class UserClient(ClientBase):
                 list is the databases that are required for the first argument, the
                 second list is the databases that are required for the second
                 argument, etc.
-            action: AlgorithmStepType, optional
+            action: str, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
                 available from either, there will be an error. Suitable actions may be
@@ -1949,7 +1950,9 @@ class UserClient(ClientBase):
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
-                databases = [[{"label": databases, "type": TaskDatabaseType.SOURCE}]]
+                databases = [
+                    [{"label": databases, "type": TaskDatabaseType.SOURCE.value}]
+                ]
 
             # It is common to only specify a single level of databases, we assume
             # that its not a multiple databases argument and convert it so that every

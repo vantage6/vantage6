@@ -8,7 +8,7 @@ from flask_restful import Api
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import RunStatus, TaskStatus
 from vantage6.common.globals import AuthStatus
 
 from vantage6.server import db
@@ -170,7 +170,7 @@ class KillTask(ServicesResources):
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if RunStatus.has_finished(task.status):
+        if TaskStatus.has_finished(task.status):
             return {
                 "msg": f"Task {id_} already finished with status "
                 f"'{task.status}', so cannot kill it!"

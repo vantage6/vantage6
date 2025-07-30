@@ -157,7 +157,7 @@ class PermissionManagerBase(ABC):
             Scope that the rule applies to
         """
 
-        self.assign_rule_to_fixed_role(self.default_roles.ROOT, *args, **kwargs)
+        self.assign_rule_to_fixed_role(self.default_roles.ROOT.value, *args, **kwargs)
 
     def appender(self, name: str) -> callable:
         """

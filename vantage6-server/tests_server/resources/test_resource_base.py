@@ -220,7 +220,7 @@ class TestResourceBase(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
-                runs=[Run(status=RunStatus.PENDING.value, action=action)],
+                runs=[Run(status=RunStatus.PENDING.value, action=action.value)],
             )
             task.save()
 

@@ -1,16 +1,11 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 
 import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
-
-if TYPE_CHECKING:
-    from vantage6.server.model import Session
 
 
 class Dataframe(Base):

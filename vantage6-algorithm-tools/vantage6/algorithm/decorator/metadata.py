@@ -80,6 +80,6 @@ def metadata(func: callable) -> callable:
         )
         return func(metadata, *args, **kwargs)
 
-    decorator.vantage6_metadata_decorated = DecoratorStepType.METADATA.value
+    decorator.vantage6_metadata_decorated = True
 
     return decorator

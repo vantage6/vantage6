@@ -42,7 +42,7 @@ from vantage6.cli.utils import check_config_name_allowed
     help="Keep image after finishing. Useful for debugging",
 )
 @click.option("--wait", default=False, help="Wait for the import to finish")
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 def cli_server_import(
     ctx: ServerContext,
     file: str,

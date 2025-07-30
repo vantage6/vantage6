@@ -29,7 +29,9 @@ class AlgorithmStoreContext(BaseServerContext):
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
         super().__init__(
-            InstanceType.ALGORITHM_STORE, instance_name, system_folders=system_folders
+            InstanceType.ALGORITHM_STORE,
+            instance_name,
+            system_folders=system_folders,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -79,7 +81,7 @@ class AlgorithmStoreContext(BaseServerContext):
         """
         return super().from_external_config_file(
             path,
-            ServerType.ALGORITHM_STORE.value,
+            ServerType.ALGORITHM_STORE,
             AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value,
             system_folders,
         )

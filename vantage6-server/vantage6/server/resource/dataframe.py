@@ -297,7 +297,7 @@ class SessionDataframes(SessionBase):
                     ]
                 ],
                 description=description,
-                action=AlgorithmStepType.DATA_EXTRACTION.value,
+                action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
                 store_id=extraction_details.get("store_id"),
             )
@@ -582,13 +582,13 @@ class DataframePreprocessing(SessionBase):
                 [
                     {
                         "dataframe_id": dataframe.id,
-                        "type": TaskDatabaseType.DATAFRAME,
+                        "type": TaskDatabaseType.DATAFRAME.value,
                     }
                 ]
             ],
             description=description,
             depends_on_ids=[rt.id for rt in requires_tasks],
-            action=AlgorithmStepType.PREPROCESSING.value,
+            action=AlgorithmStepType.PREPROCESSING,
             image=preprocessing_task["image"],
             method=preprocessing_task["method"],
             organizations=preprocessing_task["organizations"],

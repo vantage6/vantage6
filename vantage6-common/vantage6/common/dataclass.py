@@ -38,6 +38,11 @@ class TaskDB:
                 f"Database with label {data['label']} is missing a type. "
                 "Please provide a valid type."
             )
+        if data["type"] not in DatabaseType.list():
+            raise ValueError(
+                f"Database with label {data['label']} has an invalid type: "
+                f"{data['type']}. Please provide a valid type."
+            )
         if "uri" not in data:
             raise ValueError(
                 f"Database with label {data['label']} has no uri. "
@@ -45,6 +50,6 @@ class TaskDB:
             )
         return cls(
             label=data["label"],
-            type=data["type"],
+            type=DatabaseType(data["type"]),
             uri=data["uri"],
         )
