@@ -83,7 +83,7 @@ def permissions(permissions: PermissionManager) -> None:
     """
     add = permissions.appender(module_name)
     add(operation=Operation.CREATE, description="Create role")
-    add(operation=Operation.VIEW, description="View any role")
+    add(operation=Operation.VIEW, description="View a role")
     add(operation=Operation.EDIT, description="Edit a role")
     add(operation=Operation.DELETE, description="Delete a role")
 

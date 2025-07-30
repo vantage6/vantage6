@@ -31,7 +31,7 @@ class RuleCollectionBase(ABC, dict):
     def __init__(self, name):
         self.name = name
 
-    def add(self, operation: str, scope: str = None) -> None:
+    def add(self, operation: str, scope: str | None = None) -> None:
         """
         Add a rule to the rule collection
 
@@ -43,7 +43,7 @@ class RuleCollectionBase(ABC, dict):
             What operation the rule applies to
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
-        attribute_name = f"{operation}"
+        attribute_name = operation
         if scope:
             attribute_name += f"_{scope}"
         self.__setattr__(f"{attribute_name}", permission)

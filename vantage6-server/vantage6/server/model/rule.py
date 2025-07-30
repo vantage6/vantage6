@@ -91,7 +91,7 @@ class Rule(Base):
     users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, scope: str, operation: str) -> Rule | None:
+    def get_by_(cls, name: str, scope: Scope, operation: Operation) -> Rule | None:
         """
         Get a rule by its name, scope and operation.
 
@@ -99,9 +99,9 @@ class Rule(Base):
         ----------
         name : str
             Name of the resource on which the rule acts, e.g. 'node'
-        scope : str
+        scope : Scope
             Scope of the rule, e.g. 'organization'
-        operation : str
+        operation : Operation
             Operation of the rule, e.g. 'view'
 
         Returns
@@ -112,7 +112,9 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            stmt = select(cls).filter_by(name=name, scope=scope, operation=operation)
+            stmt = select(cls).filter_by(
+                name=name, scope=scope.value, operation=operation.value
+            )
             result = session.scalars(stmt).first()
             session.commit()
             return result

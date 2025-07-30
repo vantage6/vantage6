@@ -11,29 +11,30 @@ from types import ModuleType
 
 import requests
 from flask import Flask, Request, Response, make_response, request, send_from_directory
-from flask_jwt_extended import JWTManager
-from flask_principal import Principal
-from flask_marshmallow import Marshmallow
-from flask_restful import Api
 from flask_cors import CORS
 from flask_cors.core import probably_regex
+from flask_jwt_extended import JWTManager
+from flask_marshmallow import Marshmallow
+from flask_principal import Principal
+from flask_restful import Api
 from werkzeug.exceptions import HTTPException
 
-
-from vantage6.common import validate_required_env_vars, logger_name
+from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.globals import DEFAULT_API_PATH
+
 from vantage6.cli.context.base_server import BaseServerContext
-from vantage6.backend.common.jsonable import jsonable
-from vantage6.backend.common.mail_service import MailService
-from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
-from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+
+from vantage6.backend.common._version import __version__  # noqa: F401
 from vantage6.backend.common.auth import get_keycloak_id_for_user
+from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
 from vantage6.backend.common.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     HOST_URI_ENV,
     RequiredServerEnvVars,
 )
-from vantage6.backend.common._version import __version__  # noqa: F401
+from vantage6.backend.common.jsonable import jsonable
+from vantage6.backend.common.mail_service import MailService
+from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 
 # make sure the version is available
 

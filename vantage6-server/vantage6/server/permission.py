@@ -81,19 +81,19 @@ class RuleCollection(RuleCollectionBase):
         auth_org = obtain_auth_organization()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation}_{Scope.GLOBAL}")
+        global_perm = getattr(self, f"{operation.value}_{Scope.GLOBAL.value}")
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has organization permission and organization is
         # the same as the subject organization
-        org_perm = getattr(self, f"{operation}_{Scope.ORGANIZATION}")
+        org_perm = getattr(self, f"{operation.value}_{Scope.ORGANIZATION.value}")
         if auth_org.id == subject_org_id and org_perm and org_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # organization is in the collaboration of the own organization
-        col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
+        col_perm = getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}")
         if col_perm and col_perm.can():
             for col in auth_org.collaborations:
                 if subject_org_id in [org.id for org in col.organizations]:
@@ -121,13 +121,13 @@ class RuleCollection(RuleCollectionBase):
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation}_{Scope.GLOBAL}")
+        global_perm = getattr(self, f"{operation.value}_{Scope.GLOBAL.value}")
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
-        col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
+        col_perm = getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}")
         if (
             col_perm
             and col_perm.can()
@@ -153,13 +153,13 @@ class RuleCollection(RuleCollectionBase):
             Highest scope that the entity has for the operation. None if the
             entity has no permission for the operation
         """
-        if getattr(self, f"{operation}_{Scope.GLOBAL}"):
+        if getattr(self, f"{operation.value}_{Scope.GLOBAL.value}"):
             return Scope.GLOBAL
-        elif getattr(self, f"{operation}_{Scope.COLLABORATION}"):
+        elif getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}"):
             return Scope.COLLABORATION
-        elif getattr(self, f"{operation}_{Scope.ORGANIZATION}"):
+        elif getattr(self, f"{operation.value}_{Scope.ORGANIZATION.value}"):
             return Scope.ORGANIZATION
-        elif getattr(self, f"{operation}_{Scope.OWN}"):
+        elif getattr(self, f"{operation.value}_{Scope.OWN.value}"):
             return Scope.OWN
         else:
             return None
@@ -183,7 +183,7 @@ class RuleCollection(RuleCollectionBase):
         """
         scopes: list[Scope] = self._get_scopes_from(scope)
         for s in scopes:
-            perm = getattr(self, f"{operation}_{s}", None)
+            perm = getattr(self, f"{operation.value}_{s.value}", None)
             if perm and perm.can():
                 return True
         return False
@@ -302,7 +302,7 @@ class PermissionManager(PermissionManagerBase):
             role.save()
 
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
-        rule_params = f"{resource},{scope},{operation.value}"
+        rule_params = f"{resource},{scope.value},{operation.value}"
 
         if not rule:
             log.error(f"Rule ({rule_params}) not found!")
@@ -368,7 +368,7 @@ class PermissionManager(PermissionManagerBase):
             rule = Rule(
                 name=resource,
                 operation=operation.value,
-                scope=scope,
+                scope=scope.value,
                 description=description,
             )
             rule.save()

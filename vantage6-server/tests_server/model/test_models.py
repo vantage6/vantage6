@@ -87,7 +87,8 @@ class TestCollaborationModel(TestModelBase):
         self.assertEqual(db_col, col)
 
     def test_methods(self):
-        db_col = Collaboration.get(1)
+        db_col = Collaboration(name=str(uuid.uuid4()))
+        db_col.save()
         org_ids = db_col.get_organization_ids()
         self.assertIsInstance(org_ids, list)
         self.assertIsInstance(db_col.get_task_ids(), list)
@@ -320,7 +321,7 @@ class TestRuleModel(TestModelBase):
 
     def test_methods(self):
         # check that error is raised
-        self.assertIsNone(Rule.get_by_("non-existant", 1, 1))
+        self.assertIsNone(Rule.get_by_("non-existent", Scope.GLOBAL, Operation.CREATE))
 
     def test_relations(self):
         rules = Rule.get()

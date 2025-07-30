@@ -34,7 +34,7 @@ class RuleCollection(RuleCollectionBase):
         bool
             True if the entity has at least the scope, False otherwise
         """
-        perm = getattr(self, f"{operation}", None)
+        perm = getattr(self, operation.value, None)
 
         if perm and perm.can():
             return True
@@ -115,7 +115,7 @@ class PermissionManager(PermissionManagerBase):
         # assign all new rules to root user
         self.assign_rule_to_root(resource, operation)
 
-        self.collection(resource).add(rule.operation)
+        self.collection(resource).add(operation=rule.operation)
 
     def check_user_rules(self, rules: list[Rule]):
         """
