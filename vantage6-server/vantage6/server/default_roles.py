@@ -1,9 +1,9 @@
-from enum import Enum
+from vantage6.common.enum import EnumBase
 
 from vantage6.server.model.rule import Operation, Scope
 
 
-class DefaultRole(str, Enum):
+class DefaultRole(EnumBase):
     """Enum containing the names of the default roles"""
 
     ROOT = "Root"

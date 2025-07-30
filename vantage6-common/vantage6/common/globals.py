@@ -1,6 +1,8 @@
 from enum import Enum
 from pathlib import Path
 
+from vantage6.common.enum import EnumBase
+
 #
 #   PACKAGE GLOBALS
 #
@@ -46,14 +48,15 @@ DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300
 
-# Constant multiplier to make interval for requesting results from a task progressively longer
+# Constant multiplier to make interval for requesting results from a task progressively
+# longer
 INTERVAL_MULTIPLIER = 1.5
 
 # keyword for the multiple dataframes in single argument decorator
 DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 
 
-class InstanceType(str, Enum):
+class InstanceType(EnumBase):
     """The types of instances that can be created."""
 
     NODE = "node"
@@ -62,7 +65,7 @@ class InstanceType(str, Enum):
     UI = "ui"
 
 
-class NodePolicy(str, Enum):
+class NodePolicy(EnumBase):
     """Enum containing the names of the names of the node policies"""
 
     ALLOWED_ALGORITHMS = "allowed_algorithms"
@@ -72,7 +75,7 @@ class NodePolicy(str, Enum):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
-class NodeConfigKey(str, Enum):
+class NodeConfigKey(EnumBase):
     """Enum containing the keys of the node configuration"""
 
     ENCRYPTION = "encryption"
@@ -93,7 +96,7 @@ class Ports(int, Enum):
     DEV_ALGO_STORE = 7602
 
 
-class ContainerEnvNames(str, Enum):
+class ContainerEnvNames(EnumBase):
     """Enum containing the names of the container environment variables"""
 
     FUNCTION_ACTION = "FUNCTION_ACTION"
@@ -113,7 +116,7 @@ class ContainerEnvNames(str, Enum):
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
 
 
-class RequiredNodeEnvVars(str, Enum):
+class RequiredNodeEnvVars(EnumBase):
     """Enum containing the required node environment variables"""
 
     V6_API_KEY = "V6_API_KEY"
@@ -122,7 +125,7 @@ class RequiredNodeEnvVars(str, Enum):
     KEYCLOAK_REALM = "KEYCLOAK_REALM"
 
 
-class AuthStatus(str, Enum):
+class AuthStatus(EnumBase):
     """Enum containing the different statuses of the authenticable (node/user)"""
 
     ONLINE = "online"

@@ -2,9 +2,9 @@
 This module contains global variables that are used throughout the CLI.
 """
 
-from enum import Enum
 from pathlib import Path
 
+from vantage6.common.enum import EnumBase
 from vantage6.common.globals import APPNAME
 
 #
@@ -58,28 +58,28 @@ PROMETHEUS_DIR = "prometheus"
 
 
 # datasets included in the nodes of the dev network
-class DefaultDatasets(str, Enum):
+class DefaultDatasets(EnumBase):
     """Enum containing default datasets"""
 
     OLYMPIC_ATHLETES = "olympic_athletes_2016.csv"
     KAPLAN_MEIER_TEST = "km_dataset.csv"
 
 
-class ServerType(str, Enum):
+class ServerType(EnumBase):
     """Enum containing server types"""
 
     V6SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
 
 
-class ServerGlobals(str, Enum):
+class ServerGlobals(EnumBase):
     """Enum containing server environment variables"""
 
     DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
 
 
-class AlgoStoreGlobals(str, Enum):
+class AlgoStoreGlobals(EnumBase):
     """Enum containing algorithm store environment variables"""
 
     DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"

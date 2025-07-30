@@ -1,11 +1,11 @@
-from enum import Enum
 from typing import Callable
 
 import pandas as pd
 
 from vantage6.common import error, info
+from vantage6.common.enum import EnumBase
 
-from vantage6.algorithm.data_extraction import (
+from vantage6.algorithm.data_extraction.readers import (
     _read_csv,
     _read_excel,
     _read_parquet,
@@ -14,7 +14,7 @@ from vantage6.algorithm.data_extraction import (
 )
 
 
-class MockDatabaseType(str, Enum):
+class MockDatabaseType(EnumBase):
     """
     Enum for the different database types.
     Attributes

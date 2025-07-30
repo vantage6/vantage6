@@ -3,7 +3,6 @@ import inspect
 import json
 import os
 import sys
-from enum import Enum
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
@@ -18,7 +17,7 @@ from vantage6.common.algorithm_function import (
     get_vantage6_decorator_type,
     is_vantage6_algorithm_func,
 )
-from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
+from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType, EnumBase
 
 from vantage6.algorithm.tools import DecoratorStepType
 
@@ -55,7 +54,7 @@ class MergePreference:
         cls._prefer_existing = None
 
 
-class FunctionArgumentType(Enum):
+class FunctionArgumentType(EnumBase):
     """Type of the function argument"""
 
     PARAMETER = "parameter"

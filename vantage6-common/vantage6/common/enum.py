@@ -1,7 +1,26 @@
 from enum import Enum
 
 
-class StorePolicies(str, Enum):
+class EnumBase(str, Enum):
+    """Base class for all enums"""
+
+    @classmethod
+    def list(cls) -> list[str]:
+        """Return a list of all the enum values"""
+        return [status.value for status in cls]
+
+    @classmethod
+    def names(cls) -> list[str]:
+        """Return a list of all the enum names"""
+        return [status.name.lower() for status in cls]
+
+    @classmethod
+    def items(cls) -> list[tuple[str, str]]:
+        """Return a list of (name, value) tuples for all enum members"""
+        return [(status.name.lower(), status.value) for status in cls]
+
+
+class StorePolicies(EnumBase):
     """
     Enum for the different types of policies of the algorithm store.
     """
@@ -14,31 +33,12 @@ class StorePolicies(str, Enum):
     ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
-class AlgorithmViewPolicies(str, Enum):
+class AlgorithmViewPolicies(EnumBase):
     """Enum for available algorithm view policies"""
 
     PUBLIC = "public"
     AUTHENTICATED = "authenticated"
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
-
-
-class EnumBase(str, Enum):
-    """Base class for all enums"""
-
-    @classmethod
-    def list(cls) -> list[str]:
-        """Return a list of all the enum values"""
-        return [status.value for status in cls]
-
-    @classmethod
-    def names(cls) -> list[str]:
-        """Return a list of all the enum names"""
-        return [status.name for status in cls]
-
-    @classmethod
-    def items(cls) -> list[tuple[str, str]]:
-        """Return a list of (name, value) tuples for all enum members"""
-        return [(status.name, status.value) for status in cls]
 
 
 class AlgorithmStepType(EnumBase):

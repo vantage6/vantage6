@@ -1,7 +1,7 @@
-from enum import Enum
+from vantage6.common.enum import EnumBase
 
 
-class LogLevel(Enum):
+class LogLevel(EnumBase):
     """
     Enum for the different log levels
 

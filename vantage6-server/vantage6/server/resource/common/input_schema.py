@@ -466,7 +466,7 @@ class SessionInputSchema(Schema):
         ValidationError
             If the scope is not valid.
         """
-        allowed_scopes = set(Scope.list()) - {Scope.GLOBAL.name.lower()}
+        allowed_scopes = set(Scope.names()) - {Scope.GLOBAL.name.lower()}
         if scope not in allowed_scopes:
             raise ValidationError(
                 f"Session scope '{scope}' is not valid. Allowed values are: "

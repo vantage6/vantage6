@@ -3,20 +3,22 @@ Marshmallow schemas for validating input data for the API.
 """
 
 import json
-from marshmallow import Schema, fields, ValidationError, validates, validates_schema
+
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
+from marshmallow import Schema, ValidationError, fields, validates, validates_schema
 
 from vantage6.common.enum import (
+    AlgorithmArgumentType,
     AlgorithmStepType,
     AlgorithmViewPolicies,
-    AlgorithmArgumentType,
 )
+
+from vantage6.algorithm.store.globals import ConditionalArgComparator
 from vantage6.algorithm.store.model.common.enums import (
     Partitioning,
     VisualizationType,
 )
-from vantage6.algorithm.store.globals import ConditionalArgComparator
 from vantage6.algorithm.store.model.common.ui_visualization_schemas import (
     get_schema_for_visualization,
 )
@@ -272,37 +274,20 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     """
 
     display_name = fields.String()
-    type_ = fields.String(required=True, data_key="type")
+    type_ = fields.String(
+        required=True,
+        data_key="type",
+        validate=validate.OneOf(AlgorithmArgumentType.list()),
+    )
     allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
     default_value = fields.String()
     conditional_on = fields.String()
-    conditional_operator = fields.String()
+    conditional_operator = fields.String(
+        validate=validate.OneOf(ConditionalArgComparator.list())
+    )
     conditional_value = fields.String()
     is_frontend_only = fields.Boolean()
-
-    @validates("type_")
-    def validate_type(self, value):
-        """
-        Validate that the type is one of the allowed values.
-        """
-        types = [a.value for a in AlgorithmArgumentType]
-        if value not in types:
-            raise ValidationError(
-                f"Argument type '{value}' is not one of the allowed values: {types}"
-            )
-
-    @validates("conditional_operator")
-    def validate_conditional_operator(self, value):
-        """
-        Validate that the conditional comparator is one of the allowed values.
-        """
-        comparators = [c.value for c in ConditionalArgComparator]
-        if value not in comparators:
-            raise ValidationError(
-                f"Conditional comparator '{value}' is not one of the allowed values: "
-                f"{comparators}"
-            )
 
     @validates_schema
     def validate_schema(self, data, **kwargs):
@@ -447,20 +432,12 @@ class UIVisualizationInputSchema(_NameDescriptionSchema):
     Schema for the input of a UI visualization.
     """
 
-    type_ = fields.String(required=True, data_key="type")
+    type_ = fields.String(
+        required=True,
+        data_key="type",
+        validate=validate.OneOf(VisualizationType.list()),
+    )
     schema = fields.Dict()
-
-    @validates("type_")
-    def validate_type(self, value):
-        """
-        Validate that the type is one of the allowed values.
-        """
-        types = [v.value for v in VisualizationType]
-        if value not in types:
-            raise ValidationError(
-                f"UI visualization type '{value}' is not one of the allowed values "
-                f"{types}"
-            )
 
     @validates_schema
     def validate_schema(self, data, **kwargs):
@@ -502,7 +479,7 @@ class PolicyInputSchema(Schema):
     """
 
     algorithm_view = fields.String(
-        validate=validate.OneOf([p.value for p in AlgorithmViewPolicies])
+        validate=validate.OneOf(AlgorithmViewPolicies.list())
     )
 
 
