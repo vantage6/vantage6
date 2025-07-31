@@ -33,7 +33,7 @@ setup(
     python_requires=">=3.13",
     install_requires=[
         "openpyxl>=3.0.0",
-        "pandas>=1.5.3",
+        "pandas>=2.2.3",
         "pyjwt==2.9.0",
         "pyfiglet==0.8.post1",
         "SPARQLWrapper>=2.0.0",

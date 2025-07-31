@@ -416,6 +416,7 @@ jobs:
           pip install click
           pip install wheel
           pip install twine
+          pip install setuptools
 
       - name: Build project
         id: make

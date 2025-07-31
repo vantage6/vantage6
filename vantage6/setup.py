@@ -40,7 +40,7 @@ setup(
         "ipython==8.10.0",
         "jinja2==3.1.6",
         "kubernetes==28.1.0",
-        "pandas>=1.5.3",
+        "pandas>=2.2.3",
         "questionary==1.10.0",
         "rich==13.5.2",
         "schema==0.7.5",
