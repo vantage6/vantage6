@@ -4,7 +4,11 @@ from flask import g
 
 from vantage6.common import logger_name
 
-from vantage6.backend.common.permission import PermissionManagerBase, RuleCollectionBase
+from vantage6.backend.common.permission import (
+    PermissionManagerBase,
+    RuleCollectionBase,
+    get_attribute_name,
+)
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
 
 from vantage6.server import db
@@ -81,19 +85,19 @@ class RuleCollection(RuleCollectionBase):
         auth_org = obtain_auth_organization()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation.value}_{Scope.GLOBAL.value}")
+        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has organization permission and organization is
         # the same as the subject organization
-        org_perm = getattr(self, f"{operation.value}_{Scope.ORGANIZATION.value}")
+        org_perm = getattr(self, get_attribute_name(operation, Scope.ORGANIZATION))
         if auth_org.id == subject_org_id and org_perm and org_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # organization is in the collaboration of the own organization
-        col_perm = getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}")
+        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
         if col_perm and col_perm.can():
             for col in auth_org.collaborations:
                 if subject_org_id in [org.id for org in col.organizations]:
@@ -121,13 +125,13 @@ class RuleCollection(RuleCollectionBase):
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation.value}_{Scope.GLOBAL.value}")
+        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
-        col_perm = getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}")
+        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
         if (
             col_perm
             and col_perm.can()
@@ -153,13 +157,13 @@ class RuleCollection(RuleCollectionBase):
             Highest scope that the entity has for the operation. None if the
             entity has no permission for the operation
         """
-        if getattr(self, f"{operation.value}_{Scope.GLOBAL.value}"):
+        if getattr(self, get_attribute_name(operation, Scope.GLOBAL)):
             return Scope.GLOBAL
-        elif getattr(self, f"{operation.value}_{Scope.COLLABORATION.value}"):
+        elif getattr(self, get_attribute_name(operation, Scope.COLLABORATION)):
             return Scope.COLLABORATION
-        elif getattr(self, f"{operation.value}_{Scope.ORGANIZATION.value}"):
+        elif getattr(self, get_attribute_name(operation, Scope.ORGANIZATION)):
             return Scope.ORGANIZATION
-        elif getattr(self, f"{operation.value}_{Scope.OWN.value}"):
+        elif getattr(self, get_attribute_name(operation, Scope.OWN)):
             return Scope.OWN
         else:
             return None
@@ -183,7 +187,7 @@ class RuleCollection(RuleCollectionBase):
         """
         scopes: list[Scope] = self._get_scopes_from(scope)
         for s in scopes:
-            perm = getattr(self, f"{operation.value}_{s.value}", None)
+            perm = getattr(self, get_attribute_name(operation, s), None)
             if perm and perm.can():
                 return True
         return False
@@ -408,7 +412,6 @@ class PermissionManager(PermissionManagerBase):
                 rule.scope, rule.operation
             ):
                 raise UnauthorizedError(
-                    f"You don't have the rule ({rule.name}, "
-                    f"{rule.scope.name.lower()}, "
-                    f"{rule.operation.name.lower()})"
+                    f"You don't have the rule ({rule.name}, {rule.scope}, "
+                    f"{rule.operation})"
                 )

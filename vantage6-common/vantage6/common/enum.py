@@ -1,10 +1,10 @@
-from enum import StrEnum
+from enum import Enum, StrEnum
 
-# Note: List is used instead of regular list, because EnumBase already contains list()
+# Note: List is used instead of regular list, because StrEnumBase already contains list()
 from typing import List
 
 
-class EnumBase(StrEnum):
+class EnumBase(Enum):
     """Base class for all enums"""
 
     @classmethod
@@ -23,7 +23,11 @@ class EnumBase(StrEnum):
         return [(status.name.lower(), status.value) for status in cls]
 
 
-class StorePolicies(EnumBase):
+class StrEnumBase(StrEnum, EnumBase):
+    """Base class for all enums"""
+
+
+class StorePolicies(StrEnumBase):
     """
     Enum for the different types of policies of the algorithm store.
     """
@@ -36,7 +40,7 @@ class StorePolicies(EnumBase):
     ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
-class AlgorithmViewPolicies(EnumBase):
+class AlgorithmViewPolicies(StrEnumBase):
     """Enum for available algorithm view policies"""
 
     PUBLIC = "public"
@@ -44,7 +48,7 @@ class AlgorithmViewPolicies(EnumBase):
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
 
 
-class AlgorithmStepType(EnumBase):
+class AlgorithmStepType(StrEnumBase):
     """Enum to represent the local actions
 
     A container (= function) on a node can perform a single action. Depending on the
@@ -64,14 +68,14 @@ class AlgorithmStepType(EnumBase):
         return step_type in [cls.FEDERATED_COMPUTE.value, cls.CENTRAL_COMPUTE.value]
 
 
-class TaskDatabaseType(EnumBase):
+class TaskDatabaseType(StrEnumBase):
     """Enum to represent the type of database used by a task"""
 
     SOURCE = "source"
     DATAFRAME = "dataframe"
 
 
-class DatabaseType(EnumBase):
+class DatabaseType(StrEnumBase):
     """Enum to represent the type of database"""
 
     CSV = "csv"
@@ -93,7 +97,7 @@ class DatabaseType(EnumBase):
         ]
 
 
-class TaskStatus(EnumBase):
+class TaskStatus(StrEnumBase):
     """Enum to represent the status of a task"""
 
     # All runs have been completed
@@ -121,7 +125,7 @@ class TaskStatus(EnumBase):
         return status in [cls.COMPLETED.value, cls.FAILED.value]
 
 
-class RunStatus(EnumBase):
+class RunStatus(StrEnumBase):
     """Enum to represent the status of a run"""
 
     # Task has not yet been started (usually, node is offline)
@@ -223,7 +227,7 @@ class RunStatus(EnumBase):
         ]
 
 
-class TaskStatusQueryOptions(EnumBase):
+class TaskStatusQueryOptions(StrEnumBase):
     """Enum for different options for querying task statuses"""
 
     OPEN = "open"
@@ -231,7 +235,7 @@ class TaskStatusQueryOptions(EnumBase):
     FINISHED = "finished"
 
 
-class AlgorithmArgumentType(EnumBase):
+class AlgorithmArgumentType(StrEnumBase):
     """Enum for argument types"""
 
     COLUMN = "column"

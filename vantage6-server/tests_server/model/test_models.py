@@ -327,8 +327,8 @@ class TestRuleModel(TestModelBase):
         rules = Rule.get()
         for rule in rules:
             self.assertIsInstance(rule.name, str)
-            self.assertIsInstance(rule.operation, Operation)
-            self.assertIsInstance(rule.scope, Scope)
+            self.assertIn(rule.operation, Operation.list())
+            self.assertIn(rule.scope, Scope.list())
 
             for role in rule.roles:
                 self.assertIsInstance(role, Role)

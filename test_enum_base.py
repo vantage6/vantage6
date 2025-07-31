@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Test script to demonstrate the EnumBase functionality
+Test script to demonstrate the StrEnumBase functionality
 """
 
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 
 
-class TestEnum(EnumBase):
+class TestEnum(StrEnumBase):
     """Test enum to demonstrate functionality"""
 
     VALUE_1 = "test1"
@@ -15,7 +15,7 @@ class TestEnum(EnumBase):
 
 
 def test_enum_base_functionality():
-    """Test the EnumBase list() method"""
+    """Test the StrEnumBase list() method"""
 
     assert TestEnum.list() == ["test1", "test2", "test3"]
     assert TestEnum.names() == ["value_1", "value_2", "value_3"]

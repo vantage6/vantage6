@@ -1,32 +1,32 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, Enum, String, Text, select
+from sqlalchemy import Column, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
-class Operation(EnumBase):
+class Operation(StrEnumBase):
     """Enumerator of all available operations"""
 
-    VIEW = "v"
-    EDIT = "e"
-    CREATE = "c"
-    DELETE = "d"
-    SEND = "s"
-    RECEIVE = "r"
+    VIEW = "view"
+    EDIT = "edit"
+    CREATE = "create"
+    DELETE = "delete"
+    SEND = "send"
+    RECEIVE = "receive"
 
 
-class Scope(EnumBase):
+class Scope(StrEnumBase):
     """Enumerator of all available scopes"""
 
     OWN = "own"
-    ORGANIZATION = "org"
-    COLLABORATION = "col"
-    GLOBAL = "glo"
+    ORGANIZATION = "organization"
+    COLLABORATION = "collaboration"
+    GLOBAL = "global"
 
     @classmethod
     def get_name_from_value(cls, value: str) -> str | None:

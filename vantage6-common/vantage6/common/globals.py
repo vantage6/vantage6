@@ -1,7 +1,7 @@
 from enum import IntEnum
 from pathlib import Path
 
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 
 #
 #   PACKAGE GLOBALS
@@ -56,7 +56,7 @@ INTERVAL_MULTIPLIER = 1.5
 DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 
 
-class InstanceType(EnumBase):
+class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
 
     NODE = "node"
@@ -65,7 +65,7 @@ class InstanceType(EnumBase):
     UI = "ui"
 
 
-class NodePolicy(EnumBase):
+class NodePolicy(StrEnumBase):
     """Enum containing the names of the names of the node policies"""
 
     ALLOWED_ALGORITHMS = "allowed_algorithms"
@@ -75,7 +75,7 @@ class NodePolicy(EnumBase):
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
 
-class NodeConfigKey(EnumBase):
+class NodeConfigKey(StrEnumBase):
     """Enum containing the keys of the node configuration"""
 
     ENCRYPTION = "encryption"
@@ -96,7 +96,7 @@ class Ports(IntEnum):
     DEV_ALGO_STORE = 7602
 
 
-class ContainerEnvNames(EnumBase):
+class ContainerEnvNames(StrEnumBase):
     """Enum containing the names of the container environment variables"""
 
     FUNCTION_ACTION = "FUNCTION_ACTION"
@@ -116,7 +116,7 @@ class ContainerEnvNames(EnumBase):
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
 
 
-class RequiredNodeEnvVars(EnumBase):
+class RequiredNodeEnvVars(StrEnumBase):
     """Enum containing the required node environment variables"""
 
     V6_API_KEY = "V6_API_KEY"
@@ -125,7 +125,7 @@ class RequiredNodeEnvVars(EnumBase):
     KEYCLOAK_REALM = "KEYCLOAK_REALM"
 
 
-class AuthStatus(EnumBase):
+class AuthStatus(StrEnumBase):
     """Enum containing the different statuses of the authenticable (node/user)"""
 
     ONLINE = "online"

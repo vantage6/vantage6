@@ -1,9 +1,9 @@
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
-class DefaultRole(EnumBase):
+class DefaultRole(StrEnumBase):
     """Enum containing the names of the default roles"""
 
     DEVELOPER = "Developer"

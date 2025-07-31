@@ -440,8 +440,8 @@ class RoleSchema(HATEOASModelSchema):
 
 
 class RuleSchema(HATEOASModelSchema):
-    scope = fields.Function(serialize=lambda obj: obj.scope.name)
-    operation = fields.Function(serialize=lambda obj: obj.operation.name)
+    scope = fields.Function(serialize=lambda obj: obj.scope)
+    operation = fields.Function(serialize=lambda obj: obj.operation)
     users = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="user", link_from="rule_id")
     )

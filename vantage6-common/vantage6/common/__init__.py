@@ -13,7 +13,7 @@ from colorama import Fore, Style, init
 
 # make sure the version is available
 from vantage6.common._version import __version__  # noqa: F401
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 
 # init colorstuff
@@ -354,7 +354,7 @@ def split_rabbitmq_uri(rabbit_uri: str) -> dict:
     }
 
 
-def validate_required_env_vars(env_vars: EnumBase) -> None:
+def validate_required_env_vars(env_vars: StrEnumBase) -> None:
     """Validate that the required environment variables are set."""
     for env_var in env_vars.list():
         if not os.environ.get(env_var):

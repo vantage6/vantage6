@@ -17,7 +17,7 @@ from vantage6.common.algorithm_function import (
     get_vantage6_decorator_type,
     is_vantage6_algorithm_func,
 )
-from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType, EnumBase
+from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType, StrEnumBase
 
 from vantage6.algorithm.tools import DecoratorStepType
 
@@ -54,7 +54,7 @@ class MergePreference:
         cls._prefer_existing = None
 
 
-class FunctionArgumentType(EnumBase):
+class FunctionArgumentType(StrEnumBase):
     """Type of the function argument"""
 
     PARAMETER = "parameter"

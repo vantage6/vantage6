@@ -4,14 +4,14 @@ from sqlalchemy import Column, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.common.enum import EnumBase
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.backend.common.permission_models import RuleInterface
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 
 
-class Operation(EnumBase):
+class Operation(StrEnumBase):
     """Enumerator of all available operations"""
 
     VIEW = "view"

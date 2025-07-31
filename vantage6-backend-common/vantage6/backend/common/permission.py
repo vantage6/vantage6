@@ -18,6 +18,31 @@ log = logging.getLogger(module_name)
 RuleNeed = NamedTuple("RuleNeed", [("name", str), ("scope", str), ("operation", str)])
 
 
+def get_attribute_name(operation: str, scope: str | None = None) -> str:
+    """
+    Get the attribute name for a rule.
+
+    We only take the first letter of the operation and the first 3 letters of the scope
+    to keep attribute names like 'v_glo' for view global
+
+    Parameters
+    ----------
+    operation: str
+        Operation of the rule
+    scope: str | None
+        Scope of the rule
+
+    Returns
+    -------
+    str
+        Attribute name for the rule
+    """
+    attribute_name = operation[0].lower()
+    if scope:
+        attribute_name += f"_{scope[0:3].lower()}"
+    return attribute_name
+
+
 class RuleCollectionBase(ABC, dict):
     """
     Class that tracks a set of all rules for a certain resource name
@@ -43,9 +68,8 @@ class RuleCollectionBase(ABC, dict):
             What operation the rule applies to
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
-        attribute_name = operation
-        if scope:
-            attribute_name += f"_{scope}"
+
+        attribute_name = get_attribute_name(operation, scope)
         self.__setattr__(attribute_name, permission)
 
 

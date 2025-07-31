@@ -3,8 +3,6 @@ import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
-from vantage6.common.enum import EnumBase
-
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 
