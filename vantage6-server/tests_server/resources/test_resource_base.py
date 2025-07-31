@@ -105,6 +105,7 @@ class TestResourceBase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         Database().clear_data()
+        Database().close()
 
     def setUp(self):
         # set session.session

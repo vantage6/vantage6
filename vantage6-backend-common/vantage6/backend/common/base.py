@@ -1,29 +1,36 @@
 # TODO this is almost a copy of the same file in the server package. Refactor
+import inspect as class_inspect
 import logging
 import os
-import inspect as class_inspect
-from typing import Any
 from time import sleep
-from flask.globals import g
+from typing import Any
 
-from sqlalchemy import Column, Integer, inspect, Table, exists, create_engine, text
+from flask.globals import g
+from sqlalchemy import (
+    Column,
+    Integer,
+    Table,
+    create_engine,
+    exists,
+    inspect,
+    select,
+    text,
+)
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
-
-from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
+from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
+from sqlalchemy.orm import RelationshipProperty, scoped_session, sessionmaker
 from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
-from sqlalchemy import select
 
 from vantage6.common import logger_name
+
 from vantage6.backend.common import session
 from vantage6.backend.common.globals import (
     MAX_NUMBER_OF_ATTEMPTS,
     RETRY_DELAY_IN_SECONDS,
 )
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -73,6 +80,8 @@ class BaseDatabase:
         unit testing.
         """
         self._drop_all(base)
+        if self.engine:
+            self.engine.dispose()
         self.engine = None
         self.Session = None
         self.object_session = None

@@ -18,6 +18,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
     def tearDown(self):
         # clear_data() will clear session too
         Database().clear_data()
+        Database().close()
 
     def test_cleanup_completed_old_run(self):
         # Eligible: completed > 30 days ago
@@ -99,6 +100,7 @@ class TestCleanupRunsCount(unittest.TestCase):
     def tearDown(self):
         # clear_data() will clear session too
         Database().clear_data()
+        Database().close()
 
     def create_runs(self):
         run0 = Run(
