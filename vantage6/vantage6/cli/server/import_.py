@@ -4,7 +4,6 @@ from threading import Thread
 import click
 import docker
 from sqlalchemy.engine.url import make_url
-from vantage6.cli.globals import ServerGlobals
 
 from vantage6.common import info, warning
 from vantage6.common.docker.addons import check_docker_running, pull_image
@@ -14,10 +13,12 @@ from vantage6.common.globals import (
     DEFAULT_SERVER_IMAGE,
     InstanceType,
 )
-from vantage6.cli.context.server import ServerContext
-from vantage6.cli.utils import check_config_name_allowed
+
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import print_log_worker
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import ServerGlobals
+from vantage6.cli.utils import check_config_name_allowed
 
 
 # TODO this method has a lot of duplicated code from `start`
@@ -33,8 +34,7 @@ from vantage6.cli.common.utils import print_log_worker
 @click.option(
     "--mount-src",
     default="",
-    help="Override vantage6 source code in container with the source"
-    " code in this path",
+    help="Override vantage6 source code in container with the source code in this path",
 )
 @click.option(
     "--keep/--auto-remove",
@@ -42,7 +42,7 @@ from vantage6.cli.common.utils import print_log_worker
     help="Keep image after finishing. Useful for debugging",
 )
 @click.option("--wait", default=False, help="Wait for the import to finish")
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 def cli_server_import(
     ctx: ServerContext,
     file: str,
@@ -111,7 +111,7 @@ def cli_server_import(
         mounts.append(docker.types.Mount("/mnt/database/", dirname, type="bind"))
 
         environment_vars = {
-            ServerGlobals.DB_URI_ENV_VAR: f"sqlite:////mnt/database/{basename}"
+            ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}"
         }
 
     else:

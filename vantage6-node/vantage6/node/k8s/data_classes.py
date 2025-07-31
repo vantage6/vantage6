@@ -1,5 +1,7 @@
 from typing import NamedTuple
 
+from vantage6.common.enum import RunStatus
+
 
 class Result(NamedTuple):
     """
@@ -13,15 +15,15 @@ class Result(NamedTuple):
         Logs attached to current algorithm run
     data: str
         Output data of the algorithm
-    status_code: int
-        Status code of the algorithm run
+    status: RunStatus
+        Status of the algorithm run
     """
 
     run_id: int
     task_id: int
     logs: str
     data: str
-    status: str
+    status: RunStatus
     parent_id: int | None
 
 

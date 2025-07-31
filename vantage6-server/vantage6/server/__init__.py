@@ -7,7 +7,9 @@ authenticated nodes and users via the socketIO server that is run here.
 """
 
 import os
+
 from gevent import monkey
+
 from vantage6.server.algo_store_communication import add_algorithm_store_to_database
 
 # This is a workaround for readthedocs
@@ -16,48 +18,48 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
+import datetime as dt
 import importlib
 import logging
-import uuid
 import time
-import datetime as dt
+import uuid
+from http import HTTPStatus
+from threading import Thread
 
 from flask import current_app
 from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
-from threading import Thread
 from sqlalchemy.orm.exc import NoResultFound
-from http import HTTPStatus
 
 from vantage6.common import logger_name, split_rabbitmq_uri
-from vantage6.common.globals import PING_INTERVAL_SECONDS, AuthStatus
-from vantage6.backend.common.permission import RuleNeed
-from vantage6.backend.common import Vantage6App
 from vantage6.common.globals import (
+    DEFAULT_PROMETHEUS_EXPORTER_PORT,
     PING_INTERVAL_SECONDS,
     AuthStatus,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
 )
-from vantage6.backend.common.permission import RuleNeed
+
+from vantage6.cli.context.server import ServerContext
+
 from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
-from vantage6.cli.context.server import ServerContext
-from vantage6.server.model.base import DatabaseSessionManager, Database
-from vantage6.server.permission import PermissionManager
+from vantage6.backend.common.permission import RuleNeed
+
 from vantage6.server import db
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.globals import (
-    RESOURCES,
-    RESOURCES_PATH,
-    SUPER_USER_INFO,
-    SERVER_MODULE_NAME,
-)
-from vantage6.server.websockets import DefaultSocketNamespace
-from vantage6.server.default_roles import get_default_roles, DefaultRole
-from vantage6.server.controller import cleanup
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
+from vantage6.server.controller import cleanup
+from vantage6.server.default_roles import DefaultRole, get_default_roles
+from vantage6.server.globals import (
+    RESOURCES,
+    RESOURCES_PATH,
+    SERVER_MODULE_NAME,
+    SUPER_USER_INFO,
+)
+from vantage6.server.model.base import Database, DatabaseSessionManager
+from vantage6.server.permission import PermissionManager
+from vantage6.server.resource.common.output_schema import HATEOASModelSchema
+from vantage6.server.websockets import DefaultSocketNamespace
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -234,7 +236,7 @@ class ServerApp(Vantage6App):
 
             # in case of a user or node, we find an authenticated entity
             if isinstance(auth, db.Node):
-                for rule in db.Role.get_by_name(DefaultRole.NODE).rules:
+                for rule in db.Role.get_by_name(DefaultRole.NODE.value).rules:
                     auth_identity.provides.add(
                         RuleNeed(
                             name=rule.name,
@@ -328,8 +330,7 @@ class ServerApp(Vantage6App):
         if not (org := db.Organization.get_by_name("root")):
             org = db.Organization(name="root")
 
-        # TODO use constant instead of 'Root' literal
-        root = db.Role.get_by_name(DefaultRole.ROOT)
+        root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
         # TODO no longer use any default root username / password
         log.warning(

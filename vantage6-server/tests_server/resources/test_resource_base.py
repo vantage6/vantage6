@@ -1,38 +1,38 @@
-from uuid import uuid1
-import unittest
+import json
+import os
 import random
 import string
-import os
-import json
+import unittest
+from http import HTTPStatus
+from unittest.mock import MagicMock, patch
+from uuid import uuid1
+
 import jwt
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
-
-from http import HTTPStatus
-
 from flask import Response as BaseResponse
 from flask.testing import FlaskClient
 from flask_socketio import SocketIO
 from werkzeug.utils import cached_property
-from unittest.mock import MagicMock, patch
+
+from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.globals import InstanceType
 
 from vantage6.backend.common.test_context import TestContext
-from vantage6.server.globals import PACKAGE_FOLDER
 
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.common.globals import InstanceType
-from vantage6.common.enum import AlgorithmStepType, RunStatus
 from vantage6.server import ServerApp
+from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server.model import (
-    Organization,
-    User,
-    Node,
     Collaboration,
-    Task,
-    Run,
+    Node,
+    Organization,
     Rule,
+    Run,
+    Task,
+    User,
 )
+from vantage6.server.model.base import Database, DatabaseSessionManager
 
 # Generate a mock RSA key pair for testing
 MOCK_PRIVATE_KEY = rsa.generate_private_key(
@@ -105,6 +105,7 @@ class TestResourceBase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         Database().clear_data()
+        Database().close()
 
     def setUp(self):
         # set session.session
@@ -220,7 +221,7 @@ class TestResourceBase(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
-                runs=[Run(status=RunStatus.PENDING, action=action)],
+                runs=[Run(status=RunStatus.PENDING.value, action=action.value)],
             )
             task.save()
 
@@ -317,6 +318,6 @@ class TestResourceBase(unittest.TestCase):
     def create_run(self, task=None):
         if not task:
             task = self.create_task()
-        run = Run(status=RunStatus.PENDING, task=task)
+        run = Run(status=RunStatus.PENDING.value, task=task)
         run.save()
         return run

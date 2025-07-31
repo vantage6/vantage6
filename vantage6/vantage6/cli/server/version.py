@@ -4,9 +4,10 @@ import docker
 from vantage6.common import error
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import InstanceType
-from vantage6.cli.common.utils import get_server_name, get_running_servers
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+
 from vantage6.cli import __version__
+from vantage6.cli.common.utils import get_running_servers, get_server_name
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
 @click.command()
@@ -22,10 +23,10 @@ def cli_server_version(name: str, system_folders: bool) -> None:
     check_docker_running()
     client = docker.from_env()
 
-    running_server_names = get_running_servers(client, InstanceType.SERVER.value)
+    running_server_names = get_running_servers(client, InstanceType.SERVER)
 
     name = get_server_name(
-        name, system_folders, running_server_names, InstanceType.SERVER.value
+        name, system_folders, running_server_names, InstanceType.SERVER
     )
 
     if name in running_server_names:

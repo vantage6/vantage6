@@ -1,5 +1,6 @@
 from typing import List
-from marshmallow import Schema, fields, validates, ValidationError
+
+from marshmallow import Schema, ValidationError, fields, validates
 from marshmallow.validate import Length, Range
 
 MAX_LEN_NAME = 128

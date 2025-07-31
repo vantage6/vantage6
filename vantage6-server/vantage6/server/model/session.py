@@ -1,22 +1,20 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 from datetime import datetime, timezone
+
 from sqlalchemy import (
     Column,
-    String,
-    Integer,
-    ForeignKey,
     DateTime,
+    ForeignKey,
+    Integer,
+    String,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.rule import Scope
 from vantage6.server.model.base import Base
-
-if TYPE_CHECKING:
-    from vantage6.server.model.collaboration import Collaboration
+from vantage6.server.model.collaboration import Collaboration
+from vantage6.server.model.rule import Scope
 
 
 class Session(Base):
@@ -98,7 +96,7 @@ class Session(Base):
         return False
 
     @staticmethod
-    def name_exists(name: str, collaboration: "Collaboration") -> bool:
+    def name_exists(name: str, collaboration: Collaboration) -> bool:
         """
         Check if a session with the given name already exists in the collaboration.
 

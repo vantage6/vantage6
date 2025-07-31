@@ -1,18 +1,19 @@
-import logging
 import datetime as dt
-
+import logging
 from http import HTTPStatus
 from socket import SocketIO
-from flask import request, g
+
+from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 
 from vantage6.common import logger_name
-from vantage6.common.enum import RunStatus
+from vantage6.common.enum import RunStatus, TaskStatus
 from vantage6.common.globals import AuthStatus
-from vantage6.server.resource import ServicesResources, with_user
+
 from vantage6.server import db
-from vantage6.server.permission import Scope, Operation, PermissionManager
+from vantage6.server.permission import Operation, PermissionManager, Scope
+from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.input_schema import (
     KillNodeTasksInputSchema,
     KillTaskInputSchema,
@@ -169,7 +170,7 @@ class KillTask(ServicesResources):
         if not task:
             return {"msg": f"Task id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if RunStatus.has_finished(task.status):
+        if TaskStatus.has_finished(task.status):
             return {
                 "msg": f"Task {id_} already finished with status "
                 f"'{task.status}', so cannot kill it!"
@@ -257,7 +258,7 @@ class KillNodeTasks(ServicesResources):
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if node.status != AuthStatus.ONLINE.value:
+        if node.status != AuthStatus.ONLINE:
             return {
                 "msg": f"Node {id_} is not online so cannot kill its tasks!"
             }, HTTPStatus.BAD_REQUEST
@@ -325,7 +326,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
         for run in task.runs:
             if RunStatus.has_finished(run.status):
                 continue  # don't overwrite status if run is already finished
-            run.status = RunStatus.KILLED
+            run.status = RunStatus.KILLED.value
             run.finished_at = dt.datetime.now(dt.timezone.utc)
             run.save()
 

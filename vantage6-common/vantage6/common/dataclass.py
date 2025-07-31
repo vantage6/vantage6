@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 
 from vantage6.common.enum import DatabaseType
 
@@ -30,13 +31,18 @@ class TaskDB:
     local_uri: str | None = None
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TaskDB":
+    def from_dict(cls, data: dict) -> Self:
         if "label" not in data:
             raise ValueError("Database label is required")
         if "type" not in data:
             raise ValueError(
                 f"Database with label {data['label']} is missing a type. "
                 "Please provide a valid type."
+            )
+        if data["type"] not in DatabaseType.list():
+            raise ValueError(
+                f"Database with label {data['label']} has an invalid type: "
+                f"{data['type']}. Please provide a valid type."
             )
         if "uri" not in data:
             raise ValueError(
@@ -45,6 +51,6 @@ class TaskDB:
             )
         return cls(
             label=data["label"],
-            type=data["type"],
+            type=DatabaseType(data["type"]),
             uri=data["uri"],
         )

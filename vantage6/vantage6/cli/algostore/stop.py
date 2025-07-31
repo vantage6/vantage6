@@ -2,12 +2,13 @@ import click
 import docker
 from colorama import Fore, Style
 
-from vantage6.common import info, warning, error
+from vantage6.common import error, info, warning
 from vantage6.common.docker.addons import (
     check_docker_running,
     remove_container_if_exists,
 )
 from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
@@ -23,7 +24,7 @@ def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_stores: bool):
     client = docker.from_env()
 
     running_stores = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE}"}
     )
 
     if not running_stores:

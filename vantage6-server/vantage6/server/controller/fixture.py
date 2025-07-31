@@ -1,12 +1,13 @@
-import uuid
 import logging
+import uuid
 
+from vantage6.common import bytes_to_base64s
 from vantage6.common.enum import RunStatus
 from vantage6.common.serialization import serialize
-from vantage6.common import bytes_to_base64s
+
 import vantage6.server.model as db
-from vantage6.server.model.base import Database
 from vantage6.server import RESOURCES, RESOURCES_PATH, DefaultRole
+from vantage6.server.model.base import Database
 from vantage6.server.permission import PermissionManager
 
 module_name = __name__.split(".")[-1]
@@ -150,7 +151,7 @@ def load(fixtures: dict, drop_all: bool = False) -> None:
                     task=task,
                     arguments=bytes_to_base64s(serialize({"a": "b"})),
                     organization=organization,
-                    status=RunStatus.PENDING,
+                    status=RunStatus.PENDING.value,
                 )
                 run.save()
 

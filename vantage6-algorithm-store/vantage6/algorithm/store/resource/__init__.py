@@ -1,22 +1,22 @@
 import logging
-
 from functools import wraps
 from http import HTTPStatus
-from flask import request, g
+
+from flask import g, request
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from flask_mail import Mail
 from flask_restful import Api
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.model.user import User
+
 from vantage6.backend.common.services_resources import BaseServicesResources
+
 from vantage6.algorithm.store import PermissionManager
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.model.common.enums import (
-    DefaultStorePolicies,
-)
+from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.user import User
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -88,8 +88,8 @@ def _authorize_user(
     g.user = user
     if not user.can(resource, operation):
         msg = (
-            f"You are not allowed to perform the operation '{operation}' on resource "
-            f"'{resource}'"
+            f"You are not allowed to perform the operation '{operation}' on "
+            f"resource '{resource}'"
         )
 
         log.warning(msg)
@@ -180,7 +180,8 @@ def with_permission_to_view_algorithms() -> callable:
             policies = Policy.get_as_dict()
             # check if everyone has permission to view algorithms
             algorithm_view_policy = policies.get(
-                StorePolicies.ALGORITHM_VIEW, DefaultStorePolicies.ALGORITHM_VIEW.value
+                StorePolicies.ALGORITHM_VIEW.value,
+                DefaultStorePolicies.ALGORITHM_VIEW.value,
             )
 
             # check if user is trying to view algorithms that are not approved by review

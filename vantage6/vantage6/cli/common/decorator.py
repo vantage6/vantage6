@@ -1,11 +1,13 @@
 from functools import wraps
 from pathlib import Path
+
 import click
 
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
+
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
-from vantage6.cli.context import select_context_class, get_context
+from vantage6.cli.context import get_context, select_context_class
 
 
 def click_insert_context(

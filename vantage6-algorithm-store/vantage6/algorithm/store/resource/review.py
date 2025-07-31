@@ -1,10 +1,9 @@
-import logging
 import datetime
-
+import logging
 from http import HTTPStatus
 from threading import Thread
 
-from flask import request, g, render_template, Flask, current_app
+from flask import Flask, current_app, g, render_template, request
 from flask_mail import Mail
 from flask_restful import Api
 from marshmallow import ValidationError
@@ -12,21 +11,22 @@ from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
-from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.backend.common import get_server_url
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
 )
-from vantage6.backend.common import get_server_url
+from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.algorithm.store.model.common.enums import ReviewStatus, AlgorithmStatus
-from vantage6.algorithm.store.permission import PermissionManager, Operation as P
-from vantage6.algorithm.store.resource import (
-    with_permission,
-    AlgorithmStoreResources,
-)
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.permission import Operation as P, PermissionManager
+from vantage6.algorithm.store.resource import (
+    AlgorithmStoreResources,
+    with_permission,
+)
 from vantage6.algorithm.store.resource.schema.input_schema import (
     ReviewCreateInputSchema,
     ReviewUpdateInputSchema,
@@ -318,12 +318,12 @@ class Reviews(ReviewBase):
             }, HTTPStatus.BAD_REQUEST
         # check if a policy exist that allow the user to assign a review
         if not Policy.search_user_in_policy(
-            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value
+            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS
         ):
             return {
                 "msg": "You are not allowed to assign reviews due to the policy set "
                 "by the administrator of this store."
-            }, HTTPStatus.UNAUTHORIZED
+            }, HTTPStatus.FORBIDDEN
 
         # check if the developer is the review assigner and if this is allowed
         if (
@@ -352,7 +352,7 @@ class Reviews(ReviewBase):
         # a different dev policy is set
 
         elif not Policy.search_user_in_policy(
-            reviewer, StorePolicies.ALLOWED_REVIEWERS.value
+            reviewer, StorePolicies.ALLOWED_REVIEWERS
         ):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms, "
@@ -388,7 +388,7 @@ class Reviews(ReviewBase):
 
         # also update the algorithm status to 'under review' if policies are met:
         if self._is_reviewers_assignment_finished(algorithm.reviews):
-            algorithm.status = AlgorithmStatus.UNDER_REVIEW
+            algorithm.status = AlgorithmStatus.UNDER_REVIEW.value
             algorithm.save()
 
         # send email to the reviewer to notify them of the new review
@@ -559,11 +559,11 @@ class Review(ReviewBase):
             if not other_reviews or not self._is_reviewers_assignment_finished(
                 other_reviews
             ):
-                algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+                algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
                 # it is now deleted, the algorithm should be approved
-                algorithm.status = AlgorithmStatus.APPROVED
+                algorithm.status = AlgorithmStatus.APPROVED.value
             algorithm.save()
         elif algorithm.status == AlgorithmStatus.APPROVED:
             # for algorithms that are currently approved, the reviews may not be
@@ -736,7 +736,7 @@ class ReviewApprove(ReviewUpdateResources):
             }, HTTPStatus.BAD_REQUEST
 
         # update the review status to 'approved'
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
@@ -831,7 +831,7 @@ class ReviewReject(ReviewUpdateResources):
             }, HTTPStatus.BAD_REQUEST
 
         # update the review status to 'rejected'
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
@@ -839,7 +839,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # also update the algorithm status to 'rejected'
         algorithm: db.Algorithm = review.algorithm
-        algorithm.status = AlgorithmStatus.REJECTED
+        algorithm.status = AlgorithmStatus.REJECTED.value
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
 
@@ -847,7 +847,7 @@ class ReviewReject(ReviewUpdateResources):
         for other_review in algorithm.reviews:
             if other_review.id == review.id:
                 continue
-            other_review.status = ReviewStatus.DROPPED
+            other_review.status = ReviewStatus.DROPPED.value
             other_review.save()
 
             # notify the reviewer by email that this review is no longer necessary

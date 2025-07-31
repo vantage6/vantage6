@@ -1,4 +1,4 @@
-from enum import Enum
+from vantage6.common.enum import StrEnumBase
 
 # pagination settings
 DEFAULT_PAGE = 1
@@ -18,7 +18,7 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
 
-class RequiredServerEnvVars(str, Enum):
+class RequiredServerEnvVars(StrEnumBase):
     """Enum containing the required server environment variables"""
 
     KEYCLOAK_URL = "KEYCLOAK_URL"

@@ -402,7 +402,7 @@ class Node:
             self.client.run.patch(
                 id_=run_id,
                 data={
-                    "status": RunStatus.FAILED,
+                    "status": RunStatus.FAILED.value,
                     "finished_at": datetime.datetime.now().isoformat(),
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
@@ -427,14 +427,14 @@ class Node:
                 self.client.run.patch(
                     id_=run_id,
                     data={
-                        "status": RunStatus.FAILED,
+                        "status": RunStatus.FAILED.value,
                         "log": "Could not obtain algorithm container token",
                     },
                 )
 
         # Run the container. This adds the created container/task to the list
         # __docker.active_tasks
-        task_status = self.k8s_container_manager.run(
+        run_status: RunStatus = self.k8s_container_manager.run(
             action=container_action,
             run_id=run_id,
             task_info=task,
@@ -446,8 +446,8 @@ class Node:
         )
 
         # save task status to the server
-        update = {"status": task_status}
-        if task_status == RunStatus.NOT_ALLOWED:
+        update = {"status": run_status.value}
+        if run_status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
@@ -459,7 +459,7 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(task, run_id, task_status)
+        self.__emit_algorithm_status_change(task, run_id, run_status)
 
     def __emit_algorithm_status_change(
         self, task: dict, run_id: int, status: RunStatus
@@ -474,7 +474,7 @@ class Node:
         run_id : int
             Run ID
         status : RunStatus
-            Task status
+            Status of the algorithm run
         """
         # ensure that the /tasks namespace is connected. This may take a while
         # (usually < 5s) when the socket just (re)connected
@@ -490,7 +490,7 @@ class Node:
             "algorithm_status_change",
             data={
                 "node_id": self.client.whoami.id_,
-                "status": status,
+                "status": status.value,
                 "run_id": run_id,
                 "task_id": task["id"],
                 "collaboration_id": self.client.collaboration_id,
@@ -543,7 +543,7 @@ class Node:
                     data={
                         "result": results.data,
                         "log": results.logs,
-                        "status": results.status,
+                        "status": results.status.value,
                         "finished_at": datetime.datetime.now().isoformat(),
                     },
                     init_org_id=init_org.get("id"),
@@ -555,7 +555,7 @@ class Node:
                     "algorithm_status_change",
                     data={
                         "node_id": self.client.whoami.id_,
-                        "status": results.status,
+                        "status": results.status.value,
                         "run_id": results.run_id,
                         "task_id": results.task_id,
                         "collaboration_id": self.client.collaboration_id,
@@ -782,7 +782,8 @@ class Node:
         # return killed_algos
         # TODO (HC) Implement using k8s container manager
         print(
-            f">>>>>>>Here I'm supposed to kill a runnin job pod given this info: {json.dumps(kill_info, indent=4)}"
+            ">>>>>>>Here I'm supposed to kill a runnin job pod given this info: "
+            f"{json.dumps(kill_info, indent=4)}"
         )
         return []
 
@@ -806,22 +807,22 @@ class Node:
         encryption_config = self.config.get("encryption")
         if encryption_config:
             if encryption_config.get("enabled") is not None:
-                config_to_share[NodeConfigKey.ENCRYPTION] = str(
+                config_to_share[NodeConfigKey.ENCRYPTION.value] = str(
                     encryption_config.get("enabled")
                 )
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
-        config_to_share[NodeConfigKey.ALLOWED_ALGORITHMS] = policies.get(
-            NodePolicy.ALLOWED_ALGORITHMS, "all"
+        config_to_share[NodeConfigKey.ALLOWED_ALGORITHMS.value] = policies.get(
+            NodePolicy.ALLOWED_ALGORITHMS.value, "all"
         )
-        if policies.get(NodePolicy.ALLOWED_USERS) is not None:
-            config_to_share[NodeConfigKey.ALLOWED_USERS] = policies.get(
-                NodePolicy.ALLOWED_USERS
+        if policies.get(NodePolicy.ALLOWED_USERS.value) is not None:
+            config_to_share[NodeConfigKey.ALLOWED_USERS.value] = policies.get(
+                NodePolicy.ALLOWED_USERS.value
             )
-        if policies.get(NodePolicy.ALLOWED_ORGANIZATIONS) is not None:
-            config_to_share[NodeConfigKey.ALLOWED_ORGANIZATIONS] = policies.get(
-                NodePolicy.ALLOWED_ORGANIZATIONS
+        if policies.get(NodePolicy.ALLOWED_ORGANIZATIONS.value) is not None:
+            config_to_share[NodeConfigKey.ALLOWED_ORGANIZATIONS.value] = policies.get(
+                NodePolicy.ALLOWED_ORGANIZATIONS.value
             )
 
         # share node database labels and types to help people extract data from
@@ -834,8 +835,8 @@ class Node:
             labels.append(label)
             types[f"db_type_{label}"] = type_
 
-        config_to_share[NodeConfigKey.DATABASE_LABELS] = labels
-        config_to_share[NodeConfigKey.DATABASE_TYPES] = types
+        config_to_share[NodeConfigKey.DATABASE_LABELS.value] = labels
+        config_to_share[NodeConfigKey.DATABASE_TYPES.value] = types
 
         self.log.debug("Sharing node configuration: %s", config_to_share)
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")

@@ -171,15 +171,15 @@ class AlgorithmStoreApp(Vantage6App):
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():
             if policy in [
-                StorePolicies.ALLOWED_REVIEWERS,
-                StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+                StorePolicies.ALLOWED_REVIEWERS.value,
+                StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value,
             ]:
                 if not isinstance(policy_value, list):
                     log.warning("Policy '%s' should be a list, skipping", policy)
                     continue
                 for value in policy_value:
                     db.Policy(key=policy, value=value).save()
-            elif policy not in [p.value for p in StorePolicies]:
+            elif policy not in StorePolicies.list():
                 log.warning("Policy '%s' is not a valid policy, skipping", policy)
                 continue
             elif isinstance(policy_value, list):
@@ -218,7 +218,10 @@ class AlgorithmStoreApp(Vantage6App):
         """
         # set all algorithms that are under review or awaiting review to approved
         for algorithm in db.Algorithm.get_by_algorithm_status(
-            [AlgorithmStatus.UNDER_REVIEW, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT]
+            [
+                AlgorithmStatus.UNDER_REVIEW,
+                AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            ]
         ):
             algorithm.approve()
 
@@ -244,7 +247,7 @@ class AlgorithmStoreApp(Vantage6App):
                         "this point that the user exists at the given vantage6 server."
                     )
 
-                    root = db.Role.get_by_name(DefaultRole.ROOT)
+                    root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
                     root_user = db.User(
                         username=root_username,

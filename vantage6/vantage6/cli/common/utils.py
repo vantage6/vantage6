@@ -78,7 +78,7 @@ def get_running_servers(
     return [server.name for server in running_servers]
 
 
-def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
+def get_server_configuration_list(instance_type: InstanceType) -> None:
     """
     Print list of available server configurations.
 
@@ -90,11 +90,7 @@ def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
     client = docker.from_env()
     ctx_class = select_context_class(instance_type)
 
-    instance_type_value = (
-        instance_type.value if isinstance(instance_type, enum.Enum) else instance_type
-    )
-
-    running_server_names = get_running_servers(client, instance_type_value)
+    running_server_names = get_running_servers(client, instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
@@ -108,26 +104,24 @@ def get_server_configuration_list(instance_type: InstanceType.SERVER) -> None:
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-system-{instance_type_value}"
-            in running_server_names
+            if f"{APPNAME}-{config.name}-system-{instance_type}" in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25} System ")
+        click.echo(f"{config.name:25}{status:25} System ")
 
     # user folders
     configs, f2 = ctx_class.available_configurations(system_folders=False)
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-user-{instance_type_value}"
-            in running_server_names
+            if f"{APPNAME}-{config.name}-user-{instance_type}" in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25} User   ")
+        click.echo(f"{config.name:25}{status:25} User   ")
 
     click.echo("-" * 85)
     if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")
 
 
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:

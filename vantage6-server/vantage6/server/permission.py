@@ -1,14 +1,20 @@
 import logging
 
 from flask import g
-from vantage6.server import db
 
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
+from vantage6.common import logger_name
+
+from vantage6.backend.common.permission import (
+    PermissionManagerBase,
+    RuleCollectionBase,
+    get_attribute_name,
+)
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
+
+from vantage6.server import db
 from vantage6.server.model.base import Base
 from vantage6.server.model.role import Role
-from vantage6.server.model.rule import Rule, Operation, Scope
-from vantage6.common import logger_name
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -79,19 +85,19 @@ class RuleCollection(RuleCollectionBase):
         auth_org = obtain_auth_organization()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation}_{Scope.GLOBAL}")
+        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has organization permission and organization is
         # the same as the subject organization
-        org_perm = getattr(self, f"{operation}_{Scope.ORGANIZATION}")
+        org_perm = getattr(self, get_attribute_name(operation, Scope.ORGANIZATION))
         if auth_org.id == subject_org_id and org_perm and org_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # organization is in the collaboration of the own organization
-        col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
+        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
         if col_perm and col_perm.can():
             for col in auth_org.collaborations:
                 if subject_org_id in [org.id for org in col.organizations]:
@@ -119,13 +125,13 @@ class RuleCollection(RuleCollectionBase):
         auth_collabs = obtain_auth_collaborations()
 
         # check if the entity has global permission
-        global_perm = getattr(self, f"{operation}_{Scope.GLOBAL}")
+        global_perm = getattr(self, get_attribute_name(operation, Scope.GLOBAL))
         if global_perm and global_perm.can():
             return True
 
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
-        col_perm = getattr(self, f"{operation}_{Scope.COLLABORATION}")
+        col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
         if (
             col_perm
             and col_perm.can()
@@ -151,13 +157,13 @@ class RuleCollection(RuleCollectionBase):
             Highest scope that the entity has for the operation. None if the
             entity has no permission for the operation
         """
-        if getattr(self, f"{operation}_{Scope.GLOBAL}"):
+        if getattr(self, get_attribute_name(operation, Scope.GLOBAL)):
             return Scope.GLOBAL
-        elif getattr(self, f"{operation}_{Scope.COLLABORATION}"):
+        elif getattr(self, get_attribute_name(operation, Scope.COLLABORATION)):
             return Scope.COLLABORATION
-        elif getattr(self, f"{operation}_{Scope.ORGANIZATION}"):
+        elif getattr(self, get_attribute_name(operation, Scope.ORGANIZATION)):
             return Scope.ORGANIZATION
-        elif getattr(self, f"{operation}_{Scope.OWN}"):
+        elif getattr(self, get_attribute_name(operation, Scope.OWN)):
             return Scope.OWN
         else:
             return None
@@ -181,7 +187,7 @@ class RuleCollection(RuleCollectionBase):
         """
         scopes: list[Scope] = self._get_scopes_from(scope)
         for s in scopes:
-            perm = getattr(self, f"{operation}_{s}", None)
+            perm = getattr(self, get_attribute_name(operation, s), None)
             if perm and perm.can():
                 return True
         return False
@@ -252,7 +258,7 @@ class PermissionManager(PermissionManagerBase):
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            self.default_roles.NODE, resource, operation, scope
+            self.default_roles.NODE.value, resource, operation, scope
         )
 
     def assign_rule_to_container(
@@ -271,7 +277,7 @@ class PermissionManager(PermissionManagerBase):
             Operation that the rule applies to
         """
         self.assign_rule_to_fixed_role(
-            self.default_roles.CONTAINER, resource, operation, scope
+            self.default_roles.CONTAINER.value, resource, operation, scope
         )
 
     def assign_rule_to_fixed_role(
@@ -308,7 +314,7 @@ class PermissionManager(PermissionManagerBase):
         if rule not in role.rules:
             role.rules.append(rule)
             role.save()
-            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+            log.info(f"Rule ({rule_params}) added to {fixedrole} role!")
 
     def get_new_collection(self, name: str) -> RuleCollection:
         """
@@ -364,14 +370,17 @@ class PermissionManager(PermissionManagerBase):
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
         if not rule:
             rule = Rule(
-                name=resource, operation=operation, scope=scope, description=description
+                name=resource,
+                operation=operation.value,
+                scope=scope.value,
+                description=description,
             )
             rule.save()
             log.debug(
                 "New auth rule '%s' with scope=%s and operation=%s is stored in the DB",
                 resource,
-                scope.value,
-                operation.value,
+                scope,
+                operation,
             )
 
         if assign_to_container:
@@ -403,7 +412,6 @@ class PermissionManager(PermissionManagerBase):
                 rule.scope, rule.operation
             ):
                 raise UnauthorizedError(
-                    f"You don't have the rule ({rule.name}, "
-                    f"{rule.scope.name.lower()}, "
-                    f"{rule.operation.name.lower()})"
+                    f"You don't have the rule ({rule.name}, {rule.scope}, "
+                    f"{rule.operation})"
                 )

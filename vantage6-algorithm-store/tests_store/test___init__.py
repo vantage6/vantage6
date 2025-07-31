@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import patch
 
-from vantage6.algorithm.store.model.rule import Rule
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.default_roles import DefaultRole
+
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.default_roles import get_default_roles
-from vantage6.algorithm.store import db
 
 from .base.unittest_base import TestResources
 
@@ -24,7 +24,7 @@ class TestAlgorithmStoreApp(TestResources):
         # Create a mock configuration
         config = {
             "policies": {
-                StorePolicies.ALGORITHM_VIEW: AlgorithmViewPolicies.PUBLIC,
+                StorePolicies.ALGORITHM_VIEW.value: AlgorithmViewPolicies.PUBLIC.value,
                 "non_existing_policy": "value",
             },
         }
@@ -52,7 +52,7 @@ class TestAlgorithmStoreApp(TestResources):
 
         # ensure root role is present - this role will be assigned to the root user
         # that is created on server startup
-        root_role = Role(name=DefaultRole.ROOT, rules=Rule.get())
+        root_role = Role(name=DefaultRole.ROOT.value, rules=Rule.get())
         root_role.save()
 
         self.server.ctx.config["root_user"] = {
@@ -67,7 +67,7 @@ class TestAlgorithmStoreApp(TestResources):
         root_user = User.get_by_username("superuser")
         self.assertIsNotNone(root_user)
         self.assertEqual(len(root_user.roles), 1)
-        self.assertEqual(root_user.roles[0].name, DefaultRole.ROOT)
+        self.assertEqual(root_user.roles[0].name, DefaultRole.ROOT.value)
 
     def test_add_default_roles(self):
         """Test that the default roles are added to the database"""
@@ -91,14 +91,14 @@ class TestAlgorithmStoreApp(TestResources):
 
         # test that when removing rules from a role, they are re-added when
         # _add_default_roles is run again
-        role = Role.get_by_name(DefaultRole.VIEWER)
+        role = Role.get_by_name(DefaultRole.VIEWER.value)
         role.rules = []
         role.save()
         self.server._add_default_roles(get_default_roles(), db)
-        role = Role.get_by_name(DefaultRole.VIEWER)
+        role = Role.get_by_name(DefaultRole.VIEWER.value)
         self.assertNotEqual(len(role.rules), 0)
         for r in default_role_list_dict:
-            if r["name"] == DefaultRole.VIEWER:
+            if r["name"] == DefaultRole.VIEWER.value:
                 self.assertEqual(len(role.rules), len(r["rules"]))
 
 

@@ -1,5 +1,6 @@
 import datetime
-from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, select
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -101,7 +102,7 @@ class Algorithm(Base):
         """
         Approve the algorithm, and invalidate all other algorithms with the same image.
         """
-        self.status = AlgorithmStatus.APPROVED
+        self.status = AlgorithmStatus.APPROVED.value
         self.approved_at = datetime.datetime.now(datetime.timezone.utc)
         self.save()
 
@@ -114,7 +115,7 @@ class Algorithm(Base):
             ) or other_version.id == self.id:
                 continue
             other_version.invalidated_at = self.approved_at
-            other_version.status = AlgorithmStatus.REPLACED
+            other_version.status = AlgorithmStatus.REPLACED.value
             other_version.save()
 
     @classmethod
@@ -160,9 +161,9 @@ class Algorithm(Base):
         result = session.scalars(
             select(cls)
             .where(
-                cls.status.in_(state)
-                if isinstance(state, list)
-                else cls.status == state
+                cls.status.in_(
+                    [s.value for s in state] if isinstance(state, list) else state.value
+                )
             )
             .order_by(cls.id)
         ).all()

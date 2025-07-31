@@ -1,18 +1,19 @@
-import os
 import importlib
-import traceback
 import json
-import pyarrow.parquet as pq
-
+import os
+import traceback
 from typing import Any
+
+import pyarrow.parquet as pq
 
 from vantage6.common import serialization
 from vantage6.common.algorithm_function import is_vantage6_algorithm_func
 from vantage6.common.client import deserialization
-from vantage6.common.globals import ContainerEnvNames
-from vantage6.algorithm.tools.util import info, error, get_env_var, get_action
-from vantage6.algorithm.tools.exceptions import DeserializationError
 from vantage6.common.enum import AlgorithmStepType
+from vantage6.common.globals import ContainerEnvNames
+
+from vantage6.algorithm.tools.exceptions import DeserializationError
+from vantage6.algorithm.tools.util import error, get_action, get_env_var, info
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:
@@ -205,7 +206,6 @@ def _write_output(output: Any, output_file: str) -> None:
         # paruet serialization method.
         pq.write_table(output, output_file)
     else:
-
         with open(output_file, "wb") as fp:
             serialized = serialization.serialize(output)
             fp.write(serialized)

@@ -1,20 +1,20 @@
-from pathlib import Path
 from importlib import resources as impresources
-import yaml
+from pathlib import Path
+
 import click
 import pandas as pd
-
-from jinja2 import Environment, FileSystemLoader
+import yaml
 from colorama import Fore, Style
+from jinja2 import Environment, FileSystemLoader
 
+from vantage6.common import ensure_config_dir_writable, error, generate_apikey, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
-from vantage6.common import ensure_config_dir_writable, info, error, generate_apikey
 
 import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.globals import PACKAGE_FOLDER, DefaultDatasets
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import PACKAGE_FOLDER, DefaultDatasets
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
@@ -428,7 +428,7 @@ def create_algo_store_config(
     )
     folders = AlgorithmStoreContext.instance_folders(
         instance_type=InstanceType.ALGORITHM_STORE,
-        instance_name="{server_name}_store",
+        instance_name=f"{server_name}_store",
         system_folders=False,
     )
 
@@ -546,21 +546,19 @@ def demo_network(
     "--server-port",
     type=int,
     default=Ports.DEV_SERVER.value,
-    help=f"Port to run the server on. Default is {Ports.DEV_SERVER.value}.",
+    help=f"Port to run the server on. Default is {Ports.DEV_SERVER}.",
 )
 @click.option(
     "--ui-port",
     type=int,
     default=Ports.DEV_UI.value,
-    help=f"Port to run the UI on. Default is {Ports.DEV_UI.value}.",
+    help=f"Port to run the UI on. Default is {Ports.DEV_UI}.",
 )
 @click.option(
     "--algorithm-store-port",
     type=int,
     default=Ports.DEV_ALGO_STORE.value,
-    help=(
-        f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE.value}."
-    ),
+    help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
 )
 @click.option(
     "-i",

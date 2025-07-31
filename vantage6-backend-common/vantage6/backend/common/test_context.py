@@ -1,7 +1,8 @@
 from __future__ import annotations
-from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.common.context import AppContext
+from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli.configuration_manager import TestingConfigurationManager
 
 
@@ -29,7 +30,7 @@ class TestContext(AppContext):
             Context object
         """
         return super().from_external_config_file(
-            cls.test_config_location(package_folder, instance_type), "unittest", True
+            cls.test_config_location(package_folder, instance_type), instance_type, True
         )
 
     @staticmethod

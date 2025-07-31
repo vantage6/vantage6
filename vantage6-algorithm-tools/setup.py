@@ -1,9 +1,9 @@
 import codecs
 import os
-
 from os import path
-from setuptools import setup, find_namespace_packages
 from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
 
 # get current directory
 here = Path(path.abspath(path.dirname(__file__)))
@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/vantage6/vantage6",
     packages=find_namespace_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.13",
     install_requires=[
         "openpyxl>=3.0.0",
         "pandas>=1.5.3",
@@ -39,7 +39,7 @@ setup(
         "SPARQLWrapper>=2.0.0",
         "sqlalchemy>=1.4.46",
         "pyarrow>=16.1.0",
-        f'vantage6-common=={version_ns["__version__"]}',
+        f"vantage6-common=={version_ns['__version__']}",
     ],
     extras_require={
         "dev": [

@@ -1,27 +1,27 @@
-import os
-import sys
 import importlib
 import inspect
 import json
-
-from enum import Enum
+import os
+import sys
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
 from typing import Any, OrderedDict
 
 import click
-import questionary as q
 import pandas as pd
+import questionary as q
 
-from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.common import error, info, warning
-from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType
 from vantage6.common.algorithm_function import (
     get_vantage6_decorator_type,
     is_vantage6_algorithm_func,
 )
+from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType, StrEnumBase
+
+from vantage6.algorithm.tools import DecoratorStepType
+
+from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.preprocessing.algorithm_json_data import (
     PREPROCESSING_FUNCTIONS_JSON_DATA,
 )
@@ -54,7 +54,7 @@ class MergePreference:
         cls._prefer_existing = None
 
 
-class FunctionArgumentType(Enum):
+class FunctionArgumentType(StrEnumBase):
     """Type of the function argument"""
 
     PARAMETER = "parameter"
@@ -80,7 +80,7 @@ class Function:
             "display_name": self._pretty_print_name(self.name),
             "standalone": True,
             "description": self._extract_headline_of_docstring(),
-            "step_type": self.step_type,
+            "step_type": self.step_type.value if self.step_type else None,
             "ui_visualizations": [],
             "arguments": [],
             "databases": [],
@@ -91,7 +91,7 @@ class Function:
         # if the function is a data extraction function, the first argument is a dict
         # with database connection details. This argument should not be added to the
         # function json. Instead, a database should be added to the function json.
-        if self.step_type == AlgorithmStepType.DATA_EXTRACTION.value:
+        if self.step_type == AlgorithmStepType.DATA_EXTRACTION:
             function_json["databases"].append(
                 {
                     "name": "Database",
@@ -211,11 +211,12 @@ class Function:
             }, FunctionArgumentType.DATAFRAME
         else:
             # This is a regular function parameter
+            type_ = self._get_argument_type(param, name)
             arg_json = {
                 "name": name,
                 "display_name": self._pretty_print_name(name),
                 "description": self._extract_parameter_description(name),
-                "type": self.get_argument_type(param, name),
+                "type": type_.value if type_ else None,
                 "required": param.default == inspect.Parameter.empty,
                 "has_default_value": param.default != inspect.Parameter.empty,
                 "is_frontend_only": False,
@@ -247,7 +248,9 @@ class Function:
                 "will not be added."
             )
 
-    def get_argument_type(self, param: inspect.Parameter, name: str) -> str:
+    def _get_argument_type(
+        self, param: inspect.Parameter, name: str
+    ) -> AlgorithmArgumentType | None:
         """Get the type of the argument"""
         if isinstance(param.annotation, UnionType):
             # Arguments with default values may have type 'str | None'. If that is the
@@ -276,23 +279,23 @@ class Function:
             type_ = param.annotation
 
         if type_ == str:
-            return AlgorithmArgumentType.STRING.value
+            return AlgorithmArgumentType.STRING
         elif type_ == dict:
-            return AlgorithmArgumentType.JSON.value
+            return AlgorithmArgumentType.JSON
         elif type_ == int:
-            return AlgorithmArgumentType.INTEGER.value
+            return AlgorithmArgumentType.INTEGER
         elif type_ == float:
-            return AlgorithmArgumentType.FLOAT.value
+            return AlgorithmArgumentType.FLOAT
         elif type_ == bool:
-            return AlgorithmArgumentType.BOOLEAN.value
+            return AlgorithmArgumentType.BOOLEAN
         elif type_ == list:
-            return AlgorithmArgumentType.STRINGS.value
+            return AlgorithmArgumentType.STRINGS
         elif type_ == list[str]:
-            return AlgorithmArgumentType.STRINGS.value
+            return AlgorithmArgumentType.STRINGS
         elif type_ == list[int]:
-            return AlgorithmArgumentType.INTEGERS.value
+            return AlgorithmArgumentType.INTEGERS
         elif type_ == list[float]:
-            return AlgorithmArgumentType.FLOATS.value
+            return AlgorithmArgumentType.FLOATS
         else:
             warning(
                 f"Unsupported argument type: {param.annotation} for argument {name} "
@@ -321,21 +324,20 @@ class Function:
         header = " ".join(line.strip() for line in lines if line.strip() != "")
         return header
 
-    def _get_step_type(self) -> str:
+    def _get_step_type(self) -> AlgorithmStepType | None:
         """Get the step type of the function"""
         decorator_type = get_vantage6_decorator_type(self.func)
         if decorator_type == DecoratorStepType.FEDERATED:
-            return AlgorithmStepType.FEDERATED_COMPUTE.value
+            return AlgorithmStepType.FEDERATED_COMPUTE
         elif decorator_type == DecoratorStepType.CENTRAL:
-            return AlgorithmStepType.CENTRAL_COMPUTE.value
+            return AlgorithmStepType.CENTRAL_COMPUTE
         elif decorator_type == DecoratorStepType.PREPROCESSING:
-            return AlgorithmStepType.PREPROCESSING.value
+            return AlgorithmStepType.PREPROCESSING
         elif decorator_type == DecoratorStepType.DATA_EXTRACTION:
-            return AlgorithmStepType.DATA_EXTRACTION.value
+            return AlgorithmStepType.DATA_EXTRACTION
         else:
             warning(
-                f"Unsupported decorator type: {decorator_type} for function "
-                f"{self.name}"
+                f"Unsupported decorator type: {decorator_type} for function {self.name}"
             )
             return None
 

@@ -1,18 +1,19 @@
 import unittest
-
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 from click.testing import CliRunner
 
 from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli.common.utils import attach_logs
-from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.server.list import cli_server_configuration_list
+from vantage6.cli.server.attach import cli_server_attach
 from vantage6.cli.server.files import cli_server_files
 from vantage6.cli.server.import_ import cli_server_import
+from vantage6.cli.server.list import cli_server_configuration_list
 from vantage6.cli.server.new import cli_server_new
+from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
-from vantage6.cli.server.attach import cli_server_attach
 
 
 class ServerCLITest(unittest.TestCase):
@@ -133,7 +134,7 @@ class ServerCLITest(unittest.TestCase):
         """Stop server without errors."""
 
         container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER.value}"
+        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER}"
         containers.containers.list.return_value = [container1]
 
         runner = CliRunner()

@@ -1,24 +1,24 @@
-import logging
 import datetime
+import logging
 import uuid
 
 from sqlalchemy.exc import IntegrityError
 
-from .test_model_base import TestModelBase
-
 from vantage6.backend.common import session
-from vantage6.server.model import (
-    User,
-    Organization,
-    Collaboration,
-    Task,
-    Run,
-    Node,
-    Rule,
-    Role,
-)
-from vantage6.server.model.rule import Scope, Operation
 
+from vantage6.server.model import (
+    Collaboration,
+    Node,
+    Organization,
+    Role,
+    Rule,
+    Run,
+    Task,
+    User,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_model_base import TestModelBase
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
@@ -87,7 +87,8 @@ class TestCollaborationModel(TestModelBase):
         self.assertEqual(db_col, col)
 
     def test_methods(self):
-        db_col = Collaboration.get(1)
+        db_col = Collaboration(name=str(uuid.uuid4()))
+        db_col.save()
         org_ids = db_col.get_organization_ids()
         self.assertIsInstance(org_ids, list)
         self.assertIsInstance(db_col.get_task_ids(), list)
@@ -296,7 +297,9 @@ class TestTaskModel(TestModelBase):
 
 class TestRuleModel(TestModelBase):
     def test_read(self):
-        rule = Rule(name="some-name", operation=Operation.CREATE, scope=Scope.GLOBAL)
+        rule = Rule(
+            name="some-name", operation=Operation.CREATE.value, scope=Scope.GLOBAL
+        )
         rule.save()
 
         rules = Rule.get()
@@ -318,14 +321,14 @@ class TestRuleModel(TestModelBase):
 
     def test_methods(self):
         # check that error is raised
-        self.assertIsNone(Rule.get_by_("non-existant", 1, 1))
+        self.assertIsNone(Rule.get_by_("non-existent", Scope.GLOBAL, Operation.CREATE))
 
     def test_relations(self):
         rules = Rule.get()
         for rule in rules:
             self.assertIsInstance(rule.name, str)
-            self.assertIsInstance(rule.operation, Operation)
-            self.assertIsInstance(rule.scope, Scope)
+            self.assertIn(rule.operation, Operation.list())
+            self.assertIn(rule.scope, Scope.list())
 
             for role in rule.roles:
                 self.assertIsInstance(role, Role)

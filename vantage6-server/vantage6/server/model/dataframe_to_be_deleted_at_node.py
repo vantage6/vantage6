@@ -1,4 +1,7 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, select
+from typing import Self
+
+from sqlalchemy import Column, ForeignKey, Integer, String, select
+
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
@@ -29,7 +32,7 @@ class DataframeToBeDeletedAtNode(Base):
     @classmethod
     def get_by_multiple_keys(
         cls, dataframe_name: str, session_id: int, node_id: int
-    ) -> "DataframeToBeDeletedAtNode":
+    ) -> Self:
         """
         Get a dataframe to be deleted at a node by multiple keys.
 

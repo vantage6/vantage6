@@ -1,9 +1,10 @@
 from sqlalchemy import Column, String, select
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
-from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
 from vantage6.common.enum import StorePolicies
+
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
+from vantage6.algorithm.store.model.user import User
 
 
 class Policy(Base):
@@ -48,7 +49,7 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS)
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS.value)
         ).one_or_none()
         session.commit()
         if result is None:
@@ -68,7 +69,7 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
+            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value)
         ).one_or_none()
         session.commit()
         if result is None:
@@ -78,7 +79,8 @@ class Policy(Base):
     @classmethod
     def get_minimum_reviewing_orgs(cls) -> int:
         """
-        Get the minimum number of organizations that have to be involved in the review process.
+        Get the minimum number of organizations that have to be involved in the review
+        process.
 
         Returns
         -------
@@ -87,15 +89,15 @@ class Policy(Base):
         """
         session = DatabaseSessionManager.get_session()
         result = session.scalars(
-            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
         ).one_or_none()
         session.commit()
         if result is None:
-            return DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value
+            return int(DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
         return int(result.value)
 
     @classmethod
-    def search_user_in_policy(cls, user: User, policy: str) -> bool:
+    def search_user_in_policy(cls, user: User, policy: StorePolicies) -> bool:
         """
         Search a user in a policy where specific users are indicated.
         The users have to be saved in the policy with their username.
@@ -104,8 +106,8 @@ class Policy(Base):
         ----------
         user : User
             User to search for
-        policy : str
-            Policy to search in
+        policy : StorePolicies
+            Member of StorePolicies enum
 
         Returns
         -------
@@ -114,7 +116,7 @@ class Policy(Base):
         """
 
         session = DatabaseSessionManager.get_session()
-        result = session.scalars(select(cls).filter_by(key=policy)).all()
+        result = session.scalars(select(cls).filter_by(key=policy.value)).all()
         session.commit()
 
         if result is None or result == []:

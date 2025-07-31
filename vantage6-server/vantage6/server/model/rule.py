@@ -1,48 +1,32 @@
 from __future__ import annotations
 
-from enum import Enum as Enumerate
-
-from sqlalchemy import Column, Enum, String, Text, select
+from sqlalchemy import Column, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
+
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 
-class Operation(str, Enumerate):
+class Operation(StrEnumBase):
     """Enumerator of all available operations"""
 
-    VIEW = "v"
-    EDIT = "e"
-    CREATE = "c"
-    DELETE = "d"
-    SEND = "s"
-    RECEIVE = "r"
+    VIEW = "view"
+    EDIT = "edit"
+    CREATE = "create"
+    DELETE = "delete"
+    SEND = "send"
+    RECEIVE = "receive"
 
 
-class Scope(str, Enumerate):
+class Scope(StrEnumBase):
     """Enumerator of all available scopes"""
 
     OWN = "own"
-    ORGANIZATION = "org"
-    COLLABORATION = "col"
-    GLOBAL = "glo"
-
-    @classmethod
-    def list(cls) -> list[str]:
-        """
-        List the names of the available scopes.
-
-        Note: this list gives the *names* of the scopes, not the values. It is only in
-        handling API input/output and should therefore give full names instead of
-        abbreviations.
-
-        Returns
-        -------
-        list[str]
-            List of all available scopes
-        """
-        return [scope.name.lower() for scope in cls]
+    ORGANIZATION = "organization"
+    COLLABORATION = "collaboration"
+    GLOBAL = "global"
 
     @classmethod
     def get_name_from_value(cls, value: str) -> str | None:
@@ -61,7 +45,7 @@ class Scope(str, Enumerate):
         str | None
             Name of the scope or None if no scope with the given value exists
         """
-        return next((scope.name.lower() for scope in cls if scope.value == value), None)
+        return next((scope.name.lower() for scope in cls if scope == value), None)
 
 
 class Rule(Base):
@@ -93,11 +77,8 @@ class Rule(Base):
 
     # fields
     name = Column(Text)
-    # TODO v5+ maybe get rid of these enums as they have weird side-effects - e.g.
-    # you have to do `client.rule.list(operation='v', scope='glo')` to get all rules
-    # with global view - which is very difficult for the user
-    operation = Column(Enum(Operation))
-    scope = Column(Enum(Scope))
+    operation = Column(String)
+    scope = Column(String)
     description = Column(String)
 
     # relationships
@@ -107,7 +88,7 @@ class Rule(Base):
     users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, scope: str, operation: str) -> Rule | None:
+    def get_by_(cls, name: str, scope: Scope, operation: Operation) -> Rule | None:
         """
         Get a rule by its name, scope and operation.
 
@@ -115,9 +96,9 @@ class Rule(Base):
         ----------
         name : str
             Name of the resource on which the rule acts, e.g. 'node'
-        scope : str
+        scope : Scope
             Scope of the rule, e.g. 'organization'
-        operation : str
+        operation : Operation
             Operation of the rule, e.g. 'view'
 
         Returns
@@ -128,7 +109,9 @@ class Rule(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            stmt = select(cls).filter_by(name=name, scope=scope, operation=operation)
+            stmt = select(cls).filter_by(
+                name=name, scope=scope.value, operation=operation.value
+            )
             result = session.scalars(stmt).first()
             session.commit()
             return result

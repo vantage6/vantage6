@@ -78,6 +78,7 @@ class TestResources(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         Database().clear_data()
+        Database().close()
 
     @classmethod
     def setUp(cls):

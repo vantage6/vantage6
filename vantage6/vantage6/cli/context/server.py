@@ -1,16 +1,18 @@
 from __future__ import annotations
+
 from pathlib import Path
 
 from vantage6.common.globals import APPNAME, InstanceType
+
+from vantage6.cli._version import __version__
 from vantage6.cli.configuration_manager import ServerConfigurationManager
+from vantage6.cli.context.base_server import BaseServerContext
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
     PROMETHEUS_DIR,
-    ServerType,
     ServerGlobals,
+    ServerType,
 )
-from vantage6.cli._version import __version__
-from vantage6.cli.context.base_server import BaseServerContext
 
 
 class ServerContext(BaseServerContext):
@@ -45,7 +47,7 @@ class ServerContext(BaseServerContext):
         str
             string representation of the database uri
         """
-        return super().get_database_uri(ServerGlobals.DB_URI_ENV_VAR)
+        return super().get_database_uri(ServerGlobals.DB_URI_ENV_VAR.value)
 
     @property
     def docker_container_name(self) -> str:
@@ -105,7 +107,10 @@ class ServerContext(BaseServerContext):
             Server context object
         """
         return super().from_external_config_file(
-            path, ServerType.V6SERVER, ServerGlobals.CONFIG_NAME_ENV_VAR, system_folders
+            path,
+            ServerType.V6SERVER,
+            ServerGlobals.CONFIG_NAME_ENV_VAR.value,
+            system_folders,
         )
 
     @classmethod

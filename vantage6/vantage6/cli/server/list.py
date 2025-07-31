@@ -2,6 +2,7 @@ import click
 
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import InstanceType
+
 from vantage6.cli.common.utils import get_server_configuration_list
 
 
@@ -12,4 +13,4 @@ def cli_server_configuration_list() -> None:
     """
     check_docker_running()
 
-    get_server_configuration_list(InstanceType.SERVER.value)
+    get_server_configuration_list(InstanceType.SERVER)

@@ -41,10 +41,10 @@
 #     # check that the server is not running
 #     client = docker.from_env()
 #     running_servers = client.containers.list(
-#         filters={"label": f"{APPNAME}-type={InstanceType.SERVER.value}"}
+#         filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
 #     )
 #     running_server_names = [server.name for server in running_servers]
-#     container_name = f"{APPNAME}-{name}-user-{InstanceType.SERVER.value}"
+#     container_name = f"{APPNAME}-{name}-user-{InstanceType.SERVER}"
 #     if container_name in running_server_names:
 #         error(
 #             f"Server {Fore.RED}{name}{Style.RESET_ALL} is still running! First stop "

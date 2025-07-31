@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import logging
 import importlib
+import logging
 from abc import ABC, abstractmethod
-
-from collections import namedtuple
 from enum import EnumMeta
+from typing import NamedTuple
 
 from flask_principal import Permission
 
@@ -16,7 +15,32 @@ from vantage6.backend.common.permission_models import RuleInterface
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
-RuleNeed = namedtuple("RuleNeed", ["name", "scope", "operation"])
+RuleNeed = NamedTuple("RuleNeed", [("name", str), ("scope", str), ("operation", str)])
+
+
+def get_attribute_name(operation: str, scope: str | None = None) -> str:
+    """
+    Get the attribute name for a rule.
+
+    We only take the first letter of the operation and the first 3 letters of the scope
+    to keep attribute names like 'v_glo' for view global
+
+    Parameters
+    ----------
+    operation: str
+        Operation of the rule
+    scope: str | None
+        Scope of the rule
+
+    Returns
+    -------
+    str
+        Attribute name for the rule
+    """
+    attribute_name = operation[0].lower()
+    if scope:
+        attribute_name += f"_{scope[0:3].lower()}"
+    return attribute_name
 
 
 class RuleCollectionBase(ABC, dict):
@@ -32,7 +56,7 @@ class RuleCollectionBase(ABC, dict):
     def __init__(self, name):
         self.name = name
 
-    def add(self, operation: str, scope: str = None) -> None:
+    def add(self, operation: str, scope: str | None = None) -> None:
         """
         Add a rule to the rule collection
 
@@ -44,10 +68,9 @@ class RuleCollectionBase(ABC, dict):
             What operation the rule applies to
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
-        attribute_name = f"{operation}"
-        if scope:
-            attribute_name += f"_{scope}"
-        self.__setattr__(f"{attribute_name}", permission)
+
+        attribute_name = get_attribute_name(operation, scope)
+        self.__setattr__(attribute_name, permission)
 
 
 class PermissionManagerBase(ABC):
@@ -158,7 +181,7 @@ class PermissionManagerBase(ABC):
             Scope that the rule applies to
         """
 
-        self.assign_rule_to_fixed_role(self.default_roles.ROOT, *args, **kwargs)
+        self.assign_rule_to_fixed_role(self.default_roles.ROOT.value, *args, **kwargs)
 
     def appender(self, name: str) -> callable:
         """

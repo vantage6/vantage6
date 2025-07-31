@@ -1,21 +1,20 @@
-import os
-import sys
+import enum
 import logging
 import logging.handlers
-import enum
-import pyfiglet
-
+import os
+import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Self, Tuple
 
 import appdirs
+import pyfiglet
 
-from vantage6.common import Singleton, error, Fore, Style, get_config_path, logger_name
-from vantage6.common.colors import ColorStreamHandler
-from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.common.docker.addons import running_in_docker
-from vantage6.common.configuration_manager import ConfigurationManager
+from vantage6.common import Fore, Singleton, Style, error, get_config_path, logger_name
 from vantage6.common._version import __version__
+from vantage6.common.colors import ColorStreamHandler
+from vantage6.common.configuration_manager import ConfigurationManager
+from vantage6.common.docker.addons import running_in_docker
+from vantage6.common.globals import APPNAME, InstanceType
 
 
 class AppContext(metaclass=Singleton):
@@ -65,7 +64,7 @@ class AppContext(metaclass=Singleton):
 
     def initialize(
         self,
-        instance_type: str,
+        instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
         config_file: str | None = None,
@@ -76,8 +75,8 @@ class AppContext(metaclass=Singleton):
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            InstanceType enum
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -91,7 +90,7 @@ class AppContext(metaclass=Singleton):
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
-        self.instance_type = instance_type
+        self.instance_type: InstanceType = instance_type
         # if config_file is None:
         #     config_file = f"{instance_name}.yaml"
         self.config_file = self.find_config_file(
@@ -133,16 +132,14 @@ class AppContext(metaclass=Singleton):
         self.log.info("-" * 60)
         self.log.info(f"Started application {APPNAME}")
         self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(
-            f"Successfully loaded configuration from " f"'{self.config_file}'"
-        )
+        self.log.info(f"Successfully loaded configuration from '{self.config_file}'")
         self.log.info("Logging to '%s'" % self.log_file)
         self.log.info(f"Common package version '{__version__}'")
 
     @classmethod
     def from_external_config_file(
         cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
-    ) -> "AppContext":
+    ) -> Self:
         """
         Create a new AppContext instance from an external config file.
 
@@ -324,7 +321,7 @@ class AppContext(metaclass=Singleton):
         Path
             Path to the log file
         """
-        return self.log_file_name(type_=self.instance_type)
+        return self.log_file_name(type_=self.instance_type.value)
 
     def log_file_name(self, type_: str) -> Path:
         """
@@ -345,9 +342,8 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert (
-            self.config_manager
-        ), "Log file unkown as configuration manager not initialized"
+        assert self.config_manager, "Log file unkown. Initialize configuration manager"
+
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
@@ -539,8 +535,7 @@ class AppContext(metaclass=Singleton):
             )
         except PermissionError:
             error(
-                f"Can't write to log dir: "
-                f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
+                f"Can't write to log dir: {Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
             exit(1)
 

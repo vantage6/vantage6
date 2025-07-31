@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from vantage6.common.globals import APPNAME, InstanceType
+
+from vantage6.cli._version import __version__
 from vantage6.cli.configuration_manager import ServerConfigurationManager
+from vantage6.cli.context.base_server import BaseServerContext
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
-    ServerType,
     AlgoStoreGlobals,
+    ServerType,
 )
-from vantage6.cli._version import __version__
-from vantage6.cli.context.base_server import BaseServerContext
 
 
 class AlgorithmStoreContext(BaseServerContext):
@@ -28,7 +29,9 @@ class AlgorithmStoreContext(BaseServerContext):
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
         super().__init__(
-            InstanceType.ALGORITHM_STORE, instance_name, system_folders=system_folders
+            InstanceType.ALGORITHM_STORE,
+            instance_name,
+            system_folders=system_folders,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -41,7 +44,7 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             string representation of the database uri
         """
-        return super().get_database_uri(AlgoStoreGlobals.DB_URI_ENV_VAR)
+        return super().get_database_uri(AlgoStoreGlobals.DB_URI_ENV_VAR.value)
 
     @property
     def docker_container_name(self) -> str:
@@ -53,7 +56,7 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE.value}"
+        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
 
     @classmethod
     def from_external_config_file(
@@ -79,7 +82,7 @@ class AlgorithmStoreContext(BaseServerContext):
         return super().from_external_config_file(
             path,
             ServerType.ALGORITHM_STORE,
-            AlgoStoreGlobals.CONFIG_NAME_ENV_VAR,
+            AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value,
             system_folders,
         )
 

@@ -1,18 +1,19 @@
 import click
 
 from vantage6.common import info
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.common.stop import helm_uninstall, stop_port_forward
 from vantage6.cli.config import CliConfig
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.common.stop import helm_uninstall, stop_port_forward
 
 
 @click.command()
 # add context and namespace options
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
-@click_insert_context(type_="server")
+@click_insert_context(type_=InstanceType.SERVER)
 def cli_server_stop(
     ctx: ServerContext,
     context: str,

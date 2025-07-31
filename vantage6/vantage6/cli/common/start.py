@@ -33,8 +33,8 @@ from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 from vantage6.cli.utils import (
-    validate_input_cmd_args,
     check_config_name_allowed,
+    validate_input_cmd_args,
 )
 
 
@@ -69,7 +69,7 @@ def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
     )
     for server in running_servers:
         if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-{type_}":
-            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} " "is already running")
+            error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} is already running")
             exit(1)
     return docker_client
 
@@ -304,8 +304,6 @@ def attach_logs(container: Container, type_: InstanceType) -> None:
     type_ : InstanceType
         The type of instance to attach the logs for
     """
-    if isinstance(type_, enum.Enum):
-        type_ = type_.value
     logs = container.attach(stream=True, logs=True, stdout=True)
     Thread(target=print_log_worker, args=(logs,), daemon=True).start()
     while True:

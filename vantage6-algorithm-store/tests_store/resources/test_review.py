@@ -25,10 +25,10 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create a few reviews
-        r1 = Review(status=ReviewStatus.UNDER_REVIEW)
-        r2 = Review(status=ReviewStatus.APPROVED)
-        r3 = Review(status=ReviewStatus.REJECTED)
-        r4 = Review(status=ReviewStatus.DROPPED)
+        r1 = Review(status=ReviewStatus.UNDER_REVIEW.value)
+        r2 = Review(status=ReviewStatus.APPROVED.value)
+        r3 = Review(status=ReviewStatus.REJECTED.value)
+        r4 = Review(status=ReviewStatus.DROPPED.value)
         # pylint: disable=expression-not-assigned
         [r.save() for r in [r1, r2, r3, r4]]
 
@@ -86,7 +86,7 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create a review
-        review = Review(status=ReviewStatus.UNDER_REVIEW)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value)
         review.save()
 
         # check that getting reviews without authentication fails
@@ -142,7 +142,8 @@ class TestReviewResources(TestResources):
 
         # create algorithm
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT, developer=developer
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
+            developer=developer,
         )
         algorithm.save()
 
@@ -156,7 +157,7 @@ class TestReviewResources(TestResources):
             "/api/review",
             json={
                 **json_body,
-                "status": ReviewStatus.APPROVED,
+                "status": ReviewStatus.APPROVED.value,
             },
         )
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -178,7 +179,7 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # allow self review and check that the developer can assign now a review
-        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value=True).save()
+        Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value=True).save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 
@@ -188,14 +189,14 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # check that review cannot be assigned if algorithm is not awaiting review
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.save()
         json_body["reviewer_id"] = another_reviewer.id
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         # check that you can assign a second reviewer
-        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+        algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
         algorithm.save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
@@ -214,10 +215,10 @@ class TestReviewResources(TestResources):
 
         # create algorithm and review
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
         )
         algorithm.save()
-        review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value, algorithm=algorithm)
         review.save()
 
         # check that deleting a review without authentication fails
@@ -244,44 +245,48 @@ class TestReviewResources(TestResources):
             user_rules=[Rule.get_by_("review", Operation.EDIT)],
         )
         # re-create review
-        review = Review(status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm)
+        review = Review(status=ReviewStatus.UNDER_REVIEW.value, algorithm=algorithm)
         review.save()
 
         # check that deleting reviews for currently approved algorithms is not allowed
-        algorithm.status = AlgorithmStatus.APPROVED
+        algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that if algorithm status is updated to awaiting review if only
         # review is deleted
-        algorithm.status = AlgorithmStatus.UNDER_REVIEW
+        algorithm.status = AlgorithmStatus.UNDER_REVIEW.value
         algorithm.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT)
+        self.assertEqual(
+            algorithm.status, AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+        )
         review = None  # update deleted sqlalchemy object to prevent warnings
 
         # set policy to require one review and one organization
-        Policy(key=StorePolicies.MIN_REVIEWERS, value=1).save()
-        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value=1).save()
+        Policy(key=StorePolicies.MIN_REVIEWERS.value, value=1).save()
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=1).save()
 
         # check that if there are two reviews, one of which is approved and the other is
         # deleted, the algorithm status is updated to approved
         approved_review = Review(
-            status=ReviewStatus.APPROVED, algorithm=algorithm, reviewer=reviewer
+            status=ReviewStatus.APPROVED.value, algorithm=algorithm, reviewer=reviewer
         )
         approved_review.save()
         # re-create review again
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=algorithm,
+            reviewer=reviewer,
         )
         review.save()
         response = self.app.delete(f"/api/review/{review.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)
         algorithm = Algorithm.get(algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_review_approve(self, authenticate_mock):
@@ -289,9 +294,13 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # create algorithm
-        current_algorithm = Algorithm(status=AlgorithmStatus.APPROVED, image="image")
+        current_algorithm = Algorithm(
+            status=AlgorithmStatus.APPROVED.value, image="image"
+        )
         current_algorithm.save()
-        new_algorithm = Algorithm(status=AlgorithmStatus.UNDER_REVIEW, image="image")
+        new_algorithm = Algorithm(
+            status=AlgorithmStatus.UNDER_REVIEW.value, image="image"
+        )
         new_algorithm.save()
 
         # check that approving a review without authentication fails
@@ -311,11 +320,13 @@ class TestReviewResources(TestResources):
 
         # create reviews
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=new_algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=new_algorithm,
+            reviewer=reviewer,
         )
         review.save()
         another_review = Review(
-            status=ReviewStatus.UNDER_REVIEW,
+            status=ReviewStatus.UNDER_REVIEW.value,
             algorithm=new_algorithm,
             reviewer=another_reviewer,
         )
@@ -326,11 +337,11 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # check that approving review fails if it was already approved or rejected
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -341,13 +352,13 @@ class TestReviewResources(TestResources):
 
         # approve the second review so that the first one can be approved with the
         # side-effects of the algorithm status being updated
-        another_review.status = ReviewStatus.APPROVED
+        another_review.status = ReviewStatus.APPROVED.value
         another_review.save()
 
         # check that approving a review with authentication succeeds, and that the
         # algorithm status is updated to approved
         body_ = {"comment": "Awesome algorithm!"}
-        review.status = ReviewStatus.UNDER_REVIEW
+        review.status = ReviewStatus.UNDER_REVIEW.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/approve", json=body_)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -355,10 +366,10 @@ class TestReviewResources(TestResources):
         self.assertEqual(review.comment, body_["comment"])
         self.assertEqual(review.status, ReviewStatus.APPROVED.value)
         algorithm = Algorithm.get(new_algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.APPROVED.value)
         # check also that old algorithm is replaced by the new one
         current_algorithm = Algorithm.get(current_algorithm.id)
-        self.assertEqual(current_algorithm.status, AlgorithmStatus.REPLACED)
+        self.assertEqual(current_algorithm.status, AlgorithmStatus.REPLACED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_review_reject(self, authenticate_mock):
@@ -368,9 +379,13 @@ class TestReviewResources(TestResources):
         )
 
         # create algorithm
-        current_algorithm = Algorithm(status=AlgorithmStatus.APPROVED, image="image")
+        current_algorithm = Algorithm(
+            status=AlgorithmStatus.APPROVED.value, image="image"
+        )
         current_algorithm.save()
-        new_algorithm = Algorithm(status=AlgorithmStatus.UNDER_REVIEW, image="image")
+        new_algorithm = Algorithm(
+            status=AlgorithmStatus.UNDER_REVIEW.value, image="image"
+        )
         new_algorithm.save()
 
         # check that rejecting a review without authentication fails
@@ -390,11 +405,13 @@ class TestReviewResources(TestResources):
 
         # create reviews
         review = Review(
-            status=ReviewStatus.UNDER_REVIEW, algorithm=new_algorithm, reviewer=reviewer
+            status=ReviewStatus.UNDER_REVIEW.value,
+            algorithm=new_algorithm,
+            reviewer=reviewer,
         )
         review.save()
         another_review = Review(
-            status=ReviewStatus.UNDER_REVIEW,
+            status=ReviewStatus.UNDER_REVIEW.value,
             algorithm=new_algorithm,
             reviewer=another_reviewer,
         )
@@ -405,11 +422,11 @@ class TestReviewResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
         # check that rejecting review fails if it was already approved or rejected
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json={})
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
@@ -420,13 +437,13 @@ class TestReviewResources(TestResources):
 
         # approve the second review so that the first one can be rejected with the
         # side-effects of the algorithm status being updated
-        another_review.status = ReviewStatus.APPROVED
+        another_review.status = ReviewStatus.APPROVED.value
         another_review.save()
 
         # check that rejecting a review with authentication succeeds, and that the
         # algorithm status is updated to rejected
         body_ = {"comment": "Not good enough!"}
-        review.status = ReviewStatus.UNDER_REVIEW
+        review.status = ReviewStatus.UNDER_REVIEW.value
         review.save()
         response = self.app.post(f"/api/review/{review.id}/reject", json=body_)
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -434,10 +451,10 @@ class TestReviewResources(TestResources):
         self.assertEqual(review.comment, body_["comment"])
         self.assertEqual(review.status, ReviewStatus.REJECTED.value)
         algorithm = Algorithm.get(new_algorithm.id)
-        self.assertEqual(algorithm.status, AlgorithmStatus.REJECTED)
+        self.assertEqual(algorithm.status, AlgorithmStatus.REJECTED.value)
         # check also that old algorithm is still present
         current_algorithm = Algorithm.get(current_algorithm.id)
-        self.assertEqual(current_algorithm.status, AlgorithmStatus.APPROVED)
+        self.assertEqual(current_algorithm.status, AlgorithmStatus.APPROVED.value)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_algorithm_status_update_to_under_review(self, authenticate_mock):
@@ -447,15 +464,15 @@ class TestReviewResources(TestResources):
         self.register_user(authenticate_mock=authenticate_mock)
 
         # register policy for minimum reviewers
-        Policy(key=StorePolicies.MIN_REVIEWERS, value="2").save()
+        Policy(key=StorePolicies.MIN_REVIEWERS.value, value="2").save()
 
         # register policy for minimum reviewing organizations
-        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS, value="2").save()
+        Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value="2").save()
 
         # create algorithm
         dev = self.register_user(username="algo_dev")
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
             image="image",
             developer=dev,
         )
@@ -572,7 +589,7 @@ class TestReviewResources(TestResources):
 
         # create algorithm
         algorithm = Algorithm(
-            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            status=AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
             image="image",
             developer=dev,
         )
@@ -608,20 +625,38 @@ class TestReviewResources(TestResources):
 
         # register policy for allowed assigners
         reviewer_1_ref = reviewer_1.username
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_1_ref).save()
+        Policy(key=StorePolicies.ALLOWED_REVIEWERS.value, value=reviewer_1_ref).save()
 
         # register policy for allowed reviewers
-        Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS, value=reviewer_1_ref).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=reviewer_1_ref
+        ).save()
+
+        # verify that the assigner 2 (returned by the mocked token validation)
+        # cannot assign reviews because they are not in the allowed assigners list
+        response = self.app.post(
+            "/api/review",
+            json={
+                "algorithm_id": algorithm.id,
+                "reviewer_id": reviewer_2.id,
+            },
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # add assigner 2 to the allowed assigners list
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=reviewer_2.username
+        ).save()
 
         # verify that the assigner 2 (returned by the mocked token validation)
         # cannot assign a review, as they are not in the allowed reviewers policy
         response = self.app.post("/api/review", json=json_body)
-        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # add the assigner to the allowed reviewers policy and verify that
         # the assigner can now assign a review
         Policy(
-            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS,
+            key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value,
             value=assigner_2.username,
         ).save()
         response = self.app.post("/api/review", json=json_body)
@@ -635,7 +670,9 @@ class TestReviewResources(TestResources):
 
         # add the reviewer to the allowed reviewers policy and verify that
         # a review can now be assigned
-        Policy(key=StorePolicies.ALLOWED_REVIEWERS, value=reviewer_2.username).save()
+        Policy(
+            key=StorePolicies.ALLOWED_REVIEWERS.value, value=reviewer_2.username
+        ).save()
         response = self.app.post("/api/review", json=json_body)
         self.assertEqual(response.status_code, HTTPStatus.CREATED)
 

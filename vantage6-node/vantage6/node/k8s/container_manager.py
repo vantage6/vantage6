@@ -194,8 +194,8 @@ class ContainerManager:
         """
         policies = config.get("policies", {})
         if not policies or (
-            not policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+            not policies.get(NodePolicy.ALLOWED_ALGORITHMS.value)
+            and not policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES.value)
         ):
             self.log.warning(
                 "No policies on allowed algorithms have been set for this node!"
@@ -370,7 +370,8 @@ class ContainerManager:
         # Verify that an allowed image is used
         if not self.is_image_allowed(image, task_info):
             self.log.critical(
-                "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
+                "[Algorithm job run %s requested by org %s] Docker image %s is not "
+                "allowed on this Node!",
                 run_id,
                 init_org_id,
                 image,
@@ -380,7 +381,8 @@ class ContainerManager:
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Task is already being executed, discarding task",
+                "[Algorithm job run %s requested by org %s] Task is already being "
+                "executed, discarding task",
                 run_id,
                 init_org_id,
             )
@@ -419,7 +421,8 @@ class ContainerManager:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
-            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and PROXY_SERVER_PORT=%s env variables on the job POD",
+            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and "
+            "PROXY_SERVER_PORT=%s env variables on the job POD",
             run_id,
             env_vars[ContainerEnvNames.HOST.value],
             env_vars[ContainerEnvNames.PORT.value],
@@ -441,7 +444,8 @@ class ContainerManager:
             self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Validation of environment variables failed: %s",
+                "[Algorithm job run %s requested by org %s] Validation of environment "
+                "variables failed: %s",
                 run_id,
                 init_org_id,
                 e,
@@ -482,7 +486,7 @@ class ContainerManager:
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
                 "task_parent_id": str(parent_task_id),
-                "action": str(action.value),
+                "action": str(action),
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
                 "df_id": str(df_details.get("id")) if df_details else "",
@@ -512,7 +516,8 @@ class ContainerManager:
         )
 
         self.log.info(
-            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for task_id=%s.",
+            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for"
+            " task_id=%s.",
             run_id,
             init_org_id,
             task_id,
@@ -523,8 +528,8 @@ class ContainerManager:
         # to the Pod's backoff failure policy, it will have a failed status only after
         # the last failed retry.
 
-        # Wait until the POD is running. The following method is blocking until the POD is
-        # running or
+        # Wait until the POD is running. The following method is blocking until the POD
+        # is running or
         # TODO we could make this non-blocking by keeping track of the started jobs
         #     and checking their status in a separate thread
         # TODO in the previous `DockerTaskManager` a few checks where performed to
@@ -548,7 +553,8 @@ class ContainerManager:
         waits until it transitions to a 'Running' state or another terminal state
         (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
         After the timeout, this method will have additional status-event waiting windows
-        only if the reason for such timeout is an (large) image that is already being pulled.
+        only if the reason for such timeout is an (large) image that is already being
+        pulled.
 
                                - Succeeded
                               /
@@ -567,10 +573,13 @@ class ContainerManager:
             The status of the run:
             - RunStatus.ACTIVE: If the pod is already with a Running status
             - RunStatus.FAILED: If the pod reported a Failed status
-            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or problematic Docker image.
-            - RunStatus.CRASHED: If the pod is still in pending status but has reported a runtime crash.
+            - RunStatus.NO_DOCKER_IMAGE: If the pod is pending due to a missing or
+              problematic Docker image.
+            - RunStatus.CRASHED: If the pod is still in pending status but has reported
+              a runtime crash.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
-            - RunStatus.COMPLETED: Not expected to happen but still possible: the job pod is reported as Succeded shortly after being created.
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the job
+              pod is reported as Succeded shortly after being created.
         """
 
         # Wait until the POD is created
@@ -578,13 +587,15 @@ class ContainerManager:
 
         try:
             while True:
-                # Non-busy waiting for status changes on the job POD through K8S' event stream watch. This
-                # inner for loop will process events until a terminal status is identifed (Running, Failed,
-                # Succeded) or timeout_seconds is reached.
+                # Non-busy waiting for status changes on the job POD through K8S' event
+                # stream watch. This inner for loop will process events until a terminal
+                # status is identifed (Running, Failed, Succeded) or timeout_seconds is
+                # reached.
                 #
-                # Given that after the timeout the status would be uncertain, the job pod status is
-                # checked (directly) again to decide whether a new stream-watch iteration is performed
-                # (e.g, an image may be too large), or an error is reported.
+                # Given that after the timeout the status would be uncertain, the job
+                # pod status is checked (directly) again to decide whether a new
+                # stream-watch iteration is performed (e.g, an image may be too large),
+                # or an error is reported.
                 for event in w.stream(
                     func=self.core_api.list_namespaced_pod,
                     namespace=self.task_namespace,
@@ -605,13 +616,15 @@ class ContainerManager:
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
                 self.log.debug(
-                    "Job (label %s, namespace %s) event stream timeout reached. Checking the cause...",
+                    "Job (label %s, namespace %s) event stream timeout reached. "
+                    "Checking the cause...",
                     label,
                     self.task_namespace,
                 )
 
                 # Getting the POD again to check its post-timeout status
-                # Note on using container_statuses[0]: The job pods always use a single container, container_statuses will always have a single element
+                # Note on using container_statuses[0]: The job pods always use a single
+                # container, container_statuses will always have a single element
                 pod = self.core_api.list_namespaced_pod(
                     namespace=self.task_namespace, label_selector=label
                 ).items[0]
@@ -623,13 +636,15 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outher loop is performed if the pod is pending for reasons other than
-                # missing/invalid Docker image (which is reported as INITIALIZING).
+                # Another iteration on the outher loop is performed if the pod is
+                # pending for reasons other than missing/invalid Docker image (which is
+                # reported as INITIALIZING).
                 if pod_phase != RunStatus.INITIALIZING:
                     return pod_phase
 
                 self.log.debug(
-                    "Job (label %s, namespace %s) still pulling the (probably large) docker image. Waiting again for a new status update...",
+                    "Job (label %s, namespace %s) still pulling the (probably large) "
+                    "docker image. Waiting again for a new status update...",
                     label,
                     self.task_namespace,
                 )
@@ -706,10 +721,16 @@ class ContainerManager:
 
         Returns
         -------
-        list[client.V1Volume], list[client.V1VolumeMount], dict[str, str], dict[str, str]
+        Tuple[
+            list[client.V1Volume],
+            list[client.V1VolumeMount],
+            dict[str, str],
+            dict[str, str],
+        ]
             a tuple with (1) the created volume names and (2) their corresponding volume
             mounts and (3) the list of the environment variables required by the
-            algorithms to use such mounts and (4) the secrets to be passed to the container.
+            algorithms to use such mounts and (4) the secrets to be passed to the
+            container.
 
         Notes
         -----
@@ -808,7 +829,7 @@ class ContainerManager:
                 vol_mounts.append(db_mount)
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
-            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type.value
 
             # additional environment variables for the database. These will be stored
             # as {PREFIX}{KEY}=value in the container. These are read by the
@@ -901,7 +922,7 @@ class ContainerManager:
         if not all(df["type"] == TaskDatabaseType.DATAFRAME for df in databases_to_use):
             self.log.error(
                 "All databases used in the algorithm must be of type '%s'.",
-                TaskDatabaseType.DATAFRAME.value,
+                TaskDatabaseType.DATAFRAME,
             )
             raise PermanentAlgorithmStartFail()
 
@@ -959,10 +980,10 @@ class ContainerManager:
 
         source_database = databases_to_use[0]
 
-        if source_database["type"] != TaskDatabaseType.SOURCE.value:
+        if source_database["type"] != TaskDatabaseType.SOURCE:
             self.log.error(
-                "The database used in the data extraction step must be of type "
-                f"'{TaskDatabaseType.SOURCE.value}'."
+                "The database used in the data extraction step must be of type '%s'.",
+                TaskDatabaseType.SOURCE,
             )
             ok = False
 
@@ -995,15 +1016,15 @@ class ContainerManager:
             Whether the image is allowed or not
         """
         # check if algorithm matches any of the regex cases
-        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS)
-        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES)
+        allowed_algorithms = self._policies.get(NodePolicy.ALLOWED_ALGORITHMS.value)
+        allowed_stores = self._policies.get(NodePolicy.ALLOWED_ALGORITHM_STORES.value)
         allow_either_whitelist_or_store = self._policies.get(
             "allow_either_whitelist_or_store", False
         )
 
         # check if user or their organization is allowed
-        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS, [])
-        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS, [])
+        allowed_users = self._policies.get(NodePolicy.ALLOWED_USERS.value, [])
+        allowed_orgs = self._policies.get(NodePolicy.ALLOWED_ORGANIZATIONS.value, [])
         if allowed_users or allowed_orgs:
             is_allowed = self.client.check_user_allowed_to_send_task(
                 allowed_users,
@@ -1148,7 +1169,7 @@ class ContainerManager:
             Returns False if the pattern is a normal string, True if it is a regex.
         """
         # Inspired by
-        # https://github.com/corydolphin/flask-cors/blob/main/flask_cors/core.py#L254.
+        # https://github.com/corydolphin/flask-cors/blob/a5003f391e56f74f11a3e509cd180787c75eb6b0/flask_cors/core.py#L266
         common_regex_chars = [
             "*",
             "\\",
@@ -1163,7 +1184,6 @@ class ContainerManager:
             "}",
             "|",
             "+",
-            "\.",
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.

@@ -1,7 +1,33 @@
-from enum import Enum
+from enum import Enum, StrEnum
+
+# Note: List is used instead of regular list, because StrEnumBase already contains list()
+from typing import List
 
 
-class StorePolicies(str, Enum):
+class EnumBase(Enum):
+    """Base class for all enums"""
+
+    @classmethod
+    def list(cls) -> List[str]:
+        """Return a list of all the enum values"""
+        return [status.value for status in cls]
+
+    @classmethod
+    def names(cls) -> List[str]:
+        """Return a list of all the enum names"""
+        return [status.name.lower() for status in cls]
+
+    @classmethod
+    def items(cls) -> List[tuple[str, str]]:
+        """Return a list of (name, value) tuples for all enum members"""
+        return [(status.name.lower(), status.value) for status in cls]
+
+
+class StrEnumBase(StrEnum, EnumBase):
+    """Base class for all enums"""
+
+
+class StorePolicies(StrEnumBase):
     """
     Enum for the different types of policies of the algorithm store.
     """
@@ -14,7 +40,7 @@ class StorePolicies(str, Enum):
     ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
-class AlgorithmViewPolicies(str, Enum):
+class AlgorithmViewPolicies(StrEnumBase):
     """Enum for available algorithm view policies"""
 
     PUBLIC = "public"
@@ -22,16 +48,7 @@ class AlgorithmViewPolicies(str, Enum):
     ONLY_WITH_EXPLICIT_PERMISSION = "private"
 
 
-class EnumBase(str, Enum):
-    """Base class for all enums in this module"""
-
-    @classmethod
-    def list(cls) -> list[str]:
-        """Return a list of all the enum values"""
-        return [status.value.lower() for status in cls]
-
-
-class AlgorithmStepType(EnumBase):
+class AlgorithmStepType(StrEnumBase):
     """Enum to represent the local actions
 
     A container (= function) on a node can perform a single action. Depending on the
@@ -48,17 +65,17 @@ class AlgorithmStepType(EnumBase):
     @classmethod
     def is_compute(cls, step_type: str) -> bool:
         """Check if the step type is a compute step"""
-        return step_type in [cls.FEDERATED_COMPUTE.value, cls.CENTRAL_COMPUTE.value]
+        return step_type in [cls.FEDERATED_COMPUTE, cls.CENTRAL_COMPUTE]
 
 
-class TaskDatabaseType(EnumBase):
+class TaskDatabaseType(StrEnumBase):
     """Enum to represent the type of database used by a task"""
 
     SOURCE = "source"
     DATAFRAME = "dataframe"
 
 
-class DatabaseType(EnumBase):
+class DatabaseType(StrEnumBase):
     """Enum to represent the type of database"""
 
     CSV = "csv"
@@ -72,10 +89,15 @@ class DatabaseType(EnumBase):
 
     def is_file_based(self) -> bool:
         """Check if the database type is file-based"""
-        return self in [self.CSV, self.EXCEL, self.PARQUET, self.FOLDER]
+        return self in [
+            self.CSV,
+            self.EXCEL,
+            self.PARQUET,
+            self.FOLDER,
+        ]
 
 
-class TaskStatus(EnumBase):
+class TaskStatus(StrEnumBase):
     """Enum to represent the status of a task"""
 
     # All runs have been completed
@@ -86,13 +108,13 @@ class TaskStatus(EnumBase):
     WAITING = "awaiting"
 
     @classmethod
-    def has_finished(cls, status) -> bool:
+    def has_finished(cls, status: str) -> bool:
         """
         Check if task has finished
 
         Parameters
         ----------
-        status: TaskStatus | str
+        status: str
             The status of the task
 
         Returns
@@ -100,10 +122,10 @@ class TaskStatus(EnumBase):
         bool
             True if task has finished, False otherwise
         """
-        return status in [cls.COMPLETED.value, cls.FAILED.value]
+        return status in [cls.COMPLETED, cls.FAILED]
 
 
-class RunStatus(EnumBase):
+class RunStatus(StrEnumBase):
     """Enum to represent the status of a run"""
 
     # Task has not yet been started (usually, node is offline)
@@ -138,36 +160,36 @@ class RunStatus(EnumBase):
     UNEXPECTED_OUTPUT = "unexpected output"
 
     @classmethod
-    def has_failed(cls, status) -> bool:
+    def has_failed(cls, status: str) -> bool:
         """
-        Check if task has failed to run to completion
+        Check if run has failed to complete
 
         Parameters
         ----------
-        status: RunStatus | str
+        status: str
             The status of the task
 
         Returns
         -------
         bool
-            True if task has failed, False otherwise
+            True if run has failed, False otherwise
         """
         return status in cls.failed_statuses()
 
     @classmethod
-    def has_finished(cls, status) -> bool:
+    def has_finished(cls, status: str) -> bool:
         """
-        Check if task has finished or failed
+        Check if run has finished or failed
 
         Parameters
         ----------
-        status: RunStatus | str
-            The status of the task
+        status: str
+            The status of the run
 
         Returns
         -------
         bool
-            True if task has finished or failed, False otherwise
+            True if run has finished or failed, False otherwise
         """
         return status in cls.finished_statuses()
 
@@ -176,23 +198,23 @@ class RunStatus(EnumBase):
         """Return a list of all the failed status values"""
 
         return [
-            cls.FAILED.value,
-            cls.CRASHED.value,
-            cls.KILLED.value,
-            cls.NOT_ALLOWED.value,
-            cls.UNKNOWN_ERROR.value,
-            cls.START_FAILED.value,
-            cls.NO_DOCKER_IMAGE.value,
-            cls.UNEXPECTED_OUTPUT.value,
-            cls.DATAFRAME_NOT_FOUND.value,
-            cls.DEPENDED_ON_FAILED_TASK.value,
+            cls.FAILED,
+            cls.CRASHED,
+            cls.KILLED,
+            cls.NOT_ALLOWED,
+            cls.UNKNOWN_ERROR,
+            cls.START_FAILED,
+            cls.NO_DOCKER_IMAGE,
+            cls.UNEXPECTED_OUTPUT,
+            cls.DATAFRAME_NOT_FOUND,
+            cls.DEPENDED_ON_FAILED_TASK,
         ]
 
     @classmethod
     def finished_statuses(cls) -> list[str]:
         """Return a list of all the finished status values"""
 
-        return cls.failed_statuses() + [cls.COMPLETED.value]
+        return cls.failed_statuses() + [cls.COMPLETED]
 
     @classmethod
     def alive_statuses(cls) -> list[str]:
@@ -200,19 +222,20 @@ class RunStatus(EnumBase):
 
         return [
             cls.PENDING,
-            cls.INITIALIZING.value,
-            cls.ACTIVE.value,
+            cls.INITIALIZING,
+            cls.ACTIVE,
         ]
 
 
-class TaskStatusQueryOptions(EnumBase):
+class TaskStatusQueryOptions(StrEnumBase):
+    """Enum for different options for querying task statuses"""
 
     OPEN = "open"
     WAITING = "waiting"
     FINISHED = "finished"
 
 
-class AlgorithmArgumentType(EnumBase):
+class AlgorithmArgumentType(StrEnumBase):
     """Enum for argument types"""
 
     COLUMN = "column"

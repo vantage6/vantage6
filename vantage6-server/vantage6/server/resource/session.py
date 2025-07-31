@@ -1,28 +1,29 @@
 import logging
-
-from flask import request, g
-from flask_restful import Api
 from http import HTTPStatus
-from sqlalchemy import or_, and_, select
-from names_generator import generate_name
+
+from flask import g, request
+from flask_restful import Api
 from marshmallow import ValidationError
+from names_generator import generate_name
+from sqlalchemy import and_, or_, select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType
-from vantage6.server import db
+
 from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.server import db
 from vantage6.server.dataclass import CreateTaskDB
 from vantage6.server.permission import (
-    Scope as S,
     Operation as P,
     PermissionManager,
     RuleCollection,
+    Scope as S,
 )
-from vantage6.server.resource import only_for, with_user, ServicesResources
+from vantage6.server.resource import ServicesResources, only_for, with_user
 from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource.common.output_schema import SessionSchema
 from vantage6.server.resource.task import Tasks
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -360,7 +361,6 @@ class SessionBase(ServicesResources):
 
 
 class Sessions(SessionBase):
-
     @only_for(("user", "node"))
     def get(self):
         """Returns a list of sessions
@@ -633,7 +633,6 @@ class Sessions(SessionBase):
 
 
 class Session(SessionBase):
-
     @only_for(("user", "node"))
     def get(self, id):
         """View specific session

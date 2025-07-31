@@ -1,18 +1,20 @@
-from enum import Enum
 from typing import Callable
+
 import pandas as pd
 
 from vantage6.common import error, info
-from vantage6.algorithm.data_extraction import (
+from vantage6.common.enum import StrEnumBase
+
+from vantage6.algorithm.data_extraction.readers import (
     _read_csv,
-    _read_parquet,
     _read_excel,
+    _read_parquet,
     _read_sparql_database,
     _read_sql_database,
 )
 
 
-class MockDatabaseType(str, Enum):
+class MockDatabaseType(StrEnumBase):
     """
     Enum for the different database types.
     Attributes
@@ -67,7 +69,7 @@ def load_mock_data(
             f"Unknown database type '{database_type}' for database {database_uri}."
             " Please check the node configuration."
         )
-        info(f"Available mock database types: {', '.join(MockDatabaseType)}")
+        info(f"Available mock database types: {', '.join(MockDatabaseType.list())}")
         exit(1)
 
     connection_details = {

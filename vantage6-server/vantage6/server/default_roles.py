@@ -1,9 +1,9 @@
-from enum import Enum
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.server.model.rule import Operation, Scope
 
 
-class DefaultRole(str, Enum):
+class DefaultRole(StrEnumBase):
     """Enum containing the names of the default roles"""
 
     ROOT = "Root"
@@ -49,7 +49,7 @@ def get_default_roles(db) -> list[dict]:
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
-        "name": DefaultRole.ROOT,
+        "name": DefaultRole.ROOT.value,
         "description": "Super role",
         "rules": db.Rule.get(),
     }
@@ -72,7 +72,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("session", Scope.COLLABORATION, Operation.VIEW),
     ]
     VIEWER_ROLE = {
-        "name": DefaultRole.VIEWER,
+        "name": DefaultRole.VIEWER.value,
         "description": "Can manage their own account and view resources "
         "related to their organization",
         "rules": VIEWER_RULES,
@@ -89,7 +89,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("session", Scope.ORGANIZATION, Operation.DELETE),
     ]
     RESEARCHER_ROLE = {
-        "name": DefaultRole.RESEARCHER,
+        "name": DefaultRole.RESEARCHER.value,
         "description": "Can perform tasks, manage their own account, and "
         "view resources related to their organization",
         "rules": RESEARCHER_RULES,
@@ -108,7 +108,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("event", Scope.ORGANIZATION, Operation.SEND),
     ]
     ORG_ADMIN_ROLE = {
-        "name": DefaultRole.ORG_ADMIN,
+        "name": DefaultRole.ORG_ADMIN.value,
         "description": "Can manage an organization including its users, roles, and nodes."
         " Also has all permissions of a researcher.",
         "rules": ORG_ADMIN_RULES,
@@ -138,7 +138,7 @@ def get_default_roles(db) -> list[dict]:
         db.Rule.get_by_("session", Scope.COLLABORATION, Operation.DELETE),
     ]
     COLLAB_ADMIN_ROLE = {
-        "name": DefaultRole.COL_ADMIN,
+        "name": DefaultRole.COL_ADMIN.value,
         "description": "Can manage an collaboration including its organization and users."
         " Also has permissions of an organization admin.",
         "rules": COLLAB_ADMIN_RULES,

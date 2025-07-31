@@ -2,22 +2,22 @@ import logging
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.common.enum import TaskStatus
-from vantage6.server.model import (
-    Rule,
-    Organization,
-    Node,
-    Collaboration,
-    Task,
-    Run,
-    Study,
-    Session,
-)
-from vantage6.server.model.rule import Scope, Operation
-from vantage6.server._version import __version__
-from .test_resource_base import TestResourceBase
+from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
 
+from vantage6.server._version import __version__
+from vantage6.server.model import (
+    Collaboration,
+    Node,
+    Organization,
+    Rule,
+    Run,
+    Session,
+    Study,
+    Task,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
@@ -196,7 +196,7 @@ class TestResources(TestResourceBase):
         task.save()
         res = Run(
             task=task,
-            status=RunStatus.PENDING,
+            status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )
         res.save()
@@ -236,7 +236,7 @@ class TestResources(TestResourceBase):
             "organizations": [{"id": 9999}],
             "image": "some-image",
             "session_id": session.id,
-            "action": AlgorithmStepType.FEDERATED_COMPUTE,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
         }
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
@@ -322,7 +322,7 @@ class TestResources(TestResourceBase):
         parent_res = Run(
             organization=org,
             task=parent_task,
-            status=RunStatus.PENDING,
+            status=RunStatus.PENDING.value,
             action=AlgorithmStepType.CENTRAL_COMPUTE.value,
         )
         parent_res.save()
@@ -342,7 +342,7 @@ class TestResources(TestResourceBase):
             "collaboration_id": col2.id,
             "image": "some-image",
             "session_id": session.id,
-            "action": AlgorithmStepType.CENTRAL_COMPUTE,
+            "action": AlgorithmStepType.CENTRAL_COMPUTE.value,
         }
 
         # Test wrong collaboration_id
@@ -368,7 +368,7 @@ class TestResources(TestResourceBase):
         # self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test with correct parameters
-        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE
+        task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
         results = self.app.post(
             "/api/task",
             headers=headers,
@@ -377,7 +377,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
         # test already completed task
-        parent_res.status = RunStatus.COMPLETED
+        parent_res.status = RunStatus.COMPLETED.value
         parent_res.save()
         results = self.app.post(
             "/api/task",
@@ -387,7 +387,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # test a failed task
-        parent_res.status = RunStatus.FAILED
+        parent_res.status = RunStatus.FAILED.value
         parent_res.save()
         results = self.app.post(
             "/api/task",
@@ -612,14 +612,14 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Test with global permissions
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Test with organization permissions (should fail for other organizations)
         rule = Rule.get_by_("task", Scope.ORGANIZATION, Operation.VIEW)
@@ -631,7 +631,7 @@ class TestResources(TestResourceBase):
         headers = self.create_user_and_login(org, rules=[rule])
         result = self.app.get(f"/api/task/{task.id}/status", headers=headers)
         self.assertEqual(result.status_code, HTTPStatus.OK)
-        self.assertEqual(result.json["status"], TaskStatus.WAITING)
+        self.assertEqual(result.json["status"], TaskStatus.WAITING.value)
 
         # Cleanup
         task.delete()

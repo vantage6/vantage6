@@ -1,23 +1,21 @@
-from enum import Enum
-
-from vantage6.common.enum import AlgorithmViewPolicies
+from vantage6.common.enum import AlgorithmViewPolicies, EnumBase, StrEnumBase
 
 
-class Partitioning(str, Enum):
+class Partitioning(StrEnumBase):
     """Enum for types of algorithm partitioning"""
 
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
 
-class VisualizationType(str, Enum):
+class VisualizationType(StrEnumBase):
     """Enum for visualization types"""
 
     TABLE = "table"
     LINE = "line"
 
 
-class ReviewStatus(str, Enum):
+class ReviewStatus(StrEnumBase):
     """Enum for review status"""
 
     UNDER_REVIEW = "under review"
@@ -27,7 +25,7 @@ class ReviewStatus(str, Enum):
     DROPPED = "dropped"
 
 
-class AlgorithmStatus(str, Enum):
+class AlgorithmStatus(StrEnumBase):
     """Enum for algorithm status
 
     Note that this contains all values from ReviewStatus but it also contains additional
@@ -45,27 +43,27 @@ class AlgorithmStatus(str, Enum):
     REMOVED = "removed"
 
 
-class PublicPolicies(str, Enum):
+class PublicPolicies(StrEnumBase):
     """Enum to contain all policies that are publicly available"""
 
     # whether algorithms are visible to all users
     ALGORITHM_VIEW = "algorithm_view"
 
 
-class BooleanPolicies(str, Enum):
+class BooleanPolicies(StrEnumBase):
     """Enum to contain all policies that are boolean"""
 
     ASSIGN_REVIEW_OWN_ALGORITHM = "assign_review_own_algorithm"
 
 
-class ListPolicies(str, Enum):
+class ListPolicies(StrEnumBase):
     """Enum to contain all policies that are lists"""
 
     ALLOWED_REVIEWERS = "allowed_reviewers"
     ALLOWED_REVIEW_ASSIGNERS = "allowed_review_assigners"
 
 
-class DefaultStorePolicies(Enum):
+class DefaultStorePolicies(EnumBase):
     """
     Enum for the default values of the policies of the algorithm store.
     """
