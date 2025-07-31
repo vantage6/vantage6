@@ -65,7 +65,7 @@ class AlgorithmStepType(StrEnumBase):
     @classmethod
     def is_compute(cls, step_type: str) -> bool:
         """Check if the step type is a compute step"""
-        return step_type in [cls.FEDERATED_COMPUTE.value, cls.CENTRAL_COMPUTE.value]
+        return step_type in [cls.FEDERATED_COMPUTE, cls.CENTRAL_COMPUTE]
 
 
 class TaskDatabaseType(StrEnumBase):
@@ -90,10 +90,10 @@ class DatabaseType(StrEnumBase):
     def is_file_based(self) -> bool:
         """Check if the database type is file-based"""
         return self in [
-            self.CSV.value,
-            self.EXCEL.value,
-            self.PARQUET.value,
-            self.FOLDER.value,
+            self.CSV,
+            self.EXCEL,
+            self.PARQUET,
+            self.FOLDER,
         ]
 
 
@@ -122,7 +122,7 @@ class TaskStatus(StrEnumBase):
         bool
             True if task has finished, False otherwise
         """
-        return status in [cls.COMPLETED.value, cls.FAILED.value]
+        return status in [cls.COMPLETED, cls.FAILED]
 
 
 class RunStatus(StrEnumBase):
@@ -198,32 +198,32 @@ class RunStatus(StrEnumBase):
         """Return a list of all the failed status values"""
 
         return [
-            cls.FAILED.value,
-            cls.CRASHED.value,
-            cls.KILLED.value,
-            cls.NOT_ALLOWED.value,
-            cls.UNKNOWN_ERROR.value,
-            cls.START_FAILED.value,
-            cls.NO_DOCKER_IMAGE.value,
-            cls.UNEXPECTED_OUTPUT.value,
-            cls.DATAFRAME_NOT_FOUND.value,
-            cls.DEPENDED_ON_FAILED_TASK.value,
+            cls.FAILED,
+            cls.CRASHED,
+            cls.KILLED,
+            cls.NOT_ALLOWED,
+            cls.UNKNOWN_ERROR,
+            cls.START_FAILED,
+            cls.NO_DOCKER_IMAGE,
+            cls.UNEXPECTED_OUTPUT,
+            cls.DATAFRAME_NOT_FOUND,
+            cls.DEPENDED_ON_FAILED_TASK,
         ]
 
     @classmethod
     def finished_statuses(cls) -> list[str]:
         """Return a list of all the finished status values"""
 
-        return cls.failed_statuses() + [cls.COMPLETED.value]
+        return cls.failed_statuses() + [cls.COMPLETED]
 
     @classmethod
     def alive_statuses(cls) -> list[str]:
         """Return a list of all the status values where run is not completed"""
 
         return [
-            cls.PENDING.value,
-            cls.INITIALIZING.value,
-            cls.ACTIVE.value,
+            cls.PENDING,
+            cls.INITIALIZING,
+            cls.ACTIVE,
         ]
 
 

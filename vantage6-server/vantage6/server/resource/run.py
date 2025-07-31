@@ -216,11 +216,11 @@ class MultiRunBase(RunBase):
         #   finished:
         #       Runs that are finished
         #
-        if args.get("state") == TaskStatusQueryOptions.OPEN.value:
+        if args.get("state") == TaskStatusQueryOptions.OPEN:
             q = q.filter(db.Task.is_open)
-        elif args.get("state") == TaskStatusQueryOptions.WAITING.value:
+        elif args.get("state") == TaskStatusQueryOptions.WAITING:
             q = q.filter(db.Task.is_waiting)
-        elif args.get("state") == TaskStatusQueryOptions.FINISHED.value:
+        elif args.get("state") == TaskStatusQueryOptions.FINISHED:
             q = q.filter(db_Run.finished_at.isnot(None))
 
         if "collaboration_id" in args:

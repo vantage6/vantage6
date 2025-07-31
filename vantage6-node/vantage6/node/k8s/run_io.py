@@ -178,7 +178,7 @@ class RunIO:
                     " Exception: %s",
                     self.run_id,
                     self.session_id,
-                    self.action.value,
+                    self.action,
                     str(e),
                 )
                 return b"", RunStatus.UNEXPECTED_OUTPUT

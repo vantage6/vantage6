@@ -56,7 +56,7 @@ class AlgorithmStoreContext(BaseServerContext):
         str
             Server's docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE.value}"
+        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
 
     @classmethod
     def from_external_config_file(

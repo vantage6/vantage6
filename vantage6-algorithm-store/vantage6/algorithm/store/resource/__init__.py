@@ -88,7 +88,7 @@ def _authorize_user(
     g.user = user
     if not user.can(resource, operation):
         msg = (
-            f"You are not allowed to perform the operation '{operation.value}' on "
+            f"You are not allowed to perform the operation '{operation}' on "
             f"resource '{resource}'"
         )
 
@@ -197,7 +197,7 @@ def with_permission_to_view_algorithms() -> callable:
 
             # if the algorithm is public and approved, allow access
             if (
-                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC.value
+                algorithm_view_policy == AlgorithmViewPolicies.PUBLIC
                 and request_approved
             ):
                 return fn(self, *args, **kwargs)
@@ -209,7 +209,7 @@ def with_permission_to_view_algorithms() -> callable:
 
             # if user is authenticated an anyone with token can view algorithms, allow
             if (
-                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED.value
+                algorithm_view_policy == AlgorithmViewPolicies.AUTHENTICATED
                 and request_approved
             ):
                 return fn(self, *args, **kwargs)

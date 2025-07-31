@@ -370,7 +370,8 @@ class ContainerManager:
         # Verify that an allowed image is used
         if not self.is_image_allowed(image, task_info):
             self.log.critical(
-                "[Algorithm job run %s requested by org %s] Docker image %s is not allowed on this Node!",
+                "[Algorithm job run %s requested by org %s] Docker image %s is not "
+                "allowed on this Node!",
                 run_id,
                 init_org_id,
                 image,
@@ -380,7 +381,8 @@ class ContainerManager:
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Task is already being executed, discarding task",
+                "[Algorithm job run %s requested by org %s] Task is already being "
+                "executed, discarding task",
                 run_id,
                 init_org_id,
             )
@@ -419,7 +421,8 @@ class ContainerManager:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
-            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and PROXY_SERVER_PORT=%s env variables on the job POD",
+            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and "
+            "PROXY_SERVER_PORT=%s env variables on the job POD",
             run_id,
             env_vars[ContainerEnvNames.HOST.value],
             env_vars[ContainerEnvNames.PORT.value],
@@ -441,7 +444,8 @@ class ContainerManager:
             self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Validation of environment variables failed: %s",
+                "[Algorithm job run %s requested by org %s] Validation of environment "
+                "variables failed: %s",
                 run_id,
                 init_org_id,
                 e,
@@ -482,7 +486,7 @@ class ContainerManager:
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
                 "task_parent_id": str(parent_task_id),
-                "action": str(action.value),
+                "action": str(action),
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
                 "df_id": str(df_details.get("id")) if df_details else "",
@@ -717,10 +721,16 @@ class ContainerManager:
 
         Returns
         -------
-        list[client.V1Volume], list[client.V1VolumeMount], dict[str, str], dict[str, str]
+        Tuple[
+            list[client.V1Volume],
+            list[client.V1VolumeMount],
+            dict[str, str],
+            dict[str, str],
+        ]
             a tuple with (1) the created volume names and (2) their corresponding volume
             mounts and (3) the list of the environment variables required by the
-            algorithms to use such mounts and (4) the secrets to be passed to the container.
+            algorithms to use such mounts and (4) the secrets to be passed to the
+            container.
 
         Notes
         -----
@@ -909,12 +919,10 @@ class ContainerManager:
             If any requested df name is not found in the session folder.
         """
 
-        if not all(
-            df["type"] == TaskDatabaseType.DATAFRAME.value for df in databases_to_use
-        ):
+        if not all(df["type"] == TaskDatabaseType.DATAFRAME for df in databases_to_use):
             self.log.error(
                 "All databases used in the algorithm must be of type '%s'.",
-                TaskDatabaseType.DATAFRAME.value,
+                TaskDatabaseType.DATAFRAME,
             )
             raise PermanentAlgorithmStartFail()
 
@@ -972,10 +980,10 @@ class ContainerManager:
 
         source_database = databases_to_use[0]
 
-        if source_database["type"] != TaskDatabaseType.SOURCE.value:
+        if source_database["type"] != TaskDatabaseType.SOURCE:
             self.log.error(
                 "The database used in the data extraction step must be of type '%s'.",
-                TaskDatabaseType.SOURCE.value,
+                TaskDatabaseType.SOURCE,
             )
             ok = False
 
@@ -1161,7 +1169,7 @@ class ContainerManager:
             Returns False if the pattern is a normal string, True if it is a regex.
         """
         # Inspired by
-        # https://github.com/corydolphin/flask-cors/blob/main/flask_cors/core.py#L254.
+        # https://github.com/corydolphin/flask-cors/blob/a5003f391e56f74f11a3e509cd180787c75eb6b0/flask_cors/core.py#L266
         common_regex_chars = [
             "*",
             "\\",
@@ -1176,7 +1184,6 @@ class ContainerManager:
             "}",
             "|",
             "+",
-            "\.",
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.

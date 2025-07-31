@@ -156,13 +156,13 @@ class TestAlgorithmResources(TestResources):
         policy.save()
 
         num_approved = len(
-            [a for a in Algorithm.get() if a.status == AlgorithmStatus.APPROVED.value]
+            [a for a in Algorithm.get() if a.status == AlgorithmStatus.APPROVED]
         )
         num_awaiting_review = len(
             [
                 a
                 for a in Algorithm.get()
-                if a.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+                if a.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             ]
         )
         # test if the endpoint is accessible. Only approved algorithms should be

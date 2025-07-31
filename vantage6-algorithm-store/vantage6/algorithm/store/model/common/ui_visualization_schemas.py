@@ -74,9 +74,9 @@ def get_schema_for_visualization(visualization_type: str) -> dict:
     ValueError
         If the visualization type is not supported.
     """
-    if visualization_type == VisualizationType.TABLE.value:
+    if visualization_type == VisualizationType.TABLE:
         return TABLE_SCHEMA
-    elif visualization_type == VisualizationType.LINE.value:
+    elif visualization_type == VisualizationType.LINE:
         return LINE_SCHEMA
     else:
         raise ValueError(f"Visualization type '{visualization_type}' is not supported.")

@@ -1,17 +1,20 @@
 import sys
+
 import click
 
 from vantage6.common.globals import Ports
+
 from vantage6.client import UserClient
-from vantage6.cli.utils import error
+
 from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
+from vantage6.cli.utils import error
 
 
 @click.command()
 @click.option(
     "--server-url",
     type=str,
-    default=f"http://localhost:{Ports.DEV_SERVER.value}/api",
+    default=f"http://localhost:{Ports.DEV_SERVER}/api",
     help="URL of the server",
 )
 @click.option(

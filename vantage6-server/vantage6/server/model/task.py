@@ -182,7 +182,7 @@ class Task(Base):
         """
         return (
             max([r.finished_at for r in self.results])
-            if self.status == TaskStatus.COMPLETED.value and self.results
+            if self.status == TaskStatus.COMPLETED and self.results
             else None
         )
 

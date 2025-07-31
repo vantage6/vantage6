@@ -65,10 +65,10 @@ def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
 
     # check that this server is not already running
     running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type={type_.value}"}
+        filters={"label": f"{APPNAME}-type={type_}"}
     )
     for server in running_servers:
-        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-{type_.value}":
+        if server.name == f"{APPNAME}-{ctx.name}-{ctx.scope}-{type_}":
             error(f"Server {Fore.RED}{ctx.name}{Style.RESET_ALL} is already running")
             exit(1)
     return docker_client
@@ -304,8 +304,6 @@ def attach_logs(container: Container, type_: InstanceType) -> None:
     type_ : InstanceType
         The type of instance to attach the logs for
     """
-    if isinstance(type_, enum.Enum):
-        type_ = type_.value
     logs = container.attach(stream=True, logs=True, stdout=True)
     Thread(target=print_log_worker, args=(logs,), daemon=True).start()
     while True:

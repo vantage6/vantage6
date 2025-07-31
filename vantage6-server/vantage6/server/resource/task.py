@@ -1068,7 +1068,7 @@ class Tasks(TaskBase):
             db_labels_available = [
                 config.value
                 for config in node.config
-                if config.key == NodeConfigKey.DATABASE_LABELS.value
+                if config.key == NodeConfigKey.DATABASE_LABELS
             ]
             if label not in db_labels_available:
                 raise BadRequestError(
@@ -1122,7 +1122,7 @@ class Tasks(TaskBase):
         """
         has_limitations = False
         for config_option in node_configs:
-            if config_option.key == NodePolicy.ALLOWED_USERS.value:
+            if config_option.key == NodePolicy.ALLOWED_USERS:
                 has_limitations = True
                 # TODO expand when we allow also usernames, like orgs below
                 if g.user.id == int(config_option.value):
@@ -1281,8 +1281,8 @@ class Tasks(TaskBase):
 
         if action and store_action and action != store_action:
             raise BadRequestError(
-                f"Action {action.value} does not match the action type in the "
-                f"algorithm store: {store_action.value}"
+                f"Action {action} does not match the action type in the "
+                f"algorithm store: {store_action}"
             )
         elif not action and not store_action:
             raise BadRequestError(
@@ -1294,7 +1294,7 @@ class Tasks(TaskBase):
             action = store_action
 
         if should_be_compute and not AlgorithmStepType.is_compute(action):
-            msg = f"A {action.value} task cannot be created in this endpoint."
+            msg = f"A {action} task cannot be created in this endpoint."
             if action == AlgorithmStepType.DATA_EXTRACTION:
                 msg += (
                     " Please use the dataframe endpoint to create a dataframe "

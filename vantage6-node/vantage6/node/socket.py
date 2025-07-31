@@ -105,7 +105,7 @@ class NodeTaskNamespace(ClientNamespace):
         if RunStatus.has_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
-            if status == RunStatus.NOT_ALLOWED.value:
+            if status == RunStatus.NOT_ALLOWED:
                 self.log.critical(
                     "A node within your collaboration part did not allow a "
                     "container of job_id=%s to start",

@@ -43,11 +43,11 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        if instance_type == InstanceType.SERVER.value:
+        if instance_type == InstanceType.SERVER:
             return (
                 package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
             )
-        elif instance_type == InstanceType.ALGORITHM_STORE.value:
+        elif instance_type == InstanceType.ALGORITHM_STORE:
             return (
                 package_folder
                 / APPNAME

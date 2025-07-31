@@ -59,7 +59,7 @@ class Review(Base):
         bool
             True if the review is finished, False otherwise
         """
-        return self.status != ReviewStatus.UNDER_REVIEW.value
+        return self.status != ReviewStatus.UNDER_REVIEW
 
     def __repr__(self) -> str:
         """

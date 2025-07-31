@@ -306,7 +306,7 @@ class PermissionManager(PermissionManagerBase):
             role.save()
 
         rule = Rule.get_by_(name=resource, scope=scope, operation=operation)
-        rule_params = f"{resource},{scope.value},{operation.value}"
+        rule_params = f"{resource},{scope},{operation}"
 
         if not rule:
             log.error(f"Rule ({rule_params}) not found!")
@@ -379,8 +379,8 @@ class PermissionManager(PermissionManagerBase):
             log.debug(
                 "New auth rule '%s' with scope=%s and operation=%s is stored in the DB",
                 resource,
-                scope.value,
-                operation.value,
+                scope,
+                operation,
             )
 
         if assign_to_container:

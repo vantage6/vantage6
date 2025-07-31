@@ -258,7 +258,7 @@ class KillNodeTasks(ServicesResources):
         if not node:
             return {"msg": f"Node id={id_} not found"}, HTTPStatus.NOT_FOUND
 
-        if node.status != AuthStatus.ONLINE.value:
+        if node.status != AuthStatus.ONLINE:
             return {
                 "msg": f"Node {id_} is not online so cannot kill its tasks!"
             }, HTTPStatus.BAD_REQUEST

@@ -6,13 +6,14 @@ import logging
 from http import HTTPStatus
 
 import jwt
-from flask import request, g
+from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
 
-from vantage6.common.enum import TaskStatus, AlgorithmStepType
+from vantage6.common.enum import AlgorithmStepType, TaskStatus
+
 from vantage6.server import db
-from vantage6.server.resource import with_node, ServicesResources
+from vantage6.server.resource import ServicesResources, with_node
 from vantage6.server.resource.common.input_schema import TokenAlgorithmInputSchema
 
 module_name = __name__.split(".")[-1]
@@ -103,7 +104,7 @@ class ContainerToken(ServicesResources):
 
         # Check wether the action of the task is of type 'central_compute' as only
         # the central task requires to communicate with the server.
-        if db_task.action != AlgorithmStepType.CENTRAL_COMPUTE.value:
+        if db_task.action != AlgorithmStepType.CENTRAL_COMPUTE:
             log.warning(
                 "Node %s attempts to generate key for task %s which is not a "
                 "central compute task.",

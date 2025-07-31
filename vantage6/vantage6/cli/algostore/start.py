@@ -84,7 +84,7 @@ def cli_algo_store_start(
     info(cmd)
 
     info("Run Docker container")
-    port_ = str(port or ctx.config["port"] or Ports.DEV_ALGO_STORE.value)
+    port_ = str(port or ctx.config["port"] or Ports.DEV_ALGO_STORE)
     container = docker_client.containers.run(
         image,
         command=cmd,

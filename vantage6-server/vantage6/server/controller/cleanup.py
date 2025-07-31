@@ -38,7 +38,7 @@ def cleanup_runs_data(days: int, include_args: bool = False):
                 select(Run).filter(
                     Run.finished_at < threshold_date,
                     Run.cleanup_at == None,
-                    Run.status == RunStatus.COMPLETED.value,
+                    Run.status == RunStatus.COMPLETED,
                 )
             ).all()
             for run in runs:

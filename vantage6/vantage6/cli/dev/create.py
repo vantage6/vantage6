@@ -546,21 +546,19 @@ def demo_network(
     "--server-port",
     type=int,
     default=Ports.DEV_SERVER.value,
-    help=f"Port to run the server on. Default is {Ports.DEV_SERVER.value}.",
+    help=f"Port to run the server on. Default is {Ports.DEV_SERVER}.",
 )
 @click.option(
     "--ui-port",
     type=int,
     default=Ports.DEV_UI.value,
-    help=f"Port to run the UI on. Default is {Ports.DEV_UI.value}.",
+    help=f"Port to run the UI on. Default is {Ports.DEV_UI}.",
 )
 @click.option(
     "--algorithm-store-port",
     type=int,
     default=Ports.DEV_ALGO_STORE.value,
-    help=(
-        f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE.value}."
-    ),
+    help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
 )
 @click.option(
     "-i",

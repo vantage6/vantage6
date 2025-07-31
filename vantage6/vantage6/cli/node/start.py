@@ -77,7 +77,7 @@ def cli_node_start(
 
     # check that this node is not already running
     running_nodes = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
     )
 
     suffix = "system" if system_folders else "user"
@@ -222,7 +222,7 @@ def cli_node_start(
             exit(1)
 
         info(
-            f"  Processing {Fore.GREEN}{db.type.value}{Style.RESET_ALL} database "
+            f"  Processing {Fore.GREEN}{db.type}{Style.RESET_ALL} database "
             f"{Fore.GREEN}{db.label}:{db.uri}{Style.RESET_ALL}"
         )
         label_capitals = db.label.upper()
@@ -239,7 +239,7 @@ def cli_node_start(
         if db.type.is_file_based() and not db_file_exists:
             error(
                 f"Database {Fore.RED}{db.uri}{Style.RESET_ALL} not found. Databases of "
-                f"type '{db.type.value}' must be present on the harddrive. Please "
+                f"type '{db.type}' must be present on the harddrive. Please "
                 "update your node configuration file."
             )
             exit(1)

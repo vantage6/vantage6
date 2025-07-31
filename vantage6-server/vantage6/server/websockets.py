@@ -293,7 +293,7 @@ class DefaultSocketNamespace(Namespace):
         # notify nodes that there is a new task available if there are tasks dependent
         # on this one
         dependent_tasks = run.task.required_by
-        if status == RunStatus.COMPLETED.value and dependent_tasks:
+        if status == RunStatus.COMPLETED and dependent_tasks:
             self.log.debug(
                 f"{len(dependent_tasks)} dependent tasks ready to be executed"
             )

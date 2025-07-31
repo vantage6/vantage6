@@ -300,24 +300,22 @@ class Algorithms(AlgorithmBaseResource):
             }, HTTPStatus.BAD_REQUEST
         if awaiting_reviewer_assignment:
             q = q.filter(
-                db_Algorithm.status
-                == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
+                db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
             )
         elif under_review:
-            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW)
         elif invalidated:
             q = q.filter(db_Algorithm.invalidated_at.is_not(None))
         elif in_review_process:
             q = q.filter(
                 or_(
-                    db_Algorithm.status
-                    == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
-                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW.value,
+                    db_Algorithm.status == AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+                    db_Algorithm.status == AlgorithmStatus.UNDER_REVIEW,
                 )
             )
         else:
             # by default, only approved algorithms are returned
-            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED.value)
+            q = q.filter(db_Algorithm.status == AlgorithmStatus.APPROVED)
 
         if (full_image := request.args.get("image")) is not None:
             # determine the sha256 of the image, and filter on that. Sort descending

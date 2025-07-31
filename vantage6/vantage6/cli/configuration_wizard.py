@@ -56,9 +56,9 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
 
     # set default port to the https port if server_url is https
     default_port = (
-        str(Ports.HTTPS.value)
+        str(Ports.HTTPS)
         if config["server_url"].startswith("https")
-        else str(Ports.DEV_SERVER.value)
+        else str(Ports.DEV_SERVER)
     )
 
     config = config | q.unsafe_prompt(
@@ -313,10 +313,9 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
                 "name": "port",
                 "message": "Enter port to which the server listens:",
                 "default": (
-                    # Note that .value is required in YAML to get proper str value
-                    str(Ports.DEV_SERVER.value)
+                    str(Ports.DEV_SERVER)
                     if instance_type == InstanceType.SERVER
-                    else str(Ports.DEV_ALGO_STORE.value)
+                    else str(Ports.DEV_ALGO_STORE)
                 ),
             },
         ]
@@ -451,13 +450,9 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     dict
         Dictionary with the new server configuration
     """
-    config = _get_common_server_config(
-        InstanceType.ALGORITHM_STORE.value, instance_name
-    )
+    config = _get_common_server_config(InstanceType.ALGORITHM_STORE, instance_name)
 
-    default_v6_server_uri = (
-        f"http://localhost:{Ports.DEV_SERVER.value}{DEFAULT_API_PATH}"
-    )
+    default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER}{DEFAULT_API_PATH}"
     default_root_username = "admin"
 
     v6_server_uri = q.text(

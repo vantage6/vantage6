@@ -248,17 +248,15 @@ class Reviews(ReviewBase):
 
         # filter by review status
         if under_review:
-            q = q.filter(db.Review.status == ReviewStatus.UNDER_REVIEW.value)
+            q = q.filter(db.Review.status == ReviewStatus.UNDER_REVIEW)
         if reviewed:
             q = q.filter(
-                db.Review.status.in_(
-                    [ReviewStatus.APPROVED.value, ReviewStatus.REJECTED.value]
-                )
+                db.Review.status.in_([ReviewStatus.APPROVED, ReviewStatus.REJECTED])
             )
         if approved:
-            q = q.filter(db.Review.status == ReviewStatus.APPROVED.value)
+            q = q.filter(db.Review.status == ReviewStatus.APPROVED)
         if rejected:
-            q = q.filter(db.Review.status == ReviewStatus.REJECTED.value)
+            q = q.filter(db.Review.status == ReviewStatus.REJECTED)
 
         # paginate results
         try:
@@ -562,12 +560,12 @@ class Review(ReviewBase):
                 other_reviews
             ):
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
-            elif all([r.status == ReviewStatus.APPROVED.value for r in other_reviews]):
+            elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
                 # it is now deleted, the algorithm should be approved
                 algorithm.status = AlgorithmStatus.APPROVED.value
             algorithm.save()
-        elif algorithm.status == AlgorithmStatus.APPROVED.value:
+        elif algorithm.status == AlgorithmStatus.APPROVED:
             # for algorithms that are currently approved, the reviews may not be
             # deleted.
             return {
@@ -731,7 +729,7 @@ class ReviewApprove(ReviewUpdateResources):
             return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be approved
-        if review.status != ReviewStatus.UNDER_REVIEW.value:
+        if review.status != ReviewStatus.UNDER_REVIEW:
             return {
                 "msg": f"This review has status {review.status} so it can no longer be "
                 "approved!"
@@ -748,7 +746,7 @@ class ReviewApprove(ReviewUpdateResources):
         # that needed to be approved
         algorithm: db.Algorithm = review.algorithm
         if (
-            algorithm.status == AlgorithmStatus.UNDER_REVIEW.value
+            algorithm.status == AlgorithmStatus.UNDER_REVIEW
             and algorithm.are_all_reviews_approved()
         ):
             algorithm.approve()
@@ -826,7 +824,7 @@ class ReviewReject(ReviewUpdateResources):
             return {"msg": "You are not assigned to this review!"}, HTTPStatus.FORBIDDEN
 
         # check if review can still be rejected
-        if review.status != ReviewStatus.UNDER_REVIEW.value:
+        if review.status != ReviewStatus.UNDER_REVIEW:
             return {
                 "msg": f"This review has status {review.status} so it can no longer be "
                 "approved!"

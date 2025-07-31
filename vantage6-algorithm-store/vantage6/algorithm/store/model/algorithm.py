@@ -83,8 +83,8 @@ class Algorithm(Base):
             True if the algorithm is being reviewed, False otherwise
         """
         return self.status not in [
-            AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value,
-            AlgorithmStatus.UNDER_REVIEW.value,
+            AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT,
+            AlgorithmStatus.UNDER_REVIEW,
         ]
 
     def are_all_reviews_approved(self) -> bool:
@@ -96,9 +96,7 @@ class Algorithm(Base):
         bool
             True if all reviews are approved, False otherwise
         """
-        return all(
-            [review.status == ReviewStatus.APPROVED.value for review in self.reviews]
-        )
+        return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
 
     def approve(self) -> None:
         """

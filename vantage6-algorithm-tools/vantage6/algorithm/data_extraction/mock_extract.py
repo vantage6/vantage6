@@ -76,11 +76,11 @@ def load_mock_data(
         "uri": database_uri,
         "type": database_type,
     }
-    if database_type == MockDatabaseType.EXCEL.value:
+    if database_type == MockDatabaseType.EXCEL:
         return loader(connection_details, sheet_name=sheet_name)
     elif (
-        database_type == MockDatabaseType.SPARQL.value
-        or database_type == MockDatabaseType.SQL.value
+        database_type == MockDatabaseType.SPARQL
+        or database_type == MockDatabaseType.SQL
     ):
         if not query:
             error(f"Query is required for {database_type} databases.")

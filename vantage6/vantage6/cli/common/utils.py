@@ -90,11 +90,7 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     client = docker.from_env()
     ctx_class = select_context_class(instance_type)
 
-    instance_type_value = (
-        instance_type.value if isinstance(instance_type, enum.Enum) else instance_type
-    )
-
-    running_server_names = get_running_servers(client, instance_type_value)
+    running_server_names = get_running_servers(client, instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
@@ -108,8 +104,7 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-system-{instance_type_value}"
-            in running_server_names
+            if f"{APPNAME}-{config.name}-system-{instance_type}" in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} System ")
@@ -119,8 +114,7 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-user-{instance_type_value}"
-            in running_server_names
+            if f"{APPNAME}-{config.name}-user-{instance_type}" in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} User   ")

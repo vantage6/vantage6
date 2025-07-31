@@ -3,15 +3,17 @@ Common functions that are used in node CLI commands
 """
 
 import os
+
 import docker
 from colorama import Fore, Style
 
-from vantage6.common import error, info, debug
+from vantage6.common import debug, error, info
 from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
+
 from vantage6.client import UserClient
 
-from vantage6.cli.context.node import NodeContext
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.context.node import NodeContext
 
 
 def create_client(ctx: NodeContext) -> UserClient:
@@ -86,8 +88,7 @@ def select_node(name: str, system_folders: bool) -> tuple[str, str]:
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
         error(
-            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} could "
-            f"not be found."
+            f"The configuration {Fore.RED}{name}{Style.RESET_ALL} could not be found."
         )
         exit(1)
     return name
@@ -108,6 +109,6 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
         List of names of running nodes
     """
     running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
     )
     return [node.name for node in running_nodes]

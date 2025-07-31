@@ -45,7 +45,7 @@ class Scope(StrEnumBase):
         str | None
             Name of the scope or None if no scope with the given value exists
         """
-        return next((scope.name.lower() for scope in cls if scope.value == value), None)
+        return next((scope.name.lower() for scope in cls if scope == value), None)
 
 
 class Rule(Base):

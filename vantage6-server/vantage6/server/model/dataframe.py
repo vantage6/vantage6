@@ -79,9 +79,9 @@ class Dataframe(Base):
             [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
         ) and any(
             [
-                run.status == RunStatus.COMPLETED.value
+                run.status == RunStatus.COMPLETED
                 for run in self.last_session_task.runs
-                if run.action == AlgorithmStepType.DATA_EXTRACTION.value
+                if run.action == AlgorithmStepType.DATA_EXTRACTION
             ]
         )
 
@@ -97,8 +97,8 @@ class Dataframe(Base):
         return [
             run.organization_id
             for run in self.last_session_task.runs
-            if run.status == RunStatus.COMPLETED.value
-            and run.action == AlgorithmStepType.DATA_EXTRACTION.value
+            if run.status == RunStatus.COMPLETED
+            and run.action == AlgorithmStepType.DATA_EXTRACTION
         ]
 
     @staticmethod

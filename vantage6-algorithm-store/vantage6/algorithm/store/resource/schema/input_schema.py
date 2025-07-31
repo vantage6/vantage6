@@ -127,11 +127,11 @@ class FunctionInputSchema(_NameDescriptionSchema):
                 )
                 # argument of list types cannot be conditional - this is not supported
                 if conditional_arg.get("type_") in [
-                    AlgorithmArgumentType.COLUMNS.value,
-                    AlgorithmArgumentType.STRINGS.value,
-                    AlgorithmArgumentType.INTEGERS.value,
-                    AlgorithmArgumentType.FLOATS.value,
-                    AlgorithmArgumentType.ORGANIZATIONS.value,
+                    AlgorithmArgumentType.COLUMNS,
+                    AlgorithmArgumentType.STRINGS,
+                    AlgorithmArgumentType.INTEGERS,
+                    AlgorithmArgumentType.FLOATS,
+                    AlgorithmArgumentType.ORGANIZATIONS,
                 ]:
                     raise ValidationError(
                         f"The argument '{arg_name}' is conditional on "
@@ -139,8 +139,8 @@ class FunctionInputSchema(_NameDescriptionSchema):
                         " type, which is not supported."
                     )
                 elif conditional_arg.get("type_") in [
-                    AlgorithmArgumentType.ORGANIZATION.value,
-                    AlgorithmArgumentType.JSON.value,
+                    AlgorithmArgumentType.ORGANIZATION,
+                    AlgorithmArgumentType.JSON,
                 ]:
                     raise ValidationError(
                         f"The argument '{arg_name}' is conditional on "
@@ -159,7 +159,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                     # conditional value is null - this is allowed and does not need to
                     # be checked further
                     continue
-                elif conditional_type == AlgorithmArgumentType.INTEGER.value:
+                elif conditional_type == AlgorithmArgumentType.INTEGER:
                     try:
                         int(conditional_value)
                     except (ValueError, TypeError) as exc:
@@ -168,7 +168,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"integer, while the conditional argument '{conditional_on}' "
                             "requires an integer"
                         ) from exc
-                elif conditional_type == AlgorithmArgumentType.FLOAT.value:
+                elif conditional_type == AlgorithmArgumentType.FLOAT:
                     try:
                         float(conditional_value)
                     except (ValueError, TypeError) as exc:
@@ -177,7 +177,7 @@ class FunctionInputSchema(_NameDescriptionSchema):
                             f"float, while the conditional argument '{conditional_on}' "
                             "requires a float"
                         ) from exc
-                elif conditional_type == AlgorithmArgumentType.BOOLEAN.value:
+                elif conditional_type == AlgorithmArgumentType.BOOLEAN:
                     if conditional_value.lower() not in ["true", "false", "1", "0"]:
                         raise ValidationError(
                             f"Conditional value '{conditional_value}' is not a valid "
@@ -309,8 +309,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         type_ = data.get("type_")
         if default := data.get("default_value"):
             if (
-                type_ == AlgorithmArgumentType.INTEGER.value
-                or type_ == AlgorithmArgumentType.ORGANIZATION.value
+                type_ == AlgorithmArgumentType.INTEGER
+                or type_ == AlgorithmArgumentType.ORGANIZATION
             ):
                 try:
                     int(default)
@@ -319,7 +319,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"Default value '{default}' is not a valid integer, while the "
                         f"argument type {type_} requires an integer"
                     ) from exc
-            elif type_ == AlgorithmArgumentType.FLOAT.value:
+            elif type_ == AlgorithmArgumentType.FLOAT:
                 try:
                     float(default)
                 except ValueError as exc:
@@ -327,14 +327,14 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"Default value '{default}' is not a valid float, while the "
                         f"argument type {type_} requires a float"
                     ) from exc
-            elif type_ == AlgorithmArgumentType.BOOLEAN.value:
+            elif type_ == AlgorithmArgumentType.BOOLEAN:
                 if str(default).lower() not in ["true", "false", "1", "0"]:
                     raise ValidationError(
                         f"Default value '{default}' is not a valid boolean, while the "
                         f"argument type {type_} requires a boolean. Please use 'true', "
                         "'false', '1', or '0'"
                     )
-            elif type_ == AlgorithmArgumentType.JSON.value:
+            elif type_ == AlgorithmArgumentType.JSON:
                 try:
                     json.loads(default)
                 except ValueError as exc:
@@ -343,8 +343,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"the argument type {type_} requires a JSON object"
                     ) from exc
             elif (
-                type_ == AlgorithmArgumentType.STRINGS.value
-                or type_ == AlgorithmArgumentType.COLUMNS.value
+                type_ == AlgorithmArgumentType.STRINGS
+                or type_ == AlgorithmArgumentType.COLUMNS
             ):
                 try:
                     json_list = json.loads(default)
@@ -356,8 +356,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"the argument type {type_} requires a JSON array"
                     ) from exc
             elif (
-                type_ == AlgorithmArgumentType.INTEGERS.value
-                or type_ == AlgorithmArgumentType.ORGANIZATIONS.value
+                type_ == AlgorithmArgumentType.INTEGERS
+                or type_ == AlgorithmArgumentType.ORGANIZATIONS
             ):
                 try:
                     json_list = json.loads(default)
@@ -371,7 +371,7 @@ class ArgumentInputSchema(_NameDescriptionSchema):
                         f"integers, while the argument type {type_} requires a JSON "
                         "array of integers"
                     ) from exc
-            elif type_ == AlgorithmArgumentType.FLOATS.value:
+            elif type_ == AlgorithmArgumentType.FLOATS:
                 try:
                     json_list = json.loads(default)
                     if not isinstance(json_list, list):
@@ -387,9 +387,9 @@ class ArgumentInputSchema(_NameDescriptionSchema):
 
         # if there are allowed values, validate that they are of the correct type
         if data.get("allowed_values"):
-            if type_ == AlgorithmArgumentType.INTEGER.value:
+            if type_ == AlgorithmArgumentType.INTEGER:
                 desired_type = int
-            elif type_ == AlgorithmArgumentType.FLOAT.value:
+            elif type_ == AlgorithmArgumentType.FLOAT:
                 desired_type = float
             else:
                 desired_type = str

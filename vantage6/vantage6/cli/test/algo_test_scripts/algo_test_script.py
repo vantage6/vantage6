@@ -1,12 +1,13 @@
-import logging
 import json
+import logging
 import sys
 
+from vantage6.common import error
 from vantage6.common.enum import TaskStatus
+from vantage6.common.globals import Ports
 
 from vantage6.client import Client
-from vantage6.common import error
-from vantage6.common.globals import Ports
+
 import vantage6.cli.test.algo_test_scripts.algo_test_arguments as arguments
 
 
@@ -33,7 +34,7 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
 
     try:
         # check if the task has failed
-        assert client.task.get(task_id)["status"] != TaskStatus.FAILED.value
+        assert client.task.get(task_id)["status"] != TaskStatus.FAILED
 
         logging.info("Task for %s completed successfully.", algo_name)
 
@@ -57,7 +58,7 @@ def run_test(custom_args: dict | None = None):
     """
     # Create a client and authenticate
     client = Client(
-        server_url=f"http://localhost:{Ports.DEV_SERVER.value}/api",
+        server_url=f"http://localhost:{Ports.DEV_SERVER}/api",
         auth_url="http://localhost:8080",
     )
     try:
