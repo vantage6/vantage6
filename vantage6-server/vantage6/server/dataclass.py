@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import Self
 
 from marshmallow import ValidationError
+
 from vantage6.common.enum import TaskDatabaseType
 
 
@@ -11,7 +13,7 @@ class CreateTaskDB:
     dataframe_id: int | None = None
 
     @classmethod
-    def from_dict(cls, database: dict) -> "CreateTaskDB":
+    def from_dict(cls, database: dict) -> Self:
         if "type" not in database:
             raise ValidationError("Each database must have a 'type' key")
         if database["type"] == TaskDatabaseType.DATAFRAME and not database.get(

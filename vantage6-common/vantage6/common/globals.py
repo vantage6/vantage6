@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 from pathlib import Path
 
 from vantage6.common.enum import EnumBase
@@ -86,7 +86,7 @@ class NodeConfigKey(EnumBase):
     DATABASE_TYPES = "database_types"
 
 
-class Ports(int, Enum):
+class Ports(IntEnum):
     """Enum containing the default ports used by the vantage6 components"""
 
     HTTP = 80

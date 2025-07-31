@@ -1,6 +1,7 @@
-import bcrypt
+from typing import Self
 
-from sqlalchemy import Column, String, DateTime, select
+import bcrypt
+from sqlalchemy import Column, DateTime, String, select
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
@@ -43,7 +44,7 @@ class Authenticatable(Base):
         return bcrypt.hashpw(secret.encode("utf8"), bcrypt.gensalt()).decode("utf8")
 
     @staticmethod
-    def get_by_keycloak_id(keycloak_id: str) -> "Authenticatable":
+    def get_by_keycloak_id(keycloak_id: str) -> Self:
         """
         Get an authenticatable entity by its keycloak ID.
 

@@ -1,4 +1,6 @@
-from schema import And, Or, Use, Optional
+from typing import Self
+
+from schema import And, Optional, Or, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
 
@@ -63,7 +65,7 @@ class NodeConfigurationManager(ConfigurationManager):
         super().__init__(conf_class=NodeConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path: str) -> "NodeConfigurationManager":
+    def from_file(cls, path: str) -> Self:
         """
         Create a new instance of the NodeConfigurationManager from a
         configuration file.
@@ -95,7 +97,7 @@ class ServerConfigurationManager(ConfigurationManager):
         super().__init__(conf_class=ServerConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path) -> "ServerConfigurationManager":
+    def from_file(cls, path) -> Self:
         """
         Create a new instance of the ServerConfigurationManager from a
         configuration file.

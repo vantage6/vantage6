@@ -4,7 +4,7 @@ import logging.handlers
 import os
 import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Self, Tuple
 
 import appdirs
 import pyfiglet
@@ -139,7 +139,7 @@ class AppContext(metaclass=Singleton):
     @classmethod
     def from_external_config_file(
         cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
-    ) -> "AppContext":
+    ) -> Self:
         """
         Create a new AppContext instance from an external config file.
 

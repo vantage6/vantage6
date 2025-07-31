@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 
 # Note: List is used instead of regular list, because EnumBase already contains list()
 from typing import List
 
 
-class EnumBase(str, Enum):
+class EnumBase(StrEnum):
     """Base class for all enums"""
 
     @classmethod
