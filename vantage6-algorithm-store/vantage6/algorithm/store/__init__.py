@@ -7,16 +7,6 @@ vantage6 server. This allows both coupling a community store and a private
 store to a vantage6 server.
 """
 
-import os
-
-from gevent import monkey
-
-# This is a workaround for readthedocs
-if not os.environ.get("READTHEDOCS"):
-    # flake8: noqa: E402 (ignore import error)
-    monkey.patch_all()
-
-# pylint: disable=C0413, C0411
 import importlib
 import logging
 
@@ -310,19 +300,3 @@ def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     allow_drop_all = ctx.config["allow_drop_all"]
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
     return AlgorithmStoreApp(ctx).start()
-
-
-def run_dev_server(server_app: AlgorithmStoreApp, *args, **kwargs) -> None:
-    """
-    Run a vantage6 development server (outside of a Docker container).
-
-    Parameters
-    ----------
-    server_app: AlgorithmStoreApp
-        Instance of a vantage6 server
-    """
-    log.warning("*" * 80)
-    log.warning(" DEVELOPMENT SERVER ".center(80, "*"))
-    log.warning("*" * 80)
-    kwargs.setdefault("log_output", False)
-    server_app.socketio.run(server_app.app, *args, **kwargs)

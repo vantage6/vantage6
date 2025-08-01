@@ -30,7 +30,7 @@ itsdangerous==2.2.0
 jedi==0.18.2
 jinja2==3.1.6
 jsonschema==4.21.1
-kombu==5.2.4
+kombu==5.5.4
 MarkupSafe==2.1.2
 marshmallow==3.20.2
 marshmallow-sqlalchemy==1.4.0

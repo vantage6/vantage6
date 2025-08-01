@@ -8,6 +8,15 @@ keycloak:
   auth:
     adminUser: admin
     adminPassword: admin
+  # ensure that the auth pod has enough resources to run
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+    requests:
+      memory: 1Gi
+      cpu: 500m
+  # keycloak configuration
   keycloakConfigCli:
     enabled: true
     configuration:

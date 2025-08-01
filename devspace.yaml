@@ -159,6 +159,12 @@ hooks:
     command: |
       dev/check_microk8s_storage_enabled.sh
     events: ["before:deploy:vantage6-auth"]
+  # before building images, pull the latest base image
+  - name: "pull-base-image"
+    command: |
+      echo "Pulling base image"
+      docker pull harbor2.vantage6.ai/infrastructure/infrastructure-base:5.0
+    events: ["before:build:server", "before:build:node", "before:build:store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -167,17 +173,14 @@ images:
     image: ${SERVER_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
-
   node:
     image: ${NODE_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
-
   store:
     image: ${STORE_IMAGE}
     dockerfile: docker/algorithm-store.Dockerfile
     context: .
-
   ui:
     image: "${UI_IMAGE}"
     dockerfile: docker/ui_dev.Dockerfile

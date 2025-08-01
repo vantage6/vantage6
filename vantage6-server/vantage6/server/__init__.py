@@ -460,19 +460,3 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
     allow_drop_all = ctx.config["allow_drop_all"]
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
     return ServerApp(ctx).start()
-
-
-def run_dev_server(server_app: ServerApp, *args, **kwargs) -> None:
-    """
-    Run a vantage6 development server (outside of a Docker container).
-
-    Parameters
-    ----------
-    server_app: ServerApp
-        Instance of a vantage6 server
-    """
-    log.warn("*" * 80)
-    log.warn(" DEVELOPMENT SERVER ".center(80, "*"))
-    log.warn("*" * 80)
-    kwargs.setdefault("log_output", False)
-    server_app.socketio.run(server_app.app, *args, **kwargs)

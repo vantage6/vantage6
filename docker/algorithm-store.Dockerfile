@@ -20,8 +20,17 @@ RUN pip install psycopg2-binary
 # copy source
 COPY . /vantage6
 
+RUN pip install --upgrade pip
+
+# Install requirements. We cannot rely on setup.py because of the way
+# python resolves package versions. To control all dependencies we install
+# them from the requirements.txt
+# This is also done in the base-image to safe build time. We redo it here
+# to allow for dependency upgrades in minor and patch versions.
+RUN pip install -r /vantage6/requirements.txt \
+  --extra-index-url https://www.piwheels.org/simple
+
 # install individual packages
-# TODO check which dependencies are needed - remove at least server
 RUN pip install -e /vantage6/vantage6-common
 RUN pip install -e /vantage6/vantage6-client
 RUN pip install -e /vantage6/vantage6
