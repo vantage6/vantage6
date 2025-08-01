@@ -173,17 +173,14 @@ images:
     image: ${SERVER_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
-
   node:
     image: ${NODE_IMAGE}
     dockerfile: docker/node-and-server.Dockerfile
     context: .
-
   store:
     image: ${STORE_IMAGE}
     dockerfile: docker/algorithm-store.Dockerfile
     context: .
-
   ui:
     image: "${UI_IMAGE}"
     dockerfile: docker/ui_dev.Dockerfile
