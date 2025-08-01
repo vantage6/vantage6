@@ -7,17 +7,16 @@
 #
 ARG TAG=latest
 ARG BASE=5.0
-FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
-# Update and upgrade
-RUN apt update -y
-RUN apt upgrade -y
-
-# Install uv
-RUN pip install uv
+# slim bookworm does not have gcc installed
+# libdev is needed for arm compilation
+RUN apt-get update \
+    && apt-get install -y gcc python3-dev libffi-dev \
+    && apt-get upgrade -y
 
 # copy source
 COPY . /vantage6
@@ -25,16 +24,13 @@ COPY . /vantage6
 # Install dependencies using uv
 WORKDIR /vantage6
 
-# Create virtual environment and install all packages in editable mode
-RUN uv venv
-
-# Install all packages in editable mode
-RUN uv pip install -e vantage6-common
-RUN uv pip install -e vantage6-client
-RUN uv pip install -e vantage6
-RUN uv pip install -e vantage6-backend-common
-RUN uv pip install -e vantage6-server
-RUN uv pip install -e vantage6-node
+# Install all packages in editable mode globally
+RUN uv pip install --system -e vantage6-common
+RUN uv pip install --system -e vantage6-client
+RUN uv pip install --system -e vantage6
+RUN uv pip install --system -e vantage6-backend-common
+RUN uv pip install --system -e vantage6-server
+RUN uv pip install --system -e vantage6-node
 
 # Overwrite uWSGI installation from the requirements.txt
 # Install uWSGI from source (for RabbitMQ)
@@ -43,7 +39,7 @@ RUN apt-get install --no-install-recommends --no-install-suggests -y \
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
-  uv pip install --no-binary uwsgi uwsgi
+  uv pip install --system --no-binary=uwsgi uwsgi
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 

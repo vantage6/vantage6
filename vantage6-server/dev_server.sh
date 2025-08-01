@@ -11,10 +11,7 @@ if [ -z "$VANTAGE6_SERVER_CONFIG_LOCATION" ]; then
     VANTAGE6_SERVER_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
-# Activate virtual environment if it exists
-if [ -f "/vantage6/.venv/bin/activate" ]; then
-    . /vantage6/.venv/bin/activate
-fi
+
 
 uwsgi \
     --py-autoreload 1 \

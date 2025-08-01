@@ -71,14 +71,14 @@ community:
 	cd tools && python update-discord.py ${FLAGS}
 
 uninstall:
-	pip uninstall -y vantage6
-	pip uninstall -y vantage6-client
-	pip uninstall -y vantage6-algorithm-tools
-	pip uninstall -y vantage6-common
-	pip uninstall -y vantage6-node
-	pip uninstall -y vantage6-backend-common
-	pip uninstall -y vantage6-server
-	pip uninstall -y vantage6-algorithm-store
+	uv remove vantage6
+	uv remove vantage6-client
+	uv remove vantage6-algorithm-tools
+	uv remove vantage6-common
+	uv remove vantage6-node
+	uv remove vantage6-backend-common
+	uv remove vantage6-server
+	uv remove vantage6-algorithm-store
 
 install:
 	uv add vantage6-common

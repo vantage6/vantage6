@@ -1,7 +1,7 @@
 import re
-import click
-
 from pathlib import Path
+
+import click
 
 
 # from vantage6.common import info
@@ -145,19 +145,6 @@ def update_version_docker_files(version: str) -> None:
         The new version to which to update.
     """
     major_minor = ".".join(version.split(".")[:2])
-
-    # update version label in infrastructure-base
-    info("Updating version in infrastructure-base/Dockerfile")
-    file = Path("../docker/infrastructure-base.Dockerfile")
-    with open(file, "r") as f:
-        content = f.read()
-        new_content = re.sub(
-            r"(LABEL version=\")(\d+.\d+)\"",
-            r"\g<1>{}".format(major_minor + '"'),
-            content,
-        )
-    with open(file, "w") as f:
-        f.write(new_content)
 
     # update version label in node-and-server and algorithm store dockerfile
     info("Updating version in Dockerfiles for node, server and algorithm store")

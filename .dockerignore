@@ -39,3 +39,7 @@ docker-compose.yml
 .readthedocs.yml
 .pre-commit-config.yaml
 CITATION.cff
+
+# Ignore virtual environments
+.venv/
+venv/
