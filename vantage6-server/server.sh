@@ -9,6 +9,11 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+# Activate virtual environment if it exists
+if [ -f "/vantage6/.venv/bin/activate" ]; then
+    . /vantage6/.venv/bin/activate
+fi
+
 uwsgi \
     --http :80 \
     --gevent 1000 \

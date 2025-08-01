@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vantage6-common"
+version = "5.0.0a29"
+description = "Vantage6 common utilities"
+readme = "../README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Vantage6 Team", email = "info@vantage6.ai"}
+]
+maintainers = [
+    {name = "Frank Martin", email = "f.martin@iknl.nl"},
+    {name = "Bart van Beusekom", email = "b.vanbeusekom@iknl.nl"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "appdirs==1.4.4",
+    "click==8.1.3",
+    "colorama==0.4.6",
+    "docker==7.1.0",
+    "ipython==8.10.0",
+    "jinja2==3.1.6",
+    "pandas>=2.2.3",
+    "pyfiglet==0.8.post1",
+    "questionary==1.10.0",
+    "rich==13.5.2",
+    "schema==0.7.5",
+    "sqlalchemy==2.0.37",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage==6.4.4",
+    "black",
+    "pre-commit",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["vantage6"]
+
+[tool.hatch.build.targets.wheel.sources]
+"vantage6" = "vantage6" 

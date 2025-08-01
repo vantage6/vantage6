@@ -81,24 +81,24 @@ uninstall:
 	pip uninstall -y vantage6-algorithm-store
 
 install:
-	cd vantage6-common && pip install .
-	cd vantage6-client && pip install .
-	cd vantage6-algorithm-tools && pip install .
-	cd vantage6 && pip install .
-	cd vantage6-node && pip install .
-	cd vantage6-backend-common && pip install .
-	cd vantage6-server && pip install .
-	cd vantage6-algorithm-store && pip install .
+	uv add vantage6-common
+	uv add vantage6-client
+	uv add vantage6-algorithm-tools
+	uv add vantage6
+	uv add vantage6-node
+	uv add vantage6-backend-common
+	uv add vantage6-server
+	uv add vantage6-algorithm-store
 
 install-dev:
-	cd vantage6-common && pip install -e .
-	cd vantage6-client && pip install -e .
-	cd vantage6-algorithm-tools && pip install -e .
-	cd vantage6 && pip install -e .[dev]
-	cd vantage6-node && pip install -e .[dev]
-	cd vantage6-backend-common && pip install -e .[dev]
-	cd vantage6-server && pip install -e .[dev]
-	cd vantage6-algorithm-store && pip install -e .[dev]
+	uv pip install -e vantage6-common
+	uv pip install -e vantage6-client
+	uv pip install -e vantage6-algorithm-tools
+	uv pip install -e vantage6[dev]
+	uv pip install -e vantage6-node[dev]
+	uv pip install -e vantage6-backend-common[dev]
+	uv pip install -e vantage6-server[dev]
+	uv pip install -e vantage6-algorithm-store[dev]
 
 base-image:
 	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
