@@ -40,7 +40,12 @@ class NodeContext(AppContext):
         logger_prefix: str = "",
     ):
         super().__init__(
-            InstanceType.NODE, instance_name, system_folders=system_folders
+            InstanceType.NODE,
+            instance_name,
+            system_folders=system_folders,
+            config_file=config_file,
+            print_log_header=print_log_header,
+            logger_prefix=logger_prefix,
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
