@@ -18,16 +18,16 @@ fi
 # Use case statement to handle different image types
 case "$1" in
     --server)
-        echo "devspace build --profile build-server-only"
+        echo "devspace build --skip-push --profile build-server-only"
         ;;
     --node)
-        echo "devspace build --profile build-node-only"
+        echo "devspace build --skip-push --profile build-node-only"
         ;;
     --store)
-        echo "devspace build --profile build-store-only"
+        echo "devspace build --skip-push --profile build-store-only"
         ;;
     --ui)
-        echo "devspace build --profile build-ui-only"
+        echo "devspace build --skip-push --profile build-ui-only"
         ;;
     *)
         echo "Invalid argument: $1" >&2
