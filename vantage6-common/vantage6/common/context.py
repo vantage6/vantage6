@@ -9,7 +9,7 @@ from typing import Self, Tuple
 import appdirs
 import pyfiglet
 
-from vantage6.common import Fore, Singleton, Style, error, get_config_path, logger_name
+from vantage6.common import Fore, Singleton, Style, error, get_config_path
 from vantage6.common._version import __version__
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager

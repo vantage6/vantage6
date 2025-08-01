@@ -15,8 +15,6 @@ uwsgi \
     --py-autoreload 1 \
     --reload-mercy 1 \
     --http :7602 \
-    --gevent 1000 \
-    --http-websockets \
     --master \
     --callable app \
     --disable-logging \
