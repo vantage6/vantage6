@@ -41,7 +41,7 @@ setup(
         "Flask-SocketIO==5.3.6",
         "gevent==25.4.2",
         "ipython==8.10.0",
-        "kombu==5.2.4",
+        "kombu==5.5.4",
         "marshmallow==3.19.0",
         "names_generator==0.2.0",
         "prometheus-client==0.21.1",
