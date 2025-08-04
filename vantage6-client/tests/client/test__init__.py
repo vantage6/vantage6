@@ -11,7 +11,7 @@ class TestUserClient(unittest.TestCase):
     @patch('requests.get')
     @patch('vantage6.client.UserClient.authenticate')
     @patch('vantage6.client.UserClient.setup_encryption')
-    def test_wait_for_results(self, mock_setup_encryption, mock_authenticate, mock_requests_get):
+    def test_retrieve_results(self, mock_setup_encryption, mock_authenticate, mock_requests_get):
       
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -40,7 +40,7 @@ class TestUserClient(unittest.TestCase):
         client_instance.request.status_code = 200
       
         # Call the method under test
-        results = client_instance.wait_for_results(task_id=1, interval=0.1)
+        results = client_instance.retrieve_results(task_id=1, interval=0.1)
         print(results)
         # Assertions
         

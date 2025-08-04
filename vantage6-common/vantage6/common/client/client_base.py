@@ -705,3 +705,9 @@ class ClientBase(object):
                 Input `data` but with the key-value pair where value is `None` removed
             """
             return {k: v for k, v in data.items() if v is not None}
+        
+        @staticmethod
+        def chunked_result_stream(result: bytes, chunk_size: int = 8192):
+            """Helper function for yielding chunks of the result stream"""
+            for i in range(0, len(result), chunk_size):
+                yield result[i:i + chunk_size]

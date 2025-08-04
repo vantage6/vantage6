@@ -347,15 +347,29 @@ def proxy_results(id_: int) -> Response:
     return result, response.status_code
 
 
-@app.route("/resultstream/<string:id>", methods=["GET"])
+@app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
+    """ 
+    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server. 
+    Parameters
+    ----------
+    id : str
+        The id of the blob to be streamed.  
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing the streamed blob data.
+        If the blob is successfully streamed, it returns a response with the content type set to "application/octet-stream" and the content disposition set to attachment.
+        If an error occurs, it returns an error message with the appropriate HTTP status code.
+    """
+    
     log.info("Proxy stream handler called with id: %s", id)
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
             if h in request.headers:
                 headers[h] = request.headers[h]
     method = get_method(request.method)
-    url = f"{server_url}/resultstream/{id}"
+    url = f"{server_url}/blobstream/{id}"
     log.info("Making proxied request to %s", url)
 
     backend_response = method(url, stream=True, params=request.args, headers=headers)
@@ -391,8 +405,15 @@ def stream_handler(id: str) -> FlaskResponse:
         # Return the raw content if not a valid stream or error occurred
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
 
-@app.route("/resultstream", methods=["POST"])
+@app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
+    """
+    Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing if the blob was successfully streamed to the server.
+    """    
     log.info("Proxy stream POST handler called")
 
     client: NodeClient = app.config.get("SERVER_IO")
@@ -414,7 +435,7 @@ def stream_handler_post() -> FlaskResponse:
         if h in request.headers:
             headers[h] = request.headers[h]
 
-    url = f"{server_url}/resultstream"
+    url = f"{server_url}/blobstream"
     log.info("Making proxied POST request to %s", url)
 
     encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)

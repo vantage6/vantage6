@@ -196,8 +196,7 @@ class UserClient(ClientBase):
             self.log.info("--> %s", response["msg"])
             return
 
-    def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
-        #TODO: Rename and refactor this function to retrieve_results, or someting similar.
+    def retrieve_results(self, task_id: int, interval: float = 1) -> dict:
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.
@@ -232,7 +231,7 @@ class UserClient(ClientBase):
 
         """
         for item in result["data"]:
-            url = f"{self.base_path}/resultstream/{item['result']}"
+            url = f"{self.base_path}/blobstream/{item['result']}"
             headers = self.headers
             timeout = 300
             self.log.debug(f"Streaming result from {url} for task_id {task_id}...")
@@ -1785,6 +1784,7 @@ class UserClient(ClientBase):
 
             return self.parent.request("task", params=params)
 
+
         @post_filtering(iterable=False)
         def create(
             self,
@@ -1888,32 +1888,28 @@ class UserClient(ClientBase):
                     "Authorization": f"Bearer {self.parent.token}",
                     "Content-Type": "application/octet-stream",
                 }
-                url = self.parent.generate_path_to("resultstream", False)
-                self.parent.log.debug(f"Uploading input to resultstream: {url}")
-
-                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                    for i in range(0, len(result), chunk_size):
-                        yield result[i:i + chunk_size]
+                url = self.parent.generate_path_to("blobstream", False)
+                self.parent.log.debug(f"Uploading input to blobstream: {url}")
 
                 try:
-                    response = requests.post(url, data=chunked_result_stream(encrypted_input), headers=headers)
+                    response = requests.post(url, data=self.chunked_result_stream(encrypted_input), headers=headers)
                 except Exception as e:
-                    self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
-                    raise requests.RequestException("Failed to upload input to resultstream.")
+                    self.parent.log.error(f"Error occurred while uploading input to blobstream: {e}")
+                    raise requests.RequestException("Failed to upload input to blobstream.")
 
                 if not (200 <= response.status_code < 300):
                     self.parent.log.error(
-                        f"Failed to upload input to resultstream: {response.text}"
+                        f"Failed to upload input to blobstream: {response.text}"
                     )
-                    raise RuntimeError("Failed to upload input to resultstream")
+                    raise RuntimeError("Failed to upload input to blobstream")
 
                 result_uuid_response = response.json()
                 result_uuid = result_uuid_response.get("uuid")
                 if not result_uuid:
-                    self.parent.log.error("Failed to get UUID from resultstream response")
-                    raise RuntimeError("Failed to get UUID from resultstream response")
+                    self.parent.log.error("Failed to get UUID from blobstream response")
+                    raise RuntimeError("Failed to get UUID from blobstream response")
                 self.parent.log.info(
-                    f"Input uploaded to resultstream with UUID: {result_uuid}"
+                    f"Input uploaded to blobstream with UUID: {result_uuid}"
                 )
                 organization_json_list.append(
                     {
@@ -2265,7 +2261,7 @@ class UserClient(ClientBase):
 
             results = self.parent.request("result", params={"task_id": task_id})
             for item in results["data"]:
-                url = f"{self.parent.base_path}/resultstream/{item['result']}"
+                url = f"{self.parent.base_path}/blobstream/{item['result']}"
                 headers = self.parent.headers
                 timeout = 300
             
