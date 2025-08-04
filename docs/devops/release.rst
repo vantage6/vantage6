@@ -52,14 +52,13 @@ the following steps to test a release:
    the :ref:`actual release <create-release>`, except that the candidate has
    a 'pre' tag (e.g. ``1.2.3rc1`` for release candidate number 1 of version
    1.2.3). Note that for an RC release, no notifications are sent to Discord.
-2. *Install the release*. The release should be tested from a clean conda
-   environment.
+2. *Install the release*. The release should be tested from a clean environment.
 
   .. code:: bash
 
-    conda create -n <name> python=3.13
-    conda activate <name>
-    pip install vantage6==<version>
+    uv venv --python 3.13
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    uv add vantage6==<version>
 
 3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
    release candidate using ``v6 dev`` network:

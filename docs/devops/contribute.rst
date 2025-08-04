@@ -165,7 +165,6 @@ Setup your environment
 ^^^^^^^^^^^^^^^^^^^^^^
 * Make sure you have a Github account
 * Install and configure ``git`` and ``make``
-* (Optional) install and configure Miniconda
 * Clone the main repository locally:
 
   ::
@@ -180,21 +179,12 @@ Setup your environment
 
     git remote add fork https://github.com/{username}/vantage6
 
-* Create a virtual environment to work in. If you are using miniconda:
+* Create a virtual environment to work in using uv:
 
   ::
 
-    conda create -n vantage6 python=3.13
-    conda activate vantage6
-
-  It is also possible to use ``virtualenv`` if you do not have a conda
-  installation.
-
-* Update pip and setuptools
-
-  ::
-
-    python -m pip install --upgrade pip setuptools
+    uv venv --python 3.13
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 * Install vantage6 as development environment:
 
@@ -254,7 +244,7 @@ We use `Ruff <https://docs.astral.sh/ruff/>`_ to lint and format our code. As
 described by Ruff, it is a `drop-in replacement <https://docs.astral.sh/ruff/
 faq/#is-the-ruff-linter-compatible-with-black>`_ for Black.
 
-You can install Ruff by running ``pip install ruff`` in your virtual environment.
+You can install Ruff by running ``uv add ruff`` in your virtual environment.
 To automatically enable Ruff, we recommend that you install the `Ruff` extension
 from Astral Software in the VSCode marketplace. By enabling the option
 'format on save' you can then automatically format your code in the proper style

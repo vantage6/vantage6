@@ -36,6 +36,9 @@ Then you can install the ``vantage6-client`` with:
 
 ::
 
+   uv add vantage6==<version>
+
+   # or, if you are using conda / pyenv / ...
    pip install vantage6==<version>
 
 where you add the version you want to install. You may also leave out

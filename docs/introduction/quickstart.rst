@@ -15,20 +15,20 @@ components. Installation instructions are present, for instance, in the
 Installation
 ------------
 
-Create a virtual Python environment. We recommend installing
-`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. If you are using
-miniconda, you can create and activate a Python environment called 'vantage6_env' with:
+Create a virtual Python environment. We recommend using
+`uv <https://docs.astral.sh/uv/>`_ for package management. You can create and activate
+a Python environment with:
 
 .. code-block:: bash
 
-    conda create -n vantage6_env python=3.13
-    conda activate vantage6_env
+    uv venv --python 3.13
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 Then, install the vantage6 command line interface (CLI) by running:
 
 .. code-block:: bash
 
-    pip install vantage6
+    uv add vantage6
 
 .. _create-dev-network:
 

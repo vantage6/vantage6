@@ -50,11 +50,11 @@ package.
 
    # create a Python environment. Be sure to replace <my-algorithm-env> with
    # the name of your environment.
-   conda create -n <my-algorithm-env> python=3.13
-   conda activate <my-algorithm-env>
+   uv venv --python 3.13
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
    # install the algorithm dependencies
-   pip install -r requirements.txt
+   uv sync
 
 Also, it is always good to use a version control system such as ``git`` to
 keep track of your changes. An initial commit of the boilerplate code could be:

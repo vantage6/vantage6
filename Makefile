@@ -53,6 +53,7 @@ help:
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
+	@echo "  install-docs         : install documentation dependencies"
 	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
@@ -185,7 +186,7 @@ ui-image:
 CHARTS := auth common node store server
 
 helm-charts:
-    # Update the Helm chart dependencies, package them and clean up the chart deps 
+    # Update the Helm chart dependencies, package them and clean up the chart deps
 	for chart in $(CHARTS); do \
 		helm dependency update charts/$$chart; \
 		helm package charts/$$chart -d charts/; \
@@ -252,6 +253,8 @@ test:
 	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
 	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
 
+install-docs:
+	uv sync --extra docs
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.

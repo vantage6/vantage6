@@ -54,7 +54,7 @@ These containers are connected to containers at other nodes by a internal networ
 The **vantage6** infrastructure is delivered in Docker images. To run these images, you
 need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the
 latest version of the vantage6 CLI, you need to have
-[Python](https://www.python.org/downloads/) v3.13. We recommend 
+[Python](https://www.python.org/downloads/) v3.13. We recommend
 [uv](https://docs.astral.sh/uv/) for package management.
 
 Install the latest version of the vantage6 CLI by using:

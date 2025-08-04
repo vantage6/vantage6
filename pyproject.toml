@@ -77,7 +77,7 @@ dependencies = [
     "pure-eval==0.2.2",
     "pycparser==2.21",
     "pyfiglet==0.8.post1",
-    "Pygments==2.15.0",
+    "pygments==2.19.2",
     "pyjwt==2.9.0",
     "pyotp==2.8.0",
     "pyparsing==3.0.9",
@@ -103,7 +103,6 @@ dependencies = [
     "werkzeug==3.1.3",
     "zope.event==4.6",
     "zope.interface==7.2",
-
 ]
 
 [project.optional-dependencies]
@@ -114,6 +113,14 @@ dev = [
     "ruff",
     "pytest",
     "pytest-cov",
+]
+docs = [
+    "sphinx==8.2.3",
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinx-click",
+    "sphinxcontrib-plantuml",
+    "furo",
 ]
 
 [project.scripts]
@@ -132,7 +139,7 @@ Issues = "https://github.com/vantage6/vantage6/issues"
 packages = [
     "vantage6",
     "vantage6-common",
-    "vantage6-client", 
+    "vantage6-client",
     "vantage6-server",
     "vantage6-node",
     "vantage6-algorithm-tools",

@@ -23,12 +23,10 @@ commands:
 ::
 
     # install requirements to run documentation (only required once)
-    pip install -r docs/requirements.txt
+    make install-docs
 
     # run documentation interactively
     make devdocs
-    # or alternatively, if you don't have make
-    sphinx-autobuild docs docs/_build/html --watch .
 
 Then, you can access the documentation on ``http://127.0.0.1:8000``. The ``--watch``
 option makes sure that if you make changes to either the documentation text or the
