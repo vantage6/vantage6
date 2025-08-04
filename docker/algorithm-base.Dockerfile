@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bookworm
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 LABEL version=${TAG}
 LABEL maintainer="F.C. Martin <f.martin@iknl.nl>"
@@ -9,6 +9,5 @@ COPY ./README.md /README.md
 COPY ./vantage6-common /vantage6-common
 COPY ./vantage6-algorithm-tools /vantage6-algorithm-tools
 
-RUN pip install --upgrade pip
-RUN pip install /vantage6-common
-RUN pip install /vantage6-algorithm-tools
+RUN uv pip install --system /vantage6-common
+RUN uv pip install --system /vantage6-algorithm-tools
