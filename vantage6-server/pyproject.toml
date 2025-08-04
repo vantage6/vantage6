@@ -9,7 +9,7 @@ description = "Vantage6 server"
 readme = "../README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Vantage6 Team", email = "info@vantage6.ai"}
+    {name = "Vantage6 Team"}
 ]
 maintainers = [
     {name = "Frank Martin", email = "f.martin@iknl.nl"},
@@ -56,4 +56,4 @@ vserver-local = "vantage6.server.cli.server:cli_server"
 packages = ["vantage6"]
 
 [tool.hatch.build.targets.wheel.sources]
-"vantage6" = "vantage6" 
+"vantage6" = "vantage6"

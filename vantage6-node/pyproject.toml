@@ -9,7 +9,7 @@ description = "vantage6 node"
 readme = "../README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Vantage6 Team", email = "info@vantage6.ai"}
+    {name = "Vantage6 Team"}
 ]
 maintainers = [
     {name = "Frank Martin", email = "f.martin@iknl.nl"},
@@ -51,4 +51,4 @@ vnode-local = "vantage6.node.cli.node:cli_node"
 packages = ["vantage6"]
 
 [tool.hatch.build.targets.wheel.sources]
-"vantage6" = "vantage6" 
+"vantage6" = "vantage6"

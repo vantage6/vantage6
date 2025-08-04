@@ -1,4 +1,4 @@
-target-version = "py310"
+target-version = "py313"
 line-length = 88          # Same as Black
 
 [lint]
@@ -13,7 +13,7 @@ section-order = ["future", "standard-library", "third-party", "v6-common", "v6-c
 
 [lint.isort.sections]
 v6-common = ["vantage6.common"]
-v6-client = ["vantage6.client"]  
+v6-client = ["vantage6.client"]
 v6-algo-tools = ["vantage6.algorithm.tools"]
 v6-cli = ["vantage6.cli"]
 v6-backend-common = ["vantage6.backend.common"]
