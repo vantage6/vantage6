@@ -35,11 +35,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "coverage==6.4.4",
-    "python-coveralls==2.9.3",
-    "sqlalchemy==2.0.37",
-    "schema==0.7.5",
-    "appdirs==1.4.4",
-    "flask==3.1.1",
     "black",
     "pre-commit",
 ]
