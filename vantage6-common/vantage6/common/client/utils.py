@@ -1,5 +1,5 @@
 import qrcode
-
+import uuid
 
 def print_qr_code(json_data: dict) -> None:
     """
@@ -45,3 +45,13 @@ def show_qr_code_image(qr_uri: str) -> None:
     qr.add_data(qr_uri)
     qr.make(fit=True)
     qr.print_ascii()
+
+
+    def is_uuid(self, value):
+        try:
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            uuid.UUID(value)
+            return True
+        except (ValueError, TypeError, AttributeError):
+            return False

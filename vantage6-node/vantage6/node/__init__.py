@@ -32,16 +32,6 @@ import queue
 import json
 import shutil
 import requests.exceptions
-import json
-import re
-
-UUID_REGEX = re.compile(
-    r"^[a-fA-F0-9]{8}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{12}$"
-)
 
 import psutil
 import pynvml
@@ -377,7 +367,7 @@ class Node:
 
         # request open tasks from the server
         task_results = self.client.run.list(state="open", include_task=True)
-        self.log.info("task_results: %s", task_results)
+        self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_results)

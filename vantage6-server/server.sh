@@ -16,7 +16,6 @@ uwsgi \
     --http-chunked-input \
     --http-keepalive \
     --post-buffering 0 \
-    --buffer-size 65535 \
     --master --callable app --disable-logging \
     --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
     --pyargv "${VANTAGE6_CONFIG_LOCATION}"

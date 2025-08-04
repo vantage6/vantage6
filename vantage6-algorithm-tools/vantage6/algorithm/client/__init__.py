@@ -3,21 +3,15 @@
 from cmath import log
 import jwt
 import json
-import time
 
 from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common import base64s_to_bytes, bytes_to_base64s
+from vantage6.common import base64s_to_bytes
 from vantage6.common.serialization import serialize
-from vantage6.common.task_status import has_task_finished
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
-
-import requests
-import uuid
-
 
 class AlgorithmClient(ClientBase):
     """
@@ -149,9 +143,15 @@ class AlgorithmClient(ClientBase):
         """
         self._retrieve_results(task_id, interval)
         result = self.request("result", params={"task_id": task_id})
-        base_url = super().generate_path_to("blobstream", False)
-        output = self._aggregate_results(result, base_url, task_id)
-
+        output = []
+        for uuid in result["data"]:
+            try:
+                run_data = self.parent.download_run_data_from_server(uuid, task_id)
+                output_json = json.loads(run_data.decode('utf-8'))
+                output.append(output_json)
+            except ValueError as e:
+                self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
+                raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
         return output
     
     def _retrieve_results(self, task_id: int, interval: float = 1) -> None:
@@ -162,33 +162,6 @@ class AlgorithmClient(ClientBase):
         self.wait_for_task_completion(self.request, task_id, interval, False)
 
         return True
-
-    def _aggregate_results(self, result, base_url, task_id) -> list:
-        """ 
-        Aggregate results from the result stream.
-        """
-        output = []
-        for item in result["data"]:
-            url = f"{base_url}/{str(uuid.UUID(item['result']))}"
-            self.log.info(f"retrieving data for url: {url}")
-            headers = self.headers
-            timeout = 300
-            output_result = b""
-
-            try:
-                with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
-                    if response.status_code == 200:
-                        self.log.debug(f"Successfully streamed result for task_id {task_id}.")
-                        for chunk in response.iter_content(chunk_size=8192):
-                            output_result += chunk
-                    else:
-                        self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
-                        self.log.error(f"Response: {response.text}")
-            except requests.RequestException as e:
-                self.log.error(f"An error occurred while streaming result: {e}")
-            output_json = json.loads(output_result.decode('utf-8'))
-            output.append(output_json)
-        return output
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
@@ -422,34 +395,7 @@ class AlgorithmClient(ClientBase):
                 for org_id in organizations:
                     pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
                     self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
-                    headers = {
-                        "Authorization": f"Bearer {self.parent.token}",
-                        "Content-Type": "application/octet-stream",
-                        "X-Public-Key": pub_key,
-                    }
-                    url = self.parent.generate_path_to("blobstream", False)
-                    self.parent.log.debug(f"Uploading input to blobstream: {url}")
-                    
-                    try:
-                        response = requests.post(url, data=self.chunked_result_stream(serialized_input), headers=headers)
-                    except Exception as e:
-                        self.parent.log.error(f"Error occurred while uploading input to blobstream: {e}")
-                        raise requests.RequestException("Error occurred while uploading input to blobstream")
-
-                    if not (200 <= response.status_code < 300):
-                        self.parent.log.error(
-                            f"Failed to upload input to blobstream: {response.text}"
-                        )
-                        raise RuntimeError("Failed to upload input to blobstream")
-
-                    result_uuid_response = response.json()
-                    result_uuid = result_uuid_response.get("uuid")
-                    if not result_uuid:
-                        self.parent.log.error("Failed to get UUID from blobstream response")
-                        raise RuntimeError("Failed to get UUID from blobstream response")
-                    self.parent.log.info(
-                        f"Input uploaded to blobstream with UUID: {result_uuid}"
-                    )
+                    result_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
                     organization_json_list.append(
                         {
                             "id": org_id,

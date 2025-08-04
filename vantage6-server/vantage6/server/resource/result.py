@@ -45,7 +45,16 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("POST",),
         resource_class_kwargs=services,
     )
-        
+
+    # Flask checks exact matches before variable matches,
+    # so this should not clash with the UUID endpoint below.
+    api.add_resource(
+        BlobStream,
+        api_base + "/blobstream/status",
+        endpoint="result_stream_status",
+        methods=("GET",),
+        resource_class_kwargs=services,
+    )
 
     api.add_resource(
         BlobStream,
@@ -114,6 +123,14 @@ class BlobStream(BlobStreamBase):
       super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
+    def get(self):
+        if self.storage_adapter:
+            return {"blob_store_enabled": True}, HTTPStatus.CREATED
+        else:
+            return {"blob_store_enabled": False}, HTTPStatus.CREATED
+
+
+    @only_for(("node", "user", "container"))
     def get(self, id):
         if not self.storage_adapter:
             log.warning(
@@ -150,8 +167,10 @@ class BlobStream(BlobStreamBase):
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding
         try:
-            # Unfortunately, in the case of streams smaller than one chunk, reverse proxies like nginx will automatically remove the chunked transfer encoding.
-            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi to a different server might solve this issue.
+            # Unfortunately, in the case of streams smaller than one chunk, 
+            # reverse proxies like nginx will automatically remove the chunked transfer encoding.
+            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi
+            # to a different server might solve this issue.
             if is_chunked:
                 stream = UwsgiChunkedStream()
                 self.storage_adapter.store_blob(result_uuid, stream)

@@ -248,7 +248,42 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved an the input is
     # encrypted specifically for them.
+    def encrypt_input(organization_id: int, input_: dict) -> str:
+        """
+        Encrypt the input for a specific organization by using its public key.
+        Parameters
+        ----------
+        organization_id : int
+            ID of the organization
+        input_ : dict
+            Input as specified by the client (algorithm in this case)
+        Returns
+        -------
+        str
+            Encrypted input as a string
+        """
+        # retrieve public key of the organization
+        log.debug("Retrieving public key of org: %s", organization_id)
+        response = make_request(
+            "get", f"organization/{organization_id}", headers=headers
+        )
+        public_key = response.json().get("public_key")
 
+        # Encrypt the input field
+        client: NodeClient = app.config.get("SERVER_IO")
+        encrypted_input = client.cryptor.encrypt_bytes_to_str(
+            base64s_to_bytes(input_), public_key
+        )
+
+        log.debug("Input successfully encrypted for organization %s!", organization_id)
+        return encrypted_input
+
+    if client.is_encrypted_collaboration():
+        log.debug("Applying end-to-end encryption")
+        for org in organizations:
+            if org.get("input") and not org.get("input").get("from_blob_store"):
+                org["input"] = encrypt_input(org["id"], org.get("input", {}))
+        data["organizations"] = organizations
     # Attempt to send the task to the central server
     try:
         response = make_request("post", "task", data, headers=headers)
@@ -304,6 +339,10 @@ def proxy_result() -> Response:
     # Attempt to decrypt the results. The endpoint should have returned
     # a list of results
     results = get_response_json_and_handle_exceptions(response)
+    
+    for result in results["data"]:
+        if not result.from_blob_store:
+            result = decrypt_result(result)
 
     return results, response.status_code
 

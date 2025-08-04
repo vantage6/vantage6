@@ -9,7 +9,6 @@ uwsgi --http :7601 \
   --http-chunked-input \
   --http-keepalive \
   --post-buffering 0 \
-  --buffer-size 65535 \
   --master \
   --callable app \
   --disable-logging \

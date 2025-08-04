@@ -221,33 +221,11 @@ class UserClient(ClientBase):
         self.log.setLevel(prev_level)
         result = self.request("result", params={"task_id": task_id})
         self.log.info(f"--> Task {task_id} completed. Streaming results...")
-        result = self._aggregate_results(result, task_id)
+        result = self.parent.download_run_data_from_server(result, task_id)
         result = self.result._decrypt_result(result, is_single_result=False)
         return result
-    
-    def _aggregate_results(self, result, task_id: int) -> dict:
-        """
-        Aggregate results from the server.
-
-        """
-        for item in result["data"]:
-            url = f"{self.base_path}/blobstream/{item['result']}"
-            headers = self.headers
-            timeout = 300
-            self.log.debug(f"Streaming result from {url} for task_id {task_id}...")
-            try:
-                with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
-                    if response.status_code == 200:
-                        item['result'] = b""
-                        for chunk in response.iter_content(chunk_size=8192):
-                            item['result'] += chunk
-                    else:
-                        self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
-                        self.log.error(f"Response: {response.text}")
-            except requests.RequestException as e:
-                self.log.error(f"An error occurred while streaming result: {e}")
-        return result
         
+    
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
@@ -1880,44 +1858,37 @@ class UserClient(ClientBase):
             # public key.
             self.parent.log.debug("Encrypting input for each organization")
             organization_json_list = []
+
+            url = self.parent.generate_path_to("resultstream", False)
+
+            # Check if blob store is enabled
+            headers = {
+                "Authorization": f"Bearer {self.parent.token}",
+                "Content-Type": "application/octet-stream",
+            }
+            try:
+                response = requests.get(url, headers=headers)
+            except Exception as e:
+                self.parent.log.error(f"Error occurred while checking blob store availability: {e}")
+                raise requests.RequestException("Failed to check blob store availability.")
+            
             for org_id in organizations:
-                pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
-                encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
-
-                headers = {
-                    "Authorization": f"Bearer {self.parent.token}",
-                    "Content-Type": "application/octet-stream",
-                }
-                url = self.parent.generate_path_to("blobstream", False)
-                self.parent.log.debug(f"Uploading input to blobstream: {url}")
-
-                try:
-                    response = requests.post(url, data=self.chunked_result_stream(encrypted_input), headers=headers)
-                except Exception as e:
-                    self.parent.log.error(f"Error occurred while uploading input to blobstream: {e}")
-                    raise requests.RequestException("Failed to upload input to blobstream.")
-
-                if not (200 <= response.status_code < 300):
-                    self.parent.log.error(
-                        f"Failed to upload input to blobstream: {response.text}"
+                pub_key = self.parent.request(f"organization/{org_id}").get(
+                    "public_key")
+                if response.blob_store_enabled:
+                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
+                    organization_input = self.parent.upload_run_data_to_server(encrypted_input)
+                else:
+                    organization_input = self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_input, pub_key
                     )
-                    raise RuntimeError("Failed to upload input to blobstream")
-
-                result_uuid_response = response.json()
-                result_uuid = result_uuid_response.get("uuid")
-                if not result_uuid:
-                    self.parent.log.error("Failed to get UUID from blobstream response")
-                    raise RuntimeError("Failed to get UUID from blobstream response")
-                self.parent.log.info(
-                    f"Input uploaded to blobstream with UUID: {result_uuid}"
-                )
                 organization_json_list.append(
                     {
                         "id": org_id,
-                        "input": result_uuid,
+                        "input": organization_input,
                     }
                 )
-
+                
             params = {
                 "name": name,
                 "image": image,
@@ -2261,24 +2232,29 @@ class UserClient(ClientBase):
 
             results = self.parent.request("result", params={"task_id": task_id})
             for item in results["data"]:
-                url = f"{self.parent.base_path}/blobstream/{item['result']}"
-                headers = self.parent.headers
-                timeout = 300
-            
+                uuid = item['result']
                 try:
-                    with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
-                        if response.status_code == 200:
-                            item['result'] = b""
-                            for chunk in response.iter_content(chunk_size=8192):
-                                item['result'] += chunk
-                        else:
-                            self.parent.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
-                            self.parent.log.error(f"Response: {response.text}")
-                except requests.RequestException as e:
-                    self.parent.log.error(f"An error occurred while streaming result: {e}")
+                    run_data = self.parent.download_run_data_from_server(uuid, task_id)
+                    item['result'] = run_data
+                except ValueError as e:
+                    self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
+                    raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}", e)
+
             results = self._decrypt_result(results, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
+        
+
+            output = []
+            for uuid in result["data"]:
+                try:
+                    run_data = self.parent.download_run_data_from_server(uuid, task_id)
+                    output_json = json.loads(run_data.decode('utf-8'))
+                    output.append(output_json)
+                except ValueError as e:
+                    self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
+                    raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
+            return output
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """

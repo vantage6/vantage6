@@ -53,6 +53,12 @@ MAX_INTERVAL = 300
 # Constant multiplier to make interval for requesting results from a task progressively longer
 INTERVAL_MULTIPLIER = 1.5
 
+# Default timeout for requests to the server
+REQUEST_TIMEOUT = 300
+
+# Default chunk size for streaming inputs and results
+DEFAULT_CHUNK_SIZE = 8192
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""
