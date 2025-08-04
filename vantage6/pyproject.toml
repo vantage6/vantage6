@@ -53,4 +53,14 @@ packages = ["vantage6"]
 where = ["vantage6/cli"]
 
 [tool.setuptools.package-data]
-"vantage6/cli/" = ["__build__"]
+"vantage6/cli/" = [
+    "__build__",
+    "rabbimq/rabbitmq.config",
+    "template/node_config.j2",
+    "template/server_config.j2",
+    "template/server_import_config.j2",
+    "template/algo_store_config.j2",
+    "dev/data/olympic_athletes_2016.csv",
+    "dev/data/km_dataset.csv",
+    "prometheus/prometheus.yml",
+]

@@ -21,6 +21,7 @@ dependencies = [
     "requests==2.32.4",
     "rich==13.5.2",
     "schema==0.7.5",
+    "vantage6-common==5.0.0a29",
 ]
 
 [project.optional-dependencies]

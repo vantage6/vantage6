@@ -36,6 +36,7 @@ dev = [
     "coverage==6.4.4",
     "black",
     "pre-commit",
+    "ruff",
 ]
 
 [tool.hatch.build.targets.wheel]
