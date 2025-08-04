@@ -101,16 +101,6 @@ install-dev:
 	uv pip install -e vantage6-server[dev]
 	uv pip install -e vantage6-algorithm-store[dev]
 
-base-image:
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/infrastructure-base:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/infrastructure-base.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
 	docker buildx build \
