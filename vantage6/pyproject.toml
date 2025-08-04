@@ -42,12 +42,9 @@ dev = [
 
 [project.scripts]
 v6 = "vantage6.cli.cli:cli_complete"
-vnode = "vantage6.cli.cli:cli_node"
-vserver = "vantage6.cli.cli:cli_server"
-vdev = "vantage6.cli.cli:cli_dev"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vantage6"]
 
 [tool.hatch.build.targets.wheel.sources]
-"vantage6" = "vantage6" 
+"vantage6" = "vantage6"

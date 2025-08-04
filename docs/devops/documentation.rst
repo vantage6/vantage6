@@ -22,7 +22,8 @@ commands:
 
 ::
 
-    # install requirements to run documentation (only required once)
+    # install requirements to run documentation (only required once). Note that you
+    # should also have run `make install-dev` or `make install` for this to work.
     make install-docs
 
     # run documentation interactively
