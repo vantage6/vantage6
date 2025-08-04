@@ -1,9 +1,9 @@
-from discord import Embed
-
 # import discord
 import os
+
 import click
-from discord.ext import tasks, commands
+from discord import Embed
+from discord.ext import commands, tasks
 
 # from vantage6.common import info
 # from dotenv import load_dotenv
@@ -93,7 +93,7 @@ class PostUpdates(commands.Cog):
             "https://docs.vantage6.ai/en/main/release_notes.html)\n\n"
             "To upgrade:"
             "```"
-            f"pip install vantage6=={version}"
+            f"uv add vantage6=={version}"
             "```"
             "\n\n"
             f"_{notes}_"
