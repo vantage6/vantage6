@@ -24,6 +24,11 @@ jobs:
       run: |
         pip install uv
 
+    - name: Create virtual environment
+      run: |
+        uv venv --python 3.13
+        source .venv/bin/activate
+
     - name: Install dependencies
       run: |
         uv pip install flake8 pytest

@@ -409,6 +409,11 @@ jobs:
         run: |
           pip install uv
 
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.13
+          source .venv/bin/activate
+
       - name: Install twine for publishing
         run: |
           uv pip install twine
