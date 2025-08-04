@@ -63,12 +63,9 @@ help:
 	@echo "  platforms: ${PLATFORMS}"
 
 set-version:
-	# --version --build --spec --post
-	cd tools && ls
 	cd tools && python update-version.py ${FLAGS}
 
 community:
-	#  make community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'"
 	cd tools && python update-discord.py ${FLAGS}
 
 uninstall:
