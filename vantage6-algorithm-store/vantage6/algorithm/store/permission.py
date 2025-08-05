@@ -115,7 +115,7 @@ class PermissionManager(PermissionManagerBase):
         # assign all new rules to root user
         self.assign_rule_to_root(resource, operation)
 
-        self.collection(resource).add(operation=rule.operation)
+        self.collection(resource).add(operation=rule.operation, shorten=False)
 
     def check_user_rules(self, rules: list[Rule]):
         """
@@ -139,6 +139,7 @@ class PermissionManager(PermissionManagerBase):
     def get_new_collection(self, name: str) -> RuleCollection:
         """
         Initialize and return a new StoreRuleCollection.
+
         Parameters
         ----------
         name: str

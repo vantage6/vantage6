@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
 import logging
-
 from http import HTTPStatus
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from flask import request, g
+from flask import g, request
 from flask_restful import Api
 from marshmallow import ValidationError
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from vantage6.common import logger_name
+
+from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.backend.common.auth import get_keycloak_id_for_user
-from vantage6.algorithm.store import db
-from vantage6.algorithm.store.permission import Operation as P, PermissionManager
-from vantage6.algorithm.store.model.user import User as db_User
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.resource import (
-    with_permission,
-    AlgorithmStoreResources,
-)
 
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.user import User as db_User
+from vantage6.algorithm.store.permission import Operation as P, PermissionManager
+from vantage6.algorithm.store.resource import (
+    AlgorithmStoreResources,
+    with_permission,
+)
 from vantage6.algorithm.store.resource.schema.input_schema import (
     UserInputSchema,
     UserUpdateInputSchema,
@@ -181,7 +181,7 @@ class Users(AlgorithmStoreResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
 
             q = (

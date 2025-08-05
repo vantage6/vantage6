@@ -18,12 +18,11 @@ log = logging.getLogger(module_name)
 RuleNeed = NamedTuple("RuleNeed", [("name", str), ("scope", str), ("operation", str)])
 
 
-def get_attribute_name(operation: str, scope: str | None = None) -> str:
+def get_attribute_name(
+    operation: str, scope: str | None = None, shorten: bool = True
+) -> str:
     """
     Get the attribute name for a rule.
-
-    We only take the first letter of the operation and the first 3 letters of the scope
-    to keep attribute names like 'v_glo' for view global
 
     Parameters
     ----------
@@ -31,15 +30,21 @@ def get_attribute_name(operation: str, scope: str | None = None) -> str:
         Operation of the rule
     scope: str | None
         Scope of the rule
+    shorten: bool
+        Whether to shorten the attribute name in the format of 'v_glo' for view global.
+        If False, the attribute name will be the full operation name.
 
     Returns
     -------
     str
         Attribute name for the rule
     """
-    attribute_name = operation[0].lower()
-    if scope:
-        attribute_name += f"_{scope[0:3].lower()}"
+    if shorten:
+        attribute_name = operation[0].lower()
+        if scope:
+            attribute_name += f"_{scope[0:3].lower()}"
+    else:
+        attribute_name = operation
     return attribute_name
 
 
@@ -56,7 +61,9 @@ class RuleCollectionBase(ABC, dict):
     def __init__(self, name):
         self.name = name
 
-    def add(self, operation: str, scope: str | None = None) -> None:
+    def add(
+        self, operation: str, scope: str | None = None, shorten: bool = True
+    ) -> None:
         """
         Add a rule to the rule collection
 
@@ -69,7 +76,7 @@ class RuleCollectionBase(ABC, dict):
         """
         permission = Permission(RuleNeed(self.name, scope, operation))
 
-        attribute_name = get_attribute_name(operation, scope)
+        attribute_name = get_attribute_name(operation, scope, shorten)
         self.__setattr__(attribute_name, permission)
 
 
