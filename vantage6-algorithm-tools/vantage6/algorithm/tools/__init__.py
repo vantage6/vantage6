@@ -3,7 +3,7 @@
 from vantage6.common.enum import StrEnumBase
 
 # make sure the version is available
-from vantage6.algorithm.client._version import __version__  # noqa: F401
+from vantage6.algorithm.client import __version__  # noqa: F401
 
 
 class DecoratorStepType(StrEnumBase):

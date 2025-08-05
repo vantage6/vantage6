@@ -7,27 +7,27 @@ Some commands, such as ``vnode-local start``, are used within the Docker
 container when ``v6 node start`` is used.
 """
 
-import click
+import errno
 import os
 import sys
-import questionary as q
-import errno
-from vantage6.common.globals import InstanceType
-
-import vantage6.node.globals as constants
-
-from colorama import Fore, Style
 from pathlib import Path
 
-from vantage6 import node
-from vantage6.node.context import NodeContext, DockerNodeContext
-from vantage6.common import warning, info, error, ensure_config_dir_writable
+import click
+import questionary as q
+from colorama import Fore, Style
+
+from vantage6.common import ensure_config_dir_writable, error, info, warning
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_wizard import (
     configuration_wizard,
     select_configuration_questionaire,
 )
-from vantage6.node._version import __version__
+
+import vantage6.node.globals as constants
+from vantage6 import node
+from vantage6.node import __version__
+from vantage6.node.context import DockerNodeContext, NodeContext
 
 
 @click.group(name="vnode-local")
@@ -63,7 +63,7 @@ def cli_node() -> None:
 @click.option(
     "--dockerized/-non-dockerized",
     default=False,
-    help=("Whether to use DockerNodeContext or regular NodeContext " "(default)"),
+    help=("Whether to use DockerNodeContext or regular NodeContext (default)"),
 )
 def cli_node_start(
     name: str, config: str, system_folders: bool, dockerized: bool

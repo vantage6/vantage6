@@ -1,23 +1,24 @@
+from functools import wraps
+
 import click
 import IPython
-from vantage6.common.globals import InstanceType
 import yaml
-
-from functools import wraps
-from traitlets.config import get_config
 from colorama import Fore, Style
+from traitlets.config import get_config
 
 from vantage6.common import (
-    info,
     error,
+    info,
 )
-from vantage6.server.model.base import Database
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
-from vantage6.server.controller import fixture
+from vantage6.common.globals import InstanceType
+
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
 from vantage6.cli.context.server import ServerContext
-from vantage6.server._version import __version__
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 
+from vantage6.server import __version__
+from vantage6.server.controller import fixture
+from vantage6.server.model.base import Database
 
 help_ = {
     "name": "name of the configutation you want to use.",

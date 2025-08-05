@@ -6,6 +6,7 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
+import importlib.metadata
 import os
 
 from gevent import monkey
@@ -45,9 +46,6 @@ from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
 from vantage6.server import db
-
-# make sure the version is available
-from vantage6.server._version import __version__  # noqa: F401
 from vantage6.server.controller import cleanup
 from vantage6.server.default_roles import DefaultRole, get_default_roles
 from vantage6.server.globals import (
@@ -60,6 +58,8 @@ from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
 from vantage6.server.websockets import DefaultSocketNamespace
+
+__version__ = importlib.metadata.version(__package__)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

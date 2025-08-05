@@ -3,16 +3,16 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from vantage6.common import logger_name
-from vantage6.server.model import (
-    Rule,
-    Organization,
-    Collaboration,
-    AlgorithmStore,
-)
-from vantage6.server.model.rule import Scope, Operation
-from vantage6.server._version import __version__
-from .test_resource_base import TestResourceBase
 
+from vantage6.server.model import (
+    AlgorithmStore,
+    Collaboration,
+    Organization,
+    Rule,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)

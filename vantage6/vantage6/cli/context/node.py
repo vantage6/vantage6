@@ -7,7 +7,7 @@ from pathlib import Path
 from vantage6.common.context import AppContext
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
-from vantage6.cli._version import __version__
+from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 
