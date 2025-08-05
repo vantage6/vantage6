@@ -372,4 +372,5 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
 
 
 if __name__ == "__main__":
+    # pylint: disable=no-value-for-parameter
     set_version()  # Click handles command line arguments automatically

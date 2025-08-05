@@ -10,11 +10,11 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>; Bart van Beusekom <b.vanbeusekom@iknl.nl>"
-  
+
 # slim bookworm does not have gcc installed
 # libdev is needed for arm compilation
 RUN apt-get update \
-    && apt-get install -y gcc python3-dev libffi-dev \
+    && apt-get install --no-install-recommends -y gcc python3-dev libffi-dev \
     && apt-get upgrade -y
 
 # Fix DB issue

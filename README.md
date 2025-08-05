@@ -65,7 +65,8 @@ uv add vantage6
 pip install vantage6
 ```
 
-This installs the `v6` commands, which allows you to manage your nodes and servers. To view all available options, run:
+This installs the `v6` commands, which allows you to manage your nodes and servers. To
+view all available options, run:
 
 ```bash
 v6 --help

@@ -15,7 +15,7 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 # slim bookworm does not have gcc installed
 # libdev is needed for arm compilation
 RUN apt-get update \
-    && apt-get install -y gcc python3-dev libffi-dev \
+    && apt-get install --no-install-recommends -y gcc python3-dev libffi-dev \
     && apt-get upgrade -y
 
 # copy source
