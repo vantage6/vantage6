@@ -412,7 +412,8 @@ jobs:
       - name: Create virtual environment
         run: |
           uv venv --python 3.13
-          source .venv/bin/activate
+          . .venv/bin/activate
+          echo PATH=$PATH >> $GITHUB_ENV
 
       - name: Install twine for publishing
         run: |
