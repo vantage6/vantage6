@@ -45,9 +45,3 @@ packages = ["vantage6"]
 
 [tool.hatch.build.targets.wheel.sources]
 "vantage6" = "vantage6"
-
-[tool.setuptools.packages.find]
-where = ["vantage6/backend/common"]
-
-[tool.setuptools.package-data]
-"vantage6/backend/common/" = ["__build__"]

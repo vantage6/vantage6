@@ -47,9 +47,3 @@ packages = ["vantage6"]
 
 [tool.hatch.build.targets.wheel.sources]
 "vantage6" = "vantage6"
-
-[tool.setuptools.packages.find]
-where = ["vantage6/algorithm/store"]
-
-[tool.setuptools.package-data]
-"vantage6/algorithm/store/" = ["__build__"]

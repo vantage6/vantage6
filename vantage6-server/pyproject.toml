@@ -59,7 +59,7 @@ packages = ["vantage6"]
 "vantage6" = "vantage6"
 
 [tool.setuptools.packages.find]
-where = ["vantage6/server", "vantage6/"]
+where = ["vantage6/server"]
 
 [tool.setuptools.package-data]
-"vantage6/server/" = ["__build__", "_data"]
+"vantage6/server/" = ["_data"]
