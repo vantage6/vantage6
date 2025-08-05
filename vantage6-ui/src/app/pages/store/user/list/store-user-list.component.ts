@@ -77,7 +77,7 @@ export class StoreUserListComponent extends BaseListComponent implements OnInit,
   private async getUsers(page: number, getUserParameters: GetStoreUserParameters) {
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
-    const result = await this.storeUserService.getPaginatedUsers(store.url, page, getUserParameters);
+    const result = await this.storeUserService.getPaginatedUsers(store, page, getUserParameters);
     this.table = {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },

@@ -29,16 +29,18 @@ def connect_store(client: Client, dev_dir: Path) -> str:
 
     # URL should be retrieved from the store, see issue:
     # https://github.com/vantage6/vantage6/issues/1824
-    local_store_url = "http://localhost:7602/store"
-    client.store.url = local_store_url
+    local_store_url = "http://localhost:7602"
+    local_store_api_path = "/store"
     client.store.store_id = 1
     if local_store_url not in existing_urls:
         summary += "Registering local store\n"
-        client.store.create(
+        store = client.store.create(
             algorithm_store_url=local_store_url,
+            api_path=local_store_api_path,
             name="Local store",
             all_collaborations=True,
         )
+        client.store.set(store["id"])
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]

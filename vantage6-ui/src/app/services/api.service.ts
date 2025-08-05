@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { Pagination } from 'src/app/models/api/pagination.model';
 import { SnackbarService } from './snackbar.service';
 import { isNested } from 'src/app/helpers/utils.helper';
+import { AlgorithmStore } from '../models/api/algorithmStore.model';
 
 @Injectable({
   providedIn: 'root'
@@ -63,13 +64,12 @@ export class ApiService {
   }
 
   async getForAlgorithmApi<T = null>(
-    algo_store_url: string,
+    algoStore: AlgorithmStore,
     path: string,
     parameters: object | null = null,
     showAuthError: boolean = true
   ): Promise<T> {
-    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    const request = this.http.get<T>(algo_store_url + path, {
+    const request = this.http.get<T>(this.getAlgoStorePath(algoStore, path), {
       params: { ...parameters }
     });
     if (showAuthError) {
@@ -80,14 +80,13 @@ export class ApiService {
   }
 
   async getForAlgorithmApiWithPagination<T>(
-    algo_store_url: string,
+    algoStore: AlgorithmStore,
     path: string,
     currentPage: number,
     parameters: object | null = null
   ): Promise<Pagination<T>> {
-    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
     return await this.handleResultForPagination(
-      this.http.get<Pagination<T>>(algo_store_url + path, {
+      this.http.get<Pagination<T>>(this.getAlgoStorePath(algoStore, path), {
         observe: 'response',
         params: {
           ...parameters,
@@ -98,20 +97,17 @@ export class ApiService {
     );
   }
 
-  async postForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
-    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(this.http.post<T>(algo_store_url + path, body));
+  async postForAlgorithmApi<T>(algoStore: AlgorithmStore, path: string, body: object): Promise<T> {
+    return await this.handleResult(this.http.post<T>(this.getAlgoStorePath(algoStore, path), body));
   }
 
-  async patchForAlgorithmApi<T>(algo_store_url: string, path: string, body: object): Promise<T> {
-    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(this.http.patch<T>(algo_store_url + path, body));
+  async patchForAlgorithmApi<T>(algoStore: AlgorithmStore, path: string, body: object): Promise<T> {
+    return await this.handleResult(this.http.patch<T>(this.getAlgoStorePath(algoStore, path), body));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async deleteForAlgorithmApi(algo_store_url: string, path: string): Promise<any> {
-    algo_store_url = this.fixAlgorithmStoreUrl(algo_store_url);
-    return await this.handleResult(this.http.delete(algo_store_url + path));
+  async deleteForAlgorithmApi(algoStore: AlgorithmStore, path: string): Promise<any> {
+    return await this.handleResult(this.http.delete(this.getAlgoStorePath(algoStore, path)));
   }
 
   private async handleResult<T = null>(request: Observable<T>): Promise<T> {
@@ -202,5 +198,12 @@ export class ApiService {
       return environment.server_url + path;
     }
     return environment.server_url + environment.api_path + path;
+  }
+
+  private getAlgoStorePath(algoStore: AlgorithmStore, path: string): string {
+    if (path.startsWith('/') && path.startsWith(`${algoStore.api_path}/`)) {
+      return this.fixAlgorithmStoreUrl(algoStore.url) + path;
+    }
+    return this.fixAlgorithmStoreUrl(algoStore.url) + algoStore.api_path + path;
   }
 }

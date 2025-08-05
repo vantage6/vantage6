@@ -653,10 +653,11 @@
     "title": "Add algorithm store to your collaboration",
     "name": "Name",
     "url": "Algorithm store URL",
+    "api-path": "Algorithm store API path",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
-      "url-hint": "The web address of the algorithm store, including the API path (often '/api') at the end.",
-      "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
+      "url-hint": "The web address of the algorithm store, excluding the API path.",
+      "api-path-hint": "The API path to the algorithm store. Default is '/api'.",
       "all-collaborations": "Make this algorithm store available to all collaborations"
     }
   },

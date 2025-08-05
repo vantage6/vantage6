@@ -83,9 +83,9 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
 
   protected async initData(): Promise<void> {
     if (!this.store) return;
-    this.role = await this.storeRoleService.getRole(this.store?.url, this.id, [StoreRoleLazyProperties.Users]);
-    this.allRules = await this.storeRuleService.getRules(this.store?.url);
-    this.roleRules = await this.storeRuleService.getRules(this.store?.url, { role_id: this.id });
+    this.role = await this.storeRoleService.getRole(this.store, this.id, [StoreRoleLazyProperties.Users]);
+    this.allRules = await this.storeRuleService.getRules(this.store);
+    this.roleRules = await this.storeRuleService.getRules(this.store, { role_id: this.id });
     this.setPermissions();
     this.setUpUserTable();
     this.enterEditMode(false);
@@ -114,7 +114,7 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
         if (!this.role) return;
         if (!this.store) return;
         this.isLoading = true;
-        await this.storeRoleService.deleteRole(this.store?.url, this.role.id);
+        await this.storeRoleService.deleteRole(this.store, this.role.id);
         this.router.navigate([routePaths.storeRoles]);
       }
     );
@@ -151,7 +151,7 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
     if (!store) return;
     this.isLoading = true;
     const role: StoreRole = { ...this.role, rules: this.changedRules };
-    await this.storeRoleService.patchRole(store.url, role);
+    await this.storeRoleService.patchRole(store, role);
     this.changedRules = [];
     this.initData();
   }

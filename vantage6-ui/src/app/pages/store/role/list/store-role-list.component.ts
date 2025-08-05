@@ -18,21 +18,21 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-    selector: 'app-store-role-list',
-    templateUrl: './store-role-list.component.html',
-    styleUrl: './store-role-list.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatCard,
-        MatCardContent,
-        TableComponent,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-store-role-list',
+  templateUrl: './store-role-list.component.html',
+  styleUrl: './store-role-list.component.scss',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    MatCard,
+    MatCardContent,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class StoreRoleListComponent extends BaseListComponent implements OnInit {
   getRoleParameters: GetStoreRoleParameters = {};
@@ -78,7 +78,7 @@ export class StoreRoleListComponent extends BaseListComponent implements OnInit 
   private async getRoles(page: number, getRoleParameters: GetStoreRoleParameters) {
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
-    const result = await this.storeRoleService.getPaginatedRoles(store.url, page, getRoleParameters);
+    const result = await this.storeRoleService.getPaginatedRoles(store, page, getRoleParameters);
     this.table = {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },

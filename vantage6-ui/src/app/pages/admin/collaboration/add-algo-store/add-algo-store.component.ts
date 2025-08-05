@@ -36,7 +36,8 @@ export class AddAlgoStoreComponent implements OnInit {
     // convert form to API parameters
     const addAlgorithmStore: AddAlgorithmStore = {
       name: algorithmStoreForm.name,
-      algorithm_store_url: algorithmStoreForm.algorithm_store_url
+      algorithm_store_url: algorithmStoreForm.algorithm_store_url,
+      api_path: algorithmStoreForm.api_path
     };
     if (!algorithmStoreForm.all_collaborations) {
       addAlgorithmStore.collaboration_id = algorithmStoreForm.collaboration_id;

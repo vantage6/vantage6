@@ -1222,7 +1222,7 @@ class Tasks(TaskBase):
         """
         # get the algorithm from the store
         response, status_code = request_algo_store(
-            algo_store_url=store.url,
+            algo_store_url=f"{store.url}{store.api_path}",
             endpoint="algorithm",
             method="GET",
             params={"image": image},

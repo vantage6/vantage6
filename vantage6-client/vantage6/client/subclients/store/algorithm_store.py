@@ -1,10 +1,12 @@
+from vantage6.common.client.client_base import ClientBase
+from vantage6.common.globals import DEFAULT_API_PATH
+
 from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.store.policy import PolicySubClient
 from vantage6.client.subclients.store.review import ReviewSubClient
 from vantage6.client.subclients.store.role import StoreRoleSubClient
 from vantage6.client.subclients.store.rule import StoreRuleSubClient
 from vantage6.client.subclients.store.user import StoreUserSubClient
-from vantage6.client.subclients.store.policy import PolicySubClient
-from vantage6.common.client.client_base import ClientBase
 
 
 class AlgorithmStoreSubClient(ClientBase.SubClient):
@@ -39,7 +41,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         """
         store = self.get(id_)
         try:
-            self.url = f"{store['url']}/api"
+            self.url = f"{store['url']}{store['api_path']}"
             self.store_id = id_
         except KeyError:
             self.parent.log.error("Algorithm store URL could not be set.")
@@ -120,8 +122,9 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def create(
         self,
-        algorithm_store_url: str,
         name: str,
+        algorithm_store_url: str,
+        api_path: str = DEFAULT_API_PATH,
         collaboration: int | None = None,
         all_collaborations: bool = False,
     ) -> dict:
@@ -130,10 +133,12 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
 
         Parameters
         ----------
-        algorithm_store_url : str
-            The url of the algorithm store, including the API path.
         name : str
             The name of the algorithm store.
+        algorithm_store_url : str
+            The url of the algorithm store, excluding the API path.
+        api_path : str, optional
+            The API path of the algorithm store. Default is "/api".
         collaboration : int, optional
             The id of the collaboration to link the algorithm store to. If not given
             and client.setup_collaboration() was called, the collaboration id from the
@@ -170,6 +175,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         data = {
             "algorithm_store_url": algorithm_store_url,
             "name": name,
+            "api_path": api_path,
         }
         if collaboration is not None:
             data["collaboration_id"] = (collaboration,)

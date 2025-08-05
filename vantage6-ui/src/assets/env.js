@@ -10,5 +10,6 @@
     window["env"]["keycloak_realm"] = "vantage6";
     window["env"]["keycloak_client"] = "public_client";
     window["env"]["refresh_token_validity_seconds"] = "1800";
-    window["env"]["community_store_url"] = "https://store.cotopaxi.vantage6.ai/api";
+    window["env"]["community_store_url"] = "https://store.cotopaxi.vantage6.ai";
+    window["env"]["community_store_api_path"] = "/api";
 })(this);

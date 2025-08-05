@@ -90,7 +90,7 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org, org2])
         col.save()
         algo_store = AlgorithmStore(
-            name="test", url="http://test.com", collaboration=col
+            name="test", url="http://test.com", api_path="/api", collaboration=col
         )
         algo_store.save()
         rule = Rule.get_by_("collaboration", Scope.ORGANIZATION, Operation.VIEW)
@@ -152,7 +152,7 @@ class TestResources(TestResourceBase):
         col = Collaboration(organizations=[org])
         col.save()
         algo_store = AlgorithmStore(
-            name="test", url="http://test.com", collaboration=col
+            name="test", url="http://test.com", api_path="/api", collaboration=col
         )
         algo_store.save()
 
@@ -205,6 +205,7 @@ class TestResources(TestResourceBase):
         algo_store = AlgorithmStore(
             name="test",
             url="http://test.com",
+            api_path="/api",
             collaboration_id=col.id,
         )
         algo_store.save()
@@ -232,6 +233,7 @@ class TestResources(TestResourceBase):
         algo_store = AlgorithmStore(
             name="test2",
             url="http://test.com",
+            api_path="/api",
             collaboration_id=col.id,
         )
         algo_store.save()

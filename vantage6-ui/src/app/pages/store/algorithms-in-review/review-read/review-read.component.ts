@@ -94,10 +94,10 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
     if (!this.store) {
       return;
     }
-    this.algorithm = await this.algorithmService.getAlgorithm(this.store.url, this.algoID);
-    this.developer = await this.storeUserService.getUser(this.store.url, String(this.algorithm.developer_id));
-    this.reviewers = await this.storeUserService.getUsers(this.store.url, { can_review: true });
-    this.reviews = await this.reviewService.getReviews(this.store.url, { algorithm_id: this.algoID });
+    this.algorithm = await this.algorithmService.getAlgorithm(this.store, this.algoID);
+    this.developer = await this.storeUserService.getUser(this.store, String(this.algorithm.developer_id));
+    this.reviewers = await this.storeUserService.getUsers(this.store, { can_review: true });
+    this.reviews = await this.reviewService.getReviews(this.store, { algorithm_id: this.algoID });
 
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.DELETE);
     this.canApprove = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.EDIT);
@@ -143,7 +143,7 @@ export class ReviewReadComponent implements OnInit, OnDestroy {
       .subscribe(async (result) => {
         if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.store) return;
-          await this.reviewService.deleteReview(this.store.url, review.id).then(() => {
+          await this.reviewService.deleteReview(this.store, review.id).then(() => {
             this.reviews = this.reviews.filter((r) => r.id !== review.id);
           });
           if (this.reviews.length === 0) {

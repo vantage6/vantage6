@@ -30,7 +30,7 @@ export class StorePermissionService {
 
   async initialize(store: AlgorithmStore): Promise<void> {
     this.store = store;
-    this.publicPolicies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.store.url, true);
+    this.publicPolicies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.store, true);
     this.activeRules = await this.getStoreRules();
     this.canViewAlgorithms = await this.determineViewAlgorithms();
     this.initialized$.next(true);
@@ -53,7 +53,7 @@ export class StorePermissionService {
 
     // get the rules
     try {
-      const result = await this.storeRuleService.getRules(this.store.url, { no_pagination: 1, current_user: true }, false);
+      const result = await this.storeRuleService.getRules(this.store, { no_pagination: 1, current_user: true }, false);
       this.isUserRegistered = true;
       return result;
     } catch (error) {

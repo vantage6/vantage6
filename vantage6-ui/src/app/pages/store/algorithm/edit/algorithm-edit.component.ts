@@ -57,7 +57,7 @@ export class AlgorithmEditComponent implements OnInit, OnDestroy {
   private async initData(): Promise<void> {
     const chosenStore = this.chosenStoreService.store$.value;
     if (!chosenStore) return;
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore, this.id);
 
     // parse algorithm to form
     this.algorithmForm = {
