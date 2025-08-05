@@ -260,6 +260,7 @@ deployments:
             secret: development-constant-secret!
           dev:
             host_uri: ${HOST_URI}
+            store_in_local_cluster: true
         ui:
           image: ${UI_IMAGE}
           keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
