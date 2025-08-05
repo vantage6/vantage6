@@ -410,12 +410,18 @@ class ServerApp(Vantage6App):
                         "Algorithm store %s has no url, skipping coupling", name
                     )
                     continue
-                store = db.AlgorithmStore.get_by_url(url)
+                elif not (api_path := store.get("api_path")):
+                    log.warning(
+                        "Algorithm store %s has no api_path, skipping coupling", name
+                    )
+                    continue
+                store = db.AlgorithmStore.get_by_url(url, api_path)
                 if not store:
                     response, status = add_algorithm_store_to_database(
                         {
                             "name": name,
                             "algorithm_store_url": url,
+                            "api_path": api_path,
                         },
                     )
                     if status == HTTPStatus.CREATED:

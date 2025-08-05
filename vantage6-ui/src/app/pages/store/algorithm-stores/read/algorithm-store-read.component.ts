@@ -119,7 +119,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
 
     const getPublicPolicies = !this.storePermissionService.isUserRegistered;
 
-    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url, getPublicPolicies);
+    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore, getPublicPolicies);
 
     this.policyTable = this.translatePoliciesToTable(policies);
   }

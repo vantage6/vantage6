@@ -11,6 +11,7 @@ export interface AlgorithmStore {
   id: number;
   name: string;
   url: string;
+  api_path: string;
   collaborations: BaseCollaboration[];
   all_collaborations: boolean;
 }
@@ -18,6 +19,7 @@ export interface AlgorithmStore {
 export interface AlgorithmStoreForm {
   name: string;
   algorithm_store_url: string;
+  api_path: string;
   all_collaborations: boolean;
   collaboration_id?: string;
 }
@@ -25,6 +27,7 @@ export interface AlgorithmStoreForm {
 export interface AddAlgorithmStore {
   name: string;
   algorithm_store_url: string;
+  api_path: string;
   collaboration_id?: string;
 }
 

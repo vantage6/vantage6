@@ -1,5 +1,4 @@
 import { StoreRole } from './store-role.model';
-import { StoreServerRegistration } from './store-server';
 
 export enum StoreUserLazyProperties {
   Roles = 'roles'

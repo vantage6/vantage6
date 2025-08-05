@@ -1,19 +1,19 @@
 import logging
-
 from http import HTTPStatus
+
 from flask import request
 from flask_restful import Api
-from sqlalchemy import or_, select
 from marshmallow import ValidationError
+from sqlalchemy import or_, select
+
+from vantage6.backend.common.resource.pagination import Pagination
 
 from vantage6.server import db
-from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
-from vantage6.server.permission import RuleCollection, Operation as P
-from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
-from vantage6.server.resource import with_user, with_user_or_node, ServicesResources
 from vantage6.server.algo_store_communication import add_algorithm_store_to_database
-
+from vantage6.server.permission import Operation as P, RuleCollection
+from vantage6.server.resource import ServicesResources, with_user, with_user_or_node
+from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
+from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -230,7 +230,11 @@ class AlgorithmStores(AlgorithmStoreBase):
                     description: Human readable name for the algorithm store
                   algorithm_store_url:
                     type: string
-                    description: URL to the algorithm store, including the API path
+                    description: URL to the algorithm store, excluding the API path
+                  api_path:
+                    type: string
+                    description: API path to the algorithm store. Default is
+                      "/api".
                   collaboration_id:
                     type: integer
                     description: Collaboration id to which the algorithm store
@@ -516,7 +520,7 @@ class AlgorithmStore(AlgorithmStoreBase):
         tags: ["Collaboration"]
         """
 
-        algorithm_store = db.AlgorithmStore.get(id)
+        algorithm_store: db.AlgorithmStore | None = db.AlgorithmStore.get(id)
         if not algorithm_store:
             return {
                 "msg": f"Algorithm store id={id} is not found"
@@ -531,7 +535,9 @@ class AlgorithmStore(AlgorithmStoreBase):
         # Check if algostore is used by other collaborations. If it is, user needs
         # to have global permissions to delete all those links.
         # TODO require extra --force parameter to do this?
-        all_stores_with_url = db.AlgorithmStore.get_by_url(algorithm_store.url)
+        all_stores_with_url = db.AlgorithmStore.get_by_url(
+            algorithm_store.url, algorithm_store.api_path
+        )
         if len(all_stores_with_url) > 1:
             if self.r_col.e_glo.can():
                 log.warning(

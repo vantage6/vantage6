@@ -75,10 +75,10 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
   protected async initData(): Promise<void> {
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
-    this.user = await this.storeUserService.getUser(store?.url, this.id, [StoreUserLazyProperties.Roles]);
+    this.user = await this.storeUserService.getUser(store, this.id, [StoreUserLazyProperties.Roles]);
 
     this.setPermissions();
-    this.allUserRules = await this.storeRuleService.getRules(store.url, { user_id: this.user.id });
+    this.allUserRules = await this.storeRuleService.getRules(store, { user_id: this.user.id });
 
     this.isLoading = false;
   }
@@ -100,7 +100,7 @@ export class StoreUserReadComponent extends BaseReadComponent implements OnInit,
         const store = this.chosenStoreService.store$.value;
         if (!store || !this.user) return;
         this.isLoading = true;
-        await this.storeUserService.deleteUser(store.url, this.user.id);
+        await this.storeUserService.deleteUser(store, this.user.id);
         this.router.navigate([this.routes.storeUsers]);
       }
     );

@@ -4,6 +4,7 @@ from marshmallow import Schema, ValidationError, fields, validates, validates_sc
 from marshmallow.validate import Length, OneOf, Range
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.globals import DEFAULT_API_PATH
 
 from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
@@ -390,6 +391,7 @@ class AlgorithmStoreInputSchema(Schema):
 
     name = fields.String(required=True)
     algorithm_store_url = fields.Url(required=True)
+    api_path = fields.String(required=False, load_default=DEFAULT_API_PATH)
     collaboration_id = fields.Integer(validate=Range(min=1))
 
 

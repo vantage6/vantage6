@@ -9,6 +9,11 @@
     <input matInput type="text" formControlName="algorithm_store_url" />
     <mat-hint>{{ "algorithm-store-add.form.url-hint" | translate }}</mat-hint>
   </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "algorithm-store-add.api-path" | translate }}</mat-label>
+    <input matInput type="text" formControlName="api_path" />
+    <mat-hint>{{ "algorithm-store-add.form.api-path-hint" | translate }}</mat-hint>
+  </mat-form-field>
   <mat-checkbox formControlName="all_collaborations" *ngIf="canSetAllCollaborations">{{
     "algorithm-store-add.form.all-collaborations" | translate
   }}</mat-checkbox>

@@ -7,4 +7,5 @@ export interface EnvironmentConfig {
   keycloak_client: string;
   refresh_token_validity_seconds: number;
   community_store_url: string;
+  community_store_api_path: string;
 }

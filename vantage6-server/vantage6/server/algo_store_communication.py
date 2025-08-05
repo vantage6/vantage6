@@ -1,12 +1,14 @@
 import logging
 import os
-import requests
-from flask import Response
 from http import HTTPStatus
 from urllib.parse import urlparse
 
-from vantage6.server import db
+import requests
+from flask import Response
 
+from vantage6.common.globals import DEFAULT_API_PATH
+
+from vantage6.server import db
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -58,8 +60,9 @@ def add_algorithm_store_to_database(
     algorithm_store_url = data["algorithm_store_url"]
     if algorithm_store_url.endswith("/"):
         algorithm_store_url = algorithm_store_url[:-1]
+    api_path = data.get("api_path", DEFAULT_API_PATH)
 
-    if not _check_algorithm_store_online(algorithm_store_url):
+    if not _check_algorithm_store_online(f"{algorithm_store_url}{api_path}"):
         return {
             "msg": "Algorithm store cannot be found. Is it online and is the URL "
             "correct?"
@@ -67,7 +70,9 @@ def add_algorithm_store_to_database(
 
     # Delete existing records that will be replaced by the new one
     records_to_delete = []
-    existing_algorithm_stores = db.AlgorithmStore.get_by_url(algorithm_store_url)
+    existing_algorithm_stores = db.AlgorithmStore.get_by_url(
+        algorithm_store_url, api_path
+    )
     if existing_algorithm_stores:
         collabs_with_algo_store = [
             a.collaboration_id for a in existing_algorithm_stores
@@ -93,6 +98,7 @@ def add_algorithm_store_to_database(
     algorithm_store = db.AlgorithmStore(
         name=data["name"],
         url=algorithm_store_url,
+        api_path=api_path,
         collaboration_id=collaboration_id,
     )
     algorithm_store.save()

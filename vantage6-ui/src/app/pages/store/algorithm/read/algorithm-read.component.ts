@@ -110,7 +110,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
       propertiesToLoad.push(AlgorithmLazyProperties.Reviews);
     }
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, propertiesToLoad);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore, this.id, propertiesToLoad);
 
     this.isLoading = false;
   }

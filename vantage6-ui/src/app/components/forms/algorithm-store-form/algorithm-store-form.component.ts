@@ -13,10 +13,10 @@ import { MatButton } from '@angular/material/button';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-algorithm-store-form',
-    templateUrl: './algorithm-store-form.component.html',
-    styleUrls: ['./algorithm-store-form.component.scss'],
-    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatHint, NgIf, MatCheckbox, MatButton, TranslateModule]
+  selector: 'app-algorithm-store-form',
+  templateUrl: './algorithm-store-form.component.html',
+  styleUrls: ['./algorithm-store-form.component.scss'],
+  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatHint, NgIf, MatCheckbox, MatButton, TranslateModule]
 })
 export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   @Input() algorithmStore?: AlgorithmStore;
@@ -26,6 +26,7 @@ export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
   form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     algorithm_store_url: ['', Validators.required],
+    api_path: ['/api'],
     collaboration_id: '',
     all_collaborations: false
   });
@@ -43,6 +44,7 @@ export class AlgorithmStoreFormComponent implements OnInit, OnDestroy {
     if (this.algorithmStore) {
       this.form.controls.name.setValue(this.algorithmStore.name);
       this.form.controls.algorithm_store_url.setValue(this.algorithmStore.url);
+      this.form.controls.api_path.setValue(this.algorithmStore.api_path);
     }
     // get ID from router
     this.form.controls.collaboration_id.setValue(this.router.url.split('/').pop() as string);

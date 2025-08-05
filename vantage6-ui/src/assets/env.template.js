@@ -11,4 +11,5 @@
   window["env"]["keycloak_client"] = "${KEYCLOAK_CLIENT}";
   window["env"]["refresh_token_validity_seconds"] = "${REFRESH_TOKEN_VALIDITY_SECONDS}";
   window["env"]["community_store_url"] = "${COMMUNITY_STORE_URL}";
+  window["env"]["community_store_api_path"] = "${COMMUNITY_STORE_API_PATH}";
 })(this);

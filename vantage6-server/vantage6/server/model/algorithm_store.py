@@ -1,5 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Integer, ForeignKey, select
+
+from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
@@ -32,6 +33,7 @@ class AlgorithmStore(Base):
     # fields
     name = Column(String)
     url = Column(String)
+    api_path = Column(String)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"))
 
     # relationships
@@ -39,7 +41,7 @@ class AlgorithmStore(Base):
     tasks = relationship("Task", back_populates="algorithm_store")
 
     @classmethod
-    def get_by_url(cls, url: str) -> list[AlgorithmStore]:
+    def get_by_url(cls, url: str, api_path: str) -> list[AlgorithmStore]:
         """
         Get all algorithm store records with a certain url
 
@@ -47,6 +49,8 @@ class AlgorithmStore(Base):
         ----------
         url : str
             The url of the algorithm store
+        api_path : str
+            The api path of the algorithm store
 
         Returns
         -------
@@ -54,7 +58,9 @@ class AlgorithmStore(Base):
             List of algorithm store records with that URL
         """
         session = DatabaseSessionManager.get_session()
-        results = session.scalars(select(AlgorithmStore).filter_by(url=url)).all()
+        results = session.scalars(
+            select(AlgorithmStore).filter_by(url=url, api_path=api_path)
+        ).all()
         session.commit()
         return results
 
