@@ -3,6 +3,7 @@ Common functionality used in multiple vantage6 components.
 """
 
 import base64
+import importlib.metadata
 import os
 import typing
 import uuid
@@ -11,10 +12,10 @@ import appdirs
 import click
 from colorama import Fore, Style, init
 
-# make sure the version is available
-from vantage6.common._version import __version__  # noqa: F401
 from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME, STRING_ENCODING
+
+__version__ = importlib.metadata.version(__package__)
 
 # init colorstuff
 init()

@@ -9,21 +9,21 @@ Local (test) Installation
 To install the vantage6 |instance-type|, make sure you have met the
 |requirements-link|. Then, we provide a command-line interface (CLI) with which
 you can manage your |instance-type|. The CLI is a Python package that can be
-installed using pip. We always recommend to install the CLI
-in a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ or
-a `conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_.
+installed using uv. We always recommend to install the CLI
+in a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`_,
+for example using `uv <https://docs.astral.sh/uv/>`_.
 
 Run this command to install the CLI in your environment:
 
 ::
 
-   pip install vantage6
+   uv add vantage6
 
 Or if you want to install a specific version:
 
 ::
 
-   pip install vantage6==x.y.z
+   uv add vantage6==x.y.z
 
 
 You can verify that the CLI has been installed by running the command

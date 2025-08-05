@@ -54,16 +54,19 @@ These containers are connected to containers at other nodes by a internal networ
 The **vantage6** infrastructure is delivered in Docker images. To run these images, you
 need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the
 latest version of the vantage6 CLI, you need to have
-[Python](https://www.python.org/downloads/), we recommend using an environment manager
-like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
+[Python](https://www.python.org/downloads/) v3.13. We recommend
+[uv](https://docs.astral.sh/uv/) for package management.
 
 Install the latest version of the vantage6 CLI by using:
 
 ```bash
+uv add vantage6
+# or, if you are using conda / pyenv / ...
 pip install vantage6
 ```
 
-This install the `v6` commands, which allows you to manage your nodes and servers. To view all available options, run:
+This installs the `v6` commands, which allows you to manage your nodes and servers. To
+view all available options, run:
 
 ```bash
 v6 --help
@@ -127,7 +130,7 @@ You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai
 
 ### PYPI packages
 
-This repository is home to 6 PyPi packages:
+This repository is home to 8 PyPI packages:
 
 - [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and server instances_
 - [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with the vantage6-server_
@@ -156,11 +159,6 @@ in our private [Harbor](https://goharbor.io/) registry. The most important image
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
-
-Several other images are used to support the infrastructure:
-
-- `harbor2.vantage6.ai/infrastructure/infrastructure-base:VERSION` -> _Base image for the infrastructure_
-- `harbor2.vantage6.ai/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
 
 And finally there are some images released for algorithm development:
 

@@ -159,12 +159,6 @@ hooks:
     command: |
       dev/check_microk8s_storage_enabled.sh
     events: ["before:deploy:vantage6-auth"]
-  # before building images, pull the latest base image
-  - name: "pull-base-image"
-    command: |
-      echo "Pulling base image"
-      docker pull harbor2.vantage6.ai/infrastructure/infrastructure-base:5.0
-    events: ["before:build:server", "before:build:node", "before:build:store"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.

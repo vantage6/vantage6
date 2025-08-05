@@ -33,13 +33,11 @@ Python
 """"""
 
 Installation of any of the vantage6 packages requires Python 3.13.
-For installation instructions, see `python.org <https://python.org>`__,
-`anaconda.com <https://anaconda.com>`__ or use the package manager
-native to your OS and/or distribution.
+For installation instructions, see `python.org <https://python.org>`__ or use the
+package manager native to your OS and/or distribution.
 
 .. note::
-    We recommend you install vantage6 in a new, clean Python (Conda)
-    environment.
+    We recommend you install vantage6 in a new, clean Python environment using uv.
 
     Higher versions of Python (3.11+) will most likely also work, as might lower
     versions (3.8 or 3.9). However, we develop and test vantage6 on version

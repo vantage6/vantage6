@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vantage6.common.globals import APPNAME, InstanceType
 
-from vantage6.cli._version import __version__
+from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import ServerConfigurationManager
 from vantage6.cli.context.base_server import BaseServerContext
 from vantage6.cli.globals import (

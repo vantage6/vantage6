@@ -9,8 +9,7 @@ from typing import Self, Tuple
 import appdirs
 import pyfiglet
 
-from vantage6.common import Fore, Singleton, Style, error, get_config_path
-from vantage6.common._version import __version__
+from vantage6.common import Fore, Singleton, Style, __version__, error, get_config_path
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.docker.addons import running_in_docker
@@ -130,11 +129,11 @@ class AppContext(metaclass=Singleton):
         self.log.info("please cite the proper sources as mentioned in:")
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
-        self.log.info(f"Started application {APPNAME}")
-        self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(f"Successfully loaded configuration from '{self.config_file}'")
-        self.log.info("Logging to '%s'" % self.log_file)
-        self.log.info(f"Common package version '{__version__}'")
+        self.log.info("Started application %s", APPNAME)
+        self.log.info("Current working directory is '%s'", os.getcwd())
+        self.log.info("Successfully loaded configuration from '%s'", self.config_file)
+        self.log.info("Logging to '%s'", self.log_file)
+        self.log.info("Common package version '%s'", __version__)
 
     @classmethod
     def from_external_config_file(

@@ -53,6 +53,7 @@ help:
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
+	@echo "  install-docs         : install documentation dependencies"
 	@echo "  devdocs              : run a documentation development server"
 	@echo ""
 	@echo "Using "
@@ -62,53 +63,40 @@ help:
 	@echo "  platforms: ${PLATFORMS}"
 
 set-version:
-	# --version --build --spec --post
-	cd tools && ls
 	cd tools && python update-version.py ${FLAGS}
 
 community:
-	#  make community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'"
 	cd tools && python update-discord.py ${FLAGS}
 
 uninstall:
-	pip uninstall -y vantage6
-	pip uninstall -y vantage6-client
-	pip uninstall -y vantage6-algorithm-tools
-	pip uninstall -y vantage6-common
-	pip uninstall -y vantage6-node
-	pip uninstall -y vantage6-backend-common
-	pip uninstall -y vantage6-server
-	pip uninstall -y vantage6-algorithm-store
+	uv remove vantage6
+	uv remove vantage6-client
+	uv remove vantage6-algorithm-tools
+	uv remove vantage6-common
+	uv remove vantage6-node
+	uv remove vantage6-backend-common
+	uv remove vantage6-server
+	uv remove vantage6-algorithm-store
 
 install:
-	cd vantage6-common && pip install .
-	cd vantage6-client && pip install .
-	cd vantage6-algorithm-tools && pip install .
-	cd vantage6 && pip install .
-	cd vantage6-node && pip install .
-	cd vantage6-backend-common && pip install .
-	cd vantage6-server && pip install .
-	cd vantage6-algorithm-store && pip install .
+	uv add vantage6-common
+	uv add vantage6-client
+	uv add vantage6-algorithm-tools
+	uv add vantage6
+	uv add vantage6-node
+	uv add vantage6-backend-common
+	uv add vantage6-server
+	uv add vantage6-algorithm-store
 
 install-dev:
-	cd vantage6-common && pip install -e .
-	cd vantage6-client && pip install -e .
-	cd vantage6-algorithm-tools && pip install -e .
-	cd vantage6 && pip install -e .[dev]
-	cd vantage6-node && pip install -e .[dev]
-	cd vantage6-backend-common && pip install -e .[dev]
-	cd vantage6-server && pip install -e .[dev]
-	cd vantage6-algorithm-store && pip install -e .[dev]
-
-base-image:
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/infrastructure-base:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/infrastructure-base.Dockerfile \
-		$(if ${_condition_push},--push .,.)
+	uv pip install -e vantage6-common
+	uv pip install -e vantage6-client
+	uv pip install -e vantage6-algorithm-tools
+	uv pip install -e vantage6[dev]
+	uv pip install -e vantage6-node[dev]
+	uv pip install -e vantage6-backend-common[dev]
+	uv pip install -e vantage6-server[dev]
+	uv pip install -e vantage6-algorithm-store[dev]
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
@@ -185,7 +173,7 @@ ui-image:
 CHARTS := auth common node store server
 
 helm-charts:
-    # Update the Helm chart dependencies, package them and clean up the chart deps 
+    # Update the Helm chart dependencies, package them and clean up the chart deps
 	for chart in $(CHARTS); do \
 		helm dependency update charts/$$chart; \
 		helm package charts/$$chart -d charts/; \
@@ -252,6 +240,8 @@ test:
 	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
 	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
 
+install-docs:
+	uv sync --extra docs
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.

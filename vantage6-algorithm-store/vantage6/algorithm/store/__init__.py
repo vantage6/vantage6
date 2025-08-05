@@ -8,6 +8,7 @@ store to a vantage6 server.
 """
 
 import importlib
+import importlib.metadata
 import logging
 
 from flask import current_app
@@ -26,7 +27,6 @@ from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchem
 from vantage6.algorithm.store import db
 
 # make sure the version is available
-from vantage6.algorithm.store._version import __version__  # noqa: F401
 from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.globals import (
     RESOURCES,
@@ -39,6 +39,8 @@ from vantage6.algorithm.store.permission import PermissionManager
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
+
+__version__ = importlib.metadata.version(__package__)
 
 
 class AlgorithmStoreApp(Vantage6App):

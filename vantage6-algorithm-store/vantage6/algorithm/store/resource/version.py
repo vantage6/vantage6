@@ -3,15 +3,16 @@ Resources below '/<api_base>/version'
 """
 
 import logging
+from http import HTTPStatus
 
 from flask_restful import Api
-from http import HTTPStatus
+
 from vantage6.common import logger_name
-from vantage6.algorithm.store._version import __version__
+
+from vantage6.algorithm.store import __version__
 
 # TODO move to common / refactor
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

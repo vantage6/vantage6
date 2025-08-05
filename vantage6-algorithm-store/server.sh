@@ -9,6 +9,8 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+
+
 uwsgi \
     --http :80 \
     --gevent 1000 \

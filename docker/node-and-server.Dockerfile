@@ -7,39 +7,30 @@
 #
 ARG TAG=latest
 ARG BASE=5.0
-FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
-# Update and upgrade
-RUN apt update -y
-RUN apt upgrade -y
-
-# Fix DB issue
-RUN pip install psycopg2-binary
+# slim bookworm does not have gcc installed
+# libdev is needed for arm compilation
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y gcc python3-dev libffi-dev \
+    && apt-get upgrade -y
 
 # copy source
 COPY . /vantage6
 
-RUN pip install --upgrade pip
+# Install dependencies using uv
+WORKDIR /vantage6
 
-# Install requirements. We cannot rely on setup.py because of the way
-# python resolves package versions. To control all dependencies we install
-# them from the requirements.txt
-# This is also done in the base-image to safe build time. We redo it here
-# to allow for dependency upgrades in minor and patch versions.
-RUN pip install -r /vantage6/requirements.txt \
-  --extra-index-url https://www.piwheels.org/simple
-
-# install individual packages
-RUN pip install -e /vantage6/vantage6-common
-RUN pip install -e /vantage6/vantage6-client
-RUN pip install -e /vantage6/vantage6-algorithm-tools
-RUN pip install -e /vantage6/vantage6
-RUN pip install -e /vantage6/vantage6-node
-RUN pip install -e /vantage6/vantage6-backend-common
-RUN pip install -e /vantage6/vantage6-server
+# Install all packages in editable mode globally
+RUN uv pip install --system -e vantage6-common
+RUN uv pip install --system -e vantage6-client
+RUN uv pip install --system -e vantage6
+RUN uv pip install --system -e vantage6-backend-common
+RUN uv pip install --system -e vantage6-server
+RUN uv pip install --system -e vantage6-node
 
 # Overwrite uWSGI installation from the requirements.txt
 # Install uWSGI from source (for RabbitMQ)
@@ -48,7 +39,7 @@ RUN apt-get install --no-install-recommends --no-install-suggests -y \
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
-  pip install uwsgi -Iv
+  uv pip install --system --no-binary=uwsgi uwsgi
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 

@@ -1,0 +1,173 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vantage6"
+version = "5.0.0a29"
+description = "Vantage6 - Privacy-preserving federated learning"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Vantage6 Team"}
+]
+maintainers = [
+    {name = "Frank Martin", email = "f.martin@iknl.nl"},
+    {name = "Bart van Beusekom", email = "b.vanbeusekom@iknl.nl"}
+]
+keywords = ["federated-learning", "privacy", "distributed-computing", "healthcare"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "aniso8601==9.0.1",
+    "appdirs==1.4.4",
+    "attrs==22.2.0",
+    "backcall==0.2.0",
+    "bcrypt==4.0.1",
+    "bidict==0.22.1",
+    "blinker==1.9.0",
+    "cffi==1.17.1",
+    "charset-normalizer==3.0.1",
+    "click==8.1.3",
+    "colorama==0.4.6",
+    "contextlib2==21.6.0",
+    "cryptography==45.0.5",
+    "decorator==5.1.1",
+    "docker==7.1.0",
+    "flask==3.1.1",
+    "flask-cors==6.0.0",
+    "Flask-JWT-Extended==4.7.1",
+    "Flask-Mail==0.9.1",
+    "flask-marshmallow==0.15.0",
+    "Flask-Principal==0.4.0",
+    "Flask-RESTful==0.3.10",
+    "Flask-SocketIO==5.3.6",
+    "gevent==25.4.2",
+    "greenlet==3.2.1",
+    "idna==3.7",
+    "ipython==8.10.0",
+    "isodate==0.6.1",
+    "itsdangerous==2.2.0",
+    "jedi==0.18.2",
+    "jinja2==3.1.6",
+    "jsonschema==4.21.1",
+    "kombu==5.5.4",
+    "MarkupSafe==2.1.2",
+    "marshmallow==3.20.2",
+    "marshmallow-sqlalchemy==1.4.0",
+    "mistune==2.0.4",
+    "names_generator==0.2.0",
+    "numpy==2.3.0",
+    "oauthlib==3.2.2",
+    "pandas>=2.2.3",
+    "psutil==7.0.0",
+    "parso==0.8.3",
+    "pickleshare==0.7.5",
+    "prompt-toolkit==3.0.36",
+    "pure-eval==0.2.2",
+    "pycparser==2.21",
+    "pyfiglet==0.8.post1",
+    "pygments==2.19.2",
+    "pyjwt==2.9.0",
+    "pyotp==2.8.0",
+    "pyparsing==3.0.9",
+    "pyrsistent==0.19.3",
+    "python-dateutil==2.8.2",
+    "python-engineio==4.3.4",
+    "python-socketio==5.7.2",
+    "pytz==2022.7.1",
+    "PyYAML==6.0.1",
+    "questionary==1.10.0",
+    "rdflib==6.2.0",
+    "requests==2.32.4",
+    "requests-oauthlib==1.3.1",
+    "rich==13.5.2",
+    "schema==0.7.5",
+    "six==1.16.0",
+    "SPARQLWrapper==2.0.0",
+    "sqlalchemy==2.0.37",
+    "traitlets==5.8.1",
+    "urllib3==2.5.0",
+    "wcwidth==0.2.6",
+    "websocket-client==1.5.0",
+    "werkzeug==3.1.3",
+    "zope.event==4.6",
+    "zope.interface==7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage==7.10.2",
+    "black",
+    "pre-commit",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+]
+docs = [
+    "sphinx==8.2.3",
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinx-click",
+    "sphinxcontrib-plantuml",
+    "furo",
+]
+
+[project.scripts]
+v6 = "vantage6.cli.cli:cli_complete"
+
+[project.urls]
+Homepage = "https://vantage6.ai"
+Documentation = "https://docs.vantage6.ai"
+Repository = "https://github.com/vantage6/vantage6"
+Issues = "https://github.com/vantage6/vantage6/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "vantage6",
+    "vantage6-common",
+    "vantage6-client",
+    "vantage6-server",
+    "vantage6-node",
+    "vantage6-algorithm-tools",
+    "vantage6-backend-common",
+    "vantage6-algorithm-store",
+]
+
+# [tool.hatch.build.hooks.custom]
+# path = "build_hook.py"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.black]
+target-version = ['py313']
+line-length = 88
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''

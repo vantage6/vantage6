@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vantage6-client"
+version = "5.0.0a29"
+description = "Vantage6 client library"
+readme = "../README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Vantage6 Team"}
+]
+maintainers = [
+    {name = "Frank Martin", email = "f.martin@iknl.nl"},
+    {name = "Bart van Beusekom", email = "b.vanbeusekom@iknl.nl"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pyfiglet==0.8.post1",
+    "requests==2.32.4",
+    "rich==13.5.2",
+    "schema==0.7.5",
+    "vantage6-common==5.0.0a29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage==7.10.2",
+    "black",
+    "pre-commit",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["vantage6"]
+
+[tool.hatch.build.targets.wheel.sources]
+"vantage6" = "vantage6"

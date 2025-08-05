@@ -1,17 +1,17 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
-import jwt
+import importlib.metadata
 import json as json_lib
-
 from typing import Any
 
-from vantage6.common.client.client_base import ClientBase
+import jwt
+
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
-from vantage6.common.enum import RunStatus, AlgorithmStepType
+from vantage6.common.client.client_base import ClientBase
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.serialization import serialize
 
-# make sure the version is available
-from vantage6.algorithm.client._version import __version__  # noqa: F401
+__version__ = importlib.metadata.version(__package__)
 
 
 class AlgorithmClient(ClientBase):

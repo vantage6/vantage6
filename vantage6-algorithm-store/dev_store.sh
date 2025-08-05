@@ -11,6 +11,8 @@ if [ -z "$VANTAGE6_STORE_CONFIG_LOCATION" ]; then
     VANTAGE6_STORE_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+
+
 uwsgi \
     --py-autoreload 1 \
     --reload-mercy 1 \

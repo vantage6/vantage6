@@ -30,7 +30,7 @@ def filter_dicts_from_results(func: callable) -> callable:
         *args,
         filter_: tuple[Any, Any] = None,
         filters: list[tuple[Any, Any]] = None,
-        **kwargs
+        **kwargs,
     ) -> list[dict]:
         """
         Apply filters to the results of the function.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import logging
 import os
 import subprocess
@@ -23,8 +24,6 @@ from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.serialization import serialize
 
-# make sure the version is available
-from vantage6.client._version import __version__  # noqa: F401
 from vantage6.client.filter import post_filtering
 from vantage6.client.subclients.dataframe import DataFrameSubClient
 from vantage6.client.subclients.session import SessionSubClient
@@ -33,6 +32,7 @@ from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubCl
 from vantage6.client.subclients.study import StudySubClient
 from vantage6.client.utils import LogLevel
 
+__version__ = importlib.metadata.version(__package__)
 module_name = __name__.split(".")[1]
 
 

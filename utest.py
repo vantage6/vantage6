@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from vantage6.common.utest import run_tests, find_tests
-import sys
 import argparse
 import logging
+import sys
+from pathlib import Path
+
+from vantage6.common.utest import find_tests, run_tests
 
 # Suppress all logging output
 logging.getLogger().setLevel(logging.CRITICAL)
@@ -34,7 +35,8 @@ def run():
 
     # run common tests
     if args.common or args.all:
-        common_test_suites = find_tests(str(Path(__file__).parent / "vantage6-common"))
+        common_test_path = Path(__file__).parent / "vantage6-common" / "tests"
+        common_test_suites = find_tests(str(common_test_path))
         success_common = run_tests(common_test_suites)
         success = success and success_common
 

@@ -1,5 +1,6 @@
 """Common functionality for the vantage6 server and algorithm store."""
 
+import importlib.metadata
 import json
 import logging
 import os
@@ -24,7 +25,6 @@ from vantage6.common.globals import DEFAULT_API_PATH
 
 from vantage6.cli.context.base_server import BaseServerContext
 
-from vantage6.backend.common._version import __version__  # noqa: F401
 from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
 from vantage6.backend.common.globals import (
@@ -36,7 +36,7 @@ from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
 
-# make sure the version is available
+__version__ = importlib.metadata.version(__package__)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

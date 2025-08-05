@@ -7,7 +7,7 @@ rebuild: clean build-dist
 
 build-dist:
 	# Build the PyPI package
-	python setup.py sdist bdist_wheel
+	uv build
 
 publish:
 	# Uploading to pypi.org

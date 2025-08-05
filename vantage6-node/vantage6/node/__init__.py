@@ -23,6 +23,7 @@ see if there are new tasks available.
 """
 
 import datetime
+import importlib.metadata
 import json
 import logging
 import os
@@ -54,9 +55,6 @@ from vantage6.common.log import get_file_logger
 from vantage6.cli.context.node import NodeContext
 
 from vantage6.node import proxy_server
-
-# make sure the version is available
-from vantage6.node._version import __version__  # noqa: F401
 from vantage6.node.globals import (
     SLEEP_BTWN_NODE_LOGIN_TRIES,
     TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET,
@@ -65,6 +63,8 @@ from vantage6.node.globals import (
 from vantage6.node.k8s.container_manager import ContainerManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
+
+__version__ = importlib.metadata.version(__package__)
 
 
 # ------------------------------------------------------------------------------
