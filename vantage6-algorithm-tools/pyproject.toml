@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "coverage==6.4.4",
+    "coverage==7.10.2",
     "black",
     "pre-commit",
     "vantage6-common==5.0.0a29",
