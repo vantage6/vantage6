@@ -61,6 +61,7 @@ import { StoreRoleCreateComponent } from './pages/store/role/create/store-role-c
 import { CommunityStoreComponent } from './layouts/community-store/community-store.component';
 import { AlgorithmReadPublicComponent } from './pages/store/algorithm/read-public/algorithm-read-public.component';
 import { AlgorithmListPublicComponent } from './pages/store/algorithm/list-public/algorithm-list-public.component';
+import { PrivacyComponent } from './pages/privacy/privacy.component';
 
 export const routes: Routes = [
   {
@@ -91,6 +92,11 @@ export const routes: Routes = [
         path: routerConfig.home,
         component: HomeComponent,
         canActivate: [authenticationGuard]
+      },
+      {
+        path: routerConfig.privacy,
+        component: PrivacyComponent,
+        data: { crumb: ['privacy.title', routePaths.privacy] }
       }
     ]
   },

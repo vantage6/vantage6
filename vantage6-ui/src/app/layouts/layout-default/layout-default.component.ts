@@ -17,6 +17,7 @@ import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatNavList, MatListItem, MatListItemIcon } from '@angular/material/list';
+import { MatDivider } from '@angular/material/divider';
 import { BreadcrumbsComponent } from '../../components/breadcrumbs/breadcrumbs.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { LoginLogoutService } from 'src/app/services/logout.service';
@@ -51,7 +52,8 @@ import { KeycloakUserService } from 'src/app/services/keycloak-user.service';
     MatCardContent,
     RouterOutlet,
     AsyncPipe,
-    TranslateModule
+    TranslateModule,
+    MatDivider
   ]
 })
 export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {

@@ -27,28 +27,45 @@
   </div>
 </mat-toolbar>
 <mat-sidenav-container autosize>
-  <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
-    <mat-nav-list>
-      <div *ngFor="let link of navigationLinks">
-        <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
-          <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-          <a matLine>{{ link.label }}</a>
-        </mat-list-item>
-        <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
-          <mat-list-item
-            [routerLink]="[sublink.route]"
-            [routerLinkActive]="['mdc-list-item--activated']"
-            [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
-          >
-            <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
-            <a matLine>{{ sublink.label }}</a>
+  <mat-sidenav
+    #sideNav
+    *ngIf="!hideMenu"
+    [mode]="hideSideMenu ? 'over' : 'side'"
+    [fixedInViewport]="hideSideMenu"
+    fixedTopGap="56"
+    [ngClass]="{ 'fixed-sidenav': !hideSideMenu }"
+  >
+    <div class="sidenav-container">
+      <mat-nav-list>
+        <div *ngFor="let link of navigationLinks">
+          <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
+            <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+            <a matLine>{{ link.label }}</a>
           </mat-list-item>
+          <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
+            <mat-list-item
+              [routerLink]="[sublink.route]"
+              [routerLinkActive]="['mdc-list-item--activated']"
+              [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
+            >
+              <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
+              <a matLine>{{ sublink.label }}</a>
+            </mat-list-item>
+          </div>
         </div>
+      </mat-nav-list>
+      <!-- Privacy Statement Link - At the bottom -->
+      <div>
+        <mat-divider></mat-divider>
+        <mat-list-item [routerLink]="[routes.privacy]" [routerLinkActive]="['mdc-list-item--activated']" class="privacy-link">
+          <mat-icon matListItemIcon>privacy_tip</mat-icon>
+          <a matLine>{{ "links.privacy" | translate }}</a>
+        </mat-list-item>
       </div>
-    </mat-nav-list>
+    </div>
   </mat-sidenav>
   <mat-sidenav-content>
-    <div class="layout-container">
+    <div class="layout-container" [ngClass]="{ 'fixed-sidenav': !hideSideMenu }">
       <app-breadcrumbs></app-breadcrumbs>
       <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.chooseCollaboration">
         <mat-card class="choice-alert">

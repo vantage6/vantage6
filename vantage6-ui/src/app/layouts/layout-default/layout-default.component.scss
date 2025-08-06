@@ -2,6 +2,15 @@
 
 .layout-container {
   margin: $spacing-px-4;
+  min-height: calc(100vh - 56px);
+
+  @media only screen and (min-width: 600px) {
+    min-height: calc(100vh - 64px);
+  }
+
+  &.fixed-sidenav {
+    margin-left: 16px;
+  }
 }
 
 mat-toolbar {
@@ -12,11 +21,34 @@ mat-toolbar {
 
 mat-sidenav {
   max-width: 285px;
+  height: calc(100vh - 56px);
+
+  @media only screen and (min-width: 600px) {
+    height: calc(100vh - 64px);
+  }
+
+  &.fixed-sidenav {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    z-index: 1000;
+
+    @media only screen and (min-width: 600px) {
+      top: 64px;
+    }
+  }
 
   button {
     width: calc(100% - ($spacing-px-4 * 2));
     margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;
     box-sizing: border-box;
+  }
+
+  .sidenav-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
   }
 
   mat-list-item {
@@ -29,10 +61,11 @@ mat-sidenav {
 }
 
 mat-sidenav-container {
-  min-height: calc(100% - 56px);
+  min-height: calc(100vh - 56px);
+  position: relative;
 
   @media only screen and (min-width: 600px) {
-    min-height: calc(100% - 64px);
+    min-height: calc(100vh - 64px);
   }
 }
 
@@ -59,6 +92,19 @@ mat-toolbar {
 
 .submenu.expanded {
   height: auto;
+}
+
+.privacy-link {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+
+  mat-icon {
+    color: #666;
+  }
+
+  a {
+    color: #666;
+    font-size: 0.9rem;
+  }
 }
 
 .choice-alert {
