@@ -19,14 +19,9 @@ This is a web application that allows you to communicate easily with your **vant
 ## How to use
 
 For instructions on how to run your own user interface, see the instructions below.
-
 If you are using our Cotopaxi server you can use this user interface by logging
 on to https://portal.cotopaxi.vantage6.ai/. Contact us if you would like to have
 a user account.
-
-Note that the user interface is not available for older **vantage6** servers
-such as Harukas (v2). Please consider upgrading to Cotopaxi (v4), or alternatively,
-Petronas (v3). Note that in the latter case only an older UI is available.
 
 ### Running the UI locally
 
