@@ -63,6 +63,7 @@ export const routePaths = {
   algorithmReview: '/store/review',
   algorithmReviewSubmit: '/store/review/submit',
   myPendingAlgorithms: '/store/pending/algorithms',
+  privacy: '/privacy',
   communityStore: '/communitystore',
   communityStoreAlgorithms: '/communitystore/algorithm'
 };
@@ -135,6 +136,7 @@ export const routerConfig = {
   algorithmReview: 'review/:algoID',
   algorithmReviewSubmit: 'review/submit/:id',
   myPendingAlgorithms: 'pending/algorithms',
+  privacy: 'privacy',
   communityStoreAlgorithm: 'algorithm/:id',
   communityStoreAlgorithms: 'algorithm'
 };

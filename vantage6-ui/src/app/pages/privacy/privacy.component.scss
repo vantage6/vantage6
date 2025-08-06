@@ -1,0 +1,97 @@
+@import "src/app/styles/config.scss";
+
+.privacy-content {
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+
+  .disclaimer-box {
+    background-color: $warning-50;
+    border: 1px solid $warning-200;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    h2 {
+      color: $warning-800;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    p {
+      color: $warning-800;
+      margin-bottom: 0;
+      font-weight: 500;
+    }
+  }
+
+  h2 {
+    color: map-get($vantage-primary, 900);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  h2:first-child {
+    margin-top: 0;
+  }
+
+  p {
+    margin-bottom: 1rem;
+    text-align: justify;
+  }
+
+  ul {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 16px 8px 0;
+    padding: 12px 16px;
+    background-color: map-get($vantage-primary, 900);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background-color: map-get($vantage-primary, 800);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+mat-card {
+  margin: 1rem;
+}
+
+mat-card-header {
+  margin-bottom: 1rem;
+}
+
+mat-card-title {
+  font-size: 2rem;
+  font-weight: 500;
+  color: map-get($vantage-primary, 900);
+}

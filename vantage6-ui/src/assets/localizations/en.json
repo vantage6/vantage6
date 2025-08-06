@@ -56,10 +56,52 @@
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
     "pending-algorithms": "Pending algorithms",
-    "old-algorithms": "Old algorithms"
+    "old-algorithms": "Old algorithms",
+    "privacy": "Privacy Statement"
   },
   "home": {
     "title": "Home"
+  },
+  "privacy": {
+    "disclaimer": {
+      "title": "Disclaimer",
+      "content": "Vantage6 is an open-source project, that might be used by anyone. This Privacy statement is not a legal document, and does not create any rights or obligations. It is provided only to inform you what personal information the vantage6 software collects, and how it is used."
+    },
+    "title": "Privacy statement",
+    "lastUpdated": "Last Updated",
+    "lastUpdatedDate": "August 6, 2025",
+    "introduction": {
+      "title": "Introduction",
+      "content": "This Privacy statement describes how Vantage6 collects, uses, and protects your personal information when you use our federated learning platform. The vantage6 project is committed to protecting your privacy and ensuring the security of your data."
+    },
+    "dataCollection": {
+      "title": "Data collection",
+      "content": "Vantage6 collects the following types of information:",
+      "item1": "Account information (username, email address, organization name)",
+      "item2": "Usage data (login times, feature usage)"
+    },
+    "dataUsage": {
+      "title": "How vantage6 uses your data",
+      "content": "Your data is used only to provide a working federated learning platform, and to comply with legal obligations.",
+      "details-account": "Cookies are used to authenticate you. These cookies are essential for the functioning of vantage6, and are the only cookies used by vantage6.",
+      "details-usage": "The vantage6 software logs which requests you make to our platform, and when. Depending on the project, logging may be a legal requirement that can be used to prevent or detect abuse. Also, logging may be used in your project to detect errors in the vantage6 software, or in related components, such as algorithms run in your project. The log level set in your vantage6 project determines the amount of information that is logged."
+    },
+    "dataSharing": {
+      "title": "Data sharing",
+      "content": "Vantage6 is not a commercial platform and as such, has no commercial interest in your data. The vantage6 software has no built-in mechanism to share your personal information. Although the vantage6 team would not endorse this, the organization responsible for maintaining vantage6 in your project is technically able to share your data. In rare cases, they may even be required by law to share data."
+    },
+    "dataSecurity": {
+      "title": "Data security",
+      "content": "The vantage6 software aims to implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. Note that, as an open-source platform, there is not a single organization that is responsible for the security of the vantage6 software. Also, the way in which vantage6 is deployed in your project`will determine the security of your data. The vantage6 development team recommends that every project has a party that takes responsibility for the security."
+    },
+    "userRights": {
+      "title": "Your personal information",
+      "content": "You should contact the organization responsible for maintaining vantage6 in your project if you have any questions about your personal information."
+    },
+    "contact": {
+      "title": "Contact us",
+      "content": "If you have any questions about this Privacy statement, please reach out to us on Discord, create an issue on GitHub:"
+    }
   },
   "choose-collaboration": {
     "title": "Choose a collaboration",
