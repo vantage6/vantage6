@@ -1,9 +1,13 @@
-from dataclasses import dataclass
+import logging
 import os
+from dataclasses import dataclass
+
 from keycloak import KeycloakAdmin, KeycloakOpenID
 
 from vantage6.backend.common.globals import RequiredServerEnvVars
 from vantage6.backend.common.resource.error_handling import BadRequestError
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -51,8 +55,13 @@ def get_keycloak_id_for_user(username: str):
     """
     Get the keycloak id for a user
     """
-    keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-    keycloak_id = keycloak_admin.get_user_id(username)
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        keycloak_id = keycloak_admin.get_user_id(username)
+    except Exception as exc:
+        log.exception(exc)
+        raise BadRequestError("Could not retrieve user from Keycloak") from exc
+
     if keycloak_id is None:
         raise BadRequestError("User does not exist in Keycloak")
     return keycloak_id
@@ -64,30 +73,36 @@ def create_service_account_in_keycloak(
     """
     Create a service account in Keycloak
     """
-    keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-    client_id = keycloak_admin.create_client(
-        {
-            "clientId": client_name,
-            "publicClient": False,
-            "enabled": True,
-            "serviceAccountsEnabled": True,
-            "standardFlowEnabled": False,
-            "protocolMappers": [
-                {
-                    "name": "vantage6_client_type",
-                    "protocol": "openid-connect",
-                    "protocolMapper": "oidc-hardcoded-claim-mapper",
-                    "config": {
-                        "claim.name": "vantage6_client_type",
-                        "claim.value": "node" if is_node else "user",
-                        "access.token.claim": True,
-                    },
-                }
-            ],
-        }
-    )
-    user_id = keycloak_admin.get_user_id(f"service-account-{client_name}")
-    secret = keycloak_admin.get_client_secrets(client_id)
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        client_id = keycloak_admin.create_client(
+            {
+                "clientId": client_name,
+                "publicClient": False,
+                "enabled": True,
+                "serviceAccountsEnabled": True,
+                "standardFlowEnabled": False,
+                "protocolMappers": [
+                    {
+                        "name": "vantage6_client_type",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-hardcoded-claim-mapper",
+                        "config": {
+                            "claim.name": "vantage6_client_type",
+                            "claim.value": "node" if is_node else "user",
+                            "access.token.claim": True,
+                        },
+                    }
+                ],
+            }
+        )
+        user_id = keycloak_admin.get_user_id(f"service-account-{client_name}")
+        secret = keycloak_admin.get_client_secrets(client_id)
+    except Exception as exc:
+        log.exception(exc)
+        raise BadRequestError(
+            f"Could not create service account '{client_name}' in Keycloak"
+        ) from exc
     return KeycloakServiceAccount(client_id, secret["value"], user_id)
 
 
@@ -106,5 +121,11 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
     """
     Delete a service account in Keycloak
     """
-    keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-    keycloak_admin.delete_client(client_id)
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        keycloak_admin.delete_client(client_id)
+    except Exception as exc:
+        log.exception(exc)
+        raise BadRequestError(
+            "Service account '{client_id}' could not be deleted from Keycloak"
+        ) from exc

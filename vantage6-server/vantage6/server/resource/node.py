@@ -9,7 +9,6 @@ from sqlalchemy import select
 from vantage6.common.globals import AuthStatus
 
 from vantage6.backend.common.auth import (
-    KeycloakServiceAccount,
     create_service_account_in_keycloak,
     delete_service_account_in_keycloak,
     get_service_account_in_keycloak,
@@ -496,19 +495,12 @@ class Nodes(NodeBase):
         # Create a keycloak account for the node if the server is configured to do so,
         # otherwise verify that the node exists in keycloak
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            try:
-                keycloak_service_account: KeycloakServiceAccount = (
-                    create_service_account_in_keycloak(
-                        f"{name}-node-client", is_node=True
-                    )
-                )
-            except Exception as e:
-                msg = f"Error creating keycloak account for node {name}: {e}"
-                log.error(msg)
-                return {"msg": msg}, HTTPStatus.INTERNAL_SERVER_ERROR
+            keycloak_service_account = create_service_account_in_keycloak(
+                f"{name}-node-client", is_node=True
+            )
         else:
-            keycloak_service_account: KeycloakServiceAccount = (
-                get_service_account_in_keycloak(f"{name}-node-client")
+            keycloak_service_account = get_service_account_in_keycloak(
+                f"{name}-node-client"
             )
         node.keycloak_id = keycloak_service_account.user_id
         node.keycloak_client_id = keycloak_service_account.client_id
@@ -602,6 +594,7 @@ class Node(NodeBase):
 
         return node_schema.dump(node, many=False), HTTPStatus.OK
 
+    @handle_exceptions
     @with_user
     def delete(self, id):
         """
