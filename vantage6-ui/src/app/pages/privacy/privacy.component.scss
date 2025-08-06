@@ -1,18 +1,20 @@
+@import "src/app/styles/config.scss";
+
 .privacy-content {
   max-width: 800px;
   margin: 0 auto;
   line-height: 1.6;
 
   .disclaimer-box {
-    background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
+    background-color: $warning-50;
+    border: 1px solid $warning-200;
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     h2 {
-      color: #856404;
+      color: $warning-800;
       margin-top: 0;
       margin-bottom: 1rem;
       font-size: 1.3rem;
@@ -20,14 +22,14 @@
     }
 
     p {
-      color: #856404;
+      color: $warning-800;
       margin-bottom: 0;
       font-weight: 500;
     }
   }
 
   h2 {
-    color: #1976d2;
+    color: map-get($vantage-primary, 900);
     margin-top: 2rem;
     margin-bottom: 1rem;
     font-size: 1.5rem;
@@ -58,7 +60,7 @@
     gap: 8px;
     margin: 8px 16px 8px 0;
     padding: 12px 16px;
-    background-color: #1976d2;
+    background-color: map-get($vantage-primary, 900);
     color: white;
     text-decoration: none;
     border-radius: 6px;
@@ -67,7 +69,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     &:hover {
-      background-color: #1565c0;
+      background-color: map-get($vantage-primary, 800);
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
@@ -91,5 +93,5 @@ mat-card-header {
 mat-card-title {
   font-size: 2rem;
   font-weight: 500;
-  color: #1976d2;
+  color: map-get($vantage-primary, 900);
 }
