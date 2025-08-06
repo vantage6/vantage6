@@ -136,7 +136,7 @@ ui:
   # Use "*" to allow all stores (less secure) or specify specific URLs
   # allowedAlgorithmStores: "http://localhost:7602 https://store.cotopaxi.vantage6.ai"
   allowedAlgorithmStores: "*"
-  # Community algorithm store URL. 
+  # Community algorithm store URL.
   communityStoreUrl: https://store.cotopaxi.vantage6.ai
   # Community algorithm store API path
   communityStoreApiPath: /api
