@@ -158,7 +158,7 @@ class UserClient(ClientBase):
         It also collects some additional info about your user.
         """
         auth_url = self.kc_openid.auth_url(
-            redirect_uri="http://localhost:8081/callback",
+            redirect_uri="http://localhost:7681/callback",
             scope="openid",
             state="state",
         )
@@ -182,7 +182,7 @@ class UserClient(ClientBase):
                     token = self.server.kc_openid.token(
                         grant_type="authorization_code",
                         code=params["code"][0],
-                        redirect_uri="http://localhost:8081/callback",
+                        redirect_uri="http://localhost:7681/callback",
                     )
 
                     # Store the token
@@ -207,7 +207,7 @@ class UserClient(ClientBase):
                 threading.Thread(target=self.server.shutdown).start()
 
         # Start server in a separate thread
-        server = HTTPServer(("localhost", 8081), CallbackHandler)
+        server = HTTPServer(("localhost", 7681), CallbackHandler)
         server.kc_openid = self.kc_openid
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True
