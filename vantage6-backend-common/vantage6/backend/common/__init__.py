@@ -300,8 +300,15 @@ class Vantage6App:
                     current_role.save()
 
     def _add_keycloak_id_to_super_user(self, super_user: BaseModelBase) -> None:
-        super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
-        super_user.save()
+        try:
+            super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
+            super_user.save()
+        except Exception as exc:
+            log.error(
+                "Could not get keycloak ID for super user %s", super_user.username
+            )
+            log.error("This means that you cannot login as this user")
+            log.exception(exc)
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:

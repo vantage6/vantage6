@@ -293,13 +293,7 @@ class Users(AlgorithmStoreResources):
             }, HTTPStatus.BAD_REQUEST
 
         # check if the user already exists in keycloak
-        try:
-            user_id = get_keycloak_id_for_user(request.json["username"])
-        except Exception:
-            return {
-                "msg": f"User {request.json['username']} not found: cannot register "
-                "user in algorithm store"
-            }, HTTPStatus.BAD_REQUEST
+        user_id = get_keycloak_id_for_user(request.json["username"])
 
         # check unique constraints
         if db.User.get_by_keycloak_id(keycloak_id=user_id):

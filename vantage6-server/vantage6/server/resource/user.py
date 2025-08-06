@@ -109,7 +109,7 @@ def permissions(permissions: PermissionManager) -> None:
     add(
         S.COLLABORATION,
         P.CREATE,
-        description="Create a new user for organizations in your " "collaborations",
+        description="Create a new user for organizations in your collaborations",
     )
     add(S.ORGANIZATION, P.CREATE, description="Create a new user for your organization")
     add(S.GLOBAL, P.EDIT, description="Edit any user")
@@ -237,7 +237,7 @@ class Users(UserBase):
             if not self.r.allowed_for_org(P.VIEW, args["organization_id"]):
                 return {
                     "msg": "You lack the permission view users from the "
-                    f'organization with id {args["organization_id"]}!'
+                    f"organization with id {args['organization_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(db.User.organization_id == args["organization_id"])
         if "last_seen_till" in args:
@@ -250,7 +250,7 @@ class Users(UserBase):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             # note: We check if role has organization to ensure that users
             # with limited permissions can still see who have default roles
@@ -273,7 +273,7 @@ class Users(UserBase):
             rule = db.Rule.get(args["rule_id"])
             if not rule:
                 return {
-                    "msg": f'Rule with id={args["rule_id"]} does not exist!'
+                    "msg": f"Rule with id={args['rule_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.UserPermission)
@@ -285,7 +285,7 @@ class Users(UserBase):
             if not self.r.can_for_col(P.VIEW, args["collaboration_id"]):
                 return {
                     "msg": "You lack the permission view all users from "
-                    f'collaboration {args["collaboration_id"]}!'
+                    f"collaboration {args['collaboration_id']}!"
                 }, HTTPStatus.UNAUTHORIZED
             q = q.filter(
                 db.User.organization_id.in_(
@@ -500,20 +500,24 @@ class Users(UserBase):
         return json_response, HTTPStatus.CREATED
 
     def _create_user_in_keycloak(self, data):
-        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-        return keycloak_admin.create_user(
-            {
-                "username": data["username"],
-                "enabled": True,
-                "credentials": [
-                    {
-                        "type": "password",
-                        "value": data["password"],
-                        "temporary": True,
-                    }
-                ],
-            }
-        )
+        try:
+            keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+            return keycloak_admin.create_user(
+                {
+                    "username": data["username"],
+                    "enabled": True,
+                    "credentials": [
+                        {
+                            "type": "password",
+                            "value": data["password"],
+                            "temporary": True,
+                        }
+                    ],
+                }
+            )
+        except Exception as exc:
+            log.exception(exc)
+            raise BadRequestError("User could not be created in Keycloak") from exc
 
 
 class CurrentUser(UserBase):
