@@ -52,9 +52,33 @@ import {
 } from 'keycloak-angular';
 import { environment } from 'src/environments/environment';
 
-// Send the Keycloak token along with all requests when the user is authenticated.
+/*
+ * Get the URL pattern for services that the token is sent to.
+
+ * If the allowed algorithm stores is '*', return a pattern that matches all URLs.
+ * If allowed algorithm stores are specified, we can determine the URL pattern to allow
+ * for the Bearer token inclusion as thes server URL plus the allowed algorithm stores.
+ */
+function getUrlPattern() {
+  if (environment.allowed_algorithm_stores === '*') {
+    return new RegExp(`.*`, 'i');
+  }
+  const urls: string[] = environment.allowed_algorithm_stores.split(' ');
+  urls.push(environment.server_url);
+
+  // Create a pattern that matches the base URL and any subpaths
+  // Escape special regex characters in URLs and add optional trailing slash and subpaths
+  const escapedUrls = urls.map((url) => {
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return `${escaped}(/.*)?`;
+  });
+  return new RegExp(`^(${escapedUrls.join('|')})$`, 'i');
+}
+
+// Send the Keycloak token along with requests when the user is authenticated. The url
+// pattern defines to which backend services the token is included.
 const UrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
-  urlPattern: new RegExp(`.*`, 'i'),
+  urlPattern: getUrlPattern(),
   bearerPrefix: 'Bearer'
 });
 

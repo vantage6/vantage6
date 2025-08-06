@@ -24,3 +24,10 @@ fi
 # escape the slashes in the urls
 ALLOWED_ALGORITHM_STORES=$(echo "$ALLOWED_ALGORITHM_STORES" | sed 's/\//\\\//g')
 sed -i "s/<ALGORITHM_STORE_URLS>/$ALLOWED_ALGORITHM_STORES/g" /etc/nginx/nginx.conf
+
+if [ -z "${AUTH_URL}" ]; then
+    AUTH_URL="https://auth.cotopaxi.vantage6.ai"
+fi
+# escape the slashes in the url
+AUTH_URL=$(echo "$AUTH_URL" | sed 's/\//\\\//g')
+sed -i "s/<AUTH_URL>/$AUTH_URL/g" /etc/nginx/nginx.conf

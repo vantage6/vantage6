@@ -38,3 +38,11 @@ spec:
         # automatically logs out the user.
         - name: REFRESH_TOKEN_VALIDITY_SECONDS
           value: "1800" # 30 minutes - the keycloak default
+        # Algorithm store URLs for Bearer token inclusion and for CSP header policies
+        - name: ALLOWED_ALGORITHM_STORES
+          value: {{ .Values.ui.allowedAlgorithmStores | default "*" | quote }}
+        # Community store URL
+        - name: COMMUNITY_STORE_URL
+          value: {{ .Values.ui.communityStoreUrl | default "https://store.cotopaxi.vantage6.ai" | quote }}
+        - name: COMMUNITY_STORE_API_PATH
+          value: {{ .Values.ui.communityStoreApiPath | default "/api" | quote }}
