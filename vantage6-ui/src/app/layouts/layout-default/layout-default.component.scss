@@ -2,10 +2,11 @@
 
 .layout-container {
   margin: $spacing-px-4;
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
+  overflow-y: auto;
 
   @media only screen and (min-width: 600px) {
-    min-height: calc(100vh - 64px);
+    height: calc(100vh - 64px);
   }
 
   &.fixed-sidenav {
@@ -22,9 +23,11 @@ mat-toolbar {
 mat-sidenav {
   max-width: 285px;
   height: calc(100vh - 56px);
+  top: 56px;
 
   @media only screen and (min-width: 600px) {
     height: calc(100vh - 64px);
+    top: 64px;
   }
 
   &.fixed-sidenav {
@@ -32,9 +35,11 @@ mat-sidenav {
     top: 56px;
     left: 0;
     z-index: 1000;
+    height: calc(100vh - 56px);
 
     @media only screen and (min-width: 600px) {
       top: 64px;
+      height: calc(100vh - 64px);
     }
   }
 
@@ -49,6 +54,7 @@ mat-sidenav {
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
+    overflow-y: auto;
   }
 
   mat-list-item {
@@ -61,11 +67,11 @@ mat-sidenav {
 }
 
 mat-sidenav-container {
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
   position: relative;
 
   @media only screen and (min-width: 600px) {
-    min-height: calc(100vh - 64px);
+    height: calc(100vh - 64px);
   }
 }
 
