@@ -31,6 +31,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
+from vantage6.common.globals import DEFAULT_CHUNK_SIZE
 
 SEPARATOR = "$"
 
@@ -117,7 +118,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return self.str_to_bytes(data.decode('utf-8'))
 
-    def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=8192):
+    def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=DEFAULT_CHUNK_SIZE):
         """
         Base64-encode a stream, yielding encoded chunks.
 
@@ -135,7 +136,6 @@ class CryptorBase(metaclass=Singleton):
         bytes
             Base64-encoded data chunks.
         """
-        import base64
 
         buffer = b""
         while True:
@@ -156,7 +156,7 @@ class CryptorBase(metaclass=Singleton):
             encoded = base64.b64encode(buffer)
             yield encoded
     
-    def decrypt_stream(self, stream, chunk_size=8192):
+    def decrypt_stream(self, stream, chunk_size=DEFAULT_CHUNK_SIZE):
         """
         Decode a base64-encoded stream to bytes, yielding decoded chunks.
 
@@ -190,8 +190,17 @@ class CryptorBase(metaclass=Singleton):
             yield decoded
         # Decode any remaining data in the buffer
         if buffer:
-            decoded = base64.b64decode(buffer)
-            yield decoded
+            # Pad buffer to a multiple of 4 for base64 decoding
+            padding_len = (-len(buffer)) % 4
+            if padding_len:
+                buffer += b'=' * padding_len
+            try:
+                decoded = base64.b64decode(buffer)
+                yield decoded
+            except Exception as e:
+                self.log.error(f"Failed to decode base64 buffer: {e}")
+                raise
+
     
 
 
@@ -438,7 +447,7 @@ class RSACryptor(CryptorBase):
 
 
 
-    def _crypt_stream(self, stream, key, iv, chunk_size=8192):
+    def _crypt_stream(self, stream, key, iv, chunk_size=DEFAULT_CHUNK_SIZE):
         """
         Encrypt or decrypt a stream using AES-CTR.
 
@@ -476,7 +485,7 @@ class RSACryptor(CryptorBase):
         if final_chunk:
             yield final_chunk
 
-    def encrypt_stream(self, stream, pubkey_base64s: str, chunk_size=8192):
+    def encrypt_stream(self, stream, pubkey_base64s: str, chunk_size=DEFAULT_CHUNK_SIZE):
         """
         Encrypt a stream using hybrid RSA/AES encryption.
 
@@ -517,7 +526,7 @@ class RSACryptor(CryptorBase):
         yield header_bytes
         yield from self._crypt_stream(stream, shared_key, iv_bytes, chunk_size)
 
-    def decrypt_stream(self, stream, chunk_size=8192):
+    def decrypt_stream(self, stream, chunk_size=DEFAULT_CHUNK_SIZE):
         """
         Decrypt a stream that was encrypted using hybrid RSA/AES encryption.
 

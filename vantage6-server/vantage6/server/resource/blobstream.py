@@ -40,17 +40,24 @@ def setup(api: Api, api_base: str, services: dict) -> None:
 
     api.add_resource(
         BlobStream,
-        api_base + "/resultstream",
+        api_base + "/blobstream",
         endpoint="result_stream_without_id",
         methods=("POST",),
         resource_class_kwargs=services,
     )
-        
+
+    api.add_resource(
+        BlobStreamStatus,
+        api_base + "/blobstream/status",
+        endpoint="blob_stream_status",
+        methods=("GET",),
+        resource_class_kwargs=services,
+    )
 
     api.add_resource(
         BlobStream,
-        api_base + "/resultstream/<string:id>",
-        endpoint="result_stream_with_id",
+        api_base + "/blobstream/<string:id>",
+        endpoint="blob_stream_with_id",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -101,21 +108,39 @@ def permissions(permissions: PermissionManager):
 # Resources / API's
 # ------------------------------------------------------------------------------
 class BlobStreamBase(ServicesResources):
-    """Base class for run resources"""
+    """
+    Base class for run resources that require a storage adapter. 
+    This class provides methods for streaming large results from the storage adapter, 
+    in this case Azure Blob Storage.
+    """
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
+class BlobStreamStatus(BlobStreamBase):
+    """
+    Resource for /api/blobstream/status (GET)
+    Returns whether the blob store is enabled.
+    """
+    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
+        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+
+    @only_for(("node", "user", "container"))
+    def get(self):
+        if self.storage_adapter:
+            return {"blob_store_enabled": True}, HTTPStatus.CREATED
+        else:
+            return {"blob_store_enabled": False}, HTTPStatus.CREATED
+
 class BlobStream(BlobStreamBase):
     """
-    Resource for /api/blobstream/<id> (GET and POST)
-    This resource allows for streaming large blobs from the storage adapter.
+    Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
+    This resource allows for streaming large results from Azure Blob Storage.
     """
-
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
-      super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
@@ -154,8 +179,10 @@ class BlobStream(BlobStreamBase):
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding
         try:
-            # Unfortunately, in the case of streams smaller than one chunk, reverse proxies like nginx will automatically remove the chunked transfer encoding.
-            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi to a different server might solve this issue.
+            # Unfortunately, in the case of streams smaller than one chunk, 
+            # reverse proxies like nginx will automatically remove the chunked transfer encoding.
+            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi
+            # to a different server might solve this issue.
             if is_chunked:
                 stream = UwsgiChunkedStream()
                 self.storage_adapter.store_blob(result_uuid, stream)
@@ -185,12 +212,23 @@ class BlobStream(BlobStreamBase):
         return HTTPStatus.OK
 
 class UwsgiChunkedStream:
+    """
+    A stream for reading data in chunks from uwsgi.
+    This is useful for handling large uploads without loading everything into memory at once.
+    """
+    #TODO: Using uwsgi in python in combination with flask is not very stable. Need to find an other solution to stream large data files.
     def __init__(self, chunk_size=4096):
+        """
+        Initialize the UwsgiChunkedStream.
+        """
         self.chunk_size = chunk_size
         self._buffer = b""
         self._eof = False
 
     def read(self, size=-1):
+        """
+        Read data from the stream.
+        """
         log.info(f"Reading with size: {size}")
         if size < 0:
             chunks = [self._buffer]
@@ -212,4 +250,3 @@ class UwsgiChunkedStream:
 
         result, self._buffer = self._buffer[:size], self._buffer[size:]
         return result
-  

@@ -19,6 +19,8 @@ from flask import Flask, request, stream_with_context, Response as FlaskResponse
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.client.utils import is_uuid
+from vantage6.common.globals import DataStorageUsed
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -248,7 +250,47 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved an the input is
     # encrypted specifically for them.
+    def encrypt_input(organization_id: int, input_: dict) -> str:
+        """
+        Encrypt the input for a specific organization by using its public key.
+        Parameters
+        ----------
+        organization_id : int
+            ID of the organization
+        input_ : dict
+            Input as specified by the client (algorithm in this case)
+        Returns
+        -------
+        str
+            Encrypted input as a string
+        """
+        # retrieve public key of the organization
+        log.debug("Retrieving public key of org: %s", organization_id)
+        response = make_request(
+            "get", f"organization/{organization_id}", headers=headers
+        )
+        public_key = response.json().get("public_key")
 
+        # Encrypt the input field
+        client: NodeClient = app.config.get("SERVER_IO")
+        encrypted_input = client.cryptor.encrypt_bytes_to_str(
+            base64s_to_bytes(input_), public_key
+        )
+
+        log.debug("Input successfully encrypted for organization %s!", organization_id)
+        return encrypted_input
+
+    if client.is_encrypted_collaboration():
+        log.debug("Applying end-to-end encryption")
+        blob_store_enabled = client.check_if_blob_store_enabled()
+
+        for org in organizations:
+            if not blob_store_enabled:
+                if is_uuid(org.get("input")):
+                    log.warning("Input is a UUID, are you sending blob based inputs "
+                                "to a non-blob store enabled server?")
+                org["input"] = encrypt_input(org["id"], org.get("input", {}))
+        data["organizations"] = organizations
     # Attempt to send the task to the central server
     try:
         response = make_request("post", "task", data, headers=headers)
@@ -304,6 +346,10 @@ def proxy_result() -> Response:
     # Attempt to decrypt the results. The endpoint should have returned
     # a list of results
     results = get_response_json_and_handle_exceptions(response)
+    
+    for result in results["data"]:
+        if not result["data_storage_used"] or result["data_storage_used"] == DataStorageUsed.RELATIONAL.value:
+            result = decrypt_result(result)
 
     return results, response.status_code
 
@@ -347,15 +393,29 @@ def proxy_results(id_: int) -> Response:
     return result, response.status_code
 
 
-@app.route("/resultstream/<string:id>", methods=["GET"])
+@app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
+    """ 
+    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server. 
+    Parameters
+    ----------
+    id : str
+        The id of the blob to be streamed.  
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing the streamed blob data.
+        If the blob is successfully streamed, it returns a response with the content type set to "application/octet-stream" and the content disposition set to attachment.
+        If an error occurs, it returns an error message with the appropriate HTTP status code.
+    """
+    
     log.info("Proxy stream handler called with id: %s", id)
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
             if h in request.headers:
                 headers[h] = request.headers[h]
     method = get_method(request.method)
-    url = f"{server_url}/resultstream/{id}"
+    url = f"{server_url}/blobstream/{id}"
     log.info("Making proxied request to %s", url)
 
     backend_response = method(url, stream=True, params=request.args, headers=headers)
@@ -445,6 +505,13 @@ def stream_handler_delete(id: str) -> FlaskResponse:
 
 @app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
+    """
+    Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing if the blob was successfully streamed to the server.
+    """    
     log.info("Proxy stream POST handler called")
 
     client: NodeClient = app.config.get("SERVER_IO")
@@ -466,7 +533,7 @@ def stream_handler_post() -> FlaskResponse:
         if h in request.headers:
             headers[h] = request.headers[h]
 
-    url = f"{server_url}/resultstream"
+    url = f"{server_url}/blobstream"
     log.info("Making proxied POST request to %s", url)
 
     encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)

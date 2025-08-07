@@ -247,6 +247,10 @@
               <b>{{ "task-run.node" | translate }}</b>
               <span>{{ run.node.name }}</span>
             </div>
+            <div class="data-list__item">
+              <b>{{ "task-run.data-storage-used" | translate }}</b>
+              <span>{{ run.data_storage_used || "-" }}</span>
+            </div>
           </div>
           <div class="run__actions">
             <button actions mat-raised-button (click)="openLog(run)">

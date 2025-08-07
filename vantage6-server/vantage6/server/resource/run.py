@@ -630,6 +630,10 @@ class Run(SingleRunBase):
                   status:
                     type: string
                     description: Status of the task
+                  data_storage_used:
+                    type: string
+                    enum: [relational, file, azure, s3]
+                    description: Storage type for the input and result data
 
         responses:
           200:
@@ -686,6 +690,7 @@ class Run(SingleRunBase):
         run.result = data.get("result")
         run.log = data.get("log")
         run.status = data.get("status", run.status)
+        run.data_storage_used = data.get("data_storage_used", run.data_storage_used)
         run.save()
 
         return run_schema.dump(run, many=False), HTTPStatus.OK

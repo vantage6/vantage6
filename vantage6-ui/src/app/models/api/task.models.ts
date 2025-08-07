@@ -34,6 +34,13 @@ export enum TaskStatusGroup {
   Error = 'error'
 }
 
+export enum DataStorageUsed {
+  Relational = 'relational',
+  File = 'file',
+  Azure = 'azure',
+  S3 = 's3'
+}
+
 export interface GetTaskParameters {
   collaboration_id?: string;
   name?: string;
@@ -96,6 +103,7 @@ export interface TaskRun {
   finished_at?: string;
   log?: string;
   organization?: BaseLink;
+  data_storage_used?: DataStorageUsed;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
 }

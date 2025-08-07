@@ -227,8 +227,8 @@ prometheus:
 # Settings for the large result store. By default, the server uses a database to store all inputs and results.
 # Adding this will set Vantage6 to use blob storage rather than the database for both inputs and results.
 large_result_store:
-  # Type of the large result store. Currently, only "azure_blob_storage" is supported.
-  type: "azure_blob_storage"
+  # Type of the large result store. Currently, only "azure" is supported.
+  type: "azure"
   # The name of the Blob Storage container to use for storing large results.
   container_name: test-container
   # Connection string to the Storage account. Mostly useful for testing purposes, such as connecting to Azurite.

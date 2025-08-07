@@ -1,11 +1,12 @@
 import datetime
 import logging
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
+from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from vantage6.common import logger_name
+from vantage6.common.globals import DataStorageUsed
 from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model import Node, Collaboration, Organization
 from vantage6.server.model.task import Task
@@ -49,6 +50,10 @@ class Run(Base):
         Organization that executed the task
     ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
         List of ports that are part of this result
+    data_storage_used : DataStorageUsed
+        Enum indicating where the input and result data are stored
+        Options are: 'relational', 'file', 'azure', 's3'
+        Defaults to 'relational'
     """
 
     # fields
@@ -62,6 +67,13 @@ class Run(Base):
     status = Column(Text)
     log = Column(Text)
     cleanup_at = Column(DateTime, nullable=True)
+    # Native Enum will only be used in PostgreSQL, as it is not supported in SQLite.
+    # This is handled automatically by SQLAlchemy.
+    data_storage_used = Column(
+        Enum(DataStorageUsed, name="data_storage_used", native_enum=True),
+        nullable=True
+    )
+
 
     # relationships
     task = relationship("Task", back_populates="runs")

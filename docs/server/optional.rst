@@ -408,7 +408,7 @@ configuration file:
 ::
     
   large_result_store:
-    type: "azure_blob_storage"
+    type: "azure"
     container_name: test-container
     tenant_id: "your-tenant-id"
     client_id: "your-client-id"
@@ -427,7 +427,7 @@ it is not recommended.
 ::
     
   large_result_store:
-    type: "azure_blob_storage"
+    type: "azure"
     container_name: test-container
     connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
 

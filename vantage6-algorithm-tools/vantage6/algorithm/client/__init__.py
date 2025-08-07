@@ -3,21 +3,15 @@
 from cmath import log
 import jwt
 import json
-import time
 
 from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common import base64s_to_bytes, bytes_to_base64s
+from vantage6.common import base64s_to_bytes
 from vantage6.common.serialization import serialize
-from vantage6.common.task_status import has_task_finished
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
-
-import requests
-import uuid
-
 
 class AlgorithmClient(ClientBase):
     """
@@ -131,7 +125,7 @@ class AlgorithmClient(ClientBase):
         return NotImplementedError("Algorithm containers cannot refresh their token!")
 
 
-    def wait_for_results(self, task_id: int, interval: float = 1) -> None:
+    def retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
         TODO: Check if this function can be removed in the future, as it is not used
         anymore. Otherwise rename to retrieve_results.
@@ -147,14 +141,21 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        self._wait_for_results(task_id, interval)
+        self._retrieve_results(task_id, interval)
         result = self.request("result", params={"task_id": task_id})
-        base_url = super().generate_path_to("resultstream", False)
-        output = self._aggregate_results(result, base_url, task_id)
-
+        output = []
+        for run in result["data"]:
+            try:
+                uuid = run.get("result")
+                run_data = self.download_run_data_from_server(uuid)
+                output_json = json.loads(run_data.decode('utf-8'))
+                output.append(output_json)
+            except ValueError as e:
+                self.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
+                raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
         return output
     
-    def _wait_for_results(self, task_id: int, interval: float = 1) -> None:
+    def _retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
         Poll the central server until results are available.
         """
@@ -162,33 +163,6 @@ class AlgorithmClient(ClientBase):
         self.wait_for_task_completion(self.request, task_id, interval, False)
 
         return True
-
-    def _aggregate_results(self, result, base_url, task_id) -> list:
-        """ 
-        Aggregate results from the result stream.
-        """
-        output = []
-        for item in result["data"]:
-            url = f"{base_url}/{str(uuid.UUID(item['result']))}"
-            self.log.info(f"retrieving data for url: {url}")
-            headers = self.headers
-            timeout = 300
-            output_result = b""
-
-            try:
-                with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
-                    if response.status_code == 200:
-                        self.log.debug(f"Successfully streamed result for task_id {task_id}.")
-                        for chunk in response.iter_content(chunk_size=8192):
-                            output_result += chunk
-                    else:
-                        self.log.error(f"Failed to stream result for task_id {task_id}. Status code: {response.status_code}")
-                        self.log.error(f"Response: {response.text}")
-            except requests.RequestException as e:
-                self.log.error(f"An error occurred while streaming result: {e}")
-            output_json = json.loads(output_result.decode('utf-8'))
-            output.append(output_json)
-        return output
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
@@ -422,45 +396,13 @@ class AlgorithmClient(ClientBase):
                 for org_id in organizations:
                     pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
                     self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
-                    headers = {
-                        "Authorization": f"Bearer {self.parent.token}",
-                        "Content-Type": "application/octet-stream",
-                        "X-Public-Key": pub_key,
-                    }
-                    url = self.parent.generate_path_to("resultstream", False)
-                    self.parent.log.debug(f"Uploading input to resultstream: {url}")
-
-                    def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                        for i in range(0, len(result), chunk_size):
-                            yield result[i:i + chunk_size]
-
-                    try:
-                        response = requests.post(url, data=chunked_result_stream(serialized_input), headers=headers)
-                    except Exception as e:
-                        self.parent.log.error(f"Error occurred while uploading input to resultstream: {e}")
-                        raise requests.RequestException("Error occurred while uploading input to resultstream")
-
-                    if not (200 <= response.status_code < 300):
-                        self.parent.log.error(
-                            f"Failed to upload input to resultstream: {response.text}"
-                        )
-                        raise RuntimeError("Failed to upload input to resultstream")
-
-                    result_uuid_response = response.json()
-                    result_uuid = result_uuid_response.get("uuid")
-                    if not result_uuid:
-                        self.parent.log.error("Failed to get UUID from resultstream response")
-                        raise RuntimeError("Failed to get UUID from resultstream response")
-                    self.parent.log.info(
-                        f"Input uploaded to resultstream with UUID: {result_uuid}"
-                    )
+                    input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
                     organization_json_list.append(
                         {
                             "id": org_id,
-                            "input": result_uuid,
+                            "input": input_uuid,
                         }
                     )
-
             json_body = {
                 "name": name,
                 "image": self.parent.image,

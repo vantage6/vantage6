@@ -3,8 +3,6 @@ This module provides a client interface for the node to communicate with the
 central server.
 """
 
-import traceback
-import uuid
 import jwt
 import datetime
 import time
@@ -13,12 +11,10 @@ from threading import Thread
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
-import requests
 from vantage6.common.globals import (
     NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
-    InstanceType,
+    InstanceType, DataStorageUsed
 )
-
 
 class NodeClient(ClientBase):
     """Node interface to the central server."""
@@ -190,50 +186,27 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                input_value = run["input"]
-                self.parent.log.info(f"Parsing uuid from input: {input_value}")
-
-                if isinstance(input_value, bytes):
-                    input_value = input_value.decode('utf-8')
-                input_value = input_value.strip('\'"')
-                self.parent.log.info(f"stripped uuid: {input_value}")
-                if not self.is_uuid(input_value):
-                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_value}")
-                    continue
-
-                uuid_obj = uuid.UUID(input_value)
-                url = self.parent.generate_path_to("resultstream", False)
-                url = f"{url}/{str(uuid_obj)}"
-                self.parent.log.info(f"Retrieving input data for url: {url}")
-                headers = {
-                    "Authorization": f"Bearer {self.parent.token}",
-                    "Content-Type": "application/octet-stream",
-                }
-                timeout = 300
-                result_bytes = b''
-                try:
-                    with requests.get(url, headers=headers, stream=True, timeout=timeout) as response:
-                        if response.status_code == 200:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                result_bytes += chunk
-                        else:
-                            self.parent.log.error(f"Failed to stream input for task_id {run['id']}. Status code: {response.status_code}")
-                            self.parent.log.error(f"Response: {response.text}")
-                            return
-                except requests.RequestException as e:
-                    self.parent.log.error(f"An error occurred while streaming input: {e}")
-                    return
-                run["input"] = self.parent._decrypt_input(result_bytes)
+                self.fetch_and_decrypt_input(run)
             return run_data
-        
-        def is_uuid(self, value):
-            try:
-                if isinstance(value, bytes):
-                    value = value.decode("utf-8")
-                uuid.UUID(value)
-                return True
-            except (ValueError, TypeError, AttributeError):
-                return False
+
+        def fetch_and_decrypt_input(self, run):
+            input_data = run.get("input")
+            data_storage_used = DataStorageUsed(run.get("data_storage_used", DataStorageUsed.RELATIONAL.value))
+            self.parent.log.debug(f"input data: {run}")
+            if data_storage_used == DataStorageUsed.AZURE:
+                input_uuid = input_data
+                self.parent.log.debug(f"Parsing uuid from input: {input_uuid}")
+
+                if isinstance(input_uuid, bytes):
+                    input_uuid = input_uuid.decode('utf-8')
+                input_uuid = input_uuid.strip('\'"')
+                try:
+                    input_data = self.parent.download_run_data_from_server(input_uuid)
+                except ValueError as e:
+                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_uuid}")
+                    raise ValueError(f"Input for run {run['id']} is not a valid UUID: {input_uuid}", e)
+                
+            run["input"] = self.parent._decrypt_input(input_data)
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
@@ -284,39 +257,9 @@ class NodeClient(ClientBase):
 
             self.parent.log.debug(f"Sending algorithm run update to server")
             if "result" in data:
-                headers = {
-                    "Authorization": f"Bearer {self.parent.token}",
-                    "Content-Type": "application/octet-stream",
-                }
-                
-                url = self.parent.generate_path_to("resultstream", False)
-                self.parent.log.debug(f"Making request: {url}")
-
-                def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-                    for i in range(0, len(result), chunk_size):
-                        yield result[i:i + chunk_size]
-
-                try:
-                    response = requests.post(url, data=chunked_result_stream(data["result"]), headers=headers)
-                except requests.RequestException as e:
-                    self.parent.log.error(f"Failed to upload result to server: {e}")
-                    return
-
-                if not (200 <= response.status_code < 300):
-                    self.parent.log.error(
-                        f"Failed to upload result to server: {response.text}"
-                    )
-                    return
-
-                result_uuid_response = response.json()
-                result_uuid = result_uuid_response.get("uuid")
-                if not result_uuid:
-                    self.parent.log.error("Failed to upload result to server")
-                    return
+                result_uuid = self.parent.upload_run_data_to_server(data["result"])
+                self.parent.log.debug(f"Result uploaded to server with UUID: {result_uuid}")
                 data["result"] = result_uuid
-                self.parent.log.info(
-                    f"Result uploaded to server with UUID: {result_uuid}"
-                )
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     class AlgorithmStore(ClientBase.SubClient):

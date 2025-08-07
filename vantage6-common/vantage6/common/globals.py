@@ -53,6 +53,12 @@ MAX_INTERVAL = 300
 # Constant multiplier to make interval for requesting results from a task progressively longer
 INTERVAL_MULTIPLIER = 1.5
 
+# Default timeout for requests to the server
+REQUEST_TIMEOUT = 300
+
+# Default chunk size for streaming inputs and results
+DEFAULT_CHUNK_SIZE = 8192
+
 
 class InstanceType(str, Enum):
     """The types of instances that can be created."""
@@ -87,3 +93,11 @@ class AuthStatus(str, Enum):
 
     ONLINE = "online"
     OFFLINE = "offline"
+
+
+# This enum is used to specify where inputs and results are stored for the run.
+class DataStorageUsed(Enum):
+    RELATIONAL = "relational" # Relational database storage - default
+    FILE = "file" # File based storage - not yet implemented
+    AZURE = "azure" # Azure Blob Storage
+    S3 = "s3" # Amazon S3 storage - not yet implemented

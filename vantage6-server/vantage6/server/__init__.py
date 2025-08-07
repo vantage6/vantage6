@@ -6,6 +6,7 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
+import enum
 import os
 from gevent import monkey
 
@@ -51,6 +52,7 @@ from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     AuthStatus,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
+    DataStorageUsed,
 )
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
@@ -141,34 +143,7 @@ class ServerApp:
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
-        # Setup storage adapter
-        self.storage_adapter = None
-        if self.ctx.config.get("large_result_store") and self.ctx.config["large_result_store"].get("type") == "azure_blob_storage":
-            log.info("Using Azure Blob Storage as large result store")
-            if self.ctx.config["large_result_store"].get("tenant_id") \
-            and self.ctx.config["large_result_store"].get("client_id") \
-            and self.ctx.config["large_result_store"].get("client_secret") \
-            and self.ctx.config["large_result_store"].get("storage_account_name"):
-                credential = ClientSecretCredential(
-                    tenant_id=self.ctx.config["large_result_store"]["tenant_id"],
-                    client_id=self.ctx.config["large_result_store"]["client_id"],
-                    client_secret=self.ctx.config["large_result_store"]["client_secret"]
-                )
-                self.blob_service_client = BlobServiceClient(
-                    account_url=f"https://{self.ctx.config['large_result_store']['storage_account_name']}.blob.core.windows.net/",
-                    credential=credential,
-                )
-                self.storage_adapter = AzureStorageService(
-                    blob_service_client=self.blob_service_client,
-                    container_name=self.ctx.config["large_result_store"]["container_name"],
-                )
-            elif self.ctx.config["large_result_store"].get("connection_string"):
-                self.storage_adapter = AzureStorageService(
-                    connection_string=self.ctx.config["large_result_store"]["connection_string"],
-                    container_name=self.ctx.config["large_result_store"]["container_name"],
-                )
-        else:
-            log.info("Not using a large result store")
+        self.setup_large_result_store()
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -227,6 +202,48 @@ class ServerApp:
             )
 
         log.info("Initialization done")
+
+    def setup_large_result_store(self):
+        self.storage_adapter = None
+        config = self.ctx.config.get("large_result_store", {})
+        store_type = DataStorageUsed(config.get("type", DataStorageUsed.RELATIONAL.value))
+
+        if store_type != DataStorageUsed.AZURE:
+            log.info("No large result store configured, using relational database for input and result storage")
+            return
+
+        log.info("Using Azure Blob Storage as large result store")
+        tenant_id = config.get("tenant_id")
+        client_id = config.get("client_id")
+        client_secret = config.get("client_secret")
+        storage_account_name = config.get("storage_account_name")
+        container_name = config.get("container_name")
+        connection_string = config.get("connection_string")
+
+        if tenant_id and client_id and client_secret and storage_account_name:
+            credential = ClientSecretCredential(
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret
+            )
+            self.blob_service_client = BlobServiceClient(
+                account_url=f"https://{storage_account_name}.blob.core.windows.net/",
+                credential=credential,
+            )
+            self.storage_adapter = AzureStorageService(
+                blob_service_client=self.blob_service_client,
+                container_name=container_name,
+            )
+            return
+
+        if connection_string:
+            self.storage_adapter = AzureStorageService(
+                connection_string=connection_string,
+                container_name=container_name,
+            )
+            return
+
+        log.warning("Azure Blob Storage configuration is incomplete. Large result store not set up.")
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
@@ -548,8 +565,13 @@ class ServerApp:
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
+            # if the response is an enum, convert it to its value
+            def enum_serializer(obj):
+                if isinstance(obj, enum.Enum):
+                    return obj.value
+                raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
-            resp = make_response(json.dumps(data), code)
+            resp = make_response(json.dumps(data, default=enum_serializer), code)
             if isinstance(headers, dict):
                 resp.headers.extend(headers)
             return resp
@@ -723,7 +745,7 @@ class ServerApp:
         for res in RESOURCES:
             try:
                 module = importlib.import_module("vantage6.server.resource." + res)
-                if res in ["result"]:
+                if res in ["blob_stream"]:
                     module.setup(self.api, self.ctx.config["api_path"], result_services)
                 else:
                     module.setup(self.api, self.ctx.config["api_path"], services)

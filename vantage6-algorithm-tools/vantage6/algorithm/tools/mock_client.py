@@ -134,7 +134,7 @@ class MockAlgorithmClient:
         self.collaboration = self.Collaboration(self)
 
     # pylint: disable=unused-argument
-    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+    def retrieve_results(self, task_id: int, interval: float = 1) -> list:
         """
         Mock waiting for results - just return the results as tasks are
         completed synchronously in the mock client.
@@ -273,6 +273,7 @@ class MockAlgorithmClient:
                         "ports": [],
                         "status": "completed",
                         "input": json.dumps(input_),
+                        "data_storage_used": "relational",
                         "results": {
                             "id": self.last_result_id,
                             "link": f"/api/result/{self.last_result_id}",

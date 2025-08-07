@@ -1,6 +1,7 @@
 import logging
 import json
 import datetime
+import uuid
 
 from flask import g, request, url_for
 from flask_restful import Api
@@ -9,7 +10,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
-from vantage6.common.globals import STRING_ENCODING, NodePolicy
+from vantage6.common.globals import STRING_ENCODING, NodePolicy, DataStorageUsed
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.common.encryption import DummyCryptor
 from vantage6.backend.common import get_server_url
@@ -760,6 +761,14 @@ class Tasks(TaskBase):
         # to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
         # send encrypted input.
+        data_storage_used = DataStorageUsed(config.get("large_result_store", {}).get("type", DataStorageUsed.RELATIONAL.value))
+
+        log.debug(f"storing in: {data_storage_used}")
+        is_valid_input, error_msg = Tasks._check_input(
+            organizations_json_list, collaboration, data_storage_used
+        )
+        if not is_valid_input:
+            return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
 
         # permissions ok, create task record and TaskDatabase records
         task = db.Task(
@@ -837,6 +846,7 @@ class Tasks(TaskBase):
                 organization=organization,
                 input=input_,
                 status=TaskStatus.PENDING,
+                data_storage_used=data_storage_used
             )
             run.save()
 
@@ -935,6 +945,73 @@ class Tasks(TaskBase):
                     if org and g.user.organization_id == org.id:
                         return False
         return has_limitations
+    
+    @staticmethod
+    def _check_input(
+        organizations_json_list: list[dict], collaboration: db.Collaboration, data_storage_used: DataStorageUsed
+    ) -> tuple[bool, str]:
+        """
+        Check if the input is valid for the collaboration. If the collaboration
+        is encrypted, the input should not be readable as a string. If the
+        collaboration is not encrypted, the input should be readable as a string.
+
+        Parameters
+        ----------
+        organizations_json_list : list[dict]
+            List of organizations which contains the input per organization.
+        collaboration : db.Collaboration
+            Collaboration object.
+
+        Returns
+        -------
+        bool
+            True if the input is valid.
+        str
+            Error message if the input is invalid.
+        """
+        if not organizations_json_list:
+            return False, "No organizations provided in the request."
+        if data_storage_used == DataStorageUsed.AZURE:
+            return Tasks.check_input_uuid(organizations_json_list)
+        else:
+            return Tasks._check_input_encryption(organizations_json_list, collaboration)
+        
+    @staticmethod
+    def check_input_uuid(
+        organizations_json_list: list[dict]
+    ) -> tuple[bool, str]:
+        """
+        Check if the input is a valid uuid for all collaborations.
+        Parameters
+        ----------
+        organizations_json_list : list[dict]
+            List of organizations containing the uuids of the inputs.
+
+        Returns
+        -------
+        bool
+            True if the input is valid.
+        str
+            Error message if the input is invalid.
+        """
+        for org in organizations_json_list:
+            input_ = org.get("input")
+            if not isinstance(input_, str):
+                return False, (
+                    "Your task's input cannot be parsed. Your input should be "
+                    "a UUID as a large result store has been configured. Note that if you are using "
+                    "the user interface or Python client, this should be done "
+                    "for you."
+                )
+            try:
+                uuid.UUID(input_)
+            except ValueError:
+                return False, (
+                    "Your task's input cannot be parsed. YNote that if you are using "
+                    "the user interface or Python client, this should be done "
+                    "for you."
+                )
+        return True, ""
 
     @staticmethod
     def _check_input_encryption(

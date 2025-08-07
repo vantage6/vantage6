@@ -9,6 +9,7 @@ store to a vantage6 server.
 
 import os
 from gevent import monkey
+import sqlalchemy
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -320,7 +321,10 @@ class AlgorithmStoreApp:
         """
         # delete old policies from the database
         # pylint: disable=expression-not-assigned
-        [p.delete() for p in db.Policy.get()]
+        try:
+            [p.delete() for p in db.Policy.get()]
+        except sqlalchemy.orm.exc.ObjectDeletedError:
+            log.warning("Policy table is locked, skipping policy deletion")
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():

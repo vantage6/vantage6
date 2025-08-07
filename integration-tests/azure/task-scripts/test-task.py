@@ -27,7 +27,7 @@ average_task = client.task.create(
 print("Waiting for results")
 task_id = average_task['id']
 
-result = client.wait_for_results(task_id)
+result = client.retrieve_results(task_id)
 print(f"------------------------------------")
 print(f"wait for results: {result}")
 task_info = client.task.get(task_id, include_results=False)

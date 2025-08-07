@@ -33,7 +33,7 @@ def central(
     )
 
     task_id = task['id']
-    results = client.wait_for_results(task_id)
+    results = client.retrieve_results(task_id)
 
     sum_female_age = 0
     sum_male_age = 0

@@ -32,17 +32,6 @@ import queue
 import json
 import shutil
 import requests.exceptions
-import json
-import re
-
-UUID_REGEX = re.compile(
-    r"^[a-fA-F0-9]{8}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{4}-"
-    r"[a-fA-F0-9]{12}$"
-)
-
 import psutil
 import pynvml
 
@@ -377,7 +366,7 @@ class Node:
 
         # request open tasks from the server
         task_results = self.client.run.list(state="open", include_task=True)
-        self.log.info("task_results: %s", task_results)
+        self.log.debug("task_results: %s", task_results)
 
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_results)
@@ -397,6 +386,7 @@ class Node:
         task_runs = self.client.run.list(
             include_task=True, state="open", task_id=task_id
         )
+
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_runs)
 
@@ -461,7 +451,7 @@ class Node:
         # create a temporary volume for each job_id
         vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
         self.__docker.create_volume(vol_name)
-      
+
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.
