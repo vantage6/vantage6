@@ -32,7 +32,6 @@ import queue
 import json
 import shutil
 import requests.exceptions
-
 import psutil
 import pynvml
 
@@ -387,6 +386,7 @@ class Node:
         task_runs = self.client.run.list(
             include_task=True, state="open", task_id=task_id
         )
+
         # add the tasks to the queue
         self.__add_tasks_to_queue(task_runs)
 
@@ -451,7 +451,7 @@ class Node:
         # create a temporary volume for each job_id
         vol_name = self.ctx.docker_temporary_volume_name(task["job_id"])
         self.__docker.create_volume(vol_name)
-      
+
         # For some reason, if the key 'input' consists of JSON, it is
         # automatically marshalled? This causes trouble, so we'll serialize it
         # again.

@@ -144,13 +144,14 @@ class AlgorithmClient(ClientBase):
         self._retrieve_results(task_id, interval)
         result = self.request("result", params={"task_id": task_id})
         output = []
-        for uuid in result["data"]:
+        for run in result["data"]:
             try:
-                run_data = self.parent.download_run_data_from_server(uuid, task_id)
+                uuid = run.get("result")
+                run_data = self.download_run_data_from_server(uuid)
                 output_json = json.loads(run_data.decode('utf-8'))
                 output.append(output_json)
             except ValueError as e:
-                self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
+                self.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
                 raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
         return output
     
@@ -395,14 +396,13 @@ class AlgorithmClient(ClientBase):
                 for org_id in organizations:
                     pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
                     self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
-                    result_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
+                    input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
                     organization_json_list.append(
                         {
                             "id": org_id,
-                            "input": result_uuid,
+                            "input": input_uuid,
                         }
                     )
-
             json_body = {
                 "name": name,
                 "image": self.parent.image,

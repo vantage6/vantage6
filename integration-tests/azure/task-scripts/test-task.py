@@ -16,7 +16,7 @@ input_ = {
 
 average_task = client.task.create(
    collaboration=1,
-   organizations=[2],
+   organizations=[1],
    name="dhd-test-task-1",
    image="localhost:5000/dhd-test-algorithm:latest",
    description='',

@@ -219,10 +219,13 @@ class UserClient(ClientBase):
         self.log.setLevel(logging.WARN)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-        result = self.request("result", params={"task_id": task_id})
+        response = self.request("result", params={"task_id": task_id})
         self.log.info(f"--> Task {task_id} completed. Streaming results...")
-        result = self.parent.download_run_data_from_server(result, task_id)
-        result = self.result._decrypt_result(result, is_single_result=False)
+        for task in response["data"]:
+            if task.get("result"):
+                result_data = self.download_run_data_from_server(task.get("result"))
+                task["result"] = result_data
+        result = self.result._decrypt_result(response, is_single_result=False)
         return result
         
     
@@ -1859,23 +1862,12 @@ class UserClient(ClientBase):
             self.parent.log.debug("Encrypting input for each organization")
             organization_json_list = []
 
-            url = self.parent.generate_path_to("resultstream", False)
+            blob_store_enabled = self.parent.check_if_blob_store_enabled()
 
-            # Check if blob store is enabled
-            headers = {
-                "Authorization": f"Bearer {self.parent.token}",
-                "Content-Type": "application/octet-stream",
-            }
-            try:
-                response = requests.get(url, headers=headers)
-            except Exception as e:
-                self.parent.log.error(f"Error occurred while checking blob store availability: {e}")
-                raise requests.RequestException("Failed to check blob store availability.")
-            
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get(
                     "public_key")
-                if response.blob_store_enabled:
+                if blob_store_enabled:
                     encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
                     organization_input = self.parent.upload_run_data_to_server(encrypted_input)
                 else:
@@ -1905,7 +1897,6 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
-
             return self.parent.request(
                 "task",
                 method="post",
@@ -2234,7 +2225,7 @@ class UserClient(ClientBase):
             for item in results["data"]:
                 uuid = item['result']
                 try:
-                    run_data = self.parent.download_run_data_from_server(uuid, task_id)
+                    run_data = self.parent.download_run_data_from_server(uuid)
                     item['result'] = run_data
                 except ValueError as e:
                     self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
@@ -2243,18 +2234,6 @@ class UserClient(ClientBase):
             results = self._decrypt_result(results, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
-        
-
-            output = []
-            for uuid in result["data"]:
-                try:
-                    run_data = self.parent.download_run_data_from_server(uuid, task_id)
-                    output_json = json.loads(run_data.decode('utf-8'))
-                    output.append(output_json)
-                except ValueError as e:
-                    self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
-                    raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
-            return output
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """

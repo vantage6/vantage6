@@ -19,6 +19,8 @@ from flask import Flask, request, stream_with_context, Response as FlaskResponse
 
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.client.utils import is_uuid
+from vantage6.common.globals import DataStorageUsed
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -280,8 +282,13 @@ def proxy_task():
 
     if client.is_encrypted_collaboration():
         log.debug("Applying end-to-end encryption")
+        blob_store_enabled = client.check_if_blob_store_enabled()
+
         for org in organizations:
-            if org.get("input") and not org.get("input").get("from_blob_store"):
+            if not blob_store_enabled:
+                if is_uuid(org.get("input")):
+                    log.warning("Input is a UUID, are you sending blob based inputs "
+                                "to a non-blob store enabled server?")
                 org["input"] = encrypt_input(org["id"], org.get("input", {}))
         data["organizations"] = organizations
     # Attempt to send the task to the central server
@@ -341,7 +348,7 @@ def proxy_result() -> Response:
     results = get_response_json_and_handle_exceptions(response)
     
     for result in results["data"]:
-        if not result.from_blob_store:
+        if not result["data_storage_used"] or result["data_storage_used"] == DataStorageUsed.RELATIONAL.value:
             result = decrypt_result(result)
 
     return results, response.status_code

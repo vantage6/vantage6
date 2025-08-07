@@ -3,6 +3,7 @@ import logging
 import time
 import requests
 import json as json_lib
+import uuid
 from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
@@ -687,13 +688,12 @@ class ClientBase(object):
             UUID of the uploaded run data, or None if upload failed.
         """
         headers = {
-            "Authorization": f"Bearer {self.parent.token}",
+            "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/octet-stream",
         }
         if pub_key:
             headers["X-Public-Key"] = pub_key
-        url = self.parent.generate_path_to("blobstream", False)
-        self.log.debug(f"Uploading input to blobstream: {url}")
+        url = self.generate_path_to("blobstream", False)
 
         def chunked_run_data_stream(run_data: bytes, chunk_size: int = DEFAULT_CHUNK_SIZE):
             for i in range(0, len(run_data), chunk_size):
@@ -721,39 +721,69 @@ class ClientBase(object):
         )
         return run_data_uuid
 
-    def download_run_data_from_server(self, uuid, task_id: int) -> dict:
+    def download_run_data_from_server(self, run_data_uuid) -> dict:
         """
         Aggregate results from the server.
 
         """
-        if not is_uuid(uuid):
-            self.parent.log.error(f"Input is not a valid UUID: {uuid}")
-            raise ValueError(f"Input is not a valid UUID: {uuid}")
-        uuid_obj = uuid.UUID(uuid)
-        
+        if not is_uuid(run_data_uuid):
+            self.log.error(f"Input is not a valid UUID: {run_data_uuid}")
+            raise ValueError(f"Input is not a valid UUID: {run_data_uuid}")
+        uuid_obj = uuid.UUID(run_data_uuid)
+        self.log.debug(f"Downloading run data with UUID: {uuid_obj}")
         base_path = self.generate_path_to("blobstream", False)
         url = f"{base_path}/{str(uuid_obj)}"
         headers = self.headers
         headers["Content-Type"] = "application/octet-stream"
-        self.log.debug(f"Streaming run data from {url} for task_id {task_id}...")
+        self.log.debug(f"Streaming run data from {url}")
         run_data = b""
         try:
             with requests.get(url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT) as response:
                 if response.status_code == 200:
-                    self.log.debug(f"Successfully requested run data stream for task_id {task_id}.")
+                    self.log.debug(f"Successfully requested run data stream.")
                     for chunk in response.iter_content(chunk_size=DEFAULT_CHUNK_SIZE):
                         run_data += chunk
                 else:
-                    self.log.error(f"Failed to stream run data for task_id {task_id}. Status code: {response.status_code}")
+                    self.log.error(f"Failed to stream run data for uuid {run_data_uuid}. Status code: {response.status_code}")
                     self.log.error(f"Response: {response.text}")
                     raise requests.RequestException(
-                        f"Failed to stream run data for task_id {task_id}. Status code: {response.status_code}"
+                        f"Failed to stream run data for uuid {run_data_uuid}. Status code: {response.status_code}"
                     )
         except requests.RequestException as e:
-            self.log.error(f"An error occurred while streaming run data: {e}")
-            raise requests.RequestException("An error occurred while streaming run data", e)
+            self.log.error(f"An error occurred while streaming run data for uuid {run_data_uuid}: {e}")
+            raise requests.RequestException(f"An error occurred while streaming run data for uuid {run_data_uuid}", e)
         return run_data
         
+    def check_if_blob_store_enabled(self):
+        """
+        Check if the blob store is enabled on the server.
+
+        Returns
+        -------
+        bool
+            True if blob store is enabled, False otherwise.
+
+        Raises
+        ------
+        requests.RequestException
+            If the request to check blob store status fails.
+        """
+        base_url = self.generate_path_to("blobstream", False)
+        status_url = f"{base_url}/status"
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/octet-stream",
+        }
+        response = requests.get(status_url, headers=headers)
+        if not response.ok:
+            self.log.error(
+                f"Blob store check failed with status code {response.status_code}: {response.text}"
+            )
+            raise requests.RequestException(
+                f"Failed to check blob store availability. Status code: {response.status_code}"
+            )
+        response_json = response.json()
+        return response_json.get("blob_store_enabled", False)
 
     class SubClient:
         """
@@ -790,9 +820,3 @@ class ClientBase(object):
                 Input `data` but with the key-value pair where value is `None` removed
             """
             return {k: v for k, v in data.items() if v is not None}
-        
-        @staticmethod
-        def chunked_result_stream(result: bytes, chunk_size: int = 8192):
-            """Helper function for yielding chunks of the result stream"""
-            for i in range(0, len(result), chunk_size):
-                yield result[i:i + chunk_size]

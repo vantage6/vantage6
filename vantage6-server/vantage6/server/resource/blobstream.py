@@ -41,17 +41,15 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         BlobStream,
         api_base + "/blobstream",
-        endpoint="result_stream_without_id",
+        endpoint="blob_stream_without_id",
         methods=("POST",),
         resource_class_kwargs=services,
     )
 
-    # Flask checks exact matches before variable matches,
-    # so this should not clash with the UUID endpoint below.
     api.add_resource(
-        BlobStream,
+        BlobStreamStatus,
         api_base + "/blobstream/status",
-        endpoint="result_stream_status",
+        endpoint="blob_stream_status",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -59,7 +57,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         BlobStream,
         api_base + "/blobstream/<string:id>",
-        endpoint="result_stream_with_id",
+        endpoint="blob_stream_with_id",
         methods=("GET",),
         resource_class_kwargs=services,
     )
@@ -113,14 +111,13 @@ class BlobStreamBase(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
-class BlobStream(BlobStreamBase):
+class BlobStreamStatus(BlobStreamBase):
     """
-    Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
-    This resource allows for streaming large results from Azure Blob Storage.
+    Resource for /api/blobstream/status (GET)
+    Returns whether the blob store is enabled.
     """
-
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
-      super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self):
@@ -129,6 +126,13 @@ class BlobStream(BlobStreamBase):
         else:
             return {"blob_store_enabled": False}, HTTPStatus.CREATED
 
+class BlobStream(BlobStreamBase):
+    """
+    Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
+    This resource allows for streaming large results from Azure Blob Storage.
+    """
+    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
+        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
@@ -223,4 +227,3 @@ class UwsgiChunkedStream:
 
         result, self._buffer = self._buffer[:size], self._buffer[size:]
         return result
-  

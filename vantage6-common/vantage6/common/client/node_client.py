@@ -13,7 +13,7 @@ from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
     NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
-    InstanceType,
+    InstanceType, DataStorageUsed
 )
 
 class NodeClient(ClientBase):
@@ -191,18 +191,20 @@ class NodeClient(ClientBase):
 
         def fetch_and_decrypt_input(self, run):
             input_data = run.get("input")
-            if run.get("from_blob_store"):
-                input_value = input_data
-                self.parent.log.debug(f"Parsing uuid from input: {input_value}")
-            
-                if isinstance(input_value, bytes):
-                    input_value = input_value.decode('utf-8')
-                input_value = input_value.strip('\'"')
-                try:   
-                    input_data = self.parent.download_run_data_from_server(input_value)
+            data_storage_used = DataStorageUsed(run.get("data_storage_used", DataStorageUsed.RELATIONAL.value))
+            self.parent.log.debug(f"input data: {run}")
+            if data_storage_used == DataStorageUsed.AZURE:
+                input_uuid = input_data
+                self.parent.log.debug(f"Parsing uuid from input: {input_uuid}")
+
+                if isinstance(input_uuid, bytes):
+                    input_uuid = input_uuid.decode('utf-8')
+                input_uuid = input_uuid.strip('\'"')
+                try:
+                    input_data = self.parent.download_run_data_from_server(input_uuid)
                 except ValueError as e:
-                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_value}")
-                    raise ValueError(f"Input for run {run['id']} is not a valid UUID: {input_value}", e)
+                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_uuid}")
+                    raise ValueError(f"Input for run {run['id']} is not a valid UUID: {input_uuid}", e)
                 
             run["input"] = self.parent._decrypt_input(input_data)
 
@@ -256,6 +258,7 @@ class NodeClient(ClientBase):
             self.parent.log.debug(f"Sending algorithm run update to server")
             if "result" in data:
                 result_uuid = self.parent.upload_run_data_to_server(data["result"])
+                self.parent.log.debug(f"Result uploaded to server with UUID: {result_uuid}")
                 data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 

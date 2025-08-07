@@ -6,6 +6,7 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
+import enum
 import os
 from gevent import monkey
 
@@ -51,6 +52,7 @@ from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     AuthStatus,
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
+    DataStorageUsed,
 )
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
@@ -204,9 +206,9 @@ class ServerApp:
     def setup_large_result_store(self):
         self.storage_adapter = None
         config = self.ctx.config.get("large_result_store", {})
-        store_type = config.get("type")
+        store_type = DataStorageUsed(config.get("type", DataStorageUsed.RELATIONAL.value))
 
-        if store_type != "azure_blob_storage":
+        if store_type != DataStorageUsed.AZURE:
             log.info("No large result store configured, using relational database for input and result storage")
             return
 
@@ -563,8 +565,13 @@ class ServerApp:
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
+            # if the response is an enum, convert it to its value
+            def enum_serializer(obj):
+                if isinstance(obj, enum.Enum):
+                    return obj.value
+                raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
-            resp = make_response(json.dumps(data), code)
+            resp = make_response(json.dumps(data, default=enum_serializer), code)
             if isinstance(headers, dict):
                 resp.headers.extend(headers)
             return resp
@@ -738,7 +745,7 @@ class ServerApp:
         for res in RESOURCES:
             try:
                 module = importlib.import_module("vantage6.server.resource." + res)
-                if res in ["result"]:
+                if res in ["blob_stream"]:
                     module.setup(self.api, self.ctx.config["api_path"], result_services)
                 else:
                     module.setup(self.api, self.ctx.config["api_path"], services)
