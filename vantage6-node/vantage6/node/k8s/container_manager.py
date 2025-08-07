@@ -486,7 +486,7 @@ class ContainerManager:
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
                 "task_parent_id": str(parent_task_id),
-                "action": str(action),
+                "action": action.value,
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
                 "df_id": str(df_details.get("id")) if df_details else "",
@@ -829,7 +829,7 @@ class ContainerManager:
                 vol_mounts.append(db_mount)
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
-            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type.value
+            environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
 
             # additional environment variables for the database. These will be stored
             # as {PREFIX}{KEY}=value in the container. These are read by the
