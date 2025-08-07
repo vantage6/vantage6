@@ -1,11 +1,14 @@
 import io
-import pandas as pd
 import os
-from sqlalchemy import create_engine
-from SPARQLWrapper import SPARQLWrapper, CSV
 
-from vantage6.common import info, error
+import pandas as pd
+from SPARQLWrapper import CSV, SPARQLWrapper
+from sqlalchemy import create_engine
+
+from vantage6.common import error, info
+
 from vantage6.algorithm.tools.exceptions import DataReadError
+
 from vantage6.algorithm.decorator.action import data_extraction
 
 _SPARQL_RETURN_FORMAT = CSV

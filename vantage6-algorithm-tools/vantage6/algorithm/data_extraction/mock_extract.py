@@ -5,7 +5,7 @@ import pandas as pd
 from vantage6.common import error, info
 from vantage6.common.enum import StrEnumBase
 
-from vantage6.algorithm.data_extraction.readers import (
+from vantage6.algorithm.data_extraction import (
     _read_csv,
     _read_excel,
     _read_parquet,

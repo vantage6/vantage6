@@ -11,7 +11,7 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.serialization import serialize
 
-__version__ = importlib.metadata.version(__package__)
+from vantage6.algorithm.tools import __version__  # noqa: F401
 
 
 class AlgorithmClient(ClientBase):

@@ -7,7 +7,6 @@ import jwt
 
 from vantage6.common.globals import ContainerEnvNames
 
-from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.algorithm.tools.util import info
 
 

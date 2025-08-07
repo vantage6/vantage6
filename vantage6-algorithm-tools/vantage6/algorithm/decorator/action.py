@@ -9,7 +9,6 @@ from vantage6.common import error, info
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
-from vantage6.algorithm.tools import DecoratorStepType
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
     SessionError,
@@ -198,7 +197,7 @@ def data_extraction(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.DATA_EXTRACTION
+    wrapper.vantage6_decorator_step_type = AlgorithmStepType.DATA_EXTRACTION
     return wrapper
 
 
@@ -215,7 +214,7 @@ def preprocessing(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.PREPROCESSING
+    wrapper.vantage6_decorator_step_type = AlgorithmStepType.PREPROCESSING
     return wrapper
 
 
@@ -228,7 +227,7 @@ def federated(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.FEDERATED
+    wrapper.vantage6_decorator_step_type = AlgorithmStepType.FEDERATED_COMPUTE
     return wrapper
 
 
@@ -241,5 +240,5 @@ def central(func: callable) -> callable:
         result = func(*args, **kwargs)
         return result
 
-    wrapper.vantage6_decorator_step_type = DecoratorStepType.CENTRAL
+    wrapper.vantage6_decorator_step_type = AlgorithmStepType.CENTRAL_COMPUTE
     return wrapper

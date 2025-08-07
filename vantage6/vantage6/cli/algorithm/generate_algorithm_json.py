@@ -19,8 +19,6 @@ from vantage6.common.algorithm_function import (
 )
 from vantage6.common.enum import AlgorithmArgumentType, AlgorithmStepType, StrEnumBase
 
-from vantage6.algorithm.tools import DecoratorStepType
-
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.algorithm.preprocessing.algorithm_json_data import (
     PREPROCESSING_FUNCTIONS_JSON_DATA,
@@ -120,7 +118,7 @@ class Function:
         # infrastructure-defined function
         if (
             not self.func.__module__.startswith("vantage6.algorithm.")
-            or not self.json["name"] in PREPROCESSING_FUNCTIONS_JSON_DATA
+            or self.json["name"] not in PREPROCESSING_FUNCTIONS_JSON_DATA
         ):
             return
 
@@ -327,14 +325,8 @@ class Function:
     def _get_step_type(self) -> AlgorithmStepType | None:
         """Get the step type of the function"""
         decorator_type = get_vantage6_decorator_type(self.func)
-        if decorator_type == DecoratorStepType.FEDERATED:
-            return AlgorithmStepType.FEDERATED_COMPUTE
-        elif decorator_type == DecoratorStepType.CENTRAL:
-            return AlgorithmStepType.CENTRAL_COMPUTE
-        elif decorator_type == DecoratorStepType.PREPROCESSING:
-            return AlgorithmStepType.PREPROCESSING
-        elif decorator_type == DecoratorStepType.DATA_EXTRACTION:
-            return AlgorithmStepType.DATA_EXTRACTION
+        if decorator_type in AlgorithmStepType.list():
+            return decorator_type
         else:
             warning(
                 f"Unsupported decorator type: {decorator_type} for function {self.name}"
