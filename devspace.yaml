@@ -193,6 +193,11 @@ deployments:
         service:
           type: ClusterIP
         keycloak:
+          # for dev environment, we don't need TLS for internal Keycloak communication
+          # as everything is on HTTP, not HTTPS
+          production: false
+          tls:
+            enabled: false
           keycloakConfigCli:
             configuration:
               realm:
