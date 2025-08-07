@@ -1,5 +1,5 @@
 @use "@angular/material" as mat;
-@import "config.scss";
+@use "config.scss" as *;
 
 // ANGULAR MATERIAL SETUP
 @include mat.core();

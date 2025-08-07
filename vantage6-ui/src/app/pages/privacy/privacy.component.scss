@@ -1,4 +1,4 @@
-@import "src/app/styles/config.scss";
+@use "src/app/styles/config.scss" as *;
 
 .privacy-content {
   max-width: 800px;

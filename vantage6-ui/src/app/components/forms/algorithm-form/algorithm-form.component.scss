@@ -1,4 +1,4 @@
-@import "src/app/styles/config.scss";
+@use "src/app/styles/config.scss" as *;
 
 .button-container-separate {
   margin-top: $spacing-px-4;

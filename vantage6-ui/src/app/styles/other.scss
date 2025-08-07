@@ -1,3 +1,5 @@
+@use "config.scss" as *;
+
 .button-container {
   display: flex;
   gap: $spacing-px-2;

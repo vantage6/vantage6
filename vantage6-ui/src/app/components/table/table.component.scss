@@ -1,3 +1,4 @@
+@use "src/app/styles/config.scss" as *;
 .searchable-table {
   position: relative;
   min-height: 100px; /* Guarantees that the loading is also visible during initial loading. */
