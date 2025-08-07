@@ -1268,7 +1268,7 @@ class Tasks(TaskBase):
             algorithm store.
         """
         method = request_data["method"]
-        if not action:
+        if not action and request_data.get("action"):
             action = AlgorithmStepType(request_data.get("action"))
         store_action = None
         if algorithm:
