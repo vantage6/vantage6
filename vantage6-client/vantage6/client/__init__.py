@@ -2284,6 +2284,36 @@ class UserClient(ClientBase):
             self.parent.log.info("Successfully decrypted results")
             return results
 
+        def delete_blob_completed_tasks(self, task_id: int) -> None:
+            """
+            Delete all blobs for a specific task
+
+            Parameters
+            ----------
+            task_id : int
+                Id of the task to delete blobs 
+            """
+
+            self.parent.log.info("--> Attempting to delete blobs!")
+
+            results = self.parent.request("result", params={"task_id": task_id})
+            for item in results["data"]:
+                url = f"{self.parent.base_path}/blobstream/delete/{item['result']}"
+                headers = self.parent.headers
+                timeout = 300
+            
+                try:
+                    with requests.delete(url, headers=headers, stream=True, timeout=timeout) as response:
+                        if response.status_code == 200:
+                            self.parent.log.info(f"Successfully deleted result for task_id {task_id}")
+                        else:
+                            self.parent.log.error(f"Failed to delete result for task_id {task_id}. Status code: {response.status_code}")
+                            self.parent.log.error(f"Response: {response.text}")
+                except requests.RequestException as e:
+                    self.parent.log.error(f"An error occurred while deleting result: {e}")
+            self.parent.log.info("Successfully deleted blob")
+            
+
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
             Wrapper function to decrypt and deserialize the input of one or

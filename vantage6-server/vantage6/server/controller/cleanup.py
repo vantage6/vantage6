@@ -46,7 +46,9 @@ def cleanup_runs_data(days: int, include_input: bool = False):
                     run.input = ""
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")
+        # TODO: clear blobs from Azure Blob Storage if applicable
 
+   
         log.info(
             "Cleanup job completed successfully, deleted %d old run results.", len(runs)
         )

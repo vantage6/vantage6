@@ -1237,17 +1237,36 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
-        # TODO add try/catch for all cleanups so that if one fails, the others are
-        # still executed
+        """
+        Cleanup the node by disconnecting from the socket, exiting the VPN,
+        stopping SSH tunnels, and cleaning up the Docker manager and storage
+        adapter.
+        """
+        self.log.info("Cleaning up node...")
         if hasattr(self, "socketIO") and self.socketIO:
-            self.socketIO.disconnect()
+            try:
+                self.socketIO.disconnect()
+            except Exception as e:
+                self.log.exception("Error disconnecting socketIO during cleanup")
+
         if hasattr(self, "vpn_manager") and self.vpn_manager:
-            self.vpn_manager.exit_vpn()
+            try:
+                self.vpn_manager.exit_vpn()
+            except Exception as e:
+                self.log.exception("Error exiting VPN during cleanup")
+
         if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
             for tunnel in self.ssh_tunnels:
-                tunnel.stop()
+                try:
+                    tunnel.stop()
+                except Exception as e:
+                    self.log.exception("Error stopping SSH tunnel during cleanup")
+
         if hasattr(self, "_Node__docker") and self.__docker:
-            self.__docker.cleanup()
+            try:
+                self.__docker.cleanup()
+            except Exception as e:
+                self.log.exception("Error cleaning up Docker manager during cleanup")
 
         self.log.info("Bye!")
 

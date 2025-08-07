@@ -7,7 +7,7 @@ server_api = "/api"
 username = "alpha-user"
 password = "alpha-password"
 
-organization_key = "./privkey_alpha.pem"
+organization_key = "/home/mvdsande/code/vantage6/integration-tests/azure/privkey_alpha.pem"
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;" \
                     "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;" \

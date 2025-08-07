@@ -39,7 +39,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
-        ResultStream,
+        BlobStream,
         api_base + "/resultstream",
         endpoint="result_stream_without_id",
         methods=("POST",),
@@ -48,10 +48,18 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         
 
     api.add_resource(
-        ResultStream,
+        BlobStream,
         api_base + "/resultstream/<string:id>",
         endpoint="result_stream_with_id",
         methods=("GET",),
+        resource_class_kwargs=services,
+    )
+    
+    api.add_resource(
+        BlobStream,
+        api_base + "/blobstream/delete/<string:id>",
+        endpoint="result_stream_delete_with_id",
+        methods=("DELETE",),
         resource_class_kwargs=services,
     )
 
@@ -92,7 +100,7 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
-class ResultStreamBase(ServicesResources):
+class BlobStreamBase(ServicesResources):
     """Base class for run resources"""
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
@@ -100,10 +108,10 @@ class ResultStreamBase(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
-class ResultStream(ResultStreamBase):
+class BlobStream(BlobStreamBase):
     """
-    Resource for /api/resultstream/<id> (GET and POST)
-    This resource allows for streaming large results from the storage adapter.
+    Resource for /api/blobstream/<id> (GET and POST)
+    This resource allows for streaming large blobs from the storage adapter.
     """
 
     def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
@@ -159,8 +167,23 @@ class ResultStream(ResultStreamBase):
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
-
     
+    @only_for(("node", "user", "container"))
+    def delete(self):
+        if not self.storage_adapter:
+            log.warning(
+                "The large result store is not set to azure blob storage, result streaming is not available."
+            )
+            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+        try:
+            log.debug(f"Deleting result for run id={id}")
+            self.storage_adapter.delete_blob(id)
+        except Exception as e:
+            log.error(f"Error deleting result: {e}")
+            return {"msg": "Error deleting result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        return HTTPStatus.OK
+
 class UwsgiChunkedStream:
     def __init__(self, chunk_size=4096):
         self.chunk_size = chunk_size

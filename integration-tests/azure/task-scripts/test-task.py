@@ -2,8 +2,7 @@ from vantage6.client import UserClient as Client
 
 import config
 
-client = Client(config.server_url, config.server_port, config.server_api,
-                log_level='debug')
+client = Client(config.server_url, config.server_port, config.server_api, log_level='debug')
 
 client.authenticate(config.username, config.password)
 client.setup_encryption(config.organization_key)
@@ -38,3 +37,7 @@ print(f"task info: {task_info}")
 result_info = client.result.from_task(task_id=task_id)
 print(f"------------------------------------")
 print(f"result info: {result_info}")
+
+## clear results
+client.task.cleanup(task_id=task_id, include_input=True)
+print(f"------------------------------------")

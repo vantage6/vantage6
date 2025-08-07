@@ -1,31 +1,49 @@
 import unittest
 
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
 
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller import cleanup
 from vantage6.common.task_status import TaskStatus
+from vantage6.server.model import Task, Collaboration, Organization
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 
+        
 class TestCleanupRunsIsolated(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
+        self.patcher = patch("vantage6.server.service.azure_storage_service.AzureStorageService")
+        self.patcher.connection_string = "sqlite://"
+        self.mock_azure_storage_service = self.patcher.start()
 
     def tearDown(self):
-        # clear_data() will clear session too
         Database().clear_data()
+        self.patcher.stop()
 
-    def test_cleanup_completed_old_run(self):
-        # Eligible: completed > 30 days ago
+    @patch("vantage6.server.model.task.Task")
+    def test_cleanup_completed_old_run(self, mock_task):
+        # Now use the actual instances, not ints
+        task = Task(
+            name="test-task",
+            description="Test task for cleanup",
+            image="test-image:latest",
+        )
+        self.session.add(task)
+        self.session.commit()
+
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result",
             input="input",
             log="log should be preserved",
             status=TaskStatus.COMPLETED,
+            task=task
         )
+
         self.session.add(run)
         self.session.commit()
 
@@ -171,3 +189,6 @@ class TestCleanupRunsCount(unittest.TestCase):
         for i in range(2, 6):
             self.assertEqual(runs[i].result, f"result{i}")
             self.assertEqual(runs[i].input, f"input{i}")
+
+
+
