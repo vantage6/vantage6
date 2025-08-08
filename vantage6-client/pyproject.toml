@@ -18,6 +18,7 @@ maintainers = [
 requires-python = ">=3.13"
 dependencies = [
     "pyfiglet==1.0.3",
+    "python-keycloak==5.5.0",
     "requests==2.32.4",
     "rich==13.5.2",
     "schema==0.7.5",
