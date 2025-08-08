@@ -8,6 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from vantage6.common import logger_name
+from vantage6.common.globals import SESSION_STATE_FILENAME
 
 from vantage6.node.globals import TASK_FILES_ROOT
 
@@ -32,7 +33,7 @@ class SessionFileManager:
         self.session_id = session_id
 
         self.session_name = f"session{self.session_id:09d}"
-        self.session_state_file_name = "session_state.parquet"
+        self.session_state_file_name = f"{SESSION_STATE_FILENAME}.parquet"
 
         self.session_folder = os.path.join("sessions", self.session_name)
         if task_dir_extension:

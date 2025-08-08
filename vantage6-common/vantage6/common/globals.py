@@ -57,6 +57,9 @@ DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 DATAFRAME_WITHIN_GROUP_SEPARATOR = ","
 DATAFRAME_BETWEEN_GROUPS_SEPARATOR = ";"
 
+# session state file name
+SESSION_STATE_FILENAME = "session_state"
+
 
 class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
