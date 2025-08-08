@@ -352,19 +352,20 @@ class TestResources(TestResourceBase):
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # test wrong action
-        # TODO: This unit test gave issues as patching some methods in the resources
-        # module. This is a problem with the way we setup the unit tests. Once #1982
-        # has been merged, the unittest should be fixable. This TODO has been logged in
-        # https://github.com/vantage6/vantage6/issues/1495
-        # task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE
+        # test actions: task endpoint can also be used for federated compute but not
+        # for preprocessing or data extraction
+        task_json["action"] = AlgorithmStepType.FEDERATED_COMPUTE.value
         task_json["collaboration_id"] = col.id
-        # results = self.app.post(
-        #     "/api/task",
-        #     headers=headers,
-        #     json=task_json,
-        # )
-        # self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        task_json["action"] = AlgorithmStepType.PREPROCESSING.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        task_json["action"] = AlgorithmStepType.DATA_EXTRACTION.value
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # test with correct parameters
         task_json["action"] = AlgorithmStepType.CENTRAL_COMPUTE.value
