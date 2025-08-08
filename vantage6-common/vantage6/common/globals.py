@@ -55,6 +55,9 @@ INTERVAL_MULTIPLIER = 1.5
 # keyword for the multiple dataframes in single argument decorator
 DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 
+# session state file name
+SESSION_STATE_FILENAME = "session_state"
+
 
 class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
