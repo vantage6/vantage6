@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "vantage6-algorithm-store"
 version = "5.0.0a31"
 description = "Vantage6 algorithm store"
-readme = "../README.md"
+readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "Vantage6 Team"}
