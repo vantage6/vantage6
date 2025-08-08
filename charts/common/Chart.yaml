@@ -2,5 +2,5 @@ apiVersion: v2
 name: common
 description: A Helm chart for common Kubernetes resources for the vantage6 project
 type: library
-version: "5.0.0-a31"
-appVersion: "5.0.0-a31"
+version: "5.0.0-a32"
+appVersion: "5.0.0-a32"
