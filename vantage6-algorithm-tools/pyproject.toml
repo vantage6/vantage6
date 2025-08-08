@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-algorithm-tools"
-version = "5.0.0a30"
+version = "5.0.0a31"
 description = "Vantage6 algorithm tools"
 readme = "../README.md"
 license = {text = "MIT"}
@@ -27,7 +27,7 @@ dev = [
     "coverage==7.10.2",
     "black",
     "pre-commit",
-    "vantage6-common==5.0.0a30",
+    "vantage6-common==5.0.0a31",
 ]
 
 [tool.hatch.build.targets.wheel]

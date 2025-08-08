@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6"
-version = "5.0.0a30"
+version = "5.0.0a31"
 description = "Vantage6 - Privacy-preserving federated learning"
 readme = "README.md"
 license = {text = "MIT"}
