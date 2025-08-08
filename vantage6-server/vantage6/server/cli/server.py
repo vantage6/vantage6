@@ -159,7 +159,6 @@ def cli_server_shell(ctx: ServerContext) -> None:
 
     logging.getLogger("parso.cache").setLevel(logging.WARNING)
     logging.getLogger("parso.python.diff").setLevel(logging.WARNING)
-    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     logging.warning(
@@ -169,7 +168,7 @@ def cli_server_shell(ctx: ServerContext) -> None:
     logging.warning("Please use the User interface, Python client, or API.")
     del logging
 
-    import vantage6.server.db as db
+    import vantage6.server.db as db  # noqa: F401
 
     IPython.embed(config=c)
 

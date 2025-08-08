@@ -18,6 +18,9 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y gcc python3-dev libffi-dev \
     && apt-get upgrade -y
 
+# Fix DB issue
+RUN pip install psycopg2-binary
+
 # copy source
 COPY . /vantage6
 
