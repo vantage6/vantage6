@@ -306,9 +306,10 @@ jobs:
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
-      - name: Build and push Algorithm OMOP base image
-        if: ${{ env.stage == '' || env.patch == 0 }}
-        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
+      # TODO v5+ re-enable this - requires update of the python-ohdsi packages
+      # - name: Build and push Algorithm OMOP base image
+      #   if: ${{ env.stage == '' || env.patch == 0 }}
+      #   run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
