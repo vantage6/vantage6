@@ -1294,7 +1294,7 @@ class Tasks(TaskBase):
             action = store_action
 
         if should_be_compute and not AlgorithmStepType.is_compute(action):
-            msg = f"A {action} task cannot be created in this endpoint."
+            msg = f"A {action.value} task cannot be created in this endpoint."
             if action == AlgorithmStepType.DATA_EXTRACTION:
                 msg += (
                     " Please use the dataframe endpoint to create a dataframe "
