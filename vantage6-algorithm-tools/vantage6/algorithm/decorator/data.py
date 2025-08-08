@@ -131,9 +131,13 @@ def dataframe(*sources: str | int) -> callable:
 
             # get the dataframe names that the user requested
             dataframes_grouped = _get_user_dataframes()
+            print("dataframes_grouped", dataframes_grouped)
+            print("sources", sources)
 
             # check if user provided enough databases
             number_of_expected_arguments = len(sources)
+            print("number_of_expected_arguments", number_of_expected_arguments)
+            print("len(dataframes_grouped)", len(dataframes_grouped))
             if len(dataframes_grouped) < number_of_expected_arguments:
                 error(
                     f"Algorithm requires {number_of_expected_arguments} databases "

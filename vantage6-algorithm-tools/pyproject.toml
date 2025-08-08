@@ -17,9 +17,13 @@ maintainers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "openpyxl>=3.0.0",
     "pandas>=2.2.3",
-    "numpy==2.3.0",
-    "scikit-learn>=1.0.0",
+    "pyjwt==2.9.0",
+    "pyfiglet==1.0.3",
+    "SPARQLWrapper>=2.0.0",
+    "sqlalchemy>=1.4.46",
+    "pyarrow>=16.1.0",
 ]
 
 [project.optional-dependencies]
@@ -27,7 +31,7 @@ dev = [
     "coverage==7.10.2",
     "black",
     "pre-commit",
-    "vantage6-common==5.0.0a33",
+    "vantage6-common==5.0.0a29",
 ]
 
 [tool.hatch.build.targets.wheel]
