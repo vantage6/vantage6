@@ -4,7 +4,7 @@ from marshmallow import Schema, ValidationError, fields, validates, validates_sc
 from marshmallow.validate import Length, OneOf, Range
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
-from vantage6.common.globals import DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH, SESSION_STATE_FILENAME
 
 from vantage6.backend.common.resource.input_schema import (
     MAX_LEN_NAME,
@@ -502,6 +502,11 @@ class DataframeInitInputSchema(Schema):
             raise ValidationError(
                 "Dataframe name must contain only letters, numbers, hyphens and "
                 "underscores"
+            )
+        if name == SESSION_STATE_FILENAME:
+            raise ValidationError(
+                f"Dataframe name cannot be '{SESSION_STATE_FILENAME}'. This name is "
+                "reserved as it is used to track the status of the session."
             )
 
 
