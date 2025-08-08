@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "vantage6"
 version = "5.0.0a31"
 description = "vantage6 command line interface"
-readme = "../README.md"
+readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "Vantage6 Team"}
