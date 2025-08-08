@@ -165,11 +165,12 @@ class NodePermissionException(AlgorithmError):
 # ---------------- Session exceptions ----------------
 
 
-class SessionError(AlgorithmError):
+class SessionActionMismatchError(AlgorithmError):
     """
-    Generic error raised when a step of the session fails.
+    Error raised when the action requested by the user does not match the action
+    requested by the container.
 
     Example usage:
-    - The function requested to be executed to build the session is not started using
-      the correction action (data extraction, preprocessing, etc.)
+    - The function is e.g. a data extraction function but the user requests to start
+      a preprocessing task using that function.
     """

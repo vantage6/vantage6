@@ -11,7 +11,7 @@ from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.exceptions import (
     DataTypeError,
-    SessionError,
+    SessionActionMismatchError,
 )
 from vantage6.algorithm.tools.util import get_action, get_env_var
 
@@ -37,7 +37,7 @@ def _exit_if_action_mismatch(function_action: AlgorithmStepType):
     ------
     EnvironmentVariableNotFoundError
         If the environment variable FUNCTION_ACTION is not found.
-    SessionError
+    SessionActionMismatchError
         If the container action does not match the requested action.
 
     """
@@ -45,7 +45,7 @@ def _exit_if_action_mismatch(function_action: AlgorithmStepType):
     requested_action = get_action()
 
     if requested_action != function_action:
-        raise SessionError(
+        raise SessionActionMismatchError(
             f"Container started as {requested_action}, but user requested "
             f"{function_action}."
         )
@@ -67,7 +67,7 @@ def _convert_to_parquet(data: Any) -> pa.Table:
 
     Raises
     ------
-    SessionError
+    SessionActionMismatchError
         If the DataFrame cannot be converted to a Parquet Table.
     DataTypeError
         If the data extraction function returns an unsupported dataframe type.
@@ -78,7 +78,7 @@ def _convert_to_parquet(data: Any) -> pa.Table:
             try:
                 data = pa.Table.from_pandas(data)
             except Exception as e:
-                raise SessionError(
+                raise SessionActionMismatchError(
                     "Could not convert DataFrame to Parquet Table"
                 ) from e
             return data
@@ -118,7 +118,7 @@ def data_extraction(func: callable) -> callable:
 
         Raises
         ------
-        SessionError
+        SessionActionMismatchError
             If the container action does not match the requested action.
         DataTypeError
             If the data extraction function returns an unsupported dataframe type.
