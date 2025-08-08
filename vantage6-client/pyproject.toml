@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-client"
-version = "5.0.0a32"
+version = "5.0.0a33"
 description = "Vantage6 client library"
 readme = "README.md"
 license = {text = "MIT"}
@@ -21,7 +21,7 @@ dependencies = [
     "requests==2.32.4",
     "rich==13.5.2",
     "schema==0.7.5",
-    "vantage6-common==5.0.0a32",
+    "vantage6-common==5.0.0a33",
 ]
 
 [project.optional-dependencies]
