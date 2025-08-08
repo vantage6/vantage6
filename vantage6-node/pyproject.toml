@@ -28,7 +28,6 @@ dependencies = [
     "nvidia-ml-py==12.535.133",
     "vantage6==5.0.0a30",
     "vantage6-client==5.0.0a30",
-    "vantage6-algorithm-tools==5.0.0a30",
     "vantage6-common==5.0.0a30",
 ]
 
