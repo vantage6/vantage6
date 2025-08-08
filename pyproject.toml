@@ -76,7 +76,7 @@ dependencies = [
     "prompt-toolkit==3.0.36",
     "pure-eval==0.2.2",
     "pycparser==2.21",
-    "pyfiglet==0.8.post1",
+    "pyfiglet==1.0.3",
     "pygments==2.19.2",
     "pyjwt==2.9.0",
     "pyotp==2.8.0",
