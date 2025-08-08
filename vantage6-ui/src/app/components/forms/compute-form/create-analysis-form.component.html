@@ -206,14 +206,22 @@
         <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
           <form class="form" [formGroup]="dataframeForm">
             <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
-            <mat-form-field *ngIf="dataframes.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.dataframe" | translate }}{{ isFirstDatabaseMultiple() ? "s" : "" }}</mat-label>
-              <mat-select formControlName="dataframeId" [compareWith]="compareIDsForSelection" [multiple]="isFirstDatabaseMultiple()">
-                <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
-                  {{ dataframe.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+            <div class="field-description">{{ "task-create.step-dataframe.description" | translate }}</div>
+            <div *ngIf="dataframes.length > 0 && function?.databases">
+              <mat-form-field
+                *ngFor="let database of function?.databases || []; let i = index"
+                subscriptSizing="dynamic"
+                class="dataframe-select"
+              >
+                <mat-label>{{ database.name }}{{ database.description ? " (" + database.description + ")" : "" }}</mat-label>
+                <mat-select [formControlName]="'dataframeId' + i" [compareWith]="compareIDsForSelection" [multiple]="database.multiple">
+                  <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
+                    {{ dataframe.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
             <app-alert-with-button
               *ngIf="dataFrameNotReadyForAllSelectedOrganizations()"
               class="node-alert"

@@ -1,10 +1,16 @@
 import os
-import pandas as pd
-
 from functools import wraps
 
-from vantage6.common.globals import ContainerEnvNames, DATAFRAME_MULTIPLE_KEYWORD
-from vantage6.algorithm.tools.util import info, error, warn
+import pandas as pd
+
+from vantage6.common.globals import (
+    DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
+    DATAFRAME_MULTIPLE_KEYWORD,
+    DATAFRAME_WITHIN_GROUP_SEPARATOR,
+    ContainerEnvNames,
+)
+
+from vantage6.algorithm.tools.util import error, info, warn
 
 
 def _get_user_dataframes() -> list[str]:
@@ -19,8 +25,8 @@ def _get_user_dataframes() -> list[str]:
     """
     dfs = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
 
-    data_arguments = dfs.split(";")
-    return [arg.split(",") for arg in data_arguments]
+    data_arguments = dfs.split(DATAFRAME_BETWEEN_GROUPS_SEPARATOR)
+    return [arg.split(DATAFRAME_WITHIN_GROUP_SEPARATOR) for arg in data_arguments]
 
 
 def _read_df_from_disk(df_name: str) -> pd.DataFrame:
@@ -82,9 +88,9 @@ def dataframe(*sources: str | int) -> callable:
     >>>                  <other arguments>):
     >>>     pass
 
-    >>> @dataframe("multiple", 3)
+    >>> @dataframe("multiple", 2)
     >>> def my_algorithm(dfs: dict[str, pd.DataFrame], first_df: pd.DataFrame,
-    >>>                  third_df: pd.DataFrame, <other arguments>):
+    >>>                  second_df: pd.DataFrame, <other arguments>):
     >>>     pass
 
     >>> @dataframe("multiple", 1, "multiple")
@@ -94,6 +100,9 @@ def dataframe(*sources: str | int) -> callable:
     """
     if not sources:
         sources = (1,)
+    elif isinstance(sources, int):
+        # if user calls it as @dataframe(3), we should convert it to (1, 1, 1)
+        sources = (1,) * sources
 
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)

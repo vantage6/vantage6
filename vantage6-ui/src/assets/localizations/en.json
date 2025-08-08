@@ -267,6 +267,7 @@
     "step-dataframe": {
       "title": "Select dataframe",
       "create-new-df": "Create dataframe",
+      "description": "Select the dataframe(s) you want to use. The options in the dropdown represent the dataframes created in the selected session.",
       "alert-dataframe-not-ready-for-all-selected-organizations": "The selected dataframe is not properly created for selected organizations: {{organizations}}. Please deselect these organization or create a new dataframe that also supports them."
     },
     "step-preprocessing": {

@@ -54,6 +54,8 @@ INTERVAL_MULTIPLIER = 1.5
 
 # keyword for the multiple dataframes in single argument decorator
 DATAFRAME_MULTIPLE_KEYWORD = "multiple"
+DATAFRAME_WITHIN_GROUP_SEPARATOR = ","
+DATAFRAME_BETWEEN_GROUPS_SEPARATOR = ";"
 
 
 class InstanceType(StrEnumBase):
