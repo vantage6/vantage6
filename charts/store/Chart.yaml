@@ -2,9 +2,9 @@ apiVersion: v2
 name: store
 description: A Helm chart to deploy a vantage6 algorithm store
 type: application
-version: "5.0.0-a32"
-appVersion: "5.0.0-a32"
+version: "5.0.0-a33"
+appVersion: "5.0.0-a33"
 dependencies:
   - name: common
-    version: "5.0.0-a32"
+    version: "5.0.0-a33"
     repository: file://../common

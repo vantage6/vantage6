@@ -1680,7 +1680,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.0a32"
+version = "5.0.0a33"
 source = { editable = "." }
 dependencies = [
     { name = "aniso8601" },

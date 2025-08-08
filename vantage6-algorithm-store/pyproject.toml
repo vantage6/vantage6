@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-algorithm-store"
-version = "5.0.0a32"
+version = "5.0.0a33"
 description = "Vantage6 algorithm store"
 readme = "README.md"
 license = {text = "MIT"}
@@ -31,8 +31,8 @@ dependencies = [
     "schema==0.7.5",
     "sqlalchemy==2.0.37",
     "werkzeug==3.1.3",
-    "vantage6-common==5.0.0a32",
-    "vantage6==5.0.0a32",
+    "vantage6-common==5.0.0a33",
+    "vantage6==5.0.0a33",
 ]
 
 [project.optional-dependencies]
