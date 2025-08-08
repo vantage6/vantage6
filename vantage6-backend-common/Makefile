@@ -7,9 +7,7 @@ rebuild: clean build-dist
 
 build-dist:
 	# Build the PyPI package
-	cp ../README.md .
 	uv build
-	rm README.md
 
 publish:
 	# Uploading to pypi.org
