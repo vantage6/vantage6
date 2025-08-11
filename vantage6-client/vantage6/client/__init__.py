@@ -219,7 +219,7 @@ class UserClient(ClientBase):
         self.log.setLevel(logging.WARN)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-        run = self.request("result", params={"task_id": task_id})
+        run = self.result.from_task(task_id)
         data_storage_used = run.get("data_storage_used")
         try:
             data_storage_used_enum = DataStorageUsed(data_storage_used)
