@@ -10,6 +10,7 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 
+from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 
 from vantage6.server import db
@@ -172,6 +173,7 @@ class SessionDataframes(SessionBase):
 
         return self.response(page, dataframe_schema)
 
+    @handle_exceptions
     @with_user
     def post(self, session_id):
         """Create a new dataframe in a session
@@ -241,6 +243,8 @@ class SessionDataframes(SessionBase):
             }, HTTPStatus.BAD_REQUEST
 
         collaboration = session.collaboration
+
+        self.__check_image_allowed_in_session(collaboration, data["image"], session)
 
         # This label is used to identify the database, this label should match the
         # label in the node configuration file. Each node can have multiple
@@ -313,6 +317,22 @@ class SessionDataframes(SessionBase):
         dataframe.save()
 
         return dataframe_schema.dump(dataframe), HTTPStatus.CREATED
+
+    def __check_image_allowed_in_session(
+        self, collaboration: db.Collaboration, image: str, session: db.Session
+    ) -> None:
+        """Check if the collaboration has a restriction on the image"""
+        if collaboration.session_restrict_to_same_image:
+            if not session.image:
+                # this is the first task in the session, so we can set the image
+                session.image = image
+                session.save()
+            elif session.image != image:
+                return {
+                    "msg": "This collaboration only allows a single image per session. "
+                    "You cannot create a dataframe with a different image. Allowed"
+                    f"image: {session.image}"
+                }, HTTPStatus.UNAUTHORIZED
 
 
 class SessionDataframe(SessionBase):

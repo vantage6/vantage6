@@ -142,7 +142,10 @@ class ContainerToken(ServicesResources):
                     claim_image,
                     task_id,
                 )
-                return {"msg": "Image and task do no match"}, HTTPStatus.UNAUTHORIZED
+                return {
+                    "msg": "This collaboration only allows a single image per session. "
+                    "You cannot create a task with a different image."
+                }, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if TaskStatus.has_finished(db_task.status):

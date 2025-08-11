@@ -41,6 +41,9 @@ class Session(Base):
         Date and time of the last usage of the session
     scope : str
         Scope of the session
+    image : str
+        Image that is used in the session. This field is only used if the collaboration
+        is set to restrict the image to be the same for all tasks in the session.
 
     Relationships
     -------------
@@ -69,6 +72,7 @@ class Session(Base):
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
     scope = Column(String, default=Scope.OWN.value)
+    image = Column(String)
 
     __table_args__ = (UniqueConstraint("name", "collaboration_id"),)
 
