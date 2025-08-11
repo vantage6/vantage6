@@ -590,8 +590,6 @@ class ClientBase(object):
         """
 
         def _decrypt_and_decode(value: str, field: str, data_storage_used: DataStorageUsed) -> str:
-            print(f"Decrypting field {field} with data storage used: {data_storage_used}")  # REMOVE
-            print(data_storage_used)  # REMOVE
             decrypted = self.fetch_and_decrypt_run_data(value, data_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
@@ -622,7 +620,6 @@ class ClientBase(object):
             for resource in data["data"]:
                 if resource.get(field):
                     resource[field] = _decrypt_and_decode(resource[field], field, resource["data_storage_used"])
-        print(f"Decrypted data: {data}")  # REMOVE
         return data
 
     def __check_algorithm_store_valid(self, is_for_algorithm_store: bool) -> bool:
@@ -802,7 +799,6 @@ class ClientBase(object):
                 f"Failed to check blob store availability. Status code: {response.status_code}"
             )
         response_json = response.json()
-        print(response_json)  # REMOVE
         return response_json.get("blob_store_enabled", False)
 
     class SubClient:
