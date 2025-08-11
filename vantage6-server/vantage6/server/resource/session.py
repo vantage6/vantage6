@@ -20,9 +20,10 @@ from vantage6.server.permission import (
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import ServicesResources, only_for, with_user
+from vantage6.server.resource import only_for, with_user
 from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource.common.output_schema import SessionSchema
+from vantage6.server.resource.common.task_post_base import TaskPostBase
 from vantage6.server.resource.task import Tasks
 
 module_name = logger_name(__name__)
@@ -146,7 +147,7 @@ session_schema = SessionSchema()
 session_input_schema = SessionInputSchema()
 
 
-class SessionBase(ServicesResources):
+class SessionBase(TaskPostBase):
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
@@ -352,9 +353,8 @@ class SessionBase(ServicesResources):
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
-        return Tasks.post_task(
+        return self.post_task(
             input_,
-            self.socketio,
             getattr(self.permissions, "task"),
             action,
         )
