@@ -6,7 +6,7 @@ from colorama import Fore, Style
 
 from vantage6.common import error, info, debug
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.server.service.azure_storage_service import AzureStorageService
+# from vantage6.server.service.azure_storage_service import AzureStorageService
 
 @click.command()
 def cli_node_clean() -> None:
@@ -44,8 +44,8 @@ def cli_node_clean() -> None:
                 debug(e)
                 exit(1)    
 
-        info(f"Deleted blob for {client.containers.name} from Azure Storage.")
-        storage_service = AzureStorageService(client.containers.name)
-        storage_service.delete_blob(client.containers.name)
+        # info(f"Deleted blob for {client.containers.name} from Azure Storage.")
+        # storage_service = AzureStorageService(client.containers.name)
+        # storage_service.delete_blob(client.containers.name)
 
     info("Done!")
