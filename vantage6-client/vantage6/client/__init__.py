@@ -219,20 +219,7 @@ class UserClient(ClientBase):
         self.log.setLevel(logging.WARN)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-        run = self.result.from_task(task_id)
-        data_storage_used = run.get("data_storage_used")
-        try:
-            data_storage_used_enum = DataStorageUsed(data_storage_used)
-        except (ValueError, TypeError):
-            data_storage_used_enum = DataStorageUsed.RELATIONAL
-
-        if data_storage_used_enum == DataStorageUsed.AZURE:
-            for task in run["data"]:
-                if task.get("result"):
-                    result_data = self.parent.download_run_data_from_server(task.get("result"))
-                    task["result"] = result_data
-        result = self.result._decrypt_result(run, is_single_result=False)
-        return result
+        return self.result.from_task(task_id)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -1770,7 +1757,6 @@ class UserClient(ClientBase):
 
             return self.parent.request("task", params=params)
 
-
         @post_filtering(iterable=False)
         def create(
             self,
@@ -1864,14 +1850,18 @@ class UserClient(ClientBase):
 
             # Encrypt the input per organization using that organization's
             # public key.
-            self.parent.log.debug("Encrypting input for each organization")
+            
             organization_json_list = []
 
             blob_store_enabled = self.parent.check_if_blob_store_enabled()
 
+            self.parent.log.debug("Encrypting input for each organization")
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get(
                     "public_key")
+                self.parent.log.debug("Public key for organization %s: %s", org_id, pub_key)
+                # If a blob store is configured, store the data there and use a UUID reference in the input.
+                # In this case, base64 encoding of the message can be skipped since the data will never be part of a larger JSON object.
                 if blob_store_enabled:
                     encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key, skip__base64_encoding_of_msg=True)
                     organization_input = self.parent.upload_run_data_to_server(encrypted_input)
@@ -2227,18 +2217,34 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             results = self.parent.request("result", params={"task_id": task_id})
-            for item in results["data"]:
-                uuid = item['result']
+            for run in results["data"]:
+                data_storage_used = run.get("data_storage_used")
                 try:
-                    run_data = self.parent.download_run_data_from_server(uuid)
-                    item['result'] = run_data
-                except ValueError as e:
-                    self.parent.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
-                    raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}", e)
+                    data_storage_used_enum = DataStorageUsed(data_storage_used)
+                except (ValueError, TypeError):
+                    data_storage_used_enum = DataStorageUsed.RELATIONAL
+                if data_storage_used_enum == DataStorageUsed.AZURE:
+                                for task in run["data"]:
+                                    if task.get("result"):
+                                        try:
+                                            uuid = task.get("result")
+                                            result_data = self.parent.download_run_data_from_server(uuid)
+                                            task["result"] = result_data
+                                        except Exception as e:
+                                            self.parent.log.error(f"Error retrieving result data for UUID: {uuid}")
+                                            raise e                                        
 
             results = self._decrypt_result(results, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
+        
+
+            
+            # If blob storage is used, the JSON response contains a UUID reference
+            # rather than the actual data. Download the data from storage.
+            
+            result = self.result._decrypt_result(run, is_single_result=False)
+            return result
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
