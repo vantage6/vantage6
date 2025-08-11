@@ -38,8 +38,8 @@ def central(
     sum_female_age = 0
     sum_male_age = 0
     for item in results:
-        sum_female_age += item["age"]["female"]
-        sum_male_age += item["age"]["male"]
+        sum_female_age += item["result"]["age"]["female"]
+        sum_male_age += item["result"]["age"]["male"]
 
     output = {
         "sum_female_age": sum_female_age,

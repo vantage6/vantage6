@@ -1,5 +1,7 @@
 FROM python:3.10-slim-bookworm
 
+ARG TAG=latest
+
 LABEL version=${TAG}
 LABEL maintainer="F.C. Martin <f.martin@iknl.nl>"
 
@@ -8,7 +10,6 @@ LABEL maintainer="F.C. Martin <f.martin@iknl.nl>"
 COPY ./README.md /README.md
 COPY ./vantage6-common /vantage6-common
 COPY ./vantage6-algorithm-tools /vantage6-algorithm-tools
-COPY ./vantage6-client /vantage6-client
 COPY ./vantage6 /vantage6
 
 RUN pip install --upgrade pip
@@ -21,4 +22,3 @@ RUN pip install -r /vantage6/requirements.txt \
   --extra-index-url https://www.piwheels.org/simple
 RUN pip install /vantage6-common
 RUN pip install /vantage6-algorithm-tools
-RUN pip install /vantage6-client

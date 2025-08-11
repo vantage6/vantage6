@@ -106,7 +106,7 @@ class BlobStreamBase(ServicesResources):
     in this case Azure Blob Storage.
     """
 
-    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
+    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
@@ -116,8 +116,8 @@ class BlobStreamStatus(BlobStreamBase):
     Resource for /api/blobstream/status (GET)
     Returns whether the blob store is enabled.
     """
-    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
-        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
+        super().__init__(socketio, mail, api, permissions, config, storage_adapter=storage_adapter)
 
     @only_for(("node", "user", "container"))
     def get(self):
@@ -131,8 +131,8 @@ class BlobStream(BlobStreamBase):
     Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
     This resource allows for streaming large results from Azure Blob Storage.
     """
-    def __init__(self, storage_adapter, socketio, mail, api, permissions, config):
-        super().__init__(storage_adapter, socketio, mail, api, permissions, config)
+    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
+        super().__init__(socketio, mail, api, permissions, config, storage_adapter=storage_adapter)
 
     @only_for(("node", "user", "container"))
     def get(self, id):

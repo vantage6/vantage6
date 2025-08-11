@@ -8,7 +8,10 @@ from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING, REQUEST_TIMEOUT, DEFAULT_CHUNK_SIZE
+from vantage6.common.globals import (
+    INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING, REQUEST_TIMEOUT,
+    DEFAULT_CHUNK_SIZE, DataStorageUsed
+)
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
 
@@ -515,7 +518,22 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
         self.__refresh_token = response.json()["refresh_token"]
 
-    def _decrypt_input(self, input_: str) -> bytes:
+    def fetch_and_decrypt_run_data(self, run_data: str, data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL) -> bytes:
+        if data_storage_used == DataStorageUsed.AZURE.value:
+            uuid = run_data # If blob storage is used, the data is a UUID reference to the blob
+            self.log.debug(f"Parsing uuid from input: {uuid}")
+            if isinstance(uuid, bytes):
+                uuid = uuid.decode('utf-8')
+            uuid = uuid.strip('\'"')
+            try:
+                run_data = self.download_run_data_from_server(uuid)
+            except ValueError as e:
+                self.log.error(f"Not a valid UUID: {uuid}")
+                raise ValueError(f"Not a valid UUID: {uuid}", e)
+
+        return self._decrypt_input(run_data) # Naming of this function is misleading, as it is also used to decrypt results
+
+    def _decrypt_input(self, input_: str | bytes) -> bytes:
         """Helper to decrypt the input of an algorithm run
 
         Keys are replaced, but object reference remains intact: changes are
@@ -542,11 +560,10 @@ class ClientBase(object):
             # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
-            input_ = cryptor.decrypt_str_to_bytes(input_)
+            input_ = cryptor.decrypt(input_)
 
         except Exception as e:
             self.log.exception(e)
-
         return input_
 
     def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
@@ -572,8 +589,10 @@ class ClientBase(object):
             Data on the algorithm run(s) with decrypted input
         """
 
-        def _decrypt_and_decode(value: str, field: str):
-            decrypted = self._decrypt_input(value)
+        def _decrypt_and_decode(value: str, field: str, data_storage_used: DataStorageUsed) -> str:
+            print(f"Decrypting field {field} with data storage used: {data_storage_used}")  # REMOVE
+            print(data_storage_used)  # REMOVE
+            decrypted = self.fetch_and_decrypt_run_data(value, data_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got" " %s.",
@@ -597,13 +616,13 @@ class ClientBase(object):
 
         if is_single_resource:
             if data.get(field):
-                data[field] = _decrypt_and_decode(data[field], field)
+                data[field] = _decrypt_and_decode(data[field], field, data["data_storage_used"])
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data["data"]:
                 if resource.get(field):
-                    resource[field] = _decrypt_and_decode(resource[field], field)
-
+                    resource[field] = _decrypt_and_decode(resource[field], field, resource["data_storage_used"])
+        print(f"Decrypted data: {data}")  # REMOVE
         return data
 
     def __check_algorithm_store_valid(self, is_for_algorithm_store: bool) -> bool:
@@ -783,6 +802,7 @@ class ClientBase(object):
                 f"Failed to check blob store availability. Status code: {response.status_code}"
             )
         response_json = response.json()
+        print(response_json)  # REMOVE
         return response_json.get("blob_store_enabled", False)
 
     class SubClient:

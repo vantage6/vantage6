@@ -7,8 +7,9 @@ import json
 from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
-from vantage6.common import base64s_to_bytes
+from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.serialization import serialize
+from vantage6.common.globals import DataStorageUsed
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -141,28 +142,10 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
-        self._retrieve_results(task_id, interval)
-        result = self.request("result", params={"task_id": task_id})
-        output = []
-        for run in result["data"]:
-            try:
-                uuid = run.get("result")
-                run_data = self.download_run_data_from_server(uuid)
-                output_json = json.loads(run_data.decode('utf-8'))
-                output.append(output_json)
-            except ValueError as e:
-                self.log.error(f"Input for task {task_id} is not a valid UUID: {uuid}")
-                raise ValueError(f"Input for run {task_id} is not a valid UUID: {uuid}")
-        return output
-    
-    def _retrieve_results(self, task_id: int, interval: float = 1) -> None:
-        """
-        Poll the central server until results are available.
-        """
         self.log.debug(f"Waiting for results for task_id {task_id}...")
         self.wait_for_task_completion(self.request, task_id, interval, False)
 
-        return True
+        return self.result.from_task(task_id)
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
         """
@@ -314,18 +297,26 @@ class AlgorithmClient(ClientBase):
 
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            decoded_results = []
-            try:
-                decoded_results = [
-                    json.loads(base64s_to_bytes(result.get("result")).decode())
-                    for result in results
-                    if result.get("result")
-                ]
-            except Exception as e:
-                self.parent.log.error("Unable to load results")
-                self.parent.log.error(e)
-
-            return decoded_results
+            for run in results:
+                if run.get("data_storage_used") == DataStorageUsed.AZURE.value:
+                    try:
+                        uuid = run.get("result")
+                        run_data = self.parent.download_run_data_from_server(uuid)
+                        run["result"] = json.loads(run_data.decode('utf-8'))
+                    except Exception as e:
+                        self.parent.log.error(f"Failed to download or decode Azure result for task {task_id}: {e}")
+                        run["result"] = None
+                else:
+                    if run.get("result"):
+                        try:
+                            run["result"] = json.loads(base64s_to_bytes(run.get("result")).decode())
+                        except Exception as e:
+                            self.parent.log.error("Unable to load results")
+                            self.parent.log.error(e)
+                            run["result"] = None
+                    else:
+                        run["result"] = None
+            return results
 
     class Task(ClientBase.SubClient):
         """
@@ -389,20 +380,24 @@ class AlgorithmClient(ClientBase):
                 description or f"task from container on node_id={self.parent.node_id}"
             )
             if input_:
-                # serializing input. Note that the input is not encrypted here, but
-                # in the proxy server (self.parent.request())
-                serialized_input = serialize(input_)
                 organization_json_list = []
                 for org_id in organizations:
                     pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
                     self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
-                    input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
-                    organization_json_list.append(
-                        {
-                            "id": org_id,
-                            "input": input_uuid,
-                        }
-                    )
+                    # Note that the input is not encrypted here, but in the proxy server (self.parent.request())
+                    blob_store_enabled = self.parent.check_if_blob_store_enabled()
+                    self.parent.log.debug("Blob store enabled: %s", blob_store_enabled)
+                    if blob_store_enabled:
+                        input_uuid = self.parent.upload_run_data_to_server(serialize(input_), pub_key=pub_key)
+                        organization_json_list.append(
+                            {
+                                "id": org_id,
+                                "input": input_uuid,
+                            }
+                        )
+                    else:
+                        organization_json_list.append({"id": org_id, "input": bytes_to_base64s(serialize(input_))})
+
             json_body = {
                 "name": name,
                 "image": self.parent.image,
