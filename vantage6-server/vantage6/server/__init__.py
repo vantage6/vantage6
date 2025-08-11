@@ -745,7 +745,7 @@ class ServerApp:
         for res in RESOURCES:
             try:
                 module = importlib.import_module("vantage6.server.resource." + res)
-                if res in ["blob_stream"]:
+                if res in ["blobstream"]:
                     module.setup(self.api, self.ctx.config["api_path"], result_services)
                 else:
                     module.setup(self.api, self.ctx.config["api_path"], services)

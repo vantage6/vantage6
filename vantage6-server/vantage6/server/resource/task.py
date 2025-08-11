@@ -1039,7 +1039,7 @@ class Tasks(TaskBase):
         dummy_cryptor = DummyCryptor()
         for org in organizations_json_list:
             input_ = org.get("input")
-            decrypted_input = dummy_cryptor.decrypt_str_to_bytes(input_)
+            decrypted_input = dummy_cryptor.decrypt(input_)
             is_input_readable = False
             try:
                 decrypted_input.decode(STRING_ENCODING)

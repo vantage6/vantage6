@@ -11,7 +11,7 @@ import traceback
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.globals import APPNAME, AuthStatus, DataStorageUsed
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
@@ -219,16 +219,21 @@ class UserClient(ClientBase):
         self.log.setLevel(logging.WARN)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-        response = self.request("result", params={"task_id": task_id})
-        self.log.info(f"--> Task {task_id} completed. Streaming results...")
-        for task in response["data"]:
-            if task.get("result"):
-                result_data = self.download_run_data_from_server(task.get("result"))
-                task["result"] = result_data
-        result = self.result._decrypt_result(response, is_single_result=False)
+        run = self.request("result", params={"task_id": task_id})
+        data_storage_used = run.get("data_storage_used")
+        try:
+            data_storage_used_enum = DataStorageUsed(data_storage_used)
+        except (ValueError, TypeError):
+            data_storage_used_enum = DataStorageUsed.RELATIONAL
+
+        if data_storage_used_enum == DataStorageUsed.AZURE:
+            for task in run["data"]:
+                if task.get("result"):
+                    result_data = self.parent.download_run_data_from_server(task.get("result"))
+                    task["result"] = result_data
+        result = self.result._decrypt_result(run, is_single_result=False)
         return result
-        
-    
+
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
@@ -1868,7 +1873,7 @@ class UserClient(ClientBase):
                 pub_key = self.parent.request(f"organization/{org_id}").get(
                     "public_key")
                 if blob_store_enabled:
-                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key)
+                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key, skip__base64_encoding_of_msg=True)
                     organization_input = self.parent.upload_run_data_to_server(encrypted_input)
                 else:
                     organization_input = self.parent.cryptor.encrypt_bytes_to_str(
@@ -2267,7 +2272,7 @@ class UserClient(ClientBase):
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
-            Wrapper function to decrypt and deserialize the input of one or
+            Wrapper function to decrypt and deserialize the result of one or
             more runs
 
             Parameters
@@ -2280,7 +2285,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Data on the algorithm run(s) with decrypted input
+                Data on the algorithm run(s) with decrypted result
             """
             return self.parent._decrypt_field(
                 data=result_data, field="result", is_single_resource=is_single_result

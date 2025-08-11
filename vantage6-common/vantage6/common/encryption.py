@@ -17,6 +17,7 @@ these public keys is outside the scope of this module).
 import os
 import logging
 import base64
+import json
 
 from pathlib import Path
 
@@ -80,7 +81,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return base64s_to_bytes(data)
 
-    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str) -> str:
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str, skip__base64_encoding_of_msg: bool = False) -> str:
         """
         Encrypt bytes in `data` using a (base64 encoded) public key.
 
@@ -102,7 +103,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return self.bytes_to_str(data)
 
-    def decrypt_str_to_bytes(self, data: bytes) -> bytes:
+    def decrypt(self, data: str | bytes) -> bytes:
         """
         Decrypt base64 encoded *string* data.
 
@@ -116,7 +117,10 @@ class CryptorBase(metaclass=Singleton):
         bytes
             The decrypted data.
         """
-        return self.str_to_bytes(data.decode('utf-8'))
+        if isinstance(data, bytes):
+            return self.str_to_bytes(data.decode('utf-8'))
+        elif isinstance(data, str):
+            return self.str_to_bytes(data)
 
     def encrypt_stream(self, stream, pubkey_base64s: str = None, chunk_size=DEFAULT_CHUNK_SIZE):
         """
@@ -350,7 +354,7 @@ class RSACryptor(CryptorBase):
         """
         return bytes_to_base64s(self.public_key_bytes)
 
-    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str) -> str:
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str, skip__base64_encoding_of_msg: bool = False) -> str:
         """
         Encrypt bytes in `data` using a (base64 encoded) public key.
 
@@ -388,63 +392,114 @@ class RSACryptor(CryptorBase):
             self.log.error(f"Failed to load public key: {e}")
             raise ValueError("Invalid public key provided for encryption.") from e
 
+        # Encrypt the shared key using the public key (i.e. assymmetrically)
         encrypted_key_bytes = pubkey.encrypt(shared_key, padding.PKCS1v15())
+
+        # Join the encrypted key, iv and encrypted message into a single string
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
-        header_str = SEPARATOR.join([encrypted_key, iv, ""])
-        header_bytes = header_str.encode("utf-8")
+        if skip__base64_encoding_of_msg:
+            header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode("utf-8")
+            return header + encrypted_msg_bytes
+        else:
+            encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
+            return SEPARATOR.join([encrypted_key, iv, encrypted_msg])
+        
 
-        return header_bytes + encrypted_msg_bytes
+    def decrypt(self, data: str | bytes) -> bytes:
+        if isinstance(data, bytes):
+            sep_bytes = SEPARATOR.encode()
+            sep_count = 0
+            sep_indices = []
+            for i in range(len(data)):
+                if data[i:i+1] == sep_bytes:
+                    sep_count += 1
+                    sep_indices.append(i)
+                    if sep_count == 2:
+                        break
+            if sep_count < 2:
+                raise ValueError("Header format is invalid — missing separators.")
 
-    def decrypt_str_to_bytes(self, data: bytes) -> bytes:
+            header_bytes = data[:sep_indices[1] + 1]
+            header_str = header_bytes.decode("utf-8")
+            header_parts = header_str.split(SEPARATOR, 2)
+            if len(header_parts) != 3:
+                raise ValueError("Header format is invalid — expected three parts separated by '$'.")
+            encrypted_key_b64, iv_b64, _ = header_parts
+            encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
+            iv_bytes = self.str_to_bytes(iv_b64)
+            shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
+            try:
+                shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
+            except UnicodeDecodeError:
+                pass
+            if len(shared_key) != 32:
+                raise ValueError(f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256.")
+            body = data[sep_indices[1] + 1:]
+            cipher = Cipher(algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend())
+            decryptor = cipher.decryptor()
+            decrypted = decryptor.update(body) + decryptor.finalize()
+
+            return decrypted
+        elif isinstance(data, str):
+            return self.decrypt_str_to_bytes(data)
+
+    def decrypt_str_to_bytes(self, data: str) -> bytes:
         """
-        Decrypt a payload with a base64-encoded header and raw encrypted body.
+        Decrypt base64 encoded *string* data.
 
         Parameters
         ----------
-        data : bytes
-            The input bytes to decrypt (header + encrypted content).
+        data: str
+            The data to decrypt.
 
         Returns
         -------
         bytes
-            The fully decrypted data.
+            The decrypted data.
         """
-        sep_bytes = SEPARATOR.encode()
-        sep_count = 0
-        sep_indices = []
+        # Note that the decryption process is the reverse of the encryption process
+        # in the function above
+        (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
 
-        for i in range(len(data)):
-            if data[i:i+1] == sep_bytes:
-                sep_count += 1
-                sep_indices.append(i)
-                if sep_count == 2:
-                    break
-        if sep_count < 2:
-            raise ValueError("Header format is invalid — missing separators.")
+        # Convert the strings to back to bytes
+        encrypted_key_bytes = self.str_to_bytes(encrypted_key)
+        iv_bytes = self.str_to_bytes(iv)
+        encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
 
-        header_bytes = data[:sep_indices[1] + 1]
-        header_str = header_bytes.decode("utf-8")
-        header_parts = header_str.split(SEPARATOR, 2)
-        if len(header_parts) != 3:
-            raise ValueError("Header format is invalid — expected three parts separated by '$'.")
-        encrypted_key_b64, iv_b64, _ = header_parts
-        encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
-        iv_bytes = self.str_to_bytes(iv_b64)
+        # Decrypt the shared key using asymmetric encryption
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
+
+        # In the UI, the bytes have to be base64 encoded before encryption (we cannot
+        # encrypt bytes directly in javascript) - so if this key was encrypted in the
+        # UI, we need to decode it here as extra step. If it fails, ignore it as it is
+        # apparently not needed.
+        # TODO v5+ add additional encoding step in Python so that we always have the
+        # same process
         try:
             shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
         except UnicodeDecodeError:
             pass
-        if len(shared_key) != 32:
-            raise ValueError(f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256.")
-        body = data[sep_indices[1] + 1:]
-        cipher = Cipher(algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend())
+
+        # Use the shared key for symmetric decryption of the payload
+        cipher = Cipher(
+            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
+        )
         decryptor = cipher.decryptor()
-        decrypted = decryptor.update(body) + decryptor.finalize()
+        result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
 
-        return decrypted
-
+        # In the UI, the result has an extra base64 encoding step also for the
+        # symmetrical part of the encryption. If it fails, ignore it as it is
+        # apparently not needed.
+        # TODO v5+ adapt as stated above in decrypting shared key
+        try:
+            json.loads(result.decode("utf-8"))
+        except json.decoder.JSONDecodeError:
+            try:
+                result = base64s_to_bytes(result.decode("utf-8"))
+            except UnicodeDecodeError:
+                pass
+        return result
 
 
     def _crypt_stream(self, stream, key, iv, chunk_size=DEFAULT_CHUNK_SIZE):
@@ -520,7 +575,7 @@ class RSACryptor(CryptorBase):
         encrypted_key_b64 = self.bytes_to_str(encrypted_key_bytes)
         iv_b64 = self.bytes_to_str(iv_bytes)
 
-        header_str = f"{encrypted_key_b64}${iv_b64}$"
+        header_str = f"{encrypted_key_b64}{SEPARATOR}{iv_b64}{SEPARATOR}"
         header_bytes = header_str.encode("utf-8")
 
         yield header_bytes

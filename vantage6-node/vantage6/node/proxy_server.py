@@ -176,7 +176,7 @@ def decrypt_result(run: dict) -> dict:
     try:
         if run["result"]:
             run["result"] = bytes_to_base64s(
-                client.cryptor.decrypt_str_to_bytes(run["result"])
+                client.cryptor.decrypt(run["result"])
             )
     except Exception:
         log.exception(
@@ -246,6 +246,8 @@ def proxy_task():
 
     log.debug("%s organizations", len(organizations))
 
+    blob_store_enabled = client.check_if_blob_store_enabled()
+
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved an the input is
@@ -274,7 +276,7 @@ def proxy_task():
         # Encrypt the input field
         client: NodeClient = app.config.get("SERVER_IO")
         encrypted_input = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_), public_key
+            base64s_to_bytes(input_), public_key, skip__base64_encoding_of_msg=blob_store_enabled
         )
 
         log.debug("Input successfully encrypted for organization %s!", organization_id)
@@ -282,7 +284,6 @@ def proxy_task():
 
     if client.is_encrypted_collaboration():
         log.debug("Applying end-to-end encryption")
-        blob_store_enabled = client.check_if_blob_store_enabled()
 
         for org in organizations:
             if not blob_store_enabled:
@@ -388,7 +389,8 @@ def proxy_results(id_: int) -> Response:
 
     # Try to decrypt the results
     result = get_response_json_and_handle_exceptions(response)
-    result = decrypt_result(result)
+    if not result["data_storage_used"] or result["data_storage_used"] == DataStorageUsed.RELATIONAL.value:
+        result = decrypt_result(result)
 
     return result, response.status_code
 

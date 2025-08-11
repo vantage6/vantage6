@@ -13,7 +13,7 @@ from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
     NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
-    InstanceType, DataStorageUsed
+    InstanceType
 )
 
 class NodeClient(ClientBase):
@@ -186,27 +186,9 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                self.fetch_and_decrypt_input(run)
+                run["input"] = self.parent.fetch_and_decrypt_run_data(run["input"], run["data_storage_used"])
+
             return run_data
-
-        def fetch_and_decrypt_input(self, run):
-            input_data = run.get("input")
-            data_storage_used = DataStorageUsed(run.get("data_storage_used", DataStorageUsed.RELATIONAL.value))
-            self.parent.log.debug(f"input data: {run}")
-            if data_storage_used == DataStorageUsed.AZURE:
-                input_uuid = input_data
-                self.parent.log.debug(f"Parsing uuid from input: {input_uuid}")
-
-                if isinstance(input_uuid, bytes):
-                    input_uuid = input_uuid.decode('utf-8')
-                input_uuid = input_uuid.strip('\'"')
-                try:
-                    input_data = self.parent.download_run_data_from_server(input_uuid)
-                except ValueError as e:
-                    self.parent.log.error(f"Input for run {run['id']} is not a valid UUID: {input_uuid}")
-                    raise ValueError(f"Input for run {run['id']} is not a valid UUID: {input_uuid}", e)
-                
-            run["input"] = self.parent._decrypt_input(input_data)
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
@@ -251,15 +233,17 @@ class NodeClient(ClientBase):
                         "initiating organization belong to your organization?"
                     )
 
+                self.parent.log.debug(f"Sending algorithm run update to server")
+                blob_store_enabled = self.parent.check_if_blob_store_enabled()
+
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
-                    data["result"], public_key
+                    data["result"], public_key, skip__base64_encoding_of_msg=blob_store_enabled
                 )
 
-            self.parent.log.debug(f"Sending algorithm run update to server")
-            if "result" in data:
-                result_uuid = self.parent.upload_run_data_to_server(data["result"])
-                self.parent.log.debug(f"Result uploaded to server with UUID: {result_uuid}")
-                data["result"] = result_uuid
+                if blob_store_enabled:
+                        result_uuid = self.parent.upload_run_data_to_server(data["result"])
+                        self.parent.log.debug(f"Result uploaded to server with UUID: {result_uuid}")
+                        data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     class AlgorithmStore(ClientBase.SubClient):
