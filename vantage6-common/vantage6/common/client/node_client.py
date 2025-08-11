@@ -237,7 +237,7 @@ class NodeClient(ClientBase):
                 blob_store_enabled = self.parent.check_if_blob_store_enabled()
 
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
-                    data["result"], public_key, skip__base64_encoding_of_msg=blob_store_enabled
+                    data["result"], public_key, skip_base64_encoding_of_msg=blob_store_enabled
                 )
 
                 if blob_store_enabled:

@@ -1863,7 +1863,7 @@ class UserClient(ClientBase):
                 # If a blob store is configured, store the data there and use a UUID reference in the input.
                 # In this case, base64 encoding of the message can be skipped since the data will never be part of a larger JSON object.
                 if blob_store_enabled:
-                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key, skip__base64_encoding_of_msg=True)
+                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key, skip_base64_encoding_of_msg=True)
                     organization_input = self.parent.upload_run_data_to_server(encrypted_input)
                 else:
                     organization_input = self.parent.cryptor.encrypt_bytes_to_str(
@@ -1892,6 +1892,8 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
+            print("Creating task with parameters:")
+            print(params)
             return self.parent.request(
                 "task",
                 method="post",
@@ -2216,25 +2218,9 @@ class UserClient(ClientBase):
             """
             self.parent.log.info("--> Attempting to decrypt results!")
 
-            results = self.parent.request("result", params={"task_id": task_id})
-            for run in results["data"]:
-                data_storage_used = run.get("data_storage_used")
-                try:
-                    data_storage_used_enum = DataStorageUsed(data_storage_used)
-                except (ValueError, TypeError):
-                    data_storage_used_enum = DataStorageUsed.RELATIONAL
-                if data_storage_used_enum == DataStorageUsed.AZURE:
-                                for task in run["data"]:
-                                    if task.get("result"):
-                                        try:
-                                            uuid = task.get("result")
-                                            result_data = self.parent.download_run_data_from_server(uuid)
-                                            task["result"] = result_data
-                                        except Exception as e:
-                                            self.parent.log.error(f"Error retrieving result data for UUID: {uuid}")
-                                            raise e                                        
+            runs = self.parent.request("result", params={"task_id": task_id})                                     
 
-            results = self._decrypt_result(results, is_single_result=False)
+            results = self._decrypt_result(runs, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
         

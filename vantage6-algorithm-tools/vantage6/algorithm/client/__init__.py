@@ -392,7 +392,6 @@ class AlgorithmClient(ClientBase):
                         input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
                         org_input = input_uuid
                     else:
-                        print(serialized_input) #REMOVE
                         org_input = bytes_to_base64s(serialized_input)
                     organization_json_list.append({"id": org_id, "input": org_input})
 
