@@ -482,6 +482,10 @@ class Collaboration(CollaborationBase):
 
           Accessible to users.
 
+          Note that the session_restrict_to_same_image field is not editable. If that
+          would be changed from False to True, all sessions in the collaboration would
+          be invalidated. Due to these complications, the field is not editable.
+
         parameters:
           - in: path
             name: id

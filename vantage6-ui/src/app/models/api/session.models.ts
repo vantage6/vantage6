@@ -50,6 +50,7 @@ export interface BaseSession {
   collaboration?: BaseLink;
   dataframes: string[];
   tasks: string[];
+  image?: string;
 }
 
 export interface Session {
@@ -64,6 +65,7 @@ export interface Session {
   collaboration?: BaseLink;
   dataframes: string[];
   tasks: string[];
+  image?: string;
 }
 
 export interface CreateSession {

@@ -1871,7 +1871,7 @@ class UserClient(ClientBase):
                     )
 
             if databases is None:
-                databases = []
+                databases = [[]]
             databases = self._parse_arg_databases(databases)
 
             # Data will be serialized in JSON.

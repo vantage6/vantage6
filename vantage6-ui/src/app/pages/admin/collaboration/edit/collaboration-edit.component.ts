@@ -102,7 +102,6 @@ export class CollaborationEditComponent implements OnInit {
     const collaborationCreate: CollaborationCreate = {
       name: collaborationForm.name,
       encrypted: collaborationForm.encrypted,
-      session_restrict_to_same_image: collaborationForm.session_restrict_to_same_image,
       organization_ids: collaborationForm.organizations.map((organization: BaseOrganization) => organization.id)
     };
     const result = await this.collaborationService.editCollaboration(this.collaboration?.id.toString(), collaborationCreate);

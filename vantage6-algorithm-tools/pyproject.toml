@@ -31,7 +31,7 @@ dev = [
     "coverage==7.10.2",
     "black",
     "pre-commit",
-    "vantage6-common==5.0.0a29",
+    "vantage6-common==5.0.0a33",
 ]
 
 [tool.hatch.build.targets.wheel]

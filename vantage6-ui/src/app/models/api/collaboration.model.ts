@@ -57,6 +57,6 @@ export interface CollaborationForm {
 export type CollaborationCreate = {
   name: string;
   encrypted: boolean;
-  session_restrict_to_same_image: boolean;
+  session_restrict_to_same_image?: boolean;
   organization_ids: number[];
 };

@@ -153,6 +153,8 @@
     "scope": "Scope",
     "ready": "Ready to use?",
     "created-at": "Created",
+    "restricted_to_single_image": "Session restricted to single image?",
+    "image": "Image used in session",
     "dataframes": {
       "title": "Dataframes",
       "add": "Create dataframe",
@@ -252,7 +254,8 @@
         "df-name-warning": "The dataframe name is not filled in for repeating data extraction tasks. Please provide a unique name for the dataframe.",
         "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
-        "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations."
+        "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations.",
+        "function-restricted-to-same-image": "The selected session only allows functions from the same image to be run throughout the session. Therefore, only functions from the session's allowed image are shown."
       }
     },
     "step-database": {

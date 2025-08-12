@@ -75,6 +75,10 @@
         <mat-step [stepControl]="functionForm" *ngIf="availableSteps.function">
           <form class="form" [formGroup]="functionForm">
             <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
+            <app-alert
+              *ngIf="sessionRestrictedToSameImage"
+              label="{{ 'task-create.step-function.description.function-restricted-to-same-image' | translate }}"
+            ></app-alert>
             <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
             <mat-form-field subscriptSizing="dynamic" class="select-form-field">
               <mat-label>{{ "task.function" | translate }}</mat-label>
@@ -102,7 +106,7 @@
                   </button>
                 </mat-form-field>
                 <mat-option
-                  *ngFor="let function of filteredFunctions"
+                  *ngFor="let function of functionsFilteredBySearch"
                   class="function-select-option"
                   [innerHTML]="getFunctionOptionLabel(function) | highlight: functionForm.controls.algorithmFunctionSearch.value : true"
                   [value]="getAlgorithmFunctionSpec(function)"

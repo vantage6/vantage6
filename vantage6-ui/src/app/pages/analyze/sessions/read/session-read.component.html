@@ -57,6 +57,14 @@
             <b>{{ "session.ready" | translate }}</b>
             <span>{{ session.ready ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
           </div>
+          <div class="data-list__item">
+            <b>{{ "session.restricted_to_single_image" | translate }}</b>
+            <span>{{ chosenCollaborationIsRestrictedToSingleImage ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+          </div>
+          <div class="data-list__item data-list__item--big" *ngIf="chosenCollaborationIsRestrictedToSingleImage">
+            <b>{{ "session.image" | translate }}</b>
+            <span>{{ session.image || "-" }}</span>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
