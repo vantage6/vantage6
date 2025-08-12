@@ -128,10 +128,7 @@ class AlgorithmClient(ClientBase):
 
     def retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
-        TODO: Check if this function can be removed in the future, as it is not used
-        anymore. Otherwise rename to retrieve_results.
-        Retrieve results for a specific task.
-
+        Retrieve results from the server for a given task id.
         Parameters
         ----------
         task_id: int

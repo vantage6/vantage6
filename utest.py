@@ -26,15 +26,19 @@ def run():
     )
     success_algorithm_store = run_tests(algorithm_store_test_suites)
 
+    # run algorithm tests
+    algorithm_test_suites = find_tests(str(Path(__file__).parent / "vantage6-algorithm-tools"))
+    success_algorithm = run_tests(algorithm_test_suites)
+
     sys.exit(
         not (
             success_server
             and success_cli
             and success_common
             and success_algorithm_store
+            and success_algorithm
         )
     )
-
 
 if __name__ == "__main__":
     run()
