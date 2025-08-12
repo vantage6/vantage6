@@ -7,7 +7,7 @@
     <mat-checkbox formControlName="encrypted" color="primary" labelPosition="before">
       {{ "collaboration.encrypted" | translate }}
     </mat-checkbox>
-    <mat-checkbox formControlName="session_restrict_to_same_image" color="primary" labelPosition="before">
+    <mat-checkbox *ngIf="!isEdit" formControlName="session_restrict_to_same_image" color="primary" labelPosition="before">
       {{ "collaboration.session-restrict-to-same-image" | translate }}
     </mat-checkbox>
     <mat-form-field subscriptSizing="dynamic" *ngIf="canEditOrganizations">

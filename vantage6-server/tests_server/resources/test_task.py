@@ -218,13 +218,12 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
     def test_create_task_permission_as_user(self):
-        user = self.create_user()
-        headers = self.login(user)
-
         org = Organization()
         org.save()
         col = Collaboration(organizations=[org], encrypted=False)
         col.save()
+        user = self.create_user(organization=org)
+        headers = self.login(user)
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
@@ -267,7 +266,7 @@ class TestResources(TestResourceBase):
         rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
         headers = self.get_user_auth_header(rules=[rule])
         results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(results.status_code, HTTPStatus.FORBIDDEN)
 
         # user with organization permissions
         headers = self.get_user_auth_header(org, rules=[rule])
@@ -277,12 +276,10 @@ class TestResources(TestResourceBase):
         # user with global permissions but outside of the collaboration. They
         # should *not* be allowed to create a task in a collaboration that
         # they're not a part of
-        # TODO add test for user with global permission that creates a task for
-        # another organization than their own in the same collaboration
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.CREATE)
         headers = self.get_user_auth_header(rules=[rule])
         results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(results.status_code, HTTPStatus.FORBIDDEN)
 
         # check that no tasks can be created with organizations outside a study but
         # within the collaboration

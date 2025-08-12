@@ -141,7 +141,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   collaboration?: Collaboration | null = null;
   organizations: BaseOrganization[] = [];
   functions: AlgorithmFunctionExtended[] = [];
-  filteredFunctions: AlgorithmFunctionExtended[] = [];
+  functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
+  functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
@@ -323,23 +324,20 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
 
     this.functionForm.controls.description.setValue(this.repeatedTask.description);
-    let algorithm = this.algorithms.find((_) => _.image === this.repeatedTask?.image);
-    if (!algorithm && this.repeatedTask?.image.includes('@sha256:')) {
-      // get algorithm including digest
-      algorithm = this.algorithms.find((_) => `${_.image}@${_.digest}` === this.repeatedTask?.image);
-    }
-    if (!algorithm || !algorithm.algorithm_store_id) return;
+    this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
+    if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
 
-    await this.handleAlgorithmChange(algorithm.id, algorithm.algorithm_store_id);
     // set function step
     const func =
-      this.functions.find(
+      this.functionsAllowedForSession.find(
         (_) =>
-          _.name === this.repeatedTask?.method && _.algorithm_id == algorithm.id && _.algorithm_store_id == algorithm.algorithm_store_id
+          _.name === this.repeatedTask?.method &&
+          _.algorithm_id == this.algorithm?.id &&
+          _.algorithm_store_id == this.algorithm?.algorithm_store_id
       ) || null;
     if (!func) return;
     this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    await this.handleFunctionChange(this.repeatedTask.method, algorithm.id, algorithm.algorithm_store_id);
+    await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
     if (!this.function) return;
     const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.functionForm.controls.organizationIDs.setValue(organizationIDs);
@@ -392,9 +390,17 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
+  private getAlgorithmFromImage(image: string): Algorithm | null {
+    if (image.includes('@sha256:')) {
+      return this.algorithms.find((_) => `${_.image}@${_.digest}` === image) || null;
+    } else {
+      return this.algorithms.find((_) => _.image === image) || null;
+    }
+  }
+
   search() {
     const value = this.functionForm.controls.algorithmFunctionSearch.value;
-    this.filteredFunctions = this.functions.filter((func) => {
+    this.functionsFilteredBySearch = this.functionsAllowedForSession.filter((func) => {
       const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
       const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
       return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
@@ -797,7 +803,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.sessions = await this.sessionService.getSessions();
+    this.sessions = await this.sessionService.getSessions({
+      collaboration_id: this.collaboration?.id.toString() || ''
+    });
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
@@ -813,7 +821,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
           };
         });
     });
-    this.filteredFunctions = this.functions;
+    this.functionsAllowedForSession = this.functions;
+    this.functionsFilteredBySearch = this.functions;
     this.node = await this.getOnlineNode();
     this.availableDatabases = getDatabasesFromNode(this.node);
 
@@ -883,6 +892,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       } else if (this.shouldShowStudyStep) {
         this.studyForm.get('studyOrCollabID')?.enable();
       }
+      if (this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image && this.session?.image) {
+        const allowedAlgorithm: Algorithm | null = this.getAlgorithmFromImage(this.session.image);
+        if (allowedAlgorithm) {
+          this.functionsAllowedForSession = this.functionsAllowedForSession.filter((func) => func.algorithm_id === allowedAlgorithm.id);
+          this.functionsFilteredBySearch = this.functionsAllowedForSession;
+        }
+      }
       this.dataframes = await this.sessionService.getDataframes(this.session.id);
       // filter dataframes that are not ready - they cannot be used for analyses
       this.dataframes = this.dataframes.filter((df) => df.ready);
@@ -908,16 +924,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.setOrganizations();
   }
 
-  private async handleAlgorithmChange(algorithmID: number, algoStoreID: number): Promise<void> {
-    //Clear form
-    this.clearFunctionStep();
-    this.clearDatabaseStep();
-    this.clearParameterStep();
-
-    //Get selected algorithm
-    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
-  }
-
   private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
@@ -928,7 +934,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
     // Get selected function
     const selectedFunction =
-      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
+      this.functionsAllowedForSession.find(
+        (_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID
+      ) || null;
 
     if (selectedFunction) {
       // Add form controls for parameters for selected function
