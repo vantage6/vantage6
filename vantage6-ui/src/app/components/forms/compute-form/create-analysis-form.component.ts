@@ -797,7 +797,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.sessions = await this.sessionService.getSessions();
+    this.sessions = await this.sessionService.getSessions({
+      collaboration_id: this.collaboration?.id.toString() || ''
+    });
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
