@@ -1,7 +1,9 @@
-import sys
 import logging
+import sys
 from pathlib import Path
+
 from vantage6.cli.context.node import NodeContext
+
 from vantage6.node import run
 
 logging.basicConfig(level=logging.DEBUG)
@@ -9,7 +11,6 @@ log = logging.getLogger("vantage6.dev_start")
 
 
 def run_function(config):
-
     if not config:
         log.critical("No config provided.")
         return
@@ -21,7 +22,6 @@ def run_function(config):
 
 
 if __name__ == "__main__":
-
     config_file = Path(sys.argv[1]) if len(sys.argv) > 1 else None
     if not config_file:
         log.critical("No config file provided.")

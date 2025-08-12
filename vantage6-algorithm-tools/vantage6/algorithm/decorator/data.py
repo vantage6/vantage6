@@ -10,6 +10,7 @@ from vantage6.common.globals import (
     ContainerEnvNames,
 )
 
+from vantage6.algorithm.tools.exceptions import UserInputError
 from vantage6.algorithm.tools.util import error, info, warn
 
 
@@ -100,9 +101,6 @@ def dataframe(*sources: str | int) -> callable:
     """
     if not sources:
         sources = (1,)
-    elif isinstance(sources, int):
-        # if user calls it as @dataframe(3), we should convert it to (1, 1, 1)
-        sources = (1,) * sources
 
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
@@ -131,13 +129,15 @@ def dataframe(*sources: str | int) -> callable:
 
             # get the dataframe names that the user requested
             dataframes_grouped = _get_user_dataframes()
-            print("dataframes_grouped", dataframes_grouped)
-            print("sources", sources)
 
             # check if user provided enough databases
-            number_of_expected_arguments = len(sources)
-            print("number_of_expected_arguments", number_of_expected_arguments)
-            print("len(dataframes_grouped)", len(dataframes_grouped))
+            number_of_expected_arguments = 0
+            for source in sources:
+                if isinstance(source, int):
+                    number_of_expected_arguments += source
+                else:  # "multiple" requires one argument (of type list)
+                    number_of_expected_arguments += 1
+
             if len(dataframes_grouped) < number_of_expected_arguments:
                 error(
                     f"Algorithm requires {number_of_expected_arguments} databases "
@@ -152,20 +152,30 @@ def dataframe(*sources: str | int) -> callable:
                     f"first {number_of_expected_arguments} databases."
                 )
 
-            for source, requested_dataframes in zip(sources, dataframes_grouped):
-                # read the data from the database
-
+            # read the data from the database(s)
+            idx_dataframes = 0
+            for source in sources:
                 # if the source is not "multiple", we can just add the first (and only)
                 # dataframe to the arguments
-                if str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
-                    data_ = _read_df_from_disk(requested_dataframes[0])
+                if isinstance(source, int):
+                    for _ in range(source):
+                        requested_dataframes = dataframes_grouped[idx_dataframes]
+                        df = _read_df_from_disk(requested_dataframes[0])
+                        idx_dataframes += 1
+                        args = (df, *args)
+                elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                    requested_dataframes = dataframes_grouped[idx_dataframes]
+                    data_ = {
+                        df_name: _read_df_from_disk(df_name)
+                        for df_name in requested_dataframes
+                    }
+                    idx_dataframes += 1
+                    args = (data_, *args)
                 else:
-                    data_ = {}
-                    for df_name in requested_dataframes:
-                        data_[df_name] = _read_df_from_disk(df_name)
-
-                # add the data to the arguments
-                args = (data_, *args)
+                    raise UserInputError(
+                        f"Unrecognized argument '{source}' in dataframe decorator. "
+                        "Please use 'multiple' or a number of dataframes to load."
+                    )
 
             return func(*args, **kwargs)
 
