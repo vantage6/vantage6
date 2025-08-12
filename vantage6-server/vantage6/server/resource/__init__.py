@@ -171,16 +171,12 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         def decorator(*args, **kwargs):
             try:
                 _validate_user_or_node_token(types)
-
-                return fn(*args, **kwargs)
-
             except Exception:
                 if "container" not in types:
                     raise Exception("Authentication failed")
-
                 _validate_container_token()
 
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
 
         return decorator
 
