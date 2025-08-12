@@ -160,6 +160,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
   showWarningUniqueDFName: boolean = false;
+  sessionRestrictedToSameImage: boolean = false;
   repeatedTask: Task | null = null;
 
   sessionForm = this.fb.nonNullable.group({
@@ -893,6 +894,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.studyForm.get('studyOrCollabID')?.enable();
       }
       if (this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image && this.session?.image) {
+        this.sessionRestrictedToSameImage = true;
         const allowedAlgorithm: Algorithm | null = this.getAlgorithmFromImage(this.session.image);
         if (allowedAlgorithm) {
           this.functionsAllowedForSession = this.functionsAllowedForSession.filter((func) => func.algorithm_id === allowedAlgorithm.id);
