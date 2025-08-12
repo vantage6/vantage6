@@ -24,7 +24,7 @@ own collaborations.
 If you would like to contribute to the community store, you should first check the
 `production-ready algorithm guidelines <https://docs.vantage6.ai/en/main/algorithms/review_guidelines.html>`_
 to see if you meet the requirements. If you do, you can send an email to
-`Frank Martin <f.martin@iknl.nl>`_ to aquire and account and upload your algorithm. The algorithm
+`Frank Martin <f.martin@iknl.nl>`_ to acquire an account and upload your algorithm. The algorithm
 will go through a review process before it is added to the community store.
 
 .. # TODO add link to creating algorithm store
