@@ -1964,7 +1964,16 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
+            ## Is a seperate method needed or can we add the delete blob to the general delete method?
+            if self.parent.check_if_blob_store_enabled():
+                # If blob store is enabled, we also need to delete the blobs
+                # associated with the task.
+                
+                msg = self.parent.request(f"blobstream/delete/{id_}", method="delete")
+                self.parent.log.info(f"--> {msg}")
+
             msg = self.parent.request(f"task/{id_}", method="delete")
+            
             self.parent.log.info(f"--> {msg}")
 
         def kill(self, id_: int) -> dict:

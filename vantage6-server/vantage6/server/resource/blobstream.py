@@ -196,7 +196,7 @@ class BlobStream(BlobStreamBase):
         return {"uuid": result_uuid}, HTTPStatus.CREATED
     
     @only_for(("node", "user", "container"))
-    def delete(self):
+    def delete(self, id):
         if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to azure blob storage, result streaming is not available."
