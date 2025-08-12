@@ -4,17 +4,16 @@ communicate with the server. It contains general methods for any routes, and
 methods to handle tasks and results, including their encryption and decryption.
 """
 
-import requests
 import logging
 import traceback
-
-from time import sleep
 from http import HTTPStatus
+from time import sleep
+
+import requests
+from flask import Flask, request
 from requests import Response
 
-from flask import Flask, request
-
-from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
+from vantage6.common import base64s_to_bytes, bytes_to_base64s, logger_name
 from vantage6.common.client.node_client import NodeClient
 
 # Initialize FLASK
@@ -175,8 +174,7 @@ def decrypt_result(run: dict) -> dict:
             )
     except Exception:
         log.exception(
-            "Unable to decrypt and/or decode results, sending them "
-            "to the algorithm..."
+            "Unable to decrypt and/or decode results, sending them to the algorithm..."
         )
 
     return run
@@ -217,8 +215,7 @@ def proxy_task():
     client: NodeClient | None = app.config.get("SERVER_IO")
     if not client:
         log.error(
-            "Task proxy request received but proxy server was not "
-            "initialized properly."
+            "Task proxy request received but proxy server was not initialized properly."
         )
         return (
             {"msg": "Proxy server not initialized properly"},
