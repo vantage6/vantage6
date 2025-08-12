@@ -24,7 +24,6 @@ from vantage6.server.resource import only_for, with_user
 from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource.common.output_schema import SessionSchema
 from vantage6.server.resource.common.task_post_base import TaskPostBase
-from vantage6.server.resource.task import Tasks
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -465,11 +464,18 @@ class Sessions(SessionBase):
         # can see the sessions in the collaboration that have a scope collaboration.
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(db.Session.collaboration_id.in_(auth_org.collaborations))
-            elif self.r.v_org.can():
                 q = q.filter(
+                    db.Session.collaboration_id.in_(
+                        self.obtain_auth_collaboration_ids()
+                    )
+                )
+            elif self.r.v_org.can():
+                q = q.join(db.User, db.Session.user_id == db.User.id).filter(
                     or_(
-                        db.Session.organization_id == auth_org.id,
+                        and_(
+                            db.User.organization_id == auth_org.id,
+                            db.Session.user_id == db.User.id,
+                        ),
                         and_(
                             db.Session.collaboration_id.in_(
                                 self.obtain_auth_collaboration_ids()
@@ -479,15 +485,18 @@ class Sessions(SessionBase):
                     )
                 )
             else:
-                q = q.filter(
+                q = q.join(db.User, db.Session.user_id == db.User.id).filter(
                     or_(
                         db.Session.user_id == g.user.id,
                         and_(
-                            db.Session.organization_id == auth_org.id,
+                            db.User.organization_id == auth_org.id,
+                            db.Session.user_id == db.User.id,
                             db.Session.scope == S.ORGANIZATION,
                         ),
                         and_(
-                            db.Session.collaboration_id.in_(auth_org.collaborations),
+                            db.Session.collaboration_id.in_(
+                                self.obtain_auth_collaboration_ids()
+                            ),
                             db.Session.scope == S.COLLABORATION,
                         ),
                     )

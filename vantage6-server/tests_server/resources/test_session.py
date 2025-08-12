@@ -1,18 +1,35 @@
+from http import HTTPStatus
 from uuid import uuid1
 
-from vantage6.server.model import Session, User, Node
+from vantage6.server.model import Session, User
+from vantage6.server.model.collaboration import Collaboration
+from vantage6.server.model.organization import Organization
+from vantage6.server.model.rule import Operation, Rule, Scope
 
 from .test_resource_base import TestResourceBase
 
 
 class TestSessionResource(TestResourceBase):
-
-    def create_session(self, user=None):
+    def create_session(
+        self, user=None, organization=None, collaboration=None, scope=Scope.OWN
+    ):
+        if not organization:
+            organization = Organization(name=str(uuid1()))
+            organization.save()
         if not user:
-            user = User.get_by_username("admin")
+            user = User(username=str(uuid1()), organization=organization)
+            user.save()
+        if not collaboration:
+            collaboration = Collaboration(
+                name=str(uuid1()), organizations=[organization]
+            )
+            collaboration.save()
 
         session = Session(
-            name=str(uuid1()), collaboration_id=1, scope="OWN", owner=user
+            name=str(uuid1()),
+            collaboration_id=collaboration.id,
+            scope=scope.value,
+            owner=user,
         )
         session.save()
 
@@ -20,61 +37,88 @@ class TestSessionResource(TestResourceBase):
 
     def test_get_session(self):
         session = self.create_session()
-        headers = self.login()
+        headers = self.login_as_root()
         sessions_response = self.app.get("/api/session", headers=headers)
-        assert sessions_response.status_code == 200
+        assert sessions_response.status_code == HTTPStatus.OK
 
         data = sessions_response.json["data"][0]
         self.assertEqual(data["name"], session.name)
         self.assertEqual(data["scope"], session.scope)
-        self.assertIn("owner", data)
-        self.assertIn("collaboration", data)
-        self.assertIn("tasks", data)
+        self.assertEqual(data["owner"]["id"], session.owner.id)
+        self.assertEqual(data["collaboration"]["id"], session.collaboration_id)
+        self.assertEqual(data["study"], None)
+        self.assertEqual(data["image"], None)
         self.assertIn("last_used_at", data)
         self.assertIn("created_at", data)
-        self.assertIn("ready", data)
-        self.assertIn("node_sessions", data)
-
-        session.delete()
+        self.assertEqual(data["ready"], False)
 
     def test_create_session(self):
-        headers = self.login()
+        organization = Organization(name=str(uuid1()))
+        organization.save()
+        collaboration = Collaboration(name=str(uuid1()), organizations=[organization])
+        collaboration.save()
+        user = User(
+            username=str(uuid1()),
+            organization=organization,
+            rules=[
+                Rule.get_by_(
+                    name="session",
+                    scope=Scope.COLLABORATION,
+                    operation=Operation.CREATE,
+                )
+            ],
+        )
+        user.save()
+
+        headers = self.login(user)
         session_input = {
             "name": str(uuid1()),
-            "collaboration_id": 1,
+            "collaboration_id": collaboration.id,
             "scope": "own",
         }
         response = self.app.post("/api/session", json=session_input, headers=headers)
-        assert response.status_code == 201
+        assert response.status_code == HTTPStatus.CREATED
 
         session = Session.get(response.json["id"])
         self.assertEqual(session.name, session_input["name"])
         self.assertEqual(session.scope, session_input["scope"])
 
-        session.delete()
-
     def test_get_session_id(self):
         session = self.create_session()
-        headers = self.login()
+        headers = self.login_as_root()
         response = self.app.get(f"/api/session/{session.id}", headers=headers)
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
 
         data = response.json
         self.assertEqual(data["name"], session.name)
         self.assertEqual(data["scope"], session.scope)
-        self.assertIn("owner", data)
-        self.assertIn("collaboration", data)
-        self.assertIn("tasks", data)
+        self.assertEqual(data["owner"]["id"], session.owner.id)
+        self.assertEqual(data["collaboration"]["id"], session.collaboration_id)
+        self.assertEqual(data["study"], None)
+        self.assertEqual(data["image"], None)
         self.assertIn("last_used_at", data)
         self.assertIn("created_at", data)
-        self.assertIn("ready", data)
-        self.assertIn("node_sessions", data)
-
-        session.delete()
+        self.assertEqual(data["ready"], False)
 
     def test_update_session(self):
-        session = self.create_session()
-        headers = self.login()
+        organization = Organization(name=str(uuid1()))
+        organization.save()
+        collaboration = Collaboration(name=str(uuid1()), organizations=[organization])
+        collaboration.save()
+        user = User(
+            username=str(uuid1()),
+            organization=organization,
+            rules=[
+                Rule.get_by_(
+                    name="session",
+                    scope=Scope.COLLABORATION,
+                    operation=Operation.EDIT,
+                )
+            ],
+        )
+        user.save()
+        session = self.create_session(user, organization, collaboration)
+        headers = self.login(user)
         session_input = {
             "name": str(uuid1()),
             "scope": "own",
@@ -82,7 +126,7 @@ class TestSessionResource(TestResourceBase):
         response = self.app.patch(
             f"/api/session/{session.id}", json=session_input, headers=headers
         )
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
 
         session = Session.get(session.id)
         self.assertEqual(session.name, session_input["name"])
@@ -92,67 +136,113 @@ class TestSessionResource(TestResourceBase):
 
     def test_delete_session(self):
         session = self.create_session()
-        headers = self.login()
+        headers = self.login_as_root()
         response = self.app.delete(f"/api/session/{session.id}", headers=headers)
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
 
         session = Session.get(session.id)
         self.assertIsNone(session)
 
-    def test_get_node_sessions(self):
-        headers = self.login()
-        session_rep = self.app.post(
-            "/api/session",
-            json={"name": str(uuid1()), "collaboration_id": 1, "scope": "own"},
-            headers=headers,
+    def test_view_session_permissions(self):
+        organization = Organization(name=str(uuid1()))
+        organization.save()
+        organization2 = Organization(name=str(uuid1()))
+        organization2.save()
+        collaboration = Collaboration(
+            name=str(uuid1()), organizations=[organization, organization2]
+        )
+        collaboration.save()
+        user = User(username=str(uuid1()), organization=organization)
+        user.save()
+
+        session_own = self.create_session(user, organization, collaboration)
+        session_org = self.create_session(
+            user, organization, collaboration, Scope.ORGANIZATION
+        )
+        session_col = self.create_session(
+            user, organization, collaboration, Scope.COLLABORATION
         )
 
-        session = Session.get(session_rep.json["id"])
-        for n_session in session.node_sessions:
-            self.addCleanup(n_session.delete)
-        self.addCleanup(session.delete)
+        # check that root user can see all sessions
+        headers = self.login_as_root()
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 3
 
-        response = self.app.get(f"/api/session/{session.id}/node", headers=headers)
-        assert response.status_code == 200
+        # check that user without any permissions can not see any sessions
+        headers = self.create_user_and_login()
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 0
 
-        data = response.json
-        self.assertGreater(len(data), 0)
-        self.assertEqual(len(data), len(session.node_sessions))
+        # check that the user that create the session can see the sessions
+        headers = self.login(user)
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 3
 
-    def test_update_node_sessions(self):
+        # check that a user from the same organization can see all sessions except the
+        # one with scope OWN
+        headers = self.create_user_and_login(organization=organization)
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 2
+        assert session_own.id not in [s["id"] for s in response.json["data"]]
 
-        # API key is coming from the unittest.yaml file
-        node = Node.get_by_api_key("123e4567-e89b-12d3-a456-426614174000")
-        collaboration_id = node.collaboration_id
+        # check that a user from another organization can see the collaboration level
+        # sessions
+        headers = self.create_user_and_login(organization=organization2)
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 1
+        assert response.json["data"][0]["id"] == session_col.id
 
-        headers = self.login()
-        session_rep = self.app.post(
-            "/api/session",
-            json={
-                "name": str(uuid1()),
-                "collaboration_id": collaboration_id,
-                "scope": "own",
-            },
-            headers=headers,
+        # Check that if we give user from another organization the permissions to see
+        # all sessions on collaboration level, they can see the all sessions the first
+        # user created
+        headers = self.create_user_and_login(
+            organization=organization2,
+            rules=[
+                Rule.get_by_(
+                    name="session",
+                    scope=Scope.COLLABORATION,
+                    operation=Operation.VIEW,
+                )
+            ],
         )
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 3
 
-        session = Session.get(session_rep.json["id"])
-        for n_session in session.node_sessions:
-            for n_session_config in n_session.config:
-                self.addCleanup(n_session_config.delete)
-            self.addCleanup(n_session.delete)
-        self.addCleanup(session.delete)
-
-        headers = self.login_node(api_key="123e4567-e89b-12d3-a456-426614174000")
-        response = self.app.patch(
-            f"/api/session/{session.id}/node",
-            json={
-                "state": "ready",
-                "config": [{"key": "test-key", "value": "test-value"}],
-            },
-            headers=headers,
+        # check that a user from the same organization with organization level
+        # permissions can also see the scope=own session (and the other sessions)
+        headers = self.create_user_and_login(
+            organization=organization,
+            rules=[
+                Rule.get_by_(
+                    name="session",
+                    scope=Scope.ORGANIZATION,
+                    operation=Operation.VIEW,
+                )
+            ],
         )
-        assert response.status_code == 200
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 3
 
-        # data = response.json
-        # conf = data["config"][0]
+        # check that for a user from another organization with organization level
+        # permissions, they cannot see the scope=own session nor the scope=organization
+        # session, but only the scope=collaboration session
+        headers = self.create_user_and_login(
+            organization=organization2,
+            rules=[
+                Rule.get_by_(
+                    name="session",
+                    scope=Scope.ORGANIZATION,
+                    operation=Operation.VIEW,
+                )
+            ],
+        )
+        response = self.app.get("/api/session", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        assert len(response.json["data"]) == 1
