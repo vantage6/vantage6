@@ -1892,8 +1892,6 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
-            print("Creating task with parameters:")
-            print(params)
             return self.parent.request(
                 "task",
                 method="post",
@@ -2224,14 +2222,6 @@ class UserClient(ClientBase):
             self.parent.log.info("Successfully decrypted results")
             return results
         
-
-            
-            # If blob storage is used, the JSON response contains a UUID reference
-            # rather than the actual data. Download the data from storage.
-            
-            result = self.result._decrypt_result(run, is_single_result=False)
-            return result
-
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
             Wrapper function to decrypt and deserialize the result of one or
