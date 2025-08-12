@@ -244,7 +244,14 @@ class SessionDataframes(SessionBase):
 
         collaboration = session.collaboration
 
-        self.__check_image_allowed_in_session(collaboration, data["image"], session)
+        task = data["task"]
+        image_with_hash, _, _ = self.get_algorithm(
+            task.get("store_id"),
+            session.collaboration_id,
+            task["image"],
+        )
+
+        self.__check_image_allowed_in_session(collaboration, image_with_hash, session)
 
         # This label is used to identify the database, this label should match the
         # label in the node configuration file. Each node can have multiple
@@ -252,8 +259,7 @@ class SessionDataframes(SessionBase):
         source_db_label = data["label"]
 
         # Create the dataframe
-        df_name = data.get("name")
-        if df_name:
+        if df_name := data.get("name"):
             if db.Dataframe.name_exists(df_name):
                 return {
                     "msg": f"Dataframe with name {df_name} already exists. Duplicate "
@@ -276,9 +282,9 @@ class SessionDataframes(SessionBase):
         # When a session is initialized, a mandatory data extraction step is
         # required. This step is the first step in the dataframe and is used to
         # extract the data from the source database.
-        extraction_details = data["task"]
-        if "description" in extraction_details and extraction_details["description"]:
-            description = extraction_details["description"]
+
+        if task.get("description"):
+            description = task["description"]
         else:
             description = (
                 f"Data extraction step for session {session.name} ({session.id})."
@@ -290,9 +296,9 @@ class SessionDataframes(SessionBase):
         try:
             response, status_code = self.create_session_task(
                 session=session,
-                image=extraction_details["image"],
-                method=extraction_details["method"],
-                organizations=extraction_details["organizations"],
+                image=task["image"],
+                method=task["method"],
+                organizations=task["organizations"],
                 databases=[
                     [
                         CreateTaskDB(
@@ -303,7 +309,7 @@ class SessionDataframes(SessionBase):
                 description=description,
                 action=AlgorithmStepType.DATA_EXTRACTION,
                 dataframe=dataframe,
-                store_id=extraction_details.get("store_id"),
+                store_id=task.get("store_id"),
             )
         except Exception as e:
             dataframe.delete()
@@ -485,6 +491,7 @@ class SessionDataframe(SessionBase):
 
 
 class DataframePreprocessing(SessionBase):
+    @handle_exceptions
     @with_user
     def post(self, id):
         """Add a preprocessing step to a dataframe

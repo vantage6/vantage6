@@ -64,6 +64,7 @@ export interface Session {
   collaboration?: BaseLink;
   dataframes: string[];
   tasks: string[];
+  image?: string;
 }
 
 export interface CreateSession {

@@ -153,6 +153,8 @@
     "scope": "Scope",
     "ready": "Ready to use?",
     "created-at": "Created",
+    "restricted_to_single_image": "Session restricted to single image?",
+    "image": "Image used in session",
     "dataframes": {
       "title": "Dataframes",
       "add": "Create dataframe",

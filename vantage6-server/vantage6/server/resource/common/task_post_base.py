@@ -103,20 +103,15 @@ class TaskPostBase(ServicesResources):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
-
-        elif g.container:
-            if not self.__verify_container_permissions(
-                g.container, image, collaboration.id
-            ):
-                return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
+        elif g.container and not self.__verify_container_permissions(
+            g.container, image, collaboration.id
+        ):
+            return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         image_with_hash, store, algorithm = self.get_algorithm(
             data.get("store_id"), collaboration.id, image
         )
-
-        # # check if the image can be run within this session
-        # if collaboration.session_restrict_to_same_image:
-        #     self.__check_image_allowed_in_session(image_with_hash, session)
+        self._check_image_allowed_in_session(image_with_hash, session, collaboration)
 
         # check the action of the task
         action = self.__check_action(data, action, algorithm, should_be_compute)
@@ -277,6 +272,19 @@ class TaskPostBase(ServicesResources):
                 "You can only create tasks for collaborations you are participating in!"
             )
         return init_org
+
+    def _check_image_allowed_in_session(
+        self, image_with_hash: str, session: db.Session, collaboration: db.Collaboration
+    ) -> None:
+        """Check if the image can be run within this session"""
+        if (
+            collaboration.session_restrict_to_same_image
+            and session.image != image_with_hash
+        ):
+            raise BadRequestError(
+                f"The session is restricted to the single image '{session.image}'. "
+                f"You cannot create a task with image '{image_with_hash}'."
+            )
 
     def _get_dependent_tasks(
         self,
@@ -479,21 +487,6 @@ class TaskPostBase(ServicesResources):
                 collaboration_id,
             )
             return False
-
-        # check that the image is allowed: algorithm containers can only
-        # create tasks with the same image
-        collaboration: db.Collaboration = db.Collaboration.get(collaboration_id)
-        if collaboration.session_restrict_to_same_image:
-            if not image != container["image"]:
-                log.warning(
-                    "Container from node=%s attempts to post a "
-                    "task using a different image than the parent task. That is not "
-                    "allowed in this collaboration.",
-                    container["node_id"],
-                )
-                log.warning("  requested image: %s", image)
-                log.warning("  parent image: %s", container["image"])
-                return False
 
         # check that parent task is not completed yet
         if TaskStatus.has_finished(db.Task.get(container["task_id"]).status):

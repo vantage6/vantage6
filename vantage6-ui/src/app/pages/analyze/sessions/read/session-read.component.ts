@@ -148,6 +148,10 @@ export class SessionReadComponent implements OnInit, OnDestroy {
     };
   }
 
+  get chosenCollaborationIsRestrictedToSingleImage(): boolean {
+    return this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image ?? false;
+  }
+
   handleDataframeTableClick(id: string): void {
     this.router.navigate([routePaths.sessionDataframe.replace(':sessionId', this.id), id]);
   }
