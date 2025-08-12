@@ -82,7 +82,7 @@ Release notes
     and then runs a script in that environment. This is mostly meant for testing
     algorithms (`Issue#1615 <https://github.com/vantage6/vantage6/issues/1615>`_,
     `PR#1835 <https://github.com/vantage6/vantage6/pull/1835>`_).
-  - The performance of the ``retrieve_results`` function in the algorithm client and
+  - The performance of the ``wait_for_results`` function in the algorithm client and
     the user client has been improved by implementing a specific task `/status`
     endpoint (`Issue#1363 <https://github.com/vantage6/vantage6/issues/1363>`_,
     `PR#1885 <https://github.com/vantage6/vantage6/pull/1885>`_).
@@ -2184,8 +2184,8 @@ Release notes
      (`PR#325 <https://github.com/vantage6/vantage6/pull/325>`__,
      `ISSUE#8 <https://github.com/vantage6/vantage6/issues/8>`__).
      Which allows you to automatically poll for results by using
-     ``client.retrieve_results(...)``, for more info see
-     ``help(client.retrieve_results)``.
+     ``client.wait_for_results(...)``, for more info see
+     ``help(client.wait_for_results)``.
   -  Added Github releases
      (`PR#358 <https://github.com/vantage6/vantage6/pull/358>`__,
      `ISSUE#357 <https://github.com/vantage6/vantage6/issues/357>`__).
