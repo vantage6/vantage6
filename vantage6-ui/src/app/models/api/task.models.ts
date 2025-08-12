@@ -129,6 +129,7 @@ export interface TaskResult {
   id: number;
   result?: string;
   decoded_result?: object;
+  data_storage_used?: DataStorageUsed;
 }
 
 export interface TaskDatabase {
