@@ -81,7 +81,7 @@ class CryptorBase(metaclass=Singleton):
         """
         return base64s_to_bytes(data)
 
-    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str, skip__base64_encoding_of_msg: bool = False) -> str:
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64: str, skip_base64_encoding_of_msg: bool = False) -> str:
         """
         Encrypt bytes in `data` using a (base64 encoded) public key.
 
@@ -354,7 +354,7 @@ class RSACryptor(CryptorBase):
         """
         return bytes_to_base64s(self.public_key_bytes)
 
-    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str, skip__base64_encoding_of_msg: bool = False) -> str:
+    def encrypt_bytes_to_str(self, data: bytes, pubkey_base64s: str, skip_base64_encoding_of_msg: bool = False) -> str:
         """
         Encrypt bytes in `data` using a (base64 encoded) public key.
 
@@ -398,7 +398,7 @@ class RSACryptor(CryptorBase):
         # Join the encrypted key, iv and encrypted message into a single string
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
-        if skip__base64_encoding_of_msg:
+        if skip_base64_encoding_of_msg:
             header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode("utf-8")
             return header + encrypted_msg_bytes
         else:
@@ -461,7 +461,6 @@ class RSACryptor(CryptorBase):
         # Note that the decryption process is the reverse of the encryption process
         # in the function above
         (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
-
         # Convert the strings to back to bytes
         encrypted_key_bytes = self.str_to_bytes(encrypted_key)
         iv_bytes = self.str_to_bytes(iv)
@@ -469,7 +468,6 @@ class RSACryptor(CryptorBase):
 
         # Decrypt the shared key using asymmetric encryption
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
-
         # In the UI, the bytes have to be base64 encoded before encryption (we cannot
         # encrypt bytes directly in javascript) - so if this key was encrypted in the
         # UI, we need to decode it here as extra step. If it fails, ignore it as it is

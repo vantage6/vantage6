@@ -276,7 +276,7 @@ def proxy_task():
         # Encrypt the input field
         client: NodeClient = app.config.get("SERVER_IO")
         encrypted_input = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_), public_key, skip__base64_encoding_of_msg=blob_store_enabled
+            base64s_to_bytes(input_), public_key, skip_base64_encoding_of_msg=blob_store_enabled
         )
 
         log.debug("Input successfully encrypted for organization %s!", organization_id)

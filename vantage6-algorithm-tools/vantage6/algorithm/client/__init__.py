@@ -291,31 +291,27 @@ class AlgorithmClient(ClientBase):
                 List of results. The type of the results depends on the
                 algorithm.
             """
+            def decode_result(run):
+                result_data = run.get("result")
+                if not result_data:
+                    return None
+                try:
+                    if run.get("data_storage_used") == DataStorageUsed.AZURE.value:
+                        run_data = self.parent.download_run_data_from_server(result_data)
+                        return json.loads(run_data.decode('utf-8'))
+                    else:
+                        return json.loads(base64s_to_bytes(result_data).decode())
+                except Exception as e:
+                    self.parent.log.error(f"Unable to load results for task {task_id}: {e}")
+                    return None
+
             results = self.parent._multi_page_request(
                 "result", params={"task_id": task_id}
             )
-
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
             for run in results:
-                if run.get("data_storage_used") == DataStorageUsed.AZURE.value:
-                    try:
-                        uuid = run.get("result")
-                        run_data = self.parent.download_run_data_from_server(uuid)
-                        run["result"] = json.loads(run_data.decode('utf-8'))
-                    except Exception as e:
-                        self.parent.log.error(f"Failed to download or decode Azure result for task {task_id}: {e}")
-                        run["result"] = None
-                else:
-                    if run.get("result"):
-                        try:
-                            run["result"] = json.loads(base64s_to_bytes(run.get("result")).decode())
-                        except Exception as e:
-                            self.parent.log.error("Unable to load results")
-                            self.parent.log.error(e)
-                            run["result"] = None
-                    else:
-                        run["result"] = None
+                run["result"] = decode_result(run)
             return results
 
     class Task(ClientBase.SubClient):
@@ -379,24 +375,25 @@ class AlgorithmClient(ClientBase):
             description = (
                 description or f"task from container on node_id={self.parent.node_id}"
             )
+            # Note that the input is not encrypted here, but in the proxy server (self.parent.request())
             if input_:
                 organization_json_list = []
+                # serializing input. Note that the input is not encrypted here, but
+                # in the proxy server (self.parent.request())
+                serialized_input = serialize(input_)
+                blob_store_enabled = self.parent.check_if_blob_store_enabled()
                 for org_id in organizations:
                     pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
                     self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
-                    # Note that the input is not encrypted here, but in the proxy server (self.parent.request())
-                    blob_store_enabled = self.parent.check_if_blob_store_enabled()
-                    self.parent.log.debug("Blob store enabled: %s", blob_store_enabled)
+                    # If blob store is enabled, upload the input data to blob storage
+                    # and set a UUID reference for the input.
                     if blob_store_enabled:
-                        input_uuid = self.parent.upload_run_data_to_server(serialize(input_), pub_key=pub_key)
-                        organization_json_list.append(
-                            {
-                                "id": org_id,
-                                "input": input_uuid,
-                            }
-                        )
+                        self.parent.log.debug("Blob store is enabled, uploading input data to blob storage.")
+                        input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
+                        org_input = input_uuid
                     else:
-                        organization_json_list.append({"id": org_id, "input": bytes_to_base64s(serialize(input_))})
+                        org_input = bytes_to_base64s(serialized_input)
+                    organization_json_list.append({"id": org_id, "input": org_input})
 
             json_body = {
                 "name": name,
