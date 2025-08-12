@@ -968,6 +968,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       form.addControl(`dataframeId${index}`, new FormControl(null, [Validators.required]));
     });
     // Add value change subscriptions for dataframe form controls
+    // TODO BvB 2025-08-12: I feel this triple loop can be simplified - requires testing
     if (func.databases) {
       func.databases.forEach((_, idx) => {
         (form.get(`dataframeId${idx}`) as any)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (value: any) => {
