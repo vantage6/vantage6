@@ -102,7 +102,7 @@
                   </button>
                 </mat-form-field>
                 <mat-option
-                  *ngFor="let function of filteredFunctions"
+                  *ngFor="let function of functionsFilteredBySearch"
                   class="function-select-option"
                   [innerHTML]="getFunctionOptionLabel(function) | highlight: functionForm.controls.algorithmFunctionSearch.value : true"
                   [value]="getAlgorithmFunctionSpec(function)"
