@@ -66,12 +66,28 @@ delete_all_in_dir() {
   echo "Deleting all data in ${dir}"
 
   need_sudo=0
-  for item in "$dir"/*; do
-    if [ ! -w "$item" ]; then
-      need_sudo=1
-      break
-    fi
-  done
+  # Function to check write permissions recursively
+  check_permissions() {
+    local path="$1"
+    for item in "$path"/*; do
+      if [ -e "$item" ]; then
+        if [ ! -w "$item" ]; then
+          need_sudo=1
+          return
+        fi
+        # If it's a directory, check its contents recursively
+        if [ -d "$item" ]; then
+          check_permissions "$item"
+          # If we found a permission issue, stop checking
+          if [ $need_sudo -eq 1 ]; then
+            return
+          fi
+        fi
+      fi
+    done
+  }
+
+  check_permissions "$dir"
 
   # Check if directory is writable by current user
   if [ $need_sudo -eq 0 ]; then

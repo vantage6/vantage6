@@ -11,7 +11,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import {
   Algorithm,
@@ -112,7 +112,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
-  @Input() dataframe?: Dataframe | null = null;
+  @Input() selectedDataframes: Dataframe[] = [];
 
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
@@ -179,9 +179,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   databaseForm = this.fb.nonNullable.group({
     database: ['', Validators.required]
   });
-  dataframeForm = this.fb.nonNullable.group({
-    dataframeId: ['', Validators.required]
-  });
+  dataframeForm = this.fb.nonNullable.group({});
   parameterForm: FormGroup = this.fb.nonNullable.group({});
 
   private nodeStatusUpdateSubscription?: Subscription;
@@ -259,13 +257,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   dataFrameNotReadyForAllSelectedOrganizations(): boolean {
-    if (!this.dataframe) return false;
+    if (!this.selectedDataframes || this.selectedDataframes.length === 0) return false;
     let selectedOrganizations = this.functionForm.controls.organizationIDs.value;
     if (!selectedOrganizations) return false;
     if (!Array.isArray(selectedOrganizations)) {
       selectedOrganizations = [selectedOrganizations];
     }
-    const selectedOrganizationsNotReady = selectedOrganizations.filter((org) => !this.dataframe?.organizations_ready.includes(Number(org)));
+    const selectedOrganizationsNotReady = selectedOrganizations.filter(
+      (org) => !this.selectedDataframes.find((df) => df.organizations_ready.includes(Number(org)))
+    );
     this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
       (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''
     );
@@ -350,8 +350,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // set dataframe step
     if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-      this.dataframeForm.controls.dataframeId.setValue(this.repeatedTask.databases[0].dataframe_id?.toString() || '');
-      await this.handleDataframeChange(this.repeatedTask.databases[0].dataframe_id?.toString() || '');
+      this.repeatedTask.databases.forEach((db, idx) => {
+        (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
+      });
+      await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
     }
 
     // set parameter step
@@ -531,15 +533,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       formCreateOutput.database = this.databaseForm.controls.database.value;
     }
 
-    // TODO get this to work for algorithms that use multiple dataframes
     if (this.shouldShowDataframeStep) {
-      const ids = this.dataframeForm.controls.dataframeId.value;
-      formCreateOutput.dataframes = [
-        (Array.isArray(ids) ? ids : [ids]).map((id) => ({
-          dataframe_id: id,
-          type: TaskDatabaseType.Dataframe
-        }))
-      ];
+      const dataframes: { dataframe_id: number; type: TaskDatabaseType }[][] = [];
+      if (this.function?.databases) {
+        this.function.databases.forEach((_, idx) => {
+          const value = (this.dataframeForm.get(`dataframeId${idx}`) as any)?.value;
+          if (value) {
+            if (Array.isArray(value)) {
+              dataframes.push(value.map((id: any) => ({ dataframe_id: Number(id), type: TaskDatabaseType.Dataframe })));
+            } else {
+              dataframes.push([{ dataframe_id: Number(value), type: TaskDatabaseType.Dataframe }]);
+            }
+          }
+        });
+      }
+      formCreateOutput.dataframes = dataframes;
     }
 
     this.onSubmit.next(formCreateOutput);
@@ -856,13 +864,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       });
 
     // set columns if dataframe is already set (for preprocessing tasks)
-    if (this.dataframe) {
-      this.setColumns(this.dataframe);
+    if (this.selectedDataframes.length > 0) {
+      this.setColumns(this.selectedDataframes);
     }
-    // set columns if dataframe is selected
-    this.dataframeForm.controls['dataframeId'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (dataframeID) => {
-      this.handleDataframeChange(dataframeID);
-    });
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -876,8 +880,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.isDataInitialized = true;
   }
 
-  setColumns(dataframe: Dataframe) {
-    this.columns = dataframe.columns.map((col) => col.name);
+  setColumns(dataframes: Dataframe[]) {
+    // TODO generate warnings for columns that are not present on all dataframes
+    this.columns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
   }
 
   private async handleSessionChange(sessionID: string): Promise<void> {
@@ -930,6 +935,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
     this.clearDatabaseStep();
+    this.clearDataframeStep();
     this.clearParameterStep();
 
     //Get selected function
@@ -943,6 +949,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (selectedFunction) {
       // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
+      this.addDataframeFormControlsForFunction(selectedFunction, this.dataframeForm);
 
       // If it's a federated step, select all organizations
       if (this.isFederatedStep(selectedFunction.step_type)) {
@@ -956,17 +963,38 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.function = selectedFunction;
   }
 
-  private async handleDataframeChange(dataframeID: string): Promise<void> {
-    this.columns = [];
-    if (Array.isArray(dataframeID) && dataframeID.length > 0) {
-      // For multi-select, use the first selected dataframe to get columns
-      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID[0]));
-    } else if (dataframeID) {
-      // For single select
-      this.dataframe = this.dataframes.find((_) => _.id === Number(dataframeID));
+  private addDataframeFormControlsForFunction(func: AlgorithmFunctionExtended, form: FormGroup) {
+    func?.databases.forEach((database, index) => {
+      form.addControl(`dataframeId${index}`, new FormControl(null, [Validators.required]));
+    });
+    // Add value change subscriptions for dataframe form controls
+    // TODO BvB 2025-08-12: I feel this triple loop can be simplified - requires testing
+    if (func.databases) {
+      func.databases.forEach((_, idx) => {
+        (form.get(`dataframeId${idx}`) as any)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (value: any) => {
+          // Collect all current dataframe values
+          const allDataframeValues: string[] = [];
+          func.databases.forEach((__, dbIdx) => {
+            const dbValue = (this.dataframeForm.get(`dataframeId${dbIdx}`) as any)?.value;
+            if (dbValue) {
+              if (Array.isArray(dbValue)) {
+                allDataframeValues.push(...dbValue.map((v: any) => v.toString()));
+              } else {
+                allDataframeValues.push(dbValue.toString());
+              }
+            }
+          });
+          await this.handleDataframeChange(allDataframeValues);
+        });
+      });
     }
-    if (this.dataframe) {
-      this.setColumns(this.dataframe);
+  }
+
+  private async handleDataframeChange(dataframeIDs: string[]): Promise<void> {
+    this.columns = [];
+    this.selectedDataframes = this.dataframes.filter((_) => dataframeIDs.includes(_.id.toString()));
+    if (this.selectedDataframes.length > 0) {
+      this.setColumns(this.selectedDataframes);
     }
 
     // Set loading columns to false after columns are loaded
@@ -1003,6 +1031,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   // TODO this function might be removed
   private clearDatabaseStep(): void {}
+
+  private clearDataframeStep(): void {
+    this.dataframeForm.reset();
+    this.columns = [];
+    this.selectedDataframes = [];
+  }
 
   private clearParameterStep(): void {
     this.parameterForm = this.fb.nonNullable.group({});

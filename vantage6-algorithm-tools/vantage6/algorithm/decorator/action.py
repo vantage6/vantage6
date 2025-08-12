@@ -41,7 +41,7 @@ def _exit_if_action_mismatch(function_action: AlgorithmStepType):
         If the container action does not match the requested action.
 
     """
-    info(f"Validating function action: {function_action}")
+    info(f"Validating function action: {function_action.value}")
     requested_action = get_action()
 
     if requested_action != function_action:

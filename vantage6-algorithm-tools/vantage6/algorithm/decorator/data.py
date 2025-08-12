@@ -1,10 +1,17 @@
 import os
-import pandas as pd
-
 from functools import wraps
 
-from vantage6.common.globals import ContainerEnvNames, DATAFRAME_MULTIPLE_KEYWORD
-from vantage6.algorithm.tools.util import info, error, warn
+import pandas as pd
+
+from vantage6.common.globals import (
+    DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
+    DATAFRAME_MULTIPLE_KEYWORD,
+    DATAFRAME_WITHIN_GROUP_SEPARATOR,
+    ContainerEnvNames,
+)
+
+from vantage6.algorithm.tools.exceptions import UserInputError
+from vantage6.algorithm.tools.util import error, info, warn
 
 
 def _get_user_dataframes() -> list[str]:
@@ -19,8 +26,8 @@ def _get_user_dataframes() -> list[str]:
     """
     dfs = os.environ[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value]
 
-    data_arguments = dfs.split(";")
-    return [arg.split(",") for arg in data_arguments]
+    data_arguments = dfs.split(DATAFRAME_BETWEEN_GROUPS_SEPARATOR)
+    return [arg.split(DATAFRAME_WITHIN_GROUP_SEPARATOR) for arg in data_arguments]
 
 
 def _read_df_from_disk(df_name: str) -> pd.DataFrame:
@@ -82,9 +89,9 @@ def dataframe(*sources: str | int) -> callable:
     >>>                  <other arguments>):
     >>>     pass
 
-    >>> @dataframe("multiple", 3)
+    >>> @dataframe("multiple", 2)
     >>> def my_algorithm(dfs: dict[str, pd.DataFrame], first_df: pd.DataFrame,
-    >>>                  third_df: pd.DataFrame, <other arguments>):
+    >>>                  second_df: pd.DataFrame, <other arguments>):
     >>>     pass
 
     >>> @dataframe("multiple", 1, "multiple")
@@ -124,7 +131,13 @@ def dataframe(*sources: str | int) -> callable:
             dataframes_grouped = _get_user_dataframes()
 
             # check if user provided enough databases
-            number_of_expected_arguments = len(sources)
+            number_of_expected_arguments = 0
+            for source in sources:
+                if isinstance(source, int):
+                    number_of_expected_arguments += source
+                else:  # "multiple" requires one argument (of type list)
+                    number_of_expected_arguments += 1
+
             if len(dataframes_grouped) < number_of_expected_arguments:
                 error(
                     f"Algorithm requires {number_of_expected_arguments} databases "
@@ -139,20 +152,30 @@ def dataframe(*sources: str | int) -> callable:
                     f"first {number_of_expected_arguments} databases."
                 )
 
-            for source, requested_dataframes in zip(sources, dataframes_grouped):
-                # read the data from the database
-
+            # read the data from the database(s)
+            idx_dataframes = 0
+            for source in sources:
                 # if the source is not "multiple", we can just add the first (and only)
                 # dataframe to the arguments
-                if str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
-                    data_ = _read_df_from_disk(requested_dataframes[0])
+                if isinstance(source, int):
+                    for _ in range(source):
+                        requested_dataframes = dataframes_grouped[idx_dataframes]
+                        df = _read_df_from_disk(requested_dataframes[0])
+                        idx_dataframes += 1
+                        args = (df, *args)
+                elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                    requested_dataframes = dataframes_grouped[idx_dataframes]
+                    data_ = {
+                        df_name: _read_df_from_disk(df_name)
+                        for df_name in requested_dataframes
+                    }
+                    idx_dataframes += 1
+                    args = (data_, *args)
                 else:
-                    data_ = {}
-                    for df_name in requested_dataframes:
-                        data_[df_name] = _read_df_from_disk(df_name)
-
-                # add the data to the arguments
-                args = (data_, *args)
+                    raise UserInputError(
+                        f"Unrecognized argument '{source}' in dataframe decorator. "
+                        "Please use 'multiple' or a number of dataframes to load."
+                    )
 
             return func(*args, **kwargs)
 

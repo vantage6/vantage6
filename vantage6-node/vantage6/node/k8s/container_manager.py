@@ -20,6 +20,8 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.common.globals import (
+    DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
+    DATAFRAME_WITHIN_GROUP_SEPARATOR,
     DEFAULT_ALPINE_IMAGE,
     DEFAULT_DOCKER_REGISTRY,
     ENV_VAR_EQUALS_REPLACEMENT,
@@ -857,9 +859,11 @@ class ContainerManager:
             # # Groups are separated by ';' and the dataframes are separated by ','
             # # so we need to join the dataframes and the groups
             environment_variables[ContainerEnvNames.USER_REQUESTED_DATAFRAMES.value] = (
-                ";".join(
+                DATAFRAME_BETWEEN_GROUPS_SEPARATOR.join(
                     [
-                        ",".join([db["dataframe_name"] for db in db_group])
+                        DATAFRAME_WITHIN_GROUP_SEPARATOR.join(
+                            [db["dataframe_name"] for db in db_group]
+                        )
                         for _, db_group in grouped_databases
                     ]
                 )

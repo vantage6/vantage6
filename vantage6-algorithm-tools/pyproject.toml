@@ -17,9 +17,13 @@ maintainers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "openpyxl>=3.0.0",
     "pandas>=2.2.3",
-    "numpy==2.3.0",
-    "scikit-learn>=1.0.0",
+    "pyjwt==2.9.0",
+    "pyfiglet==1.0.3",
+    "SPARQLWrapper>=2.0.0",
+    "sqlalchemy>=1.4.46",
+    "pyarrow>=16.1.0",
 ]
 
 [project.optional-dependencies]
