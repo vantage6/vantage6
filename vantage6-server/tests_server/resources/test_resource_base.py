@@ -32,7 +32,11 @@ from vantage6.server.model import (
     Task,
     User,
 )
+from vantage6.server.model.algorithm_store import AlgorithmStore
 from vantage6.server.model.base import Database, DatabaseSessionManager
+from vantage6.server.model.dataframe import Dataframe
+from vantage6.server.model.session import Session
+from vantage6.server.model.study import Study
 
 # Generate a mock RSA key pair for testing
 MOCK_PRIVATE_KEY = rsa.generate_private_key(
@@ -113,6 +117,22 @@ class TestResourceBase(unittest.TestCase):
 
     def tearDown(self):
         # unset session.session
+        for table in [
+            Session,
+            Collaboration,
+            Dataframe,
+            Node,
+            Organization,
+            Run,
+            AlgorithmStore,
+            Study,
+            Task,
+            User,
+        ]:
+            table_to_delete = table.get()
+            for t in table_to_delete:
+                t.delete()
+
         DatabaseSessionManager.clear_session()
 
     def login(self, user: User | None = None):

@@ -187,7 +187,7 @@ class SessionBase(TaskPostBase):
 
         if (
             self.r.v_org.can() or session.scope == S.ORGANIZATION
-        ) and session.organization_id == self.obtain_organization_id():
+        ) and session.owner.organization_id == self.obtain_organization_id():
             return True
 
         if self.is_user() and session.user_id == g.user.id:
@@ -270,12 +270,14 @@ class SessionBase(TaskPostBase):
         if (
             getattr(self.r, f"{op}_col").can()
             and session.collaboration_id in self.obtain_auth_collaboration_ids()
+            and session.scope <= S.COLLABORATION
         ):
             return True
 
         if (
             getattr(self.r, f"{op}_org").can()
             and session.owner.organization_id == self.obtain_organization_id()
+            and S(session.scope) <= S.ORGANIZATION
         ):
             return True
 
@@ -283,6 +285,7 @@ class SessionBase(TaskPostBase):
             self.is_user()
             and getattr(self.r, f"{op}_own").can()
             and session.user_id == g.user.id
+            and session.scope == S.OWN
         ):
             return True
 
