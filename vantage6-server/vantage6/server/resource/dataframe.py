@@ -251,7 +251,7 @@ class SessionDataframes(SessionBase):
             task["image"],
         )
 
-        self.__check_image_allowed_in_session(collaboration, image_with_hash, session)
+        self.__set_session_image(collaboration, image_with_hash, session)
 
         # This label is used to identify the database, this label should match the
         # label in the node configuration file. Each node can have multiple
@@ -324,21 +324,17 @@ class SessionDataframes(SessionBase):
 
         return dataframe_schema.dump(dataframe), HTTPStatus.CREATED
 
-    def __check_image_allowed_in_session(
+    def __set_session_image(
         self, collaboration: db.Collaboration, image: str, session: db.Session
     ) -> None:
-        """Check if the collaboration has a restriction on the image"""
-        if collaboration.session_restrict_to_same_image:
-            if not session.image:
-                # this is the first task in the session, so we can set the image
-                session.image = image
-                session.save()
-            elif session.image != image:
-                return {
-                    "msg": "This collaboration only allows a single image per session. "
-                    "You cannot create a dataframe with a different image. Allowed"
-                    f"image: {session.image}"
-                }, HTTPStatus.UNAUTHORIZED
+        """
+        Set the session image if session is restricted to same image and it is not
+        set.
+        """
+        if collaboration.session_restrict_to_same_image and not session.image:
+            # this is the first task in the session, so we can set the image
+            session.image = image
+            session.save()
 
 
 class SessionDataframe(SessionBase):

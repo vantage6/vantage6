@@ -12,37 +12,9 @@ from .test_resource_base import TestResourceBase
 
 
 class TestSessionResource(TestResourceBase):
-    def create_session(
-        self,
-        user=None,
-        organization=None,
-        collaboration=None,
-        scope=Scope.OWN,
-        name=None,
-    ):
-        if not organization:
-            organization = Organization(name=str(uuid4()))
-            organization.save()
-        if not user:
-            user = User(username=str(uuid4()), organization=organization)
-            user.save()
-        if not collaboration:
-            collaboration = Collaboration(
-                name=str(uuid4()), organizations=[organization]
-            )
-            collaboration.save()
+    """Test /session resource"""
 
-        session = Session(
-            name=name or str(uuid4()),
-            collaboration_id=collaboration.id,
-            scope=scope.value,
-            owner=user,
-        )
-        session.save()
-
-        return session
-
-    def test_get_session(self):
+    def test_get(self):
         session = self.create_session()
         headers = self.login_as_root()
         sessions_response = self.app.get("/api/session", headers=headers)
@@ -59,7 +31,7 @@ class TestSessionResource(TestResourceBase):
         self.assertIn("created_at", data)
         self.assertEqual(data["ready"], False)
 
-    def test_create_session(self):
+    def test_create(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         collaboration = Collaboration(name=str(uuid4()), organizations=[organization])
@@ -125,7 +97,7 @@ class TestSessionResource(TestResourceBase):
         response = self.app.post("/api/session", json=session_input, headers=headers)
         assert response.status_code == HTTPStatus.CREATED
 
-    def test_get_session_id(self):
+    def test_get_single(self):
         session = self.create_session()
         headers = self.login_as_root()
         response = self.app.get(f"/api/session/{session.id}", headers=headers)
@@ -142,7 +114,7 @@ class TestSessionResource(TestResourceBase):
         self.assertIn("created_at", data)
         self.assertEqual(data["ready"], False)
 
-    def test_update_session(self):
+    def test_update(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         collaboration = Collaboration(name=str(uuid4()), organizations=[organization])
@@ -199,7 +171,7 @@ class TestSessionResource(TestResourceBase):
         )
         assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    def test_delete_session(self):
+    def test_delete(self):
         session = self.create_session()
         headers = self.login_as_root()
         response = self.app.delete(f"/api/session/{session.id}", headers=headers)
@@ -227,7 +199,7 @@ class TestSessionResource(TestResourceBase):
         assert Dataframe.get(df_id) is None
         assert Session.get(ses_id) is None
 
-    def test_view_sessions_permissions(self):
+    def test_view_permissions(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         organization2 = Organization(name=str(uuid4()))
@@ -259,7 +231,7 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == HTTPStatus.OK
         assert len(response.json["data"]) == 0
 
-        # check that the user that create the session can see the sessions
+        # check that the user that created the session can see the sessions
         headers = self.login(user)
         response = self.app.get("/api/session", headers=headers)
         assert response.status_code == HTTPStatus.OK
@@ -333,7 +305,7 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == HTTPStatus.OK
         assert len(response.json["data"]) == 1
 
-    def test_view_single_session_permissions(self):
+    def test_view_single_permissions(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         organization2 = Organization(name=str(uuid4()))
@@ -430,7 +402,7 @@ class TestSessionResource(TestResourceBase):
         response = self.app.get(f"/api/session/{session_col.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
 
-    def test_post_session_permissions(self):
+    def test_create_permissions(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         organization2 = Organization(name=str(uuid4()))
@@ -537,7 +509,7 @@ class TestSessionResource(TestResourceBase):
         response = self.app.post("/api/session", json=session_input, headers=headers)
         assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    def test_edit_session_permissions(self):
+    def test_edit_permissions(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         organization2 = Organization(name=str(uuid4()))
@@ -749,7 +721,7 @@ class TestSessionResource(TestResourceBase):
         session_col.save()
         del session_input["scope"]
 
-    def test_delete_session_permissions(self):
+    def test_delete_permissions(self):
         organization = Organization(name=str(uuid4()))
         organization.save()
         organization2 = Organization(name=str(uuid4()))

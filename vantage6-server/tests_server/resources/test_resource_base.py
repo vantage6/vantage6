@@ -5,7 +5,7 @@ import string
 import unittest
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
-from uuid import uuid1
+from uuid import uuid1, uuid4
 
 import jwt
 from cryptography.hazmat.backends import default_backend
@@ -35,6 +35,7 @@ from vantage6.server.model import (
 from vantage6.server.model.algorithm_store import AlgorithmStore
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.model.dataframe import Dataframe
+from vantage6.server.model.rule import Scope
 from vantage6.server.model.session import Session
 from vantage6.server.model.study import Study
 
@@ -118,16 +119,16 @@ class TestResourceBase(unittest.TestCase):
     def tearDown(self):
         # unset session.session
         for table in [
-            Session,
-            Collaboration,
             Dataframe,
-            Node,
+            Session,
+            User,
             Organization,
+            Collaboration,
+            Node,
             Run,
             AlgorithmStore,
             Study,
             Task,
-            User,
         ]:
             table_to_delete = table.get()
             for t in table_to_delete:
@@ -335,9 +336,69 @@ class TestResourceBase(unittest.TestCase):
         task.save()
         return task
 
+    def create_organization(self):
+        org = Organization(name=str(uuid4()))
+        org.save()
+        return org
+
+    def create_collaboration(self, organizations=None, restrict_image=False):
+        if not organizations:
+            organizations = [self.create_organization()]
+        collaboration = Collaboration(
+            name=str(uuid4()),
+            organizations=organizations,
+            session_restrict_to_same_image=restrict_image,
+        )
+        collaboration.save()
+        for org in organizations:
+            self.create_node(organization=org, collaboration=collaboration)
+        return collaboration
+
     def create_run(self, task=None):
         if not task:
             task = self.create_task()
         run = Run(status=RunStatus.PENDING.value, task=task)
         run.save()
         return run
+
+    def create_session(
+        self,
+        user=None,
+        organization=None,
+        collaboration=None,
+        scope=Scope.OWN,
+        name=None,
+    ):
+        if not organization:
+            organization = Organization(name=str(uuid4()))
+            organization.save()
+        if not user:
+            user = User(username=str(uuid4()), organization=organization)
+            user.save()
+        if not collaboration:
+            collaboration = Collaboration(
+                name=str(uuid4()), organizations=[organization]
+            )
+            collaboration.save()
+
+        session = Session(
+            name=name or str(uuid4()),
+            collaboration_id=collaboration.id,
+            scope=scope.value,
+            owner=user,
+        )
+        session.save()
+
+        return session
+
+    def create_dataframe(self, session, collaboration):
+        if not session:
+            session = self.create_session()
+        last_session_task = self.create_task(collaboration=collaboration)
+        dataframe = Dataframe(
+            name=str(uuid4()),
+            session=session,
+            last_session_task=last_session_task,
+        )
+        dataframe.save()
+        return dataframe
