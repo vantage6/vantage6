@@ -1,5 +1,8 @@
 from http import HTTPStatus
+from unittest.mock import patch
 from uuid import uuid4
+
+from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.server.model import Session, User
 from vantage6.server.model.collaboration import Collaboration
@@ -849,3 +852,107 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == HTTPStatus.OK
         response = self.app.delete(f"/api/session/{session_col.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
+
+    @patch(
+        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "._check_arguments_encryption"
+    )
+    @patch(
+        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "._check_data_extract_ready_for_requested_orgs"
+    )
+    # pylint: disable=unused-argument
+    def test_session_restrict_to_same_image(
+        self,
+        mock_check_arguments_encryption,
+        mock_check_data_extract_ready_for_requested_orgs,
+    ):
+        org = self.create_organization()
+        col = self.create_collaboration(organizations=[org], restrict_image=True)
+        user = self.create_user(organization=org, rules=Rule.get())
+        session = self.create_session(user=user, collaboration=col)
+        headers = self.login(user)
+
+        # first, initialize the session with a dataframe
+        create_dataframe_input = {
+            "label": "dummy-db-label",
+            "task": {
+                "image": "dummy-image",
+                "method": "dummy-method",
+                "organizations": [{"id": org.id}],
+            },
+        }
+        response = self.app.post(
+            f"/api/session/{session.id}/dataframe",
+            headers=headers,
+            json=create_dataframe_input,
+        )
+        assert response.status_code == HTTPStatus.CREATED
+        df = Dataframe.get(response.json["id"])
+
+        # now, try to create a dataframe with a different image
+        create_dataframe_input["task"]["image"] = "dummy-image-2"
+        response = self.app.post(
+            f"/api/session/{session.id}/dataframe",
+            headers=headers,
+            json=create_dataframe_input,
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+        # check that we CAN create another dataframe with the same image
+        create_dataframe_input["label"] = "dummy-db-label-2"
+        create_dataframe_input["task"]["image"] = "dummy-image"
+        response = self.app.post(
+            f"/api/session/{session.id}/dataframe",
+            headers=headers,
+            json=create_dataframe_input,
+        )
+        assert response.status_code == HTTPStatus.CREATED
+
+        # try to create a preprocess task with a different image
+        create_preprocess_input = {
+            "dataframe_id": df.id,
+            "task": {
+                "image": "dummy-image-2",
+                "method": "dummy-method",
+                "organizations": [{"id": org.id}],
+            },
+        }
+        response = self.app.post(
+            f"/api/session/dataframe/{df.id}/preprocess",
+            headers=headers,
+            json=create_preprocess_input,
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+        # check that we CAN create a preprocess task with the same image
+        create_preprocess_input["task"]["image"] = "dummy-image"
+        response = self.app.post(
+            f"/api/session/dataframe/{df.id}/preprocess",
+            headers=headers,
+            json=create_preprocess_input,
+        )
+        assert response.status_code == HTTPStatus.CREATED
+
+        # check that we can also create a compute task with the same image
+        task_json = {
+            "image": "dummy-image",
+            "method": "dummy",
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id}],
+            "session_id": session.id,
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+        response = self.app.post("/api/task", headers=headers, json=task_json)
+        assert response.status_code == HTTPStatus.CREATED
+
+        # but not with a different image
+        task_json["image"] = "dummy-image-2"
+        response = self.app.post("/api/task", headers=headers, json=task_json)
+        assert response.status_code == HTTPStatus.BAD_REQUEST
+
+        # if we disable the check, we can create a task with a different image
+        col.session_restrict_to_same_image = False
+        col.save()
+        response = self.app.post("/api/task", headers=headers, json=task_json)
+        assert response.status_code == HTTPStatus.CREATED
