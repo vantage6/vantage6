@@ -1773,6 +1773,10 @@ class UserClient(ClientBase):
         ) -> dict:
             """Create a new task
 
+            If blob storage is configured at the server, the input data will be
+            encrypted and uploaded to the blob storage, and a UUID reference is
+            stored as an input instead.
+
             Parameters
             ----------
             organizations : list
@@ -1875,7 +1879,7 @@ class UserClient(ClientBase):
                         "input": organization_input,
                     }
                 )
-                
+
             params = {
                 "name": name,
                 "image": image,
@@ -1892,6 +1896,7 @@ class UserClient(ClientBase):
                 params["store_id"] = store
             if server_url:
                 params["server_url"] = server_url
+
             return self.parent.request(
                 "task",
                 method="post",
@@ -2203,6 +2208,10 @@ class UserClient(ClientBase):
         def from_task(self, task_id: int):
             """
             Get all results from a specific task
+
+            In case blob storage was used to store the run data,
+            the results will be retrieved from blob storage during
+            the decryption process.
 
             Parameters
             ----------

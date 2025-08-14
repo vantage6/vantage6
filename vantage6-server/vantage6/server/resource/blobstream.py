@@ -76,23 +76,23 @@ def permissions(permissions: PermissionManager):
     """
     add = permissions.appender(module_name)
 
-    add(scope=S.GLOBAL, operation=P.VIEW, description="view any run")
+    add(scope=S.GLOBAL, operation=P.VIEW, description="view any blob")
     add(
         scope=S.COLLABORATION,
         operation=P.VIEW,
         assign_to_container=True,
         assign_to_node=True,
-        description="view runs of your organizations " "collaborations",
+        description="view blobs of your organizations collaborations",
     )
     add(
         scope=S.ORGANIZATION,
         operation=P.VIEW,
-        description="view any run of a task created by your organization",
+        description="view any blob of a task created by your organization",
     )
     add(
         scope=S.OWN,
         operation=P.VIEW,
-        description="view any run of a task created by you",
+        description="view any blob of a task created by you",
     )
 
 
@@ -102,8 +102,7 @@ def permissions(permissions: PermissionManager):
 class BlobStreamBase(ServicesResources):
     """
     Base class for run resources that require a storage adapter. 
-    This class provides methods for streaming large results from the storage adapter, 
-    in this case Azure Blob Storage.
+    This class provides methods for streaming large results from the storage adapter.
     """
 
     def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
@@ -121,6 +120,23 @@ class BlobStreamStatus(BlobStreamBase):
 
     @only_for(("node", "user", "container"))
     def get(self):
+        """Get the status of the blob store
+        ---
+
+        description: >-
+            Returns whether or not blob storage is enabled. \n
+            If enabled, results can be streamed from blob storage.
+
+        responses:
+          200:
+              description: Ok
+          401:
+              description: Unauthorized
+
+        security:
+          - bearerAuth: []
+        """
+        log.debug("Checking if blob store is enabled")
         if self.storage_adapter:
             return {"blob_store_enabled": True}, HTTPStatus.CREATED
         else:
@@ -129,16 +145,51 @@ class BlobStreamStatus(BlobStreamBase):
 class BlobStream(BlobStreamBase):
     """
     Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
-    This resource allows for streaming large results from Azure Blob Storage.
+    This resource allows for streaming large results from blob Storage.
     """
     def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
         super().__init__(socketio, mail, api, permissions, config, storage_adapter=storage_adapter)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
+        """ Stream the result or input with the given id from blob storage.
+        ---
+
+        description: >-
+            Streams the result or input with the given id from blob storage.
+            
+            ### Permission Table\n
+            |Rule name|Scope|Operation|Assigned to node|Assigned to container|
+            Description|\n
+            |--|--|--|--|--|--|\n
+            |Blob|Global|View|❌|❌|View any blob|\n
+            |Blob|Collaboration|View|✅|✅|View the blobs of your
+            organization's collaborations|\n
+            |Blob|Organization|View|❌|❌|View any blob from a task created by
+            your organization|\n
+            |Blob|Own|View|❌|❌|View any blob from a task created by you|\n
+
+            Accessible to users.
+            
+        responses:
+          200:
+            description: Ok
+          401:
+            description: Unauthorized
+          500:
+            description: Internal Server Error
+          501:
+            description: Not Implemented
+
+        security:
+        - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
+
         if not self.storage_adapter:
             log.warning(
-                "The large result store is not set to azure blob storage, result streaming is not available."
+                "The large result store is not set to blob storage, result streaming is not available."
             )
             return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
         try:
@@ -162,9 +213,31 @@ class BlobStream(BlobStreamBase):
                
     @only_for(("node", "user", "container"))
     def post(self):
+        """ Post a result to the blob storage.
+        blobs are streamed directly to the blob storage.
+        This is useful for large results that cannot be loaded into memory at once.
+        ---
+        description: >-
+          Stream and store blob to blob storage.
+
+        requestBody:
+          content:
+            application/octet-stream
+
+        responses:
+          201:
+            description: Created
+          501:
+            description: Not Implemented
+
+        security:
+          - bearerAuth: []
+
+        tags: ["Algorithm"]
+        """
         if not self.storage_adapter:
                 log.warning(
-                    "The large result store is not set to azure blob storage, result streaming is not available."
+                    "The large result store is not set to blob storage, result streaming is not available."
                 )
                 return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
         result_uuid = str(uuid.uuid4())
@@ -190,10 +263,11 @@ class BlobStream(BlobStreamBase):
     
 class UwsgiChunkedStream:
     """
-    A stream for reading data in chunks from uwsgi.
-    This is useful for handling large uploads without loading everything into memory at once.
+    Read data in chunks from uwsgi.
     """
-    #TODO: Using uwsgi in python in combination with flask is not very stable. Need to find an other solution to stream large data files.
+    #TODO: Using uwsgi in python in combination with flask is not ideal.
+    # It would be better to switch to a different server in the long term.
+    # 
     def __init__(self, chunk_size=4096):
         """
         Initialize the UwsgiChunkedStream.

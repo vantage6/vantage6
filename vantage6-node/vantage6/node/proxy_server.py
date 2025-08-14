@@ -275,6 +275,7 @@ def proxy_task():
 
         # Encrypt the input field
         client: NodeClient = app.config.get("SERVER_IO")
+        # If blob store is enabled, we skip base64 encoding of the message.
         encrypted_input = client.cryptor.encrypt_bytes_to_str(
             base64s_to_bytes(input_), public_key, skip_base64_encoding_of_msg=blob_store_enabled
         )
@@ -398,31 +399,38 @@ def proxy_results(id_: int) -> Response:
 @app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
     """ 
-    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server. 
+    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server.
+    Proxied_request and standard response are not used here,
+    as this function is specifically designed to handle streaming of blobs
+    without loading the entire content into memory.
+
+    
     Parameters
     ----------
     id : str
-        The id of the blob to be streamed.  
+        The id of the blob to be streamed.
     Returns
     -------
     FlaskResponse
         A Flask response object containing the streamed blob data.
-        If the blob is successfully streamed, it returns a response with the content type set to "application/octet-stream" and the content disposition set to attachment.
+        If the blob is successfully streamed, it returns a response 
+        with the content type set to "application/octet-stream" and the 
+        content disposition set to attachment.
         If an error occurs, it returns an error message with the appropriate HTTP status code.
     """
-    
-    log.info("Proxy stream handler called with id: %s", id)
+
+    log.debug("Proxy stream handler called with id: %s", id)
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
             if h in request.headers:
                 headers[h] = request.headers[h]
     method = get_method(request.method)
     url = f"{server_url}/blobstream/{id}"
-    log.info("Making proxied request to %s", url)
+    log.debug("Making proxied request to %s", url)
 
     backend_response = method(url, stream=True, params=request.args, headers=headers)
 
-    log.info("Received response with status code %s", backend_response.status_code)
+    log.debug("Received response with status code %s", backend_response.status_code)
 
     if backend_response.status_code > 210:
         log.warning("Proxy server received status code %s", backend_response.status_code)
@@ -450,7 +458,7 @@ def stream_handler(id: str) -> FlaskResponse:
             content_type=content_type
         )
     else:
-        # Return the raw content if not a valid stream or error occurred
+        # Return the raw content if not a valid stream or an error occurred
         return backend_response.content, backend_response.status_code, backend_response.headers.items()
 
 @app.route("/blobstream", methods=["POST"])
@@ -458,11 +466,16 @@ def stream_handler_post() -> FlaskResponse:
     """
     Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
     Returns
+
+    Proxied_request and standard response are not used here,
+    as this function is specifically designed to handle streaming of blobs
+    without loading the entire content into memory.
+
     -------
     FlaskResponse
         A Flask response object containing if the blob was successfully streamed to the server.
     """    
-    log.info("Proxy stream POST handler called")
+    log.debug("Proxy stream POST handler called")
 
     client: NodeClient = app.config.get("SERVER_IO")
     pubkey_base64 = request.headers.get("X-Public-Key")
@@ -470,13 +483,7 @@ def stream_handler_post() -> FlaskResponse:
         log.error("Missing X-Public-Key header in request.")
         return {"msg": "Missing X-Public-Key header"}, HTTPStatus.BAD_REQUEST
 
-    log.info("Received public key: %s", pubkey_base64)
-
-    headers = {}
-    for h in ["Authorization", "Content-Type", "Content-Length"]:
-        if h in request.headers:
-            headers[h] = request.headers[h]
-    log.info("Received public key: %s", pubkey_base64)
+    log.debug("Received public key: %s", pubkey_base64)
 
     headers = {}
     for h in ["Authorization", "Content-Type", "Content-Length"]:
@@ -484,10 +491,12 @@ def stream_handler_post() -> FlaskResponse:
             headers[h] = request.headers[h]
 
     url = f"{server_url}/blobstream"
-    log.info("Making proxied POST request to %s", url)
+    log.debug("Making proxied POST request to %s", url)
 
     encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)
-
+    # Stream the data to the server while encrypting it.
+    # This is done to avoid loading the entire content into memory.
+    # The encrypted stream is a generator that yields chunks of encrypted data.
     backend_response = requests.post(
         url,
         params=request.args,
@@ -495,7 +504,7 @@ def stream_handler_post() -> FlaskResponse:
         data=encrypted_stream
     )
 
-    log.info("Received response with status code %s", backend_response.status_code)
+    log.debug("Received response with status code %s", backend_response.status_code)
 
     if backend_response.status_code > 210:
         log.warning("Proxy server received status code %s", backend_response.status_code)

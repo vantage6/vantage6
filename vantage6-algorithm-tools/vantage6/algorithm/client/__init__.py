@@ -277,6 +277,10 @@ class AlgorithmClient(ClientBase):
             Results are decrypted by the proxy server and decoded here before
             returning them to the algorithm.
 
+            If blob storage was used to store the results, the results
+            will be streamed from blob storage, through the server and proxy,
+            and decryption will take place on a chunk-by-chunk basis.
+
             Parameters
             ----------
             task_id: int
@@ -347,6 +351,10 @@ class AlgorithmClient(ClientBase):
             Containers are allowed to create child tasks (having the
             same job_id) at the central server. The docker image must
             be the same as the docker image of this container self.
+
+            If blob storage is configured at the server, the input data
+            will be uploaded to blob storage and a UUID reference will be
+            passed as a result instead.
 
             Parameters
             ----------

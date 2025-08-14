@@ -41,9 +41,6 @@ class TestUserClient(unittest.TestCase):
       
         # Call the method under test
         results = client_instance.retrieve_results(task_id=1, interval=0.1)
-        print(results)
-        # Assertions
-        
         self.assertEqual(len(results), 1)
 
 

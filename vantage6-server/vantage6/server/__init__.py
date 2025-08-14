@@ -204,6 +204,11 @@ class ServerApp:
         log.info("Initialization done")
 
     def setup_large_result_store(self):
+        """
+        Setup the large result store for storing large results.
+        If configured, inputs and results will be stored in blob Storage.
+        """
+
         self.storage_adapter = None
         config = self.ctx.config.get("large_result_store", {})
         store_type = DataStorageUsed(config.get("type", DataStorageUsed.RELATIONAL.value))
@@ -555,13 +560,12 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-            log.debug("Returning response with code %s and data: %s", code, data)
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
             # Don't attempt json conversion if it's already a response.
-            # TODO: Should be done more elegantly
+            # Used for streaming endpoints where responses cannot be jsonified.
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
@@ -738,7 +742,7 @@ class ServerApp:
             "config": self.ctx.config,
         }
 
-        result_services = {
+        blobstream_services = {
             "storage_adapter": self.storage_adapter,
             **services
         }
@@ -746,7 +750,7 @@ class ServerApp:
             try:
                 module = importlib.import_module("vantage6.server.resource." + res)
                 if res in ["blobstream"]:
-                    module.setup(self.api, self.ctx.config["api_path"], result_services)
+                    module.setup(self.api, self.ctx.config["api_path"], blobstream_services)
                 else:
                     module.setup(self.api, self.ctx.config["api_path"], services)
             except Exception as e:
