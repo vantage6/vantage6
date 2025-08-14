@@ -67,6 +67,7 @@ import { SessionStepComponent } from '../task-steps/session-step/session-step.co
 import { StudyStepComponent } from '../task-steps/study-step/study-step.component';
 import { FunctionStepComponent } from '../task-steps/function-step/function-step.component';
 import { DatabaseStepComponent } from '../task-steps/database-step/database-step.component';
+import { DataframeStepComponent } from '../task-steps/dataframe-step/dataframe-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -105,7 +106,8 @@ import { DatabaseStepComponent } from '../task-steps/database-step/database-step
     SessionStepComponent,
     StudyStepComponent,
     FunctionStepComponent,
-    DatabaseStepComponent
+    DatabaseStepComponent,
+    DataframeStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -971,6 +973,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   // Event handlers for the database step component
   onDatabaseStepDatabaseSelected(database: string): void {
     // Handle database selection if needed
+    // The main component already handles this through form binding
+  }
+
+  // Event handlers for the dataframe step component
+  onDataframeStepDataframeSelected(dataframeData: { index: number; dataframeId: number }): void {
+    // Handle dataframe selection if needed
     // The main component already handles this through form binding
   }
 

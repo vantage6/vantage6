@@ -83,51 +83,25 @@
           </div>
         </mat-step>
         <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
-          <form class="form" [formGroup]="dataframeForm">
-            <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
-            <div class="field-description">{{ "task-create.step-dataframe.description" | translate }}</div>
-            <div *ngIf="dataframes.length > 0 && function?.databases">
-              <mat-form-field
-                *ngFor="let database of function?.databases || []; let i = index"
-                subscriptSizing="dynamic"
-                class="dataframe-select"
-              >
-                <mat-label>{{ database.name }}{{ database.description ? " (" + database.description + ")" : "" }}</mat-label>
-                <mat-select [formControlName]="'dataframeId' + i" [compareWith]="compareIDsForSelection" [multiple]="database.multiple">
-                  <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
-                    {{ dataframe.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <app-alert-with-button
-              *ngIf="dataFrameNotReadyForAllSelectedOrganizations()"
-              class="node-alert"
-              label="{{
-                'task-create.step-dataframe.alert-dataframe-not-ready-for-all-selected-organizations'
-                  | translate: { organizations: organizationNamesWithNonReadyDataframes.join(', ') }
-              }}"
-              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
-              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
-              [isSuccessAlert]="false"
-            ></app-alert-with-button>
-            <div *ngIf="dataframes.length === 0">
-              <app-alert-with-button
-                class="node-alert"
-                label="{{ 'task-create.alert-no-dataframes' | translate }}"
-                buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
-                buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
-                [isSuccessAlert]="false"
-              ></app-alert-with-button>
-            </div>
-            <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
-                {{ "general.next" | translate }}
-              </button>
-            </div>
-          </form>
+          <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
+          <app-dataframe-step
+            [formGroup]="dataframeForm"
+            [dataframes]="dataframes"
+            [function]="function"
+            [session]="session"
+            [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
+            [selectedDataframes]="selectedDataframes"
+            [organizations]="organizations"
+            [functionForm]="functionForm"
+            (dataframeSelected)="onDataframeStepDataframeSelected($event)"
+          >
+          </app-dataframe-step>
+          <div>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
+              {{ "general.next" | translate }}
+            </button>
+          </div>
         </mat-step>
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
           <form class="form" [formGroup]="parameterForm">
