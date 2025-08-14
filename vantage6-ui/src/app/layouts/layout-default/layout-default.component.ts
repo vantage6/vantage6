@@ -202,21 +202,20 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       linkType: NavigationLinkType.Analyze
     };
 
-    //Tasks
     const submenus: NavigationLink[] = [];
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
-      submenus.push({
-        route: routePaths.sessions,
-        label: this.translateService.instant('resources.sessions'),
-        icon: 'fitness_center',
-        linkType: NavigationLinkType.Analyze
-      });
-    }
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
       submenus.push({
         route: routePaths.taskCreate,
         label: this.translateService.instant('links.new-analysis'),
         icon: 'science',
+        linkType: NavigationLinkType.Analyze
+      });
+    }
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
+      submenus.push({
+        route: routePaths.sessions,
+        label: this.translateService.instant('resources.sessions'),
+        icon: 'fitness_center',
         linkType: NavigationLinkType.Analyze
       });
     }
