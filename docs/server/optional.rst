@@ -433,3 +433,62 @@ it is not recommended.
 
 
 See :ref:`_server-configure` for more details.
+
+
+Developer documentation
+-------------------
+
+The `blobstream` endpoint enables streaming of large input and result data 
+directly to and from blob storage. This reduces memory usage and avoids 
+storing large payloads in the database.
+
+Configuration
+^^^^^^^^^^^^^
+
+- Based on the existence of the `large_result_storage` key in config, blob storage is enabled on the server. 
+- Only Azure Blob Storage is currently supported, but other blob storages or file storage can be added by creating a separate service for them.
+
+Functionality
+^^^^^^^^^^^^^
+
+- **Streaming Uploads**: Large data is streamed to the configured blob storage in chunks to avoid loading the entire content into memory.
+- **Data Format**: Depending on the encryption setting:
+  
+  - Unencrypted data is stored as **Base64-encoded** strings.
+  - Encrypted data is stored as **raw encrypted bytes** (Base64 is skipped).
+  
+- **UUID References**: Each upload returns a UUID reference. This UUID is stored in the `input` or `result` field in the database if blob storage is used.
+
+Blobstream endpoint Usage
+^^^^^^^^^^^^^^^^
+
+- **Upload**: Used to stream data to blob storage. Returns a UUID reference.
+- **Download**: Accepts a UUID and returns a data stream from the blob storage.
+- **Status**: Returns whether or not blob storage is used on the server. Used by the client to determine how to upload new inputs.
+
+Database
+^^^^^^^^^^^^^^^^^^^^
+
+- The `runs` table has a `data_storage_used` column indicating which blob backend was used.
+- Currently only `"azure"` is supported, apart from the default `relational` database.
+- For existing installations, empty values for `data_storage_used` are assumed to be `relational`.
+- The `input` and `result` fields in the `runs` table store the UUID reference instead of the actual data when blob storage is enabled.
+
+Client Behavior
+^^^^^^^^^^^^^^^
+
+- Clients stream large data via the server’s `blobstream` endpoint.
+- Results and inputs are encrypted and decrypted as usual after retrieving them from blob storage. 
+- Base64 encoding/decoding is **not** performed if the data is encrypted, as the encrypted raw bytes can be stored directly.
+
+Algorithm Data Flow
+^^^^^^^^^^^^^^^^^^^
+
+- Inputs and results for algorithms are streamed from azure, through the server, through the proxy to the algorithm container. 
+- The proxy encrypts and decrypts streams using **AES-CTR**, chunk by chunk, as it passes through the proxy to prevent loading the entire content into memory.
+
+Future Improvements
+^^^^^^^^^^^^^^^^^^^
+
+- A local file-based blob storage backend is planned.
+- This will reduce reliance on relational databases for handling large datasets.
