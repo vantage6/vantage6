@@ -210,6 +210,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         icon: 'science',
         linkType: NavigationLinkType.Analyze
       });
+      submenus.push({
+        route: routePaths.dataframeCreateWithoutSession,
+        label: this.translateService.instant('links.new-dataframe'),
+        icon: 'data_object',
+        linkType: NavigationLinkType.Analyze
+      });
     }
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
       submenus.push({

@@ -107,6 +107,7 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
   availableStepsEnum = AvailableStepsEnum;
+  algorithmStepType = AlgorithmStepType;
   isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
@@ -281,7 +282,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (allowedTaskTypes.length > 0) {
       this.availableSteps = {
         session:
-          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
+          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) ||
+          allowedTaskTypes.includes(AlgorithmStepType.CentralCompute) ||
+          !this.sessionId,
         study: allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
         function: true,
         database: allowedTaskTypes.includes(AlgorithmStepType.DataExtraction),

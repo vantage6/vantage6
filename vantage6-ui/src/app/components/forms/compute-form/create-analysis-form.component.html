@@ -28,7 +28,7 @@
               </mat-select>
             </mat-form-field>
             <app-alert-with-button
-              *ngIf="hasLoadedDataframes && dataframes.length === 0"
+              *ngIf="hasLoadedDataframes && dataframes.length === 0 && !this.allowedTaskTypes?.includes(algorithmStepType.DataExtraction)"
               class="node-alert"
               label="{{ 'task-create.alert-no-dataframes-in-session' | translate }}"
               buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"

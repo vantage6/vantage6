@@ -136,6 +136,14 @@ export const routes: Routes = [
         }
       },
       {
+        path: routerConfig.dataframeCreateWithoutSession,
+        component: DataframeCreateComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['session.dataframes.add']]
+        }
+      },
+      {
         path: routerConfig.sessions,
         component: SessionListComponent,
         canActivate: [authenticationGuard, chosenCollaborationGuard()],
