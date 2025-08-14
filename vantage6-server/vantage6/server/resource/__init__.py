@@ -17,6 +17,7 @@ from flask_socketio import SocketIO
 from vantage6.common import logger_name
 
 from vantage6.backend.common.permission import RuleNeed
+from vantage6.backend.common.resource.error_handling import UnauthorizedError
 from vantage6.backend.common.services_resources import BaseServicesResources
 
 from vantage6.server import db
@@ -171,9 +172,9 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         def decorator(*args, **kwargs):
             try:
                 _validate_user_or_node_token(types)
-            except Exception:
+            except Exception as exc:
                 if "container" not in types:
-                    raise Exception("Authentication failed")
+                    raise exc
                 _validate_container_token()
 
             return fn(*args, **kwargs)
@@ -207,7 +208,7 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
         # get an error message with 400 code
         msg = f"{g.type}s are not allowed to access {request.url} ({request.method})"
         log.warning(msg)
-        raise Exception(msg)
+        raise UnauthorizedError(msg)
 
     # do some specific stuff per identity
     g.user = g.container = g.node = None
@@ -230,7 +231,7 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
         log.debug("Received request from node %s (%s)", node.name, node.id)
 
     else:
-        raise Exception(f"Unknown entity: {g.type}")
+        raise UnauthorizedError(f"Unknown entity: {g.type}")
 
 
 def _validate_container_token():

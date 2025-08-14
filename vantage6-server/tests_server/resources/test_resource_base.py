@@ -34,6 +34,7 @@ from vantage6.server.model import (
 )
 from vantage6.server.model.algorithm_store import AlgorithmStore
 from vantage6.server.model.base import Database, DatabaseSessionManager
+from vantage6.server.model.column import Column
 from vantage6.server.model.dataframe import Dataframe
 from vantage6.server.model.rule import Scope
 from vantage6.server.model.session import Session
@@ -129,6 +130,7 @@ class TestResourceBase(unittest.TestCase):
             AlgorithmStore,
             Study,
             Task,
+            Column,
         ]:
             table_to_delete = table.get()
             for t in table_to_delete:
@@ -321,7 +323,7 @@ class TestResourceBase(unittest.TestCase):
         user = self.create_user(organization, rules)
         return self.login(user)
 
-    def create_task(self, collaboration=None):
+    def create_task(self, collaboration=None, session=None):
         if not collaboration:
             organization = Organization(name=str(uuid1()))
             collaboration = Collaboration(
@@ -332,6 +334,7 @@ class TestResourceBase(unittest.TestCase):
         task = Task(
             image="some-image",
             collaboration=collaboration,
+            session=session,
         )
         task.save()
         return task
@@ -394,7 +397,9 @@ class TestResourceBase(unittest.TestCase):
     def create_dataframe(self, session, collaboration):
         if not session:
             session = self.create_session()
-        last_session_task = self.create_task(collaboration=collaboration)
+        last_session_task = self.create_task(
+            collaboration=collaboration, session=session
+        )
         dataframe = Dataframe(
             name=str(uuid4()),
             session=session,

@@ -59,7 +59,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         SessionDataframe,
         api_base + "/session/dataframe/<int:id>",
         endpoint="session_dataframe_with_id",
-        methods=("GET", "PATCH", "DELETE"),
+        methods=("GET", "DELETE"),
         resource_class_kwargs=services,
     )
     api.add_resource(
@@ -436,7 +436,7 @@ class SessionDataframe(SessionBase):
         if not dataframe:
             return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        if not self.can_delete_session(dataframe.session):
+        if not self.can_edit_session(dataframe.session):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
@@ -630,6 +630,7 @@ class DataframePreprocessing(SessionBase):
 
 
 class DataframeColumns(SessionBase):
+    @handle_exceptions
     @with_node
     def post(self, id):
         """Nodes report their column names
@@ -705,4 +706,4 @@ class DataframeColumns(SessionBase):
                 node=g.node,
             ).save()
 
-        return {"msg": "Columns updated"}, HTTPStatus.OK
+        return {"msg": "Columns updated"}, HTTPStatus.CREATED

@@ -803,7 +803,8 @@ class TestSessionResource(TestResourceBase):
         session_own = self.create_session(user, organization, collaboration)
         session_org = self.create_session(user, organization, collaboration)
 
-        # test that another user within the collaboration can delete the session
+        # test that a user in another organization cannot delete the session with
+        # ORGANIZATION scope
         headers = self.create_user_and_login(
             organization=organization2,
             rules=[
@@ -834,4 +835,17 @@ class TestSessionResource(TestResourceBase):
         response = self.app.delete(f"/api/session/{session_org.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
         response = self.app.delete(f"/api/session/{session_own.id}", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        # recreate sessions
+        session_own = self.create_session(user, organization, collaboration)
+        session_org = self.create_session(user, organization, collaboration)
+        session_col = self.create_session(user, organization, collaboration)
+
+        # test that root user can delete all sessions
+        headers = self.login_as_root()
+        response = self.app.delete(f"/api/session/{session_own.id}", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        response = self.app.delete(f"/api/session/{session_org.id}", headers=headers)
+        assert response.status_code == HTTPStatus.OK
+        response = self.app.delete(f"/api/session/{session_col.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
