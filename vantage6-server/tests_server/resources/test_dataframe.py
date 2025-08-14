@@ -555,8 +555,10 @@ class TestDataframe(TestResourceBase):
 
     @patch("vantage6.server.resource.dataframe.send_delete_dataframe_event")
     def test_delete(self, mock_send_delete_dataframe_event):
-        col = self.create_collaboration()
-        ses = self.create_session(collaboration=col)
+        org = self.create_organization()
+        col = self.create_collaboration(organizations=[org])
+        user = self.create_user(organization=org, rules=Rule.get())
+        ses = self.create_session(user=user, collaboration=col)
         df = self.create_dataframe(session=ses, collaboration=col)
         df_id = df.id
         cols = [
@@ -565,7 +567,7 @@ class TestDataframe(TestResourceBase):
         ]
         for column in cols:
             column.save()
-        headers = self.login_as_root()
+        headers = self.login(user)
         response = self.app.delete(f"/api/session/dataframe/{df.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
         assert Dataframe.get(df_id) is None
