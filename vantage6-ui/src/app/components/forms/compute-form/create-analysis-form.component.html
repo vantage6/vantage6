@@ -41,116 +41,30 @@
           </div>
         </mat-step>
         <mat-step [stepControl]="functionForm" *ngIf="availableSteps.function">
-          <form class="form" [formGroup]="functionForm">
-            <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
-            <app-alert
-              *ngIf="sessionRestrictedToSameImage"
-              label="{{ 'task-create.step-function.description.function-restricted-to-same-image' | translate }}"
-            ></app-alert>
-            <div class="field-description">{{ "task-create.step-function.description.function" | translate }}</div>
-            <mat-form-field subscriptSizing="dynamic" class="select-form-field">
-              <mat-label>{{ "task.function" | translate }}</mat-label>
-              <mat-select formControlName="algorithmFunctionSpec">
-                <mat-form-field class="search-form-field">
-                  <input
-                    matInput
-                    placeholder="{{ 'task-create.step-function.description.function-placeholder' | translate }}"
-                    (keyup)="$event.stopPropagation(); search()"
-                    formControlName="algorithmFunctionSearch"
-                    type="text"
-                  />
-                  <button
-                    matSuffix
-                    mat-icon-button
-                    aria-label="Clear"
-                    color="primary"
-                    *ngIf="functionForm.controls.algorithmFunctionSearch.value"
-                    (click)="clearFunctionSearchInput()"
-                  >
-                    <mat-icon>close</mat-icon>
-                  </button>
-                  <button matSuffix mat-icon-button aria-label="Search" color="primary">
-                    <mat-icon>search</mat-icon>
-                  </button>
-                </mat-form-field>
-                <mat-option
-                  *ngFor="let function of functionsFilteredBySearch"
-                  class="function-select-option"
-                  [innerHTML]="getFunctionOptionLabel(function) | highlight: functionForm.controls.algorithmFunctionSearch.value : true"
-                  [value]="getAlgorithmFunctionSpec(function)"
-                >
-                  <span [innerHTML]="getFunctionOptionLabel(function)"></span>
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <div *ngIf="function">
-              <div class="field-description" *ngIf="!isFederatedStep(function.step_type)">
-                {{ "task-create.step-function.description.organization-central" | translate }}
-              </div>
-              <div class="field-description" *ngIf="isFederatedStep(function.step_type)">
-                {{ "task-create.step-function.description.organization-partial" | translate }}
-              </div>
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ "task-create.step-function.organization" | translate }}</mat-label>
-                <!--
-                This ugly if-else is required because the 'multiple' property of mat-select
-                cannot be changed after initialization (see e.g.
-                https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
-                -->
-                <div *ngIf="!isFederatedStep(function.step_type); else partialOrgDropdown">
-                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
-                    <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
-                      {{ organization.name }}
-                    </mat-option>
-                  </mat-select>
-                </div>
-                <ng-template #partialOrgDropdown>
-                  <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="true">
-                    <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
-                      {{ organization.name }}
-                    </mat-option>
-                  </mat-select>
-                </ng-template>
-                <!-- End ugly if-else -->
-              </mat-form-field>
-              <div class="field-description" *ngIf="isDataExtractionStep()">
-                {{ "task-create.step-function.description.df-name" | translate }}
-              </div>
-              <div class="field-description" *ngIf="!isDataExtractionStep()">
-                {{ "task-create.step-function.description.name" | translate }}
-              </div>
-              <app-alert
-                *ngIf="showWarningUniqueDFName"
-                label="{{ 'task-create.step-function.description.df-name-warning' | translate }}"
-              ></app-alert>
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ "task.name" | translate }}</mat-label>
-                <input matInput type="text" formControlName="taskName" />
-              </mat-form-field>
-              <div *ngIf="!isDataExtractionStep()">
-                <div class="field-description">
-                  {{ "task-create.step-function.description.description" | translate }}
-                </div>
-                <mat-form-field subscriptSizing="dynamic">
-                  <mat-label>{{ "task.description" | translate }}</mat-label>
-                  <input matInput type="text" formControlName="description" />
-                </mat-form-field>
-              </div>
-            </div>
-            <app-alert
-              class="node-alert"
-              *ngIf="node && node?.status !== 'online'"
-              label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
-            ></app-alert>
-            <div>
-              <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
-                {{ "general.back" | translate }}
-              </button>
-              <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
-                {{ "general.next" | translate }}
-              </button>
-            </div>
-          </form>
+          <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
+          <app-function-step
+            [formGroup]="functionForm"
+            [functionsFilteredBySearch]="functionsFilteredBySearch"
+            [organizations]="organizations"
+            [function]="function"
+            [sessionRestrictedToSameImage]="sessionRestrictedToSameImage"
+            [showWarningUniqueDFName]="showWarningUniqueDFName"
+            [node]="node"
+            [algorithms]="algorithms"
+            [collaboration]="collaboration"
+            (functionSelected)="onFunctionStepFunctionSelected($event)"
+            (searchRequested)="onFunctionStepSearchRequested()"
+            (searchCleared)="onFunctionStepSearchCleared()"
+          >
+          </app-function-step>
+          <div>
+            <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
+              {{ "general.back" | translate }}
+            </button>
+            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
+              {{ "general.next" | translate }}
+            </button>
+          </div>
         </mat-step>
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>

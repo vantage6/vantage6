@@ -28,7 +28,7 @@ import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
 import { Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
 import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
@@ -56,9 +56,8 @@ import { MatCheckbox } from '@angular/material/checkbox';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
 import { MatInput } from '@angular/material/input';
-import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatButton } from '@angular/material/button';
 import { isTruthy } from 'src/app/helpers/utils.helper';
-import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
 import { readFile } from 'src/app/helpers/file.helper';
 import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
@@ -66,6 +65,7 @@ import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
 import { SessionStepComponent } from '../task-steps/session-step/session-step.component';
 import { StudyStepComponent } from '../task-steps/study-step/study-step.component';
+import { FunctionStepComponent } from '../task-steps/function-step/function-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -95,17 +95,15 @@ import { StudyStepComponent } from '../task-steps/study-step/study-step.componen
     MatSelect,
     MatButton,
     TranslateModule,
-    RouterLink,
     ReactiveFormsModule,
     NgIf,
     NgFor,
-    MatIconButton,
     MatSuffix,
     NumberOnlyDirective,
     NgTemplateOutlet,
-    HighlightedTextPipe,
     SessionStepComponent,
-    StudyStepComponent
+    StudyStepComponent,
+    FunctionStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -953,6 +951,19 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     } else {
       this.handleStudyChange(null);
     }
+  }
+
+  // Event handlers for the function step component
+  onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
+    this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
+  }
+
+  onFunctionStepSearchRequested(): void {
+    this.search();
+  }
+
+  onFunctionStepSearchCleared(): void {
+    this.clearFunctionSearchInput();
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {
