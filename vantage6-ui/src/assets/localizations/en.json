@@ -266,7 +266,8 @@
         "query": "This database is a {{dbType}} database. Provide a query to select the data",
         "worksheet": "This database is an Excel file. Provide the name of the worksheet to use"
       },
-      "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later."
+      "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later.",
+      "no-databases-available": "No databases are available on the node! Please contact the node administrator to configure databases."
     },
     "step-dataframe": {
       "title": "Select dataframe",

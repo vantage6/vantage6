@@ -66,6 +66,7 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
 import { SessionStepComponent } from '../task-steps/session-step/session-step.component';
 import { StudyStepComponent } from '../task-steps/study-step/study-step.component';
 import { FunctionStepComponent } from '../task-steps/function-step/function-step.component';
+import { DatabaseStepComponent } from '../task-steps/database-step/database-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -103,7 +104,8 @@ import { FunctionStepComponent } from '../task-steps/function-step/function-step
     NgTemplateOutlet,
     SessionStepComponent,
     StudyStepComponent,
-    FunctionStepComponent
+    FunctionStepComponent,
+    DatabaseStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -964,6 +966,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   onFunctionStepSearchCleared(): void {
     this.clearFunctionSearchInput();
+  }
+
+  // Event handlers for the database step component
+  onDatabaseStepDatabaseSelected(database: string): void {
+    // Handle database selection if needed
+    // The main component already handles this through form binding
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {

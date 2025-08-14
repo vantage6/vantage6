@@ -8,13 +8,13 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { NgIf, NgFor } from '@angular/common';
+import { NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-study-step',
   templateUrl: './study-step.component.html',
   styleUrls: ['./study-step.component.scss'],
-  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, NgIf, NgFor],
+  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, NgFor],
   standalone: true
 })
 export class StudyStepComponent implements OnInit, OnDestroy {

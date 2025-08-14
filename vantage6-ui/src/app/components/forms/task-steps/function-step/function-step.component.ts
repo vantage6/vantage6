@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { NgIf, NgFor, NgTemplateOutlet } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from '../../../alerts/alert/alert.component';
 import { HighlightedTextPipe } from '../../../../pipes/highlighted-text.pipe';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
@@ -30,7 +30,6 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
     MatIconModule,
     NgIf,
     NgFor,
-    NgTemplateOutlet,
     AlertComponent,
     HighlightedTextPipe
   ],

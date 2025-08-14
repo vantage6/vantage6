@@ -69,19 +69,12 @@
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
-          <form class="form" [formGroup]="databaseForm">
-            <div *ngIf="availableDatabases.length > 0; else noDatabasesBlock">
-              <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ "task.database" | translate }}</mat-label>
-                <mat-select formControlName="database">
-                  <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
-                    {{ availableDatabase.name }}
-                    <div class="detail-txt">({{ availableDatabase.type }})</div>
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </form>
+          <app-database-step
+            [formGroup]="databaseForm"
+            [availableDatabases]="availableDatabases"
+            (databaseSelected)="onDatabaseStepDatabaseSelected($event)"
+          >
+          </app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
