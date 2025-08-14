@@ -330,7 +330,7 @@ class TaskPostBase(ServicesResources):
 
             # If dataframe extraction is not ready for each org, don't create task
             if action != AlgorithmStepType.DATA_EXTRACTION:
-                self.__check_data_extract_ready_for_requested_orgs(df, org_ids)
+                self._check_data_extract_ready_for_requested_orgs(df, org_ids)
             else:
                 self.__check_database_label_exists(
                     database.label, org_ids, collaboration.id
@@ -538,7 +538,7 @@ class TaskPostBase(ServicesResources):
                 )
 
     @staticmethod
-    def __check_data_extract_ready_for_requested_orgs(
+    def _check_data_extract_ready_for_requested_orgs(
         dataframe: db.Dataframe, org_ids: list[int]
     ) -> bool:
         """

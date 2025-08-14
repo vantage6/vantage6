@@ -50,6 +50,7 @@ class NodeClient(ClientBase):
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
+        self.column = self.Column(self)
 
         self.kc_openid = KeycloakOpenID(
             server_url=self.auth_url,
@@ -290,6 +291,29 @@ class NodeClient(ClientBase):
                 The algorithms as json.
             """
             return self.parent.request(f"algorithmstore/{id_}")
+
+    class Column(ClientBase.SubClient):
+        """Subclient for the column endpoint."""
+
+        def post(self, df_id: int, data: dict) -> dict:
+            """
+            Create a column at the central server.
+
+            Parameters
+            ----------
+            df_id: int
+                ID of the dataframe.
+            data: dict
+                Dictionary of fields that are to be patched
+
+            Returns
+            -------
+            dict
+                The response from the server.
+            """
+            return self.parent.request(
+                f"session/dataframe/{df_id}/column", method="post", json=data
+            )
 
     def is_encrypted_collaboration(self) -> bool:
         """

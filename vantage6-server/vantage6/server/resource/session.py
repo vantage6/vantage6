@@ -24,7 +24,6 @@ from vantage6.server.resource import only_for, with_user
 from vantage6.server.resource.common.input_schema import SessionInputSchema
 from vantage6.server.resource.common.output_schema import SessionSchema
 from vantage6.server.resource.common.task_post_base import TaskPostBase
-from vantage6.server.resource.task import Tasks
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -188,7 +187,7 @@ class SessionBase(TaskPostBase):
 
         if (
             self.r.v_org.can() or session.scope == S.ORGANIZATION
-        ) and session.organization_id == self.obtain_organization_id():
+        ) and session.owner.organization_id == self.obtain_organization_id():
             return True
 
         if self.is_user() and session.user_id == g.user.id:
@@ -271,12 +270,14 @@ class SessionBase(TaskPostBase):
         if (
             getattr(self.r, f"{op}_col").can()
             and session.collaboration_id in self.obtain_auth_collaboration_ids()
+            and session.scope <= S.COLLABORATION
         ):
             return True
 
         if (
             getattr(self.r, f"{op}_org").can()
             and session.owner.organization_id == self.obtain_organization_id()
+            and S(session.scope) <= S.ORGANIZATION
         ):
             return True
 
@@ -284,6 +285,7 @@ class SessionBase(TaskPostBase):
             self.is_user()
             and getattr(self.r, f"{op}_own").can()
             and session.user_id == g.user.id
+            and session.scope == S.OWN
         ):
             return True
 
@@ -465,11 +467,18 @@ class Sessions(SessionBase):
         # can see the sessions in the collaboration that have a scope collaboration.
         if not self.r.v_glo.can():
             if self.r.v_col.can():
-                q = q.filter(db.Session.collaboration_id.in_(auth_org.collaborations))
-            elif self.r.v_org.can():
                 q = q.filter(
+                    db.Session.collaboration_id.in_(
+                        self.obtain_auth_collaboration_ids()
+                    )
+                )
+            elif self.r.v_org.can():
+                q = q.join(db.User, db.Session.user_id == db.User.id).filter(
                     or_(
-                        db.Session.organization_id == auth_org.id,
+                        and_(
+                            db.User.organization_id == auth_org.id,
+                            db.Session.user_id == db.User.id,
+                        ),
                         and_(
                             db.Session.collaboration_id.in_(
                                 self.obtain_auth_collaboration_ids()
@@ -479,15 +488,18 @@ class Sessions(SessionBase):
                     )
                 )
             else:
-                q = q.filter(
+                q = q.join(db.User, db.Session.user_id == db.User.id).filter(
                     or_(
                         db.Session.user_id == g.user.id,
                         and_(
-                            db.Session.organization_id == auth_org.id,
+                            db.User.organization_id == auth_org.id,
+                            db.Session.user_id == db.User.id,
                             db.Session.scope == S.ORGANIZATION,
                         ),
                         and_(
-                            db.Session.collaboration_id.in_(auth_org.collaborations),
+                            db.Session.collaboration_id.in_(
+                                self.obtain_auth_collaboration_ids()
+                            ),
                             db.Session.scope == S.COLLABORATION,
                         ),
                     )

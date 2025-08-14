@@ -47,6 +47,39 @@ class Scope(StrEnumBase):
         """
         return next((scope.name.lower() for scope in cls if scope == value), None)
 
+    def __lt__(self, other: Scope) -> bool:
+        """
+        Check if this scope is strictly lower than another scope.
+        """
+        if self == Scope.OWN and other != Scope.OWN:
+            return True
+        elif self == Scope.ORGANIZATION and other in [
+            Scope.COLLABORATION,
+            Scope.GLOBAL,
+        ]:
+            return True
+        elif self == Scope.COLLABORATION and other == Scope.GLOBAL:
+            return True
+        return False
+
+    def __le__(self, other: Scope) -> bool:
+        """
+        Check if this scope is lower or equal to another scope.
+        """
+        return self == other or self < other
+
+    def __gt__(self, other: Scope) -> bool:
+        """
+        Check if this scope is strictly greater than another scope.
+        """
+        return not self <= other
+
+    def __ge__(self, other: Scope) -> bool:
+        """
+        Check if this scope is greater or equal to another scope.
+        """
+        return not self < other
+
 
 class Rule(Base):
     """Rules to determine permissions in an API endpoint.

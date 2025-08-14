@@ -248,10 +248,6 @@ class RunIO:
             {"name": field.name, "dtype": str(field.type)}
             for field in algo_result.schema
         ]
-        self.client.request(
-            f"/session/dataframe/{self.df_id}/column",
-            method="post",
-            json=columns_info,
-        )
+        self.client.column.post(self.df_id, columns_info)
         self.log.debug("Column data sent to server: %s", columns_info)
         return RunStatus.COMPLETED

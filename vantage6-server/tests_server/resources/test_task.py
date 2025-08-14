@@ -24,8 +24,10 @@ log = logging.getLogger(logger)
 
 class TestResources(TestResourceBase):
     def test_task_with_id(self):
+        task = Task(name="unit")
+        task.save()
         headers = self.login_as_root()
-        result = self.app.get("/api/task/1", headers=headers)
+        result = self.app.get(f"/api/task/{task.id}", headers=headers)
         self.assertEqual(result.status_code, 200)
 
     def test_task_witout_id(self):

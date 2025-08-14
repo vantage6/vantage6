@@ -2,23 +2,24 @@ import logging
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.backend.common import session as db_session
-from vantage6.server.model import (
-    Rule,
-    Role,
-    Organization,
-    Collaboration,
-)
-from vantage6.server.model.rule import Scope, Operation
-from .test_resource_base import TestResourceBase
 
+from vantage6.backend.common import session as db_session
+
+from vantage6.server.model import (
+    Collaboration,
+    Organization,
+    Role,
+    Rule,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_view_roles(self):
         headers = self.login_as_root()
         result = self.app.get("/api/role", headers=headers)
@@ -355,14 +356,17 @@ class TestResources(TestResourceBase):
         # check editing role outside the collaboration fails
         org3 = Organization()
         org3.save()
-        role = Role(name="some-role-name", organization=org3)
-        role.save()
+        role2 = Role(name="some-role-name", organization=org3)
+        role2.save()
         result = self.app.patch(
-            f"/api/role/{role.id}",
+            f"/api/role/{role2.id}",
             headers=headers,
             json={"name": "this-will-not-be-updated"},
         )
         self.assertEqual(result.status_code, HTTPStatus.UNAUTHORIZED)
+
+        role.delete()
+        role2.delete()
 
     def test_remove_role(self):
         org = Organization()
