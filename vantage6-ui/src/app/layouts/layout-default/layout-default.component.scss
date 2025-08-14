@@ -1,3 +1,4 @@
+@use "sass:map";
 @use "/src/app/styles/config.scss" as *;
 
 .layout-container {
@@ -114,7 +115,7 @@ mat-toolbar {
 }
 
 .choice-alert {
-  background-color: map-get($vantage-primary, 900);
+  background-color: map.get($vantage-primary, 900);
   margin-bottom: $spacing-px-2;
 
   mat-card-content {
@@ -133,12 +134,12 @@ mat-toolbar {
   }
 
   span {
-    color: map-get($vantage-primary, 50);
+    color: map.get($vantage-primary, 50);
     display: flex;
     align-items: center;
 
     &.low-importance {
-      color: map-get($vantage-primary, 200);
+      color: map.get($vantage-primary, 200);
     }
   }
 }
