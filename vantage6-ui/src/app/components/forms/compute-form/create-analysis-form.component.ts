@@ -65,6 +65,7 @@ import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
 import { SessionStepComponent } from '../task-steps/session-step/session-step.component';
+import { StudyStepComponent } from '../task-steps/study-step/study-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -103,7 +104,8 @@ import { SessionStepComponent } from '../task-steps/session-step/session-step.co
     NumberOnlyDirective,
     NgTemplateOutlet,
     HighlightedTextPipe,
-    SessionStepComponent
+    SessionStepComponent,
+    StudyStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -942,6 +944,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   onSessionStepSessionsLoaded(sessions: BaseSession[]): void {
     this.sessions = sessions;
+  }
+
+  // Event handlers for the study step component
+  onStudyStepStudySelected(study: BaseStudy | null): void {
+    if (study) {
+      this.handleStudyChange(study.id);
+    } else {
+      this.handleStudyChange(null);
+    }
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {
