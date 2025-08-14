@@ -36,11 +36,15 @@ class TestUserClient(unittest.TestCase):
 
         # Mock the request method
         client_instance.request = MagicMock()
-        client_instance.request.return_value = {"data": [{"result": "123e4567-e89b-12d3-a456-426614174000"}]}
+        client_instance.request.return_value = {
+            "data": [
+                {"result": "123e4567-e89b-12d3-a456-426614174000", "data_storage_used": "Azure"}
+            ]
+        }
         client_instance.request.status_code = 200
       
         # Call the method under test
-        results = client_instance.retrieve_results(task_id=1, interval=0.1)
+        results = client_instance.retrieve_results(task_id=1, interval=0.1, )
         print(results)
         # Assertions
         

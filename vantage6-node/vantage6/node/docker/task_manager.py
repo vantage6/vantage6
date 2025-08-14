@@ -29,7 +29,6 @@ from vantage6.node.docker.exceptions import (
     PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
 )
-from vantage6.node.service.azure_storage_service import AzureStorageService
 
 class DockerTaskManager(DockerBaseManager):
     """
@@ -283,11 +282,7 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     def cleanup(self) -> None:
-        """Cleanup the containers generated for this task"""
-        self.log.info(f"Deleted blob for {self.container.name} from Azure Storage.")
-        storage_service = AzureStorageService(self.container.name)
-        storage_service.delete_blob(self.container.name)
-        
+        """Cleanup the docker containers generated for this task"""
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 

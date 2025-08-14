@@ -27,7 +27,14 @@ FAKE_NAME = "john doe"
 
 
 class TestClient(TestCase):
-    def test_post_task(self):
+    @patch("vantage6.client.requests")
+    @patch("vantage6.client.jwt")
+    def test_post_task(self, mock_jwt, mock_requests):
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.post.return_value.status_code = 200
+        mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
+        mock_jwt.decode.return_value = {"sub": FAKE_ID}
+
         post_input = TestClient.post_task_on_mock_client(SAMPLE_INPUT)
         decoded_input = base64.b64decode(post_input)
         assert b'{"method": "test-task"}' == decoded_input
@@ -125,10 +132,16 @@ class TestClient(TestCase):
 
     @staticmethod
     def setup_client() -> UserClient:
-        client = UserClient(HOST, PORT)
-        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
-        client.setup_encryption(None)
-        return client
+        mock_requests = MagicMock()
+        mock_requests.post.return_value.status_code = 200
+        mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
+        mock_jwt = TestClient._create_mock_jwt()
+
+        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt):
+            client = UserClient(f"http://{HOST}", PORT)
+            client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+            client.setup_encryption(None)
+            return client
 
     @staticmethod
     def _create_mock_jwt() -> MagicMock:

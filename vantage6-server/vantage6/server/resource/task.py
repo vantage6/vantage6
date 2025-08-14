@@ -1275,7 +1275,6 @@ class Task(TaskBase):
 
         # delete child/grandchild/... tasks
         Task._delete_subtasks(task)
-
         # permissions ok, delete...
         task.delete()
 

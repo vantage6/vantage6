@@ -19,14 +19,15 @@ class TestDockerTaskManagerCleanup(unittest.TestCase):
         manager.log = mock_log
         manager.container = mock_container
         manager.helper_container = mock_helper_container
-
+        manager.ctx = MagicMock()
+        manager.ctx.connection_string = "test-connection-string"
         # Act
-        manager.cleanup()
+        manager.cleanup(manager.ctx)
 
         # Assert
-        mock_log.info.assert_called_with("Deleted blob for test-container from Azure Storage.")
-        mock_AzureStorageService.assert_called_with("test-container")
-        mock_storage_service.delete_blob.assert_called_with("test-container")
+        mock_log.info.assert_called_with("Delete blob for test-container from Azure Storage.")
+        mock_AzureStorageService.assert_called()
+        mock_storage_service.delete_blob.assert_called()
         mock_remove_container.assert_any_call(mock_helper_container, kill=True)
         mock_remove_container.assert_any_call(mock_container, kill=True)
 

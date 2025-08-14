@@ -111,6 +111,9 @@ class TestCleanupRunsCount(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
+        self.patcher = patch("vantage6.server.service.azure_storage_service.AzureStorageService")
+        self.patcher.connection_string = "sqlite://"
+        self.mock_azure_storage_service = self.patcher.start()
 
     def tearDown(self):
         # clear_data() will clear session too
@@ -161,7 +164,7 @@ class TestCleanupRunsCount(unittest.TestCase):
     def test_cleanup_runs_count(self):
         # Insert runs into db
         runs = self.create_runs()
-
+        
         # clean up result and input from runs older than 30 days
         cleanup.cleanup_runs_data(30, include_input=True)
 

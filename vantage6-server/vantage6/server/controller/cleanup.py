@@ -1,3 +1,4 @@
+from cProfile import run
 import logging
 
 from datetime import datetime, timedelta, timezone
@@ -5,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
+#from vantage6.server.service.azure_storage_service import AzureStorageService
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -41,12 +43,14 @@ def cleanup_runs_data(days: int, include_input: bool = False):
                 .all()
             )
             for run in runs:
+                # TODO: implement blob cleanup
+                # blob_service_client = AzureStorageService(container_name=run.container_name, connection_string=connection_string)
+                # blob_service_client.delete_blob(run.id)
                 run.result = ""
                 if include_input:
                     run.input = ""
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")
-        # TODO: clear blobs from Azure Blob Storage if applicable
 
    
         log.info(

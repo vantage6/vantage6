@@ -1952,7 +1952,7 @@ class UserClient(ClientBase):
                     )
             return databases
 
-        def delete(self, id_: int) -> None:
+        def delete(self, id_: int, include_task: bool = False) -> None:
             """Delete a task
 
             Also removes the related runs.
@@ -1962,12 +1962,16 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
-            ## Is a seperate method needed or can we add the delete blob to the general delete method?
             if self.parent.check_if_blob_store_enabled():
                 # If blob store is enabled, we also need to delete the blobs
-                # associated with the task.
-                
-                msg = self.parent.request(f"blobstream/delete/{id_}", method="delete")
+                            # get run from the API
+                run = self.parent.request("result", params={"task_id": id_}) 
+                data = run.get('data')
+                if isinstance(data, list) and len(data) > 0:
+                    result_json = data[0].get('result')
+                else:
+                    print("No result found")
+                msg = self.parent.request(f"blobstream/delete/{result_json}", method="delete")
                 self.parent.log.info(f"--> {msg}")
 
             msg = self.parent.request(f"task/{id_}", method="delete")
@@ -1988,6 +1992,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
+            
                 Message from the server
             """
             msg = self.parent.request("/kill/task", method="post", json={"id": id_})
@@ -2226,42 +2231,10 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             runs = self.parent.request("result", params={"task_id": task_id})                                     
-
+            self.parent.log.info("Received results from server: %s", runs) 
             results = self._decrypt_result(runs, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
-        
-
-        def delete_blob_completed_tasks(self, task_id: int) -> None:
-            """
-            Delete all blobs for a specific task
-
-            Parameters
-            ----------
-            task_id : int
-                Id of the task to delete blobs 
-            """
-
-            self.parent.log.info("--> Attempting to delete blobs!")
-
-            results = self.parent.request("result", params={"task_id": task_id})
-            for item in results["data"]:
-                url = f"{self.parent.base_path}/blobstream/delete/{item['result']}"
-                headers = self.parent.headers
-                timeout = 300
-            
-                try:
-                    with requests.delete(url, headers=headers, stream=True, timeout=timeout) as response:
-                        if response.status_code == 200:
-                            self.parent.log.info(f"Successfully deleted result for task_id {task_id}")
-                        else:
-                            self.parent.log.error(f"Failed to delete result for task_id {task_id}. Status code: {response.status_code}")
-                            self.parent.log.error(f"Response: {response.text}")
-                except requests.RequestException as e:
-                    self.parent.log.error(f"An error occurred while deleting result: {e}")
-            self.parent.log.info("Successfully deleted blob")
-            
-
         
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
