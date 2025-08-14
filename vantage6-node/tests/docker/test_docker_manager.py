@@ -60,9 +60,8 @@ class TestDockerManagerCleanup(unittest.TestCase):
         self.docker_task_manager = object.__new__(DockerTaskManager)
         self.docker_task_manager.active_tasks = [DummyTask(run_id=1, task_id=2, parent_id=3), DummyTask(run_id=4, task_id=5, parent_id=6)]
 
-    @patch("vantage6.node.docker.task_manager.AzureStorageService")
-    @patch("vantage6.node.docker.task_manager.remove_container")
-    def test_cleanup(self, mock_remove_container, mock_AzureStorageService):
+
+    def test_cleanup(self):
         # Call cleanup
         self.docker_manager.cleanup()
 

@@ -283,6 +283,8 @@ class DockerTaskManager(DockerBaseManager):
 
     def cleanup(self) -> None:
         """Cleanup the docker containers generated for this task"""
+        ##TODO: Check if cleanup blobs here is needed?
+        # client.task.delete(self.task_id)
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 

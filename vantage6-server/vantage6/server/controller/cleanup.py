@@ -43,9 +43,6 @@ def cleanup_runs_data(days: int, include_input: bool = False):
                 .all()
             )
             for run in runs:
-                # TODO: implement blob cleanup
-                # blob_service_client = AzureStorageService(container_name=run.container_name, connection_string=connection_string)
-                # blob_service_client.delete_blob(run.id)
                 run.result = ""
                 if include_input:
                     run.input = ""

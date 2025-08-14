@@ -518,9 +518,36 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
         self.__refresh_token = response.json()["refresh_token"]
 
-    def fetch_and_decrypt_run_data(self, run_data: str, data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL) -> bytes:
+    def fetch_and_decrypt_run_data(self, run_data: str, 
+                    data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL) -> bytes:
+        """Fetch and decrypt the run data of an algorithm run
+
+        Decrypts the run's data (either input or result). 
+        If the data is stored in a blob storage, 
+        data will be fetched using the UUID reference.
+        
+        Parameters
+        ----------
+        run_data : str | bytes
+            The run data to be fetched and decrypted. If it is a UUID, it will
+            be used to download the data from blob storage.
+        data_storage_used : DataStorageUsed, optional
+            The type of data storage used for the run data, 
+            by default DataStorageUsed.RELATIONAL
+
+        Returns
+        -------
+        bytes
+            The decrypted run data
+
+        Raises
+        ------
+        ValueError
+            If the UUID is not valid or if decryption fails
+        """
         if data_storage_used == DataStorageUsed.AZURE.value:
-            uuid = run_data # If blob storage is used, the data is a UUID reference to the blob
+            # If blob storage is used, the data is a UUID reference to the blob
+            uuid = run_data 
             self.log.debug(f"Parsing uuid from input: {uuid}")
             if isinstance(uuid, bytes):
                 uuid = uuid.decode('utf-8')
@@ -530,8 +557,8 @@ class ClientBase(object):
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
-
-        return self._decrypt_input(run_data) # Naming of this function is misleading, as it is also used to decrypt results
+        # Naming of this function is misleading, as it is also used to decrypt results
+        return self._decrypt_input(run_data) 
 
     def _decrypt_input(self, input_: str | bytes) -> bytes:
         """Helper to decrypt the input of an algorithm run
@@ -564,6 +591,7 @@ class ClientBase(object):
 
         except Exception as e:
             self.log.exception(e)
+
         return input_
 
     def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
@@ -739,7 +767,25 @@ class ClientBase(object):
 
     def download_run_data_from_server(self, run_data_uuid) -> dict:
         """
-        Aggregate results from the server.
+        Download run data (either input or result) 
+        from the server using its UUID.
+
+        Parameters
+        ----------
+        run_data_uuid : str
+            UUID of the run data to download.
+
+        Returns
+        -------
+        dict
+            The downloaded run data as bytes.
+
+        Raises
+        ------
+        ValueError
+            If the provided UUID is not valid.
+        requests.RequestException
+            If there is an error during the request to download the run data.
 
         """
         if not is_uuid(run_data_uuid):
@@ -773,6 +819,11 @@ class ClientBase(object):
     def check_if_blob_store_enabled(self):
         """
         Check if the blob store is enabled on the server.
+        This function sends a request to the blob stream status endpoint
+        and returns whether the blob store is enabled or not.
+
+        This is used so that the user does not need to be aware of storage 
+        used at the server when uploading the first input in the client.
 
         Returns
         -------

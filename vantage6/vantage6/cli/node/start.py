@@ -263,7 +263,7 @@ def cli_node_start(
     system_folders_option = "--system" if system_folders else "--user"
     cmd = (
         f"vnode-local start -c /mnt/config/{name}.yaml -n {name} "
-        f" --dockerized {system_folders_option} "
+        f" --dockerized {system_folders_option}"
     )
 
     volumes = []

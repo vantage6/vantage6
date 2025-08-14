@@ -44,10 +44,7 @@ class TestUserClient(unittest.TestCase):
         client_instance.request.status_code = 200
       
         # Call the method under test
-        results = client_instance.retrieve_results(task_id=1, interval=0.1, )
-        print(results)
-        # Assertions
-        
+        results = client_instance.retrieve_results(task_id=1, interval=0.1)
         self.assertEqual(len(results), 1)
 
 
