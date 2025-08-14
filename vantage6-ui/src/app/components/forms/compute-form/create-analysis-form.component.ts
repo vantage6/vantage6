@@ -107,6 +107,7 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
   availableStepsEnum = AvailableStepsEnum;
+  algorithmStepType = AlgorithmStepType;
   isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
@@ -281,7 +282,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (allowedTaskTypes.length > 0) {
       this.availableSteps = {
         session:
-          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
+          allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) ||
+          allowedTaskTypes.includes(AlgorithmStepType.CentralCompute) ||
+          !this.sessionId,
         study: allowedTaskTypes.includes(AlgorithmStepType.FederatedCompute) || allowedTaskTypes.includes(AlgorithmStepType.CentralCompute),
         function: true,
         database: allowedTaskTypes.includes(AlgorithmStepType.DataExtraction),
@@ -695,13 +698,25 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
+  private hasParameterStep(): boolean {
+    return this.availableSteps.parameter && this.function != null && this.function?.arguments.length > 0;
+  }
+
+  private hasDataframeStep(): boolean {
+    return this.availableSteps.dataframe && this.function != null && this.function?.databases.length > 0;
+  }
+
+  private hasDatabaseStep(): boolean {
+    return this.availableSteps.database && this.function != null && this.function?.databases.length > 0;
+  }
+
   isLastStep(step: AvailableStepsEnum): boolean {
     if (step === AvailableStepsEnum.Dataframe) {
-      return !this.availableSteps.parameter;
+      return !this.hasParameterStep();
     } else if (step === AvailableStepsEnum.Database) {
-      return !this.availableSteps.parameter && !this.availableSteps.dataframe;
+      return !this.hasParameterStep() && !this.hasDataframeStep();
     } else if (step === AvailableStepsEnum.Function) {
-      return !this.availableSteps.parameter && !this.availableSteps.dataframe && !this.availableSteps.database;
+      return !this.hasParameterStep() && !this.hasDataframeStep() && !this.hasDatabaseStep();
     } else if (step === AvailableStepsEnum.Parameter) {
       return true;
     } else {

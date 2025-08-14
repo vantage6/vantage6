@@ -60,13 +60,18 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.session = await this.sessionService.getSession(Number(this.sessionId));
+
+    // Only try to get session if sessionId is provided
+    if (this.sessionId) {
+      this.session = await this.sessionService.getSession(Number(this.sessionId));
+      this.study_id = this.session?.study?.id ?? null;
+    }
+
     this.algorithms = await this.algorithmService.getAlgorithms();
-    this.study_id = this.session?.study?.id ?? null;
   }
 
   async onSubmitHandler(formCreateOutput: FormCreateOutput): Promise<void> {
-    let session_id: number = Number(this.sessionId);
+    let session_id: number = Number(formCreateOutput.session_id);
     const dataframeInput: CreateDataframe = {
       name: formCreateOutput.name,
       label: formCreateOutput.database || '',
@@ -84,7 +89,11 @@ export class DataframeCreateComponent implements OnInit, OnDestroy {
   }
 
   onCancelHandler(): void {
-    this.router.navigate([routePaths.session, this.sessionId]);
+    if (this.sessionId) {
+      this.router.navigate([routePaths.session, this.sessionId]);
+    } else {
+      this.router.navigate([routePaths.sessions]);
+    }
   }
 
   ngOnDestroy(): void {

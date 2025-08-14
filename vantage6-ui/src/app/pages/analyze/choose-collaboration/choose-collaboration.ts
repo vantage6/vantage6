@@ -15,23 +15,23 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-choose-collaboration',
-    templateUrl: './choose-collaboration.component.html',
-    styleUrls: ['./choose-collaboration.scss'],
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        NgFor,
-        MatButton,
-        MatCard,
-        MatCardContent,
-        MatCardHeader,
-        MatCardTitle,
-        RouterLink,
-        MatProgressSpinner,
-        AsyncPipe,
-        TranslateModule
-    ]
+  selector: 'app-choose-collaboration',
+  templateUrl: './choose-collaboration.component.html',
+  styleUrls: ['./choose-collaboration.scss'],
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    NgFor,
+    MatButton,
+    MatCard,
+    MatCardContent,
+    MatCardHeader,
+    MatCardTitle,
+    RouterLink,
+    MatProgressSpinner,
+    AsyncPipe,
+    TranslateModule
+  ]
 })
 export class ChooseCollaborationComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -55,8 +55,8 @@ export class ChooseCollaborationComponent implements OnInit {
   async handleCollaborationClick(collaboration: BaseCollaboration) {
     this.isLoading = true;
     await this.chosenCollaborationService.setCollaboration(collaboration.id.toString());
-    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
-      this.router.navigate([routePaths.sessions]);
+    if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.TASK, OperationType.CREATE)) {
+      this.router.navigate([routePaths.taskCreate]);
     } else {
       this.router.navigate([routePaths.analyzeHome]);
     }
