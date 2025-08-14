@@ -1,0 +1,40 @@
+<form class="form" [formGroup]="formGroup">
+  <div *ngIf="hasNoSessions" class="margin-bottom-4">
+    <app-alert label="{{ 'task-create.alert-no-sessions-found' | translate }}"> </app-alert>
+  </div>
+
+  <div class="margin-bottom-4">
+    <button mat-flat-button color="primary" [routerLink]="routes.sessionCreate">
+      <mat-icon>add</mat-icon>{{ "session-create.create-title" | translate }}
+    </button>
+  </div>
+
+  <mat-form-field *ngIf="hasSessions" subscriptSizing="dynamic">
+    <mat-label>{{ "task.session" | translate }}</mat-label>
+    <mat-select formControlName="sessionID">
+      <mat-option *ngFor="let session of sessions" [value]="session.id.toString()">
+        {{ session.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <app-alert-with-button
+    *ngIf="shouldShowNoDataframesAlert"
+    class="node-alert"
+    label="{{ 'task-create.alert-no-dataframes-in-session' | translate }}"
+    buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+    buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+    [isSuccessAlert]="false"
+  >
+  </app-alert-with-button>
+
+  <app-alert-with-button
+    *ngIf="allDataframesNotReady"
+    class="node-alert"
+    label="{{ 'task-create.alert-dataframes-not-ready' | translate }}"
+    buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+    buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+    [isSuccessAlert]="false"
+  >
+  </app-alert-with-button>
+</form>

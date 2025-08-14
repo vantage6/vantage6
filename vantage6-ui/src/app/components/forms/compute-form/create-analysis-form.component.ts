@@ -64,6 +64,7 @@ import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
+import { SessionStepComponent } from '../task-steps/session-step/session-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -101,7 +102,8 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
     MatSuffix,
     NumberOnlyDirective,
     NgTemplateOutlet,
-    HighlightedTextPipe
+    HighlightedTextPipe,
+    SessionStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -827,9 +829,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.sessions = await this.sessionService.getSessions({
-      collaboration_id: this.collaboration?.id.toString() || ''
-    });
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
@@ -930,6 +929,19 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearParameterStep();
+  }
+
+  // Event handlers for the session step component
+  onSessionStepSessionSelected(session: BaseSession | null): void {
+    if (session) {
+      this.handleSessionChange(session.id.toString());
+    } else {
+      this.handleSessionChange('');
+    }
+  }
+
+  onSessionStepSessionsLoaded(sessions: BaseSession[]): void {
+    this.sessions = sessions;
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {

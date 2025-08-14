@@ -9,44 +9,21 @@
           <mat-icon>check</mat-icon>
         </ng-template>
         <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
-          <form class="form" [formGroup]="sessionForm">
-            <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
-            <div *ngIf="sessions.length < 1" class="margin-bottom-4">
-              <app-alert label="{{ 'task-create.alert-no-sessions-found' | translate }}"> </app-alert>
-            </div>
-            <div class="margin-bottom-4">
-              <button actions mat-flat-button color="primary" [routerLink]="routes.sessionCreate">
-                <mat-icon>add</mat-icon>{{ "session-create.create-title" | translate }}
-              </button>
-            </div>
-            <mat-form-field *ngIf="sessions.length > 0" subscriptSizing="dynamic">
-              <mat-label>{{ "task.session" | translate }}</mat-label>
-              <mat-select formControlName="sessionID">
-                <mat-option *ngFor="let session of sessions" [value]="session.id.toString()">
-                  {{ session.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <app-alert-with-button
-              *ngIf="hasLoadedDataframes && dataframes.length === 0 && !this.allowedTaskTypes?.includes(algorithmStepType.DataExtraction)"
-              class="node-alert"
-              label="{{ 'task-create.alert-no-dataframes-in-session' | translate }}"
-              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
-              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
-              [isSuccessAlert]="false"
-            ></app-alert-with-button>
-            <app-alert-with-button
-              *ngIf="allDataframesNotReady"
-              class="node-alert"
-              label="{{ 'task-create.alert-dataframes-not-ready' | translate }}"
-              buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
-              buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
-              [isSuccessAlert]="false"
-            ></app-alert-with-button>
-            <div>
-              <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-            </div>
-          </form>
+          <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
+          <app-session-step
+            [formGroup]="sessionForm"
+            [allowedTaskTypes]="allowedTaskTypes"
+            [dataframes]="dataframes"
+            [hasLoadedDataframes]="hasLoadedDataframes"
+            [allDataframesNotReady]="allDataframesNotReady"
+            [session]="session"
+            (sessionSelected)="onSessionStepSessionSelected($event)"
+            (sessionsLoaded)="onSessionStepSessionsLoaded($event)"
+          >
+          </app-session-step>
+          <div>
+            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+          </div>
         </mat-step>
         <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [completed]="isStudyCompleted" [stepControl]="studyForm">
           <form class="form" [formGroup]="studyForm">
