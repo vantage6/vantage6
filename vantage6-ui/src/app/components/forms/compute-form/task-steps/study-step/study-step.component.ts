@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { NgFor } from '@angular/common';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
+import { BaseSession } from 'src/app/models/api/session.models';
 
 @Component({
   selector: 'app-study-step',
@@ -31,6 +32,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupFormListeners();
+    this.setupChangeListeners();
   }
 
   ngOnDestroy(): void {
@@ -42,6 +44,25 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     this.formGroup.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((studyID: string) => {
       this.onStudySelected(studyID);
     });
+  }
+
+  private setupChangeListeners(): void {
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
+      this.onSessionChange(session);
+    });
+  }
+
+  onSessionChange(session: BaseSession | null): void {
+    if (!session) return;
+    this.formGroup.controls['studyOrCollabID'].reset();
+    this.isStudyCompleted = false;
+    if (session.study) {
+      this.formGroup.controls['studyOrCollabID'].disable();
+      this.formGroup.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + session.study.id.toString());
+      this.onStudySelected(StudyOrCollab.Study + session.study.id.toString());
+    } else {
+      this.formGroup.controls['studyOrCollabID'].enable();
+    }
   }
 
   onStudySelected(studyID: string): void {

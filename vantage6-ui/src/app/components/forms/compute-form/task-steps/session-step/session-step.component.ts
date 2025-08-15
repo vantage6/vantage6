@@ -16,6 +16,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-session-step',
@@ -43,7 +44,6 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   @Input() hasLoadedDataframes = false;
   @Input() session: BaseSession | null = null;
 
-  @Output() sessionSelected = new EventEmitter<BaseSession | null>();
   @Output() sessionsLoaded = new EventEmitter<BaseSession[]>();
 
   sessions: BaseSession[] = [];
@@ -55,7 +55,8 @@ export class SessionStepComponent implements OnInit, OnDestroy {
 
   constructor(
     private sessionService: SessionService,
-    private chosenCollaborationService: ChosenCollaborationService
+    private chosenCollaborationService: ChosenCollaborationService,
+    private changesInCreateTaskService: ChangesInCreateTaskService
   ) {}
 
   ngOnInit(): void {
@@ -87,13 +88,8 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   }
 
   async onSessionSelected(sessionId: string): Promise<void> {
-    if (!sessionId) {
-      this.sessionSelected.emit(null);
-      return;
-    }
-
     const session = this.sessions.find((s) => s.id === Number(sessionId));
-    this.sessionSelected.emit(session || null);
+    this.changesInCreateTaskService.emitSessionChange(session || null);
   }
 
   get hasNoSessions(): boolean {

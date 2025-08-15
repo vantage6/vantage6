@@ -12,6 +12,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-dataframe-step',
@@ -26,18 +27,24 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() function: any = null;
   @Input() session: BaseSession | null = null;
   @Input() organizationNamesWithNonReadyDataframes: string[] = [];
-  @Input() selectedDataframes: Dataframe[] = [];
   @Input() organizations: any[] = [];
   @Input() functionForm: FormGroup | null = null;
+
+  hasLoadedDataframes: boolean = false;
+  selectedDataframes: Dataframe[] = [];
 
   readonly routes = routePaths;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
+  constructor(
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private sessionService: SessionService
+  ) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
+    this.setupChangeListeners();
   }
 
   ngOnDestroy(): void {
@@ -52,11 +59,38 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
         const controlName = `dataframeId${index}`;
         if (this.formGroup.controls[controlName]) {
           this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((dataframeId: number) => {
-            this.changesInCreateTaskService.emitDataframeChange([dataframeId.toString()]);
+            this.handleDataframeChange(dataframeId, controlName);
           });
         }
       });
     }
+  }
+
+  private setupChangeListeners(): void {
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
+      this.handleSessionChange(session);
+    });
+  }
+
+  private async handleSessionChange(session: BaseSession | null): Promise<void> {
+    if (!session) return;
+    this.hasLoadedDataframes = false;
+    this.dataframes = await this.sessionService.getDataframes(session.id);
+    // filter dataframes that are not ready - they cannot be used for analyses
+    this.dataframes = this.dataframes.filter((df) => df.ready);
+    this.hasLoadedDataframes = true;
+  }
+
+  private handleDataframeChange(dataframeId: number, controlName: string): void {
+    // get all selected dataframes
+    let selectedDfs: number[] | number = this.formGroup.get(controlName)?.value;
+    if (!selectedDfs) return;
+    // if this is a number, convert it to an array
+    if (typeof selectedDfs === 'number') {
+      selectedDfs = [selectedDfs];
+    }
+    this.selectedDataframes = this.dataframes.filter((df) => selectedDfs.includes(df.id));
+    this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
   }
 
   compareIDsForSelection(option: number, value: number): boolean {

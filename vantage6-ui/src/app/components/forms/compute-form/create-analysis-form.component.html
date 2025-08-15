@@ -14,9 +14,7 @@
             [formGroup]="sessionForm"
             [allowedTaskTypes]="allowedTaskTypes"
             [dataframes]="dataframes"
-            [hasLoadedDataframes]="hasLoadedDataframes"
             [session]="session"
-            (sessionSelected)="onSessionStepSessionSelected($event)"
             (sessionsLoaded)="onSessionStepSessionsLoaded($event)"
           >
           </app-session-step>
@@ -38,15 +36,14 @@
           <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
           <app-function-step
             [formGroup]="functionForm"
-            [functionsFilteredBySearch]="functionsFilteredBySearch"
             [organizations]="organizations"
             [function]="function"
+            [functions]="functions"
             [sessionRestrictedToSameImage]="sessionRestrictedToSameImage"
             [showWarningUniqueDFName]="showWarningUniqueDFName"
             [node]="node"
             [algorithms]="algorithms"
             [collaboration]="collaboration"
-            [functionsAllowedForSession]="functionsAllowedForSession"
             (functionSelected)="onFunctionStepFunctionSelected($event)"
           >
           </app-function-step>
@@ -78,7 +75,6 @@
             [function]="function"
             [session]="session"
             [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
-            [selectedDataframes]="selectedDataframes"
             [organizations]="organizations"
             [functionForm]="functionForm"
           >

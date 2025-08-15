@@ -3,7 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AlgorithmFunction, AlgorithmFunctionExtended, Argument, Algorithm } from '../../../../../models/api/algorithm.model';
 import { BaseOrganization } from '../../../../../models/api/organization.model';
-import { AlgorithmStepType } from '../../../../../models/api/session.models';
+import { AlgorithmStepType, BaseSession } from '../../../../../models/api/session.models';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +16,7 @@ import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { HighlightedTextPipe } from '../../../../../pipes/highlighted-text.pipe';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 
 @Component({
   selector: 'app-function-step',
@@ -38,7 +39,6 @@ import { ChangesInCreateTaskService } from '../../../../../services/changes-in-c
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
-  @Input() functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
   @Input() organizations: BaseOrganization[] = [];
   @Input() function: AlgorithmFunctionExtended | null = null;
   @Input() sessionRestrictedToSameImage = false;
@@ -46,21 +46,28 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() node: any = null;
   @Input() algorithms: Algorithm[] = [];
   @Input() collaboration: Collaboration | null | undefined = null;
-  @Input() functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
+  @Input() functions: AlgorithmFunctionExtended[] = [];
 
   @Output() functionSelected = new EventEmitter<{ functionName: string; algorithmID: number; algorithmStoreID: number }>();
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
 
+  functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
+  functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
+
   readonly algorithmStepType = AlgorithmStepType;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
+  constructor(
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private chosenCollaborationService: ChosenCollaborationService
+  ) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
-    this.setupStudyChangeListener();
+    this.setupChangeListeners();
+    this.initData();
   }
 
   ngOnDestroy(): void {
@@ -83,19 +90,44 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
       });
   }
 
-  private setupStudyChangeListener(): void {
+  private initData(): void {
+    this.functionsFilteredBySearch = this.functions;
+    this.functionsAllowedForSession = this.functions;
+  }
+
+  private setupChangeListeners(): void {
     this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
       this.handleStudyChange();
+    });
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
+      this.handleSessionChange(session);
     });
   }
 
   private handleStudyChange(): void {
     // when study changes, clear the selected organizations as not all of them might be
     // part of the study
-    this.formGroup.controls['organizationIDs'].reset();
+    this.clearOrganizations();
   }
 
-  private clearFunctionStep(): void {}
+  private handleSessionChange(session: BaseSession | null): void {
+    if (!session) return;
+    this.clearOrganizations();
+    // check if session is restricted to same image, if so, filter functions to only
+    // include functions that are allowed for the session
+    if (this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image && session?.image) {
+      this.sessionRestrictedToSameImage = true;
+      const allowedAlgorithm: Algorithm | null = this.getAlgorithmFromImage(session.image);
+      if (allowedAlgorithm) {
+        this.functionsAllowedForSession = this.functionsAllowedForSession.filter((func) => func.algorithm_id === allowedAlgorithm.id);
+        this.functionsFilteredBySearch = this.functionsAllowedForSession;
+      }
+    }
+  }
+
+  private clearOrganizations(): void {
+    this.formGroup.controls['organizationIDs'].reset();
+  }
 
   onSearch(): void {
     this.searchRequested.emit();
@@ -155,5 +187,13 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   clearFunctionSearchInput() {
     this.formGroup.controls['algorithmFunctionSearch'].setValue('');
     this.search();
+  }
+
+  private getAlgorithmFromImage(image: string): Algorithm | null {
+    if (image.includes('@sha256:')) {
+      return this.algorithms.find((_) => `${_.image}@${_.digest}` === image) || null;
+    } else {
+      return this.algorithms.find((_) => _.image === image) || null;
+    }
   }
 }

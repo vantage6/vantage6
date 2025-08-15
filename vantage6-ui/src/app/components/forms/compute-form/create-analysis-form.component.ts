@@ -134,8 +134,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   collaboration?: Collaboration | null = null;
   organizations: BaseOrganization[] = [];
   functions: AlgorithmFunctionExtended[] = [];
-  functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
-  functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
@@ -147,7 +145,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   isLoading: boolean = true;
   isLoadingColumns: boolean = false;
   hasLoadedColumns: boolean = false;
-  hasLoadedDataframes: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -237,8 +234,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
       this.handleStudyChange(studyId);
     });
-    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframeIds) => {
-      this.handleDataframeChange(dataframeIds);
+    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframes) => {
+      this.handleDataframeChange(dataframes);
+    });
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
+      this.handleSessionChange(session);
     });
   }
 
@@ -278,110 +278,94 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
-    this.isLoadingColumns = true;
-    this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
-    if (!this.repeatedTask) {
-      return;
-    }
-    this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString(), { emitEvent: false });
-    await this.handleSessionChange(this.repeatedTask.session.id.toString());
-
-    // set study step
-    if (this.repeatedTask.study?.id) {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString(), { emitEvent: false });
-      await this.handleStudyChange(this.repeatedTask.study.id);
-    } else {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString(), {
-        emitEvent: false
-      });
-      await this.handleStudyChange(null);
-    }
-
-    // set algorithm step
-    this.showWarningUniqueDFName = false;
-    if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
-      // don't set task name for data extraction tasks - it will be used as the name
-      // of the created dataframe and that must be unique for the session
-      this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
-    } else {
-      this.showWarningUniqueDFName = true;
-    }
-
-    this.functionForm.controls.description.setValue(this.repeatedTask.description);
-    this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
-    if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
-
-    // set function step
-    const func =
-      this.functionsAllowedForSession.find(
-        (_) =>
-          _.name === this.repeatedTask?.method &&
-          _.algorithm_id == this.algorithm?.id &&
-          _.algorithm_store_id == this.algorithm?.algorithm_store_id
-      ) || null;
-    if (!func) return;
-    this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
-    if (!this.function) return;
-    const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
-    this.functionForm.controls.organizationIDs.setValue(organizationIDs);
-
-    // set database step
-    if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-      this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
-    }
-
-    // set dataframe step
-    if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-      this.repeatedTask.databases.forEach((db, idx) => {
-        (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
-      });
-      await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
-    }
-
-    // set parameter step
-    for (const parameter of this.repeatedTask.arguments || []) {
-      const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-      // check if value is an object
-      if (!argument) {
-        // this should never happen, but fallback is simply try to fill value in
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-      } else if (argument.type === ArgumentType.Json) {
-        this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
-      } else if (
-        argument.type === ArgumentType.FloatList ||
-        argument.type === ArgumentType.IntegerList ||
-        argument.type == ArgumentType.StringList
-      ) {
-        const controls = this.getFormArrayControls(argument);
-        let isFirst = true;
-        for (const value of parameter.value) {
-          if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
-          controls[controls.length - 1].setValue(value);
-          isFirst = false;
-        }
-      } else if (argument.type === ArgumentType.Boolean) {
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
-      } else {
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-      }
-    }
-
-    // go to last step
-    // TODO this can still be NULL when we get here, then it doesn't work
-    if (this.myStepper?._steps) {
-      for (let idx = 0; idx < this.myStepper?._steps.length || 0; idx++) {
-        this.myStepper?.next();
-      }
-    }
-  }
-
-  private getAlgorithmFromImage(image: string): Algorithm | null {
-    if (image.includes('@sha256:')) {
-      return this.algorithms.find((_) => `${_.image}@${_.digest}` === image) || null;
-    } else {
-      return this.algorithms.find((_) => _.image === image) || null;
-    }
+    //   this.isLoadingColumns = true;
+    //   this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
+    //   if (!this.repeatedTask) {
+    //     return;
+    //   }
+    //   this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString(), { emitEvent: false });
+    //   await this.handleSessionChange(this.repeatedTask.session.id.toString());
+    //   // set study step
+    //   if (this.repeatedTask.study?.id) {
+    //     this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString(), { emitEvent: false });
+    //     await this.handleStudyChange(this.repeatedTask.study.id);
+    //   } else {
+    //     this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString(), {
+    //       emitEvent: false
+    //     });
+    //     await this.handleStudyChange(null);
+    //   }
+    //   // set algorithm step
+    //   this.showWarningUniqueDFName = false;
+    //   if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
+    //     // don't set task name for data extraction tasks - it will be used as the name
+    //     // of the created dataframe and that must be unique for the session
+    //     this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
+    //   } else {
+    //     this.showWarningUniqueDFName = true;
+    //   }
+    //   this.functionForm.controls.description.setValue(this.repeatedTask.description);
+    //   this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
+    //   if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
+    //   // set function step
+    //   const func =
+    //     this.functionsAllowedForSession.find(
+    //       (_) =>
+    //         _.name === this.repeatedTask?.method &&
+    //         _.algorithm_id == this.algorithm?.id &&
+    //         _.algorithm_store_id == this.algorithm?.algorithm_store_id
+    //     ) || null;
+    //   if (!func) return;
+    //   this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
+    //   await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
+    //   if (!this.function) return;
+    //   const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
+    //   this.functionForm.controls.organizationIDs.setValue(organizationIDs);
+    //   // set database step
+    //   if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+    //     this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
+    //   }
+    //   // set dataframe step
+    //   if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+    //     this.repeatedTask.databases.forEach((db, idx) => {
+    //       (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
+    //     });
+    //     await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
+    //   }
+    //   // set parameter step
+    //   for (const parameter of this.repeatedTask.arguments || []) {
+    //     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+    //     // check if value is an object
+    //     if (!argument) {
+    //       // this should never happen, but fallback is simply try to fill value in
+    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+    //     } else if (argument.type === ArgumentType.Json) {
+    //       this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
+    //     } else if (
+    //       argument.type === ArgumentType.FloatList ||
+    //       argument.type === ArgumentType.IntegerList ||
+    //       argument.type == ArgumentType.StringList
+    //     ) {
+    //       const controls = this.getFormArrayControls(argument);
+    //       let isFirst = true;
+    //       for (const value of parameter.value) {
+    //         if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
+    //         controls[controls.length - 1].setValue(value);
+    //         isFirst = false;
+    //       }
+    //     } else if (argument.type === ArgumentType.Boolean) {
+    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
+    //     } else {
+    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+    //     }
+    //   }
+    //   // go to last step
+    //   // TODO this can still be NULL when we get here, then it doesn't work
+    //   if (this.myStepper?._steps) {
+    //     for (let idx = 0; idx < this.myStepper?._steps.length || 0; idx++) {
+    //       this.myStepper?.next();
+    //     }
+    //   }
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
@@ -615,14 +599,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
           };
         });
     });
-    this.functionsAllowedForSession = this.functions;
-    this.functionsFilteredBySearch = this.functions;
     this.node = await this.getOnlineNode();
     this.availableDatabases = getDatabasesFromNode(this.node);
-
-    this.sessionForm.controls['sessionID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (sessionID) => {
-      this.handleSessionChange(sessionID);
-    });
 
     if (this.sessionId) {
       this.sessionForm.controls['sessionID'].setValue(this.sessionId);
@@ -670,45 +648,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.columns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
   }
 
-  private async handleSessionChange(sessionID: string): Promise<void> {
-    this.hasLoadedDataframes = false;
-    this.session = this.sessions?.find((session) => session.id === Number(sessionID)) || null;
-    this.studyForm.controls.studyOrCollabID.reset();
-    this.isStudyCompleted = false;
-    if (this.session) {
-      if (this.session.study) {
-        this.studyForm.get('studyOrCollabID')?.disable();
-        this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + this.session.study.id.toString());
-        this.handleStudyChange(this.session.study.id);
-      } else if (this.shouldShowStudyStep) {
-        this.studyForm.get('studyOrCollabID')?.enable();
-      }
-      if (this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image && this.session?.image) {
-        this.sessionRestrictedToSameImage = true;
-        const allowedAlgorithm: Algorithm | null = this.getAlgorithmFromImage(this.session.image);
-        if (allowedAlgorithm) {
-          this.functionsAllowedForSession = this.functionsAllowedForSession.filter((func) => func.algorithm_id === allowedAlgorithm.id);
-          this.functionsFilteredBySearch = this.functionsAllowedForSession;
-        }
-      }
-      this.dataframes = await this.sessionService.getDataframes(this.session.id);
-      // filter dataframes that are not ready - they cannot be used for analyses
-      this.dataframes = this.dataframes.filter((df) => df.ready);
-      this.hasLoadedDataframes = true;
-    }
+  private async handleSessionChange(session: BaseSession | null): Promise<void> {
+    this.session = session;
     this.updateStudyFormValidation();
-    this.clearFunctionStep();
     this.clearDatabaseStep();
     this.clearParameterStep();
-  }
-
-  // Event handlers for the session step component
-  onSessionStepSessionSelected(session: BaseSession | null): void {
-    if (session) {
-      this.handleSessionChange(session.id.toString());
-    } else {
-      this.handleSessionChange('');
-    }
   }
 
   onSessionStepSessionsLoaded(sessions: BaseSession[]): void {
@@ -742,9 +686,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
     // Get selected function
     const selectedFunction =
-      this.functionsAllowedForSession.find(
-        (_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID
-      ) || null;
+      // this.functionsAllowedForSession.find(
+      // TODO note use the above
+      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
 
     if (selectedFunction) {
       // Add form controls for parameters for selected function
@@ -784,17 +728,16 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
               }
             }
           });
-          await this.handleDataframeChange(allDataframeValues);
         });
       });
     }
   }
 
-  private async handleDataframeChange(dataframeIDs: string[] | null): Promise<void> {
-    if (!dataframeIDs) return;
+  private async handleDataframeChange(dataframes: Dataframe[]): Promise<void> {
+    if (!dataframes) return;
     this.isLoadingColumns = true;
     this.columns = [];
-    this.selectedDataframes = this.dataframes.filter((_) => dataframeIDs.includes(_.id.toString()));
+    this.selectedDataframes = dataframes;
     if (this.selectedDataframes.length > 0) {
       this.setColumns(this.selectedDataframes);
     }
@@ -826,9 +769,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private clearFunctionStep(): void {
     this.functionForm.controls.organizationIDs.reset();
-    Object.keys(this.databaseForm.controls).forEach((control) => {
-      this.parameterForm.removeControl(control);
-    });
   }
 
   // TODO this function might be removed
