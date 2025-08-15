@@ -9,9 +9,16 @@ export class ChangesInCreateTaskService {
   private studyChangeSubject = new BehaviorSubject<number | null>(null);
   public studyChange$: Observable<number | null> = this.studyChangeSubject.asObservable();
 
+  private dataframeChangeSubject = new BehaviorSubject<string[] | null>(null);
+  public dataframeChange$: Observable<string[] | null> = this.dataframeChangeSubject.asObservable();
+
   constructor() {}
 
   emitStudyChange(studyId: number | null): void {
     this.studyChangeSubject.next(studyId);
+  }
+
+  emitDataframeChange(dataframeIds: string[]): void {
+    this.dataframeChangeSubject.next(dataframeIds);
   }
 }

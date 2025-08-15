@@ -41,7 +41,6 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframes: any[] = [];
   @Input() hasLoadedDataframes = false;
-  @Input() allDataframesNotReady = false;
   @Input() session: BaseSession | null = null;
 
   @Output() sessionSelected = new EventEmitter<BaseSession | null>();
@@ -107,5 +106,9 @@ export class SessionStepComponent implements OnInit, OnDestroy {
 
   get shouldShowNoDataframesAlert(): boolean {
     return this.hasLoadedDataframes && this.dataframes.length === 0 && !this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction);
+  }
+
+  get allDataframesNotReady(): boolean {
+    return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
   }
 }

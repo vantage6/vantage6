@@ -206,13 +206,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     });
 
     // Set up study change listener
-    this.setupStudyChangeListener();
-  }
-
-  private setupStudyChangeListener(): void {
-    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
-      this.handleStudyChange(studyId);
-    });
+    this.setupChangeListeners();
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -239,6 +233,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
+  private setupChangeListeners(): void {
+    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
+      this.handleStudyChange(studyId);
+    });
+    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframeIds) => {
+      this.handleDataframeChange(dataframeIds);
+    });
+  }
+
   get shouldShowStudyStep(): boolean {
     return (this.collaboration && this.collaboration.studies.length > 0) || false;
   }
@@ -253,31 +256,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
-  }
-
-  get allDataframesNotReady(): boolean {
-    return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
-  }
-
-  dataFrameNotReadyForAllSelectedOrganizations(): boolean {
-    if (!this.selectedDataframes || this.selectedDataframes.length === 0) return false;
-    let selectedOrganizations = this.functionForm.controls.organizationIDs.value;
-    if (!selectedOrganizations) return false;
-    if (!Array.isArray(selectedOrganizations)) {
-      selectedOrganizations = [selectedOrganizations];
-    }
-    const selectedOrganizationsNotReady = selectedOrganizations.filter(
-      (org) => !this.selectedDataframes.find((df) => df.organizations_ready.includes(Number(org)))
-    );
-    this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
-      (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''
-    );
-    return selectedOrganizationsNotReady.length > 0;
-  }
-
-  isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
-    if (!db) return false;
-    return db.multiple === true;
   }
 
   private setAvailableTaskSteps(allowedTaskTypes: AlgorithmStepType[]): void {
@@ -812,7 +790,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  private async handleDataframeChange(dataframeIDs: string[]): Promise<void> {
+  private async handleDataframeChange(dataframeIDs: string[] | null): Promise<void> {
+    if (!dataframeIDs) return;
+    this.isLoadingColumns = true;
     this.columns = [];
     this.selectedDataframes = this.dataframes.filter((_) => dataframeIDs.includes(_.id.toString()));
     if (this.selectedDataframes.length > 0) {

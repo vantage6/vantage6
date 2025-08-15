@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgIf, NgFor } from '@angular/common';
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-dataframe-step',
@@ -33,7 +34,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
@@ -51,7 +52,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
         const controlName = `dataframeId${index}`;
         if (this.formGroup.controls[controlName]) {
           this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((dataframeId: number) => {
-            // this.dataframeSelected.emit({ index, dataframeId });
+            this.changesInCreateTaskService.emitDataframeChange([dataframeId.toString()]);
           });
         }
       });
