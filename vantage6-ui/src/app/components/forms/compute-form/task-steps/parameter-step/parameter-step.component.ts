@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormArray, FormBuilder, AbstractControl, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Argument, ArgumentType, AlgorithmFunction, ConditionalArgComparatorType } from '../../../../models/api/algorithm.model';
-import { BaseOrganization } from '../../../../models/api/organization.model';
+import { Argument, ArgumentType, AlgorithmFunction, ConditionalArgComparatorType } from '../../../../../models/api/algorithm.model';
+import { BaseOrganization } from '../../../../../models/api/organization.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,12 +11,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { NgIf, NgFor, NgTemplateOutlet } from '@angular/common';
-import { AlertComponent } from '../../../alerts/alert/alert.component';
-import { NumberOnlyDirective } from '../../../../directives/numberOnly.directive';
-import { isArgumentWithAllowedValues } from '../../../../helpers/algorithm.helper';
-import { floatRegex, integerRegex } from '../../../../helpers/regex.helper';
-import { isTruthy } from '../../../../helpers/utils.helper';
+import { NgIf, NgFor } from '@angular/common';
+import { AlertComponent } from '../../../../alerts/alert/alert.component';
+import { NumberOnlyDirective } from '../../../../../directives/numberOnly.directive';
+import { floatRegex, integerRegex } from '../../../../../helpers/regex.helper';
+import { isTruthy } from '../../../../../helpers/utils.helper';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
@@ -34,7 +33,6 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
     MatIconModule,
     NgIf,
     NgFor,
-    NgTemplateOutlet,
     MatProgressSpinner,
     AlertComponent,
     NumberOnlyDirective

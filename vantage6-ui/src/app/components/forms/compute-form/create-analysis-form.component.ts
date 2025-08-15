@@ -50,25 +50,19 @@ import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { AlertComponent } from '../../alerts/alert/alert.component';
-import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
-import { MatOption, MatSelect } from '@angular/material/select';
-import { MatCheckbox } from '@angular/material/checkbox';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
-import { MatInput } from '@angular/material/input';
+import { NgIf, NgTemplateOutlet } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { isTruthy } from 'src/app/helpers/utils.helper';
 import { readFile } from 'src/app/helpers/file.helper';
-import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
-import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
-import { SessionStepComponent } from '../task-steps/session-step/session-step.component';
-import { StudyStepComponent } from '../task-steps/study-step/study-step.component';
-import { FunctionStepComponent } from '../task-steps/function-step/function-step.component';
-import { DatabaseStepComponent } from '../task-steps/database-step/database-step.component';
-import { DataframeStepComponent } from '../task-steps/dataframe-step/dataframe-step.component';
-import { ParameterStepComponent } from '../task-steps/parameter-step/parameter-step.component';
+import { SessionStepComponent } from './task-steps/session-step/session-step.component';
+import { StudyStepComponent } from './task-steps/study-step/study-step.component';
+import { FunctionStepComponent } from './task-steps/function-step/function-step.component';
+import { DatabaseStepComponent } from './task-steps/database-step/database-step.component';
+import { DataframeStepComponent } from './task-steps/dataframe-step/dataframe-step.component';
+import { ParameterStepComponent } from './task-steps/parameter-step/parameter-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -78,7 +72,6 @@ import { ParameterStepComponent } from '../task-steps/parameter-step/parameter-s
   imports: [
     PageHeaderComponent,
     AlertComponent,
-    AlertWithButtonComponent,
     MatCard,
     MatCardContent,
     MatIcon,
@@ -88,21 +81,11 @@ import { ParameterStepComponent } from '../task-steps/parameter-step/parameter-s
     MatStepperNext,
     MatStepperPrevious,
     MatStepLabel,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatCheckbox,
     MatProgressSpinner,
-    MatInput,
-    MatSelect,
     MatButton,
     TranslateModule,
     ReactiveFormsModule,
     NgIf,
-    NgFor,
-    MatSuffix,
-    NumberOnlyDirective,
     NgTemplateOutlet,
     SessionStepComponent,
     StudyStepComponent,

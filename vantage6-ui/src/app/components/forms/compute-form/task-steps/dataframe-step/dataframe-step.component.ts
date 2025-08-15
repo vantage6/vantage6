@@ -1,16 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Dataframe } from '../../../../models/api/session.models';
-import { FunctionDatabase } from '../../../../models/api/algorithm.model';
-import { BaseSession } from '../../../../models/api/session.models';
+import { Dataframe } from '../../../../../models/api/session.models';
+import { FunctionDatabase } from '../../../../../models/api/algorithm.model';
+import { BaseSession } from '../../../../../models/api/session.models';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { NgIf, NgFor } from '@angular/common';
-import { AlertWithButtonComponent } from '../../../alerts/alert-with-button/alert-with-button.component';
-import { routePaths } from '../../../../routes';
+import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
+import { routePaths } from '../../../../../routes';
 
 @Component({
   selector: 'app-dataframe-step',

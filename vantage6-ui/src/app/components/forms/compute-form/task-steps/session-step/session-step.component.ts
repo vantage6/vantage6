@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { BaseSession } from '../../../../models/api/session.models';
-import { SessionService } from '../../../../services/session.service';
-import { ChosenCollaborationService } from '../../../../services/chosen-collaboration.service';
-import { AlgorithmStepType } from '../../../../models/api/session.models';
+import { BaseSession } from '../../../../../models/api/session.models';
+import { SessionService } from '../../../../../services/session.service';
+import { ChosenCollaborationService } from '../../../../../services/chosen-collaboration.service';
+import { AlgorithmStepType } from '../../../../../models/api/session.models';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,9 +13,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 import { NgIf, NgFor } from '@angular/common';
-import { AlertComponent } from '../../../alerts/alert/alert.component';
-import { AlertWithButtonComponent } from '../../../alerts/alert-with-button/alert-with-button.component';
-import { routePaths } from '../../../../routes';
+import { AlertComponent } from '../../../../alerts/alert/alert.component';
+import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
+import { routePaths } from '../../../../../routes';
 
 @Component({
   selector: 'app-session-step',
