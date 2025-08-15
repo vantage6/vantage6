@@ -11,25 +11,15 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import {
-  Algorithm,
-  ArgumentType,
-  AlgorithmFunction,
-  Argument,
-  AlgorithmFunctionExtended,
-  ConditionalArgComparatorType,
-  FunctionDatabase
-} from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, AlgorithmFunctionExtended } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
-import { TaskService } from 'src/app/services/task.service';
+import { Task, TaskDatabaseType } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
-import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -37,14 +27,10 @@ import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatS
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
-import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
-import { OrganizationService } from 'src/app/services/organization.service';
+import { StudyOrCollab } from 'src/app/models/api/study.model';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
-import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
-import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
-import { SessionService } from 'src/app/services/session.service';
+import { AlgorithmStepType, Dataframe } from 'src/app/models/api/session.models';
 import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -53,10 +39,7 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { NgIf, NgTemplateOutlet } from '@angular/common';
 import { MatButton } from '@angular/material/button';
-import { isTruthy } from 'src/app/helpers/utils.helper';
-import { readFile } from 'src/app/helpers/file.helper';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
-import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { SessionStepComponent } from './task-steps/session-step/session-step.component';
 import { StudyStepComponent } from './task-steps/study-step/study-step.component';
 import { FunctionStepComponent } from './task-steps/function-step/function-step.component';
@@ -131,10 +114,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
-  availableDatabases: Database[] = [];
   organizationNamesWithNonReadyDataframes: string[] = [];
 
-  columns: string[] = [];
   isStudyCompleted: boolean = false;
   isLoading: boolean = true;
   isSubmitting: boolean = false;
@@ -501,11 +482,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  async setOrganizations() {
-    if (!this.collaboration) return;
-    this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
-  }
-
   hasAlgorithmStores(): boolean {
     return this.collaboration?.algorithm_stores ? this.collaboration.algorithm_stores.length > 0 : false;
   }
@@ -520,6 +496,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
+    if (!this.collaboration) return;
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
@@ -536,7 +513,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         });
     });
     this.node = await this.getOnlineNode();
-    this.availableDatabases = getDatabasesFromNode(this.node);
 
     if (this.sessionId) {
       this.sessionForm.controls['sessionID'].setValue(this.sessionId);
@@ -546,18 +522,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (this.studyStepComponent) {
       await this.studyStepComponent.initData();
     }
-    await this.setOrganizations();
+
+    // set initial values for the services
+    this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
+    this.changesInCreateTaskService.emitNodeDatabasesChange(getDatabasesFromNode(this.node));
 
     this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
       if (studyID) this.isStudyCompleted = true;
     });
-
-    this.functionForm.controls.algorithmFunctionSpec.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (algorithmFunctionSpec) => {
-        const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
-        // this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
-      });
 
     // TODO for preprocessing tasks, dataframes are preselected. They should not be
     // changed, so ensure that in the child component they are not changed (nor cleared
@@ -629,9 +601,5 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
-  }
-
-  isFederatedStep(stepType: AlgorithmStepType): boolean {
-    return stepType !== AlgorithmStepType.CentralCompute;
   }
 }

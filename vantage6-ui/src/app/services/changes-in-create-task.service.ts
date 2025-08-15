@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { BaseSession, Dataframe } from '../models/api/session.models';
 import { BaseOrganization } from '../models/api/organization.model';
 import { Algorithm, AlgorithmFunctionExtended } from '../models/api/algorithm.model';
+import { Database } from '../models/api/node.model';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +26,9 @@ export class ChangesInCreateTaskService {
 
   private organizationChangeSubject = new BehaviorSubject<BaseOrganization[]>([]);
   public organizationChange$: Observable<BaseOrganization[]> = this.organizationChangeSubject.asObservable();
+
+  private nodeDatabasesChangeSubject = new BehaviorSubject<Database[]>([]);
+  public nodeDatabasesChange$: Observable<Database[]> = this.nodeDatabasesChangeSubject.asObservable();
 
   constructor() {}
 
@@ -50,5 +54,9 @@ export class ChangesInCreateTaskService {
 
   emitfunctionAlgorithmChange(algorithm: Algorithm | null): void {
     this.functionAlgorithmChangeSubject.next(algorithm);
+  }
+
+  emitNodeDatabasesChange(databases: Database[]): void {
+    this.nodeDatabasesChangeSubject.next(databases);
   }
 }

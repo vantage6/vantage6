@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from 'src/app/components/alerts/alert/alert.component';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-database-step',
@@ -18,12 +19,13 @@ import { AlertComponent } from 'src/app/components/alerts/alert/alert.component'
 })
 export class DatabaseStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
-  @Input() availableDatabases: Database[] = [];
   @Input() node: BaseNode | null = null;
 
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  availableDatabases: Database[] = [];
+
+  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
@@ -35,8 +37,9 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
   }
 
   private setupFormListeners(): void {
-    // this.formGroup.controls['database'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((database: string) => {
-    // });
+    this.changesInCreateTaskService.nodeDatabasesChange$.pipe(takeUntil(this.destroy$)).subscribe((databases) => {
+      this.availableDatabases = databases;
+    });
   }
 
   get hasDatabases(): boolean {
