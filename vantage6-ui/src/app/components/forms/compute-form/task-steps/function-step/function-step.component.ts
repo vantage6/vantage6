@@ -15,6 +15,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { HighlightedTextPipe } from '../../../../../pipes/highlighted-text.pipe';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-function-step',
@@ -55,10 +56,11 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
+    this.setupStudyChangeListener();
   }
 
   ngOnDestroy(): void {
@@ -80,6 +82,20 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
         }
       });
   }
+
+  private setupStudyChangeListener(): void {
+    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
+      this.handleStudyChange();
+    });
+  }
+
+  private handleStudyChange(): void {
+    // when study changes, clear the selected organizations as not all of them might be
+    // part of the study
+    this.formGroup.controls['organizationIDs'].reset();
+  }
+
+  private clearFunctionStep(): void {}
 
   onSearch(): void {
     this.searchRequested.emit();

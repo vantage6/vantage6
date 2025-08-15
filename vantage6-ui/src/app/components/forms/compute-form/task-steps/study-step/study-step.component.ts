@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { NgFor } from '@angular/common';
+import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-study-step',
@@ -22,13 +23,11 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   @Input() collaboration: Collaboration | null = null;
   @Input() isStudyCompleted = false;
 
-  @Output() studySelected = new EventEmitter<BaseStudy | null>();
-
   readonly studyOrCollab = StudyOrCollab;
 
   private destroy$ = new Subject<void>();
 
-  constructor() {}
+  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
@@ -47,17 +46,16 @@ export class StudyStepComponent implements OnInit, OnDestroy {
 
   onStudySelected(studyID: string): void {
     if (!studyID) {
-      this.studySelected.emit(null);
+      this.changesInCreateTaskService.emitStudyChange(null);
       return;
     }
 
     if (studyID.startsWith(StudyOrCollab.Study)) {
       const studyId = Number(studyID.substring(StudyOrCollab.Study.length));
-      const study = this.collaboration?.studies.find((s) => s.id === studyId) || null;
-      this.studySelected.emit(study);
+      this.changesInCreateTaskService.emitStudyChange(studyId);
     } else {
       // Collaboration selected (not a specific study)
-      this.studySelected.emit(null);
+      this.changesInCreateTaskService.emitStudyChange(null);
     }
   }
 

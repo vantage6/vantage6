@@ -63,6 +63,7 @@ import { FunctionStepComponent } from './task-steps/function-step/function-step.
 import { DatabaseStepComponent } from './task-steps/database-step/database-step.component';
 import { DataframeStepComponent } from './task-steps/dataframe-step/dataframe-step.component';
 import { ParameterStepComponent } from './task-steps/parameter-step/parameter-step.component';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-create-form',
@@ -189,7 +190,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     private snackBarService: SnackbarService,
     private translateService: TranslateService,
     private organizationService: OrganizationService,
-    private encryptionService: EncryptionService
+    private encryptionService: EncryptionService,
+    private changesInCreateTaskService: ChangesInCreateTaskService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -201,6 +203,15 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       if (initialized && !this.isDataInitialized) {
         this.initData();
       }
+    });
+
+    // Set up study change listener
+    this.setupStudyChangeListener();
+  }
+
+  private setupStudyChangeListener(): void {
+    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
+      this.handleStudyChange(studyId);
     });
   }
 
@@ -726,20 +737,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.sessions = sessions;
   }
 
-  // Event handlers for the study step component
-  onStudyStepStudySelected(study: BaseStudy | null): void {
-    this.handleStudyChange(study?.id || null);
-  }
-
   // Event handlers for the function step component
   onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
     this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {
-    // clear relevant forms
-    this.clearFunctionStep();
-    this.clearDatabaseStep();
     // select study
     if (studyID) {
       this.study = this.collaboration?.studies.find((_) => _.id === studyID) || null;

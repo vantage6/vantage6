@@ -27,12 +27,7 @@
         </mat-step>
         <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [completed]="isStudyCompleted" [stepControl]="studyForm">
           <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
-          <app-study-step
-            [formGroup]="studyForm"
-            [collaboration]="collaboration!"
-            [isStudyCompleted]="isStudyCompleted"
-            (studySelected)="onStudyStepStudySelected($event)"
-          ></app-study-step>
+          <app-study-step [formGroup]="studyForm" [collaboration]="collaboration!" [isStudyCompleted]="isStudyCompleted"></app-study-step>
           <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
                 Also check other steps -->
           <div>
