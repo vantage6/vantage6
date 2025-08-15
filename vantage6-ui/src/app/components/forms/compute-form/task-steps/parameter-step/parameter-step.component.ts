@@ -26,6 +26,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { readFile } from 'src/app/helpers/file.helper';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
+import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 
 @Component({
   selector: 'app-parameter-step',
@@ -49,9 +50,10 @@ import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
   standalone: true
 })
 export class ParameterStepComponent implements OnInit, OnDestroy {
+  argumentType = ArgumentType;
+
   @Input() formGroup!: FormGroup;
   @Input() isLoadingColumns = false;
-  @Input() argumentType = ArgumentType;
 
   @Output() jsonFileSelected = new EventEmitter<{ event: Event; argument: Argument }>();
   @Output() addInputFieldRequested = new EventEmitter<Argument>();
@@ -70,7 +72,7 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.setupFormListeners();
+    this.setupForm();
     this.setupChangeListeners();
   }
 
@@ -79,17 +81,9 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private setupFormListeners(): void {
-    // Listen to changes in all parameter form controls
-    if (this.function?.arguments) {
-      this.function.arguments.forEach((argument: Argument) => {
-        if (this.formGroup.controls[argument.name]) {
-          this.formGroup.controls[argument.name].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value: any) => {
-            // Handle parameter value changes if needed
-          });
-        }
-      });
-    }
+  private setupForm(): void {
+    if (!this.function) return;
+    addParameterFormControlsForFunction(this.function, this.formGroup);
   }
 
   private setupChangeListeners(): void {
@@ -110,9 +104,9 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   private onFunctionChange(function_: AlgorithmFunction | null): void {
     if (!function_) return;
     this.function = function_;
-    // if the function changes, the parameters change. So clear the form
+    // if the function changes, the parameters change. So reinitialize the form
     this.clearForm();
-    this.setupFormListeners();
+    this.setupForm();
   }
 
   private onDataframeChange(dataframes: Dataframe[]): void {

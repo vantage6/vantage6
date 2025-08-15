@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Dataframe } from '../../../../../models/api/session.models';
 import { AlgorithmFunctionExtended, FunctionDatabase } from '../../../../../models/api/algorithm.model';
@@ -53,6 +53,21 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private setupForm() {
+    if (!this.function) return;
+    this.function?.databases.forEach((database, index) => {
+      const controlName = `dataframeId${index}`;
+      this.formGroup.addControl(controlName, new FormControl(null, [Validators.required]));
+      // track changes in the dataframe form controls
+      this.formGroup
+        .get(controlName)
+        ?.valueChanges.pipe(takeUntil(this.destroy$))
+        .subscribe((dataframeId: number) => {
+          this.handleDataframeChange(dataframeId, controlName);
+        });
+    });
+  }
+
   private setupFormListeners(): void {
     // Listen to changes in all dataframe form controls
     if (this.function?.databases) {
@@ -95,7 +110,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     // clear the selected dataframes since the function may require a different number
     // of dataframes, and set the new controls
     this.formGroup.reset();
-    this.setupFormListeners();
+    this.setupForm();
     this.selectedDataframes = [];
     this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
   }

@@ -99,8 +99,6 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
   availableStepsEnum = AvailableStepsEnum;
-  algorithmStepType = AlgorithmStepType;
-  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
@@ -110,7 +108,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
 
-  @ViewChild('stepper') private myStepper: MatStepper | null = null;
   @ViewChild(StudyStepComponent) private studyStepComponent: StudyStepComponent | null = null;
 
   availableSteps: AvailableSteps = {
@@ -140,8 +137,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   columns: string[] = [];
   isStudyCompleted: boolean = false;
   isLoading: boolean = true;
-  isLoadingColumns: boolean = false;
-  hasLoadedColumns: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -187,7 +182,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   async ngOnInit(): Promise<void> {
     this.setAvailableTaskSteps(this.allowedTaskTypes || []);
-
+    this.setupChangeListeners();
     this.isTaskRepeat = this.router.url.includes('/repeat/');
 
     this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
@@ -195,9 +190,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.initData();
       }
     });
-
-    // Set up study change listener
-    this.setupChangeListeners();
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -225,8 +217,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   private setupChangeListeners(): void {
-    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframes) => {
-      this.handleDataframeChange(dataframes);
+    this.changesInCreateTaskService.functionAlgorithmChange$.pipe(takeUntil(this.destroy$)).subscribe((algorithm) => {
+      this.algorithm = algorithm;
+    });
+    this.changesInCreateTaskService.functionChange$.pipe(takeUntil(this.destroy$)).subscribe((function_) => {
+      this.function = function_;
     });
   }
 
@@ -345,13 +340,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     //       this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
     //     } else {
     //       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-    //     }
-    //   }
-    //   // go to last step
-    //   // TODO this can still be NULL when we get here, then it doesn't work
-    //   if (this.myStepper?._steps) {
-    //     for (let idx = 0; idx < this.myStepper?._steps.length || 0; idx++) {
-    //       this.myStepper?.next();
     //     }
     //   }
   }
@@ -568,7 +556,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (algorithmFunctionSpec) => {
         const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
-        this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
+        // this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
       });
 
     // TODO for preprocessing tasks, dataframes are preselected. They should not be
@@ -588,64 +576,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     if (!this.isTaskRepeat) this.isLoading = false;
     this.isDataInitialized = true;
-  }
-
-  // Event handlers for the function step component
-  onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
-    this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
-  }
-
-  private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
-    //Get selected function
-    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
-    // Get selected function
-    const selectedFunction =
-      // this.functionsAllowedForSession.find(
-      // TODO note use the above
-      this.functions.find((_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID) || null;
-
-    if (selectedFunction) {
-      // Add form controls for parameters for selected function
-      addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
-      this.addDataframeFormControlsForFunction(selectedFunction, this.dataframeForm);
-    }
-
-    // Delay setting function, so that form controls are added
-    this.function = selectedFunction;
-  }
-
-  private addDataframeFormControlsForFunction(func: AlgorithmFunctionExtended, form: FormGroup) {
-    func?.databases.forEach((database, index) => {
-      form.addControl(`dataframeId${index}`, new FormControl(null, [Validators.required]));
-    });
-    // Add value change subscriptions for dataframe form controls
-    // TODO BvB 2025-08-12: I feel this triple loop can be simplified - requires testing
-    if (func.databases) {
-      func.databases.forEach((_, idx) => {
-        (form.get(`dataframeId${idx}`) as any)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (value: any) => {
-          // Collect all current dataframe values
-          const allDataframeValues: string[] = [];
-          func.databases.forEach((__, dbIdx) => {
-            const dbValue = (this.dataframeForm.get(`dataframeId${dbIdx}`) as any)?.value;
-            if (dbValue) {
-              if (Array.isArray(dbValue)) {
-                allDataframeValues.push(...dbValue.map((v: any) => v.toString()));
-              } else {
-                allDataframeValues.push(dbValue.toString());
-              }
-            }
-          });
-        });
-      });
-    }
-  }
-
-  private async handleDataframeChange(dataframes: Dataframe[]): Promise<void> {
-    if (!dataframes) return;
-    this.isLoadingColumns = true;
-
-    // Set loading columns to false after columns are loaded
-    this.isLoadingColumns = false;
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {

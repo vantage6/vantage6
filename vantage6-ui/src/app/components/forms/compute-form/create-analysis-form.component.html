@@ -40,7 +40,6 @@
             [node]="node"
             [algorithms]="algorithms"
             [collaboration]="collaboration"
-            (functionSelected)="onFunctionStepFunctionSelected($event)"
           >
           </app-function-step>
           <div>
@@ -81,8 +80,7 @@
         </mat-step>
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
           <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-          <app-parameter-step [formGroup]="parameterForm" [isLoadingColumns]="isLoadingColumns" [argumentType]="argumentType">
-          </app-parameter-step>
+          <app-parameter-step [formGroup]="parameterForm"> </app-parameter-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
           </div>

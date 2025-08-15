@@ -46,7 +46,6 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() collaboration: Collaboration | null | undefined = null;
   @Input() functions: AlgorithmFunctionExtended[] = [];
 
-  @Output() functionSelected = new EventEmitter<{ functionName: string; algorithmID: number; algorithmStoreID: number }>();
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
 
@@ -124,12 +123,6 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
         organizationIDs: this.organizations.map((org) => org.id.toString())
       });
     }
-
-    this.functionSelected.emit({
-      functionName: String(functionName),
-      algorithmID: Number(algorithmID),
-      algorithmStoreID: Number(algorithmStoreID)
-    });
   }
 
   private handleStudyChange(): void {
