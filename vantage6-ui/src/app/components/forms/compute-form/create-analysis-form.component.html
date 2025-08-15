@@ -10,21 +10,19 @@
         </ng-template>
         <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
           <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
-          <app-session-step
-            [formGroup]="sessionForm"
-            [allowedTaskTypes]="allowedTaskTypes"
-            [dataframes]="dataframes"
-            [session]="session"
-            (sessionsLoaded)="onSessionStepSessionsLoaded($event)"
-          >
-          </app-session-step>
+          <app-session-step [formGroup]="sessionForm" [allowedTaskTypes]="allowedTaskTypes" [dataframes]="dataframes"> </app-session-step>
           <div>
             <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
           </div>
         </mat-step>
         <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [completed]="isStudyCompleted" [stepControl]="studyForm">
           <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
-          <app-study-step [formGroup]="studyForm" [collaboration]="collaboration!" [isStudyCompleted]="isStudyCompleted"></app-study-step>
+          <app-study-step
+            [formGroup]="studyForm"
+            [collaboration]="collaboration!"
+            [isStudyCompleted]="isStudyCompleted"
+            [shouldShowStudyStep]="shouldShowStudyStep"
+          ></app-study-step>
           <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
                 Also check other steps -->
           <div>
@@ -72,7 +70,6 @@
             [formGroup]="dataframeForm"
             [dataframes]="dataframes"
             [function]="function"
-            [session]="session"
             [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
             [functionForm]="functionForm"
           >

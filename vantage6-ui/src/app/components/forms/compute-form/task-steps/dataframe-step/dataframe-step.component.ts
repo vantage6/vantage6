@@ -26,13 +26,13 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() dataframes: Dataframe[] = [];
   @Input() function: any = null;
-  @Input() session: BaseSession | null = null;
   @Input() organizationNamesWithNonReadyDataframes: string[] = [];
   @Input() functionForm: FormGroup | null = null;
 
   hasLoadedDataframes: boolean = false;
   selectedDataframes: Dataframe[] = [];
   organizations: BaseOrganization[] = [];
+  session: BaseSession | null = null;
 
   readonly routes = routePaths;
 
@@ -78,6 +78,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
 
   private async handleSessionChange(session: BaseSession | null): Promise<void> {
     if (!session) return;
+    this.session = session;
     this.hasLoadedDataframes = false;
     this.dataframes = await this.sessionService.getDataframes(session.id);
     // filter dataframes that are not ready - they cannot be used for analyses

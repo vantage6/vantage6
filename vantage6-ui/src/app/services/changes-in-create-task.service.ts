@@ -21,7 +21,7 @@ export class ChangesInCreateTaskService {
 
   constructor() {}
 
-  emitSessionChange(session: BaseSession | null): void {
+  emitSessionChange(session: BaseSession): void {
     this.sessionChangeSubject.next(session);
   }
 

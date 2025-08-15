@@ -111,6 +111,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
 
   @ViewChild('stepper') private myStepper: MatStepper | null = null;
+  @ViewChild(StudyStepComponent) private studyStepComponent: StudyStepComponent | null = null;
 
   availableSteps: AvailableSteps = {
     session: false,
@@ -126,9 +127,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   argumentType = ArgumentType;
   studyOrCollab = StudyOrCollab;
 
-  sessions: BaseSession[] = [];
-  session: BaseSession | null = null;
-  study: BaseStudy | null = null;
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
@@ -227,14 +225,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   private setupChangeListeners(): void {
-    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
-      this.handleStudyChange(studyId);
-    });
     this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframes) => {
       this.handleDataframeChange(dataframes);
-    });
-    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
-      this.handleSessionChange(session);
     });
   }
 
@@ -243,7 +235,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !this.session || (!!this.function?.databases && this.function.databases.length > 0);
+    return !!this.function?.databases && this.function.databases.length > 0;
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -562,16 +554,13 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       this.sessionForm.controls['sessionID'].setValue(this.sessionId);
     }
 
-    // set default for study step: full collaboration (this is not visible but required
-    // if there are no studies defined to have a valid form)
-    this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
-    this.updateStudyFormValidation();
-    this.setOrganizations();
+    // Initialize the study step component
+    if (this.studyStepComponent) {
+      await this.studyStepComponent.initData();
+    }
+    await this.setOrganizations();
 
     this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
-      if (studyID.startsWith(StudyOrCollab.Study)) {
-        this.handleStudyChange(Number(studyID.substring(StudyOrCollab.Study.length)));
-      }
       if (studyID) this.isStudyCompleted = true;
     });
 
@@ -604,37 +593,14 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.columns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
   }
 
-  private async handleSessionChange(session: BaseSession | null): Promise<void> {
-    this.session = session;
-    this.updateStudyFormValidation();
-    this.clearDatabaseStep();
-    this.clearParameterStep();
-  }
-
-  onSessionStepSessionsLoaded(sessions: BaseSession[]): void {
-    this.sessions = sessions;
-  }
-
   // Event handlers for the function step component
   onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
     this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
   }
 
-  private async handleStudyChange(studyID: number | null): Promise<void> {
-    // select study
-    if (studyID) {
-      this.study = this.collaboration?.studies.find((_) => _.id === studyID) || null;
-    } else {
-      // by deselecting study, defaults to entire collaboration
-      this.study = null;
-    }
-    this.setOrganizations();
-  }
-
   private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
     //Clear form
     this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
-    this.clearDatabaseStep();
     this.clearDataframeStep();
     this.clearParameterStep();
 
@@ -727,9 +693,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.functionForm.controls.organizationIDs.reset();
   }
 
-  // TODO this function might be removed
-  private clearDatabaseStep(): void {}
-
   private clearDataframeStep(): void {
     this.dataframeForm.reset();
     this.columns = [];
@@ -770,16 +733,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
-  }
-
-  private updateStudyFormValidation(): void {
-    const studyOrCollabControl = this.studyForm.get('studyOrCollabID');
-    if (this.shouldShowStudyStep) {
-      studyOrCollabControl?.setValidators(Validators.required);
-    } else {
-      studyOrCollabControl?.clearValidators();
-    }
-    studyOrCollabControl?.updateValueAndValidity();
   }
 
   isFederatedStep(stepType: AlgorithmStepType): boolean {

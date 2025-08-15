@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseStudy, StudyOrCollab } from '../../../../../models/api/study.model';
 import { Collaboration } from '../../../../../models/api/collaboration.model';
@@ -24,6 +24,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() collaboration: Collaboration | null = null;
   @Input() isStudyCompleted = false;
+  @Input() shouldShowStudyStep = false;
 
   readonly studyOrCollab = StudyOrCollab;
 
@@ -42,6 +43,14 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  async initData(): Promise<void> {
+    // set default for study step: full collaboration (this is not visible but required
+    // if there are no studies defined to have a valid form)
+    this.formGroup.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+
+    this.updateFormValidation();
   }
 
   private setupFormListeners(): void {
@@ -67,6 +76,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     } else {
       this.formGroup.controls['studyOrCollabID'].enable();
     }
+    this.updateFormValidation();
   }
 
   async onStudySelected(studyID: string): Promise<void> {
@@ -98,5 +108,15 @@ export class StudyStepComponent implements OnInit, OnDestroy {
 
   get hasStudies(): boolean {
     return this.studies.length > 0;
+  }
+
+  private updateFormValidation(): void {
+    const studyOrCollabControl = this.formGroup.get('studyOrCollabID');
+    if (this.shouldShowStudyStep) {
+      studyOrCollabControl?.setValidators(Validators.required);
+    } else {
+      studyOrCollabControl?.clearValidators();
+    }
+    studyOrCollabControl?.updateValueAndValidity();
   }
 }

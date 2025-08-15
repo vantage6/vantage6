@@ -19,6 +19,7 @@ import { isTruthy } from '../../../../../helpers/utils.helper';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { readFile } from 'src/app/helpers/file.helper';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { BaseSession } from 'src/app/models/api/session.models';
 
 @Component({
   selector: 'app-parameter-step',
@@ -88,6 +89,20 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;
     });
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
+      this.onSessionChange(session);
+    });
+  }
+
+  onSessionChange(session: BaseSession | null): void {
+    if (!session) return;
+    // if session changes, the function is also cleared. Therefore, we also need to
+    // clear the parameters
+    this.clearForm();
+  }
+
+  clearForm(): void {
+    this.formGroup.reset();
   }
 
   onJsonFileSelected(event: Event, argument: Argument): void {

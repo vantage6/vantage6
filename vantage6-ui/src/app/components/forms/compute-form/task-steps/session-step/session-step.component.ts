@@ -42,11 +42,9 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframes: any[] = [];
   @Input() hasLoadedDataframes = false;
-  @Input() session: BaseSession | null = null;
-
-  @Output() sessionsLoaded = new EventEmitter<BaseSession[]>();
 
   sessions: BaseSession[] = [];
+  session: BaseSession | null = null;
 
   readonly routes = routePaths;
   readonly algorithmStepType = AlgorithmStepType;
@@ -70,14 +68,9 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   }
 
   private async loadSessions(): Promise<void> {
-    try {
-      const collaboration = this.chosenCollaborationService.collaboration$.value;
-      if (collaboration) {
-        this.sessions = await this.sessionService.getSessions();
-        this.sessionsLoaded.emit(this.sessions);
-      }
-    } catch (error) {
-      console.error('Error loading sessions:', error);
+    const collaboration = this.chosenCollaborationService.collaboration$.value;
+    if (collaboration) {
+      this.sessions = await this.sessionService.getSessions();
     }
   }
 
@@ -89,7 +82,9 @@ export class SessionStepComponent implements OnInit, OnDestroy {
 
   async onSessionSelected(sessionId: string): Promise<void> {
     const session = this.sessions.find((s) => s.id === Number(sessionId));
-    this.changesInCreateTaskService.emitSessionChange(session || null);
+    if (!session) return;
+    this.session = session;
+    this.changesInCreateTaskService.emitSessionChange(session);
   }
 
   get hasNoSessions(): boolean {
