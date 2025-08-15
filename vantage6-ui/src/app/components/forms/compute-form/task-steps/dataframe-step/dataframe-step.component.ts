@@ -13,6 +13,7 @@ import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/a
 import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { SessionService } from 'src/app/services/session.service';
+import { BaseOrganization } from 'src/app/models/api/organization.model';
 
 @Component({
   selector: 'app-dataframe-step',
@@ -27,11 +28,11 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() function: any = null;
   @Input() session: BaseSession | null = null;
   @Input() organizationNamesWithNonReadyDataframes: string[] = [];
-  @Input() organizations: any[] = [];
   @Input() functionForm: FormGroup | null = null;
 
   hasLoadedDataframes: boolean = false;
   selectedDataframes: Dataframe[] = [];
+  organizations: BaseOrganization[] = [];
 
   readonly routes = routePaths;
 
@@ -69,6 +70,9 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   private setupChangeListeners(): void {
     this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
       this.handleSessionChange(session);
+    });
+    this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
+      this.organizations = organizations;
     });
   }
 

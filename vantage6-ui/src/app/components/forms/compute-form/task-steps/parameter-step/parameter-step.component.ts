@@ -18,6 +18,7 @@ import { floatRegex, integerRegex } from '../../../../../helpers/regex.helper';
 import { isTruthy } from '../../../../../helpers/utils.helper';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { readFile } from 'src/app/helpers/file.helper';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-parameter-step',
@@ -44,7 +45,6 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() function: AlgorithmFunction | null = null;
   @Input() columns: string[] = [];
-  @Input() organizations: BaseOrganization[] = [];
   @Input() isLoadingColumns = false;
   @Input() argumentType = ArgumentType;
 
@@ -52,12 +52,18 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   @Output() addInputFieldRequested = new EventEmitter<Argument>();
   @Output() removeInputFieldRequested = new EventEmitter<{ argument: Argument; index: number }>();
 
+  organizations: BaseOrganization[] = [];
+
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private changesInCreateTaskService: ChangesInCreateTaskService
+  ) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
+    this.setupChangeListeners();
   }
 
   ngOnDestroy(): void {
@@ -76,6 +82,12 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  private setupChangeListeners(): void {
+    this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
+      this.organizations = organizations;
+    });
   }
 
   onJsonFileSelected(event: Event, argument: Argument): void {

@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { NgFor } from '@angular/common';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 import { BaseSession } from 'src/app/models/api/session.models';
+import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-study-step',
@@ -28,7 +29,10 @@ export class StudyStepComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private changesInCreateTaskService: ChangesInCreateTaskService) {}
+  constructor(
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private organizationService: OrganizationService
+  ) {}
 
   ngOnInit(): void {
     this.setupFormListeners();
@@ -65,7 +69,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     }
   }
 
-  onStudySelected(studyID: string): void {
+  async onStudySelected(studyID: string): Promise<void> {
     if (!studyID) {
       this.changesInCreateTaskService.emitStudyChange(null);
       return;
@@ -74,6 +78,10 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     if (studyID.startsWith(StudyOrCollab.Study)) {
       const studyId = Number(studyID.substring(StudyOrCollab.Study.length));
       this.changesInCreateTaskService.emitStudyChange(studyId);
+
+      // also update the organizations available for the task
+      const organizations = await this.organizationService.getOrganizations({ study_id: studyId });
+      this.changesInCreateTaskService.emitOrganizationChange(organizations);
     } else {
       // Collaboration selected (not a specific study)
       this.changesInCreateTaskService.emitStudyChange(null);

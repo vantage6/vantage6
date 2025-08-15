@@ -36,7 +36,6 @@
           <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
           <app-function-step
             [formGroup]="functionForm"
-            [organizations]="organizations"
             [function]="function"
             [functions]="functions"
             [sessionRestrictedToSameImage]="sessionRestrictedToSameImage"
@@ -75,7 +74,6 @@
             [function]="function"
             [session]="session"
             [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
-            [organizations]="organizations"
             [functionForm]="functionForm"
           >
           </app-dataframe-step>
@@ -92,7 +90,6 @@
             [formGroup]="parameterForm"
             [function]="function"
             [columns]="columns"
-            [organizations]="organizations"
             [isLoadingColumns]="isLoadingColumns"
             [argumentType]="argumentType"
           >

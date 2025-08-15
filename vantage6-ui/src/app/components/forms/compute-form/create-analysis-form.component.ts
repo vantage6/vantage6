@@ -132,7 +132,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
-  organizations: BaseOrganization[] = [];
   functions: AlgorithmFunctionExtended[] = [];
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
@@ -368,10 +367,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     //   }
   }
 
-  getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
-    return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
-  }
-
   isFormInvalid(): boolean {
     return (
       (this.availableSteps.session && this.sessionForm.invalid) ||
@@ -491,24 +486,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.onCancel.emit();
   }
 
-  getFormArrayControls(argument: Argument) {
-    if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      const initialControl = argument.has_default_value ? [] : [this.getNewControlForArgumentList(argument)];
-      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
-    }
-    return (this.parameterForm.get(argument.name) as FormArray).controls;
-  }
-
-  private getNewControlForArgumentList(argument: Argument): AbstractControl {
-    if (argument.type === this.argumentType.IntegerList) {
-      return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);
-    } else if (argument.type === this.argumentType.FloatList) {
-      return this.fb.control('', [Validators.required, Validators.pattern(floatRegex)]);
-    } else {
-      return this.fb.control('', Validators.required);
-    }
-  }
-
   isFirstStep(step: AvailableStepsEnum): boolean {
     if (step === AvailableStepsEnum.Study) {
       return !this.availableSteps.session;
@@ -549,11 +526,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   async setOrganizations() {
     if (!this.collaboration) return;
-    if (this.study) {
-      this.organizations = await this.organizationService.getOrganizations({ study_id: this.study.id });
-    } else {
-      this.organizations = this.collaboration.organizations;
-    }
+    this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
   }
 
   hasAlgorithmStores(): boolean {
@@ -696,11 +669,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       this.addDataframeFormControlsForFunction(selectedFunction, this.dataframeForm);
 
       // If it's a federated step, select all organizations
-      if (this.isFederatedStep(selectedFunction.step_type)) {
-        this.functionForm.patchValue({
-          organizationIDs: this.organizations.map((org) => org.id.toString())
-        });
-      }
+      // if (this.isFederatedStep(selectedFunction.step_type)) {
+      //   this.functionForm.patchValue({
+      //     organizationIDs: this.organizations.map((org) => org.id.toString())
+      //   });
+      // }
     }
 
     // Delay setting function, so that form controls are added
