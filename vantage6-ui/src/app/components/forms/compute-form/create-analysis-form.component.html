@@ -58,7 +58,7 @@
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
-          <app-database-step [formGroup]="databaseForm" [availableDatabases]="availableDatabases"> </app-database-step>
+          <app-database-step [formGroup]="databaseForm" [availableDatabases]="availableDatabases" [node]="node"> </app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
@@ -132,17 +132,5 @@
     *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
     class="node-alert"
     label="{{ 'task-create.alert-no-algorithms' | translate }}"
-  ></app-alert>
-</ng-template>
-<ng-template #noDatabasesBlock>
-  <app-alert
-    class="node-alert"
-    *ngIf="node && node.config.length === 0"
-    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
-  ></app-alert>
-  <app-alert
-    class="node-alert"
-    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
-    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
   ></app-alert>
 </ng-template>

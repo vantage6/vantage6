@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Database } from '../../../../../models/api/node.model';
+import { BaseNode, Database } from '../../../../../models/api/node.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +19,7 @@ import { AlertComponent } from 'src/app/components/alerts/alert/alert.component'
 export class DatabaseStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() availableDatabases: Database[] = [];
+  @Input() node: BaseNode | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -40,5 +41,9 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
 
   get hasDatabases(): boolean {
     return this.availableDatabases.length > 0;
+  }
+
+  nodeConfigContainsDatabases(): boolean {
+    return this.node?.config.find((_) => _.key === 'database_labels') !== undefined;
   }
 }

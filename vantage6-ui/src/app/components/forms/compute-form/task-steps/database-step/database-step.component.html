@@ -13,5 +13,14 @@
 </form>
 
 <ng-template #noDatabasesBlock>
-  <app-alert [label]="'task-create.step-database.no-databases-available' | translate"></app-alert>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length === 0"
+    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
+  ></app-alert>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
+    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
+  ></app-alert>
 </ng-template>
