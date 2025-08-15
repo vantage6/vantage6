@@ -104,106 +104,22 @@
           </div>
         </mat-step>
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
-          <form class="form" [formGroup]="parameterForm">
-            <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-
-            <div *ngIf="isFirstDatabaseMultiple() && containsColumnArguments()" class="warning-message">
-              <app-alert
-                class="warning-alert"
-                label="{{ 'task-create.step-parameters.warning-column-list-multiple-dataframes' | translate }}"
-              ></app-alert>
-            </div>
-
-            <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
-              <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
-              <ng-container *ngFor="let argument of sortArgumentsForDisplay(function?.arguments)">
-                <ng-container *ngIf="shouldDisplayArgument(function, argument)">
-                  <b>{{ argument.description }}</b>
-                  <p *ngIf="argument.type === argumentType.Json">{{ "task-create.step-parameters.valid-json" | translate }}</p>
-                  <!-- Show form field for dropdowns or single input fields (float, int, string) -->
-                  <mat-form-field *ngIf="shouldIncludeFormField(argument)" subscriptSizing="dynamic">
-                    <mat-label>{{ getDisplayName(argument) }}</mat-label>
-                    <mat-select
-                      *ngIf="shouldShowColumnDropdown(argument)"
-                      [formControlName]="argument.name"
-                      [multiple]="argument.type === argumentType.ColumnList"
-                    >
-                      <mat-option *ngFor="let column of columns" [value]="column">{{ column }}</mat-option>
-                    </mat-select>
-                    <mat-select *ngIf="shouldShowAllowedValuesDropdown(argument)" [formControlName]="argument.name">
-                      <mat-option *ngFor="let allowed_value of argument.allowed_values" [value]="allowed_value">{{
-                        allowed_value
-                      }}</mat-option>
-                    </mat-select>
-                    <mat-select
-                      *ngIf="shouldShowOrganizationDropdown(argument)"
-                      [formControlName]="argument.name"
-                      [compareWith]="compareIDsForSelection"
-                      [multiple]="argument.type === argumentType.OrganizationList"
-                    >
-                      <mat-option *ngFor="let organization of organizations" [value]="organization.id">
-                        {{ organization.name }}
-                      </mat-option>
-                    </mat-select>
-                    <input
-                      *ngIf="shouldShowParameterSimpleInput(argument)"
-                      matInput
-                      appNumberOnly
-                      [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                      [formControlName]="argument.name"
-                    />
-                  </mat-form-field>
-                  <!-- Show form field for json input -->
-                  <div *ngIf="shouldShowParameterJsonInput(argument)">
-                    <p>{{ "task-create.step-parameters.upload-or-fill-in-json" | translate }}</p>
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ "algorithm-create.card-from-json.file-label" | translate }}</mat-label>
-                      <input matInput value="{{ getJsonFileName(argument) }}" disabled />
-                      <input hidden (change)="selectedJsonFile($event, argument)" #fileInput type="file" id="file" />
-                      <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">
-                        {{ "general.file-select" | translate }}
-                      </button>
-                    </mat-form-field>
-                    <p>{{ "task-create.step-parameters.valid-json" | translate }}</p>
-                    <mat-form-field subscriptSizing="dynamic">
-                      <mat-label>{{ argument.name }}</mat-label>
-                      <textarea matInput [formControlName]="argument.name"></textarea>
-                    </mat-form-field>
-                  </div>
-                  <!-- Show checkbox for boolean parameters -->
-                  <mat-checkbox
-                    class="newLineCheckbox"
-                    *ngIf="shouldShowParameterBooleanInput(argument)"
-                    [formControlName]="argument.name"
-                    [checked]="false"
-                  >
-                    {{ argument.name }}
-                  </mat-checkbox>
-                  <!-- Show expandable list for multiple inputs (list of str, int, or float) -->
-                  <div *ngIf="shouldShowMultipleInput(argument)">
-                    <div formArrayName="{{ argument.name }}" *ngFor="let input of getFormArrayControls(argument); let idx = index">
-                      <div style="display: flex; align-items: center">
-                        <mat-form-field subscriptSizing="dynamic">
-                          <mat-label>{{ argument.name }} {{ idx + 1 }}</mat-label>
-                          <input
-                            matInput
-                            appNumberOnly
-                            [type]="argument.type === argumentType.Integer || argument.type === argumentType.Float ? 'number' : 'text'"
-                            [formControlName]="idx"
-                          />
-                        </mat-form-field>
-                        <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
-                      </div>
-                    </div>
-                    <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
-                  </div>
-                </ng-container>
-              </ng-container>
-            </ng-container>
-            <div>
-              <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            </div>
-          </form>
+          <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+          <app-parameter-step
+            [formGroup]="parameterForm"
+            [function]="function"
+            [columns]="columns"
+            [organizations]="organizations"
+            [isLoadingColumns]="isLoadingColumns"
+            [argumentType]="argumentType"
+            (jsonFileSelected)="onParameterStepJsonFileSelected($event)"
+            (addInputFieldRequested)="onParameterStepAddInputFieldRequested($event)"
+            (removeInputFieldRequested)="onParameterStepRemoveInputFieldRequested($event)"
+          >
+          </app-parameter-step>
+          <div>
+            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          </div>
         </mat-step>
       </mat-stepper>
       <button mat-flat-button color="primary" [disabled]="isFormInvalid() || isSubmitting" (click)="handleSubmit()">

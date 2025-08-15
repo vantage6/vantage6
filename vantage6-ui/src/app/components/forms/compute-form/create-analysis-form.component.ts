@@ -68,6 +68,7 @@ import { StudyStepComponent } from '../task-steps/study-step/study-step.componen
 import { FunctionStepComponent } from '../task-steps/function-step/function-step.component';
 import { DatabaseStepComponent } from '../task-steps/database-step/database-step.component';
 import { DataframeStepComponent } from '../task-steps/dataframe-step/dataframe-step.component';
+import { ParameterStepComponent } from '../task-steps/parameter-step/parameter-step.component';
 
 @Component({
   selector: 'app-create-form',
@@ -107,7 +108,8 @@ import { DataframeStepComponent } from '../task-steps/dataframe-step/dataframe-s
     StudyStepComponent,
     FunctionStepComponent,
     DatabaseStepComponent,
-    DataframeStepComponent
+    DataframeStepComponent,
+    ParameterStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -980,6 +982,19 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   onDataframeStepDataframeSelected(dataframeData: { index: number; dataframeId: number }): void {
     // Handle dataframe selection if needed
     // The main component already handles this through form binding
+  }
+
+  // Event handlers for the parameter step component
+  onParameterStepJsonFileSelected(data: { event: Event; argument: Argument }): void {
+    this.selectedJsonFile(data.event, data.argument);
+  }
+
+  onParameterStepAddInputFieldRequested(argument: Argument): void {
+    this.addInputFieldForArg(argument);
+  }
+
+  onParameterStepRemoveInputFieldRequested(data: { argument: Argument; index: number }): void {
+    this.removeInputFieldForArg(data.argument, data.index);
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {
