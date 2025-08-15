@@ -29,8 +29,6 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() organizations: any[] = [];
   @Input() functionForm: FormGroup | null = null;
 
-  @Output() dataframeSelected = new EventEmitter<{ index: number; dataframeId: number }>();
-
   readonly routes = routePaths;
 
   private destroy$ = new Subject<void>();
@@ -53,7 +51,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
         const controlName = `dataframeId${index}`;
         if (this.formGroup.controls[controlName]) {
           this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((dataframeId: number) => {
-            this.dataframeSelected.emit({ index, dataframeId });
+            // this.dataframeSelected.emit({ index, dataframeId });
           });
         }
       });

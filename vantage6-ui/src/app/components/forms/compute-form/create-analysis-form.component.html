@@ -52,9 +52,8 @@
             [node]="node"
             [algorithms]="algorithms"
             [collaboration]="collaboration"
+            [functionsAllowedForSession]="functionsAllowedForSession"
             (functionSelected)="onFunctionStepFunctionSelected($event)"
-            (searchRequested)="onFunctionStepSearchRequested()"
-            (searchCleared)="onFunctionStepSearchCleared()"
           >
           </app-function-step>
           <div>
@@ -69,12 +68,7 @@
         <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
           <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
           <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
-          <app-database-step
-            [formGroup]="databaseForm"
-            [availableDatabases]="availableDatabases"
-            (databaseSelected)="onDatabaseStepDatabaseSelected($event)"
-          >
-          </app-database-step>
+          <app-database-step [formGroup]="databaseForm" [availableDatabases]="availableDatabases"> </app-database-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
@@ -93,7 +87,6 @@
             [selectedDataframes]="selectedDataframes"
             [organizations]="organizations"
             [functionForm]="functionForm"
-            (dataframeSelected)="onDataframeStepDataframeSelected($event)"
           >
           </app-dataframe-step>
           <div>
@@ -112,9 +105,6 @@
             [organizations]="organizations"
             [isLoadingColumns]="isLoadingColumns"
             [argumentType]="argumentType"
-            (jsonFileSelected)="onParameterStepJsonFileSelected($event)"
-            (addInputFieldRequested)="onParameterStepAddInputFieldRequested($event)"
-            (removeInputFieldRequested)="onParameterStepRemoveInputFieldRequested($event)"
           >
           </app-parameter-step>
           <div>

@@ -45,6 +45,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() node: any = null;
   @Input() algorithms: Algorithm[] = [];
   @Input() collaboration: Collaboration | null | undefined = null;
+  @Input() functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
 
   @Output() functionSelected = new EventEmitter<{ functionName: string; algorithmID: number; algorithmStoreID: number }>();
   @Output() searchRequested = new EventEmitter<void>();
@@ -122,5 +123,21 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
       }
     }
     return '';
+  }
+
+  search() {
+    const value = this.formGroup.controls['algorithmFunctionSearch'].value;
+    this.functionsFilteredBySearch = this.functionsAllowedForSession.filter((func) => {
+      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
+      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
+      return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
+        val?.toLowerCase()?.includes(value.toLowerCase())
+      );
+    });
+  }
+
+  clearFunctionSearchInput() {
+    this.formGroup.controls['algorithmFunctionSearch'].setValue('');
+    this.search();
   }
 }

@@ -395,22 +395,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  search() {
-    const value = this.functionForm.controls.algorithmFunctionSearch.value;
-    this.functionsFilteredBySearch = this.functionsAllowedForSession.filter((func) => {
-      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
-      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-      return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
-        val?.toLowerCase()?.includes(value.toLowerCase())
-      );
-    });
-  }
-
-  clearFunctionSearchInput() {
-    this.functionForm.controls.algorithmFunctionSearch.setValue('');
-    this.search();
-  }
-
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
     return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
   }
@@ -744,49 +728,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   // Event handlers for the study step component
   onStudyStepStudySelected(study: BaseStudy | null): void {
-    if (study) {
-      this.handleStudyChange(study.id);
-    } else {
-      this.handleStudyChange(null);
-    }
+    this.handleStudyChange(study?.id || null);
   }
 
   // Event handlers for the function step component
   onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
     this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
-  }
-
-  onFunctionStepSearchRequested(): void {
-    this.search();
-  }
-
-  onFunctionStepSearchCleared(): void {
-    this.clearFunctionSearchInput();
-  }
-
-  // Event handlers for the database step component
-  onDatabaseStepDatabaseSelected(database: string): void {
-    // Handle database selection if needed
-    // The main component already handles this through form binding
-  }
-
-  // Event handlers for the dataframe step component
-  onDataframeStepDataframeSelected(dataframeData: { index: number; dataframeId: number }): void {
-    // Handle dataframe selection if needed
-    // The main component already handles this through form binding
-  }
-
-  // Event handlers for the parameter step component
-  onParameterStepJsonFileSelected(data: { event: Event; argument: Argument }): void {
-    this.selectedJsonFile(data.event, data.argument);
-  }
-
-  onParameterStepAddInputFieldRequested(argument: Argument): void {
-    this.addInputFieldForArg(argument);
-  }
-
-  onParameterStepRemoveInputFieldRequested(data: { argument: Argument; index: number }): void {
-    this.removeInputFieldForArg(data.argument, data.index);
   }
 
   private async handleStudyChange(studyID: number | null): Promise<void> {
@@ -958,24 +905,5 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   isFederatedStep(stepType: AlgorithmStepType): boolean {
     return stepType !== AlgorithmStepType.CentralCompute;
-  }
-
-  // Functions needed for parameter step event handlers
-  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
-    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
-
-    if (!selectedFile) return;
-    const fileData = await readFile(selectedFile);
-
-    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
-    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
-  }
-
-  addInputFieldForArg(argument: Argument): void {
-    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
-  }
-
-  removeInputFieldForArg(argument: Argument, index: number): void {
-    (this.parameterForm.get(argument.name) as FormArray).removeAt(index);
   }
 }

@@ -17,6 +17,7 @@ import { NumberOnlyDirective } from '../../../../../directives/numberOnly.direct
 import { floatRegex, integerRegex } from '../../../../../helpers/regex.helper';
 import { isTruthy } from '../../../../../helpers/utils.helper';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { readFile } from 'src/app/helpers/file.helper';
 
 @Component({
   selector: 'app-parameter-step',
@@ -243,5 +244,24 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
       id2 = id2.toString();
     }
     return id1 === id2;
+  }
+
+  // Functions needed for parameter step event handlers
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.formGroup.controls[`${argument.name}`].setValue(fileData || '');
+    this.formGroup.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  addInputFieldForArg(argument: Argument): void {
+    (this.formGroup.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
+  }
+
+  removeInputFieldForArg(argument: Argument, index: number): void {
+    (this.formGroup.get(argument.name) as FormArray).removeAt(index);
   }
 }

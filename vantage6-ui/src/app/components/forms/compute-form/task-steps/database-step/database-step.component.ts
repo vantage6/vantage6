@@ -20,8 +20,6 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() availableDatabases: Database[] = [];
 
-  @Output() databaseSelected = new EventEmitter<string>();
-
   private destroy$ = new Subject<void>();
 
   constructor() {}
@@ -36,9 +34,8 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
   }
 
   private setupFormListeners(): void {
-    this.formGroup.controls['database'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((database: string) => {
-      this.databaseSelected.emit(database);
-    });
+    // this.formGroup.controls['database'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((database: string) => {
+    // });
   }
 
   get hasDatabases(): boolean {
