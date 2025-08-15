@@ -1,7 +1,13 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormArray, FormBuilder, AbstractControl, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Argument, ArgumentType, AlgorithmFunction, ConditionalArgComparatorType } from '../../../../../models/api/algorithm.model';
+import {
+  Argument,
+  ArgumentType,
+  AlgorithmFunction,
+  ConditionalArgComparatorType,
+  AlgorithmFunctionExtended
+} from '../../../../../models/api/algorithm.model';
 import { BaseOrganization } from '../../../../../models/api/organization.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -19,7 +25,7 @@ import { isTruthy } from '../../../../../helpers/utils.helper';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { readFile } from 'src/app/helpers/file.helper';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
-import { BaseSession } from 'src/app/models/api/session.models';
+import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
 
 @Component({
   selector: 'app-parameter-step',
@@ -44,8 +50,6 @@ import { BaseSession } from 'src/app/models/api/session.models';
 })
 export class ParameterStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
-  @Input() function: AlgorithmFunction | null = null;
-  @Input() columns: string[] = [];
   @Input() isLoadingColumns = false;
   @Input() argumentType = ArgumentType;
 
@@ -53,7 +57,10 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   @Output() addInputFieldRequested = new EventEmitter<Argument>();
   @Output() removeInputFieldRequested = new EventEmitter<{ argument: Argument; index: number }>();
 
+  function: AlgorithmFunctionExtended | null = null;
+  selectedAlgorithm: Algorithm | null = null;
   organizations: BaseOrganization[] = [];
+  dataFrameColumns: string[] = [];
 
   private destroy$ = new Subject<void>();
 
@@ -89,16 +96,28 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;
     });
-    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
-      this.onSessionChange(session);
+    this.changesInCreateTaskService.functionAlgorithmChange$.pipe(takeUntil(this.destroy$)).subscribe((algorithm) => {
+      this.selectedAlgorithm = algorithm;
+    });
+    this.changesInCreateTaskService.functionChange$.pipe(takeUntil(this.destroy$)).subscribe((function_) => {
+      this.onFunctionChange(function_);
+    });
+    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframes) => {
+      this.onDataframeChange(dataframes);
     });
   }
 
-  onSessionChange(session: BaseSession | null): void {
-    if (!session) return;
-    // if session changes, the function is also cleared. Therefore, we also need to
-    // clear the parameters
+  private onFunctionChange(function_: AlgorithmFunction | null): void {
+    if (!function_) return;
+    this.function = function_;
+    // if the function changes, the parameters change. So clear the form
     this.clearForm();
+    this.setupFormListeners();
+  }
+
+  private onDataframeChange(dataframes: Dataframe[]): void {
+    // TODO generate warnings for columns that are not present on all dataframes
+    this.dataFrameColumns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
   }
 
   clearForm(): void {

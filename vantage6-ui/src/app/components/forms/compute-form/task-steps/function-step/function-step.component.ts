@@ -39,7 +39,6 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
-  @Input() function: AlgorithmFunctionExtended | null = null;
   @Input() sessionRestrictedToSameImage = false;
   @Input() showWarningUniqueDFName = false;
   @Input() node: any = null;
@@ -51,6 +50,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
 
+  selectedFunction: AlgorithmFunctionExtended | null = null;
   organizations: BaseOrganization[] = [];
   functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
   functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
@@ -79,14 +79,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     this.formGroup.controls['algorithmFunctionSpec'].valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((algorithmFunctionSpec: string) => {
-        if (algorithmFunctionSpec) {
-          const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
-          this.functionSelected.emit({
-            functionName: String(functionName),
-            algorithmID: Number(algorithmID),
-            algorithmStoreID: Number(algorithmStoreID)
-          });
-        }
+        this.handleFunctionChange(algorithmFunctionSpec);
       });
   }
 
@@ -104,6 +97,38 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     });
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;
+    });
+  }
+
+  private handleFunctionChange(algorithmFunctionSpec: string): void {
+    const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
+    // emit the function change
+    this.selectedFunction =
+      this.functions.find(
+        (_) => _.name === functionName && _.algorithm_id == Number(algorithmID) && _.algorithm_store_id == Number(algorithmStoreID)
+      ) || null;
+    if (!this.selectedFunction) return;
+    this.changesInCreateTaskService.emitFunctionChange(this.selectedFunction);
+    const algorithm = this.algorithms.find((_) => _.id === Number(algorithmID) && _.algorithm_store_id == Number(algorithmStoreID));
+    if (algorithm) {
+      this.changesInCreateTaskService.emitfunctionAlgorithmChange(algorithm);
+    }
+
+    // clear the selected organizations - if e.g. first a federated function is selected,
+    // then a central compute function, the organizations are not valid anymore
+    this.clearOrganizations();
+
+    // If it's a federated step, select all organizations
+    if (this.isFederatedStep(this.selectedFunction.step_type)) {
+      this.formGroup.patchValue({
+        organizationIDs: this.organizations.map((org) => org.id.toString())
+      });
+    }
+
+    this.functionSelected.emit({
+      functionName: String(functionName),
+      algorithmID: Number(algorithmID),
+      algorithmStoreID: Number(algorithmStoreID)
     });
   }
 
@@ -126,6 +151,10 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
         this.functionsFilteredBySearch = this.functionsAllowedForSession;
       }
     }
+    // if function is not in the allowed functions, clear the function
+    if (!this.functionsAllowedForSession.some((func) => func.name === this.selectedFunction?.name)) {
+      this.selectedFunction = null;
+    }
   }
 
   private clearOrganizations(): void {
@@ -145,7 +174,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   }
 
   isDataExtractionStep(): boolean {
-    return this.function?.step_type === AlgorithmStepType.DataExtraction;
+    return this.selectedFunction?.step_type === AlgorithmStepType.DataExtraction;
   }
 
   getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {

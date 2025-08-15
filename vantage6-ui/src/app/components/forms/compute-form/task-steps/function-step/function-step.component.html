@@ -42,11 +42,11 @@
     </mat-select>
   </mat-form-field>
 
-  <div *ngIf="function">
-    <div class="field-description" *ngIf="!isFederatedStep(function.step_type)">
+  <div *ngIf="selectedFunction">
+    <div class="field-description" *ngIf="!isFederatedStep(selectedFunction.step_type)">
       {{ "task-create.step-function.description.organization-central" | translate }}
     </div>
-    <div class="field-description" *ngIf="isFederatedStep(function.step_type)">
+    <div class="field-description" *ngIf="isFederatedStep(selectedFunction.step_type)">
       {{ "task-create.step-function.description.organization-partial" | translate }}
     </div>
 
@@ -57,7 +57,7 @@
       cannot be changed after initialization (see e.g.
       https://stackoverflow.com/questions/51204450/error-cannot-change-multiple-mode-of-select-after-initialization)
       -->
-      <div *ngIf="!isFederatedStep(function.step_type); else partialOrgDropdown">
+      <div *ngIf="!isFederatedStep(selectedFunction.step_type); else partialOrgDropdown">
         <mat-select formControlName="organizationIDs" [compareWith]="compareIDsForSelection" [multiple]="false">
           <mat-option *ngFor="let organization of organizations" [value]="organization.id.toString()">
             {{ organization.name }}

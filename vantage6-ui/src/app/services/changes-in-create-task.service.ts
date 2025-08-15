@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { BaseSession, Dataframe } from '../models/api/session.models';
 import { BaseOrganization } from '../models/api/organization.model';
+import { Algorithm, AlgorithmFunctionExtended } from '../models/api/algorithm.model';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,12 @@ export class ChangesInCreateTaskService {
 
   private studyChangeSubject = new BehaviorSubject<number | null>(null);
   public studyChange$: Observable<number | null> = this.studyChangeSubject.asObservable();
+
+  private functionChangeSubject = new BehaviorSubject<AlgorithmFunctionExtended | null>(null);
+  public functionChange$: Observable<AlgorithmFunctionExtended | null> = this.functionChangeSubject.asObservable();
+
+  private functionAlgorithmChangeSubject = new BehaviorSubject<Algorithm | null>(null);
+  public functionAlgorithmChange$: Observable<Algorithm | null> = this.functionAlgorithmChangeSubject.asObservable();
 
   private dataframeChangeSubject = new BehaviorSubject<Dataframe[]>([]);
   public dataframeChange$: Observable<Dataframe[]> = this.dataframeChangeSubject.asObservable();
@@ -35,5 +42,13 @@ export class ChangesInCreateTaskService {
 
   emitOrganizationChange(organizations: BaseOrganization[]): void {
     this.organizationChangeSubject.next(organizations);
+  }
+
+  emitFunctionChange(function_: AlgorithmFunctionExtended | null): void {
+    this.functionChangeSubject.next(function_);
+  }
+
+  emitfunctionAlgorithmChange(algorithm: Algorithm | null): void {
+    this.functionAlgorithmChangeSubject.next(algorithm);
   }
 }

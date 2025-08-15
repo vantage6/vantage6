@@ -34,7 +34,6 @@
           <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
           <app-function-step
             [formGroup]="functionForm"
-            [function]="function"
             [functions]="functions"
             [sessionRestrictedToSameImage]="sessionRestrictedToSameImage"
             [showWarningUniqueDFName]="showWarningUniqueDFName"
@@ -69,7 +68,6 @@
           <app-dataframe-step
             [formGroup]="dataframeForm"
             [dataframes]="dataframes"
-            [function]="function"
             [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
             [functionForm]="functionForm"
           >
@@ -83,13 +81,7 @@
         </mat-step>
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
           <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-          <app-parameter-step
-            [formGroup]="parameterForm"
-            [function]="function"
-            [columns]="columns"
-            [isLoadingColumns]="isLoadingColumns"
-            [argumentType]="argumentType"
-          >
+          <app-parameter-step [formGroup]="parameterForm" [isLoadingColumns]="isLoadingColumns" [argumentType]="argumentType">
           </app-parameter-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>

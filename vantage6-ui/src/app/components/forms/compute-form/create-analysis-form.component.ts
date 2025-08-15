@@ -105,7 +105,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
-  @Input() selectedDataframes: Dataframe[] = [];
+  @Input() preSelectedDataframes: Dataframe[] = [];
 
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
@@ -571,9 +571,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
       });
 
-    // set columns if dataframe is already set (for preprocessing tasks)
-    if (this.selectedDataframes.length > 0) {
-      this.setColumns(this.selectedDataframes);
+    // TODO for preprocessing tasks, dataframes are preselected. They should not be
+    // changed, so ensure that in the child component they are not changed (nor cleared
+    // when other form elements are changed)
+    if (this.preSelectedDataframes.length > 0) {
+      // this.setColumns(this.preSelectedDataframes);
     }
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
@@ -588,22 +590,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.isDataInitialized = true;
   }
 
-  setColumns(dataframes: Dataframe[]) {
-    // TODO generate warnings for columns that are not present on all dataframes
-    this.columns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
-  }
-
   // Event handlers for the function step component
   onFunctionStepFunctionSelected(functionData: { functionName: string; algorithmID: number; algorithmStoreID: number }): void {
     this.handleFunctionChange(functionData.functionName, functionData.algorithmID, functionData.algorithmStoreID);
   }
 
   private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
-    //Clear form
-    this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
-    this.clearDataframeStep();
-    this.clearParameterStep();
-
     //Get selected function
     this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
     // Get selected function
@@ -616,13 +608,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       // Add form controls for parameters for selected function
       addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
       this.addDataframeFormControlsForFunction(selectedFunction, this.dataframeForm);
-
-      // If it's a federated step, select all organizations
-      // if (this.isFederatedStep(selectedFunction.step_type)) {
-      //   this.functionForm.patchValue({
-      //     organizationIDs: this.organizations.map((org) => org.id.toString())
-      //   });
-      // }
     }
 
     // Delay setting function, so that form controls are added
@@ -658,11 +643,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   private async handleDataframeChange(dataframes: Dataframe[]): Promise<void> {
     if (!dataframes) return;
     this.isLoadingColumns = true;
-    this.columns = [];
-    this.selectedDataframes = dataframes;
-    if (this.selectedDataframes.length > 0) {
-      this.setColumns(this.selectedDataframes);
-    }
 
     // Set loading columns to false after columns are loaded
     this.isLoadingColumns = false;
@@ -687,20 +667,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return await this.nodeService.getNodes({
       collaboration_id: this.collaboration?.id.toString() || ''
     });
-  }
-
-  private clearFunctionStep(): void {
-    this.functionForm.controls.organizationIDs.reset();
-  }
-
-  private clearDataframeStep(): void {
-    this.dataframeForm.reset();
-    this.columns = [];
-    this.selectedDataframes = [];
-  }
-
-  private clearParameterStep(): void {
-    this.parameterForm = this.fb.nonNullable.group({});
   }
 
   private async onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): Promise<void> {

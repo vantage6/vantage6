@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Dataframe } from '../../../../../models/api/session.models';
-import { FunctionDatabase } from '../../../../../models/api/algorithm.model';
+import { AlgorithmFunctionExtended, FunctionDatabase } from '../../../../../models/api/algorithm.model';
 import { BaseSession } from '../../../../../models/api/session.models';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -25,10 +25,10 @@ import { BaseOrganization } from 'src/app/models/api/organization.model';
 export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() dataframes: Dataframe[] = [];
-  @Input() function: any = null;
   @Input() organizationNamesWithNonReadyDataframes: string[] = [];
   @Input() functionForm: FormGroup | null = null;
 
+  function: AlgorithmFunctionExtended | null = null;
   hasLoadedDataframes: boolean = false;
   selectedDataframes: Dataframe[] = [];
   organizations: BaseOrganization[] = [];
@@ -71,6 +71,9 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
       this.handleSessionChange(session);
     });
+    this.changesInCreateTaskService.functionChange$.pipe(takeUntil(this.destroy$)).subscribe((function_) => {
+      this.handleFunctionChange(function_);
+    });
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;
     });
@@ -84,6 +87,17 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     // filter dataframes that are not ready - they cannot be used for analyses
     this.dataframes = this.dataframes.filter((df) => df.ready);
     this.hasLoadedDataframes = true;
+  }
+
+  private handleFunctionChange(function_: AlgorithmFunctionExtended | null): void {
+    if (!function_) return;
+    this.function = function_;
+    // clear the selected dataframes since the function may require a different number
+    // of dataframes, and set the new controls
+    this.formGroup.reset();
+    this.setupFormListeners();
+    this.selectedDataframes = [];
+    this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
   }
 
   private handleDataframeChange(dataframeId: number, controlName: string): void {
@@ -107,7 +121,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   }
 
   get hasFunctionDatabases(): boolean {
-    return this.function?.databases && this.function.databases.length > 0;
+    return this.function?.databases != null && this.function.databases.length > 0;
   }
 
   get shouldShowDataframeSelection(): boolean {
