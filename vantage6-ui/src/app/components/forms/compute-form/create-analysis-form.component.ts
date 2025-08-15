@@ -411,25 +411,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.search();
   }
 
-  getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
-    const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
-    const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.step_type}</div>`;
-  }
-
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
     return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
-  }
-
-  async handleDatabaseStepInitialized(): Promise<void> {
-    // TODO get rid of this function?
-    if (!this.repeatedTask || !this.function) return;
-    // This function is run when the database child component is initialized,
-    // but it may still be null when we get here. If it is null, we wait a bit
-    // and then (recursively) try again.
-    // TODO setup database step for repeating extraction task
-
-    // TODO repeat preprocessing and filtering when backend is ready
   }
 
   isFormInvalid(): boolean {
@@ -551,120 +534,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.onCancel.emit();
   }
 
-  sortArgumentsForDisplay(arguments_: Argument[] | undefined) {
-    if (!arguments_) return undefined;
-    // first order by ID
-    arguments_ = arguments_.sort((a, b) => a.id - b.id);
-    // Sort the parameters of the function such that parameters that are conditional on
-    // others are just behind those
-    for (let idx = 0; idx < arguments_.length; idx++) {
-      const arg = arguments_[idx];
-      if (arg?.conditional_on_id) {
-        // Find the idx in the list of the one it is conditional on
-        const conditionalIdx = arguments_.findIndex((condArg) => condArg.id === arg.conditional_on_id);
-        if (conditionalIdx > idx) {
-          [arguments_[idx], arguments_[conditionalIdx]] = [arguments_[conditionalIdx], arguments_[idx]];
-          idx = -1;
-        }
-      }
-    }
-    return arguments_;
-  }
-
-  shouldShowParameterSimpleInput(argument: Argument): boolean {
-    return (
-      !this.shouldShowColumnDropdown(argument) &&
-      !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument) &&
-      !this.shouldShowAllowedValuesDropdown(argument)
-    );
-  }
-
-  shouldIncludeFormField(argument: Argument): boolean {
-    return (
-      !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowMultipleInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument)
-    );
-  }
-
-  shouldShowMultipleInput(argument: Argument): boolean {
-    return (
-      argument.type === this.argumentType.IntegerList ||
-      argument.type === this.argumentType.FloatList ||
-      argument.type === this.argumentType.StringList ||
-      (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
-    );
-  }
-
-  shouldShowAllowedValuesDropdown(argument: Argument): boolean {
-    return (argument.allowed_values?.length ?? 0) > 0;
-  }
-
-  shouldShowParameterBooleanInput(argument: Argument): boolean {
-    return argument.type === this.argumentType.Boolean;
-  }
-
-  shouldShowParameterJsonInput(argument: Argument): boolean {
-    return argument.type === this.argumentType.Json;
-  }
-
-  shouldShowOrganizationDropdown(argument: Argument): boolean {
-    return argument.type === this.argumentType.Organization || argument.type === this.argumentType.OrganizationList;
-  }
-
-  shouldShowColumnDropdown(argument: Argument): boolean {
-    return (
-      (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) &&
-      (this.columns.length > 0 || this.isLoadingColumns)
-    );
-  }
-
-  isFederatedStep(stepType: AlgorithmStepType): boolean {
-    return stepType !== AlgorithmStepType.CentralCompute;
-  }
-
-  containsColumnArguments(): boolean {
-    return this.function?.arguments.some((arg) => arg.type === this.argumentType.Column) || false;
-  }
-
-  shouldShowColumnDropdownForAnyArg(): boolean {
-    return this.containsColumnArguments();
-  }
-
-  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
-    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
-
-    if (!selectedFile) return;
-    const fileData = await readFile(selectedFile);
-
-    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
-    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
-  }
-
-  getJsonFileName(argument: Argument): string {
-    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
-  }
-
-  addInputFieldForArg(argument: Argument): void {
-    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
-  }
-
-  removeInputFieldForArg(argument: Argument, index: number): void {
-    (this.parameterForm.get(argument.name) as FormArray).removeAt(index);
-  }
-
   getFormArrayControls(argument: Argument) {
     if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
       const initialControl = argument.has_default_value ? [] : [this.getNewControlForArgumentList(argument)];
       this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
     }
     return (this.parameterForm.get(argument.name) as FormArray).controls;
-  }
-
-  isDataExtractionStep(): boolean {
-    return this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction) || false;
   }
 
   private getNewControlForArgumentList(argument: Argument): AbstractControl {
@@ -715,26 +590,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  // compare function for mat-select
-  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
-    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
-    // organization object from the collaboration
-    if (Array.isArray(id2)) {
-      id2 = id2[0];
-    }
-    if (typeof id1 === 'number') {
-      id1 = id1.toString();
-    }
-    if (typeof id2 === 'number') {
-      id2 = id2.toString();
-    }
-    return id1 === id2;
-  }
-
-  compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
-    return val1 === val2;
-  }
-
   async setOrganizations() {
     if (!this.collaboration) return;
     if (this.study) {
@@ -766,54 +621,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return '';
   }
 
-  getDisplayName(obj: AlgorithmFunction | Argument): string {
-    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
-  }
-
   nodeConfigContainsDatabases(): boolean {
     return this.node?.config.find((_) => _.key === 'database_labels') !== undefined;
-  }
-
-  shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
-    // argument should not be displayed if it is conditional on another and the
-    // condition is not fulfilled
-    if (!argument.conditional_on_id) {
-      return true;
-    }
-    const conditionalArg = function_?.arguments.find((arg: Argument) => arg.id === argument.conditional_on_id);
-    if (!conditionalArg) {
-      return true;
-    }
-    let curConditionalValue = this.parameterForm.get(conditionalArg.name)?.value;
-    // cast the values (if necessary)
-    let conditionDatabaseValue: string | number | boolean | undefined;
-    if (conditionalArg.type === ArgumentType.Boolean) {
-      conditionDatabaseValue = isTruthy(argument.conditional_value);
-      curConditionalValue = isTruthy(curConditionalValue);
-    } else if (conditionalArg.type === ArgumentType.Float || conditionalArg.type === ArgumentType.Integer) {
-      conditionDatabaseValue = Number(argument.conditional_value);
-      curConditionalValue = Number(curConditionalValue);
-    } else {
-      conditionDatabaseValue = argument.conditional_value;
-    }
-    // evaluate the condition
-    if (argument.conditional_operator === ConditionalArgComparatorType.Equal) {
-      return conditionDatabaseValue === curConditionalValue;
-    } else if (argument.conditional_operator === ConditionalArgComparatorType.NotEqual) {
-      return conditionDatabaseValue !== curConditionalValue;
-    } else if (conditionDatabaseValue) {
-      if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThan) {
-        return conditionDatabaseValue > curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThanOrEqual) {
-        return conditionDatabaseValue >= curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThan) {
-        return conditionDatabaseValue < curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThanOrEqual) {
-        return conditionDatabaseValue <= curConditionalValue;
-      }
-    }
-    // fallback - just display it, but should never get here
-    return true;
   }
 
   private async initData(): Promise<void> {
@@ -1147,12 +956,26 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     studyOrCollabControl?.updateValueAndValidity();
   }
 
-  isFirstDatabaseMultiple(): boolean {
-    return this.function?.databases?.[0] ? this.function.databases[0].multiple || false : false;
+  isFederatedStep(stepType: AlgorithmStepType): boolean {
+    return stepType !== AlgorithmStepType.CentralCompute;
   }
 
-  hasColumnListWithMultipleDataframes(): boolean {
-    if (!this.isFirstDatabaseMultiple()) return false;
-    return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
+  // Functions needed for parameter step event handlers
+  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
+    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
+
+    if (!selectedFile) return;
+    const fileData = await readFile(selectedFile);
+
+    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
+    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
+  }
+
+  addInputFieldForArg(argument: Argument): void {
+    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
+  }
+
+  removeInputFieldForArg(argument: Argument, index: number): void {
+    (this.parameterForm.get(argument.name) as FormArray).removeAt(index);
   }
 }
