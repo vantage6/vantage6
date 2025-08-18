@@ -15,6 +15,7 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
 import { SessionService } from 'src/app/services/session.service';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
 import { TaskDBOutput } from 'src/app/models/api/task.models';
+import { compareIDsForSelection } from '../task-create-helper';
 
 @Component({
   selector: 'app-dataframe-step',
@@ -24,6 +25,8 @@ import { TaskDBOutput } from 'src/app/models/api/task.models';
   standalone: true
 })
 export class DataframeStepComponent implements OnInit, OnDestroy {
+  compareIDsForSelection = compareIDsForSelection;
+
   @Input() formGroup!: FormGroup;
   @Input() dataframes: Dataframe[] = [];
 
@@ -144,21 +147,6 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     }
     this.selectedDataframes = this.dataframes.filter((df) => selectedDfs.includes(df.id));
     this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
-  }
-
-  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
-    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
-    // organization object from the collaboration
-    if (Array.isArray(id2)) {
-      id2 = id2[0];
-    }
-    if (typeof id1 === 'number') {
-      id1 = id1.toString();
-    }
-    if (typeof id2 === 'number') {
-      id2 = id2.toString();
-    }
-    return id1 === id2;
   }
 
   get hasDataframes(): boolean {

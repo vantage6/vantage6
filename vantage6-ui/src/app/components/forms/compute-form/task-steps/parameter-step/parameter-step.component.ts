@@ -27,6 +27,7 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
 import { Dataframe } from 'src/app/models/api/session.models';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { TaskParameter } from 'src/app/models/api/task.models';
+import { compareIDsForSelection } from '../task-create-helper';
 
 @Component({
   selector: 'app-parameter-step',
@@ -50,6 +51,7 @@ import { TaskParameter } from 'src/app/models/api/task.models';
 })
 export class ParameterStepComponent implements OnInit, OnDestroy {
   argumentType = ArgumentType;
+  compareIDsForSelection = compareIDsForSelection;
 
   @Input() formGroup!: FormGroup;
   @Input() preSelectedDataframes: Dataframe[] = [];
@@ -291,21 +293,6 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
     } else {
       return this.fb.control('', Validators.required);
     }
-  }
-
-  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
-    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
-    // organization object from the collaboration
-    if (Array.isArray(id2)) {
-      id2 = id2[0];
-    }
-    if (typeof id1 === 'number') {
-      id1 = id1.toString();
-    }
-    if (typeof id2 === 'number') {
-      id2 = id2.toString();
-    }
-    return id1 === id2;
   }
 
   // Functions needed for parameter step event handlers

@@ -19,6 +19,7 @@ import { ChangesInCreateTaskService } from '../../../../../services/changes-in-c
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Task } from 'src/app/models/api/task.models';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { compareIDsForSelection } from '../task-create-helper';
 
 @Component({
   selector: 'app-function-step',
@@ -41,6 +42,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   standalone: true
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {
+  compareIDsForSelection = compareIDsForSelection;
+
   @Input() formGroup!: FormGroup;
   @Input() node: any = null;
   @Input() algorithms: Algorithm[] = [];
@@ -236,21 +239,6 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
     return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
-  }
-
-  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
-    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
-    // organization object from the collaboration
-    if (Array.isArray(id2)) {
-      id2 = id2[0];
-    }
-    if (typeof id1 === 'number') {
-      id1 = id1.toString();
-    }
-    if (typeof id2 === 'number') {
-      id2 = id2.toString();
-    }
-    return id1 === id2;
   }
 
   getAlgorithmStoreName(algorithm: Algorithm): string {
