@@ -39,8 +39,6 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
-  @Input() sessionRestrictedToSameImage = false;
-  @Input() showWarningUniqueDFName = false;
   @Input() node: any = null;
   @Input() algorithms: Algorithm[] = [];
   @Input() collaboration: Collaboration | null | undefined = null;
@@ -49,6 +47,8 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
 
+  sessionRestrictedToSameImage: boolean = false;
+  showWarningUniqueDFName: boolean = false;
   selectedFunction: AlgorithmFunctionExtended | null = null;
   organizations: BaseOrganization[] = [];
   functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
@@ -80,6 +80,9 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
       .subscribe((algorithmFunctionSpec: string) => {
         this.handleFunctionChange(algorithmFunctionSpec);
       });
+    this.formGroup.controls['organizationIDs'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((organizationIDs: string[]) => {
+      this.changesInCreateTaskService.emitSelectedOrganizationIDsChange(organizationIDs);
+    });
   }
 
   private initData(): void {

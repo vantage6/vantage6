@@ -25,14 +25,14 @@ import { BaseOrganization } from 'src/app/models/api/organization.model';
 export class DataframeStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() dataframes: Dataframe[] = [];
-  @Input() organizationNamesWithNonReadyDataframes: string[] = [];
-  @Input() functionForm: FormGroup | null = null;
 
   function: AlgorithmFunctionExtended | null = null;
   hasLoadedDataframes: boolean = false;
   selectedDataframes: Dataframe[] = [];
+  organizationNamesWithNonReadyDataframes: string[] = [];
   organizations: BaseOrganization[] = [];
   session: BaseSession | null = null;
+  selectedOrganizationIDs: string[] = [];
 
   readonly routes = routePaths;
 
@@ -88,6 +88,9 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     });
     this.changesInCreateTaskService.functionChange$.pipe(takeUntil(this.destroy$)).subscribe((function_) => {
       this.handleFunctionChange(function_);
+    });
+    this.changesInCreateTaskService.selectedOrganizationIDsChange$.pipe(takeUntil(this.destroy$)).subscribe((organizationIDs) => {
+      this.selectedOrganizationIDs = organizationIDs;
     });
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;
@@ -149,14 +152,8 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
 
   dataFrameNotReadyForAllSelectedOrganizations(): boolean {
     if (!this.selectedDataframes || this.selectedDataframes.length === 0) return false;
-    if (!this.functionForm) return false;
-
-    let selectedOrganizations = this.functionForm.controls['organizationIDs'].value;
-    if (!selectedOrganizations) return false;
-    if (!Array.isArray(selectedOrganizations)) {
-      selectedOrganizations = [selectedOrganizations];
-    }
-    const selectedOrganizationsNotReady = selectedOrganizations.filter(
+    if (!this.selectedOrganizationIDs || this.selectedOrganizationIDs.length === 0) return false;
+    const selectedOrganizationsNotReady = this.selectedOrganizationIDs.filter(
       (org: string) => !this.selectedDataframes.find((df) => df.organizations_ready.includes(Number(org)))
     );
     this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(

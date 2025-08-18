@@ -23,7 +23,6 @@ import { OrganizationService } from 'src/app/services/organization.service';
 export class StudyStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() collaboration: Collaboration | null = null;
-  @Input() isStudyCompleted = false;
   @Input() shouldShowStudyStep = false;
 
   readonly studyOrCollab = StudyOrCollab;
@@ -38,6 +37,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupFormListeners();
     this.setupChangeListeners();
+    this.initData();
   }
 
   ngOnDestroy(): void {
@@ -68,7 +68,6 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   onSessionChange(session: BaseSession | null): void {
     if (!session) return;
     this.formGroup.controls['studyOrCollabID'].reset();
-    this.isStudyCompleted = false;
     if (session.study) {
       this.formGroup.controls['studyOrCollabID'].disable();
       this.formGroup.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + session.study.id.toString());

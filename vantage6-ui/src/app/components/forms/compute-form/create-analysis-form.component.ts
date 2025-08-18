@@ -114,16 +114,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
-  organizationNamesWithNonReadyDataframes: string[] = [];
 
-  isStudyCompleted: boolean = false;
   isLoading: boolean = true;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
-  showWarningUniqueDFName: boolean = false;
-  sessionRestrictedToSameImage: boolean = false;
   repeatedTask: Task | null = null;
 
   sessionForm = this.fb.nonNullable.group({
@@ -211,7 +207,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !!this.function?.databases && this.function.databases.length > 0;
+    return !!this.function?.databases && this.function.databases.length > 0 && this.preSelectedDataframes.length === 0;
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -514,22 +510,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     });
     this.node = await this.getOnlineNode();
 
-    if (this.sessionId) {
-      this.sessionForm.controls['sessionID'].setValue(this.sessionId);
-    }
-
-    // Initialize the study step component
-    if (this.studyStepComponent) {
-      await this.studyStepComponent.initData();
-    }
-
     // set initial values for the services
     this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
     this.changesInCreateTaskService.emitNodeDatabasesChange(getDatabasesFromNode(this.node));
-
-    this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
-      if (studyID) this.isStudyCompleted = true;
-    });
 
     // TODO for preprocessing tasks, dataframes are preselected. They should not be
     // changed, so ensure that in the child component they are not changed (nor cleared

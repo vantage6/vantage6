@@ -30,6 +30,9 @@ export class ChangesInCreateTaskService {
   private nodeDatabasesChangeSubject = new BehaviorSubject<Database[]>([]);
   public nodeDatabasesChange$: Observable<Database[]> = this.nodeDatabasesChangeSubject.asObservable();
 
+  private selectedOrganizationIDsChangeSubject = new BehaviorSubject<string[]>([]);
+  public selectedOrganizationIDsChange$: Observable<string[]> = this.selectedOrganizationIDsChangeSubject.asObservable();
+
   constructor() {}
 
   emitSessionChange(session: BaseSession): void {
@@ -58,5 +61,9 @@ export class ChangesInCreateTaskService {
 
   emitNodeDatabasesChange(databases: Database[]): void {
     this.nodeDatabasesChangeSubject.next(databases);
+  }
+
+  emitSelectedOrganizationIDsChange(organizationIDs: string[]): void {
+    this.selectedOrganizationIDsChangeSubject.next(organizationIDs);
   }
 }

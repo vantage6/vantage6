@@ -15,12 +15,11 @@
             <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
           </div>
         </mat-step>
-        <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [completed]="isStudyCompleted" [stepControl]="studyForm">
+        <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [stepControl]="studyForm">
           <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
           <app-study-step
             [formGroup]="studyForm"
             [collaboration]="collaboration!"
-            [isStudyCompleted]="isStudyCompleted"
             [shouldShowStudyStep]="shouldShowStudyStep"
           ></app-study-step>
           <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
@@ -35,8 +34,6 @@
           <app-function-step
             [formGroup]="functionForm"
             [functions]="functions"
-            [sessionRestrictedToSameImage]="sessionRestrictedToSameImage"
-            [showWarningUniqueDFName]="showWarningUniqueDFName"
             [node]="node"
             [algorithms]="algorithms"
             [collaboration]="collaboration"
@@ -64,13 +61,7 @@
         </mat-step>
         <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
           <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
-          <app-dataframe-step
-            [formGroup]="dataframeForm"
-            [dataframes]="dataframes"
-            [organizationNamesWithNonReadyDataframes]="organizationNamesWithNonReadyDataframes"
-            [functionForm]="functionForm"
-          >
-          </app-dataframe-step>
+          <app-dataframe-step [formGroup]="dataframeForm" [dataframes]="dataframes"> </app-dataframe-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
             <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
@@ -80,7 +71,7 @@
         </mat-step>
         <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
           <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-          <app-parameter-step [formGroup]="parameterForm"> </app-parameter-step>
+          <app-parameter-step [formGroup]="parameterForm" [preSelectedDataframes]="preSelectedDataframes"> </app-parameter-step>
           <div>
             <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
           </div>

@@ -6,7 +6,7 @@
     ></app-alert>
   </div>
 
-  <ng-container *ngIf="!containsColumnArguments() || !isLoadingColumns; else loadingColumns">
+  <ng-container>
     <div class="field-description">{{ "task-create.step-parameters.description" | translate }}</div>
     <ng-container *ngFor="let argument of sortArgumentsForDisplay(function?.arguments)">
       <ng-container *ngIf="shouldDisplayArgument(function, argument)">
@@ -51,7 +51,7 @@
           <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ "algorithm-create.card-from-json.file-label" | translate }}</mat-label>
             <input matInput value="{{ getJsonFileName(argument) }}" disabled />
-            <input hidden (change)="onJsonFileSelected($event, argument)" #fileInput type="file" id="file" />
+            <input hidden (change)="selectedJsonFile($event, argument)" #fileInput type="file" id="file" />
             <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">
               {{ "general.file-select" | translate }}
             </button>
@@ -86,19 +86,12 @@
                   [formControlName]="idx"
                 />
               </mat-form-field>
-              <button mat-raised-button color="warn" (click)="onRemoveInputField(argument, idx)">Delete</button>
+              <button mat-raised-button color="warn" (click)="removeInputFieldForArg(argument, idx)">Delete</button>
             </div>
           </div>
-          <button mat-raised-button color="primary" (click)="onAddInputField(argument)">Add More</button>
+          <button mat-raised-button color="primary" (click)="addInputFieldForArg(argument)">Add More</button>
         </div>
       </ng-container>
     </ng-container>
   </ng-container>
 </form>
-
-<ng-template #loadingColumns>
-  <div class="loading-container">
-    <mat-spinner diameter="48"></mat-spinner>
-    <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
-  </div>
-</ng-template>

@@ -53,11 +53,7 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   argumentType = ArgumentType;
 
   @Input() formGroup!: FormGroup;
-  @Input() isLoadingColumns = false;
-
-  @Output() jsonFileSelected = new EventEmitter<{ event: Event; argument: Argument }>();
-  @Output() addInputFieldRequested = new EventEmitter<Argument>();
-  @Output() removeInputFieldRequested = new EventEmitter<{ argument: Argument; index: number }>();
+  @Input() preSelectedDataframes: Dataframe[] = [];
 
   function: AlgorithmFunctionExtended | null = null;
   selectedAlgorithm: Algorithm | null = null;
@@ -84,6 +80,9 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   private setupForm(): void {
     if (!this.function) return;
     addParameterFormControlsForFunction(this.function, this.formGroup);
+    if (this.preSelectedDataframes.length > 0) {
+      this.setColumns(this.preSelectedDataframes);
+    }
   }
 
   private setupChangeListeners(): void {
@@ -110,24 +109,16 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   }
 
   private onDataframeChange(dataframes: Dataframe[]): void {
+    this.setColumns(dataframes);
+  }
+
+  private setColumns(dataframes: Dataframe[]): void {
     // TODO generate warnings for columns that are not present on all dataframes
     this.dataFrameColumns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
   }
 
   clearForm(): void {
     this.formGroup.reset();
-  }
-
-  onJsonFileSelected(event: Event, argument: Argument): void {
-    this.jsonFileSelected.emit({ event, argument });
-  }
-
-  onAddInputField(argument: Argument): void {
-    this.addInputFieldRequested.emit(argument);
-  }
-
-  onRemoveInputField(argument: Argument, index: number): void {
-    this.removeInputFieldRequested.emit({ argument, index });
   }
 
   // Helper methods for determining what to show
