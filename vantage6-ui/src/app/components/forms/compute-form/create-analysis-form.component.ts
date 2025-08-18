@@ -48,6 +48,7 @@ import { DataframeStepComponent } from './task-steps/dataframe-step/dataframe-st
 import { ParameterStepComponent } from './task-steps/parameter-step/parameter-step.component';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { TaskService } from 'src/app/services/task.service';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-create-form',
@@ -160,7 +161,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     private translateService: TranslateService,
     private encryptionService: EncryptionService,
     private changesInCreateTaskService: ChangesInCreateTaskService,
-    private taskService: TaskService
+    private taskService: TaskService,
+    private sessionService: SessionService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -201,6 +203,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   private setupChangeListeners(): void {
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe(async (session) => {
+      if (session) {
+        this.dataframes = await this.sessionService.getDataframes(session.id);
+      }
+    });
     this.changesInCreateTaskService.functionAlgorithmChange$.pipe(takeUntil(this.destroy$)).subscribe((algorithm) => {
       this.algorithm = algorithm;
     });
@@ -257,60 +264,45 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       return;
     }
 
-    await this.waitForSubComponentReady(this.sessionStepComponent);
-    this.sessionStepComponent?.setupRepeatTask(this.repeatedTask.session.id.toString());
+    if (this.availableSteps.session) {
+      await this.waitForSubComponentReady(this.sessionStepComponent);
+      this.sessionStepComponent?.setupRepeatTask(this.repeatedTask.session.id.toString());
+    }
 
-    await this.waitForSubComponentReady(this.studyStepComponent);
-    if (this.studyStepComponent) {
-      if (this.repeatedTask.study?.id) {
-        this.studyStepComponent.setupRepeatTask(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
-      } else {
-        this.studyStepComponent.setupRepeatTask(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+    // collect dataframes from the session
+    this.dataframes = await this.sessionService.getDataframes(this.repeatedTask.session.id);
+
+    if (this.shouldShowStudyStep && this.availableSteps.study) {
+      await this.waitForSubComponentReady(this.studyStepComponent);
+      if (this.studyStepComponent) {
+        if (this.repeatedTask.study?.id) {
+          this.studyStepComponent.setupRepeatTask(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+        } else {
+          this.studyStepComponent.setupRepeatTask(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+        }
       }
     }
 
     await this.waitForSubComponentReady(this.functionStepComponent);
     this.functionStepComponent?.setupRepeatTask(this.repeatedTask);
 
-    // set database step
-    if (this.availableSteps.database) {
+    // function step component causes changes in the next steps, so reload child components
+    this.changeDetectorRef.detectChanges();
+
+    if (this.availableSteps.database && this.shouldShowDatabaseStep) {
       await this.waitForSubComponentReady(this.databaseStepComponent);
       this.databaseStepComponent?.setupRepeatTask(this.repeatedTask.databases[0] || null);
     }
-    // // set dataframe step
-    // if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-    //   this.repeatedTask.databases.forEach((db, idx) => {
-    //     (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
-    //   });
-    //   await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
-    // }
-    // // set parameter step
-    // for (const parameter of this.repeatedTask.arguments || []) {
-    //   const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    //   // check if value is an object
-    //   if (!argument) {
-    //     // this should never happen, but fallback is simply try to fill value in
-    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-    //   } else if (argument.type === ArgumentType.Json) {
-    //     this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
-    //   } else if (
-    //     argument.type === ArgumentType.FloatList ||
-    //     argument.type === ArgumentType.IntegerList ||
-    //     argument.type == ArgumentType.StringList
-    //   ) {
-    //     const controls = this.getFormArrayControls(argument);
-    //     let isFirst = true;
-    //     for (const value of parameter.value) {
-    //       if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
-    //       controls[controls.length - 1].setValue(value);
-    //       isFirst = false;
-    //     }
-    //   } else if (argument.type === ArgumentType.Boolean) {
-    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
-    //   } else {
-    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-    //   }
-    // }
+
+    if (this.availableSteps.dataframe && this.shouldShowDataframeStep) {
+      await this.waitForSubComponentReady(this.dataframeStepComponent);
+      this.dataframeStepComponent?.setupRepeatTask(this.repeatedTask.databases);
+    }
+
+    if (this.availableSteps.parameter && this.shouldShowParameterStep) {
+      await this.waitForSubComponentReady(this.parameterStepComponent);
+      this.parameterStepComponent?.setupRepeatTask(this.repeatedTask.arguments || []);
+    }
   }
 
   isFormInvalid(): boolean {

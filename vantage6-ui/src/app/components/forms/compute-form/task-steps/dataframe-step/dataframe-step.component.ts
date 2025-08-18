@@ -14,6 +14,7 @@ import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { SessionService } from 'src/app/services/session.service';
 import { BaseOrganization } from 'src/app/models/api/organization.model';
+import { TaskDBOutput } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-dataframe-step',
@@ -55,6 +56,15 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  public setupRepeatTask(taskDataframes: TaskDBOutput[]): void {
+    if (taskDataframes && taskDataframes.length > 0) {
+      taskDataframes.forEach((db, idx) => {
+        this.formGroup.controls[`dataframeId${idx}`].setValue(db.dataframe_id?.toString() || '');
+        this.handleDataframeChange(`dataframeId${idx}`);
+      });
+    }
+  }
+
   private setupForm() {
     if (!this.function) return;
     this.function?.databases.forEach((database, index) => {
@@ -65,7 +75,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
         .get(controlName)
         ?.valueChanges.pipe(takeUntil(this.destroy$))
         .subscribe((dataframeId: number) => {
-          this.handleDataframeChange(dataframeId, controlName);
+          this.handleDataframeChange(controlName);
         });
     });
   }
@@ -77,7 +87,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
         const controlName = `dataframeId${index}`;
         if (this.formGroup.controls[controlName]) {
           this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((dataframeId: number) => {
-            this.handleDataframeChange(dataframeId, controlName);
+            this.handleDataframeChange(controlName);
           });
         }
       });
@@ -124,7 +134,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
   }
 
-  private handleDataframeChange(dataframeId: number, controlName: string): void {
+  private handleDataframeChange(controlName: string): void {
     // get all selected dataframes
     let selectedDfs: number[] | number = this.formGroup.get(controlName)?.value;
     if (!selectedDfs) return;
@@ -136,8 +146,19 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.emitDataframeChange(this.selectedDataframes);
   }
 
-  compareIDsForSelection(option: number, value: number): boolean {
-    return option === value;
+  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    if (Array.isArray(id2)) {
+      id2 = id2[0];
+    }
+    if (typeof id1 === 'number') {
+      id1 = id1.toString();
+    }
+    if (typeof id2 === 'number') {
+      id2 = id2.toString();
+    }
+    return id1 === id2;
   }
 
   get hasDataframes(): boolean {

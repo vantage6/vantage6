@@ -26,6 +26,7 @@ import { readFile } from 'src/app/helpers/file.helper';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { Dataframe } from 'src/app/models/api/session.models';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
+import { TaskParameter } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-parameter-step',
@@ -74,6 +75,36 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  public setupRepeatTask(taskArguments: TaskParameter[]): void {
+    // set parameter step
+    for (const parameter of taskArguments || []) {
+      const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+      // check if value is an object
+      if (!argument) {
+        // this should never happen, but fallback is simply try to fill value in
+        this.formGroup.get(parameter.label)?.setValue(parameter.value);
+      } else if (argument.type === ArgumentType.Json) {
+        this.formGroup.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
+      } else if (
+        argument.type === ArgumentType.FloatList ||
+        argument.type === ArgumentType.IntegerList ||
+        argument.type == ArgumentType.StringList
+      ) {
+        const controls = this.getFormArrayControls(argument);
+        let isFirst = true;
+        for (const value of parameter.value) {
+          if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
+          controls[controls.length - 1].setValue(value);
+          isFirst = false;
+        }
+      } else if (argument.type === ArgumentType.Boolean) {
+        this.formGroup.get(parameter.label)?.setValue(parameter.value ? true : false);
+      } else {
+        this.formGroup.get(parameter.label)?.setValue(parameter.value);
+      }
+    }
   }
 
   private setupForm(): void {
