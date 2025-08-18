@@ -13,7 +13,7 @@
         <input
           matInput
           placeholder="{{ 'task-create.step-function.description.function-placeholder' | translate }}"
-          (keyup)="$event.stopPropagation(); onSearch()"
+          (keyup)="$event.stopPropagation(); search()"
           formControlName="algorithmFunctionSearch"
           type="text"
         />
@@ -23,7 +23,7 @@
           aria-label="Clear"
           color="primary"
           *ngIf="formGroup.controls['algorithmFunctionSearch'].value"
-          (click)="onClearSearch()"
+          (click)="clearFunctionSearchInput()"
         >
           <mat-icon>close</mat-icon>
         </button>
