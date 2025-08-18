@@ -27,7 +27,7 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
 import { Dataframe } from 'src/app/models/api/session.models';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 import { TaskParameter } from 'src/app/models/api/task.models';
-import { compareIDsForSelection } from '../task-create-helper';
+import { compareIDsForSelection, getDisplayName } from '../task-create-helper';
 
 @Component({
   selector: 'app-parameter-step',
@@ -52,6 +52,7 @@ import { compareIDsForSelection } from '../task-create-helper';
 export class ParameterStepComponent implements OnInit, OnDestroy {
   argumentType = ArgumentType;
   compareIDsForSelection = compareIDsForSelection;
+  getDisplayName = getDisplayName;
 
   @Input() formGroup!: FormGroup;
   @Input() preSelectedDataframes: Dataframe[] = [];
@@ -267,10 +268,6 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
       }
     }
     return arguments_;
-  }
-
-  getDisplayName(obj: AlgorithmFunction | Argument): string {
-    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
   }
 
   getJsonFileName(argument: Argument): string {

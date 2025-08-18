@@ -20,3 +20,13 @@ export function compareIDsForSelection(id1: number | string, id2: number | strin
   }
   return id1 === id2;
 }
+
+/**
+ * Gets the display name for an object, preferring display_name over name.
+ *
+ * @param obj - Object with display_name and name properties
+ * @returns string - The display name or fallback to name
+ */
+export function getDisplayName(obj: { display_name?: string; name: string }): string {
+  return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
+}

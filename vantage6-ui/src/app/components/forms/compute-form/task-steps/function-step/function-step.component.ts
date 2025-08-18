@@ -19,7 +19,7 @@ import { ChangesInCreateTaskService } from '../../../../../services/changes-in-c
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Task } from 'src/app/models/api/task.models';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { compareIDsForSelection } from '../task-create-helper';
+import { compareIDsForSelection, getDisplayName } from '../task-create-helper';
 
 @Component({
   selector: 'app-function-step',
@@ -43,6 +43,7 @@ import { compareIDsForSelection } from '../task-create-helper';
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {
   compareIDsForSelection = compareIDsForSelection;
+  getDisplayName = getDisplayName;
 
   @Input() formGroup!: FormGroup;
   @Input() node: any = null;
@@ -231,10 +232,6 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
     const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
     return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.step_type}</div>`;
-  }
-
-  getDisplayName(obj: AlgorithmFunction | Argument): string {
-    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
   }
 
   getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
