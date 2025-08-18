@@ -17,6 +17,7 @@ import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-session-step',
@@ -33,7 +34,8 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
     NgIf,
     NgFor,
     AlertComponent,
-    AlertWithButtonComponent
+    AlertWithButtonComponent,
+    MatProgressSpinner
   ],
   standalone: true
 })
@@ -42,9 +44,11 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   @Input() allowedTaskTypes?: AlgorithmStepType[];
   @Input() dataframes: any[] = [];
   @Input() hasLoadedDataframes = false;
+  @Input() isLoadingRepeatTask: boolean = false;
 
   sessions: BaseSession[] = [];
   session: BaseSession | null = null;
+  isLoading: boolean = false;
 
   readonly routes = routePaths;
   readonly algorithmStepType = AlgorithmStepType;
@@ -59,7 +63,9 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.isLoading = true;
     await this.loadSessions();
+    this.isLoading = false;
     this.setupFormListeners();
     this.initialized$.next(true);
   }

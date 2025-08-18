@@ -37,7 +37,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgIf, NgTemplateOutlet } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { SessionStepComponent } from './task-steps/session-step/session-step.component';
@@ -72,7 +72,6 @@ import { SessionService } from 'src/app/services/session.service';
     TranslateModule,
     ReactiveFormsModule,
     NgIf,
-    NgTemplateOutlet,
     SessionStepComponent,
     StudyStepComponent,
     FunctionStepComponent,
@@ -127,6 +126,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
   repeatedTask: Task | null = null;
+  isLoadingRepeatTask: boolean = false;
 
   sessionForm = this.fb.nonNullable.group({
     sessionID: ['', Validators.required]
@@ -258,8 +258,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   async setupRepeatTask(taskID: string): Promise<void> {
+    this.isLoadingRepeatTask = true;
     this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
     if (!this.repeatedTask) {
+      this.isLoadingRepeatTask = false;
       return;
     }
 
@@ -305,6 +307,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // reload the subcomponents to ensure everything is up to date
     this.changeDetectorRef.detectChanges();
+    this.isLoadingRepeatTask = false;
   }
 
   isFormInvalid(): boolean {

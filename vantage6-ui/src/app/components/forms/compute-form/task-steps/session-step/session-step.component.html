@@ -1,4 +1,4 @@
-<form class="form" [formGroup]="formGroup">
+<form class="form" [formGroup]="formGroup" *ngIf="!isLoading && !isLoadingRepeatTask; else loading">
   <div *ngIf="hasNoSessions" class="margin-bottom-4">
     <app-alert label="{{ 'task-create.alert-no-sessions-found' | translate }}"> </app-alert>
   </div>
@@ -38,3 +38,7 @@
   >
   </app-alert-with-button>
 </form>
+
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>

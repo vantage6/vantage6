@@ -1,6 +1,6 @@
 <app-page-header [title]="formTitle"></app-page-header>
 <mat-card>
-  <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateAlgorithm">
+  <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateTask">
     <mat-stepper [linear]="true" orientation="vertical" #stepper>
       <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
           We change this to a check mark to show clearly which steps have been filled in -->
@@ -9,7 +9,13 @@
       </ng-template>
       <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
         <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
-        <app-session-step [formGroup]="sessionForm" [allowedTaskTypes]="allowedTaskTypes" [dataframes]="dataframes"> </app-session-step>
+        <app-session-step
+          [formGroup]="sessionForm"
+          [allowedTaskTypes]="allowedTaskTypes"
+          [dataframes]="dataframes"
+          [isLoadingRepeatTask]="isLoadingRepeatTask"
+        >
+        </app-session-step>
         <div>
           <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
         </div>
@@ -37,6 +43,7 @@
           [algorithms]="algorithms"
           [collaboration]="collaboration"
           [allowedTaskTypes]="allowedTaskTypes"
+          [isLoadingRepeatTask]="isLoadingRepeatTask"
         >
         </app-function-step>
         <div>
@@ -86,21 +93,14 @@
     </button>
   </mat-card-content>
 </mat-card>
-<ng-template #loadingColumnsPreprocessing>
-  <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
-</ng-template>
-<ng-template #loadingColumns>
-  <div class="loading-container">
-    <mat-spinner diameter="48"></mat-spinner>
-    <div>{{ "task-create.step-preprocessing.get-columns" | translate }}</div>
+<ng-template #cannotCreateTask>
+  <div *ngIf="isDataInitialized">
+    <app-alert *ngIf="!hasOnlineNode()" class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
+    <app-alert *ngIf="!hasAlgorithmStores()" class="node-alert" label="{{ 'task-create.alert-no-stores' | translate }}"></app-alert>
+    <app-alert
+      *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
+      class="node-alert"
+      label="{{ 'task-create.alert-no-algorithms' | translate }}"
+    ></app-alert>
   </div>
-</ng-template>
-<ng-template #cannotCreateAlgorithm>
-  <app-alert *ngIf="!hasOnlineNode()" class="node-alert" label="{{ 'task-create.alert-no-online-nodes' | translate }}"></app-alert>
-  <app-alert *ngIf="!hasAlgorithmStores()" class="node-alert" label="{{ 'task-create.alert-no-stores' | translate }}"></app-alert>
-  <app-alert
-    *ngIf="hasAlgorithmStores() && !hasAlgorithms()"
-    class="node-alert"
-    label="{{ 'task-create.alert-no-algorithms' | translate }}"
-  ></app-alert>
 </ng-template>

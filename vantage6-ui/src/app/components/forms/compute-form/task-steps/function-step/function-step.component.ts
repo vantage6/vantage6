@@ -18,6 +18,7 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Task } from 'src/app/models/api/task.models';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-function-step',
@@ -34,7 +35,8 @@ import { Task } from 'src/app/models/api/task.models';
     NgIf,
     NgFor,
     AlertComponent,
-    HighlightedTextPipe
+    HighlightedTextPipe,
+    MatProgressSpinner
   ],
   standalone: true
 })
@@ -45,12 +47,14 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() collaboration: Collaboration | null | undefined = null;
   @Input() functions: AlgorithmFunctionExtended[] = [];
   @Input() allowedTaskTypes: AlgorithmStepType[] | undefined = [];
+  @Input() isLoadingRepeatTask: boolean = false;
 
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
 
   sessionRestrictedToSameImage: boolean = false;
   showWarningUniqueDFName: boolean = false;
+  isLoading: boolean = false;
   selectedFunction: AlgorithmFunctionExtended | null = null;
   organizations: BaseOrganization[] = [];
   functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
@@ -93,6 +97,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   }
 
   public async setupRepeatTask(repeatedTask: Task): Promise<void> {
+    this.isLoading = true;
     if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
       // don't set task name for data extraction tasks - it will be used as the name
       // of the created dataframe and that must be unique for the session
@@ -105,12 +110,18 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
 
     // set function and algorithm
     const algorithm = this.getAlgorithmFromImage(repeatedTask.image);
-    if (algorithm === null || algorithm?.algorithm_store_id === undefined) return;
+    if (algorithm === null || algorithm?.algorithm_store_id === undefined) {
+      this.isLoading = false;
+      return;
+    }
     const func =
       this.functionsAllowedForSession.find(
         (_) => _.name === repeatedTask?.method && _.algorithm_id == algorithm?.id && _.algorithm_store_id == algorithm?.algorithm_store_id
       ) || null;
-    if (!func) return;
+    if (!func) {
+      this.isLoading = false;
+      return;
+    }
     const functionSpec = this.getAlgorithmFunctionSpec(func);
     this.formGroup.controls['algorithmFunctionSpec'].setValue(functionSpec);
     await this.handleFunctionChange(functionSpec, algorithm);
@@ -118,11 +129,14 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     // select same organizations
     const organizationIDs = repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
     this.formGroup.controls['organizationIDs'].setValue(organizationIDs);
+
+    this.isLoading = false;
   }
 
   private initData(): void {
     this.functionsFilteredBySearch = this.functions;
     this.functionsAllowedForSession = this.functions;
+    this.isLoading = false;
   }
 
   private setupChangeListeners(): void {

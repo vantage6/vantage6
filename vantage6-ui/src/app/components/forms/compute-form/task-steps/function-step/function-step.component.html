@@ -1,4 +1,4 @@
-<form class="form" [formGroup]="formGroup">
+<form class="form" [formGroup]="formGroup" *ngIf="!isLoading && !isLoadingRepeatTask; else loading">
   <app-alert
     *ngIf="sessionRestrictedToSameImage"
     label="{{ 'task-create.step-function.description.function-restricted-to-same-image' | translate }}"
@@ -108,3 +108,7 @@
     label="{{ 'task.alert-node-offline' | translate: { name: node.name } }}"
   ></app-alert>
 </form>
+
+<ng-template #loading>
+  <mat-spinner diameter="48"></mat-spinner>
+</ng-template>
