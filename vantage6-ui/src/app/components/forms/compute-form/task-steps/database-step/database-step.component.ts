@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseNode, Database } from '../../../../../models/api/node.model';

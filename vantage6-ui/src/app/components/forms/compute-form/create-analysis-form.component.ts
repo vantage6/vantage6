@@ -16,8 +16,8 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { Algorithm, ArgumentType, AlgorithmFunctionExtended } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
-import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
-import { Task, TaskDatabaseType } from 'src/app/models/api/task.models';
+import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
+import { Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
 import { routePaths } from 'src/app/routes';
 import { Router } from '@angular/router';
 import { NodeService } from 'src/app/services/node.service';
@@ -47,6 +47,7 @@ import { DatabaseStepComponent } from './task-steps/database-step/database-step.
 import { DataframeStepComponent } from './task-steps/dataframe-step/dataframe-step.component';
 import { ParameterStepComponent } from './task-steps/parameter-step/parameter-step.component';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { TaskService } from 'src/app/services/task.service';
 
 @Component({
   selector: 'app-create-form',
@@ -91,6 +92,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
 
+  @ViewChild(SessionStepComponent) private sessionStepComponent: SessionStepComponent | null = null;
   @ViewChild(StudyStepComponent) private studyStepComponent: StudyStepComponent | null = null;
 
   availableSteps: AvailableSteps = {
@@ -115,7 +117,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
 
-  isLoading: boolean = true;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
@@ -154,7 +155,8 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     private snackBarService: SnackbarService,
     private translateService: TranslateService,
     private encryptionService: EncryptionService,
-    private changesInCreateTaskService: ChangesInCreateTaskService
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private taskService: TaskService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -179,11 +181,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // setup repeating task if needed
     if (this.isTaskRepeat) {
-      this.isLoading = true;
       const splitted = this.router.url.split('/');
       const taskID = splitted[splitted.length - 1];
+      // Ensure the content is rendered so child components are created
+      this.changeDetectorRef.detectChanges();
+      await new Promise((f) => setTimeout(f, 0));
       await this.setupRepeatTask(taskID);
-      this.isLoading = false;
     }
     this.changeDetectorRef.detectChanges();
   }
@@ -237,88 +240,91 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
+  private async waitForSubComponentReady(subComponent: any): Promise<void> {
+    // Wait until the child component exists and has finished its own initialization
+    while (!subComponent || !subComponent.initialized$.value) {
+      await new Promise((f) => setTimeout(f, 50));
+    }
+  }
+
   async setupRepeatTask(taskID: string): Promise<void> {
-    //   this.isLoadingColumns = true;
-    //   this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
-    //   if (!this.repeatedTask) {
-    //     return;
-    //   }
-    //   this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString(), { emitEvent: false });
-    //   await this.handleSessionChange(this.repeatedTask.session.id.toString());
-    //   // set study step
-    //   if (this.repeatedTask.study?.id) {
-    //     this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString(), { emitEvent: false });
-    //     await this.handleStudyChange(this.repeatedTask.study.id);
-    //   } else {
-    //     this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString(), {
-    //       emitEvent: false
-    //     });
-    //     await this.handleStudyChange(null);
-    //   }
-    //   // set algorithm step
-    //   this.showWarningUniqueDFName = false;
-    //   if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
-    //     // don't set task name for data extraction tasks - it will be used as the name
-    //     // of the created dataframe and that must be unique for the session
-    //     this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
-    //   } else {
-    //     this.showWarningUniqueDFName = true;
-    //   }
-    //   this.functionForm.controls.description.setValue(this.repeatedTask.description);
-    //   this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
-    //   if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
-    //   // set function step
-    //   const func =
-    //     this.functionsAllowedForSession.find(
-    //       (_) =>
-    //         _.name === this.repeatedTask?.method &&
-    //         _.algorithm_id == this.algorithm?.id &&
-    //         _.algorithm_store_id == this.algorithm?.algorithm_store_id
-    //     ) || null;
-    //   if (!func) return;
-    //   this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    //   await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
-    //   if (!this.function) return;
-    //   const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
-    //   this.functionForm.controls.organizationIDs.setValue(organizationIDs);
-    //   // set database step
-    //   if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-    //     this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
-    //   }
-    //   // set dataframe step
-    //   if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-    //     this.repeatedTask.databases.forEach((db, idx) => {
-    //       (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
-    //     });
-    //     await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
-    //   }
-    //   // set parameter step
-    //   for (const parameter of this.repeatedTask.arguments || []) {
-    //     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    //     // check if value is an object
-    //     if (!argument) {
-    //       // this should never happen, but fallback is simply try to fill value in
-    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-    //     } else if (argument.type === ArgumentType.Json) {
-    //       this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
-    //     } else if (
-    //       argument.type === ArgumentType.FloatList ||
-    //       argument.type === ArgumentType.IntegerList ||
-    //       argument.type == ArgumentType.StringList
-    //     ) {
-    //       const controls = this.getFormArrayControls(argument);
-    //       let isFirst = true;
-    //       for (const value of parameter.value) {
-    //         if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
-    //         controls[controls.length - 1].setValue(value);
-    //         isFirst = false;
-    //       }
-    //     } else if (argument.type === ArgumentType.Boolean) {
-    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
-    //     } else {
-    //       this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+    this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
+    if (!this.repeatedTask) {
+      return;
+    }
+    await this.waitForSubComponentReady(this.sessionStepComponent);
+    this.sessionStepComponent?.selectSessionNonInteractively(this.repeatedTask.session.id.toString());
+    if (this.studyStepComponent) {
+      if (this.repeatedTask.study?.id) {
+        this.studyStepComponent.setStudyNonInteractively(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+      } else {
+        this.studyStepComponent.setStudyNonInteractively(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+      }
+    }
+    // // set algorithm step
+    // this.showWarningUniqueDFName = false;
+    // if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
+    //   // don't set task name for data extraction tasks - it will be used as the name
+    //   // of the created dataframe and that must be unique for the session
+    //   this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
+    // } else {
+    //   this.showWarningUniqueDFName = true;
+    // }
+    // this.functionForm.controls.description.setValue(this.repeatedTask.description);
+    // this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
+    // if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
+    // // set function step
+    // const func =
+    //   this.functionsAllowedForSession.find(
+    //     (_) =>
+    //       _.name === this.repeatedTask?.method &&
+    //       _.algorithm_id == this.algorithm?.id &&
+    //       _.algorithm_store_id == this.algorithm?.algorithm_store_id
+    //   ) || null;
+    // if (!func) return;
+    // this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
+    // await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
+    // if (!this.function) return;
+    // const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
+    // this.functionForm.controls.organizationIDs.setValue(organizationIDs);
+    // // set database step
+    // if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+    //   this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
+    // }
+    // // set dataframe step
+    // if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
+    //   this.repeatedTask.databases.forEach((db, idx) => {
+    //     (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
+    //   });
+    //   await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
+    // }
+    // // set parameter step
+    // for (const parameter of this.repeatedTask.arguments || []) {
+    //   const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
+    //   // check if value is an object
+    //   if (!argument) {
+    //     // this should never happen, but fallback is simply try to fill value in
+    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value);
+    //   } else if (argument.type === ArgumentType.Json) {
+    //     this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
+    //   } else if (
+    //     argument.type === ArgumentType.FloatList ||
+    //     argument.type === ArgumentType.IntegerList ||
+    //     argument.type == ArgumentType.StringList
+    //   ) {
+    //     const controls = this.getFormArrayControls(argument);
+    //     let isFirst = true;
+    //     for (const value of parameter.value) {
+    //       if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
+    //       controls[controls.length - 1].setValue(value);
+    //       isFirst = false;
     //     }
+    //   } else if (argument.type === ArgumentType.Boolean) {
+    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
+    //   } else {
+    //     this.parameterForm.get(parameter.label)?.setValue(parameter.value);
     //   }
+    // }
   }
 
   isFormInvalid(): boolean {
@@ -514,13 +520,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
     this.changesInCreateTaskService.emitNodeDatabasesChange(getDatabasesFromNode(this.node));
 
-    // TODO for preprocessing tasks, dataframes are preselected. They should not be
-    // changed, so ensure that in the child component they are not changed (nor cleared
-    // when other form elements are changed)
-    if (this.preSelectedDataframes.length > 0) {
-      // this.setColumns(this.preSelectedDataframes);
-    }
-
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
       .subscribe((nodeStatusUpdate: NodeOnlineStatusMsg | null) => {
@@ -529,7 +528,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     this.isNgInitDone = true;
 
-    if (!this.isTaskRepeat) this.isLoading = false;
     this.isDataInitialized = true;
   }
 

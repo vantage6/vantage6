@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseStudy, StudyOrCollab } from '../../../../../models/api/study.model';
 import { Collaboration } from '../../../../../models/api/collaboration.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,6 +28,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
   readonly studyOrCollab = StudyOrCollab;
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private changesInCreateTaskService: ChangesInCreateTaskService,
@@ -51,6 +52,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     this.formGroup.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
 
     this.updateFormValidation();
+    this.initialized$.next(true);
   }
 
   private setupFormListeners(): void {
@@ -63,6 +65,10 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {
       this.onSessionChange(session);
     });
+  }
+
+  public setStudyNonInteractively(studyOrCollabId: string): void {
+    this.formGroup.controls['studyOrCollabID'].setValue(studyOrCollabId);
   }
 
   onSessionChange(session: BaseSession | null): void {

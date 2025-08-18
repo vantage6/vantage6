@@ -1,99 +1,90 @@
 <app-page-header [title]="formTitle"></app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
-  <mat-card>
-    <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateAlgorithm">
-      <mat-stepper [linear]="true" orientation="vertical" #stepper>
-        <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
+<mat-card>
+  <mat-card-content *ngIf="isDataInitialized && hasOnlineNode() && hasAlgorithmStores() && hasAlgorithms(); else cannotCreateAlgorithm">
+    <mat-stepper [linear]="true" orientation="vertical" #stepper>
+      <!-- by default, completed steps get an 'edit' icon to indicate they are completed but still editable.
           We change this to a check mark to show clearly which steps have been filled in -->
-        <ng-template matStepperIcon="edit">
-          <mat-icon>check</mat-icon>
-        </ng-template>
-        <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
-          <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
-          <app-session-step [formGroup]="sessionForm" [allowedTaskTypes]="allowedTaskTypes" [dataframes]="dataframes"> </app-session-step>
-          <div>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-          </div>
-        </mat-step>
-        <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [stepControl]="studyForm">
-          <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
-          <app-study-step
-            [formGroup]="studyForm"
-            [collaboration]="collaboration!"
-            [shouldShowStudyStep]="shouldShowStudyStep"
-          ></app-study-step>
-          <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
+      <ng-template matStepperIcon="edit">
+        <mat-icon>check</mat-icon>
+      </ng-template>
+      <mat-step [stepControl]="sessionForm" *ngIf="availableSteps.session">
+        <ng-template matStepLabel>{{ "task-create.step-session" | translate }}</ng-template>
+        <app-session-step [formGroup]="sessionForm" [allowedTaskTypes]="allowedTaskTypes" [dataframes]="dataframes"> </app-session-step>
+        <div>
+          <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+        </div>
+      </mat-step>
+      <mat-step *ngIf="shouldShowStudyStep && availableSteps.study" [stepControl]="studyForm">
+        <ng-template matStepLabel>{{ "task-create.step-study.title" | translate }}</ng-template>
+        <app-study-step
+          [formGroup]="studyForm"
+          [collaboration]="collaboration!"
+          [shouldShowStudyStep]="shouldShowStudyStep"
+        ></app-study-step>
+        <!-- TODO only show back buttons if there actually IS a step before it (which depends on the type of action)
                 Also check other steps -->
-          <div>
-            <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Study)">{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
-          </div>
-        </mat-step>
-        <mat-step [stepControl]="functionForm" *ngIf="availableSteps.function">
-          <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
-          <app-function-step
-            [formGroup]="functionForm"
-            [functions]="functions"
-            [node]="node"
-            [algorithms]="algorithms"
-            [collaboration]="collaboration"
-          >
-          </app-function-step>
-          <div>
-            <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
-              {{ "general.back" | translate }}
-            </button>
-            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
-              {{ "general.next" | translate }}
-            </button>
-          </div>
-        </mat-step>
-        <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
-          <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
-          <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
-          <app-database-step [formGroup]="databaseForm" [node]="node"> </app-database-step>
-          <div>
-            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
-              {{ "general.next" | translate }}
-            </button>
-          </div>
-        </mat-step>
-        <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
-          <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
-          <app-dataframe-step [formGroup]="dataframeForm" [dataframes]="dataframes"> </app-dataframe-step>
-          <div>
-            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-            <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
-              {{ "general.next" | translate }}
-            </button>
-          </div>
-        </mat-step>
-        <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
-          <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
-          <app-parameter-step [formGroup]="parameterForm" [preSelectedDataframes]="preSelectedDataframes"> </app-parameter-step>
-          <div>
-            <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
-          </div>
-        </mat-step>
-      </mat-stepper>
-      <button mat-flat-button color="primary" [disabled]="isFormInvalid() || isSubmitting" (click)="handleSubmit()">
-        <mat-spinner *ngIf="isSubmitting" diameter="20" class="button-spinner"></mat-spinner>
-        <span *ngIf="!isSubmitting">{{ "general.submit" | translate }}</span>
-      </button>
-      <button mat-flat-button color="secondary" (click)="handleCancel()">
-        {{ "general.cancel" | translate }}
-      </button>
-    </mat-card-content>
-  </mat-card>
-</ng-container>
-<ng-template #loading>
-  <mat-card>
-    <mat-card-content>
-      <mat-spinner diameter="48"></mat-spinner>
-    </mat-card-content>
-  </mat-card>
-</ng-template>
+        <div>
+          <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Study)">{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext>{{ "general.next" | translate }}</button>
+        </div>
+      </mat-step>
+      <mat-step [stepControl]="functionForm" *ngIf="availableSteps.function">
+        <ng-template matStepLabel>{{ "task-create.step-function.title" | translate }}</ng-template>
+        <app-function-step
+          [formGroup]="functionForm"
+          [functions]="functions"
+          [node]="node"
+          [algorithms]="algorithms"
+          [collaboration]="collaboration"
+        >
+        </app-function-step>
+        <div>
+          <button mat-button matStepperPrevious *ngIf="!isFirstStep(availableStepsEnum.Function)">
+            {{ "general.back" | translate }}
+          </button>
+          <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Function)">
+            {{ "general.next" | translate }}
+          </button>
+        </div>
+      </mat-step>
+      <mat-step [stepControl]="databaseForm" *ngIf="shouldShowDatabaseStep && availableSteps.database">
+        <ng-template matStepLabel>{{ "task-create.step-database.title" | translate }}</ng-template>
+        <div class="field-description">{{ "task-create.step-database.description.database" | translate }}</div>
+        <app-database-step [formGroup]="databaseForm" [node]="node"> </app-database-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Database)">
+            {{ "general.next" | translate }}
+          </button>
+        </div>
+      </mat-step>
+      <mat-step [stepControl]="dataframeForm" *ngIf="shouldShowDataframeStep && availableSteps.dataframe">
+        <ng-template matStepLabel>{{ "task-create.step-dataframe.title" | translate }}</ng-template>
+        <app-dataframe-step [formGroup]="dataframeForm" [dataframes]="dataframes"> </app-dataframe-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+          <button mat-button matStepperNext *ngIf="!isLastStep(availableStepsEnum.Dataframe)">
+            {{ "general.next" | translate }}
+          </button>
+        </div>
+      </mat-step>
+      <mat-step *ngIf="shouldShowParameterStep && availableSteps.parameter" [stepControl]="parameterForm">
+        <ng-template matStepLabel>{{ "task-create.step-parameters.title" | translate }}</ng-template>
+        <app-parameter-step [formGroup]="parameterForm" [preSelectedDataframes]="preSelectedDataframes"> </app-parameter-step>
+        <div>
+          <button mat-button matStepperPrevious>{{ "general.back" | translate }}</button>
+        </div>
+      </mat-step>
+    </mat-stepper>
+    <button mat-flat-button color="primary" [disabled]="isFormInvalid() || isSubmitting" (click)="handleSubmit()">
+      <mat-spinner *ngIf="isSubmitting" diameter="20" class="button-spinner"></mat-spinner>
+      <span *ngIf="!isSubmitting">{{ "general.submit" | translate }}</span>
+    </button>
+    <button mat-flat-button color="secondary" (click)="handleCancel()">
+      {{ "general.cancel" | translate }}
+    </button>
+  </mat-card-content>
+</mat-card>
 <ng-template #loadingColumnsPreprocessing>
   <ng-template [ngTemplateOutlet]="loadingColumns"></ng-template>
 </ng-template>

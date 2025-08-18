@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormArray, FormBuilder, AbstractControl, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -22,10 +22,9 @@ import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { NumberOnlyDirective } from '../../../../../directives/numberOnly.directive';
 import { floatRegex, integerRegex } from '../../../../../helpers/regex.helper';
 import { isTruthy } from '../../../../../helpers/utils.helper';
-import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { readFile } from 'src/app/helpers/file.helper';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
-import { BaseSession, Dataframe } from 'src/app/models/api/session.models';
+import { Dataframe } from 'src/app/models/api/session.models';
 import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
 
 @Component({
@@ -43,7 +42,6 @@ import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/
     MatIconModule,
     NgIf,
     NgFor,
-    MatProgressSpinner,
     AlertComponent,
     NumberOnlyDirective
   ],

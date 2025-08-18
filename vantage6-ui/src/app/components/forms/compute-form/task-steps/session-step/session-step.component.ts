@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseSession } from '../../../../../models/api/session.models';
 import { SessionService } from '../../../../../services/session.service';
 import { ChosenCollaborationService } from '../../../../../services/chosen-collaboration.service';
@@ -50,6 +50,7 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   readonly algorithmStepType = AlgorithmStepType;
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private sessionService: SessionService,
@@ -57,9 +58,10 @@ export class SessionStepComponent implements OnInit, OnDestroy {
     private changesInCreateTaskService: ChangesInCreateTaskService
   ) {}
 
-  ngOnInit(): void {
-    this.loadSessions();
+  async ngOnInit(): Promise<void> {
+    await this.loadSessions();
     this.setupFormListeners();
+    this.initialized$.next(true);
   }
 
   ngOnDestroy(): void {
@@ -78,6 +80,10 @@ export class SessionStepComponent implements OnInit, OnDestroy {
     this.formGroup.controls['sessionID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (sessionId: string) => {
       await this.onSessionSelected(sessionId);
     });
+  }
+
+  public selectSessionNonInteractively(sessionId: string): void {
+    this.formGroup.controls['sessionID'].setValue(sessionId);
   }
 
   async onSessionSelected(sessionId: string): Promise<void> {
