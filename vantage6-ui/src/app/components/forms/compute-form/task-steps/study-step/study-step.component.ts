@@ -67,7 +67,7 @@ export class StudyStepComponent implements OnInit, OnDestroy {
     });
   }
 
-  public setStudyNonInteractively(studyOrCollabId: string): void {
+  public setupRepeatTask(studyOrCollabId: string): void {
     this.formGroup.controls['studyOrCollabID'].setValue(studyOrCollabId);
   }
 

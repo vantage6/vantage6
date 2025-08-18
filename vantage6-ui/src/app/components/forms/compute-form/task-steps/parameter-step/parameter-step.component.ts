@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormArray, FormBuilder, AbstractControl, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import {
   Argument,
   ArgumentType,
@@ -59,6 +59,7 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   dataFrameColumns: string[] = [];
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private fb: FormBuilder,
@@ -81,6 +82,7 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
     if (this.preSelectedDataframes.length > 0) {
       this.setColumns(this.preSelectedDataframes);
     }
+    this.initialized$.next(true);
   }
 
   private setupChangeListeners(): void {

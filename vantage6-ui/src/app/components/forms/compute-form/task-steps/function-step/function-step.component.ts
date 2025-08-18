@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { AlgorithmFunction, AlgorithmFunctionExtended, Argument, Algorithm } from '../../../../../models/api/algorithm.model';
 import { BaseOrganization } from '../../../../../models/api/organization.model';
 import { AlgorithmStepType, BaseSession } from '../../../../../models/api/session.models';
@@ -17,6 +17,7 @@ import { HighlightedTextPipe } from '../../../../../pipes/highlighted-text.pipe'
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { Task } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-function-step',
@@ -43,6 +44,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   @Input() algorithms: Algorithm[] = [];
   @Input() collaboration: Collaboration | null | undefined = null;
   @Input() functions: AlgorithmFunctionExtended[] = [];
+  @Input() allowedTaskTypes: AlgorithmStepType[] | undefined = [];
 
   @Output() searchRequested = new EventEmitter<void>();
   @Output() searchCleared = new EventEmitter<void>();
@@ -57,6 +59,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   readonly algorithmStepType = AlgorithmStepType;
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private changesInCreateTaskService: ChangesInCreateTaskService,
@@ -67,6 +70,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     this.setupFormListeners();
     this.setupChangeListeners();
     this.initData();
+    this.initialized$.next(true);
   }
 
   ngOnDestroy(): void {
@@ -80,9 +84,40 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
       .subscribe((algorithmFunctionSpec: string) => {
         this.handleFunctionChange(algorithmFunctionSpec);
       });
-    this.formGroup.controls['organizationIDs'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((organizationIDs: string[]) => {
-      this.changesInCreateTaskService.emitSelectedOrganizationIDsChange(organizationIDs);
-    });
+    this.formGroup.controls['organizationIDs'].valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((organizationIDs: string[] | string) => {
+        const ids = Array.isArray(organizationIDs) ? organizationIDs : organizationIDs ? [organizationIDs] : [];
+        this.changesInCreateTaskService.emitSelectedOrganizationIDsChange(ids);
+      });
+  }
+
+  public async setupRepeatTask(repeatedTask: Task): Promise<void> {
+    if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
+      // don't set task name for data extraction tasks - it will be used as the name
+      // of the created dataframe and that must be unique for the session
+      this.formGroup.controls['taskName'].setValue(repeatedTask.name);
+    } else {
+      this.showWarningUniqueDFName = true;
+    }
+
+    this.formGroup.controls['description'].setValue(repeatedTask.description);
+
+    // set function and algorithm
+    const algorithm = this.getAlgorithmFromImage(repeatedTask.image);
+    if (algorithm === null || algorithm?.algorithm_store_id === undefined) return;
+    const func =
+      this.functionsAllowedForSession.find(
+        (_) => _.name === repeatedTask?.method && _.algorithm_id == algorithm?.id && _.algorithm_store_id == algorithm?.algorithm_store_id
+      ) || null;
+    if (!func) return;
+    const functionSpec = this.getAlgorithmFunctionSpec(func);
+    this.formGroup.controls['algorithmFunctionSpec'].setValue(functionSpec);
+    await this.handleFunctionChange(functionSpec, algorithm);
+
+    // select same organizations
+    const organizationIDs = repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
+    this.formGroup.controls['organizationIDs'].setValue(organizationIDs);
   }
 
   private initData(): void {
@@ -102,7 +137,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleFunctionChange(algorithmFunctionSpec: string): void {
+  private async handleFunctionChange(algorithmFunctionSpec: string, algorithm: Algorithm | undefined = undefined): Promise<void> {
     const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
     // emit the function change
     this.selectedFunction =
@@ -111,14 +146,16 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
       ) || null;
     if (!this.selectedFunction) return;
     this.changesInCreateTaskService.emitFunctionChange(this.selectedFunction);
-    const algorithm = this.algorithms.find((_) => _.id === Number(algorithmID) && _.algorithm_store_id == Number(algorithmStoreID));
+    if (!algorithm) {
+      algorithm = this.algorithms.find((_) => _.id === Number(algorithmID) && _.algorithm_store_id == Number(algorithmStoreID));
+    }
     if (algorithm) {
       this.changesInCreateTaskService.emitfunctionAlgorithmChange(algorithm);
     }
 
     // clear the selected organizations - if e.g. first a federated function is selected,
     // then a central compute function, the organizations are not valid anymore
-    this.clearOrganizations();
+    await this.clearOrganizations();
 
     // If it's a federated step, select all organizations
     if (this.isFederatedStep(this.selectedFunction.step_type)) {
@@ -153,7 +190,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     }
   }
 
-  private clearOrganizations(): void {
+  private async clearOrganizations(): Promise<void> {
     this.formGroup.controls['organizationIDs'].reset();
   }
 
@@ -187,8 +224,19 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
     return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
   }
 
-  compareIDsForSelection(option: string, value: string): boolean {
-    return option === value;
+  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
+    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
+    // organization object from the collaboration
+    if (Array.isArray(id2)) {
+      id2 = id2[0];
+    }
+    if (typeof id1 === 'number') {
+      id1 = id1.toString();
+    }
+    if (typeof id2 === 'number') {
+      id2 = id2.toString();
+    }
+    return id1 === id2;
   }
 
   getAlgorithmStoreName(algorithm: Algorithm): string {

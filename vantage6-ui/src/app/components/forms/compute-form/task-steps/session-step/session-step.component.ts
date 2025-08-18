@@ -82,7 +82,7 @@ export class SessionStepComponent implements OnInit, OnDestroy {
     });
   }
 
-  public selectSessionNonInteractively(sessionId: string): void {
+  public setupRepeatTask(sessionId: string): void {
     this.formGroup.controls['sessionID'].setValue(sessionId);
   }
 

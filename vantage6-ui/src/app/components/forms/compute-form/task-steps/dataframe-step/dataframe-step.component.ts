@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { Dataframe } from '../../../../../models/api/session.models';
 import { AlgorithmFunctionExtended, FunctionDatabase } from '../../../../../models/api/algorithm.model';
 import { BaseSession } from '../../../../../models/api/session.models';
@@ -37,6 +37,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   readonly routes = routePaths;
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private changesInCreateTaskService: ChangesInCreateTaskService,
@@ -46,6 +47,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setupFormListeners();
     this.setupChangeListeners();
+    this.initialized$.next(true);
   }
 
   ngOnDestroy(): void {
@@ -90,7 +92,11 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
       this.handleFunctionChange(function_);
     });
     this.changesInCreateTaskService.selectedOrganizationIDsChange$.pipe(takeUntil(this.destroy$)).subscribe((organizationIDs) => {
-      this.selectedOrganizationIDs = organizationIDs;
+      this.selectedOrganizationIDs = Array.isArray(organizationIDs)
+        ? organizationIDs
+        : organizationIDs
+          ? [organizationIDs as unknown as string]
+          : [];
     });
     this.changesInCreateTaskService.organizationChange$.pipe(takeUntil(this.destroy$)).subscribe((organizations) => {
       this.organizations = organizations;

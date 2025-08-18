@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseNode, Database } from '../../../../../models/api/node.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from 'src/app/components/alerts/alert/alert.component';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { TaskDBOutput } from 'src/app/models/api/task.models';
 
 @Component({
   selector: 'app-database-step',
@@ -22,6 +23,7 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
   @Input() node: BaseNode | null = null;
 
   private destroy$ = new Subject<void>();
+  public readonly initialized$ = new BehaviorSubject<boolean>(false);
 
   availableDatabases: Database[] = [];
 
@@ -29,6 +31,7 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupFormListeners();
+    this.initialized$.next(true);
   }
 
   ngOnDestroy(): void {
@@ -40,6 +43,10 @@ export class DatabaseStepComponent implements OnInit, OnDestroy {
     this.changesInCreateTaskService.nodeDatabasesChange$.pipe(takeUntil(this.destroy$)).subscribe((databases) => {
       this.availableDatabases = databases;
     });
+  }
+
+  public setupRepeatTask(taskDatabase: TaskDBOutput | null): void {
+    this.formGroup.controls['database'].setValue(taskDatabase?.label || '');
   }
 
   get hasDatabases(): boolean {

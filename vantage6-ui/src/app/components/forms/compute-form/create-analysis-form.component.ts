@@ -94,6 +94,10 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   @ViewChild(SessionStepComponent) private sessionStepComponent: SessionStepComponent | null = null;
   @ViewChild(StudyStepComponent) private studyStepComponent: StudyStepComponent | null = null;
+  @ViewChild(FunctionStepComponent) private functionStepComponent: FunctionStepComponent | null = null;
+  @ViewChild(DatabaseStepComponent) private databaseStepComponent: DatabaseStepComponent | null = null;
+  @ViewChild(DataframeStepComponent) private dataframeStepComponent: DataframeStepComponent | null = null;
+  @ViewChild(ParameterStepComponent) private parameterStepComponent: ParameterStepComponent | null = null;
 
   availableSteps: AvailableSteps = {
     session: false,
@@ -252,45 +256,27 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (!this.repeatedTask) {
       return;
     }
+
     await this.waitForSubComponentReady(this.sessionStepComponent);
-    this.sessionStepComponent?.selectSessionNonInteractively(this.repeatedTask.session.id.toString());
+    this.sessionStepComponent?.setupRepeatTask(this.repeatedTask.session.id.toString());
+
+    await this.waitForSubComponentReady(this.studyStepComponent);
     if (this.studyStepComponent) {
       if (this.repeatedTask.study?.id) {
-        this.studyStepComponent.setStudyNonInteractively(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+        this.studyStepComponent.setupRepeatTask(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
       } else {
-        this.studyStepComponent.setStudyNonInteractively(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
+        this.studyStepComponent.setupRepeatTask(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
       }
     }
-    // // set algorithm step
-    // this.showWarningUniqueDFName = false;
-    // if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
-    //   // don't set task name for data extraction tasks - it will be used as the name
-    //   // of the created dataframe and that must be unique for the session
-    //   this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
-    // } else {
-    //   this.showWarningUniqueDFName = true;
-    // }
-    // this.functionForm.controls.description.setValue(this.repeatedTask.description);
-    // this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
-    // if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
-    // // set function step
-    // const func =
-    //   this.functionsAllowedForSession.find(
-    //     (_) =>
-    //       _.name === this.repeatedTask?.method &&
-    //       _.algorithm_id == this.algorithm?.id &&
-    //       _.algorithm_store_id == this.algorithm?.algorithm_store_id
-    //   ) || null;
-    // if (!func) return;
-    // this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    // await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
-    // if (!this.function) return;
-    // const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
-    // this.functionForm.controls.organizationIDs.setValue(organizationIDs);
-    // // set database step
-    // if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-    //   this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
-    // }
+
+    await this.waitForSubComponentReady(this.functionStepComponent);
+    this.functionStepComponent?.setupRepeatTask(this.repeatedTask);
+
+    // set database step
+    if (this.availableSteps.database) {
+      await this.waitForSubComponentReady(this.databaseStepComponent);
+      this.databaseStepComponent?.setupRepeatTask(this.repeatedTask.databases[0] || null);
+    }
     // // set dataframe step
     // if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
     //   this.repeatedTask.databases.forEach((db, idx) => {
