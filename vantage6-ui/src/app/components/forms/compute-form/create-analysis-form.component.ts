@@ -191,7 +191,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       const taskID = splitted[splitted.length - 1];
       // Ensure the content is rendered so child components are created
       this.changeDetectorRef.detectChanges();
-      await new Promise((f) => setTimeout(f, 0));
       await this.setupRepeatTask(taskID);
     }
     this.changeDetectorRef.detectChanges();
@@ -303,6 +302,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       await this.waitForSubComponentReady(this.parameterStepComponent);
       this.parameterStepComponent?.setupRepeatTask(this.repeatedTask.arguments || []);
     }
+
+    // reload the subcomponents to ensure everything is up to date
+    this.changeDetectorRef.detectChanges();
   }
 
   isFormInvalid(): boolean {
@@ -380,7 +382,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       description: this.functionForm.controls.description.value,
       image: image,
       method: this.function.name,
-      session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
+      session_id: this.sessionId ? Number(this.sessionId) : -1,
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,

@@ -84,6 +84,7 @@ export class SessionStepComponent implements OnInit, OnDestroy {
 
   public setupRepeatTask(sessionId: string): void {
     this.formGroup.controls['sessionID'].setValue(sessionId);
+    this.onSessionSelected(sessionId);
   }
 
   async onSessionSelected(sessionId: string): Promise<void> {
