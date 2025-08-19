@@ -311,9 +311,7 @@ class AlgorithmClient(ClientBase):
             )
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            for run in results:
-                run["result"] = decode_result(run)
-            return results
+            return [decode_result(run) for run in results if run.get("result")]
 
     class Task(ClientBase.SubClient):
         """
