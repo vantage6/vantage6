@@ -1,10 +1,10 @@
 import codecs
 import os
-
-from os import path
 from codecs import open
-from setuptools import setup, find_namespace_packages
+from os import path
 from pathlib import Path
+
+from setuptools import find_namespace_packages, setup
 
 # get current directory
 here = Path(path.abspath(path.dirname(__file__)))
@@ -35,7 +35,7 @@ setup(
     install_requires=[
         "click==8.1.3",
         "colorama==0.4.6",
-        "copier==9.2.0",
+        "copier==9.9.1",
         "docker==7.1.0",
         "ipython==8.10.0",
         "jinja2==3.1.6",
@@ -44,8 +44,8 @@ setup(
         "rich==13.5.2",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        f'vantage6-common == {version_ns["__version__"]}',
-        f'vantage6-client == {version_ns["__version__"]}',
+        f"vantage6-common == {version_ns['__version__']}",
+        f"vantage6-client == {version_ns['__version__']}",
     ],
     extras_require={
         "dev": [
