@@ -14,8 +14,8 @@ import { getApiSearchParameters } from 'src/app/helpers/api.helper';
 import { getChipTypeForStatus, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { PaginationLinks } from 'src/app/models/api/pagination.model';
 import { OperationType, ResourceType } from 'src/app/models/api/rule.model';
-import { Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
-import { BaseTask, GetTaskParameters, TaskStatus } from 'src/app/models/api/task.models';
+import { AlgorithmStepType, Dataframe, DataframeColumnTableDisplay } from 'src/app/models/api/session.models';
+import { BaseTask, GetTaskParameters, TaskSortProperties, TaskStatus } from 'src/app/models/api/task.models';
 import { TableData } from 'src/app/models/application/table.model';
 import { routePaths } from 'src/app/routes';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
@@ -196,7 +196,15 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   }
 
   dataframeNotReadyDespiteExtraction(): boolean {
-    return this.dataframeTasks.length > 0 && !this.dataframe?.ready && this.dataframeTasks[0].status === TaskStatus.Failed;
+    return (
+      this.dataframeTasks.length > 0 &&
+      !this.dataframe?.ready &&
+      this.dataframeTasks.some((task) => task.status === TaskStatus.Failed && task.action === AlgorithmStepType.DataExtraction)
+    );
+  }
+
+  lastSessionTaskFailed(): boolean {
+    return this.dataframe?.last_session_task?.status === TaskStatus.Failed;
   }
 
   private setDataframeColumnsTablePage() {
@@ -259,7 +267,8 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
   private async getDataframeTasks(): Promise<void> {
     this.isLoading = true;
     const dataframeTasks = await this.taskService.getPaginatedTasks(this.currentPageTaskTable, {
-      dataframe_id: this.dataframe?.id
+      dataframe_id: this.dataframe?.id,
+      sort: TaskSortProperties.IDDesc
     });
     this.dataframeTasks = dataframeTasks.data;
     this.paginationTaskTable = dataframeTasks.links;
@@ -268,6 +277,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
       columns: [
         { id: 'id', label: this.translateService.instant('general.id') },
         { id: 'name', label: this.translateService.instant('general.name'), searchEnabled: true },
+        { id: 'task_type', label: this.translateService.instant('task.task-type') },
         {
           id: 'status',
           label: this.translateService.instant('task.status'),
@@ -284,6 +294,7 @@ export class DataframeReadComponent implements OnInit, OnDestroy {
             name: task.name,
             status: getTaskStatusTranslation(this.translateService, task.status),
             statusType: getChipTypeForStatus(task.status),
+            task_type: this.translateService.instant(`task.action.${task.action}`),
             created_date: this.datePipe.transform(task.created_at, 'yyyy-MM-dd HH:mm')
           }
         };

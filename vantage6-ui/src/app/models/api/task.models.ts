@@ -12,6 +12,7 @@ export enum TaskLazyProperties {
 
 export enum TaskSortProperties {
   ID = 'id',
+  IDDesc = '-id',
   Name = 'name'
 }
 

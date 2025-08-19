@@ -85,7 +85,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     this.setPermissions();
 
-    await this.initData(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
+    await this.initData(this.currentPage, { sort: TaskSortProperties.IDDesc, is_user_created: 1 });
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
@@ -100,7 +100,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
+    const parameters: GetTaskParameters = { sort: TaskSortProperties.IDDesc, is_user_created: 1 };
     if (this.currentSearchInput?.length) {
       parameters.name = this.currentSearchInput;
     }

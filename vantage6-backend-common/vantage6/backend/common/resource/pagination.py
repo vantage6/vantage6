@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import math
 import logging
+import math
 from urllib.parse import urlencode
+
 import flask
-from flask import g
 import sqlalchemy
-from sqlalchemy import func, desc, select
+from flask import g
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm.decl_api import DeclarativeMeta
 from sqlalchemy.sql.selectable import Select
 
 from vantage6.common import logger_name
-from vantage6.backend.common.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 
+from vantage6.backend.common.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

@@ -44,6 +44,11 @@
     class="node-alert"
     label="{{ 'dataframe-read.not-ready-despite-extraction' | translate }}"
   ></app-alert>
+  <app-alert
+    *ngIf="lastSessionTaskFailed()"
+    class="node-alert"
+    label="{{ 'dataframe-read.last-session-task-failed' | translate }}"
+  ></app-alert>
   <mat-card *ngIf="!isLoading && dataframe?.ready">
     <mat-card-header>
       <mat-card-title>{{ "dataframe-read.columns.title" | translate }}</mat-card-title>
