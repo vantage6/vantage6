@@ -72,14 +72,14 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
 
   private setupForm() {
     if (!this.function) return;
-    this.function?.databases.forEach((database, index) => {
+    this.function?.databases.forEach((_, index) => {
       const controlName = `dataframeId${index}`;
       this.formGroup.addControl(controlName, new FormControl(null, [Validators.required]));
       // track changes in the dataframe form controls
       this.formGroup
         .get(controlName)
         ?.valueChanges.pipe(takeUntil(this.destroy$))
-        .subscribe((dataframeId: number) => {
+        .subscribe((_: number) => {
           this.handleDataframeChange(controlName);
         });
     });
@@ -88,10 +88,10 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
   private setupFormListeners(): void {
     // Listen to changes in all dataframe form controls
     if (this.function?.databases) {
-      this.function.databases.forEach((database: FunctionDatabase, index: number) => {
+      this.function.databases.forEach((_: FunctionDatabase, index: number) => {
         const controlName = `dataframeId${index}`;
         if (this.formGroup.controls[controlName]) {
-          this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((dataframeId: number) => {
+          this.formGroup.controls[controlName].valueChanges.pipe(takeUntil(this.destroy$)).subscribe((_: number) => {
             this.handleDataframeChange(controlName);
           });
         }
