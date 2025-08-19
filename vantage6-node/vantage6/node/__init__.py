@@ -757,35 +757,29 @@ class Node:
             List of dictionaries with information on killed task (keys:
             run_id, task_id and parent_id)
         """
-        # if kill_info["collaboration_id"] != self.client.collaboration_id:
-        #     self.log.debug(
-        #         "Not killing tasks as this node is in another collaboration."
-        #     )
-        #     return []
-        # elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
-        #     self.log.debug(
-        #         "Not killing tasks as instructions to kill tasks were directed"
-        #         " at another node in this collaboration."
-        #     )
-        #     return []
+        if kill_info["collaboration_id"] != self.client.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return []
+        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration."
+            )
+            return []
 
-        # # kill specific task if specified, else kill all algorithms
-        # kill_list = kill_info.get("kill_list")
-        # killed_algos = self.__docker.kill_tasks(
-        #     org_id=self.client.whoami.organization_id, kill_list=kill_list
-        # )
-        # # update status of killed tasks
-        # for killed_algo in killed_algos:
-        #     self.client.run.patch(
-        #         id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
-        #     )
-        # return killed_algos
-        # TODO (HC) Implement using k8s container manager
-        print(
-            ">>>>>>>Here I'm supposed to kill a runnin job pod given this info: "
-            f"{json.dumps(kill_info, indent=4)}"
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get("kill_list")
+        killed_algos = self.k8s_container_manager.kill_tasks(
+            org_id=self.client.whoami.organization_id, kill_list=kill_list
         )
-        return []
+        # update status of killed tasks
+        for killed_algo in killed_algos:
+            self.client.run.patch(
+                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
+            )
+        return killed_algos
 
     def share_node_details(self) -> None:
         """

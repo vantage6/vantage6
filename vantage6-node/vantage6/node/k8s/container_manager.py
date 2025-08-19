@@ -1507,16 +1507,16 @@ class ContainerManager:
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-    # def cleanup_tasks(self) -> list[KilledRun]:
-    #     """
-    #     Stop all active tasks
+    def cleanup_tasks(self) -> list[KilledRun]:
+        """
+        Stop all active tasks
 
-    #     Returns
-    #     -------
-    #     list[KilledRun]:
-    #         List of information on tasks that have been killed
-    #     """
-    #     pass
+        Returns
+        -------
+        list[KilledRun]:
+            List of information on tasks that have been killed
+        """
+        pass
 
     # def cleanup(self) -> None:
     #     """
@@ -1554,11 +1554,6 @@ class ContainerManager:
     #     """
     #     pass
 
-    # def kill_selected_tasks(
-    #    self, org_id: int, kill_list: list[ToBeKilled] = None
-    # ) -> list[KilledRun]:
-    #   pass
-
     def kill_tasks(
         self, org_id: int, kill_list: list[ToBeKilled] = None
     ) -> list[KilledRun]:
@@ -1583,70 +1578,91 @@ class ContainerManager:
             killed_runs = self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
         else:
             # received instruction to kill all tasks on this node
-            self.log.warn(
+            self.log.warning(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now..."
             )
             killed_runs = self.cleanup_tasks()
             if len(killed_runs):
-                self.log.warn(
-                    "Killed the following run ids as instructed via socket:"
-                    f" {', '.join([str(r.run_id) for r in killed_runs])}"
+                self.log.warning(
+                    "Killed the following run ids as instructed via socket: %s",
+                    ", ".join([str(r.run_id) for r in killed_runs]),
                 )
             else:
-                self.log.warn("Instructed to kill tasks but none were running")
+                self.log.warning("Instructed to kill tasks but none were running")
         return killed_runs
 
-    # def kill_selected_tasks(
-    #     self, org_id: int, kill_list: list[ToBeKilled] = None
-    # ) -> list[KilledRun]:
-    #     """
-    #     Kill tasks specified by a kill list, if they are currently running on
-    #     this node
+    def kill_selected_tasks(
+        self, org_id: int, kill_list: list[ToBeKilled] = None
+    ) -> list[KilledRun]:
+        """
+        Kill tasks specified by a kill list, if they are currently running on
+        this node
 
-    #     Parameters
-    #     ----------
-    #     org_id: int
-    #         The organization id of this node
-    #     kill_list: list[ToBeKilled]
-    #         A list of info about tasks that should be killed.
+        Parameters
+        ----------
+        org_id: int
+            The organization id of this node
+        kill_list: list[ToBeKilled]
+            A list of info about tasks that should be killed.
 
-    #     Returns
-    #     -------
-    #     list[KilledRun]
-    #         List with information on killed tasks
-    #     """
-    #     killed_list = []
-    #     for container_to_kill in kill_list:
-    #         if container_to_kill["organization_id"] != org_id:
-    #             continue  # this run is on another node
-    #         # find the task
-    #         task = next(
-    #             (
-    #                 t
-    #                 for t in self.active_tasks
-    #                 if t.run_id == container_to_kill["run_id"]
-    #             ),
-    #             None,
-    #         )
-    #         if task:
-    #             self.log.info(f"Killing containers for run_id={task.run_id}")
-    #             self.active_tasks.remove(task)
-    #             task.cleanup()
-    #             killed_list.append(
-    #                 KilledRun(
-    #                     run_id=task.run_id,
-    #                     task_id=task.task_id,
-    #                     parent_id=task.parent_id,
-    #                 )
-    #             )
-    #         else:
-    #             self.log.warn(
-    #                 "Received instruction to kill run_id="
-    #                 f"{container_to_kill['run_id']}, but it was not "
-    #                 "found running on this node."
-    #             )
-    #     return killed_list
+        Returns
+        -------
+        list[KilledRun]
+            List with information on killed tasks
+        """
+        current_jobs = self.batch_api.list_namespaced_job(
+            self.task_namespace, label_selector=self.task_job_label_selector
+        )
+        if not current_jobs.items:
+            self.log.warning(
+                "Received instructions to kill algorithms, but no jobs found running"
+                " on this node",
+            )
+            return []
+        killed_list = []
+        for container_to_kill in kill_list:
+            if container_to_kill["organization_id"] != org_id:
+                continue  # this run is on another node
+
+            # find the task
+            job_to_kill = next(
+                (
+                    job
+                    for job in current_jobs.items
+                    if job.metadata.annotations["run_id"]
+                    == str(container_to_kill["run_id"])
+                ),
+                None,
+            )
+            if job_to_kill:
+                self.log.info("Killing for run_id=%s", container_to_kill["run_id"])
+                self._kill_job(job_to_kill)
+                killed_list.append(
+                    KilledRun(
+                        run_id=job_to_kill.metadata.annotations["run_id"],
+                        task_id=job_to_kill.metadata.annotations["task_id"],
+                        parent_id=job_to_kill.metadata.annotations["task_parent_id"],
+                    )
+                )
+            else:
+                self.log.warning(
+                    "Received instruction to kill run_id=%s, but it was not found "
+                    "running on this node.",
+                    container_to_kill["run_id"],
+                )
+        return killed_list
+
+    def _kill_job(self, job: k8s_client.V1Job) -> None:
+        """
+        Kill a job
+        """
+        run_io = RunIO.from_dict(
+            job.metadata.annotations,
+            self.client,
+            task_dir_extension=self.ctx.config.get("dev", {}).get("task_dir_extension"),
+        )
+        self.__delete_job_related_pods(run_io, self.task_namespace)
 
     # def get_column_names(self, label: str, type_: str) -> list[str]:
     #     """

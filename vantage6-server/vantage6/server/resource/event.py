@@ -200,7 +200,7 @@ class KillNodeTasks(ServicesResources):
 
     def __init__(self, socketio, mail, api, permissions, config):
         super().__init__(socketio, mail, api, permissions, config)
-        self.r = getattr(self.permissions, "task")
+        self.r = getattr(self.permissions, module_name)
 
     @with_user
     def post(self):
@@ -305,12 +305,14 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     # Gather runs and task ids of current task and child tasks
     child_runs = [r for child in task.children for r in child.runs]
     all_runs = task.runs + child_runs
-    child_task_ids = [child.id for child in task.children]
-    all_task_ids = [task.id] + child_task_ids
 
     kill_list = [
-        {"task_id": task_id, "run_id": run.id, "organization_id": run.organization_id}
-        for run, task_id in zip(all_runs, all_task_ids)
+        {
+            "task_id": run.task_id,
+            "run_id": run.id,
+            "organization_id": run.organization_id,
+        }
+        for run in all_runs
     ]
 
     # emit socket event to the node to execute the container kills
