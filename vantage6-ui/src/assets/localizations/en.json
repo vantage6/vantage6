@@ -848,7 +848,8 @@
     "production-ready-guidelines": "production-ready algorithm guidelines",
     "contribute-email": "If you do, you can send an email to",
     "account-and-review": "to aquire and account and upload your algorithm. The algorithm will be reviewed before it is added to the community store."
-
-
+  },
+  "error": {
+    "algorithmStoreNotAvailable": "Algorithm store '{{name}}' is not available"
   }
 }
