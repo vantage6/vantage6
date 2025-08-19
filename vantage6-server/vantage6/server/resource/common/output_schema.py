@@ -82,6 +82,7 @@ class TaskSchema(HATEOASModelSchema):
     complete = fields.Boolean()
     status = fields.String()
     finished_at = fields.DateTime()
+    action = fields.String()
     collaboration = fields.Method("collaboration")
     runs = fields.Function(
         lambda obj: create_one_to_many_link(obj, link_to="run", link_from="task_id")
@@ -92,11 +93,7 @@ class TaskSchema(HATEOASModelSchema):
 
     parent = fields.Method("parent_")
 
-    # depends_on = fields.Function(
-    #     lambda obj: create_one_to_many_link(obj, link_to="task", link_from="depends_on")
-    # )
     depends_on = fields.Function(lambda obj: [dep.id for dep in obj.depends_on])
-
     required_by = fields.Function(lambda obj: [req.id for req in obj.required_by])
 
     children = fields.Function(

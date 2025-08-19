@@ -217,6 +217,14 @@
     "preprocessor": "Preprocessor",
     "preprocessing-function": "Preprocessing function",
     "filter-function": "Filter function",
+    "task-type": "Task type",
+    "action": {
+      "preprocessing": "Preprocessing",
+      "data_extraction": "Data extraction",
+      "federated_compute": "Federated compute",
+      "central_compute": "Central compute",
+      "postprocessing": "Postprocessing"
+    },
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
     "alert-failed-read-arguments": "Failed to parse function arguments.",
