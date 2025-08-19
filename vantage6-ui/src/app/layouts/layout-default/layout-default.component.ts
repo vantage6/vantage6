@@ -216,6 +216,12 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
         icon: 'data_object',
         linkType: NavigationLinkType.Analyze
       });
+      submenus.push({
+        route: routePaths.sessionDataframePreprocessWithoutSession,
+        label: this.translateService.instant('links.new-dataframe-preprocess'),
+        icon: 'tune',
+        linkType: NavigationLinkType.Analyze
+      });
     }
     if (this.permissionService.isAllowedWithMinScope(ScopeType.COLLABORATION, ResourceType.SESSION, OperationType.VIEW)) {
       submenus.push({

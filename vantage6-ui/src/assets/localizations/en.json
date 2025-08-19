@@ -53,6 +53,7 @@
     "analyze": "Analyze",
     "new-analysis": "New analysis",
     "new-dataframe": "New dataframe",
+    "new-dataframe-preprocess": "Preprocessing",
     "history": "Analysis history",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
@@ -193,7 +194,8 @@
     }
   },
   "preprocessing": {
-    "title": "Add preprocessing step to dataframe '{{name}}'"
+    "title": "Add preprocessing step to dataframe '{{name}}'",
+    "title-without-session": "Create new preprocessing step"
   },
   "task": {
     "session": "Session",

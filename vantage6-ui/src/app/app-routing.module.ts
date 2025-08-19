@@ -200,6 +200,14 @@ export const routes: Routes = [
         }
       },
       {
+        path: routerConfig.sessionDataframePreprocessWithoutSession,
+        component: DataframePreprocessComponent,
+        canActivate: [authenticationGuard, chosenCollaborationGuard()],
+        data: {
+          crumbs: [['session-list.title', routePaths.sessions], ['resources.session']]
+        }
+      },
+      {
         path: routerConfig.tasks,
         component: TaskListComponent,
         canActivate: [authenticationGuard, chosenCollaborationGuard()],
