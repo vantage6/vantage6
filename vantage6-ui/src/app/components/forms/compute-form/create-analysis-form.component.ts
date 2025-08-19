@@ -11,25 +11,15 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
-import {
-  Algorithm,
-  ArgumentType,
-  AlgorithmFunction,
-  Argument,
-  AlgorithmFunctionExtended,
-  ConditionalArgComparatorType,
-  FunctionDatabase
-} from 'src/app/models/api/algorithm.model';
+import { Algorithm, ArgumentType, AlgorithmFunctionExtended } from 'src/app/models/api/algorithm.model';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
-import { BaseNode, Database, NodeStatus } from 'src/app/models/api/node.model';
+import { BaseNode, NodeStatus } from 'src/app/models/api/node.model';
 import { Task, TaskDatabaseType, TaskLazyProperties } from 'src/app/models/api/task.models';
-import { TaskService } from 'src/app/services/task.service';
 import { routePaths } from 'src/app/routes';
-import { Router, RouterLink } from '@angular/router';
-import { addParameterFormControlsForFunction } from 'src/app/pages/analyze/task/task.helper';
+import { Router } from '@angular/router';
 import { NodeService } from 'src/app/services/node.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -37,33 +27,28 @@ import { MatStepper, MatStepperIcon, MatStep, MatStepLabel, MatStepperNext, MatS
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
-import { BaseStudy, StudyOrCollab } from 'src/app/models/api/study.model';
-import { BaseOrganization } from 'src/app/models/api/organization.model';
-import { OrganizationService } from 'src/app/services/organization.service';
+import { StudyOrCollab } from 'src/app/models/api/study.model';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
-import { floatRegex, integerRegex } from 'src/app/helpers/regex.helper';
 import { EncryptionService } from 'src/app/services/encryption.service';
 import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
-import { SessionService } from 'src/app/services/session.service';
 import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { AlertComponent } from '../../alerts/alert/alert.component';
-import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
-import { MatOption, MatSelect } from '@angular/material/select';
-import { MatCheckbox } from '@angular/material/checkbox';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgFor, NgIf, NgTemplateOutlet } from '@angular/common';
-import { MatInput } from '@angular/material/input';
-import { MatButton, MatIconButton } from '@angular/material/button';
-import { isTruthy } from 'src/app/helpers/utils.helper';
-import { HighlightedTextPipe } from 'src/app/pipes/highlighted-text.pipe';
-import { readFile } from 'src/app/helpers/file.helper';
-import { NumberOnlyDirective } from 'src/app/directives/numberOnly.directive';
+import { NgIf } from '@angular/common';
+import { MatButton } from '@angular/material/button';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
-import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
-import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-with-button.component';
+import { SessionStepComponent } from './task-steps/session-step/session-step.component';
+import { StudyStepComponent } from './task-steps/study-step/study-step.component';
+import { FunctionStepComponent } from './task-steps/function-step/function-step.component';
+import { DatabaseStepComponent } from './task-steps/database-step/database-step.component';
+import { DataframeStepComponent } from './task-steps/dataframe-step/dataframe-step.component';
+import { ParameterStepComponent } from './task-steps/parameter-step/parameter-step.component';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
+import { TaskService } from 'src/app/services/task.service';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-create-form',
@@ -73,7 +58,6 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
   imports: [
     PageHeaderComponent,
     AlertComponent,
-    AlertWithButtonComponent,
     MatCard,
     MatCardContent,
     MatIcon,
@@ -83,42 +67,37 @@ import { AlertWithButtonComponent } from '../../alerts/alert-with-button/alert-w
     MatStepperNext,
     MatStepperPrevious,
     MatStepLabel,
-    MatFormField,
-    MatLabel,
-    MatSelect,
-    MatOption,
-    MatCheckbox,
     MatProgressSpinner,
-    MatInput,
-    MatSelect,
     MatButton,
     TranslateModule,
-    RouterLink,
     ReactiveFormsModule,
     NgIf,
-    NgFor,
-    MatIconButton,
-    MatSuffix,
-    NumberOnlyDirective,
-    NgTemplateOutlet,
-    HighlightedTextPipe
+    SessionStepComponent,
+    StudyStepComponent,
+    FunctionStepComponent,
+    DatabaseStepComponent,
+    DataframeStepComponent,
+    ParameterStepComponent
   ]
 })
 export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostBinding('class') class = 'card-container';
   availableStepsEnum = AvailableStepsEnum;
-  algorithmStepType = AlgorithmStepType;
-  isArgumentWithAllowedValues = isArgumentWithAllowedValues;
 
   @Input() formTitle: string = '';
   @Input() sessionId?: string = '';
   @Input() allowedTaskTypes?: AlgorithmStepType[];
-  @Input() selectedDataframes: Dataframe[] = [];
+  @Input() preSelectedDataframes: Dataframe[] = [];
 
   @Output() public onSubmit: EventEmitter<FormCreateOutput> = new EventEmitter<FormCreateOutput>();
   @Output() public onCancel: EventEmitter<void> = new EventEmitter();
 
-  @ViewChild('stepper') private myStepper: MatStepper | null = null;
+  @ViewChild(SessionStepComponent) private sessionStepComponent: SessionStepComponent | null = null;
+  @ViewChild(StudyStepComponent) private studyStepComponent: StudyStepComponent | null = null;
+  @ViewChild(FunctionStepComponent) private functionStepComponent: FunctionStepComponent | null = null;
+  @ViewChild(DatabaseStepComponent) private databaseStepComponent: DatabaseStepComponent | null = null;
+  @ViewChild(DataframeStepComponent) private dataframeStepComponent: DataframeStepComponent | null = null;
+  @ViewChild(ParameterStepComponent) private parameterStepComponent: ParameterStepComponent | null = null;
 
   availableSteps: AvailableSteps = {
     session: false,
@@ -134,35 +113,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   argumentType = ArgumentType;
   studyOrCollab = StudyOrCollab;
 
-  sessions: BaseSession[] = [];
-  session: BaseSession | null = null;
-  study: BaseStudy | null = null;
   algorithms: Algorithm[] = [];
   algorithm: Algorithm | null = null;
   collaboration?: Collaboration | null = null;
-  organizations: BaseOrganization[] = [];
   functions: AlgorithmFunctionExtended[] = [];
-  functionsAllowedForSession: AlgorithmFunctionExtended[] = [];
-  functionsFilteredBySearch: AlgorithmFunctionExtended[] = [];
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
-  availableDatabases: Database[] = [];
-  organizationNamesWithNonReadyDataframes: string[] = [];
+  selectedSession: BaseSession | null = null;
 
-  columns: string[] = [];
-  isStudyCompleted: boolean = false;
-  isLoading: boolean = true;
-  isLoadingColumns: boolean = false;
-  hasLoadedColumns: boolean = false;
-  hasLoadedDataframes: boolean = false;
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
   isDataInitialized: boolean = false;
   isNgInitDone: boolean = false;
-  showWarningUniqueDFName: boolean = false;
-  sessionRestrictedToSameImage: boolean = false;
   repeatedTask: Task | null = null;
+  isLoadingRepeatTask: boolean = false;
 
   sessionForm = this.fb.nonNullable.group({
     sessionID: ['', Validators.required]
@@ -189,21 +154,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     private fb: FormBuilder,
     private router: Router,
     private changeDetectorRef: ChangeDetectorRef,
-    private sessionService: SessionService,
     private algorithmService: AlgorithmService,
-    private taskService: TaskService,
     private nodeService: NodeService,
     public chosenCollaborationService: ChosenCollaborationService,
     private socketioConnectService: SocketioConnectService,
     private snackBarService: SnackbarService,
     private translateService: TranslateService,
-    private organizationService: OrganizationService,
-    private encryptionService: EncryptionService
+    private encryptionService: EncryptionService,
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private taskService: TaskService,
+    private sessionService: SessionService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.setAvailableTaskSteps(this.allowedTaskTypes || []);
-
+    this.setupChangeListeners();
     this.isTaskRepeat = this.router.url.includes('/repeat/');
 
     this.chosenCollaborationService.isInitialized$.pipe(takeUntil(this.destroy$)).subscribe((initialized) => {
@@ -223,11 +188,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     // setup repeating task if needed
     if (this.isTaskRepeat) {
-      this.isLoading = true;
       const splitted = this.router.url.split('/');
       const taskID = splitted[splitted.length - 1];
+      // Ensure the content is rendered so child components are created
+      this.changeDetectorRef.detectChanges();
       await this.setupRepeatTask(taskID);
-      this.isLoading = false;
     }
     this.changeDetectorRef.detectChanges();
   }
@@ -237,12 +202,27 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.nodeStatusUpdateSubscription?.unsubscribe();
   }
 
+  private setupChangeListeners(): void {
+    this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe(async (session) => {
+      if (session) {
+        this.dataframes = await this.sessionService.getDataframes(session.id);
+        this.selectedSession = session;
+      }
+    });
+    this.changesInCreateTaskService.functionAlgorithmChange$.pipe(takeUntil(this.destroy$)).subscribe((algorithm) => {
+      this.algorithm = algorithm;
+    });
+    this.changesInCreateTaskService.functionChange$.pipe(takeUntil(this.destroy$)).subscribe((function_) => {
+      this.function = function_;
+    });
+  }
+
   get shouldShowStudyStep(): boolean {
     return (this.collaboration && this.collaboration.studies.length > 0) || false;
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !this.session || (!!this.function?.databases && this.function.databases.length > 0);
+    return !!this.function?.databases && this.function.databases.length > 0 && this.preSelectedDataframes.length === 0;
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -251,31 +231,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
   get shouldShowParameterStep(): boolean {
     return !this.function || (!!this.function && !!this.function.arguments && this.function.arguments.length > 0);
-  }
-
-  get allDataframesNotReady(): boolean {
-    return this.hasLoadedDataframes && this.dataframes.length > 0 && this.dataframes.every((df) => !df.ready);
-  }
-
-  dataFrameNotReadyForAllSelectedOrganizations(): boolean {
-    if (!this.selectedDataframes || this.selectedDataframes.length === 0) return false;
-    let selectedOrganizations = this.functionForm.controls.organizationIDs.value;
-    if (!selectedOrganizations) return false;
-    if (!Array.isArray(selectedOrganizations)) {
-      selectedOrganizations = [selectedOrganizations];
-    }
-    const selectedOrganizationsNotReady = selectedOrganizations.filter(
-      (org) => !this.selectedDataframes.find((df) => df.organizations_ready.includes(Number(org)))
-    );
-    this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
-      (org) => this.organizations.find((o) => o.id === Number(org))?.name || ''
-    );
-    return selectedOrganizationsNotReady.length > 0;
-  }
-
-  isManyDatabaseType(db: FunctionDatabase | undefined): boolean {
-    if (!db) return false;
-    return db.multiple === true;
   }
 
   private setAvailableTaskSteps(allowedTaskTypes: AlgorithmStepType[]): void {
@@ -297,148 +252,64 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
+  private async waitForSubComponentReady(subComponent: any): Promise<void> {
+    // Wait until the child component exists and has finished its own initialization
+    while (!subComponent || !subComponent.initialized$.value) {
+      await new Promise((f) => setTimeout(f, 50));
+    }
+  }
+
   async setupRepeatTask(taskID: string): Promise<void> {
-    this.isLoadingColumns = true;
+    this.isLoadingRepeatTask = true;
     this.repeatedTask = await this.taskService.getTask(Number(taskID), [TaskLazyProperties.InitOrg]);
     if (!this.repeatedTask) {
+      this.isLoadingRepeatTask = false;
       return;
     }
-    this.sessionForm.controls.sessionID.setValue(this.repeatedTask.session.id.toString(), { emitEvent: false });
-    await this.handleSessionChange(this.repeatedTask.session.id.toString());
 
-    // set study step
-    if (this.repeatedTask.study?.id) {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Study + this.repeatedTask.study.id.toString(), { emitEvent: false });
-      await this.handleStudyChange(this.repeatedTask.study.id);
-    } else {
-      this.studyForm.controls.studyOrCollabID.setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString(), {
-        emitEvent: false
-      });
-      await this.handleStudyChange(null);
+    if (this.availableSteps.session) {
+      await this.waitForSubComponentReady(this.sessionStepComponent);
+      this.sessionStepComponent?.setupRepeatTask(this.repeatedTask.session.id.toString());
     }
 
-    // set algorithm step
-    this.showWarningUniqueDFName = false;
-    if (!(this.allowedTaskTypes?.length === 1 && this.allowedTaskTypes[0] === AlgorithmStepType.DataExtraction)) {
-      // don't set task name for data extraction tasks - it will be used as the name
-      // of the created dataframe and that must be unique for the session
-      this.functionForm.controls.taskName.setValue(this.repeatedTask.name);
-    } else {
-      this.showWarningUniqueDFName = true;
-    }
+    // collect dataframes from the session
+    this.dataframes = await this.sessionService.getDataframes(this.repeatedTask.session.id);
 
-    this.functionForm.controls.description.setValue(this.repeatedTask.description);
-    this.algorithm = this.getAlgorithmFromImage(this.repeatedTask.image);
-    if (this.algorithm === null || this.algorithm?.algorithm_store_id === undefined) return;
-
-    // set function step
-    const func =
-      this.functionsAllowedForSession.find(
-        (_) =>
-          _.name === this.repeatedTask?.method &&
-          _.algorithm_id == this.algorithm?.id &&
-          _.algorithm_store_id == this.algorithm?.algorithm_store_id
-      ) || null;
-    if (!func) return;
-    this.functionForm.controls.algorithmFunctionSpec.setValue(this.getAlgorithmFunctionSpec(func));
-    await this.handleFunctionChange(this.repeatedTask.method, this.algorithm.id, this.algorithm?.algorithm_store_id);
-    if (!this.function) return;
-    const organizationIDs = this.repeatedTask.runs.map((_) => _.organization?.id?.toString() ?? '').filter((value) => value);
-    this.functionForm.controls.organizationIDs.setValue(organizationIDs);
-
-    // set database step
-    if (this.availableSteps.database && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-      this.databaseForm.controls.database.setValue(this.repeatedTask.databases[0].label);
-    }
-
-    // set dataframe step
-    if (this.availableSteps.dataframe && this.repeatedTask.databases && this.repeatedTask.databases.length > 0) {
-      this.repeatedTask.databases.forEach((db, idx) => {
-        (this.dataframeForm.get(`dataframeId${idx}`) as any)?.setValue(db.dataframe_id?.toString() || '');
-      });
-      await this.handleDataframeChange(this.repeatedTask.databases.map((db) => db.dataframe_id?.toString() || ''));
-    }
-
-    // set parameter step
-    for (const parameter of this.repeatedTask.arguments || []) {
-      const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-      // check if value is an object
-      if (!argument) {
-        // this should never happen, but fallback is simply try to fill value in
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
-      } else if (argument.type === ArgumentType.Json) {
-        this.parameterForm.get(parameter.label)?.setValue(JSON.stringify(parameter.value));
-      } else if (
-        argument.type === ArgumentType.FloatList ||
-        argument.type === ArgumentType.IntegerList ||
-        argument.type == ArgumentType.StringList
-      ) {
-        const controls = this.getFormArrayControls(argument);
-        let isFirst = true;
-        for (const value of parameter.value) {
-          if (!isFirst) controls.push(this.getNewControlForArgumentList(argument));
-          controls[controls.length - 1].setValue(value);
-          isFirst = false;
+    if (this.shouldShowStudyStep && this.availableSteps.study) {
+      await this.waitForSubComponentReady(this.studyStepComponent);
+      if (this.studyStepComponent) {
+        if (this.repeatedTask.study?.id) {
+          this.studyStepComponent.setupRepeatTask(StudyOrCollab.Study + this.repeatedTask.study.id.toString());
+        } else {
+          this.studyStepComponent.setupRepeatTask(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
         }
-      } else if (argument.type === ArgumentType.Boolean) {
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value ? true : false);
-      } else {
-        this.parameterForm.get(parameter.label)?.setValue(parameter.value);
       }
     }
 
-    // go to last step
-    // TODO this can still be NULL when we get here, then it doesn't work
-    if (this.myStepper?._steps) {
-      for (let idx = 0; idx < this.myStepper?._steps.length || 0; idx++) {
-        this.myStepper?.next();
-      }
+    await this.waitForSubComponentReady(this.functionStepComponent);
+    this.functionStepComponent?.setupRepeatTask(this.repeatedTask);
+
+    // function step component causes changes in the next steps, so reload child components
+    this.changeDetectorRef.detectChanges();
+
+    if (this.availableSteps.database && this.shouldShowDatabaseStep) {
+      await this.waitForSubComponentReady(this.databaseStepComponent);
+      this.databaseStepComponent?.setupRepeatTask(this.repeatedTask.databases[0] || null);
     }
-  }
 
-  private getAlgorithmFromImage(image: string): Algorithm | null {
-    if (image.includes('@sha256:')) {
-      return this.algorithms.find((_) => `${_.image}@${_.digest}` === image) || null;
-    } else {
-      return this.algorithms.find((_) => _.image === image) || null;
+    if (this.availableSteps.dataframe && this.shouldShowDataframeStep) {
+      await this.waitForSubComponentReady(this.dataframeStepComponent);
+      this.dataframeStepComponent?.setupRepeatTask(this.repeatedTask.databases);
     }
-  }
 
-  search() {
-    const value = this.functionForm.controls.algorithmFunctionSearch.value;
-    this.functionsFilteredBySearch = this.functionsAllowedForSession.filter((func) => {
-      const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
-      const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-      return [func.algorithm_name, func.step_type, storeName, func.display_name, func.name].some((val) =>
-        val?.toLowerCase()?.includes(value.toLowerCase())
-      );
-    });
-  }
+    if (this.availableSteps.parameter && this.shouldShowParameterStep) {
+      await this.waitForSubComponentReady(this.parameterStepComponent);
+      this.parameterStepComponent?.setupRepeatTask(this.repeatedTask.arguments || []);
+    }
 
-  clearFunctionSearchInput() {
-    this.functionForm.controls.algorithmFunctionSearch.setValue('');
-    this.search();
-  }
-
-  getFunctionOptionLabel(func: AlgorithmFunctionExtended): string {
-    const curAlgorithm = this.algorithms.find((_) => _.id === func.algorithm_id && _.algorithm_store_id == func.algorithm_store_id);
-    const storeName = curAlgorithm ? this.getAlgorithmStoreName(curAlgorithm) : '';
-    return `${this.getDisplayName(func)} <div class="detail-txt"> | ${func.algorithm_name}, ${storeName}, ${func.step_type}</div>`;
-  }
-
-  getAlgorithmFunctionSpec(func: AlgorithmFunctionExtended): string {
-    return `${func.name}__${func.algorithm_id}__${func.algorithm_store_id}`;
-  }
-
-  async handleDatabaseStepInitialized(): Promise<void> {
-    // TODO get rid of this function?
-    if (!this.repeatedTask || !this.function) return;
-    // This function is run when the database child component is initialized,
-    // but it may still be null when we get here. If it is null, we wait a bit
-    // and then (recursively) try again.
-    // TODO setup database step for repeating extraction task
-
-    // TODO repeat preprocessing and filtering when backend is ready
+    // reload the subcomponents to ensure everything is up to date
+    this.changeDetectorRef.detectChanges();
+    this.isLoadingRepeatTask = false;
   }
 
   isFormInvalid(): boolean {
@@ -511,12 +382,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       image = `${image}@${this.algorithm?.digest}`;
     }
 
+    let sessionId: number;
+    if (this.sessionId) {
+      sessionId = Number(this.sessionId);
+    } else if (this.selectedSession) {
+      sessionId = this.selectedSession.id;
+    } else {
+      sessionId = -1;
+    }
+
     const formCreateOutput: FormCreateOutput = {
       name: this.functionForm.controls.taskName.value,
       description: this.functionForm.controls.description.value,
       image: image,
       method: this.function.name,
-      session_id: Number.parseInt(this.sessionForm.controls.sessionID.value),
+      session_id: sessionId,
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,
@@ -560,132 +440,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.onCancel.emit();
   }
 
-  sortArgumentsForDisplay(arguments_: Argument[] | undefined) {
-    if (!arguments_) return undefined;
-    // first order by ID
-    arguments_ = arguments_.sort((a, b) => a.id - b.id);
-    // Sort the parameters of the function such that parameters that are conditional on
-    // others are just behind those
-    for (let idx = 0; idx < arguments_.length; idx++) {
-      const arg = arguments_[idx];
-      if (arg?.conditional_on_id) {
-        // Find the idx in the list of the one it is conditional on
-        const conditionalIdx = arguments_.findIndex((condArg) => condArg.id === arg.conditional_on_id);
-        if (conditionalIdx > idx) {
-          [arguments_[idx], arguments_[conditionalIdx]] = [arguments_[conditionalIdx], arguments_[idx]];
-          idx = -1;
-        }
-      }
-    }
-    return arguments_;
-  }
-
-  shouldShowParameterSimpleInput(argument: Argument): boolean {
-    return (
-      !this.shouldShowColumnDropdown(argument) &&
-      !this.shouldShowOrganizationDropdown(argument) &&
-      !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument) &&
-      !this.shouldShowAllowedValuesDropdown(argument)
-    );
-  }
-
-  shouldIncludeFormField(argument: Argument): boolean {
-    return (
-      !this.shouldShowParameterBooleanInput(argument) &&
-      !this.shouldShowMultipleInput(argument) &&
-      !this.shouldShowParameterJsonInput(argument)
-    );
-  }
-
-  shouldShowMultipleInput(argument: Argument): boolean {
-    return (
-      argument.type === this.argumentType.IntegerList ||
-      argument.type === this.argumentType.FloatList ||
-      argument.type === this.argumentType.StringList ||
-      (argument.type === this.argumentType.ColumnList && this.columns.length === 0 && this.hasLoadedColumns)
-    );
-  }
-
-  shouldShowAllowedValuesDropdown(argument: Argument): boolean {
-    return (argument.allowed_values?.length ?? 0) > 0;
-  }
-
-  shouldShowParameterBooleanInput(argument: Argument): boolean {
-    return argument.type === this.argumentType.Boolean;
-  }
-
-  shouldShowParameterJsonInput(argument: Argument): boolean {
-    return argument.type === this.argumentType.Json;
-  }
-
-  shouldShowOrganizationDropdown(argument: Argument): boolean {
-    return argument.type === this.argumentType.Organization || argument.type === this.argumentType.OrganizationList;
-  }
-
-  shouldShowColumnDropdown(argument: Argument): boolean {
-    return (
-      (argument.type === this.argumentType.Column || argument.type === this.argumentType.ColumnList) &&
-      (this.columns.length > 0 || this.isLoadingColumns)
-    );
-  }
-
-  isFederatedStep(stepType: AlgorithmStepType): boolean {
-    return stepType !== AlgorithmStepType.CentralCompute;
-  }
-
-  containsColumnArguments(): boolean {
-    return this.function?.arguments.some((arg) => arg.type === this.argumentType.Column) || false;
-  }
-
-  shouldShowColumnDropdownForAnyArg(): boolean {
-    return this.containsColumnArguments();
-  }
-
-  async selectedJsonFile(event: Event, argument: Argument): Promise<void> {
-    const selectedFile = (event.target as HTMLInputElement).files?.item(0) || null;
-
-    if (!selectedFile) return;
-    const fileData = await readFile(selectedFile);
-
-    this.parameterForm.controls[`${argument.name}`].setValue(fileData || '');
-    this.parameterForm.controls[`${argument.name}_jsonFileName`].setValue(selectedFile.name || '');
-  }
-
-  getJsonFileName(argument: Argument): string {
-    return this.parameterForm.controls[`${argument.name}_jsonFileName`].value;
-  }
-
-  addInputFieldForArg(argument: Argument): void {
-    (this.parameterForm.get(argument.name) as FormArray).push(this.getNewControlForArgumentList(argument));
-  }
-
-  removeInputFieldForArg(argument: Argument, index: number): void {
-    (this.parameterForm.get(argument.name) as FormArray).removeAt(index);
-  }
-
-  getFormArrayControls(argument: Argument) {
-    if ((this.parameterForm.get(argument.name) as FormArray).controls === undefined) {
-      const initialControl = argument.has_default_value ? [] : [this.getNewControlForArgumentList(argument)];
-      this.parameterForm.setControl(argument.name, this.fb.array(initialControl));
-    }
-    return (this.parameterForm.get(argument.name) as FormArray).controls;
-  }
-
-  isDataExtractionStep(): boolean {
-    return this.allowedTaskTypes?.includes(AlgorithmStepType.DataExtraction) || false;
-  }
-
-  private getNewControlForArgumentList(argument: Argument): AbstractControl {
-    if (argument.type === this.argumentType.IntegerList) {
-      return this.fb.control('', [Validators.required, Validators.pattern(integerRegex)]);
-    } else if (argument.type === this.argumentType.FloatList) {
-      return this.fb.control('', [Validators.required, Validators.pattern(floatRegex)]);
-    } else {
-      return this.fb.control('', Validators.required);
-    }
-  }
-
   isFirstStep(step: AvailableStepsEnum): boolean {
     if (step === AvailableStepsEnum.Study) {
       return !this.availableSteps.session;
@@ -724,35 +478,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     }
   }
 
-  // compare function for mat-select
-  compareIDsForSelection(id1: number | string, id2: number | string | string[]): boolean {
-    // The mat-select object set from typescript only has an ID set. Compare that with the ID of the
-    // organization object from the collaboration
-    if (Array.isArray(id2)) {
-      id2 = id2[0];
-    }
-    if (typeof id1 === 'number') {
-      id1 = id1.toString();
-    }
-    if (typeof id2 === 'number') {
-      id2 = id2.toString();
-    }
-    return id1 === id2;
-  }
-
-  compareStudyOrCollabForSelection(val1: number | string, val2: number | string): boolean {
-    return val1 === val2;
-  }
-
-  async setOrganizations() {
-    if (!this.collaboration) return;
-    if (this.study) {
-      this.organizations = await this.organizationService.getOrganizations({ study_id: this.study.id });
-    } else {
-      this.organizations = this.collaboration.organizations;
-    }
-  }
-
   hasAlgorithmStores(): boolean {
     return this.collaboration?.algorithm_stores ? this.collaboration.algorithm_stores.length > 0 : false;
   }
@@ -765,71 +490,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return this.algorithms.length > 0;
   }
 
-  getAlgorithmStoreName(algorithm: Algorithm): string {
-    if (this.collaboration?.algorithm_stores && this.collaboration.algorithm_stores.length > 1) {
-      const store_name = this.collaboration.algorithm_stores.find((_) => _.url === algorithm.algorithm_store_url)?.name;
-      if (store_name) {
-        return store_name;
-      }
-    }
-    return '';
-  }
-
-  getDisplayName(obj: AlgorithmFunction | Argument): string {
-    return obj.display_name && obj.display_name != '' ? obj.display_name : obj.name;
-  }
-
-  nodeConfigContainsDatabases(): boolean {
-    return this.node?.config.find((_) => _.key === 'database_labels') !== undefined;
-  }
-
-  shouldDisplayArgument(function_: AlgorithmFunction | null, argument: Argument): boolean {
-    // argument should not be displayed if it is conditional on another and the
-    // condition is not fulfilled
-    if (!argument.conditional_on_id) {
-      return true;
-    }
-    const conditionalArg = function_?.arguments.find((arg: Argument) => arg.id === argument.conditional_on_id);
-    if (!conditionalArg) {
-      return true;
-    }
-    let curConditionalValue = this.parameterForm.get(conditionalArg.name)?.value;
-    // cast the values (if necessary)
-    let conditionDatabaseValue: string | number | boolean | undefined;
-    if (conditionalArg.type === ArgumentType.Boolean) {
-      conditionDatabaseValue = isTruthy(argument.conditional_value);
-      curConditionalValue = isTruthy(curConditionalValue);
-    } else if (conditionalArg.type === ArgumentType.Float || conditionalArg.type === ArgumentType.Integer) {
-      conditionDatabaseValue = Number(argument.conditional_value);
-      curConditionalValue = Number(curConditionalValue);
-    } else {
-      conditionDatabaseValue = argument.conditional_value;
-    }
-    // evaluate the condition
-    if (argument.conditional_operator === ConditionalArgComparatorType.Equal) {
-      return conditionDatabaseValue === curConditionalValue;
-    } else if (argument.conditional_operator === ConditionalArgComparatorType.NotEqual) {
-      return conditionDatabaseValue !== curConditionalValue;
-    } else if (conditionDatabaseValue) {
-      if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThan) {
-        return conditionDatabaseValue > curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.GreaterThanOrEqual) {
-        return conditionDatabaseValue >= curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThan) {
-        return conditionDatabaseValue < curConditionalValue;
-      } else if (argument.conditional_operator === ConditionalArgComparatorType.LessThanOrEqual) {
-        return conditionDatabaseValue <= curConditionalValue;
-      }
-    }
-    // fallback - just display it, but should never get here
-    return true;
-  }
-
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.sessions = await this.sessionService.getSessions({
-      collaboration_id: this.collaboration?.id.toString() || ''
-    });
+    if (!this.collaboration) return;
     const algorithmsObj = await this.algorithmService.getAlgorithms();
     this.algorithms = algorithmsObj;
     this.functions = algorithmsObj.flatMap((curAlgorithm) => {
@@ -845,43 +508,11 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
           };
         });
     });
-    this.functionsAllowedForSession = this.functions;
-    this.functionsFilteredBySearch = this.functions;
     this.node = await this.getOnlineNode();
-    this.availableDatabases = getDatabasesFromNode(this.node);
 
-    this.sessionForm.controls['sessionID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (sessionID) => {
-      this.handleSessionChange(sessionID);
-    });
-
-    if (this.sessionId) {
-      this.sessionForm.controls['sessionID'].setValue(this.sessionId);
-    }
-
-    // set default for study step: full collaboration (this is not visible but required
-    // if there are no studies defined to have a valid form)
-    this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Collaboration + this.collaboration?.id.toString());
-    this.updateStudyFormValidation();
-    this.setOrganizations();
-
-    this.studyForm.controls['studyOrCollabID'].valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (studyID) => {
-      if (studyID.startsWith(StudyOrCollab.Study)) {
-        this.handleStudyChange(Number(studyID.substring(StudyOrCollab.Study.length)));
-      }
-      if (studyID) this.isStudyCompleted = true;
-    });
-
-    this.functionForm.controls.algorithmFunctionSpec.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(async (algorithmFunctionSpec) => {
-        const [functionName, algorithmID, algorithmStoreID] = algorithmFunctionSpec.split('__');
-        this.handleFunctionChange(String(functionName), Number(algorithmID), Number(algorithmStoreID));
-      });
-
-    // set columns if dataframe is already set (for preprocessing tasks)
-    if (this.selectedDataframes.length > 0) {
-      this.setColumns(this.selectedDataframes);
-    }
+    // set initial values for the services
+    this.changesInCreateTaskService.emitOrganizationChange(this.collaboration.organizations);
+    this.changesInCreateTaskService.emitNodeDatabasesChange(getDatabasesFromNode(this.node));
 
     this.nodeStatusUpdateSubscription = this.socketioConnectService
       .getNodeStatusUpdates()
@@ -891,129 +522,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     this.isNgInitDone = true;
 
-    if (!this.isTaskRepeat) this.isLoading = false;
     this.isDataInitialized = true;
-  }
-
-  setColumns(dataframes: Dataframe[]) {
-    // TODO generate warnings for columns that are not present on all dataframes
-    this.columns = Array.from(new Set(dataframes.flatMap((df) => df.columns.map((col) => col.name))));
-  }
-
-  private async handleSessionChange(sessionID: string): Promise<void> {
-    this.hasLoadedDataframes = false;
-    this.session = this.sessions?.find((session) => session.id === Number(sessionID)) || null;
-    this.studyForm.controls.studyOrCollabID.reset();
-    this.isStudyCompleted = false;
-    if (this.session) {
-      if (this.session.study) {
-        this.studyForm.get('studyOrCollabID')?.disable();
-        this.studyForm.controls['studyOrCollabID'].setValue(StudyOrCollab.Study + this.session.study.id.toString());
-        this.handleStudyChange(this.session.study.id);
-      } else if (this.shouldShowStudyStep) {
-        this.studyForm.get('studyOrCollabID')?.enable();
-      }
-      if (this.chosenCollaborationService.collaboration$.value?.session_restrict_to_same_image && this.session?.image) {
-        this.sessionRestrictedToSameImage = true;
-        const allowedAlgorithm: Algorithm | null = this.getAlgorithmFromImage(this.session.image);
-        if (allowedAlgorithm) {
-          this.functionsAllowedForSession = this.functionsAllowedForSession.filter((func) => func.algorithm_id === allowedAlgorithm.id);
-          this.functionsFilteredBySearch = this.functionsAllowedForSession;
-        }
-      }
-      this.dataframes = await this.sessionService.getDataframes(this.session.id);
-      // filter dataframes that are not ready - they cannot be used for analyses
-      this.dataframes = this.dataframes.filter((df) => df.ready);
-      this.hasLoadedDataframes = true;
-    }
-    this.updateStudyFormValidation();
-    this.clearFunctionStep();
-    this.clearDatabaseStep();
-    this.clearParameterStep();
-  }
-
-  private async handleStudyChange(studyID: number | null): Promise<void> {
-    // clear relevant forms
-    this.clearFunctionStep();
-    this.clearDatabaseStep();
-    // select study
-    if (studyID) {
-      this.study = this.collaboration?.studies.find((_) => _.id === studyID) || null;
-    } else {
-      // by deselecting study, defaults to entire collaboration
-      this.study = null;
-    }
-    this.setOrganizations();
-  }
-
-  private handleFunctionChange(functionName: string, algorithmID: number, algoStoreID: number): void {
-    //Clear form
-    this.clearFunctionStep(); //Also clear function step, so user needs to reselect organization
-    this.clearDatabaseStep();
-    this.clearDataframeStep();
-    this.clearParameterStep();
-
-    //Get selected function
-    this.algorithm = this.algorithms.find((_) => _.id === algorithmID && _.algorithm_store_id == algoStoreID) || null;
-    // Get selected function
-    const selectedFunction =
-      this.functionsAllowedForSession.find(
-        (_) => _.name === functionName && _.algorithm_id == algorithmID && _.algorithm_store_id == algoStoreID
-      ) || null;
-
-    if (selectedFunction) {
-      // Add form controls for parameters for selected function
-      addParameterFormControlsForFunction(selectedFunction, this.parameterForm);
-      this.addDataframeFormControlsForFunction(selectedFunction, this.dataframeForm);
-
-      // If it's a federated step, select all organizations
-      if (this.isFederatedStep(selectedFunction.step_type)) {
-        this.functionForm.patchValue({
-          organizationIDs: this.organizations.map((org) => org.id.toString())
-        });
-      }
-    }
-
-    // Delay setting function, so that form controls are added
-    this.function = selectedFunction;
-  }
-
-  private addDataframeFormControlsForFunction(func: AlgorithmFunctionExtended, form: FormGroup) {
-    func?.databases.forEach((database, index) => {
-      form.addControl(`dataframeId${index}`, new FormControl(null, [Validators.required]));
-    });
-    // Add value change subscriptions for dataframe form controls
-    // TODO BvB 2025-08-12: I feel this triple loop can be simplified - requires testing
-    if (func.databases) {
-      func.databases.forEach((_, idx) => {
-        (form.get(`dataframeId${idx}`) as any)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(async (value: any) => {
-          // Collect all current dataframe values
-          const allDataframeValues: string[] = [];
-          func.databases.forEach((__, dbIdx) => {
-            const dbValue = (this.dataframeForm.get(`dataframeId${dbIdx}`) as any)?.value;
-            if (dbValue) {
-              if (Array.isArray(dbValue)) {
-                allDataframeValues.push(...dbValue.map((v: any) => v.toString()));
-              } else {
-                allDataframeValues.push(dbValue.toString());
-              }
-            }
-          });
-          await this.handleDataframeChange(allDataframeValues);
-        });
-      });
-    }
-  }
-
-  private async handleDataframeChange(dataframeIDs: string[]): Promise<void> {
-    this.columns = [];
-    this.selectedDataframes = this.dataframes.filter((_) => dataframeIDs.includes(_.id.toString()));
-    if (this.selectedDataframes.length > 0) {
-      this.setColumns(this.selectedDataframes);
-    }
-
-    // Set loading columns to false after columns are loaded
-    this.isLoadingColumns = false;
   }
 
   private async getOnlineNode(): Promise<BaseNode | null> {
@@ -1035,26 +544,6 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     return await this.nodeService.getNodes({
       collaboration_id: this.collaboration?.id.toString() || ''
     });
-  }
-
-  private clearFunctionStep(): void {
-    this.functionForm.controls.organizationIDs.reset();
-    Object.keys(this.databaseForm.controls).forEach((control) => {
-      this.parameterForm.removeControl(control);
-    });
-  }
-
-  // TODO this function might be removed
-  private clearDatabaseStep(): void {}
-
-  private clearDataframeStep(): void {
-    this.dataframeForm.reset();
-    this.columns = [];
-    this.selectedDataframes = [];
-  }
-
-  private clearParameterStep(): void {
-    this.parameterForm = this.fb.nonNullable.group({});
   }
 
   private async onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): Promise<void> {
@@ -1087,24 +576,5 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
         this.snackBarService.showMessage(this.translateService.instant('task-create.step-database.error-db-update'));
       }
     }
-  }
-
-  private updateStudyFormValidation(): void {
-    const studyOrCollabControl = this.studyForm.get('studyOrCollabID');
-    if (this.shouldShowStudyStep) {
-      studyOrCollabControl?.setValidators(Validators.required);
-    } else {
-      studyOrCollabControl?.clearValidators();
-    }
-    studyOrCollabControl?.updateValueAndValidity();
-  }
-
-  isFirstDatabaseMultiple(): boolean {
-    return this.function?.databases?.[0] ? this.function.databases[0].multiple || false : false;
-  }
-
-  hasColumnListWithMultipleDataframes(): boolean {
-    if (!this.isFirstDatabaseMultiple()) return false;
-    return this.function?.arguments?.some((arg: Argument) => arg.type === ArgumentType.ColumnList) || false;
   }
 }

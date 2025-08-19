@@ -1,0 +1,26 @@
+.form {
+  .field-description {
+    margin-bottom: 1rem;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.875rem;
+  }
+
+  .select-form-field {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .search-form-field {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .function-select-option {
+    padding: 0.5rem;
+  }
+}
