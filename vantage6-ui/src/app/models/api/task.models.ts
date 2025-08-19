@@ -12,6 +12,7 @@ export enum TaskLazyProperties {
 
 export enum TaskSortProperties {
   ID = 'id',
+  IDDesc = '-id',
   Name = 'name'
 }
 
@@ -61,6 +62,7 @@ export interface BaseTask {
   session: BaseLink;
   image: string;
   method: string;
+  action: AlgorithmStepType;
   arguments: TaskParameter[];
   init_org: BaseLink;
   init_user: BaseLink;
@@ -81,6 +83,7 @@ export interface Task {
   session: BaseLink;
   image: string;
   method: string;
+  action: AlgorithmStepType;
   arguments: TaskParameter[];
   init_org?: BaseOrganization;
   init_user?: BaseUser;

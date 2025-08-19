@@ -11,7 +11,13 @@ import { Subject, Subscription, takeUntil } from 'rxjs';
 import { printDate } from 'src/app/helpers/general.helper';
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
-import { GetDataframeParameters, Session, SessionLazyProperties, SessionScope } from 'src/app/models/api/session.models';
+import {
+  DataframeSortProperties,
+  GetDataframeParameters,
+  Session,
+  SessionLazyProperties,
+  SessionScope
+} from 'src/app/models/api/session.models';
 import { SessionService } from 'src/app/services/session.service';
 import { User, UserLazyProperties } from 'src/app/models/api/user.model';
 import { UserService } from 'src/app/services/user.service';
@@ -101,6 +107,8 @@ export class SessionReadComponent implements OnInit, OnDestroy {
       this.isLoading = true;
       await this.initData();
     });
+
+    this.getDataframeParameters = { sort: DataframeSortProperties.IDDesc };
   }
 
   ngOnDestroy(): void {
@@ -176,6 +184,7 @@ export class SessionReadComponent implements OnInit, OnDestroy {
   public handleSearchChanged(searchRequests: SearchRequest[]): void {
     this.getDataframeParameters = getApiSearchParameters<GetDataframeParameters>(searchRequests);
     this.currentPage = 1;
+    this.getDataframeParameters = { ...this.getDataframeParameters, sort: DataframeSortProperties.IDDesc };
     this.getDataframes();
   }
 

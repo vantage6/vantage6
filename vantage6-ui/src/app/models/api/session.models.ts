@@ -130,4 +130,10 @@ interface DataframeTask {
 
 export interface GetDataframeParameters {
   name?: string;
+  sort?: DataframeSortProperties;
+}
+
+export enum DataframeSortProperties {
+  ID = 'id',
+  IDDesc = '-id'
 }

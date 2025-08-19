@@ -53,6 +53,7 @@
     "analyze": "Analyze",
     "new-analysis": "New analysis",
     "new-dataframe": "New dataframe",
+    "new-dataframe-preprocess": "Preprocessing",
     "history": "Analysis history",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
@@ -170,6 +171,7 @@
   "dataframe-read": {
     "title": "Dataframe {{name}}",
     "not-ready-despite-extraction": "The data extraction task to produce this dataframe failed. The dataframe cannot be used for analyses.",
+    "last-session-task-failed": "The last task in this dataframe failed. Please check if this does not impact further analyses.",
     "columns": {
       "title": "Dataframe columns",
       "no-columns": "No columns are available for this dataframe.",
@@ -193,7 +195,8 @@
     }
   },
   "preprocessing": {
-    "title": "Add preprocessing step to dataframe '{{name}}'"
+    "title": "Add preprocessing step to dataframe '{{name}}'",
+    "title-without-session": "Create new preprocessing step"
   },
   "task": {
     "session": "Session",
@@ -215,6 +218,14 @@
     "preprocessor": "Preprocessor",
     "preprocessing-function": "Preprocessing function",
     "filter-function": "Filter function",
+    "task-type": "Task type",
+    "action": {
+      "preprocessing": "Preprocessing",
+      "data_extraction": "Data extraction",
+      "federated_compute": "Federated compute",
+      "central_compute": "Central compute",
+      "postprocessing": "Postprocessing"
+    },
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
     "alert-failed-read-arguments": "Failed to parse function arguments.",

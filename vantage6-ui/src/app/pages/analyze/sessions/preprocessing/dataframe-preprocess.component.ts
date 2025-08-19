@@ -10,9 +10,10 @@ import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { AlgorithmStepType, Dataframe, DataframePreprocess, Session } from 'src/app/models/api/session.models';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { OrganizationService } from 'src/app/services/organization.service';
-import { AvailableSteps, FormCreateOutput } from 'src/app/models/forms/create-form.model';
+import { FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { TranslateService } from '@ngx-translate/core';
 import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-form/create-analysis-form.component';
+import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 
 @Component({
   selector: 'app-dataframe-preprocess',
@@ -43,7 +44,8 @@ export class DataframePreprocessComponent implements OnInit, OnDestroy {
     private algorithmService: AlgorithmService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private changesInCreateTaskService: ChangesInCreateTaskService
   ) {}
 
   ngOnInit(): void {
@@ -57,15 +59,26 @@ export class DataframePreprocessComponent implements OnInit, OnDestroy {
         this.initData();
       }
     });
+    this.changesInCreateTaskService.dataframeChange$.pipe(takeUntil(this.destroy$)).subscribe((dataframes) => {
+      if (dataframes.length > 0) {
+        this.dataframe = dataframes[0];
+      }
+    });
   }
 
   private async initData(): Promise<void> {
     this.collaboration = this.chosenCollaborationService.collaboration$.value;
-    this.dataframe = await this.sessionService.getDataframe(Number(this.dfId));
-    this.title = this.translateService.instant('preprocessing.title', {
-      name: this.dataframe?.name || ''
-    });
-    this.session = await this.sessionService.getSession(Number(this.sessionId));
+    if (this.dfId) {
+      this.dataframe = await this.sessionService.getDataframe(Number(this.dfId));
+      this.title = this.translateService.instant('preprocessing.title', {
+        name: this.dataframe?.name || ''
+      });
+    } else {
+      this.title = this.translateService.instant('preprocessing.title-without-session');
+    }
+    if (this.sessionId) {
+      this.session = await this.sessionService.getSession(Number(this.sessionId));
+    }
     this.algorithms = await this.algorithmService.getAlgorithms();
     this.study_id = this.session?.study?.id ?? null;
   }

@@ -25,12 +25,14 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
+import { AlgorithmStepType } from 'src/app/models/api/session.models';
 
 enum TableRows {
   ID = 'id',
   Name = 'name',
   Status = 'status',
   Session = 'session',
+  TaskType = 'task_type',
   CreatedDate = 'created_date'
 }
 
@@ -83,7 +85,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     this.setPermissions();
 
-    await this.initData(this.currentPage, { sort: TaskSortProperties.ID, is_user_created: 1 });
+    await this.initData(this.currentPage, { sort: TaskSortProperties.IDDesc, is_user_created: 1 });
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
@@ -98,7 +100,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
 
   async handlePageEvent(e: PageEvent) {
     this.currentPage = e.pageIndex + 1;
-    const parameters: GetTaskParameters = { sort: TaskSortProperties.ID, is_user_created: 1 };
+    const parameters: GetTaskParameters = { sort: TaskSortProperties.IDDesc, is_user_created: 1 };
     if (this.currentSearchInput?.length) {
       parameters.name = this.currentSearchInput;
     }
@@ -175,6 +177,10 @@ export class TaskListComponent implements OnInit, OnDestroy {
           label: this.translateService.instant('task.session')
         },
         {
+          id: TableRows.TaskType,
+          label: this.translateService.instant('task.task-type')
+        },
+        {
           id: TableRows.Status,
           label: this.translateService.instant('task.status'),
           filterEnabled: true,
@@ -195,10 +201,15 @@ export class TaskListComponent implements OnInit, OnDestroy {
           session: this.sessionIDNameMap.get(_.id) ?? '-',
           status: this.getTaskStatusTranslation(_.status),
           statusType: this.getChipTypeForStatus(_.status),
+          task_type: this.printAction(_.action),
           created_date: this.datePipe.transform(_.created_at, 'yyyy-MM-dd HH:mm')
         }
       }))
     };
+  }
+
+  private printAction(action: AlgorithmStepType) {
+    return this.translateService.instant(`task.action.${action}`);
   }
 
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg) {
