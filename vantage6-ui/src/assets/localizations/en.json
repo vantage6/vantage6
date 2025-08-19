@@ -843,7 +843,11 @@
     "algorithms": "Algorithms",
     "welcome": "Welcome",
     "introduction": "The community store is a place where you can find algorithms that are shared by members of the vantage6 community. More information about vantage6 can be found on ",
-    "community-store": "Community Store"
+    "community-store": "Community Store",
+    "contribute": "If you would like to contribute to the community store, you should first check if it fits the requirements of",
+    "production-ready-guidelines": "production-ready algorithm guidelines",
+    "contribute-email": "If you do, you can send an email to",
+    "account-and-review": "to aquire and account and upload your algorithm. The algorithm will be reviewed before it is added to the community store."
   },
   "error": {
     "algorithmStoreNotAvailable": "Algorithm store '{{name}}' is not available"
