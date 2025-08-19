@@ -1,6 +1,38 @@
 Release notes
 =============
 
+4.12.2
+-----
+
+*19 August 2025*
+
+- **Security**
+
+  - Updated copier dependency to version 9.9.1
+    (`PR#2235 <https://github.com/vantage6/vantage6/pull/2235>`_).
+  - Updated UI dependencies: on-headers to 1.1.0 and compression to 1.8.1
+    (`PR#2144 <https://github.com/vantage6/vantage6/pull/2144>`_).
+
+- **Feature**
+
+  - Added documentation on how to contribute algorithms to the community store
+    (`Issue#2133 <https://github.com/vantage6/vantage6/issues/2133>`_,
+    `PR#2140 <https://github.com/vantage6/vantage6/pull/2140>`_).
+
+- **Bugfix**
+
+  - Fix issue that no tasks could be created via the UI if the algorithm store was not
+    running (`Issue#2180 <https://github.com/vantage6/vantage6/issues/2180>`_,
+    `PR#2199 <https://github.com/vantage6/vantage6/pull/2199>`_).
+  - Fix deleting user in UI by adding delete_dependents=True parameter
+    (`Issue#2093 <https://github.com/vantage6/vantage6/issues/2093>`_,
+    `PR#2200 <https://github.com/vantage6/vantage6/pull/2200>`_).
+  - Improved efficiency of the task status page by reducing the number of requests done there
+    (`Issue#2181 <https://github.com/vantage6/vantage6/issues/2181>`_,
+    `PR#2224 <https://github.com/vantage6/vantage6/pull/2224>`_).
+  - Added psycopg2 dependency to algorithm tools package to prevent crashes for
+    algorithms using PostgresQL.
+
 4.12.1
 -----
 
@@ -2332,8 +2364,8 @@ Release notes
      password using their current password as authentication. It is no
      longer possible to change passwords via ``client.user.update()``
      or via a PATCH ``/user/{id}`` request.
-  -  Added the default roles ‘viewer’, ‘researcher’, ‘organization
-     admin’ and ‘collaboration admin’ to newly created servers. These
+  -  Added the default roles 'viewer', 'researcher', 'organization
+     admin' and 'collaboration admin' to newly created servers. These
      roles may be assigned to users of any organization, and should
      help users with proper permission assignment.
   -  Added option to filter get all roles for a specific user id in the
@@ -2374,10 +2406,10 @@ Release notes
      via the Python client as via the server.
   -  A GET ``/role`` request crashed if parameter ``organization_id``
      was defined but not ``include_root``. This has been resolved.
-  -  Users received an ‘unexpected error’ when performing a GET
-     ``/collaboration?organization_id=<id>`` request and they didn’t
+  -  Users received an 'unexpected error' when performing a GET
+     ``/collaboration?organization_id=<id>`` request and they didn't
      have global collaboration view permission. This was fixed.
-  -  GET ``/role/<id>`` didn’t give an error if a role didn’t exist.
+  -  GET ``/role/<id>`` didn't give an error if a role didn't exist.
      Now it does.
 
 3.2.0
@@ -2494,7 +2526,7 @@ Release notes
 -  **Bugfix**
 
   -  Fixed database connection issues
-  -  Don’t allow users to be assigned to non-existing organizations by
+  -  Don't allow users to be assigned to non-existing organizations by
      root
   -  Fix node status when node is stopped and immediately started up
   -  Check if node names are allowed docker names
@@ -2568,13 +2600,13 @@ Release notes
      major version. `See this Github
      issue <https://github.com/IKNL/vantage6/issues/65>`__.
 
-     -  e.g. if you’ve installed the Trolltunga version of the CLI you
+     -  e.g. if you've installed the Trolltunga version of the CLI you
         will always get the Trolltunga version of the node and server.
      -  Infrastructure images are now tagged using their version major.
-        (e.g. ``trolltunga`` or ``harukas`` )
+        (e.g. ``trolltunga`` or ``harukas`` )
      -  It is still possible to use intermediate versions by specifying
         the ``--image`` option when starting the node or server.
-        (e.g. ``vserver start --image harbor.vantage6.ai/infrastructure/server:2.0.0.post1``
+        (e.g. ``vserver start --image harbor.vantage6.ai/infrastructure/server:2.0.0.post1``
         )
 
 -  **Bugfix**
@@ -2604,7 +2636,7 @@ Release notes
         The root role is assigned to the root user on the first run.
         The root user can assign rules and roles from there.
   -  Major update on the *python*-client. The client also contains
-     management tools for the server (i.e. to creating users,
+     management tools for the server (i.e. to create users,
      organizations and managing permissions. The client can be imported
      from ``from vantage6.client import Client`` .
   -  You can use the agrument ``verbose`` on the client to output
