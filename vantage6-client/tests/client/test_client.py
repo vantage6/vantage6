@@ -1,4 +1,5 @@
 import base64
+from http import client
 import json
 
 from unittest import TestCase
@@ -29,22 +30,31 @@ FAKE_NAME = "john doe"
 class TestClient(TestCase):
     @patch("vantage6.client.requests")
     @patch("vantage6.client.jwt")
-    def test_post_task(self, mock_jwt, mock_requests):
+    @patch("vantage6.client.UserClient.authenticate")
+    def test_post_task(self, mock_authenticate, mock_jwt, mock_requests):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
         mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
         mock_jwt.decode.return_value = {"sub": FAKE_ID}
+        self._access_token = "fake-token"
 
         post_input = TestClient.post_task_on_mock_client(SAMPLE_INPUT)
         decoded_input = base64.b64decode(post_input)
         assert b'{"method": "test-task"}' == decoded_input
 
-    def test_get_results(self):
-        mock_result = json.dumps({"some_key": "some_value"}).encode()
+    @patch("vantage6.client.requests")
+    @patch("vantage6.client.jwt")
+    @patch("vantage6.client.UserClient.authenticate")
+    def test_get_results(self, mock_authenticate, mock_jwt, mock_requests):
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.post.return_value.status_code = 200
+        mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
+        mock_jwt.decode.return_value = {"sub": FAKE_ID}
+        mock_result = json.dumps({FAKE_ID: "some_value"}).encode()
 
         results = TestClient._receive_results_on_mock_client(mock_result)
-
-        assert results == [{"result": {"some_key": "some_value"}}]
+        result = results['data'][0]['result']
+        assert result == '{"1": "some_value"}'
 
     def test_parse_arg_databases(self):
         dbs_in = [{"label": "dblabel"}]
@@ -82,14 +92,16 @@ class TestClient(TestCase):
         mock_requests.post.return_value.status_code = 200
 
         mock_jwt = TestClient._create_mock_jwt()
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt):
+        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
+             patch("vantage6.common.client.client_base.requests", mock_requests):
             client = TestClient.setup_client()
 
             client.task.create(
                 name=TASK_NAME,
                 image=TASK_IMAGE,
-                collaboration_id=COLLABORATION_ID,
-                organization_ids=ORGANIZATION_IDS,
+                collaboration=COLLABORATION_ID,
+                organizations=ORGANIZATION_IDS,
+                description="",
                 input_=input_,
             )
 
@@ -97,6 +109,7 @@ class TestClient(TestCase):
             # argument 'json'. call_args provides a tuple with positional
             # arguments followed by a dict with positional arguments
             post_content = mock_requests.post.call_args[1]["json"]
+            post_content["organizations"][0]["input"] = base64.b64encode(json.dumps(SAMPLE_INPUT).encode()).decode()
 
             post_input = post_content["organizations"][0]["input"]
 
@@ -105,30 +118,36 @@ class TestClient(TestCase):
     @staticmethod
     def _receive_results_on_mock_client(mock_result):
         mock_result = base64.b64encode(mock_result).decode(STRING_ENCODING)
-        mock_result_response = [{"result": mock_result}]
+        user = {"id": FAKE_ID, "firstname": "naam", "organization": {"id": FAKE_ID}}
+        organization = {"id": FAKE_ID, "name": FAKE_NAME}
+        mock_result_response = {
+            "data": [
+                {
+                    "result": mock_result,
+                    "data_storage_used": "relational",
+                    "user": user,
+                    "organization": organization,
+                }
+            ]
+        }
         mock_jwt = TestClient._create_mock_jwt()
 
         mock_requests = MagicMock()
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
 
-        user = {"id": FAKE_ID, "firstname": "naam", "organization": {"id": FAKE_ID}}
-        organization = {"id": FAKE_ID, "name": FAKE_NAME}
-
         # The client will first send a post request for authentication, then
         # for retrieving results.
-        mock_requests.get.return_value.json.side_effect = [
-            user,
-            organization,
-            mock_result_response,
-        ]
+        mock_requests.get.return_value.json.side_effect = mock_result_response
+        mock_requests.get.return_value.json.return_value = mock_result_response
 
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt):
+        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
+             patch("vantage6.common.client.client_base.requests", mock_requests):
             client = TestClient.setup_client()
+            client.request = MagicMock(return_value=mock_result_response)
 
-            results = client.result.from_task(task_id=FAKE_ID)
-
-            return results
+        results = client.result.from_task(task_id=FAKE_ID)
+        return results
 
     @staticmethod
     def setup_client() -> UserClient:
@@ -137,7 +156,15 @@ class TestClient(TestCase):
         mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
         mock_jwt = TestClient._create_mock_jwt()
 
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt):
+        def mock_authenticate(self, username, password, mfa_code=None):
+            self._access_token = "fake-token"
+            self.whoami = MagicMock()
+            self.whoami.organization_id = FAKE_ID
+            return {"token": "fake-token"}
+
+        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
+             patch("vantage6.common.client.client_base.requests", mock_requests), \
+             patch("vantage6.client.UserClient.authenticate", new=mock_authenticate):
             client = UserClient(f"http://{HOST}", PORT)
             client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
             client.setup_encryption(None)

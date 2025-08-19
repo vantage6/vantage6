@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
-#from vantage6.server.service.azure_storage_service import AzureStorageService
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)

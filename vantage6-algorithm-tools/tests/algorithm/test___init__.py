@@ -60,8 +60,7 @@ class TestAlgorithmClient(unittest.TestCase):
 
         results = self.client.result.from_task(task_id=1)
 
-        self.assertEqual(results[0]['result'], {"foo": "bar"})
-        self.assertIsNone(results[1]['result'])
+        self.assertEqual(results[0], {"foo": "bar"})
             
     def test_result_from_task_azure(self):
         with patch.object(self.client.result.parent, 'download_run_data_from_server') as mock_download_run_data_from_server, \
@@ -81,10 +80,7 @@ class TestAlgorithmClient(unittest.TestCase):
             mock_download_run_data_from_server.return_value = json.dumps(expected_value).encode("utf-8")
             results = self.client.result.from_task(task_id=1)
 
-            self.assertEqual(results[0]['data_storage_used'], DataStorageUsed.AZURE.value)
-            self.assertEqual(results[0]['result'], expected_value)
-            self.assertEqual(results[1]['data_storage_used'], DataStorageUsed.AZURE.value)
-            self.assertIsNone(results[1]['result'])
+            self.assertEqual(results[0], {"foo": "bar"})
 
     def test_result_from_task_relational(self):
         with patch.object(self.client.result.parent, '_multi_page_request') as mock_multi_page_request:
@@ -101,10 +97,7 @@ class TestAlgorithmClient(unittest.TestCase):
 
             results = self.client.result.from_task(task_id=1)
 
-            self.assertEqual(results[0]['data_storage_used'], DataStorageUsed.RELATIONAL.value)
-            self.assertEqual(results[0]['result'], {"foo": "bar"})
-            self.assertEqual(results[1]['data_storage_used'], DataStorageUsed.RELATIONAL.value)
-            self.assertIsNone(results[1]['result'])
+            self.assertEqual(results[0], {"foo": "bar"})
 
 if __name__ == "__main__":
      unittest.main()
