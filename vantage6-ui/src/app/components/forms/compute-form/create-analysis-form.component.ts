@@ -30,7 +30,7 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { StudyOrCollab } from 'src/app/models/api/study.model';
 import { MAX_ATTEMPTS_RENEW_NODE, SECONDS_BETWEEN_ATTEMPTS_RENEW_NODE } from 'src/app/models/constants/wait';
 import { EncryptionService } from 'src/app/services/encryption.service';
-import { AlgorithmStepType, Dataframe } from 'src/app/models/api/session.models';
+import { AlgorithmStepType, BaseSession, Dataframe } from 'src/app/models/api/session.models';
 import { AvailableSteps, AvailableStepsEnum, FormCreateOutput } from 'src/app/models/forms/create-form.model';
 import { PageHeaderComponent } from '../../page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -120,6 +120,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   function: AlgorithmFunctionExtended | null = null;
   dataframes: Dataframe[] = [];
   node: BaseNode | null = null;
+  selectedSession: BaseSession | null = null;
 
   isSubmitting: boolean = false;
   isTaskRepeat: boolean = false;
@@ -205,6 +206,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe(async (session) => {
       if (session) {
         this.dataframes = await this.sessionService.getDataframes(session.id);
+        this.selectedSession = session;
       }
     });
     this.changesInCreateTaskService.functionAlgorithmChange$.pipe(takeUntil(this.destroy$)).subscribe((algorithm) => {
@@ -380,12 +382,21 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       image = `${image}@${this.algorithm?.digest}`;
     }
 
+    let sessionId: number;
+    if (this.sessionId) {
+      sessionId = Number(this.sessionId);
+    } else if (this.selectedSession) {
+      sessionId = this.selectedSession.id;
+    } else {
+      sessionId = -1;
+    }
+
     const formCreateOutput: FormCreateOutput = {
       name: this.functionForm.controls.taskName.value,
       description: this.functionForm.controls.description.value,
       image: image,
       method: this.function.name,
-      session_id: this.sessionId ? Number(this.sessionId) : -1,
+      session_id: sessionId,
       collaboration_id: this.collaboration?.id || -1,
       database: this.databaseForm.controls.database.value,
       store_id: this.algorithm?.algorithm_store_id || -1,

@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
-import { AlgorithmFunction, AlgorithmFunctionExtended, Argument, Algorithm } from '../../../../../models/api/algorithm.model';
+import { AlgorithmFunctionExtended, Algorithm } from '../../../../../models/api/algorithm.model';
 import { BaseOrganization } from '../../../../../models/api/organization.model';
 import { AlgorithmStepType, BaseSession } from '../../../../../models/api/session.models';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { HighlightedTextPipe } from '../../../../../pipes/highlighted-text.pipe';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
+import { BaseNode } from 'src/app/models/api/node.model';
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { Task } from 'src/app/models/api/task.models';
@@ -46,7 +47,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   getDisplayName = getDisplayName;
 
   @Input() formGroup!: FormGroup;
-  @Input() node: any = null;
+  @Input() node: BaseNode | null = null;
   @Input() algorithms: Algorithm[] = [];
   @Input() collaboration: Collaboration | null | undefined = null;
   @Input() functions: AlgorithmFunctionExtended[] = [];
@@ -144,7 +145,7 @@ export class FunctionStepComponent implements OnInit, OnDestroy {
   }
 
   private setupChangeListeners(): void {
-    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((studyId) => {
+    this.changesInCreateTaskService.studyChange$.pipe(takeUntil(this.destroy$)).subscribe((_) => {
       this.handleStudyChange();
     });
     this.changesInCreateTaskService.sessionChange$.pipe(takeUntil(this.destroy$)).subscribe((session) => {

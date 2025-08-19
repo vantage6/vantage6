@@ -61,8 +61,10 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
 
   public setupRepeatTask(taskDataframes: TaskDBOutput[]): void {
     if (taskDataframes && taskDataframes.length > 0) {
-      taskDataframes.forEach((db, idx) => {
-        this.formGroup.controls[`dataframeId${idx}`].setValue(db.dataframe_id?.toString() || '');
+      this.function?.databases.forEach((funcDB, idx) => {
+        const dataframesForCurrent = taskDataframes.filter((df) => df.position === idx);
+        const formValue = funcDB.multiple ? dataframesForCurrent.map((df) => df.dataframe_id) : dataframesForCurrent[0].dataframe_id;
+        this.formGroup.controls[`dataframeId${idx}`].setValue(formValue);
         this.handleDataframeChange(`dataframeId${idx}`);
       });
     }
@@ -172,7 +174,7 @@ export class DataframeStepComponent implements OnInit, OnDestroy {
       (org: string) => !this.selectedDataframes.find((df) => df.organizations_ready.includes(Number(org)))
     );
     this.organizationNamesWithNonReadyDataframes = selectedOrganizationsNotReady.map(
-      (org: string) => this.organizations.find((o: any) => o.id === Number(org))?.name || ''
+      (org: string) => this.organizations.find((o: BaseOrganization) => o.id === Number(org))?.name || ''
     );
     return selectedOrganizationsNotReady.length > 0;
   }

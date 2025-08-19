@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
-import { BaseSession } from '../../../../../models/api/session.models';
+import { BaseSession, Dataframe } from '../../../../../models/api/session.models';
 import { SessionService } from '../../../../../services/session.service';
 import { ChosenCollaborationService } from '../../../../../services/chosen-collaboration.service';
 import { AlgorithmStepType } from '../../../../../models/api/session.models';
@@ -42,7 +42,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 export class SessionStepComponent implements OnInit, OnDestroy {
   @Input() formGroup!: FormGroup;
   @Input() allowedTaskTypes?: AlgorithmStepType[];
-  @Input() dataframes: any[] = [];
+  @Input() dataframes: Dataframe[] = [];
   @Input() hasLoadedDataframes = false;
   @Input() isLoadingRepeatTask: boolean = false;
 
