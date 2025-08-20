@@ -1967,18 +1967,14 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
-            if self.parent.check_if_blob_store_enabled():
-                # If blob store is enabled, we also need to delete the blobs
-                            # get run from the API
-                run = self.parent.request("result", params={"task_id": id_}) 
-                data = run.get('data')
-                if isinstance(data, list) and len(data) > 0:
-                    result_json = data[0].get('result')
-                else:
-                    print("No result found")
+            run = self.parent.request("result", params={"task_id": id_}) 
+            data = run.get('data')
+            if isinstance(data, list) and len(data) > 0 and data[0].get('data_storage_used') == DataStorageUsed.AZURE.value:
+                result_json = data[0].get('result')
                 msg = self.parent.request(f"blobstream/delete/{result_json}", method="delete")
                 self.parent.log.info(f"--> {msg}")
-
+            else:
+                print("No result found")
             msg = self.parent.request(f"task/{id_}", method="delete")
             
             self.parent.log.info(f"--> {msg}")
