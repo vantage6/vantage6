@@ -292,21 +292,6 @@ class BlobStream(BlobStreamBase):
 
         return HTTPStatus.OK
     
-    # @only_for(("node", "user", "container"))
-    # def delete_container(self):
-    #     if not self.storage_adapter:
-    #         log.warning(
-    #             "The large result store is not set to azure blob storage, result streaming is not available."
-    #         )
-    #         return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
-    #     try:
-    #         log.debug(f"Deleting blob storage container for {self.container.name}")
-    #         self.storage_adapter.delete_container()
-    #     except Exception as e:
-    #         log.error(f"Error deleting result: {e}")
-    #         return {"msg": "Error deleting result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-    #     return HTTPStatus.OK
 
 class UwsgiChunkedStream:
     """
