@@ -1967,7 +1967,16 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
+            run = self.parent.request("result", params={"task_id": id_}) 
+            data = run.get('data')
+            if isinstance(data, list) and len(data) > 0 and data[0].get('data_storage_used') == DataStorageUsed.AZURE.value:
+                result_json = data[0].get('result')
+                msg = self.parent.request(f"blobstream/delete/{result_json}", method="delete")
+                self.parent.log.info(f"--> {msg}")
+            else:
+                print("No result found")
             msg = self.parent.request(f"task/{id_}", method="delete")
+            
             self.parent.log.info(f"--> {msg}")
 
         def kill(self, id_: int) -> dict:
@@ -1984,6 +1993,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
+            
                 Message from the server
             """
             msg = self.parent.request("/kill/task", method="post", json={"id": id_})
@@ -2226,7 +2236,7 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             runs = self.parent.request("result", params={"task_id": task_id})                                     
-
+            self.parent.log.info("Received results from server: %s", runs) 
             results = self._decrypt_result(runs, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results

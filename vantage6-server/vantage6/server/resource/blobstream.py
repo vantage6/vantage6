@@ -41,7 +41,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         BlobStream,
         api_base + "/blobstream",
-        endpoint="blob_stream_without_id",
+        endpoint="result_stream_without_id",
         methods=("POST",),
         resource_class_kwargs=services,
     )
@@ -59,6 +59,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         api_base + "/blobstream/<string:id>",
         endpoint="blob_stream_with_id",
         methods=("GET",),
+        resource_class_kwargs=services,
+    )
+    
+    api.add_resource(
+        BlobStream,
+        api_base + "/blobstream/delete/<string:id>",
+        endpoint="blob_stream_delete_with_id",
+        methods=("DELETE",),
         resource_class_kwargs=services,
     )
 
@@ -259,8 +267,24 @@ class BlobStream(BlobStreamBase):
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
-
     
+    @only_for(("node", "user", "container"))
+    def delete(self, id):
+        if not self.storage_adapter:
+            log.warning(
+                "The large result store is not set to azure blob storage, result streaming is not available."
+            )
+            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+        try:
+            log.debug(f"Deleting result for run")
+            self.storage_adapter.delete_blob(id)
+        except Exception as e:
+            log.error(f"Error deleting result: {e}")
+            return {"msg": "Error deleting result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        return HTTPStatus.OK
+    
+
 class UwsgiChunkedStream:
     """
     Read data in chunks from uwsgi.

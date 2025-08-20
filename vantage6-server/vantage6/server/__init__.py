@@ -912,7 +912,8 @@ class ServerApp:
             try:
                 cleanup.cleanup_runs_data(
                     self.ctx.config.get("runs_data_cleanup_days"),
-                    include_input=include_input,
+                    self.ctx.config.get("large_result_store", {}),
+                    include_input=include_input                 
                 )
             except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")

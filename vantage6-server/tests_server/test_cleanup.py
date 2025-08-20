@@ -1,35 +1,56 @@
 import unittest
 
 from datetime import datetime, timedelta, timezone
+import uuid
+from unittest.mock import MagicMock, patch
 
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller import cleanup
 from vantage6.common.task_status import TaskStatus
+from vantage6.server.model import Task, Collaboration, Organization
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 
+        
 class TestCleanupRunsIsolated(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
 
+        self.azure_config = {"container_name": "test-container",
+                              "blob_service_client": patch("azure.storage.blob.BlobServiceClient").start(),
+          }
+        self.uuid = str(uuid.uuid4())
+
     def tearDown(self):
-        # clear_data() will clear session too
         Database().clear_data()
 
-    def test_cleanup_completed_old_run(self):
-        # Eligible: completed > 30 days ago
+
+    @patch("vantage6.server.model.task.Task")
+    def test_cleanup_completed_old_run(self, mock_task):
+        # Now use the actual instances, not ints
+        task = Task(
+            name="test-task",
+            description="Test task for cleanup",
+            image="test-image:latest",
+        )
+        self.session.add(task)
+        self.session.commit()
+
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
-            result="result",
+            result= self.uuid,
             input="input",
             log="log should be preserved",
             status=TaskStatus.COMPLETED,
+            task=task
         )
+
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
         self.session.refresh(run)
         self.assertEqual(run.result, "")
         self.assertEqual(run.input, "")
@@ -38,18 +59,19 @@ class TestCleanupRunsIsolated(unittest.TestCase):
 
     def test_no_cleanup_recent_completed_run(self):
         # Ineligible: completed, but not old enough
+
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=10),
-            result="result",
+            result=self.uuid,
             input="input",
             status=TaskStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
         self.session.refresh(run)
-        self.assertEqual(run.result, "result")
+        self.assertEqual(run.result, self.uuid)
         self.assertEqual(run.input, "input")
         self.assertIsNone(run.cleanup_at)
 
@@ -57,16 +79,16 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         # Ineligible: not COMPLETED, albeit old enough
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
-            result="result",
+            result=self.uuid,
             input="input",
             status=TaskStatus.FAILED,  # Not COMPLETED, so ineligible
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
         self.session.refresh(run)
-        self.assertEqual(run.result, "result")
+        self.assertEqual(run.result, self.uuid)
         self.assertEqual(run.input, "input")
         self.assertIsNone(run.cleanup_at)
 
@@ -74,14 +96,14 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         # Eligible: completed > 30 days ago
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=40),
-            result="result",
+            result=self.uuid,
             input="input",
             status=TaskStatus.COMPLETED,
         )
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, include_input=False)
+        cleanup.cleanup_runs_data(30, self.azure_config, include_input=False)
         self.session.refresh(run)
         self.assertEqual(run.result, "")
         self.assertEqual(run.input, "input")
@@ -93,6 +115,12 @@ class TestCleanupRunsCount(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
+        self.patcher = patch("vantage6.server.service.azure_storage_service.AzureStorageService")
+        self.patcher.connection_string = "sqlite://"
+        self.mock_azure_storage_service = self.patcher.start()
+        self.azure_config = {"container_name": "test-container",
+                              "blob_service_client": patch("azure.storage.blob.BlobServiceClient").start(),
+          }
 
     def tearDown(self):
         # clear_data() will clear session too
@@ -141,11 +169,12 @@ class TestCleanupRunsCount(unittest.TestCase):
         return run0, run1, run2, run3, run4, run5
 
     def test_cleanup_runs_count(self):
+
         # Insert runs into db
         runs = self.create_runs()
-
+        
         # clean up result and input from runs older than 30 days
-        cleanup.cleanup_runs_data(30, include_input=True)
+        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
 
         # db has been changed, refresh objects
         for run in runs:
@@ -171,3 +200,6 @@ class TestCleanupRunsCount(unittest.TestCase):
         for i in range(2, 6):
             self.assertEqual(runs[i].result, f"result{i}")
             self.assertEqual(runs[i].input, f"input{i}")
+
+
+
