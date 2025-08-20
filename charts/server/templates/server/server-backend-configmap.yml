@@ -6,14 +6,8 @@ metadata:
 data:
   config.yaml: |
     algorithm_stores: []
-    {{- if .Values.server.allow_drop_all }}
-    allow_drop_all: {{ .Values.server.allow_drop_all }}
-    {{- else }}
-    allow_drop_all: False
-    {{- end }}
     api_path: {{ .Values.server.apiPath }}
     description: {{ .Values.server.description }}
-    ip: 0.0.0.0
     {{- if .Values.server.jwt }}
     {{- if .Values.server.jwt.secret }}
     jwt_secret_key: {{ .Values.server.jwt.secret }}
@@ -41,15 +35,16 @@ data:
     {{- else }}
     uri: ""
     {{- end }}
-    rabbitmq:
-    {{- if .Values.server.rabbitmq_uri }}
-      uri: {{ .Values.server.rabbitmq_uri }}
-    {{- else if .Values.rabbitmq.username }}
-      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}
-    {{- else }}
-      uri: ""
+    {{- if .Values.server.cors_allowed_origins }}
+    cors_allowed_origins:
+      {{- range .Values.server.cors_allowed_origins }}
+      - {{ . }}
+      {{- end }}
     {{- end }}
-      start_with_server: false
+    {{- if .Values.rabbitmq }}
+    rabbitmq:
+      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}
+    {{- end }}
     {{- if .Values.server.dev.host_uri }}
     dev:
       host_uri: {{ .Values.server.dev.host_uri }}
@@ -66,4 +61,22 @@ data:
       - name: {{ .name }}
         url: {{ .url }}
       {{- end }}
+    {{- end }}
+    {{- if .Values.server.runs_data_cleanup_days }}
+    runs_data_cleanup_days: {{ .Values.server.runs_data_cleanup_days }}
+    {{- end }}
+    {{- if .Values.server.runs_data_cleanup_include_args }}
+    runs_data_cleanup_include_args: {{ .Values.server.runs_data_cleanup_include_args }}
+    {{- end }}
+    {{- if .Values.server.prometheus }}
+    {{- if .Values.server.prometheus.enabled }}
+    prometheus:
+      enabled: {{ .Values.server.prometheus.enabled }}
+      {{- if .Values.server.prometheus.start_with_server }}
+      start_with_server: {{ .Values.server.prometheus.start_with_server }}
+      {{- end }}
+      {{- if .Values.server.prometheus.exporter_port }}
+      exporter_port: {{ .Values.server.prometheus.exporter_port }}
+      {{- end }}
+    {{- end }}
     {{- end }}

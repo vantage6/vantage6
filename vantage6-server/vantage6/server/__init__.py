@@ -107,10 +107,11 @@ class ServerApp(Vantage6App):
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
 
-        if self.ctx.config.get("prometheus", {}).get("enabled", False):
+        prometheus_config = self.ctx.config.get("prometheus", {})
+        if prometheus_config.get("enabled", False):
             start_prometheus_exporter(
-                port=self.ctx.config.get(
-                    "prometheus_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
+                port=prometheus_config.get(
+                    "exporter_port", DEFAULT_PROMETHEUS_EXPORTER_PORT
                 )
             )
 
@@ -463,6 +464,5 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
         A running instance of the vantage6 server
     """
     ctx = ServerContext.from_external_config_file(config, system_folders)
-    allow_drop_all = ctx.config["allow_drop_all"]
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=allow_drop_all)
+    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
     return ServerApp(ctx).start()

@@ -28,16 +28,10 @@ server:
   # The number of replicas of the server
   replications: 1
 
-  # In production it is recommended to use a database that is not inside the k8s
-  # cluster. By default, a postgres database is created inside the k8s cluster.
-  # If you want to use an external database, you can set the database_uri here.
+  # # In production it is recommended to use a database that is not inside the k8s
+  # # cluster. By default, a postgres database is created inside the k8s cluster.
+  # # If you want to use an external database, you can set the database_uri here.
   # database_uri: postgresql://user:password@localhost:5432/mydatabase
-
-  # In production it is recommended to use an external RabbitMQ server (outside
-  # of k8s). By default, a RabbitMQ server is created inside the k8s cluster.
-  # If you want to use an external RabbitMQ server, you can set the rabbitmq_uri
-  # here.
-  # rabbitmq_uri: amqp://user:password@localhost:5672/myvhost
 
   # The image of the server
   image: harbor2.vantage6.ai/infrastructure/server:latest
@@ -69,17 +63,51 @@ server:
 
   dev:
     host_uri: host.docker.internal
-    drop_all: 'True'
     # This should be set to true if you are running the algorithm store in the same
     # cluster and namespace as the server
     store_in_local_cluster: false
 
-  # If you want to couple algorithm stores to the server on startup, you can add them here.
-  # The name is used to identify the algorithm store in the server's database.
-  # The url is the URL of the algorithm store's API.
+  # # If you want to couple algorithm stores to the server on startup, you can add them here.
+  # # The name is used to identify the algorithm store in the server's database.
+  # # The url is the URL of the algorithm store's API.
   # algorithm_stores:
   #   - name: local store
   #     url: http://localhost:7602/api
+
+  # Cleanup settings: This is used to cleanup the database from old results.
+  # Every hour, results older than the threshold for completed runs are deleted.
+  # Disabled unless you specify this option. Careful! Make sure you have regular
+  # backups of your database before enabling this feature, as a wrong configuration
+  # could lead to data loss.
+  runs_data_cleanup_days: 30
+  # Whether to also delete the algorithm arguments of the runs. False by default.
+  runs_data_cleanup_include_args: false
+
+  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+  # This is done using Prometheus. There are two components to this:
+  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+  #    the metrics from the nodes.
+  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
+  #     metrics exposed by the Prometheus exporter and stores them.
+  # The exporter is started by default when the server starts (if prometheus is enabled).
+  # The Prometheus server can be started separately.
+  prometheus:
+    # Set to true to enable Prometheus reporting. Default is false.
+    enabled: false
+    # # Set to true to start the Prometheus server when starting the server
+    # start_with_server: false
+    # # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+    # # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
+    # # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
+    # exporter_port: 7603
+
+  # # set up with which origins the server should allow CORS requests. The default
+  # # is to allow all origins. If you want to restrict this, you can specify a list
+  # # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # # port 7600 on localhost. Usually, only the UI needs to access the server.
+  # cors_allowed_origins:
+  #   - https://portal.cotopaxi.vantage6.ai
+  #   - http://localhost:7600
 
 rabbitmq:
   # The image of the RabbitMQ server
