@@ -9,8 +9,12 @@ from pathlib import Path
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import (
-    INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING, REQUEST_TIMEOUT,
-    DEFAULT_CHUNK_SIZE, DataStorageUsed
+    INTERVAL_MULTIPLIER,
+    MAX_INTERVAL,
+    STRING_ENCODING,
+    REQUEST_TIMEOUT,
+    DEFAULT_CHUNK_SIZE,
+    DataStorageUsed,
 )
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
@@ -518,21 +522,24 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
         self.__refresh_token = response.json()["refresh_token"]
 
-    def fetch_and_decrypt_run_data(self, run_data: str, 
-                    data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL) -> bytes:
+    def fetch_and_decrypt_run_data(
+        self,
+        run_data: str,
+        data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL,
+    ) -> bytes:
         """Fetch and decrypt the run data of an algorithm run
 
-        Decrypts the run's data (either input or result). 
-        If the data is stored in a blob storage, 
+        Decrypts the run's data (either input or result).
+        If the data is stored in a blob storage,
         data will be fetched using the UUID reference.
-        
+
         Parameters
         ----------
         run_data : str | bytes
             The run data to be fetched and decrypted. If it is a UUID, it will
             be used to download the data from blob storage.
         data_storage_used : DataStorageUsed, optional
-            The type of data storage used for the run data, 
+            The type of data storage used for the run data,
             by default DataStorageUsed.RELATIONAL
 
         Returns
@@ -547,18 +554,18 @@ class ClientBase(object):
         """
         if data_storage_used == DataStorageUsed.AZURE.value:
             # If blob storage is used, the data is a UUID reference to the blob
-            uuid = run_data 
+            uuid = run_data
             self.log.debug(f"Parsing uuid from input: {uuid}")
             if isinstance(uuid, bytes):
-                uuid = uuid.decode('utf-8')
-            uuid = uuid.strip('\'"')
+                uuid = uuid.decode("utf-8")
+            uuid = uuid.strip("'\"")
             try:
                 run_data = self.download_run_data_from_server(uuid)
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
         # Naming of this function is misleading, as it is also used to decrypt results
-        return self._decrypt_input(run_data) 
+        return self._decrypt_input(run_data)
 
     def _decrypt_input(self, input_: str | bytes) -> bytes:
         """Helper to decrypt the input of an algorithm run
@@ -617,7 +624,9 @@ class ClientBase(object):
             Data on the algorithm run(s) with decrypted input
         """
 
-        def _decrypt_and_decode(value: str, field: str, data_storage_used: DataStorageUsed) -> str:
+        def _decrypt_and_decode(
+            value: str, field: str, data_storage_used: DataStorageUsed
+        ) -> str:
             decrypted = self.fetch_and_decrypt_run_data(value, data_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
@@ -642,12 +651,16 @@ class ClientBase(object):
 
         if is_single_resource:
             if data.get(field):
-                data[field] = _decrypt_and_decode(data[field], field, data["data_storage_used"])
+                data[field] = _decrypt_and_decode(
+                    data[field], field, data["data_storage_used"]
+                )
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data["data"]:
                 if resource.get(field):
-                    resource[field] = _decrypt_and_decode(resource[field], field, resource["data_storage_used"])
+                    resource[field] = _decrypt_and_decode(
+                        resource[field], field, resource["data_storage_used"]
+                    )
         return data
 
     def __check_algorithm_store_valid(self, is_for_algorithm_store: bool) -> bool:
@@ -714,7 +727,9 @@ class ClientBase(object):
             time.sleep(interval)
             interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
 
-    def upload_run_data_to_server(self, run_data_bytes: bytes, pub_key: str | None = None) -> str | None:
+    def upload_run_data_to_server(
+        self, run_data_bytes: bytes, pub_key: str | None = None
+    ) -> str | None:
         """
         Upload run data (result or input) to the server in chunks.
 
@@ -723,7 +738,7 @@ class ClientBase(object):
         run_data_bytes : bytes
             The run data to upload (result or input) as bytes.
         pub_key : str | None, optional
-            Public key of the organization uploading the data. This is only required when 
+            Public key of the organization uploading the data. This is only required when
             streaming data from the algorithm container, since data is then streamed through
             the node proxy, and encryption takes place there chunk by chunk.
         Returns
@@ -739,20 +754,24 @@ class ClientBase(object):
             headers["X-Public-Key"] = pub_key
         url = self.generate_path_to("blobstream", False)
 
-        def chunked_run_data_stream(run_data: bytes, chunk_size: int = DEFAULT_CHUNK_SIZE):
+        def chunked_run_data_stream(
+            run_data: bytes, chunk_size: int = DEFAULT_CHUNK_SIZE
+        ):
             for i in range(0, len(run_data), chunk_size):
-                yield run_data[i:i + chunk_size]
+                yield run_data[i : i + chunk_size]
 
         try:
-            response = requests.post(url, data=chunked_run_data_stream(run_data_bytes), headers=headers)
+            response = requests.post(
+                url, data=chunked_run_data_stream(run_data_bytes), headers=headers
+            )
         except requests.RequestException as e:
             self.log.error(f"Error occurred while uploading blob stream: {e}")
-            raise requests.RequestException("Error occurred while uploading blob stream")
+            raise requests.RequestException(
+                "Error occurred while uploading blob stream"
+            )
 
         if not (200 <= response.status_code < 300):
-            self.log.error(
-                f"Failed to upload blob to server: {response.text}"
-            )
+            self.log.error(f"Failed to upload blob to server: {response.text}")
             return None
 
         run_data_uuid_response = response.json()
@@ -760,14 +779,12 @@ class ClientBase(object):
         if not run_data_uuid:
             self.log.error("Failed to upload run data to server")
             raise RuntimeError("Failed to get UUID from blobstream response")
-        self.log.info(
-            f"Run data uploaded to server with UUID: {run_data_uuid}"
-        )
+        self.log.info(f"Run data uploaded to server with UUID: {run_data_uuid}")
         return run_data_uuid
 
     def download_run_data_from_server(self, run_data_uuid) -> dict:
         """
-        Download run data (either input or result) 
+        Download run data (either input or result)
         from the server using its UUID.
 
         Parameters
@@ -800,29 +817,38 @@ class ClientBase(object):
         self.log.debug(f"Streaming run data from {url}")
         run_data = b""
         try:
-            with requests.get(url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT) as response:
+            with requests.get(
+                url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT
+            ) as response:
                 if response.status_code == 200:
                     self.log.debug(f"Successfully requested run data stream.")
                     for chunk in response.iter_content(chunk_size=DEFAULT_CHUNK_SIZE):
                         run_data += chunk
                 else:
-                    self.log.error(f"Failed to stream run data for uuid {run_data_uuid}. Status code: {response.status_code}")
+                    self.log.error(
+                        f"Failed to stream run data for uuid {run_data_uuid}. Status code: {response.status_code}"
+                    )
                     self.log.error(f"Response: {response.text}")
                     raise requests.RequestException(
                         f"Failed to stream run data for uuid {run_data_uuid}. Status code: {response.status_code}"
                     )
         except requests.RequestException as e:
-            self.log.error(f"An error occurred while streaming run data for uuid {run_data_uuid}: {e}")
-            raise requests.RequestException(f"An error occurred while streaming run data for uuid {run_data_uuid}", e)
+            self.log.error(
+                f"An error occurred while streaming run data for uuid {run_data_uuid}: {e}"
+            )
+            raise requests.RequestException(
+                f"An error occurred while streaming run data for uuid {run_data_uuid}",
+                e,
+            )
         return run_data
-        
+
     def check_if_blob_store_enabled(self):
         """
         Check if the blob store is enabled on the server.
         This function sends a request to the blob stream status endpoint
         and returns whether the blob store is enabled or not.
 
-        This is used so that the user does not need to be aware of storage 
+        This is used so that the user does not need to be aware of storage
         used at the server when uploading the first input in the client.
 
         Returns

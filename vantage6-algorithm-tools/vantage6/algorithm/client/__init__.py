@@ -14,6 +14,7 @@ from vantage6.common.globals import DataStorageUsed
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
 
+
 class AlgorithmClient(ClientBase):
     """
     Interface to communicate between the algorithm container and the central
@@ -124,7 +125,6 @@ class AlgorithmClient(ClientBase):
             Always.
         """
         return NotImplementedError("Algorithm containers cannot refresh their token!")
-
 
     def retrieve_results(self, task_id: int, interval: float = 1) -> None:
         """
@@ -292,18 +292,23 @@ class AlgorithmClient(ClientBase):
                 List of results. The type of the results depends on the
                 algorithm.
             """
+
             def decode_result(run):
                 result_data = run.get("result")
                 if not result_data:
                     return None
                 try:
                     if run.get("data_storage_used") == DataStorageUsed.AZURE.value:
-                        run_data = self.parent.download_run_data_from_server(result_data)
-                        return json.loads(run_data.decode('utf-8'))
+                        run_data = self.parent.download_run_data_from_server(
+                            result_data
+                        )
+                        return json.loads(run_data.decode("utf-8"))
                     else:
                         return json.loads(base64s_to_bytes(result_data).decode())
                 except Exception as e:
-                    self.parent.log.error(f"Unable to load results for task {task_id}: {e}")
+                    self.parent.log.error(
+                        f"Unable to load results for task {task_id}: {e}"
+                    )
                     return None
 
             results = self.parent._multi_page_request(
@@ -386,13 +391,21 @@ class AlgorithmClient(ClientBase):
                 serialized_input = serialize(input_)
                 blob_store_enabled = self.parent.check_if_blob_store_enabled()
                 for org_id in organizations:
-                    pub_key = self.parent.request(f"organization/{org_id}").get("public_key")
-                    self.parent.log.info(f"Using public key for organization {org_id}: {pub_key}")
+                    pub_key = self.parent.request(f"organization/{org_id}").get(
+                        "public_key"
+                    )
+                    self.parent.log.info(
+                        f"Using public key for organization {org_id}: {pub_key}"
+                    )
                     # If blob store is enabled, upload the input data to blob storage
                     # and set a UUID reference for the input.
                     if blob_store_enabled:
-                        self.parent.log.debug("Blob store is enabled, uploading input data to blob storage.")
-                        input_uuid = self.parent.upload_run_data_to_server(serialized_input, pub_key=pub_key)
+                        self.parent.log.debug(
+                            "Blob store is enabled, uploading input data to blob storage."
+                        )
+                        input_uuid = self.parent.upload_run_data_to_server(
+                            serialized_input, pub_key=pub_key
+                        )
                         org_input = input_uuid
                     else:
                         org_input = bytes_to_base64s(serialized_input)

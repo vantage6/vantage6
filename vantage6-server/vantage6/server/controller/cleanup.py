@@ -24,9 +24,11 @@ def cleanup_runs_data(days: int, azure_config, include_input: bool = False):
     """
     threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
     session = DatabaseSessionManager.get_session()
-    storage_adapter = AzureStorageService(container_name=azure_config.get("container_name"),
-                                          blob_service_client=azure_config.get("blob_service_client"), 
-                                          connection_string=azure_config.get("connection_string"))
+    storage_adapter = AzureStorageService(
+        container_name=azure_config.get("container_name"),
+        blob_service_client=azure_config.get("blob_service_client"),
+        connection_string=azure_config.get("connection_string"),
+    )
 
     if not days or days < 1:
         log.warning(
@@ -47,7 +49,10 @@ def cleanup_runs_data(days: int, azure_config, include_input: bool = False):
             )
 
             for run in runs:
-                if run.result is not None and run.data_storage_used == DataStorageUsed.AZURE:
+                if (
+                    run.result is not None
+                    and run.data_storage_used == DataStorageUsed.AZURE
+                ):
                     log.debug(f"Deleting blob: {run.result}")
                     storage_adapter.delete_blob(run.result)
                 run.result = ""
@@ -56,7 +61,6 @@ def cleanup_runs_data(days: int, azure_config, include_input: bool = False):
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")
 
-   
         log.info(
             "Cleanup job completed successfully, deleted %d old run results.", len(runs)
         )

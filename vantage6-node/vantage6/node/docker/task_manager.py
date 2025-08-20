@@ -30,6 +30,7 @@ from vantage6.node.docker.exceptions import (
     AlgorithmContainerNotFound,
 )
 
+
 class DockerTaskManager(DockerBaseManager):
     """
     Manager for running a vantage6 algorithm container within docker.

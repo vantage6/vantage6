@@ -11,7 +11,6 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent.parent
 SERVER_MODULE_NAME = APPNAME + "-algorithm-tools"
 
 
-
 class ConditionalArgComparator(str, Enum):
     """Enum containing allowed comparators for conditional arguments"""
 

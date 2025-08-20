@@ -211,10 +211,14 @@ class ServerApp:
 
         self.storage_adapter = None
         config = self.ctx.config.get("large_result_store", {})
-        store_type = DataStorageUsed(config.get("type", DataStorageUsed.RELATIONAL.value))
+        store_type = DataStorageUsed(
+            config.get("type", DataStorageUsed.RELATIONAL.value)
+        )
 
         if store_type != DataStorageUsed.AZURE:
-            log.info("No large result store configured, using relational database for input and result storage")
+            log.info(
+                "No large result store configured, using relational database for input and result storage"
+            )
             return
 
         log.info("Using Azure Blob Storage as large result store")
@@ -227,9 +231,7 @@ class ServerApp:
 
         if tenant_id and client_id and client_secret and storage_account_name:
             credential = ClientSecretCredential(
-                tenant_id=tenant_id,
-                client_id=client_id,
-                client_secret=client_secret
+                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
             )
             self.blob_service_client = BlobServiceClient(
                 account_url=f"https://{storage_account_name}.blob.core.windows.net/",
@@ -248,7 +250,9 @@ class ServerApp:
             )
             return
 
-        log.warning("Azure Blob Storage configuration is incomplete. Large result store not set up.")
+        log.warning(
+            "Azure Blob Storage configuration is incomplete. Large result store not set up."
+        )
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
@@ -569,11 +573,14 @@ class ServerApp:
             elif isinstance(data, RequestsResponse):
                 resp = make_response(data, code)
                 return resp
+
             # if the response is an enum, convert it to its value
             def enum_serializer(obj):
                 if isinstance(obj, enum.Enum):
                     return obj.value
-                raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+                raise TypeError(
+                    f"Object of type {obj.__class__.__name__} is not JSON serializable"
+                )
 
             resp = make_response(json.dumps(data, default=enum_serializer), code)
             if isinstance(headers, dict):
@@ -742,15 +749,14 @@ class ServerApp:
             "config": self.ctx.config,
         }
 
-        blobstream_services = {
-            "storage_adapter": self.storage_adapter,
-            **services
-        }
+        blobstream_services = {"storage_adapter": self.storage_adapter, **services}
         for res in RESOURCES:
             try:
                 module = importlib.import_module("vantage6.server.resource." + res)
                 if res in ["blobstream"]:
-                    module.setup(self.api, self.ctx.config["api_path"], blobstream_services)
+                    module.setup(
+                        self.api, self.ctx.config["api_path"], blobstream_services
+                    )
                 else:
                     module.setup(self.api, self.ctx.config["api_path"], services)
             except Exception as e:
@@ -913,7 +919,7 @@ class ServerApp:
                 cleanup.cleanup_runs_data(
                     self.ctx.config.get("runs_data_cleanup_days"),
                     self.ctx.config.get("large_result_store", {}),
-                    include_input=include_input                 
+                    include_input=include_input,
                 )
             except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")

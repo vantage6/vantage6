@@ -53,7 +53,7 @@ class TestClient(TestCase):
         mock_result = json.dumps({FAKE_ID: "some_value"}).encode()
 
         results = TestClient._receive_results_on_mock_client(mock_result)
-        result = results['data'][0]['result']
+        result = results["data"][0]["result"]
         assert result == '{"1": "some_value"}'
 
     def test_parse_arg_databases(self):
@@ -92,8 +92,9 @@ class TestClient(TestCase):
         mock_requests.post.return_value.status_code = 200
 
         mock_jwt = TestClient._create_mock_jwt()
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
-             patch("vantage6.common.client.client_base.requests", mock_requests):
+        with patch.multiple(
+            "vantage6.client", requests=mock_requests, jwt=mock_jwt
+        ), patch("vantage6.common.client.client_base.requests", mock_requests):
             client = TestClient.setup_client()
 
             client.task.create(
@@ -109,7 +110,9 @@ class TestClient(TestCase):
             # argument 'json'. call_args provides a tuple with positional
             # arguments followed by a dict with positional arguments
             post_content = mock_requests.post.call_args[1]["json"]
-            post_content["organizations"][0]["input"] = base64.b64encode(json.dumps(SAMPLE_INPUT).encode()).decode()
+            post_content["organizations"][0]["input"] = base64.b64encode(
+                json.dumps(SAMPLE_INPUT).encode()
+            ).decode()
 
             post_input = post_content["organizations"][0]["input"]
 
@@ -141,8 +144,9 @@ class TestClient(TestCase):
         mock_requests.get.return_value.json.side_effect = mock_result_response
         mock_requests.get.return_value.json.return_value = mock_result_response
 
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
-             patch("vantage6.common.client.client_base.requests", mock_requests):
+        with patch.multiple(
+            "vantage6.client", requests=mock_requests, jwt=mock_jwt
+        ), patch("vantage6.common.client.client_base.requests", mock_requests):
             client = TestClient.setup_client()
             client.request = MagicMock(return_value=mock_result_response)
 
@@ -162,9 +166,11 @@ class TestClient(TestCase):
             self.whoami.organization_id = FAKE_ID
             return {"token": "fake-token"}
 
-        with patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt), \
-             patch("vantage6.common.client.client_base.requests", mock_requests), \
-             patch("vantage6.client.UserClient.authenticate", new=mock_authenticate):
+        with patch.multiple(
+            "vantage6.client", requests=mock_requests, jwt=mock_jwt
+        ), patch("vantage6.common.client.client_base.requests", mock_requests), patch(
+            "vantage6.client.UserClient.authenticate", new=mock_authenticate
+        ):
             client = UserClient(f"http://{HOST}", PORT)
             client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
             client.setup_encryption(None)
@@ -176,5 +182,6 @@ class TestClient(TestCase):
         mock_jwt.decode.return_value = {"sub": FAKE_ID}
         return mock_jwt
 
+
 if __name__ == "__main__":
-     unittest.main()
+    unittest.main()

@@ -12,20 +12,21 @@ from vantage6.server.model import Task, Collaboration, Organization
 from vantage6.server.service.azure_storage_service import AzureStorageService
 
 
-        
 class TestCleanupRunsIsolated(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
 
-        self.azure_config = {"container_name": "test-container",
-                              "blob_service_client": patch("azure.storage.blob.BlobServiceClient").start(),
-          }
+        self.azure_config = {
+            "container_name": "test-container",
+            "blob_service_client": patch(
+                "azure.storage.blob.BlobServiceClient"
+            ).start(),
+        }
         self.uuid = str(uuid.uuid4())
 
     def tearDown(self):
         Database().clear_data()
-
 
     @patch("vantage6.server.model.task.Task")
     def test_cleanup_completed_old_run(self, mock_task):
@@ -40,11 +41,11 @@ class TestCleanupRunsIsolated(unittest.TestCase):
 
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
-            result= self.uuid,
+            result=self.uuid,
             input="input",
             log="log should be preserved",
             status=TaskStatus.COMPLETED,
-            task=task
+            task=task,
         )
 
         self.session.add(run)
@@ -115,12 +116,17 @@ class TestCleanupRunsCount(unittest.TestCase):
     def setUp(self):
         Database().connect("sqlite://", allow_drop_all=True)
         self.session = DatabaseSessionManager.get_session()
-        self.patcher = patch("vantage6.server.service.azure_storage_service.AzureStorageService")
+        self.patcher = patch(
+            "vantage6.server.service.azure_storage_service.AzureStorageService"
+        )
         self.patcher.connection_string = "sqlite://"
         self.mock_azure_storage_service = self.patcher.start()
-        self.azure_config = {"container_name": "test-container",
-                              "blob_service_client": patch("azure.storage.blob.BlobServiceClient").start(),
-          }
+        self.azure_config = {
+            "container_name": "test-container",
+            "blob_service_client": patch(
+                "azure.storage.blob.BlobServiceClient"
+            ).start(),
+        }
 
     def tearDown(self):
         # clear_data() will clear session too
@@ -172,7 +178,7 @@ class TestCleanupRunsCount(unittest.TestCase):
 
         # Insert runs into db
         runs = self.create_runs()
-        
+
         # clean up result and input from runs older than 30 days
         cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
 
@@ -200,6 +206,3 @@ class TestCleanupRunsCount(unittest.TestCase):
         for i in range(2, 6):
             self.assertEqual(runs[i].result, f"result{i}")
             self.assertEqual(runs[i].input, f"input{i}")
-
-
-

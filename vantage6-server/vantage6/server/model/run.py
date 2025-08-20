@@ -70,10 +70,8 @@ class Run(Base):
     # Native Enum will only be used in PostgreSQL, as it is not supported in SQLite.
     # This is handled automatically by SQLAlchemy.
     data_storage_used = Column(
-        Enum(DataStorageUsed, name="data_storage_used", native_enum=True),
-        nullable=True
+        Enum(DataStorageUsed, name="data_storage_used", native_enum=True), nullable=True
     )
-
 
     # relationships
     task = relationship("Task", back_populates="runs")

@@ -22,6 +22,7 @@ import uuid
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
+
 def setup(api: Api, api_base: str, services: dict) -> None:
     """
     Setup the run resource.
@@ -61,7 +62,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET",),
         resource_class_kwargs=services,
     )
-    
+
     api.add_resource(
         BlobStream,
         api_base + "/blobstream/delete/<string:id>",
@@ -69,6 +70,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("DELETE",),
         resource_class_kwargs=services,
     )
+
 
 # -----------------------------------------------------------------------------
 # Permissions
@@ -109,7 +111,7 @@ def permissions(permissions: PermissionManager):
 # ------------------------------------------------------------------------------
 class BlobStreamBase(ServicesResources):
     """
-    Base class for run resources that require a storage adapter. 
+    Base class for run resources that require a storage adapter.
     This class provides methods for streaming large results from the storage adapter.
     """
 
@@ -118,13 +120,17 @@ class BlobStreamBase(ServicesResources):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
+
 class BlobStreamStatus(BlobStreamBase):
     """
     Resource for /api/blobstream/status (GET)
     Returns whether the blob store is enabled.
     """
+
     def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
-        super().__init__(socketio, mail, api, permissions, config, storage_adapter=storage_adapter)
+        super().__init__(
+            socketio, mail, api, permissions, config, storage_adapter=storage_adapter
+        )
 
     @only_for(("node", "user", "container"))
     def get(self):
@@ -150,22 +156,26 @@ class BlobStreamStatus(BlobStreamBase):
         else:
             return {"blob_store_enabled": False}, HTTPStatus.CREATED
 
+
 class BlobStream(BlobStreamBase):
     """
     Resource for /api/blobstream/<id> (GET) and /api/blobstream (POST)
     This resource allows for streaming large results from blob Storage.
     """
+
     def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
-        super().__init__(socketio, mail, api, permissions, config, storage_adapter=storage_adapter)
+        super().__init__(
+            socketio, mail, api, permissions, config, storage_adapter=storage_adapter
+        )
 
     @only_for(("node", "user", "container"))
     def get(self, id):
-        """ Stream the result or input with the given id from blob storage.
+        """Stream the result or input with the given id from blob storage.
         ---
 
         description: >-
             Streams the result or input with the given id from blob storage.
-            
+
             ### Permission Table\n
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
             Description|\n
@@ -178,7 +188,7 @@ class BlobStream(BlobStreamBase):
             |Blob|Own|View|❌|❌|View any blob from a task created by you|\n
 
             Accessible to users.
-            
+
         responses:
           200:
             description: Ok
@@ -214,14 +224,12 @@ class BlobStream(BlobStreamBase):
         return Response(
             stream_with_context(generate()),
             content_type="application/octet-stream",
-            headers={
-                "Content-Disposition": f"attachment; filename=result_{id}.bin"
-            }
+            headers={"Content-Disposition": f"attachment; filename=result_{id}.bin"},
         )
-               
+
     @only_for(("node", "user", "container"))
     def post(self):
-        """ Post a result to the blob storage.
+        """Post a result to the blob storage.
         blobs are streamed directly to the blob storage.
         This is useful for large results that cannot be loaded into memory at once.
         ---
@@ -244,15 +252,15 @@ class BlobStream(BlobStreamBase):
         tags: ["Algorithm"]
         """
         if not self.storage_adapter:
-                log.warning(
-                    "The large result store is not set to blob storage, result streaming is not available."
-                )
-                return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+            log.warning(
+                "The large result store is not set to blob storage, result streaming is not available."
+            )
+            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
         result_uuid = str(uuid.uuid4())
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding
         try:
-            # Unfortunately, in the case of streams smaller than one chunk, 
+            # Unfortunately, in the case of streams smaller than one chunk,
             # reverse proxies like nginx will automatically remove the chunked transfer encoding.
             # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi
             # to a different server might solve this issue.
@@ -267,7 +275,7 @@ class BlobStream(BlobStreamBase):
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
-    
+
     @only_for(("node", "user", "container"))
     def delete(self, id):
         if not self.storage_adapter:
@@ -283,15 +291,16 @@ class BlobStream(BlobStreamBase):
             return {"msg": "Error deleting result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return HTTPStatus.OK
-    
+
 
 class UwsgiChunkedStream:
     """
     Read data in chunks from uwsgi.
     """
-    #TODO: Using uwsgi in python in combination with flask is not ideal.
+
+    # TODO: Using uwsgi in python in combination with flask is not ideal.
     # It would be better to switch to a different server in the long term.
-    # 
+    #
     def __init__(self, chunk_size=4096):
         """
         Initialize the UwsgiChunkedStream.

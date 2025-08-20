@@ -1854,7 +1854,7 @@ class UserClient(ClientBase):
 
             # Encrypt the input per organization using that organization's
             # public key.
-            
+
             organization_json_list = []
 
             blob_store_enabled = self.parent.check_if_blob_store_enabled()
@@ -1862,13 +1862,20 @@ class UserClient(ClientBase):
             self.parent.log.debug("Encrypting input for each organization")
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get(
-                    "public_key")
-                self.parent.log.debug("Public key for organization %s: %s", org_id, pub_key)
+                    "public_key"
+                )
+                self.parent.log.debug(
+                    "Public key for organization %s: %s", org_id, pub_key
+                )
                 # If a blob store is configured, store the data there and use a UUID reference in the input.
                 # In this case, base64 encoding of the message can be skipped since the data will never be part of a larger JSON object.
                 if blob_store_enabled:
-                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(serialized_input, pub_key, skip_base64_encoding_of_msg=True)
-                    organization_input = self.parent.upload_run_data_to_server(encrypted_input)
+                    encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_input, pub_key, skip_base64_encoding_of_msg=True
+                    )
+                    organization_input = self.parent.upload_run_data_to_server(
+                        encrypted_input
+                    )
                 else:
                     organization_input = self.parent.cryptor.encrypt_bytes_to_str(
                         serialized_input, pub_key
@@ -1967,16 +1974,22 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
-            run = self.parent.request("result", params={"task_id": id_}) 
-            data = run.get('data')
-            if isinstance(data, list) and len(data) > 0 and data[0].get('data_storage_used') == DataStorageUsed.AZURE.value:
-                result_json = data[0].get('result')
-                msg = self.parent.request(f"blobstream/delete/{result_json}", method="delete")
+            run = self.parent.request("result", params={"task_id": id_})
+            data = run.get("data")
+            if (
+                isinstance(data, list)
+                and len(data) > 0
+                and data[0].get("data_storage_used") == DataStorageUsed.AZURE.value
+            ):
+                result_json = data[0].get("result")
+                msg = self.parent.request(
+                    f"blobstream/delete/{result_json}", method="delete"
+                )
                 self.parent.log.info(f"--> {msg}")
             else:
                 print("No result found")
             msg = self.parent.request(f"task/{id_}", method="delete")
-            
+
             self.parent.log.info(f"--> {msg}")
 
         def kill(self, id_: int) -> dict:
@@ -1993,7 +2006,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-            
+
                 Message from the server
             """
             msg = self.parent.request("/kill/task", method="post", json={"id": id_})
@@ -2235,12 +2248,12 @@ class UserClient(ClientBase):
             """
             self.parent.log.info("--> Attempting to decrypt results!")
 
-            runs = self.parent.request("result", params={"task_id": task_id})                                     
-            self.parent.log.info("Received results from server: %s", runs) 
+            runs = self.parent.request("result", params={"task_id": task_id})
+            self.parent.log.info("Received results from server: %s", runs)
             results = self._decrypt_result(runs, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return results
-        
+
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
             Wrapper function to decrypt and deserialize the result of one or

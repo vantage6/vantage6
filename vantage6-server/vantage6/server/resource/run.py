@@ -36,7 +36,6 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-
 def setup(api: Api, api_base: str, services: dict) -> None:
     """
     Setup the run resource.
@@ -83,6 +82,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET",),
         resource_class_kwargs=services,
     )
+
 
 # Schemas
 run_schema = RunSchema()

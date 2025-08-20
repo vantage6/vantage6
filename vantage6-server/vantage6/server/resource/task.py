@@ -761,7 +761,11 @@ class Tasks(TaskBase):
         # to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
         # send encrypted input.
-        data_storage_used = DataStorageUsed(config.get("large_result_store", {}).get("type", DataStorageUsed.RELATIONAL.value))
+        data_storage_used = DataStorageUsed(
+            config.get("large_result_store", {}).get(
+                "type", DataStorageUsed.RELATIONAL.value
+            )
+        )
 
         log.debug(f"storing in: {data_storage_used}")
         is_valid_input, error_msg = Tasks._check_input(
@@ -846,7 +850,7 @@ class Tasks(TaskBase):
                 organization=organization,
                 input=input_,
                 status=TaskStatus.PENDING,
-                data_storage_used=data_storage_used
+                data_storage_used=data_storage_used,
             )
             run.save()
 
@@ -945,10 +949,12 @@ class Tasks(TaskBase):
                     if org and g.user.organization_id == org.id:
                         return False
         return has_limitations
-    
+
     @staticmethod
     def _check_input(
-        organizations_json_list: list[dict], collaboration: db.Collaboration, data_storage_used: DataStorageUsed
+        organizations_json_list: list[dict],
+        collaboration: db.Collaboration,
+        data_storage_used: DataStorageUsed,
     ) -> tuple[bool, str]:
         """
         Check if the input is valid for the collaboration. If the collaboration
@@ -975,11 +981,9 @@ class Tasks(TaskBase):
             return Tasks.check_input_uuid(organizations_json_list)
         else:
             return Tasks._check_input_encryption(organizations_json_list, collaboration)
-        
+
     @staticmethod
-    def check_input_uuid(
-        organizations_json_list: list[dict]
-    ) -> tuple[bool, str]:
+    def check_input_uuid(organizations_json_list: list[dict]) -> tuple[bool, str]:
         """
         Check if the input is a valid uuid for all collaborations.
         Parameters

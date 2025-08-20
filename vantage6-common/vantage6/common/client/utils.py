@@ -1,6 +1,7 @@
 import qrcode
 import uuid
 
+
 def print_qr_code(json_data: dict) -> None:
     """
     Print the QR code for 2fa with additional info of how to use it.

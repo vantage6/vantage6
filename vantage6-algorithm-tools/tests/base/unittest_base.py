@@ -32,7 +32,6 @@ class TestResources(unittest.TestCase):
         # unset session.session
         AlgorithmClient.clear_session()
 
-    
 
 class MockResponse:
     def __init__(self, json_data=None, status_code=200):
@@ -43,8 +42,6 @@ class MockResponse:
 
     def json(self):
         return self.json_data
-
-
 
 
 class TestContext(AppContext):
