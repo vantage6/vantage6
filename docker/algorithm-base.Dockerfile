@@ -1,7 +1,5 @@
 FROM python:3.10-slim-bookworm
 
-ARG TAG=latest
-
 LABEL version=${TAG}
 LABEL maintainer="F.C. Martin <f.martin@iknl.nl>"
 
