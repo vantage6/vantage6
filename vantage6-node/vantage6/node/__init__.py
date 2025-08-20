@@ -775,10 +775,14 @@ class Node:
         if kill_list:
             kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
         killed_algos = self.k8s_container_manager.kill_tasks(kill_list=kill_list)
-        # update status of killed tasks
+        # update logs of killed tasks. Note that the status is already set to KILLED
+        # by the server.
         for killed_algo in killed_algos:
             self.client.run.patch(
-                id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
+                id_=killed_algo.run_id,
+                data={
+                    "log": killed_algo.logs,
+                },
             )
         return killed_algos
 

@@ -686,9 +686,24 @@ class Run(SingleRunBase):
             }, HTTPStatus.UNAUTHORIZED
 
         if run.finished_at is not None:
-            return {
-                "msg": "Cannot update an already finished algorithm run!"
-            }, HTTPStatus.BAD_REQUEST
+            # For killed runs, allow updating only the logs. This is allowed because
+            # finished_at is by the server to the time the run was killed, but then the
+            # node can still send logs. For all other statuses, we do not allow
+            # updating the run when it is done.
+            if run.status == RunStatus.KILLED.value:
+                # check if only log is provided
+                if len(data) > 1 or data.get("log") is None:
+                    return {
+                        "msg": "Only the log can be updated for a killed run!"
+                    }, HTTPStatus.BAD_REQUEST
+                # update the log
+                run.log = data.get("log")
+                run.save()
+                return run_schema.dump(run, many=False), HTTPStatus.OK
+            else:
+                return {
+                    "msg": "Cannot update an already finished algorithm run!"
+                }, HTTPStatus.BAD_REQUEST
 
         run.started_at = parse_datetime(data.get("started_at"), run.started_at)
         run.finished_at = parse_datetime(data.get("finished_at"))
