@@ -6,7 +6,6 @@ node:
   # externally)
   createSecrets: true
 
-
   name: put-your-node-name-here
   apiKey: put-your-api-key-here
 
@@ -22,18 +21,67 @@ node:
 
   image: harbor2.vantage6.ai/infrastructure/node:latest
 
-  logging:
-    level: INFO
+  # Namespace in which the task kubernetes resources are created. This must be a
+  # namespace where the node has access to create pods.
+  taskNamespace: vantage6-tasks
 
+  # Kubernetes node name, used for local persistent volumes
+  k8sNodeName: docker-desktop
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
+
+    # Location to the log file
+    file: server.log
+
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
+
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
+
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+  encryption:
+    # Whether encryption is enabled or not. This should be the same as the `encrypted`
+    # setting of the collaboration to which this node belongs.
+    enabled: false
+
+    # Location to the private key file. Required if encryption is enabled.
+    # private_key: /path/to/private_key.pem
+
+  # Port for the node proxy to run on
   proxyPort: 7654
 
-  # Persistence configuration, these settings are both used for the file based databases
-  # and the task directory.
+  # Storage settings on host of the node machine. This defines where the database is
+  # stored as well as the task directory (which will contain the input/output of the
+  # tasks).
   persistence:
     tasks:
       storageClass: local-storage
       size: 10Gi
-      hostPath: /tmp/vantage6/tasks
+      hostPath: /path/to/where/task/files/are/stored
     database:
       storageClass: local-storage
       size: 5Gi
@@ -60,7 +108,6 @@ node:
   databases:
     fileBased:
     - name: default
-      # /run/desktop/
       uri: /mnt/data/olympic_athletes_2016.csv
       type: csv
       volumePath: /mnt/data
@@ -78,9 +125,77 @@ node:
         USER: vantage6
         PASSWORD: vantage6
 
-  # Kubernetes configuration
-  taskNamespace: vantage6-tasks
+  # Whether or not your node shares some configuration (e.g. which images are
+  # allowed to run on your node) with the central server. This can be useful
+  # for other organizations in your collaboration to understand why a task
+  # is not completed. Obviously, no sensitive data is shared. Default true
+  share_config: true
 
-  # Kubernetes node name, used for local persistent volumes
-  k8sNodeName: docker-desktop
+  # Whether or not to share algorithm logs with the server. Otherwise they will
+  # only be displayed as part of the node logs. Default is true.
+  # NOTE: It's recommented to set this to false when using sensitive data
+  share_algorithm_logs: true
 
+
+  # Define who is allowed to run which algorithms on this node.
+  policies:
+    # Control which algorithm images are allowed to run on this node. This is
+    # expected to be a valid regular expression. If you don't specify this, all algorithm
+    # images are allowed to run on this node (unless other policies restrict this).
+    allowed_algorithms:
+      - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+      - ^myalgorithm\.ai/some-algorithm
+
+    # It is also possible to allow all algorithms from particular algorithm stores. Set
+    # these stores here. They may be strings or regular expressions. If you don't specify
+    # this, algorithms from any store are allowed (unless other policies prevent this).
+    allowed_algorithm_stores:
+      # allow all algorithms from the vantage6 community store
+      - https://store.cotopaxi.vantage6.ai
+      # allow any store that is a subdomain of vantage6.ai
+      - ^https://[a-z]+\.vantage6\.ai$
+
+    # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+    # choose to only allow algorithms that both policies allow, or you can allow
+    # algorithms that either of them allows. By default, only algorithms that are given
+    # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
+    # setting this to the default value `false`.
+    allow_either_whitelist_or_store: false
+
+    # Define which users are allowed to run algorithms on your node by their ID
+    allowed_users:
+      - 2
+    # Define which organizations are allowed to run images on your node by
+    # their ID or name
+    allowed_organizations:
+      - 6
+      - root
+
+    # Set to true to always require that the algorithm image is successfully pulled. This
+    # ensures that no potentially outdated local images are used if internet connection
+    # is not available. This option should be set to false if you are testing with local
+    # algorithm images. Default value is true.
+    require_algorithm_pull: true
+
+  # Prometheus settings, for sending system metadata to the server.
+  prometheus:
+    # Whether or not to enable Prometheus reporting. Default is false.
+    enabled: false
+
+    # Interval (in seconds) at which the node sends system metadata to the server.
+    # This should align with the Prometheus scrape_interval to avoid stale data.
+    report_interval_seconds: 45
+
+  # Debug settings
+  debug:
+    # Set to `true` to enable print debug messages from Flask/socketio.
+    socketio: false
+
+    # Set to `true` to set the Flask app used for proxy service into debug mode.
+    proxy_server: false
+
+  # dev:
+  #   # Set extension for the task directory. In the development environment, the task
+  #   # directory is mounted as a volume. If multiple nodes are then running on the same
+  #   # machine, this extension is added to the task directory to avoid conflicts.
+  #   task_dir_extension: my_node_1

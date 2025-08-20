@@ -61,8 +61,6 @@ server:
       name: engineio.server
     - level: warning
       name: sqlalchemy.engine
-    - level: warning
-      name: requests_oauthlib.oauth2_session
 
   # In case you want to use a static secret key for the JWT token. Setting this is not
   # recommended for production environments.

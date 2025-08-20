@@ -8,7 +8,7 @@ spec:
 {{ include "node.matchLabels" . | indent 4 }}
     component: node
   ports:
-  # If numberOfNodes and and nodeProxyStartingPortNumber, a dev environment (devspace) 
+  # If numberOfNodes and and nodeProxyStartingPortNumber, a dev environment (devspace)
   # and multiple ports must be enabled
 {{- if and (hasKey .Values.node "numberOfNodes") (hasKey .Values.node "nodeProxyStartingPortNumber") }}
   {{- $start := int .Values.node.nodeProxyStartingPortNumber }}
@@ -26,4 +26,3 @@ spec:
       port: {{ .Values.node.proxyPort }}
       targetPort: {{ .Values.node.proxyPort }}
 {{- end }}
-
