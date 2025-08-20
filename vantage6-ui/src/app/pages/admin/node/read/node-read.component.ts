@@ -193,7 +193,9 @@ export class NodeReadComponent implements OnInit, OnDestroy {
       .subscribe(async (result) => {
         if (result === ConfirmDialogOption.PRIMARY) {
           this.killNodeTasks();
-          this.snackBarService.showMessage(this.translateService.instant('node-edit.kill-tasks-dialog.success'));
+          this.snackBarService.showMessage(
+            this.translateService.instant('node-edit.kill-tasks-dialog.success', { name: this.selectedNode?.name })
+          );
         }
       });
   }

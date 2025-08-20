@@ -61,6 +61,7 @@ from vantage6.node.globals import (
     TIME_LIMIT_RETRY_CONNECT_NODE,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
+from vantage6.node.k8s.data_classes import ToBeKilled
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
 
@@ -771,9 +772,9 @@ class Node:
 
         # kill specific task if specified, else kill all algorithms
         kill_list = kill_info.get("kill_list")
-        killed_algos = self.k8s_container_manager.kill_tasks(
-            org_id=self.client.whoami.organization_id, kill_list=kill_list
-        )
+        if kill_list:
+            kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
+        killed_algos = self.k8s_container_manager.kill_tasks(kill_list=kill_list)
         # update status of killed tasks
         for killed_algo in killed_algos:
             self.client.run.patch(
