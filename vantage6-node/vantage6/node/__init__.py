@@ -61,6 +61,7 @@ from vantage6.node.globals import (
     TIME_LIMIT_RETRY_CONNECT_NODE,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
+from vantage6.node.k8s.data_classes import ToBeKilled
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
 
@@ -757,35 +758,33 @@ class Node:
             List of dictionaries with information on killed task (keys:
             run_id, task_id and parent_id)
         """
-        # if kill_info["collaboration_id"] != self.client.collaboration_id:
-        #     self.log.debug(
-        #         "Not killing tasks as this node is in another collaboration."
-        #     )
-        #     return []
-        # elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
-        #     self.log.debug(
-        #         "Not killing tasks as instructions to kill tasks were directed"
-        #         " at another node in this collaboration."
-        #     )
-        #     return []
+        if kill_info["collaboration_id"] != self.client.collaboration_id:
+            self.log.debug(
+                "Not killing tasks as this node is in another collaboration."
+            )
+            return []
+        elif "node_id" in kill_info and kill_info["node_id"] != self.client.whoami.id_:
+            self.log.debug(
+                "Not killing tasks as instructions to kill tasks were directed"
+                " at another node in this collaboration."
+            )
+            return []
 
-        # # kill specific task if specified, else kill all algorithms
-        # kill_list = kill_info.get("kill_list")
-        # killed_algos = self.__docker.kill_tasks(
-        #     org_id=self.client.whoami.organization_id, kill_list=kill_list
-        # )
-        # # update status of killed tasks
-        # for killed_algo in killed_algos:
-        #     self.client.run.patch(
-        #         id_=killed_algo.run_id, data={"status": RunStatus.KILLED}
-        #     )
-        # return killed_algos
-        # TODO (HC) Implement using k8s container manager
-        print(
-            ">>>>>>>Here I'm supposed to kill a runnin job pod given this info: "
-            f"{json.dumps(kill_info, indent=4)}"
-        )
-        return []
+        # kill specific task if specified, else kill all algorithms
+        kill_list = kill_info.get("kill_list")
+        if kill_list:
+            kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
+        killed_algos = self.k8s_container_manager.kill_tasks(kill_list=kill_list)
+        # update logs of killed tasks. Note that the status is already set to KILLED
+        # by the server.
+        for killed_algo in killed_algos:
+            self.client.run.patch(
+                id_=killed_algo.run_id,
+                data={
+                    "log": killed_algo.logs,
+                },
+            )
+        return killed_algos
 
     def share_node_details(self) -> None:
         """
@@ -842,14 +841,17 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
-        # TODO add try/catch for all cleanups so that if one fails, the others are
-        # still executed
-        if hasattr(self, "socketIO") and self.socketIO:
-            self.socketIO.disconnect()
+        try:
+            if hasattr(self, "socketIO") and self.socketIO:
+                self.socketIO.disconnect()
+        except Exception as e:
+            self.log.exception("Error while disconnecting from socketIO: %s", e)
 
-        # TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
-        # if hasattr(self, "_Node__docker") and self.__docker:
-        #    self.__docker.cleanup()
+        try:
+            if hasattr(self, "k8s_container_manager"):
+                self.k8s_container_manager.cleanup()
+        except Exception as e:
+            self.log.exception("Error while cleaning up k8s container manager: %s", e)
 
         self.log.info("Bye!")
 

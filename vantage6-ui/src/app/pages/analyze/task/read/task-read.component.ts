@@ -310,8 +310,12 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     );
   }
 
-  isActive(status: TaskStatus): boolean {
-    return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
+  isActiveRun(run: TaskRun): boolean {
+    return run.status === TaskStatus.Pending || run.status === TaskStatus.Initializing || run.status === TaskStatus.Active;
+  }
+
+  isActiveTask(): boolean {
+    return this.task?.runs.some((run) => this.isActiveRun(run)) || false;
   }
 
   openLog(run: TaskRun): void {

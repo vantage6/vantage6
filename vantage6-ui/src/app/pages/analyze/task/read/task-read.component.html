@@ -32,9 +32,7 @@
           <button actions mat-raised-button (click)="openLog(run)">
             {{ "task-run.show-log" | translate }}
           </button>
-          <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
-            "task-run.alert-node-offline" | translate
-          }}</span>
+          <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run)">{{ "task-run.alert-node-offline" | translate }}</span>
         </app-status-info>
       </div>
       <div *ngIf="childTasks.length > 0">
@@ -57,9 +55,7 @@
             <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
-            <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
-              "task-run.alert-node-offline" | translate
-            }}</span>
+            <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run)">{{ "task-run.alert-node-offline" | translate }}</span>
           </app-status-info>
         </div>
         <button
@@ -71,7 +67,7 @@
           {{ (showAllChildTasks ? "general.show_less" : "general.show_more") | translate }}
         </button>
       </div>
-      <mat-card-actions *ngIf="canKill && isActive(task.status)">
+      <mat-card-actions *ngIf="canKill && isActiveTask()">
         <button mat-flat-button color="warn" (click)="handleTaskKill()">
           {{ "task-read.card-status.actions.kill" | translate }}
         </button>

@@ -42,4 +42,5 @@ class KilledRun(NamedTuple):
 
     run_id: int
     task_id: int
-    parent_id: int
+    parent_id: int | None
+    logs: str

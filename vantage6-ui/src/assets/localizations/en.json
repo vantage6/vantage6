@@ -875,7 +875,13 @@
   "node-edit": {
     "actions": {
       "edit": "Change name",
-      "new-api-key": "Reset API key"
+      "new-api-key": "Reset API key",
+      "killTasks": "Kill current tasks"
+    },
+    "kill-tasks-dialog": {
+      "title": "Are you sure you want to kill all tasks currently running on node '{{name}}'?",
+      "content": "This may disturb analyses run by other users. This operation cannot be undone.",
+      "success": "The node '{{name}}' has been instructed to kill all tasks."
     }
   },
   "task-status": {

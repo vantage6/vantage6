@@ -77,6 +77,11 @@ export class TaskService {
     await this.apiService.postForApi('/kill/task', killTaskParams);
   }
 
+  async killNodeTasks(nodeId: number): Promise<void> {
+    const killTaskParams = { id: nodeId };
+    await this.apiService.postForApi('/kill/node/tasks', killTaskParams);
+  }
+
   // async getTemplateTasks(): Promise<TemplateTask[]> {
   //   //TODO: Remove mock data when template tasks are implemented in backend
   //   return [mockDataQualityTemplateTask, mockDataCrossTabTemplateTask];
