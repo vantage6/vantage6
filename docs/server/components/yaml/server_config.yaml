@@ -17,12 +17,6 @@ server_url: https://cotopaxi.vantage6.ai
 # Example for running the server locally with default settings:
 # server_url: http://localhost:7601
 
-# The URI to the server database. This should be a valid SQLAlchemy URI,
-# e.g. for a SQLite database: sqlite:///database-name.sqlite,
-# or Postgres: postgresql://username:password@172.17.0.1/database).
-# Note that SQLite is not recommended for production use.
-uri: sqlite:///test.sqlite
-
 # The secret key used to generate JWT authorization tokens. This should
 # be kept secret as others are able to generate access tokens if they
 # know this secret. This parameter is optional. In case it is not

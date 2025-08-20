@@ -279,6 +279,7 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
+          api_path: /store
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
@@ -291,11 +292,11 @@ deployments:
             uri: http://localhost:7601/server
           policies:
             allowLocalhost: true
-            disable_review: true
-            review_own_algorithm: true
             assignReviewOwnAlgorithm: true
           dev:
             host_uri: ${HOST_URI}
+            disable_review: true
+            review_own_algorithm: true
 
         # This is the location of the database on the host system. In case you are using
         # Windows in combination with WSL, you should put a path here that is accessible

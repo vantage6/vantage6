@@ -37,13 +37,28 @@ server:
   image: harbor2.vantage6.ai/infrastructure/server:latest
 
   logging:
-    level: INFO
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
+
+    # Location to the log file
     file: server.log
+
+    # Size in kb of a single log file
     max_size: 1024
     use_console: true
+
+    # Date format for the log file
     datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
     backup_count: 5
+
+    # Loggers to include in the log file
     loggers:
     - level: warning
       name: urllib3

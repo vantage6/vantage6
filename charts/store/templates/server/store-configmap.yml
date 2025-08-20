@@ -5,40 +5,58 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yaml: |
-    allow_drop_all: 'True'
-    api_path: /store
-    description: 'Vantage store version 5'
-    ip: 0.0.0.0
+    api_path: {{ .Values.store.api_path }}
+    description: {{ .Values.store.description }}
     logging:
-      backup_count: 5
-      datefmt: '%Y-%m-%d %H:%M:%S'
-      file: k8s.log
-      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-      level: DEBUG
+      backup_count: {{ .Values.store.logging.backup_count }}
+      datefmt: {{ .Values.store.logging.datefmt | quote }}
+      file: {{ .Values.store.logging.file }}
+      format: {{ .Values.store.logging.format | quote }}
+      level: {{ .Values.store.logging.level }}
       loggers:
-      - level: warning
-        name: urllib3
-      - level: warning
-        name: socketIO-client
-      - level: warning
-        name: socketio.server
-      - level: warning
-        name: engineio.server
-      - level: warning
-        name: sqlalchemy.engine
-      - level: warning
-        name: requests_oauthlib.oauth2_session
-      max_size: 1024
-      use_console: true
+      {{- range .Values.store.logging.loggers }}
+      - level: {{ .level }}
+        name: {{ .name }}
+      {{- end }}
+      max_size: {{ .Values.store.logging.max_size }}
+      use_console: {{ .Values.store.logging.use_console }}
+    {{- if .Values.store.policies }}
     policies:
+      {{- if .Values.store.policies.algorithmView }}
       algorithm_view: {{ .Values.store.policies.algorithmView }}
+      {{- end }}
+      {{- if .Values.store.policies.minReviewers }}
       min_reviewers: {{ .Values.store.policies.minReviewers }}
+      {{- end }}
+      {{- if .Values.store.policies.minReviewingOrganizations }}
       min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
+      {{- end }}
+      {{- if .Values.store.policies.assignReviewOwnAlgorithm }}
       assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
+      {{- end }}
+      {{- if .Values.store.policies.allowedReviewers }}
+      allowed_reviewers:
+        {{- range .Values.store.policies.allowedReviewers }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.store.policies.allowedReviewAssigners }}
+      allowed_review_assigners:
+        {{- range .Values.store.policies.allowedReviewAssigners }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.store.cors_allowed_origins }}
+    cors_allowed_origins:
+      {{- range .Values.store.cors_allowed_origins }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
     dev:
       host_uri: {{ .Values.store.dev.host_uri }}
-      disable_review: {{ .Values.store.policies.dev.disable_review }}
-      review_own_algorithm: {{ .Values.store.policies.dev.review_own_algorithm }}
+      disable_review: {{ .Values.store.dev.disable_review }}
+      review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
     port: {{ .Values.store.internal.port }}
     root_user:
       username: {{ .Values.store.keycloakAdminUsername }}

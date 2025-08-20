@@ -3,6 +3,11 @@
 store:
   replications: 1
 
+  # The description of the store
+  description: Vantage algorithm store version 5
+
+  api_path: /store
+
   # Keycloak configuration
   keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
@@ -12,17 +17,42 @@ store:
   keycloakAdminClientSecret: myadminclientsecret
 
   policies:
+    # Set who is allowed to view the algorithms in the store. Possible values are:
+    # - "public": everyone can view the algorithms
+    # - "authenticated": users with a token valid for this store can view the algorithms
+    # - "private": only users with explicit permission in the algorithm store can view the
+    #   algorithms
     algorithmView: public
-    allowLocalhost: false
+
+    # Set the minimum number of reviewers that need to approve an algorithm before it
+    # is available in the store. In case this number is lower than min_reviewing_organizations,
+    # the min_reviewing_organizations still has to be met to proceed with the review process.
     minReviewers: 2
-    minReviewingOrganizations: 2
+
+    # Define whether or not developers are able to assign reviewers to their own algorithms.
     assignReviewOwnAlgorithm: false
 
-    # TODO v5+ change these unsafe policies to false - but I couldn't get them to work
-    # from devspace then
-    dev:
-      disable_review: true
-      review_own_algorithm: true
+    # Define the minimum amount of organizations that must be involved in the review process.
+    minReviewingOrganizations: 2
+
+    # # Specify the users that are allowed to review algorithms. This is a list of usernames
+    # # that identify unique users. This policy works in combination with the permission
+    # # system. If this policy is not set, all users with the right permissions are allowed
+    # # to review algorithms.
+    # allowedReviewers:
+    #   - some_username
+
+    # # Specify the users that are allowed to assign reviews. This is a list of usernames
+    # # that identify unique users. This policy works in combination with the permission
+    # # system. If this policy is not set, all users with the right permissions are allowed
+    # # to assign reviews.
+    # allowedReviewAssigners:
+    #   - some_username
+
+  dev:
+    host_uri: host.docker.internal
+    disable_review: false
+    review_own_algorithm: false
 
     # TODO v5+ implement the following list policies to be default all allowed unless
     # specified otherwise
@@ -37,11 +67,47 @@ store:
     port: 7602
 
   logging:
-    level: INFO
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
 
-  # TODO: merge the dev section with policies.dev?
-  dev:
-    host_uri: host.docker.internal
+    # Location to the log file
+    file: server.log
+
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
+
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
+
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+  # # set up with which origins the server should allow CORS requests. The default
+  # # is to allow all origins. If you want to restrict this, you can specify a list
+  # # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # # port 7600 on localhost. Usually, only the UI needs to access the server.
+  # cors_allowed_origins:
+  #   - https://portal.cotopaxi.vantage6.ai
+  #   - http://localhost:7600
 
 database:
   # The image of the database
