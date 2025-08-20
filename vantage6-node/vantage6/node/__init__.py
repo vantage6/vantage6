@@ -841,14 +841,17 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
-        # TODO add try/catch for all cleanups so that if one fails, the others are
-        # still executed
-        if hasattr(self, "socketIO") and self.socketIO:
-            self.socketIO.disconnect()
+        try:
+            if hasattr(self, "socketIO") and self.socketIO:
+                self.socketIO.disconnect()
+        except Exception as e:
+            self.log.exception("Error while disconnecting from socketIO: %s", e)
 
-        # TODO To be re-enabled once the cleanup method is implemented for the k8s container maanger
-        # if hasattr(self, "_Node__docker") and self.__docker:
-        #    self.__docker.cleanup()
+        try:
+            if hasattr(self, "k8s_container_manager"):
+                self.k8s_container_manager.cleanup()
+        except Exception as e:
+            self.log.exception("Error while cleaning up k8s container manager: %s", e)
 
         self.log.info("Bye!")
 

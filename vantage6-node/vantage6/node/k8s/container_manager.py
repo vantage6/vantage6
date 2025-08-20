@@ -33,6 +33,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.context.node import NodeContext
 
+from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
     DATABASE_BASE_PATH,
     DEFAULT_PROXY_SERVER_PORT,
@@ -1511,17 +1512,12 @@ class ContainerManager:
             encoded_environment_variables[key] = _encode(str(val))
         return encoded_environment_variables
 
-    # def cleanup(self) -> None:
-    #     """
-    #     Stop all active tasks and delete the isolated network
-
-    #     Note: the temporary docker volumes are kept as they may still be used
-    #     by a parent container
-    #     """
-    #     # note: the function `cleanup_tasks` returns a list of tasks that were
-    #     # killed, but we don't register them as killed so they will be run
-    #     # again when the node is restarted
-    #     pass
+    def cleanup(self) -> None:
+        """
+        Cleanup kubernetes resources created by the node
+        """
+        # kill all running jobs
+        self._kill_tasks()
 
     # def login_to_registries(self, registries: list = []) -> None:
     #     """
@@ -1567,7 +1563,11 @@ class ContainerManager:
 
         return killed_runs
 
-    def _kill_tasks(self, kill_list: list[ToBeKilled] = None) -> list[KilledRun]:
+    def _kill_tasks(
+        self,
+        kill_list: list[ToBeKilled] = None,
+        initiator: KillInitiator = KillInitiator.USER,
+    ) -> list[KilledRun]:
         """
         Kill tasks specified by a kill list, if they are currently running on
         this node
@@ -1607,7 +1607,7 @@ class ContainerManager:
         killed_list: list[KilledRun] = []
         for job in current_jobs.items:
             if self._job_should_be_killed(job, kill_list):
-                killed_run = self._kill_job(job)
+                killed_run = self._kill_job(job, initiator)
                 killed_list.append(killed_run)
 
         # log warnings if jobs should be killed but are not found
@@ -1652,7 +1652,9 @@ class ContainerManager:
             for container_to_kill in kill_list
         )
 
-    def _kill_job(self, job_to_kill: k8s_client.V1Job) -> KilledRun:
+    def _kill_job(
+        self, job_to_kill: k8s_client.V1Job, initiator: KillInitiator
+    ) -> KilledRun:
         """
         Kill a job
 
@@ -1660,6 +1662,8 @@ class ContainerManager:
         ----------
         job_to_kill: k8s_client.V1Job
             Job to kill
+        initiator: KillInitiator
+            Initiator of the kill request
 
         Returns
         -------
@@ -1675,7 +1679,10 @@ class ContainerManager:
             task_dir_extension=self.ctx.config.get("dev", {}).get("task_dir_extension"),
         )
         logs = self._get_logs(run_io)
-        logs += "\n\nAlgorithm was killed by user request."
+        if initiator == KillInitiator.USER:
+            logs += "\n\nAlgorithm was killed by user request."
+        elif initiator == KillInitiator.NODE_SHUTDOWN:
+            logs += "\n\nAlgorithm was killed because the node was shut down."
         self.__delete_job_related_pods(run_io, self.task_namespace)
         return KilledRun(
             run_id=job_to_kill.metadata.annotations["run_id"],
@@ -1683,24 +1690,6 @@ class ContainerManager:
             parent_id=job_to_kill.metadata.annotations["task_parent_id"],
             logs=logs,
         )
-
-    # def get_column_names(self, label: str, type_: str) -> list[str]:
-    #     """
-    #     Get column names from a node database
-
-    #     Parameters
-    #     ----------
-    #     label: str
-    #         Label of the database
-    #     type_: str
-    #         Type of the database
-
-    #     Returns
-    #     -------
-    #     list[str]
-    #         List of column names
-    #     """
-    #     pass
 
 
 # TODO we need this code when we move to k8s clusters
