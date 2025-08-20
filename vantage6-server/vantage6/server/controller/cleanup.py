@@ -1,4 +1,3 @@
-from cProfile import run
 import logging
 
 from datetime import datetime, timedelta, timezone

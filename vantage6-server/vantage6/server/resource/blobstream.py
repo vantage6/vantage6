@@ -65,15 +65,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     api.add_resource(
         BlobStream,
         api_base + "/blobstream/delete/<string:id>",
-        endpoint="result_stream_delete_with_id",
-        methods=("DELETE",),
-        resource_class_kwargs=services,
-    )
-    
-    api.add_resource(
-        BlobStream,
-        api_base + "/blobstream/delete_container",
-        endpoint="result_stream_delete_container",
+        endpoint="blob_stream_delete_with_id",
         methods=("DELETE",),
         resource_class_kwargs=services,
     )
@@ -284,7 +276,7 @@ class BlobStream(BlobStreamBase):
             )
             return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
         try:
-            log.debug(f"Deleting result for run id={id}")
+            log.debug(f"Deleting result for run")
             self.storage_adapter.delete_blob(id)
         except Exception as e:
             log.error(f"Error deleting result: {e}")

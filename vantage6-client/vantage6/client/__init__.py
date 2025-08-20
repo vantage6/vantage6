@@ -1957,7 +1957,7 @@ class UserClient(ClientBase):
                     )
             return databases
 
-        def delete(self, id_: int, include_task: bool = False) -> None:
+        def delete(self, id_: int) -> None:
             """Delete a task
 
             Also removes the related runs.
