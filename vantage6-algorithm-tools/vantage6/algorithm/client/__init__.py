@@ -1,6 +1,5 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
-from cmath import log
 import jwt
 import json
 

@@ -1,5 +1,4 @@
 import base64
-from http import client
 import json
 
 from unittest import TestCase

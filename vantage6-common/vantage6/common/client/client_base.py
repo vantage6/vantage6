@@ -821,7 +821,7 @@ class ClientBase(object):
                 url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT
             ) as response:
                 if response.status_code == 200:
-                    self.log.debug(f"Successfully requested run data stream.")
+                    self.log.debug("Successfully requested run data stream.")
                     for chunk in response.iter_content(chunk_size=DEFAULT_CHUNK_SIZE):
                         run_data += chunk
                 else:

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from vantage6.node.docker.docker_manager import (
     DockerManager,
-    KilledRun,
     DockerTaskManager,
 )
 from vantage6.node.docker.vpn_manager import VPNManager

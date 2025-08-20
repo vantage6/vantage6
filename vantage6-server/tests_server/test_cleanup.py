@@ -2,14 +2,13 @@ import unittest
 
 from datetime import datetime, timedelta, timezone
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller import cleanup
 from vantage6.common.task_status import TaskStatus
-from vantage6.server.model import Task, Collaboration, Organization
-from vantage6.server.service.azure_storage_service import AzureStorageService
+from vantage6.server.model import Task
 
 
 class TestCleanupRunsIsolated(unittest.TestCase):

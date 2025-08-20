@@ -236,7 +236,7 @@ class NodeClient(ClientBase):
                         "initiating organization belong to your organization?"
                     )
 
-                self.parent.log.debug(f"Sending algorithm run update to server")
+                self.parent.log.debug("Sending algorithm run update to server")
                 blob_store_enabled = self.parent.check_if_blob_store_enabled()
                 # If the result is a blob, it is not base64 encoded.
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(

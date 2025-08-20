@@ -537,7 +537,6 @@ def stream_handler_delete(id: str) -> FlaskResponse:
             backend_response.status_code,
             backend_response.headers.items(),
         )
-    client: NodeClient = app.config.get("SERVER_IO")
 
     # Only decrypt if the response is successful and content type is as expected
     content_type = backend_response.headers.get("Content-Type", "")

@@ -284,7 +284,7 @@ class BlobStream(BlobStreamBase):
             )
             return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
         try:
-            log.debug(f"Deleting result for run")
+            log.debug("Deleting result for run")
             self.storage_adapter.delete_blob(id)
         except Exception as e:
             log.error(f"Error deleting result: {e}")

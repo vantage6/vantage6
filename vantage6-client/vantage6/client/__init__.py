@@ -26,8 +26,6 @@ from vantage6.client.subclients.store.algorithm_store import AlgorithmStoreSubCl
 # make sure the version is available
 from vantage6.client._version import __version__  # noqa: F401
 
-import requests
-
 module_name = __name__.split(".")[1]
 
 
