@@ -89,14 +89,14 @@ server:
   #   - name: local store
   #     url: http://localhost:7602/api
 
-  # Cleanup settings: This is used to cleanup the database from old results.
-  # Every hour, results older than the threshold for completed runs are deleted.
-  # Disabled unless you specify this option. Careful! Make sure you have regular
-  # backups of your database before enabling this feature, as a wrong configuration
-  # could lead to data loss.
-  runs_data_cleanup_days: 30
-  # Whether to also delete the algorithm arguments of the runs. False by default.
-  runs_data_cleanup_include_args: false
+  # # Cleanup settings: This is used to cleanup the database from old results.
+  # # Every hour, results older than the threshold for completed runs are deleted.
+  # # Disabled unless you specify this option. Careful! Make sure you have regular
+  # # backups of your database before enabling this feature, as a wrong configuration
+  # # could lead to data loss.
+  # runs_data_cleanup_days: 30
+  # # Whether to also delete the algorithm arguments of the runs. False by default.
+  # runs_data_cleanup_include_args: false
 
   # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
   # This is done using Prometheus. There are two components to this:
