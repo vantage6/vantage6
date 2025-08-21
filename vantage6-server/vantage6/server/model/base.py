@@ -9,14 +9,15 @@ two different classes for it.
 import logging
 from typing import Any
 
-from sqlalchemy.orm.session import Session
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm.session import Session
 
-from vantage6.common import logger_name, Singleton
+from vantage6.common import Singleton, logger_name
+
 from vantage6.backend.common.base import (
-    BaseModelBase,
-    BaseDatabaseSessionManager,
     BaseDatabase,
+    BaseDatabaseSessionManager,
+    BaseModelBase,
 )
 
 module_name = logger_name(__name__)
@@ -61,7 +62,8 @@ class Database(BaseDatabase, metaclass=Singleton):
         uri : str
             URI of the database. Defaults to a sqlite database in /tmp.
         allow_drop_all : bool, optional
-            If True, the database can be dropped. Defaults to False.
+            If True, the database can be dropped. Defaults to False. Typically, it is
+            only set to True for unit tests.
         """
         self._connect(Base, uri, allow_drop_all)
 

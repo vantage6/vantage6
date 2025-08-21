@@ -9,27 +9,65 @@ data:
     api_path: {{ .Values.node.server.path }}
     port: {{ .Values.node.server.port }}
     node_proxy_port: {{ .Values.node.proxyPort }}
-    encryption:
-      enabled: false
-      private_key: null
-    logging:
-      backup_count: 5
-      datefmt: '%Y-%m-%d %H:%M:%S'
-      file: five_node_1.log
-      format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-      level: {{ .Values.node.logging.level }}
-      max_size: 1024
-      use_console: true
-      loggers:
-      - level: warning
-        name: urllib3
-      - level: warning
-        name: requests
-      - level: warning
-        name: engineio.client
-      - level: warning
-        name: docker.utils.config
-      - level: warning
-        name: docker.auth
     task_dir: {{ .Values.node.persistence.tasks.hostPath }}
     task_namespace: {{ .Values.node.taskNamespace }}
+    share_config: {{ .Values.node.share_config }}
+    share_algorithm_logs: {{ .Values.node.share_algorithm_logs }}
+    encryption:
+      enabled: {{ .Values.node.encryption.enabled }}
+      {{- if .Values.node.encryption.enabled }}
+      private_key: {{ .Values.node.encryption.private_key }}
+      {{- end }}
+    logging:
+      backup_count: {{ .Values.node.logging.backup_count }}
+      datefmt: {{ .Values.node.logging.datefmt | quote }}
+      file: {{ .Values.node.logging.file }}
+      format: {{ .Values.node.logging.format | quote }}
+      level: {{ .Values.node.logging.level }}
+      max_size: {{ .Values.node.logging.max_size }}
+      use_console: {{ .Values.node.logging.use_console }}
+      {{- range .Values.node.logging.loggers }}
+      - level: {{ .level }}
+        name: {{ .name }}
+      {{- end }}
+    policies:
+      {{- if .Values.node.policies.allowed_algorithms }}
+      allowed_algorithms:
+        {{- range .Values.node.policies.allowed_algorithms }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.node.policies.allowed_algorithm_stores }}
+      allowed_algorithm_stores:
+        {{- range .Values.node.policies.allowed_algorithm_stores }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.node.policies.allowed_users }}
+      allowed_users:
+        {{- range .Values.node.policies.allowed_users }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.node.policies.allowed_organizations }}
+      allowed_organizations:
+        {{- range .Values.node.policies.allowed_organizations }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      require_algorithm_pull: {{ .Values.node.policies.require_algorithm_pull }}
+      allow_either_whitelist_or_store: {{ .Values.node.policies.allow_either_whitelist_or_store }}
+    prometheus:
+      enabled: {{ .Values.node.prometheus.enabled }}
+      {{- if .Values.node.prometheus.enabled }}
+      report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds }}
+      {{- end }}
+    debug:
+      socketio: {{ .Values.node.debug.socketio }}
+      proxy_server: {{ .Values.node.debug.proxy_server }}
+    {{- if .Values.node.dev }}
+    {{- if .Values.node.dev.task_dir_extension }}
+    dev:
+      task_dir_extension: {{ .Values.node.dev.task_dir_extension }}
+    {{- end }}
+    {{- end }}

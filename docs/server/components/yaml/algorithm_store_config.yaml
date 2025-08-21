@@ -1,10 +1,6 @@
 # Human readable description of the algorithm store instance. This is to help
 # your peers to identify the store
-description: Test
-
-# IP address to which the algorithm store server binds. In case you specify 0.0.0.0
-# the server listens on all interfaces
-ip: 0.0.0.0
+description: Vantage algorithm store version 5
 
 # Port to which the algorithm store binds
 port: 7602
@@ -12,17 +8,6 @@ port: 7602
 # API path prefix. Server may be reached at https://domain.org/<api_path>/<endpoint>.
 # In case you use a reverse proxy and use a subpath, make sure to set this option.
 api_path: /api
-
-# The URI to the algorithm store database. This should be a valid SQLAlchemy URI,
-# e.g. for a SQLite database: sqlite:///database-name.sqlite,
-# or Postgres: postgresql://username:password@172.17.0.1/database).
-# Note that SQLite is not recommended for production use.
-uri: sqlite:///test.sqlite
-
-# This should be set to false in production as this allows to completely
-# wipe the database in a single command. Useful to set to true when
-# testing/developing.
-allow_drop_all: true
 
 # Settings for the logger
 logging:
@@ -53,11 +38,6 @@ logging:
       level: warning
     - name: sqlalchemy.engine
       level: warning
-
-# Additional debug flags
-debug:
-  # Set to `true` to enable debug mode in the Flask app
-  flask: false
 
 # Settings for the algorithm store's policies
 policies:
