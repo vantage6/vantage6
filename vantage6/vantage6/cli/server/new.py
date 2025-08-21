@@ -48,7 +48,7 @@ def cli_server_new(
     # check that this config does not exist
     try:
         if ServerContext.config_exists(name, system_folders):
-            error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already " "exists!")
+            error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
             exit(1)
     except Exception as e:
         error(e)
@@ -71,7 +71,6 @@ def cli_server_new(
         exit(1)
     info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
 
-    # info(f"root user created.")
     flag = "" if system_folders else "--user"
     info(
         f"You can start the server by running {Fore.GREEN}v6 server start "
