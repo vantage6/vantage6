@@ -9,6 +9,7 @@ from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli._version import __version__
+from vantage6.cli.context.algorithm_debug import AlgorithmDebugConfig
 
 
 class NodeContext(AppContext):
@@ -73,6 +74,30 @@ class NodeContext(AppContext):
         """
         return super().from_external_config_file(
             Path(path).resolve(), InstanceType.NODE, system_folders
+        )
+
+    def initialize(
+        self,
+        instance_type: str,
+        instance_name: str,
+        system_folders: bool = False,
+        config_file: str | None = None,
+        print_log_header: bool = True,
+    ) -> None:
+        """
+        Initialize the NodeContext instance.
+
+        Adds logic specific to the NodeContext, like setting up the debugger algorithm.
+        """
+        super().initialize(
+            instance_type, instance_name, system_folders, config_file, print_log_header
+        )
+
+        debugger_config = self.config.get("debugger_algorithm")
+        self.debugger_algorithm = (
+            AlgorithmDebugConfig.from_config(debugger_config, self.config_dir)
+            if debugger_config
+            else None
         )
 
     @classmethod
@@ -157,7 +182,10 @@ class NodeContext(AppContext):
         str
             Node's Docker container name
         """
-        return f"{APPNAME}-{self.name}-{self.scope}"
+        if self.config["container_name"]:
+            return self.config["container_name"]
+        else:
+            return f"{APPNAME}-{self.name}-{self.scope}"
 
     @property
     def docker_network_name(self) -> str:

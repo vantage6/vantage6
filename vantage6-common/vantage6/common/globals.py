@@ -22,6 +22,9 @@ DEFAULT_UI_IMAGE = f"infrastructure/ui:{MAIN_VERSION_NAME}"
 
 DEFAULT_ALGO_STORE_IMAGE = f"infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
 
+# Default directory where debugger is expected to be found
+DEFAULT_DEV_DEBUGGER_DIR = Path("/vantage6/dev/debugger")
+
 #
 #   COMMON GLOBALS
 #
@@ -62,6 +65,8 @@ class InstanceType(str, Enum):
     ALGORITHM_STORE = "algorithm-store"
     UI = "ui"
 
+    def __str__(self):
+        return self.value
 
 class NodePolicy(str, Enum):
     """Enum containing the names of the names of the node policies"""
@@ -73,6 +78,21 @@ class NodePolicy(str, Enum):
     ALLOW_BASICS_ALGORITHM = "allow_basics_algorithm"
     REQUIRE_ALGORITHM_PULL = "require_algorithm_pull"
 
+
+# TODO: better place?
+class NodeDefaults(str, Enum):
+    """Enum containing the default values for the node configuration"""
+
+    ALGORITHM_DEBUG_DEBUGGER_DIR_ENV_VAR = "V6_ALGORITHM_DEBUG_DEBUGGER_DIR"
+    ALGORITHM_DEBUG_DEBUGGER_MOUNT_POINT = "/mnt/v6/debugger_algorithm"
+    ALGORITHM_DEBUG_SOURCE_DIR_ENV_VAR = "V6_ALGORITHM_DEBUG_SOURCE_DIR"
+    ALGORITHM_DEBUG_SOURCE_MOUNT_POINT = "/mnt/v6/algorithm_source"
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return self.value
 
 class Ports(int, Enum):
     HTTP = 80
