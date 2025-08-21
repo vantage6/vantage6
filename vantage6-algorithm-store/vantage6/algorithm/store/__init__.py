@@ -7,10 +7,19 @@ vantage6 server. This allows both coupling a community store and a private
 store to a vantage6 server.
 """
 
+import os
+
+from gevent import monkey
+
+# This is a workaround for readthedocs
+if not os.environ.get("READTHEDOCS"):
+    monkey.patch_all()
+
 import importlib
 import importlib.metadata
 import logging
 
+import sqlalchemy
 from flask import current_app
 from flask_principal import Identity, identity_changed
 
@@ -158,7 +167,10 @@ class AlgorithmStoreApp(Vantage6App):
         """
         # delete old policies from the database
         # pylint: disable=expression-not-assigned
-        [p.delete() for p in db.Policy.get()]
+        try:
+            [p.delete() for p in db.Policy.get()]
+        except sqlalchemy.orm.exc.ObjectDeletedError:
+            log.warning("Policy table is locked, skipping policy deletion")
 
         policies: dict = config.get("policies", {})
         for policy, policy_value in policies.items():

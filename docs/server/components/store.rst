@@ -9,14 +9,18 @@ The vantage6 store is a component that stores the algorithms that can be used by
 nodes. This allows the user to easily find the algorithm they need, and know how to
 use it.
 
-.. tip::
+There is a community algorithm store hosted at
+`https://store.cotopaxi.vantage6.ai <https://store.cotopaxi.vantage6.ai>`_.
+This store is maintained by the vantage6 community and allows you to easily reuse
+algorithms developed by others. You can also create your own algorithm store. This
+allows you to create a private algorithm store, which is only available to your own
+collaborations.
 
-   There is a community algorithm store hosted at
-   `https://store.cotopaxi.vantage6.ai <https://store.cotopaxi.vantage6.ai>`_.
-   This store is maintained by the vantage6 community and allows you to easily reuse
-   algorithms developed by others. You can also create your own algorithm store. This
-   allows you to create a private algorithm store, which is only available to your own
-   collaborations.
+If you would like to contribute to the community store, you should first check the
+`production-ready algorithm guidelines <https://docs.vantage6.ai/en/main/algorithms/review_guidelines.html>`_
+to see if you meet the requirements. If you do, you can send an email to
+Frank Martin or Bart van Beusekom to acquire an account and upload your algorithm. The algorithm
+will go through a review process before it is added to the community store.
 
 
 Linking algorithm store to core

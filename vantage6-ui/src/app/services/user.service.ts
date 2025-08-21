@@ -38,6 +38,6 @@ export class UserService {
   }
 
   async deleteUser(id: number): Promise<void> {
-    return await this.apiService.deleteForApi(`/user/${id}`);
+    return await this.apiService.deleteForApi(`/user/${id}?delete_dependents=true`);
   }
 }

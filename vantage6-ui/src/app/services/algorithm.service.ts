@@ -9,6 +9,8 @@ import { isListTypeArgument } from '../helpers/algorithm.helper';
 import { getLazyProperties } from '../helpers/api.helper';
 import { AllowedArgumentValue } from '../models/api/allowed-argument-value.model';
 import { environment } from '../../environments/environment';
+import { SnackbarService } from './snackbar.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
@@ -17,14 +19,23 @@ export class AlgorithmService {
   constructor(
     private apiService: ApiService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private chosenStoreService: ChosenStoreService
+    private chosenStoreService: ChosenStoreService,
+    private snackBarService: SnackbarService,
+    private translateService: TranslateService
   ) {}
 
   async getAlgorithms(params: object = {}): Promise<Algorithm[]> {
     const algorithmStores = this.getAlgorithmStoresForCollaboration();
     const results = await Promise.all(
       algorithmStores.map(async (algorithmStore) => {
-        return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
+        try {
+          return await this.getAlgorithmsForAlgorithmStore(algorithmStore, params);
+        } catch (error) {
+          this.snackBarService.showMessage(
+            this.translateService.instant('error.algorithmStoreNotAvailable', { name: algorithmStore.name })
+          );
+          return [];
+        }
       })
     );
 
