@@ -28,12 +28,10 @@ data:
       use_console: {{ .Values.server.logging.use_console }}
     port: {{ .Values.server.internal.port }}
     server_url: {{ .Values.server.baseUrl }}{{ .Values.server.apiPath }}
-    {{- if .Values.server.database_uri }}
-    uri: {{ .Values.server.database_uri }}
-    {{- else if .Values.database.username }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    {{- if .Values.database.external }}
+    uri: {{ .Values.database.uri }}
     {{- else }}
-    uri: ""
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
     {{- end }}
     {{- if .Values.server.cors_allowed_origins }}
     cors_allowed_origins:

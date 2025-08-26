@@ -40,11 +40,6 @@ server:
   # The number of replicas of the server
   replications: {{ server.replications | default(1) }}
 
-  # # In production it is recommended to use a database that is not inside the k8s
-  # # cluster. By default, a postgres database is created inside the k8s cluster.
-  # # If you want to use an external database, you can set the database_uri here.
-  # database_uri: postgresql://user:password@localhost:5432/mydatabase
-
   # The image used to start the server
   image: {{ server.image | default('harbor2.vantage6.ai/infrastructure/server:latest') }}
 
@@ -206,6 +201,12 @@ rabbitmq:
   vhost: {{ rabbitmq.vhost | default('/vantage6') }}
 
 database:
+  # whether or not to use an external database
+  external: {{ database.external | default(false) }}
+  {% if database.external is defined and database.external %}
+  # the URI of the external database
+  uri: {{ database.uri | default('postgresql://vantage6:vantage6@localhost:5432/vantage6') }}
+  {% else %}
   # The image of the database
   image:
     {% if database.image is defined %}
@@ -230,6 +231,7 @@ database:
 
   # The name of the k8s node where the database is running
   k8sNodeName: {{ database.k8sNodeName }}
+  {% endif %}
 
 ui:
 
