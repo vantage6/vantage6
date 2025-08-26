@@ -1,34 +1,254 @@
-allow_drop_all: false
-api_path: /api
-description: 'defaultserver'
-ip: 0.0.0.0
-logging:
-  backup_count: 5
-  datefmt: '%Y-%m-%d %H:%M:%S'
-  file: test-server.log
-  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-  level: DEBUG
-  max_size: 1024
-  use_console: true
-  loggers:
-  - level: warning
-    name: urllib3
-  - level: warning
-    name: socketIO-client
-  - level: warning
-    name: socketio.server
-  - level: warning
-    name: engineio.server
-  - level: warning
-    name: sqlalchemy.engine
-  - level: warning
-    name: requests_oauthlib.oauth2_session
-port: {{ port }}
-uri: sqlite:///default.sqlite
-dev:
-  host_uri: {{ host_uri }}
-server_url: http://localhost:{{ port }}/api
+# Override the chart name
+nameOverride: {{ nameOverride | default('vantage6-server') }}
+# Optional, by default the Release.Namespace is used
+# namespace: vantage6-server
+server:
+  # The description of the server
+  description: {{ server.description | default('Vantage6 server version 5') }}
+
+  # The external URL of the server
+  baseUrl: {{ server.baseUrl | default('http://localhost:7601') }}
+  apiPath: {{ server.apiPath | default('/server') }}
+
+  # Keycloak configuration
+  keycloakUrl: {{ server.keycloakUrl }}
+  keycloakRealm: {{ server.keycloakRealm | default('vantage6') }}
+  keycloakAdminUsername: {{ server.keycloakAdminUsername | default('admin') }}
+  keycloakAdminPassword: {{ server.keycloakAdminPassword | default('admin') }}
+  keycloakAdminClient: {{ server.keycloakAdminClient | default('backend-admin-client') }}
+  keycloakAdminClientSecret: {{ server.keycloakAdminClientSecret | default('myadminclientsecret') }}
+  {% if server.keycloak is defined %}
+  keycloak:
+    manage_users_and_nodes: {{ server.keycloak.manage_users_and_nodes | default(true) }}
+  {% endif %}
+  {% if server.keycloak is not defined %}
+  keycloak:
+    manage_users_and_nodes: true
+  {% endif %}
+
+  {% if server.internal is defined %}
+  internal:
+    port: {{ server.internal.port | default(7601) }}
+  {% endif %}
+  {% if server.internal is not defined %}
+  internal:
+    port: 7601
+  {% endif %}
+
+  port: {{ server.port | default(7601) }}
+
+  # The number of replicas of the server
+  replications: {{ server.replications | default(1) }}
+
+  # # In production it is recommended to use a database that is not inside the k8s
+  # # cluster. By default, a postgres database is created inside the k8s cluster.
+  # # If you want to use an external database, you can set the database_uri here.
+  # database_uri: postgresql://user:password@localhost:5432/mydatabase
+
+  # The image used to start the server
+  image: {{ server.image | default('harbor2.vantage6.ai/infrastructure/server:latest') }}
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: {{ server.logging.level | default('INFO') }}
+
+    # Location to the log file
+    file: {{ server.logging.file | default('server.log') }}
+
+    # Size in kb of a single log file
+    max_size: {{ server.logging.max_size | default(1024) }}
+    use_console: {{ server.logging.use_console | default(true) }}
+
+    # Date format for the log file
+    datefmt: "{{ server.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+
+    # Format for the log file
+    format: "{{ server.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: {{ server.logging.backup_count | default(5) }}
+
+    # Loggers to include in the log file
+    loggers:
+    {% if server.logging.loggers is defined %}
+    {% for logger in server.logging.loggers %}
+    - level: {{ logger.level }}
+      name: {{ logger.name }}
+    {% endfor %}
+    {% endif %}
+    {% if server.logging.loggers is not defined %}
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+    {% endif %}
+
+  {% if server.jwt is defined and server.jwt.secret is defined %}
+  # Setting constant secret for the JWT token. This is not recommended for production
+  # environments.
+  jwt:
+    secret: {{ server.jwt.secret }}
+  {% endif %}
+
+  {% if server.dev is defined %}
+  dev:
+    host_uri: {{ server.dev.host_uri | default('host.docker.internal') }}
+    # This should be set to true if you are running the algorithm store in the same
+    # cluster and namespace as the server
+    store_in_local_cluster: {{ server.dev.store_in_local_cluster | default(false) }}
+  {% endif %}
+
+  # If you want to couple algorithm stores to the server on startup, you can add them here.
+  # The name is used to identify the algorithm store in the server's database.
+  # The url is the URL of the algorithm store's API.
+  {% if server.algorithm_stores is defined %}
+  algorithm_stores:
+    {% for store in server.algorithm_stores %}
+    - name: {{ store.name }}
+      url: {{ store.url }}
+    {% endfor %}
+  {% else %}
+  # algorithm_stores:
+  # - name: local store
+  #   url: http://localhost:7602/api
+  {% endif %}
+
+  # Cleanup settings: This is used to cleanup the database from old results.
+  # Every hour, results older than the threshold for completed runs are deleted.
+  # Disabled unless you specify this option. Careful! Make sure you have regular
+  # backups of your database before enabling this feature, as a wrong configuration
+  # could lead to data loss.
+  {% if server.runs_data_cleanup_days is defined %}
+  runs_data_cleanup_days: {{ server.runs_data_cleanup_days }}
+  {% endif %}
+  {% if server.runs_data_cleanup_days is not defined %}
+  # runs_data_cleanup_days: 30
+  {% endif %}
+  # Whether to also delete the algorithm arguments of the runs. False by default.
+  {% if server.runs_data_cleanup_include_args is defined %}
+  runs_data_cleanup_include_args: {{ server.runs_data_cleanup_include_args }}
+  {% endif %}
+  {% if server.runs_data_cleanup_include_args is not defined %}
+  # runs_data_cleanup_include_args: false
+  {% endif %}
+
+  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+  # This is done using Prometheus. There are two components to this:
+  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+  #    the metrics from the nodes.
+  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
+  #     metrics exposed by the Prometheus exporter and stores them.
+  # The exporter is started by default when the server starts (if prometheus is enabled).
+  # The Prometheus server can be started separately.
+  prometheus:
+    # Set to true to enable Prometheus reporting. Default is false.
+    {% if server.prometheus is defined %}
+    enabled: {{ server.prometheus.enabled | default(false) }}
+    {% else %}
+    enabled: false
+    {% endif %}
+    # Set to true to start the Prometheus server when starting the server
+    {% if server.prometheus is defined and server.prometheus.start_with_server is defined %}
+    start_with_server: {{ server.prometheus.start_with_server }}
+    {% else %}
+    # start_with_server: false
+    {% endif %}
+    # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
+    # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
+    # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
+    {% if server.prometheus is defined and server.prometheus.exporter_port is defined %}
+    exporter_port: {{ server.prometheus.exporter_port }}
+    {% else %}
+    # exporter_port: 7603
+    {% endif %}
+
+  # set up with which origins the server should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # port 7600 on localhost. Usually, only the UI needs to access the server.
+  {% if server.cors_allowed_origins is defined %}
+  cors_allowed_origins:
+    {% for origin in server.cors_allowed_origins %}
+    - {{ origin }}
+    {% endfor %}
+  {% else %}
+  # cors_allowed_origins:
+  #   - https://portal.cotopaxi.vantage6.ai
+  #   - http://localhost:7600
+  {% endif %}
+
+rabbitmq:
+  # The image of the RabbitMQ server
+  image:
+    {% if rabbitmq.image is defined %}
+    repository: {{ rabbitmq.image.repository | default('rabbitmq') }}
+    tag: {{ rabbitmq.image.tag | default('3-management') }}
+    {% else %}
+    repository: rabbitmq
+    tag: 3-management
+    {% endif %}
+
+  # The username of the RabbitMQ server
+  username: {{ rabbitmq.username | default('rabbitmquser') }}
+
+  # The password of the RabbitMQ server
+  password: {{ rabbitmq.password | default('rabbitmquserpassword') }}
+
+  # The vhost of the RabbitMQ server
+  vhost: {{ rabbitmq.vhost | default('/vantage6') }}
+
+database:
+  # The image of the database
+  image:
+    {% if database.image is defined %}
+    repository: {{ database.image.repository | default('postgres') }}
+    tag: {{ database.image.tag | default('13') }}
+    {% else %}
+    repository: postgres
+    tag: 13
+    {% endif %}
+
+  # The username of the database
+  username: {{ database.username | default('vantage6') }}
+
+  # The password of the database
+  password: {{ database.password | default('vantage6') }}
+
+  # The name of the database
+  name: {{ database.name | default('vantage6') }}
+
+  #hostpath of the database mount
+  volumePath: {{ database.volumePath }}
+
+  # The name of the k8s node where the database is running
+  k8sNodeName: {{ database.k8sNodeName }}
+
 ui:
-  enabled: true
-  port: {{ ui_port }}
-{{ user_provided_config }}
+
+  # The image of the UI
+  image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
+  # Service port for the UI
+  port: 7600
+  # keycloak realm
+  keycloakRealm: {{ ui.keycloakRealm | default('vantage6') }}
+  # keycloak client
+  keycloakClient: {{ ui.keycloakClient | default('public_client') }}
+  # keycloak public URL
+  keycloakPublicUrl: {{ ui.keycloakPublicUrl | default('http://localhost:8080') }}
+
+  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
+  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # allowedAlgorithmStores: "http://localhost:7602 https://store.cotopaxi.vantage6.ai"
+  allowedAlgorithmStores: "{{ ui.allowedAlgorithmStores | default('*') }}"
+  # Community algorithm store URL.
+  communityStoreUrl: {{ ui.communityStoreUrl | default('https://store.cotopaxi.vantage6.ai') }}
+  # Community algorithm store API path
+  communityStoreApiPath: {{ ui.communityStoreApiPath | default('/api') }}

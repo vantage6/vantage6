@@ -31,6 +31,8 @@ server:
   # # In production it is recommended to use a database that is not inside the k8s
   # # cluster. By default, a postgres database is created inside the k8s cluster.
   # # If you want to use an external database, you can set the database_uri here.
+  # TODO v5+ it may be better to set boolean flag in database section of this configuration
+  # that indicates if the database is internal or external.
   # database_uri: postgresql://user:password@localhost:5432/mydatabase
 
   # The image of the server

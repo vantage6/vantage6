@@ -56,6 +56,12 @@ DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
 PROMETHEUS_CONFIG = "prometheus.yml"
 PROMETHEUS_DIR = "prometheus"
 
+# template folder
+TEMPLATE_FOLDER = PACKAGE_FOLDER / APPNAME / "cli" / "template"
+SERVER_TEMPLATE_FILE = "server_config.j2"
+NODE_TEMPLATE_FILE = "node_config.j2"
+ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
+
 
 # datasets included in the nodes of the dev network
 class DefaultDatasets(StrEnumBase):

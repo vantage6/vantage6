@@ -1,10 +1,11 @@
 import click
 import questionary as q
 
-from vantage6.common import error, info, ensure_config_dir_writable
+from vantage6.common import ensure_config_dir_writable, error, info
+
+from vantage6.cli.configuration_wizard import NodeConfigurationManager
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.configuration_wizard import NodeConfigurationManager
 from vantage6.cli.node.common import select_node
 
 
@@ -15,7 +16,7 @@ from vantage6.cli.node.common import select_node
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",
@@ -50,6 +51,8 @@ def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
 
     # set new api key, and save the file
     ctx.config["api_key"] = api_key
+    # TODO v5+ this probably messes up the current config as the template is used...
+    # Fix when reimplementing this in v5
     conf_mgr.put(ctx.config)
     conf_mgr.save(ctx.config_file)
-    info("Your new API key has been uploaded to the config file " f"{ctx.config_file}.")
+    info(f"Your new API key has been uploaded to the config file {ctx.config_file}.")

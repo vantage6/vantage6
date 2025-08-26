@@ -389,14 +389,9 @@ def server_configuration_questionaire(
     kube_namespace = cli_config.get_last_namespace()
 
     # Initialize config with basic structure
-    config = {"server": {}, "database": {}, "ui": {}}
+    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
 
     # === Server settings ===
-    config["server"]["description"] = q.text(
-        "Enter a human-readable description:",
-        default=f"Vantage6 server {instance_name}",
-    ).unsafe_ask()
-
     config["server"]["image"] = q.text(
         "Server Docker image:",
         default="harbor2.vantage6.ai/infrastructure/server:latest",
@@ -418,6 +413,20 @@ def server_configuration_questionaire(
         "What is the name of the k8s node where the databases are running?",
         default="docker-desktop",
     ).unsafe_ask()
+
+    server_type = q.select(
+        "Do you want to use production or development settings for this server?",
+        choices=["production", "development"],
+    ).unsafe_ask()
+
+    if server_type == "development":
+        config["server"]["jwt"] = {
+            "secret": "constant_development_secret`",
+        }
+        config["server"]["dev"] = {
+            "host_uri": "host.docker.internal",
+            "store_in_local_cluster": True,
+        }
 
     # === Keycloak settings ===
     keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"

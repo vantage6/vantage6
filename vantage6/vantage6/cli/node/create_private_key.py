@@ -1,19 +1,20 @@
 from pathlib import Path
+
 import click
 from colorama import Fore, Style
 
 from vantage6.common import (
-    warning,
+    bytes_to_base64s,
+    debug,
     error,
     info,
-    debug,
-    bytes_to_base64s,
+    warning,
 )
-
 from vantage6.common.encryption import RSACryptor
+
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import select_node, create_client_and_authenticate
+from vantage6.cli.node.common import create_client_and_authenticate, select_node
 
 
 @click.command()
@@ -28,7 +29,7 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",
@@ -137,6 +138,8 @@ def cli_node_create_private_key(
 
     # update config file
     info("Updating configuration")
+    # TODO v5+ this probably messes up the current config as the template is used...
+    # Fix when reimplementing this in v5
     ctx.config["encryption"]["private_key"] = str(file_)
     ctx.config_manager.put(ctx.config)
     ctx.config_manager.save(ctx.config_file)
