@@ -78,20 +78,6 @@ class ServerType(StrEnumBase):
     ALGORITHM_STORE = "algorithm-store"
 
 
-class ServerGlobals(StrEnumBase):
-    """Enum containing server environment variables"""
-
-    DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
-
-
-class AlgoStoreGlobals(StrEnumBase):
-    """Enum containing algorithm store environment variables"""
-
-    DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
-
-
 class Charts(StrEnumBase):
     """Enum containing chart names"""
 

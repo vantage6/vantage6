@@ -30,7 +30,6 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
-from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 from vantage6.cli.utils import (
     check_config_name_allowed,
     validate_input_cmd_args,
