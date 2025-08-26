@@ -50,7 +50,8 @@ def cli_server_stop(
 
     running_servers = find_running_service_names(
         instance_type=InstanceType.SERVER,
-        system_folders=system_folders,
+        only_system_folders=system_folders,
+        only_user_folders=not system_folders,
         context=context,
         namespace=namespace,
     )

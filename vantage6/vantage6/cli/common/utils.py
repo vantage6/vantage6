@@ -17,7 +17,8 @@ from vantage6.cli.utils import validate_input_cmd_args
 
 def find_running_service_names(
     instance_type: InstanceType,
-    system_folders: bool,
+    only_system_folders: bool = False,
+    only_user_folders: bool = False,
     context: str | None = None,
     namespace: str | None = None,
 ) -> list[str]:
@@ -28,8 +29,10 @@ def find_running_service_names(
     ----------
     instance_type : InstanceType
         The type of instance to find running services for
-    system_folders : bool
-        Whether to look for system-based services or not
+    only_system_folders : bool, optional
+        Whether to look for system-based services or not. By default False.
+    only_user_folders : bool, optional
+        Whether to look for user-based services or not. By default False.
     context : str, optional
         The Kubernetes context to use.
     namespace : str, optional
@@ -44,6 +47,9 @@ def find_running_service_names(
     validate_input_cmd_args(context, "context name", allow_none=True)
     validate_input_cmd_args(namespace, "namespace name", allow_none=True)
     validate_input_cmd_args(instance_type, "instance type", allow_none=False)
+    if only_system_folders and only_user_folders:
+        error("Cannot use both only_system_folders and only_user_folders")
+        exit(1)
 
     # Create the command
     command = [
@@ -90,10 +96,12 @@ def find_running_service_names(
 
     # filter for the instance type
     svc_starts_with = f"{APPNAME}-"
-    if system_folders:
+    if only_system_folders:
         svc_ends_with = f"system-{instance_type.value}"
-    else:
+    elif only_user_folders:
         svc_ends_with = f"user-{instance_type.value}"
+    else:
+        svc_ends_with = f"-{instance_type.value}"
 
     matching_services = []
     for release in releases:
@@ -186,10 +194,9 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     instance_type : InstanceType
         The type of instance to get the configurations for
     """
-    client = docker.from_env()
     ctx_class = select_context_class(instance_type)
 
-    running_server_names = get_running_servers(client, instance_type)
+    running_server_names = find_running_service_names(instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
@@ -199,7 +206,9 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = ctx_class.available_configurations(system_folders=True)
+    configs, failed_imports_system = ctx_class.available_configurations(
+        system_folders=True
+    )
     for config in configs:
         status = (
             running
@@ -210,7 +219,9 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
         click.echo(f"{config.name:25}{status:25} System ")
 
     # user folders
-    configs, f2 = ctx_class.available_configurations(system_folders=False)
+    configs, failed_imports_user = ctx_class.available_configurations(
+        system_folders=False
+    )
     for config in configs:
         status = (
             running
@@ -221,8 +232,11 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
         click.echo(f"{config.name:25}{status:25} User   ")
 
     click.echo("-" * 85)
-    if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")
+    if len(failed_imports_system) + len(failed_imports_user):
+        warning(
+            f"{Fore.RED}Failed imports: "
+            f"{len(failed_imports_system) + len(failed_imports_user)}{Style.RESET_ALL}"
+        )
 
 
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:
