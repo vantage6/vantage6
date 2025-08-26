@@ -52,7 +52,7 @@ def cli_server_start(
     # check that log directory exists - or create it
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    release_name = f"{ctx.name}-{ctx.instance_type}"
+    release_name = f"{ctx.name}-{ctx.instance_type.value}"
     helm_install(
         release_name=release_name,
         chart_name="server",

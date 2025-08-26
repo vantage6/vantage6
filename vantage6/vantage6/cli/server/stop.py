@@ -31,7 +31,7 @@ def cli_server_stop(
 
     # uninstall the helm release
     info("Stopping server...")
-    release_name = f"{ctx.name}-{ctx.instance_type}"
+    release_name = f"{ctx.name}-{ctx.instance_type.value}"
     helm_uninstall(
         release_name=release_name,
         context=context,

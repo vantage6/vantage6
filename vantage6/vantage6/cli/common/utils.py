@@ -1,4 +1,3 @@
-import enum
 from subprocess import Popen
 from typing import Iterable
 
@@ -20,30 +19,30 @@ def get_server_name(
     instance_type: InstanceType,
 ) -> str:
     """
-    Get the version of a running server.
+    Get the full name of a running server.
 
     Parameters
     ----------
     name : str
-        Name of the server to get the version from
+        Name of the server to get the full name from
     system_folders : bool
         Whether to use system folders or not
     running_server_names : list[str]
         The names of the running servers
     instance_type : InstanceType
-        The type of instance to get the running servers from
+        The type of instance to get the full name from
     """
 
     if not name:
         if not running_server_names:
             error(
-                f"No {instance_type}s are running! You can only check the version for "
-                f"{instance_type}s that are running"
+                f"No {instance_type.value}s are running! You can only check the version"
+                f" for {instance_type.value}s that are running"
             )
             exit(1)
         try:
             name = q.select(
-                f"Select the {instance_type} you wish to inspect:",
+                f"Select the {instance_type.value} you wish to inspect:",
                 choices=running_server_names,
             ).unsafe_ask()
         except KeyboardInterrupt:
@@ -73,7 +72,7 @@ def get_running_servers(
         The names of the running servers
     """
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={instance_type}"}
+        filters={"label": f"{APPNAME}-type={instance_type.value}"}
     )
     return [server.name for server in running_servers]
 
@@ -104,7 +103,8 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-system-{instance_type}" in running_server_names
+            if f"{APPNAME}-{config.name}-system-{instance_type.value}"
+            in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} System ")
@@ -114,7 +114,8 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-user-{instance_type}" in running_server_names
+            if f"{APPNAME}-{config.name}-user-{instance_type.value}"
+            in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} User   ")
