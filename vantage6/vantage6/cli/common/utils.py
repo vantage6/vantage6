@@ -1,3 +1,5 @@
+import json
+import subprocess
 from subprocess import Popen
 from typing import Iterable
 
@@ -10,6 +12,104 @@ from vantage6.common import error, warning
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli.context import select_context_class
+from vantage6.cli.utils import validate_input_cmd_args
+
+
+def find_running_service_names(
+    instance_type: InstanceType,
+    system_folders: bool,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> list[str]:
+    """
+    List running Vantage6 servers that were installed via helm_install.
+
+    Parameters
+    ----------
+    instance_type : InstanceType
+        The type of instance to find running services for
+    system_folders : bool
+        Whether to look for system-based services or not
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+
+    Returns
+    -------
+    list[str]
+        List of release names that are running
+    """
+    # Input validation
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    validate_input_cmd_args(instance_type, "instance type", allow_none=False)
+
+    # Create the command
+    command = [
+        "helm",
+        "list",
+        "--output",
+        "json",  # Get structured output
+    ]
+
+    if context:
+        command.extend(["--kube-context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+    else:
+        command.extend(["--all-namespaces"])
+
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to list Helm releases: {e}")
+        return []
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and available in "
+            "the PATH."
+        )
+        return []
+
+    try:
+        releases = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        error("Failed to parse Helm output as JSON")
+        return []
+
+    # filter services for the vantage6 services that are sought. These have
+    # the following pattern:
+    # f"{APPNAME}-{name}-{scope}-{instance_type.value}"
+
+    # filter for the instance type
+    svc_starts_with = f"{APPNAME}-"
+    if system_folders:
+        svc_ends_with = f"system-{instance_type.value}"
+    else:
+        svc_ends_with = f"user-{instance_type.value}"
+
+    matching_services = []
+    for release in releases:
+        release_name = release.get("name", "")
+
+        # Check if this is a Vantage6 server release
+        is_matching_service = (
+            release_name.startswith(svc_starts_with)
+            and release_name.endswith(svc_ends_with)
+            and instance_type.value in release_name
+        )
+
+        if is_matching_service:
+            matching_services.append(release_name)
+
+    return matching_services
 
 
 def get_server_name(

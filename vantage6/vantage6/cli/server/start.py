@@ -52,9 +52,8 @@ def cli_server_start(
     # check that log directory exists - or create it
     ctx.log_dir.mkdir(parents=True, exist_ok=True)
 
-    release_name = f"{ctx.name}-{ctx.instance_type.value}"
     helm_install(
-        release_name=release_name,
+        release_name=ctx.helm_release_name,
         chart_name="server",
         values_file=ctx.config_file,
         context=context,
@@ -64,7 +63,7 @@ def cli_server_start(
     # port forward for server
     info("Port forwarding for server")
     start_port_forward(
-        service_name=f"{release_name}-vantage6-server-service",
+        service_name=f"{ctx.helm_release_name}-vantage6-server-service",
         service_port=ctx.config["server"].get("port", 7601),
         port=port or ctx.config["server"].get("port", 7601),
         ip=ip,
@@ -75,7 +74,7 @@ def cli_server_start(
     # port forward for UI
     info("Port forwarding for UI")
     start_port_forward(
-        service_name=f"{release_name}-vantage6-frontend-service",
+        service_name=f"{ctx.helm_release_name}-vantage6-frontend-service",
         service_port=ctx.config["ui"].get("port", 7600),
         port=ui_port or ctx.config["ui"].get("port", 7600),
         ip=ip,

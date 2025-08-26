@@ -347,6 +347,13 @@ class AppContext(metaclass=Singleton):
         return self.log_dir / file_
 
     @property
+    def helm_release_name(self) -> str:
+        """
+        Get the name of the Helm release for the server.
+        """
+        return f"{APPNAME}-{self.name}-{self.scope}-{self.instance_type.value}"
+
+    @property
     def config_file_name(self) -> str:
         """Return the name of the configuration file.
 

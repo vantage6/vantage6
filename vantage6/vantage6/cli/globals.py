@@ -90,3 +90,12 @@ class AlgoStoreGlobals(StrEnumBase):
 
     DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
     CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
+
+
+class Charts(StrEnumBase):
+    """Enum containing chart names"""
+
+    SERVER = "server"
+    ALGORITHM_STORE = "algorithm-store"
+    NODE = "node"
+    AUTH = "auth"
