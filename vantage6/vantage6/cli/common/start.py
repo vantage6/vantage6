@@ -271,13 +271,13 @@ def mount_database(
 
         if type_ == InstanceType.SERVER:
             environment_vars = {
-                ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
-                ServerGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
+                # ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                # ServerGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
         elif type_ == InstanceType.ALGORITHM_STORE:
             environment_vars = {
-                AlgoStoreGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
-                AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
+                # AlgoStoreGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                # AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
     else:
         warning(

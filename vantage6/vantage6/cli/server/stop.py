@@ -30,13 +30,13 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
     flag_value=False,
     help="Search for configuration in the user folders instead of system folders.",
 )
-@click.option("--all", "all", flag_value=True, help="Stop all running servers")
+@click.option("--all", "all_servers", flag_value=True, help="Stop all running servers")
 def cli_server_stop(
     name: str,
     context: str,
     namespace: str,
     system_folders: bool,
-    all: bool,
+    all_servers: bool,
 ):
     """
     Stop an running server.
@@ -60,7 +60,7 @@ def cli_server_stop(
         error("No running servers found.")
         return
 
-    if all:
+    if all_servers:
         for server in running_servers:
             _stop_server(server["name"], namespace, context)
     else:
