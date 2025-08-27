@@ -7,6 +7,11 @@ data:
   config.yaml: |
     api_path: {{ .Values.store.api_path }}
     description: {{ .Values.store.description }}
+    {{- if .Values.database.external }}
+    uri: {{ .Values.database.uri }}
+    {{- else }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    {{- end }}
     logging:
       backup_count: {{ .Values.store.logging.backup_count }}
       datefmt: {{ .Values.store.logging.datefmt | quote }}
@@ -53,12 +58,13 @@ data:
       - {{ . }}
       {{- end }}
     {{- end }}
+    {{- if .Values.store.dev }}
     dev:
       host_uri: {{ .Values.store.dev.host_uri }}
       disable_review: {{ .Values.store.dev.disable_review }}
       review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
+    {{- end }}
     port: {{ .Values.store.internal.port }}
     root_user:
       username: {{ .Values.store.keycloakAdminUsername }}
       v6_server_uri: {{ .Values.store.vantage6Server.uri }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}

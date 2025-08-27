@@ -46,6 +46,7 @@ data:
     {{- if .Values.server.dev.host_uri }}
     dev:
       host_uri: {{ .Values.server.dev.host_uri }}
+      store_in_local_cluster: {{ .Values.server.dev.store_in_local_cluster }}
     {{- end }}
     keycloak:
       {{- if hasKey .Values.server.keycloak "manage_users_and_nodes" }}

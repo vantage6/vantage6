@@ -54,13 +54,6 @@ store:
     disable_review: false
     review_own_algorithm: false
 
-    # TODO v5+ implement the following list policies to be default all allowed unless
-    # specified otherwise
-    # allowed_servers: []
-    # allowedReviewers: []
-    # allowedReviewAssigners: []
-
-
   image: harbor2.vantage6.ai/infrastructure/store:latest
 
   internal:

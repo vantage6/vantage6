@@ -290,3 +290,22 @@ def attach_logs(*labels: list[str]) -> None:
     command = ["kubectl", "logs", "--follow", "--selector", ",".join(labels)]
     process = Popen(command, stdout=None, stderr=None)
     process.wait()
+
+
+def get_main_cli_command_name(instance_type: InstanceType) -> str:
+    """
+    Get the main CLI command name for a given instance type.
+
+    Parameters
+    ----------
+    instance_type : InstanceType
+        The type of instance to get the main CLI command name for
+    """
+    if instance_type == InstanceType.SERVER:
+        return "server"
+    elif instance_type == InstanceType.ALGORITHM_STORE:
+        return "algorithm-store"
+    elif instance_type == InstanceType.NODE:
+        return "node"
+    else:
+        raise ValueError(f"Invalid instance type: {instance_type}")

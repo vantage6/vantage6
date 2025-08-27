@@ -3,7 +3,7 @@ from __future__ import annotations
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli import __version__
-from vantage6.cli.configuration_manager import ServerConfigurationManager
+from vantage6.cli.configuration_manager import AlgorithmStoreConfigurationManager
 from vantage6.cli.context.base_server import BaseServerContext
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
@@ -24,7 +24,7 @@ class AlgorithmStoreContext(BaseServerContext):
         System wide or user configuration, by default S_FOL
     """
 
-    INST_CONFIG_MANAGER = ServerConfigurationManager
+    INST_CONFIG_MANAGER = AlgorithmStoreConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
         super().__init__(
