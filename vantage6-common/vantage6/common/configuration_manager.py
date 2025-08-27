@@ -1,10 +1,15 @@
 from __future__ import annotations
-import yaml
-import collections
 
-from typing import Any, Type
+import collections
+from abc import abstractmethod
 from pathlib import Path
+from typing import Any, Type
+
+import yaml
+from jinja2 import Environment, FileSystemLoader, Template
 from schema import Schema, SchemaError
+
+from vantage6.cli.globals import TEMPLATE_FOLDER
 
 
 class Configuration(collections.UserDict):
@@ -184,9 +189,7 @@ class ConfigurationManager(object):
             file path.
         """
         name = Path(path).stem
-        assert name, (
-            "Configuration name could not be extracted from " f"filepath={path}"
-        )
+        assert name, f"Configuration name could not be extracted from filepath={path}"
         conf = cls(name=name, conf_class=conf_class)
         conf.load(path)
         return conf
@@ -201,5 +204,37 @@ class ConfigurationManager(object):
             The path to the file to save the configuration to.
         """
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            yaml.dump(self.config, f, default_flow_style=False)
+        template = self.get_config_template()
+        rendered_config = template.render(self.config)
+        with open(path, "x", encoding="utf-8") as f:
+            f.write(rendered_config)
+
+    @abstractmethod
+    def get_config_template(self) -> Template:
+        """
+        Get the configuration template for the server.
+        """
+        pass
+
+    @classmethod
+    def _get_config_template(cls, template_file: str) -> Template:
+        """
+        Get the configuration template for the server.
+
+        Parameters
+        ----------
+        template_file: str
+            The name of the template file to get.
+
+        Returns
+        -------
+        jinja2.Template
+            The configuration template.
+        """
+        environment = Environment(
+            loader=FileSystemLoader(TEMPLATE_FOLDER),
+            trim_blocks=True,
+            lstrip_blocks=True,
+            autoescape=True,
+        )
+        return environment.get_template(template_file)

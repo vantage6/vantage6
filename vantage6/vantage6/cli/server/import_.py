@@ -17,7 +17,6 @@ from vantage6.common.globals import (
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import ServerGlobals
 from vantage6.cli.utils import check_config_name_allowed
 
 
@@ -111,7 +110,7 @@ def cli_server_import(
         mounts.append(docker.types.Mount("/mnt/database/", dirname, type="bind"))
 
         environment_vars = {
-            ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}"
+            # ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}"
         }
 
     else:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import os
 import re
 import subprocess
@@ -31,7 +30,6 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
-from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals
 from vantage6.cli.utils import (
     check_config_name_allowed,
     validate_input_cmd_args,
@@ -273,13 +271,13 @@ def mount_database(
 
         if type_ == InstanceType.SERVER:
             environment_vars = {
-                ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
-                ServerGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
+                # ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                # ServerGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
         elif type_ == InstanceType.ALGORITHM_STORE:
             environment_vars = {
-                AlgoStoreGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
-                AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
+                # AlgoStoreGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                # AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
     else:
         warning(
@@ -361,6 +359,7 @@ def helm_install(
         chart_name,
         "--repo",
         DEFAULT_CHART_REPO,
+        # TODO v5+ remove this flag when we have a stable release
         "--devel",  # ensure using latest version including pre-releases
     ]
 
@@ -380,14 +379,18 @@ def helm_install(
             check=True,
         )
         info(
-            f"Successfully installed release '{release_name}' using chart '{chart_name}'."
+            f"Successfully installed release '{release_name}' using chart "
+            f"'{chart_name}'."
         )
-    except subprocess.CalledProcessError as e:
-        error(f"Failed to install release '{release_name}': {e.stderr}")
+    except subprocess.CalledProcessError:
+        error(f"Failed to install release '{release_name}'.")
+        exit(1)
     except FileNotFoundError:
         error(
-            "Helm command not found. Please ensure Helm is installed and available in the PATH."
+            "Helm command not found. Please ensure Helm is installed and available in "
+            "the PATH."
         )
+        exit(1)
 
 
 def start_port_forward(

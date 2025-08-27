@@ -56,6 +56,12 @@ DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
 PROMETHEUS_CONFIG = "prometheus.yml"
 PROMETHEUS_DIR = "prometheus"
 
+# template folder
+TEMPLATE_FOLDER = PACKAGE_FOLDER / APPNAME / "cli" / "template"
+SERVER_TEMPLATE_FILE = "server_config.j2"
+NODE_TEMPLATE_FILE = "node_config.j2"
+ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
+
 
 # datasets included in the nodes of the dev network
 class DefaultDatasets(StrEnumBase):
@@ -72,15 +78,10 @@ class ServerType(StrEnumBase):
     ALGORITHM_STORE = "algorithm-store"
 
 
-class ServerGlobals(StrEnumBase):
-    """Enum containing server environment variables"""
+class Charts(StrEnumBase):
+    """Enum containing chart names"""
 
-    DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
-
-
-class AlgoStoreGlobals(StrEnumBase):
-    """Enum containing algorithm store environment variables"""
-
-    DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
+    SERVER = "server"
+    ALGORITHM_STORE = "algorithm-store"
+    NODE = "node"
+    AUTH = "auth"

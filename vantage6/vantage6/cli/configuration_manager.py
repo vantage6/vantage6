@@ -4,6 +4,8 @@ from schema import And, Optional, Or, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
 
+from vantage6.cli.globals import SERVER_TEMPLATE_FILE
+
 LOGGING_VALIDATORS = {
     "level": And(
         Use(str), lambda lvl: lvl in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
@@ -113,6 +115,12 @@ class ServerConfigurationManager(ConfigurationManager):
             A new instance of the ServerConfigurationManager.
         """
         return super().from_file(path, conf_class=ServerConfiguration)
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the server.
+        """
+        return super()._get_config_template(SERVER_TEMPLATE_FILE)
 
 
 class TestingConfigurationManager(ConfigurationManager):

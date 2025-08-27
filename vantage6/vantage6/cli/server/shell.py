@@ -29,7 +29,7 @@ def cli_server_shell(ctx: ServerContext) -> None:
     docker_client = docker.from_env()
 
     running_servers = docker_client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.SERVER}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.SERVER.value}"}
     )
 
     if ctx.docker_container_name not in [s.name for s in running_servers]:

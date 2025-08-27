@@ -1,3 +1,4 @@
+{{- if not .Values.database.external }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,3 +12,4 @@ spec:
   selector:
 {{ include "vantage6.matchLabels" . | indent 4 }}
     component: postgres
+{{- end }}

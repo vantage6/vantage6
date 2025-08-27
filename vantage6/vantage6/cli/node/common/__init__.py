@@ -109,6 +109,6 @@ def find_running_node_names(client: docker.DockerClient) -> list[str]:
         List of names of running nodes
     """
     running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE}"}
+        filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
     )
     return [node.name for node in running_nodes]

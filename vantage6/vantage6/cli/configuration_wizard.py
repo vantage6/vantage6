@@ -368,16 +368,9 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     return config
 
 
-def server_configuration_questionaire(
-    instance_name: str,
-) -> dict[str, Any]:
+def server_configuration_questionaire() -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
-
-    Parameters
-    ----------
-    instance_name : str
-        Name of the server instance
 
     Returns
     -------
@@ -389,14 +382,9 @@ def server_configuration_questionaire(
     kube_namespace = cli_config.get_last_namespace()
 
     # Initialize config with basic structure
-    config = {"server": {}, "database": {}, "ui": {}}
+    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
 
     # === Server settings ===
-    config["server"]["description"] = q.text(
-        "Enter a human-readable description:",
-        default=f"Vantage6 server {instance_name}",
-    ).unsafe_ask()
-
     config["server"]["image"] = q.text(
         "Server Docker image:",
         default="harbor2.vantage6.ai/infrastructure/server:latest",
@@ -419,6 +407,22 @@ def server_configuration_questionaire(
         default="docker-desktop",
     ).unsafe_ask()
 
+    server_type = q.select(
+        "Do you want to use production or development settings for this server?",
+        choices=["production", "development"],
+    ).unsafe_ask()
+
+    if server_type == "development":
+        config["server"]["jwt"] = {
+            "secret": "constant_development_secret`",
+        }
+        config["server"]["dev"] = {
+            "host_uri": "host.docker.internal",
+            "store_in_local_cluster": True,
+        }
+    else:
+        config = _add_production_server_config(config)
+
     # === Keycloak settings ===
     keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
     config["server"]["keycloakUrl"] = keycloak_url
@@ -431,6 +435,33 @@ def server_configuration_questionaire(
     ).unsafe_ask()
 
     config["server"]["logging"] = {"level": log_level}
+
+    return config
+
+
+def _add_production_server_config(config: dict) -> dict:
+    """
+    Add the production server configuration to the config
+
+    Parameters
+    ----------
+    config : dict
+        The config to add the production server configuration to
+
+    Returns
+    -------
+    dict
+        The config with the production server configuration added
+    """
+    info("For production environments, it is recommended to use an external database.")
+    info("Please provide the URI of the external database.")
+    info("Example: postgresql://username:password@localhost:5432/vantage6")
+
+    config["database"]["external"] = True
+    config["database"]["uri"] = q.text(
+        "Database URI:",
+        default="postgresql://vantage6:vantage6@localhost:5432/vantage6",
+    ).unsafe_ask()
 
     return config
 
@@ -523,9 +554,7 @@ def configuration_wizard(
         config = node_configuration_questionaire(dirs, instance_name)
     elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(
-            instance_name=instance_name,
-        )
+        config = server_configuration_questionaire()
     else:
         conf_manager = ServerConfigurationManager
         config = algo_store_configuration_questionaire(instance_name)

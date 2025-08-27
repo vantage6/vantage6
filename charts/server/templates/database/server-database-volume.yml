@@ -1,3 +1,4 @@
+{{- if not .Values.database.external }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -23,3 +24,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.database.k8sNodeName }}
+{{- end }}

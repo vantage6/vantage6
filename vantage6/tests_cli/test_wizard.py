@@ -92,7 +92,7 @@ class WizardTest(unittest.TestCase):
                 False,
             ]
 
-            config = server_configuration_questionaire("vantage6")
+            config = server_configuration_questionaire()
 
             keys = [
                 "description",

@@ -1,4 +1,5 @@
-import enum
+import json
+import subprocess
 from subprocess import Popen
 from typing import Iterable
 
@@ -11,6 +12,112 @@ from vantage6.common import error, warning
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli.context import select_context_class
+from vantage6.cli.utils import validate_input_cmd_args
+
+
+def find_running_service_names(
+    instance_type: InstanceType,
+    only_system_folders: bool = False,
+    only_user_folders: bool = False,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> list[str]:
+    """
+    List running Vantage6 servers that were installed via helm_install.
+
+    Parameters
+    ----------
+    instance_type : InstanceType
+        The type of instance to find running services for
+    only_system_folders : bool, optional
+        Whether to look for system-based services or not. By default False.
+    only_user_folders : bool, optional
+        Whether to look for user-based services or not. By default False.
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+
+    Returns
+    -------
+    list[str]
+        List of release names that are running
+    """
+    # Input validation
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    validate_input_cmd_args(instance_type, "instance type", allow_none=False)
+    if only_system_folders and only_user_folders:
+        error("Cannot use both only_system_folders and only_user_folders")
+        exit(1)
+
+    # Create the command
+    command = [
+        "helm",
+        "list",
+        "--output",
+        "json",  # Get structured output
+    ]
+
+    if context:
+        command.extend(["--kube-context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+    else:
+        command.extend(["--all-namespaces"])
+
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to list Helm releases: {e}")
+        return []
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and available in "
+            "the PATH."
+        )
+        return []
+
+    try:
+        releases = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        error("Failed to parse Helm output as JSON")
+        return []
+
+    # filter services for the vantage6 services that are sought. These have
+    # the following pattern:
+    # f"{APPNAME}-{name}-{scope}-{instance_type.value}"
+
+    # filter for the instance type
+    svc_starts_with = f"{APPNAME}-"
+    if only_system_folders:
+        svc_ends_with = f"system-{instance_type.value}"
+    elif only_user_folders:
+        svc_ends_with = f"user-{instance_type.value}"
+    else:
+        svc_ends_with = f"-{instance_type.value}"
+
+    matching_services = []
+    for release in releases:
+        release_name = release.get("name", "")
+
+        # Check if this is a Vantage6 server release
+        is_matching_service = (
+            release_name.startswith(svc_starts_with)
+            and release_name.endswith(svc_ends_with)
+            and instance_type.value in release_name
+        )
+
+        if is_matching_service:
+            matching_services.append(release_name)
+
+    return matching_services
 
 
 def get_server_name(
@@ -20,30 +127,30 @@ def get_server_name(
     instance_type: InstanceType,
 ) -> str:
     """
-    Get the version of a running server.
+    Get the full name of a running server.
 
     Parameters
     ----------
     name : str
-        Name of the server to get the version from
+        Name of the server to get the full name from
     system_folders : bool
         Whether to use system folders or not
     running_server_names : list[str]
         The names of the running servers
     instance_type : InstanceType
-        The type of instance to get the running servers from
+        The type of instance to get the full name from
     """
 
     if not name:
         if not running_server_names:
             error(
-                f"No {instance_type}s are running! You can only check the version for "
-                f"{instance_type}s that are running"
+                f"No {instance_type.value}s are running! You can only check the version"
+                f" for {instance_type.value}s that are running"
             )
             exit(1)
         try:
             name = q.select(
-                f"Select the {instance_type} you wish to inspect:",
+                f"Select the {instance_type.value} you wish to inspect:",
                 choices=running_server_names,
             ).unsafe_ask()
         except KeyboardInterrupt:
@@ -73,7 +180,7 @@ def get_running_servers(
         The names of the running servers
     """
     running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={instance_type}"}
+        filters={"label": f"{APPNAME}-type={instance_type.value}"}
     )
     return [server.name for server in running_servers]
 
@@ -87,10 +194,9 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     instance_type : InstanceType
         The type of instance to get the configurations for
     """
-    client = docker.from_env()
     ctx_class = select_context_class(instance_type)
 
-    running_server_names = get_running_servers(client, instance_type)
+    running_server_names = find_running_service_names(instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
@@ -100,28 +206,37 @@ def get_server_configuration_list(instance_type: InstanceType) -> None:
     stopped = Fore.RED + "Not running" + Style.RESET_ALL
 
     # system folders
-    configs, f1 = ctx_class.available_configurations(system_folders=True)
+    configs, failed_imports_system = ctx_class.available_configurations(
+        system_folders=True
+    )
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-system-{instance_type}" in running_server_names
+            if f"{APPNAME}-{config.name}-system-{instance_type.value}"
+            in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} System ")
 
     # user folders
-    configs, f2 = ctx_class.available_configurations(system_folders=False)
+    configs, failed_imports_user = ctx_class.available_configurations(
+        system_folders=False
+    )
     for config in configs:
         status = (
             running
-            if f"{APPNAME}-{config.name}-user-{instance_type}" in running_server_names
+            if f"{APPNAME}-{config.name}-user-{instance_type.value}"
+            in running_server_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25} User   ")
 
     click.echo("-" * 85)
-    if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")
+    if len(failed_imports_system) + len(failed_imports_user):
+        warning(
+            f"{Fore.RED}Failed imports: "
+            f"{len(failed_imports_system) + len(failed_imports_user)}{Style.RESET_ALL}"
+        )
 
 
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:
