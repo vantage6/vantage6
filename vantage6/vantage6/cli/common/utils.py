@@ -164,6 +164,24 @@ def find_running_service_names(
     return matching_services
 
 
+def select_running_service(
+    running_services: list[str],
+    instance_type: InstanceType,
+) -> str:
+    """
+    Select a running service from the list of running services.
+    """
+    try:
+        name = q.select(
+            f"Select the {instance_type.value} you wish to inspect:",
+            choices=running_services,
+        ).unsafe_ask()
+    except KeyboardInterrupt:
+        error("Aborted by user!")
+        exit(1)
+    return name
+
+
 def get_server_name(
     name: str,
     system_folders: bool,

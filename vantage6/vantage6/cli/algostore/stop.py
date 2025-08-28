@@ -1,61 +1,96 @@
 import click
-import docker
 from colorama import Fore, Style
 
-from vantage6.common import error, info, warning
-from vantage6.common.docker.addons import (
-    check_docker_running,
-    remove_container_if_exists,
-)
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common import error, info
+from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.cli.common.stop import helm_uninstall, stop_port_forward
+from vantage6.cli.common.utils import (
+    find_running_service_names,
+    select_context_and_namespace,
+    select_running_service,
+)
+from vantage6.cli.context import get_context
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
 @click.command()
-@click_insert_context(InstanceType.ALGORITHM_STORE)
+@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+    help="Search for configuration in system folders instead of user folders. "
+    "This is the default.",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    help="Search for configuration in the user folders instead of system folders.",
+)
 @click.option("--all", "all_stores", flag_value=True, help="Stop all algorithm stores")
-def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_stores: bool):
+def cli_algo_store_stop(
+    name: str,
+    context: str,
+    namespace: str,
+    system_folders: bool,
+    all_stores: bool,
+):
     """
-    Stop one or all running server(s).
+    Stop one or all running algorithm store(s).
     """
-    check_docker_running()
-    client = docker.from_env()
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
-    running_stores = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
+    running_stores = find_running_service_names(
+        instance_type=InstanceType.ALGORITHM_STORE,
+        only_system_folders=system_folders,
+        only_user_folders=not system_folders,
+        context=context,
+        namespace=namespace,
     )
 
     if not running_stores:
-        warning("No algorithm stores are currently running.")
+        error("No running algorithm stores found.")
         return
-
-    running_store_names = [server.name for server in running_stores]
 
     if all_stores:
-        for container_name in running_store_names:
-            _stop_algorithm_store(client, container_name)
-        return
+        for store in running_stores:
+            _stop_store(store["name"], namespace, context)
+    else:
+        if not name:
+            store_name = select_running_service(
+                running_stores, InstanceType.ALGORITHM_STORE
+            )
+        else:
+            ctx = get_context(InstanceType.ALGORITHM_STORE, name, system_folders)
+            store_name = ctx.helm_release_name
 
-    container_name = ctx.docker_container_name
-    if container_name not in running_store_names:
-        error(f"{Fore.RED}{ctx.name}{Style.RESET_ALL} is not running!")
-        return
+        if store_name in running_stores:
+            _stop_store(store_name, namespace, context)
+            info(f"Stopped the {Fore.GREEN}{store_name}{Style.RESET_ALL} store.")
+        else:
+            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?!")
 
-    _stop_algorithm_store(client, container_name)
 
+def _stop_store(store_name: str, namespace: str, context: str) -> None:
+    info(f"Stopping store {store_name}...")
 
-def _stop_algorithm_store(client, container_name) -> None:
-    """
-    Stop the algorithm store server.
+    # uninstall the helm release
+    helm_uninstall(
+        release_name=store_name,
+        context=context,
+        namespace=namespace,
+    )
 
-    Parameters
-    ----------
-    client : DockerClient
-        The docker client
-    container_name : str
-        The name of the container to stop
-    """
-    remove_container_if_exists(client, name=container_name)
-    info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
+    stop_port_forward(
+        service_name=f"{store_name}-vantage6-algorithm-store-service",
+    )
+
+    info(f"Store {store_name} stopped successfully.")
