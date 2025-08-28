@@ -19,7 +19,7 @@ store:
 
   vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
 
-  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/store:latest') }}
+  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:latest') }}
 
   replications: {{ store.replications | default(1) }}
 

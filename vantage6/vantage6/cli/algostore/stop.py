@@ -82,15 +82,8 @@ def cli_algo_store_stop(
 def _stop_store(store_name: str, namespace: str, context: str) -> None:
     info(f"Stopping store {store_name}...")
 
-    # uninstall the helm release
-    helm_uninstall(
-        release_name=store_name,
-        context=context,
-        namespace=namespace,
-    )
+    helm_uninstall(release_name=store_name, context=context, namespace=namespace)
 
-    stop_port_forward(
-        service_name=f"{store_name}-vantage6-algorithm-store-service",
-    )
+    stop_port_forward(service_name=f"{store_name}-store-service")
 
     info(f"Store {store_name} stopped successfully.")
