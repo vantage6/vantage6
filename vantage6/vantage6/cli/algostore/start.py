@@ -61,7 +61,7 @@ def cli_algo_store_start(
     # port forward for server
     info("Port forwarding for algorithm store")
     start_port_forward(
-        service_name=f"{ctx.helm_release_name}-vantage6-algorithm-store-service",
+        service_name=f"{ctx.helm_release_name}-store-service",
         service_port=ctx.config["store"].get("port", Ports.DEV_ALGO_STORE.value),
         port=port or ctx.config["store"].get("port", Ports.DEV_ALGO_STORE.value),
         ip=ip,

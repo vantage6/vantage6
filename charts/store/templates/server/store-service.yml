@@ -9,7 +9,7 @@ spec:
     component: store-server
   ports:
     - protocol: TCP
-      port: 80
+      port: {{ .Values.store.port }}
       targetPort: {{ .Values.store.internal.port }}
       name: store-backend
   type: ClusterIP

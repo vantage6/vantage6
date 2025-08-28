@@ -58,8 +58,12 @@ store:
 
   image: harbor2.vantage6.ai/infrastructure/store:latest
 
+  # The internal port on the container pod that the store runs on
   internal:
     port: 7602
+
+  # The port to expose the store on in the cluster
+  port: 7602
 
   logging:
     # Controls the logging output level. Could be one of the following
