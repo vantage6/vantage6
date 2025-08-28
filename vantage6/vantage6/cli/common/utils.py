@@ -1,5 +1,6 @@
 import json
 import subprocess
+from pathlib import Path
 from subprocess import Popen
 from typing import Iterable
 
@@ -11,8 +12,51 @@ from colorama import Fore, Style
 from vantage6.common import error, warning
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
+from vantage6.cli.config import CliConfig
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import validate_input_cmd_args
+
+
+def select_context_and_namespace(
+    context: str | None = None,
+    namespace: str | None = None,
+) -> tuple[str, str]:
+    """
+    Select the context and namespace to use.
+
+    This uses the CLI config to compare the provided context and namespace with the
+    last used context and namespace. If the provided context and namespace are not
+    the same as the last used context and namespace, the CLI config is updated.
+
+    Parameters
+    ----------
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+
+    Returns
+    -------
+    tuple[str, str]
+        The context and namespace to use
+    """
+    cli_config = CliConfig()
+
+    return cli_config.compare_changes_config(
+        context=context,
+        namespace=namespace,
+    )
+
+
+def create_directory_if_not_exists(directory: Path) -> None:
+    """
+    Create a directory.
+    """
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        error(f"Failed to create directory {directory}: {e}")
+        exit(1)
 
 
 def find_running_service_names(
@@ -23,7 +67,7 @@ def find_running_service_names(
     namespace: str | None = None,
 ) -> list[str]:
     """
-    List running Vantage6 servers that were installed via helm_install.
+    List running Vantage6 servers.
 
     Parameters
     ----------

@@ -16,6 +16,8 @@ store:
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
 
+  vantage6ServerUri: http://localhost:7601/server
+
   policies:
     # Set who is allowed to view the algorithms in the store. Possible values are:
     # - "public": everyone can view the algorithms
@@ -103,6 +105,12 @@ store:
   #   - http://localhost:7600
 
 database:
+  # whether or not to use an external database
+  external: false
+
+  # the URI of the external database
+  # uri: postgres://vantage6:vantage6@localhost:5432/vantage6
+
   # The image of the database
   image:
     repository: postgres

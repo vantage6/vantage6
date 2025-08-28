@@ -17,6 +17,8 @@ store:
   keycloakAdminClient: {{ store.keycloakAdminClient | default('backend-admin-client') }}
   keycloakAdminClientSecret: {{ store.keycloakAdminClientSecret | default('myadminclientsecret') }}
 
+  vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
+
   image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/store:latest') }}
 
   replications: {{ store.replications | default(1) }}

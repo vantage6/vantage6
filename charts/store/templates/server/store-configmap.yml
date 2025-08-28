@@ -67,4 +67,4 @@ data:
     port: {{ .Values.store.internal.port }}
     root_user:
       username: {{ .Values.store.keycloakAdminUsername }}
-      v6_server_uri: {{ .Values.store.vantage6Server.uri }}
+      v6_server_uri: {{ .Values.store.vantage6ServerUri }}

@@ -78,10 +78,10 @@ class ServerType(StrEnumBase):
     ALGORITHM_STORE = "algorithm-store"
 
 
-class Charts(StrEnumBase):
+class ChartName(StrEnumBase):
     """Enum containing chart names"""
 
     SERVER = "server"
-    ALGORITHM_STORE = "algorithm-store"
+    ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"
