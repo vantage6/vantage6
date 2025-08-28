@@ -29,7 +29,12 @@ class BaseServerContext(AppContext):
         str
             string representation of the database uri
         """
-        is_db_external = self.config["database"]["external"]
+        # within container, the uri is set in the config file
+        if self.in_container:
+            return self.config.get("uri")
+
+        # outside container, the uri is set in the values.yaml in a different location
+        is_db_external = self.config.get("database", {}).get("external", False)
         if is_db_external:
             uri = self.config["database"]["uri"]
         else:
@@ -39,21 +44,6 @@ class BaseServerContext(AppContext):
                 f"{self.helm_release_name}-postgres-service:5432/{db_conf['name']}"
             )
 
-        url = make_url(uri)
-
-        if url.host is None and not os.path.isabs(url.database):
-            # We're dealing with a relative path here of a local database, when
-            # we're running the server outside of docker. Therefore we need to
-            # prepend the data directory to the database name, but after the
-            # driver name (e.g. sqlite:////db.sqlite ->
-            # sqlite:////data_dir>/db.sqlite)
-
-            # find index of database name
-            idx_db_name = str(url).find(url.database)
-
-            # add the datadir to the right location in the database uri
-            return str(url)[:idx_db_name] + str(self.data_dir / url.database)
-
         return uri
 
     @classmethod
@@ -62,6 +52,7 @@ class BaseServerContext(AppContext):
         path: str,
         server_type: ServerType,
         system_folders: bool = S_FOL,
+        in_container: bool = False,
     ) -> BaseServerContext:
         """
         Create a server context from an external configuration file. External
@@ -76,11 +67,15 @@ class BaseServerContext(AppContext):
             Type of server, either 'server' or 'algorithm-store'
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        in_container : bool, optional
+            Whether the application is running inside a container, by default False
 
         Returns
         -------
         ServerContext
             Server context object
         """
-        cls = super().from_external_config_file(path, server_type, system_folders)
+        cls = super().from_external_config_file(
+            path, server_type, system_folders, in_container
+        )
         return cls

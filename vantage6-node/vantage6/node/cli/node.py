@@ -7,8 +7,6 @@ Some commands, such as ``vnode-local start``, are used within the Docker
 container when ``v6 node start`` is used.
 """
 
-import errno
-import os
 import sys
 from pathlib import Path
 
@@ -69,7 +67,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
     # stuff since you know what you are doing
     if config:
         name = Path(config).stem
-        ctx = NodeContext(name, system_folders, config)
+        ctx = NodeContext(name, system_folders, config, in_container=True)
 
     else:
         # in case no name is supplied, ask user to select one
@@ -91,7 +89,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
                 sys.exit(0)
 
         # create dummy node context
-        ctx = NodeContext(name, system_folders)
+        ctx = NodeContext(name, system_folders, in_container=True)
 
     # run the node application
     node.run(ctx)

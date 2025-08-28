@@ -59,7 +59,7 @@ class AlgorithmStoreContext(BaseServerContext):
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, system_folders: bool = S_FOL
+        cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
     ) -> AlgorithmStoreContext:
         """
         Create a server context from an external configuration file. External
@@ -72,6 +72,8 @@ class AlgorithmStoreContext(BaseServerContext):
             Path of the configuration file
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        in_container : bool, optional
+            Whether the application is running inside a container, by default False
 
         Returns
         -------
@@ -82,6 +84,7 @@ class AlgorithmStoreContext(BaseServerContext):
             path,
             ServerType.ALGORITHM_STORE,
             system_folders,
+            in_container,
         )
 
     @classmethod

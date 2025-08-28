@@ -80,7 +80,7 @@ def click_insert_context(func: callable) -> callable:
                 exit(1)
 
             # create server context, and initialize db
-            ctx = ServerContext(name, system_folders=system_folders)
+            ctx = ServerContext(name, system_folders=system_folders, in_container=True)
 
         # initialize database (singleton)
         Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)

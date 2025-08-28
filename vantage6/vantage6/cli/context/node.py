@@ -25,6 +25,8 @@ class NodeContext(AppContext):
         _description_, by default N_FOL
     config_file : str, optional
         _description_, by default None
+    in_container : bool, optional
+        Whether the application is running inside a container, by default False
     """
 
     # The server configuration manager is aware of the structure of the server
@@ -38,6 +40,7 @@ class NodeContext(AppContext):
         config_file: str = None,
         print_log_header: bool = True,
         logger_prefix: str = "",
+        in_container: bool = False,
     ):
         super().__init__(
             InstanceType.NODE,
@@ -46,6 +49,7 @@ class NodeContext(AppContext):
             config_file=config_file,
             print_log_header=print_log_header,
             logger_prefix=logger_prefix,
+            in_container=in_container,
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)

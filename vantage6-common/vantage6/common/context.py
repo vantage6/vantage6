@@ -37,6 +37,7 @@ class AppContext(metaclass=Singleton):
         config_file: Path | str = None,
         print_log_header: bool = True,
         logger_prefix: str = "",
+        in_container: bool = False,
     ) -> None:
         """
         Create a new AppContext instance.
@@ -55,10 +56,17 @@ class AppContext(metaclass=Singleton):
             `instance_name`.
         print_log_header: bool
             Print a banner to the log file.
+        in_container: bool
+            Whether the application is running inside a container, by default False
         """
         self.LOGGER_PREFIX = logger_prefix
         self.initialize(
-            instance_type, instance_name, system_folders, config_file, print_log_header
+            instance_type,
+            instance_name,
+            system_folders,
+            config_file,
+            print_log_header,
+            in_container,
         )
 
     def initialize(
@@ -68,6 +76,7 @@ class AppContext(metaclass=Singleton):
         system_folders: bool = False,
         config_file: str | None = None,
         print_log_header: bool = True,
+        in_container: bool = False,
     ) -> None:
         """
         Initialize the AppContext instance.
@@ -86,12 +95,13 @@ class AppContext(metaclass=Singleton):
             `instance_name`.
         print_log_header: bool
             Print a banner to the log file.
+        in_container: bool
+            Whether the application is running inside a container, by default False
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
         self.instance_type: InstanceType = instance_type
-        # if config_file is None:
-        #     config_file = f"{instance_name}.yaml"
+        self.in_container = in_container
         self.config_file = self.find_config_file(
             instance_type, self.name, system_folders, config_file
         )
@@ -137,7 +147,11 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def from_external_config_file(
-        cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
+        cls,
+        path: Path | str,
+        instance_type: InstanceType,
+        system_folders: bool = False,
+        in_container: bool = False,
     ) -> Self:
         """
         Create a new AppContext instance from an external config file.
@@ -150,6 +164,8 @@ class AppContext(metaclass=Singleton):
             Type of instance for which the config file is used
         system_folders: bool
             Use system folders rather than user folders
+        in_container: bool
+            Whether the application is running inside a container, by default False
 
         Returns
         -------
@@ -159,7 +175,13 @@ class AppContext(metaclass=Singleton):
         instance_name = Path(path).stem
 
         self_ = cls.__new__(cls)
-        self_.initialize(instance_type, instance_name, system_folders, path)
+        self_.initialize(
+            instance_type,
+            instance_name,
+            system_folders,
+            path,
+            in_container=in_container,
+        )
 
         return self_
 
