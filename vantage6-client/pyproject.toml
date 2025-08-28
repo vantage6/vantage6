@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-client"
-version = "5.0.0a33"
+version = "5.0.0a34"
 description = "Vantage6 client library"
 readme = "README.md"
 license = {text = "MIT"}
@@ -20,7 +20,7 @@ dependencies = [
     "pyfiglet==1.0.3",
     "python-keycloak==5.5.0",
     "rich==13.5.2",
-    "vantage6-common==5.0.0a33",
+    "vantage6-common==5.0.0a34",
 ]
 
 [project.optional-dependencies]
