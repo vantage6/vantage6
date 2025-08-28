@@ -288,8 +288,7 @@ deployments:
           keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
-          vantage6Server:
-            uri: http://localhost:7601/server
+          vantage6ServerUri: http://localhost:7601/server
           policies:
             allowLocalhost: true
             assignReviewOwnAlgorithm: true

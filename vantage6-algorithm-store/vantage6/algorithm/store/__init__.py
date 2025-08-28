@@ -310,6 +310,8 @@ def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     AlgorithmStoreApp
         A running instance of the vantage6 server
     """
-    ctx = AlgorithmStoreContext.from_external_config_file(config, system_folders)
+    ctx = AlgorithmStoreContext.from_external_config_file(
+        config, system_folders, in_container=True
+    )
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
     return AlgorithmStoreApp(ctx).start()

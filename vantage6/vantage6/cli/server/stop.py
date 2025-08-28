@@ -1,13 +1,15 @@
 import click
-import questionary as q
 from colorama import Fore, Style
 
 from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import helm_uninstall, stop_port_forward
-from vantage6.cli.common.utils import find_running_service_names
-from vantage6.cli.config import CliConfig
+from vantage6.cli.common.utils import (
+    find_running_service_names,
+    select_context_and_namespace,
+    select_running_service,
+)
 from vantage6.cli.context import get_context
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
@@ -41,9 +43,7 @@ def cli_server_stop(
     """
     Stop an running server.
     """
-    cli_config = CliConfig()
-
-    context, namespace = cli_config.compare_changes_config(
+    context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,
     )
@@ -65,20 +65,14 @@ def cli_server_stop(
             _stop_server(server["name"], namespace, context)
     else:
         if not name:
-            try:
-                server_name = q.select(
-                    "Select the server you wish to stop:", choices=running_servers
-                ).unsafe_ask()
-            except KeyboardInterrupt:
-                error("Aborted by user!")
-                return
+            server_name = select_running_service(running_servers, InstanceType.SERVER)
         else:
             ctx = get_context(InstanceType.SERVER, name, system_folders)
             server_name = ctx.helm_release_name
 
         if server_name in running_servers:
             _stop_server(server_name, namespace, context)
-            info(f"Stopped the {Fore.GREEN}{server_name}{Style.RESET_ALL} Server.")
+            info(f"Stopped the {Fore.GREEN}{server_name}{Style.RESET_ALL} server.")
         else:
             error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?!")
 

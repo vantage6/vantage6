@@ -18,6 +18,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_manager import (
+    AlgorithmStoreConfigurationManager,
     NodeConfigurationManager,
     ServerConfigurationManager,
 )
@@ -283,7 +284,9 @@ def _get_allowed_algorithm_stores() -> list[str]:
     return allowed_algorithm_stores
 
 
-def _get_common_server_config(instance_type: InstanceType, instance_name: str) -> dict:
+def _add_common_server_config(
+    config: dict, instance_type: InstanceType, instance_name: str
+) -> dict:
     """
     Part of the questionaire that is common to all server types (vantage6
     server and algorithm store server).
@@ -300,52 +303,26 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
     dict
         Dictionary with new (partial) server configuration
     """
-    config = q.unsafe_prompt(
-        [
-            {
-                "type": "text",
-                "name": "description",
-                "message": "Enter a human-readable description:",
-            },
-            {"type": "text", "name": "ip", "message": "ip:", "default": "0.0.0.0"},
-            {
-                "type": "text",
-                "name": "port",
-                "message": "Enter port to which the server listens:",
-                "default": (
-                    str(Ports.DEV_SERVER)
-                    if instance_type == InstanceType.SERVER
-                    else str(Ports.DEV_ALGO_STORE)
-                ),
-            },
-        ]
+    backend_config = (
+        config["server"] if instance_type == InstanceType.SERVER else config["store"]
     )
 
-    config.update(
-        q.unsafe_prompt(
-            [
-                {
-                    "type": "text",
-                    "name": "uri",
-                    "message": "Database URI:",
-                    "default": "sqlite:///default.sqlite",
-                },
-                {
-                    "type": "select",
-                    "name": "allow_drop_all",
-                    "message": "Allowed to drop all tables: ",
-                    "choices": ["True", "False"],
-                },
-            ]
-        )
-    )
+    backend_config["port"] = q.text(
+        "Enter port to which the server listens:",
+        default=(
+            str(Ports.DEV_SERVER)
+            if instance_type == InstanceType.SERVER
+            else str(Ports.DEV_ALGO_STORE)
+        ),
+    ).unsafe_ask()
 
     res = q.select(
         "Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
     ).unsafe_ask()
 
-    config["logging"] = {
+    backend_config["logging"] = {
         "level": res,
         "file": f"{instance_name}.log",
         "use_console": True,
@@ -359,18 +336,42 @@ def _get_common_server_config(instance_type: InstanceType, instance_name: str) -
             {"name": "socketio.server", "level": "warning"},
             {"name": "engineio.server", "level": "warning"},
             {"name": "sqlalchemy.engine", "level": "warning"},
-            {"name": "requests_oauthlib.oauth2_session", "level": "warning"},
         ],
     }
 
-    config["api_path"] = DEFAULT_API_PATH
+    backend_config["api_path"] = DEFAULT_API_PATH
 
-    return config
+    # === Database settings ===
+    config["database"]["volumePath"] = q.text(
+        "Where is your server database located on the host machine?",
+        default=f"{Path.cwd()}/dev/.db/db_pv_server",
+    ).unsafe_ask()
+
+    config["database"]["k8sNodeName"] = q.text(
+        "What is the name of the k8s node where the databases are running?",
+        default="docker-desktop",
+    ).unsafe_ask()
+
+    is_production = q.confirm(
+        "Do you want to use production settings for this server? If not, the server will "
+        "be configured to be more suitable for development or testing purposes.",
+        default=True,
+    ).unsafe_ask()
+
+    if is_production:
+        config = _add_production_server_config(config)
+
+    return config, is_production
 
 
-def server_configuration_questionaire() -> dict[str, Any]:
+def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the server instance.
 
     Returns
     -------
@@ -384,6 +385,20 @@ def server_configuration_questionaire() -> dict[str, Any]:
     # Initialize config with basic structure
     config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
 
+    config, is_production = _add_common_server_config(
+        config, InstanceType.SERVER, instance_name
+    )
+    if not is_production:
+        config["server"]["jwt"] = {
+            "secret": "constant_development_secret`",
+        }
+        config["server"]["dev"] = {
+            "host_uri": "host.docker.internal",
+            "store_in_local_cluster": True,
+        }
+
+    # TODO v5+ these should be removed, latest should usually be used so question is
+    # not needed. However, for now we want to specify alpha/beta images.
     # === Server settings ===
     config["server"]["image"] = q.text(
         "Server Docker image:",
@@ -396,45 +411,9 @@ def server_configuration_questionaire() -> dict[str, Any]:
         default="harbor2.vantage6.ai/infrastructure/ui:latest",
     ).unsafe_ask()
 
-    # === Database settings ===
-    config["database"]["volumePath"] = q.text(
-        "Where is your server database located on the host machine?",
-        default=f"{Path.cwd()}/dev/.db/db_pv_server",
-    ).unsafe_ask()
-
-    config["database"]["k8sNodeName"] = q.text(
-        "What is the name of the k8s node where the databases are running?",
-        default="docker-desktop",
-    ).unsafe_ask()
-
-    server_type = q.select(
-        "Do you want to use production or development settings for this server?",
-        choices=["production", "development"],
-    ).unsafe_ask()
-
-    if server_type == "development":
-        config["server"]["jwt"] = {
-            "secret": "constant_development_secret`",
-        }
-        config["server"]["dev"] = {
-            "host_uri": "host.docker.internal",
-            "store_in_local_cluster": True,
-        }
-    else:
-        config = _add_production_server_config(config)
-
     # === Keycloak settings ===
     keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
     config["server"]["keycloakUrl"] = keycloak_url
-
-    # === Other settings ===
-    log_level = q.select(
-        "Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    ).unsafe_ask()
-
-    config["server"]["logging"] = {"level": log_level}
 
     return config
 
@@ -481,7 +460,17 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     dict
         Dictionary with the new server configuration
     """
-    config = _get_common_server_config(InstanceType.ALGORITHM_STORE, instance_name)
+    config = {"store": {}, "database": {}}
+
+    config, is_production = _add_common_server_config(
+        config, InstanceType.ALGORITHM_STORE, instance_name
+    )
+    if not is_production:
+        config["store"]["dev"] = {
+            "host_uri": "host.docker.internal",
+            "disable_review": True,
+            "review_own_algorithm": True,
+        }
 
     default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER}{DEFAULT_API_PATH}"
     default_root_username = "admin"
@@ -503,6 +492,7 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     }
 
     # ask about openness of the algorithm store
+    config["policies"] = {}
     is_open = q.confirm(
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",
@@ -554,9 +544,9 @@ def configuration_wizard(
         config = node_configuration_questionaire(dirs, instance_name)
     elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire()
+        config = server_configuration_questionaire(instance_name)
     else:
-        conf_manager = ServerConfigurationManager
+        conf_manager = AlgorithmStoreConfigurationManager
         config = algo_store_configuration_questionaire(instance_name)
 
     # in the case of an environment we need to add it to the current

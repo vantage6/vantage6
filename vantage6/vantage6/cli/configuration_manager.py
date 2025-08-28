@@ -4,7 +4,7 @@ from schema import And, Optional, Or, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
 
-from vantage6.cli.globals import SERVER_TEMPLATE_FILE
+from vantage6.cli.globals import ALGO_STORE_TEMPLATE_FILE, SERVER_TEMPLATE_FILE
 
 LOGGING_VALIDATORS = {
     "level": And(
@@ -25,6 +25,15 @@ class ServerConfiguration(Configuration):
     """
 
     # TODO: explore how to validate helm values.yaml files, see issue 2105
+    VALIDATORS = {}
+
+
+class AlgorithmStoreConfiguration(Configuration):
+    """
+    Stores the algorithm store's configuration and defines a set of algorithm store-specific
+    validators.
+    """
+
     VALIDATORS = {}
 
 
@@ -119,8 +128,56 @@ class ServerConfigurationManager(ConfigurationManager):
     def get_config_template(self) -> str:
         """
         Get the configuration template for the server.
+
+        Returns
+        -------
+        str
+            The configuration template for the server.
         """
         return super()._get_config_template(SERVER_TEMPLATE_FILE)
+
+
+class AlgorithmStoreConfigurationManager(ConfigurationManager):
+    """
+    Maintains the algorithm store's configuration.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    """
+
+    def __init__(self, name, *args, **kwargs) -> None:
+        super().__init__(conf_class=AlgorithmStoreConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path: str) -> Self:
+        """
+        Create a new instance of the AlgorithmStoreConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str
+            Path to the configuration file.
+
+        Returns
+        -------
+        AlgorithmStoreConfigurationManager
+            A new instance of the AlgorithmStoreConfigurationManager.
+        """
+        return super().from_file(path, conf_class=AlgorithmStoreConfiguration)
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the algorithm store.
+
+        Returns
+        -------
+        str
+            The configuration template for the algorithm store.
+        """
+        return super()._get_config_template(ALGO_STORE_TEMPLATE_FILE)
 
 
 class TestingConfigurationManager(ConfigurationManager):

@@ -16,7 +16,7 @@ def run_function(config):
         return
 
     name = Path(config).stem
-    ctx = NodeContext(name, True, config, logger_prefix=f"{name} | ")
+    ctx = NodeContext(name, True, config, logger_prefix=f"{name} | ", in_container=True)
 
     run(ctx)
 

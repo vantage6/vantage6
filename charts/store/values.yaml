@@ -16,6 +16,8 @@ store:
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
 
+  vantage6ServerUri: http://localhost:7601/server
+
   policies:
     # Set who is allowed to view the algorithms in the store. Possible values are:
     # - "public": everyone can view the algorithms
@@ -53,13 +55,6 @@ store:
     host_uri: host.docker.internal
     disable_review: false
     review_own_algorithm: false
-
-    # TODO v5+ implement the following list policies to be default all allowed unless
-    # specified otherwise
-    # allowed_servers: []
-    # allowedReviewers: []
-    # allowedReviewAssigners: []
-
 
   image: harbor2.vantage6.ai/infrastructure/store:latest
 
@@ -110,6 +105,12 @@ store:
   #   - http://localhost:7600
 
 database:
+  # whether or not to use an external database
+  external: false
+
+  # the URI of the external database
+  # uri: postgres://vantage6:vantage6@localhost:5432/vantage6
+
   # The image of the database
   image:
     repository: postgres

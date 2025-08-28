@@ -1,22 +1,195 @@
-allow_drop_all: true
-description: 'default_algorithm_store'
-ip: 0.0.0.0
-logging:
-  backup_count: 5
-  datefmt: '%Y-%m-%d %H:%M:%S'
-  file: test-server.log
-  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-  level: DEBUG
-  max_size: 1024
-  use_console: true
-port: {{ port }}
-uri: sqlite:///default.sqlite
-root_user:
-  v6_server_uri: http://localhost:{{ server_port }}/api
-  username: dev_admin
-dev:
-  host_uri: {{ host_uri }}
-  disable_review: true
-policies:
-  algorithm_view: public
-{{ user_provided_config }}
+# Override the chart name
+nameOverride: {{ nameOverride | default('vantage6-store') }}
+# Optional, by default the Release.Namespace is used
+# namespace: vantage6-store
+store:
+
+  # The description of the store
+  description: {{ store.description | default('Vantage algorithm store version 5') }}
+
+  api_path: {{ store.api_path | default('/store') }}
+
+  # Keycloak configuration
+  keycloakUrl: {{ store.keycloakUrl }}
+  keycloakRealm: {{ store.keycloakRealm | default('vantage6') }}
+  keycloakAdminUsername: {{ store.keycloakAdminUsername | default('admin') }}
+  keycloakAdminPassword: {{ store.keycloakAdminPassword | default('admin') }}
+  keycloakAdminClient: {{ store.keycloakAdminClient | default('backend-admin-client') }}
+  keycloakAdminClientSecret: {{ store.keycloakAdminClientSecret | default('myadminclientsecret') }}
+
+  vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
+
+  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/store:latest') }}
+
+  replications: {{ store.replications | default(1) }}
+
+  policies:
+    # Set who is allowed to view the algorithms in the store. Possible values are:
+    # - "public": everyone can view the algorithms
+    # - "authenticated": users with a token valid for this store can view the algorithms
+    # - "private": only users with explicit permission in the algorithm store can view the
+    #   algorithms
+    {% if store.policies is defined %}
+    algorithmView: {{ store.policies.algorithmView | default('public') }}
+    {% else %}
+    algorithmView: public
+    {% endif %}
+
+    # Set the minimum number of reviewers that need to approve an algorithm before it
+    # is available in the store. In case this number is lower than min_reviewing_organizations,
+    # the min_reviewing_organizations still has to be met to proceed with the review process.
+    {% if store.policies is defined %}
+    minReviewers: {{ store.policies.minReviewers | default(2) }}
+    {% else %}
+    minReviewers: 2
+    {% endif %}
+
+    # Define whether or not developers are able to assign reviewers to their own algorithms.
+    {% if store.policies is defined %}
+    assignReviewOwnAlgorithm: {{ store.policies.assignReviewOwnAlgorithm | default(false) }}
+    {% else %}
+    assignReviewOwnAlgorithm: false
+    {% endif %}
+
+    # Define the minimum amount of organizations that must be involved in the review process.
+    {% if store.policies is defined %}
+    minReviewingOrganizations: {{ store.policies.minReviewingOrganizations | default(2) }}
+    {% else %}
+    minReviewingOrganizations: 2
+    {% endif %}
+
+    # Specify the users that are allowed to review algorithms. This is a list of usernames
+    # that identify unique users. This policy works in combination with the permission
+    # system. If this policy is not set, all users with the right permissions are allowed
+    # to review algorithms.
+    {% if store.policies is defined and store.policies.allowedReviewers is defined %}
+    allowedReviewers:
+      {% for reviewer in store.policies.allowedReviewers %}
+      - {{ reviewer }}
+      {% endfor %}
+    {% else %}
+    # allowedReviewers:
+    #   - some_username
+    {% endif %}
+
+    # Specify the users that are allowed to assign reviews. This is a list of usernames
+    # that identify unique users. This policy works in combination with the permission
+    # system. If this policy is not set, all users with the right permissions are allowed
+    # to assign reviews.
+    {% if store.policies is defined and store.policies.allowedReviewAssigners is defined %}
+    allowedReviewAssigners:
+      {% for assigner in store.policies.allowedReviewAssigners %}
+      - {{ assigner }}
+      {% endfor %}
+    {% else %}
+    # allowedReviewAssigners:
+    #   - some_username
+    {% endif %}
+
+  {% if store.dev is defined %}
+  dev:
+    host_uri: {{ store.dev.host_uri | default('host.docker.internal') }}
+    disable_review: {{ store.dev.disable_review | default(false) }}
+    review_own_algorithm: {{ store.dev.review_own_algorithm | default(false) }}
+  {% endif %}
+
+  {% if store.internal is defined %}
+  internal:
+    port: {{ store.internal.port | default(7602) }}
+  {% endif %}
+  {% if store.internal is not defined %}
+  internal:
+    port: 7602
+  {% endif %}
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: {{ store.logging.level | default('INFO') }}
+
+    # Location to the log file
+    file: {{ store.logging.file | default('store.log') }}
+
+    # Size in kb of a single log file
+    max_size: {{ store.logging.max_size | default(1024) }}
+    use_console: {{ store.logging.use_console | default(true) }}
+
+    # Date format for the log file
+    datefmt: "{{ store.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+
+    # Format for the log file
+    format: "{{ store.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: {{ store.logging.backup_count | default(5) }}
+
+    # Loggers to include in the log file
+    loggers:
+    {% if store.logging.loggers is defined %}
+    {% for logger in store.logging.loggers %}
+    - level: {{ logger.level }}
+      name: {{ logger.name }}
+    {% endfor %}
+    {% endif %}
+    {% if store.logging.loggers is not defined %}
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+    {% endif %}
+
+  # set up with which origins the store should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # port 7600 on localhost. Usually, only the UI and the server need to access the
+  # store.
+  {% if store.cors_allowed_origins is defined %}
+  cors_allowed_origins:
+    {% for origin in store.cors_allowed_origins %}
+    - {{ origin }}
+    {% endfor %}
+  {% else %}
+  # cors_allowed_origins:
+  #   - https://portal.cotopaxi.vantage6.ai
+  #   - http://localhost:7600
+  {% endif %}
+
+database:
+  # whether or not to use an external database
+  external: {{ database.external | default(false) }}
+  {% if database.external is defined and database.external %}
+  # the URI of the external database
+  uri: {{ database.uri | default('postgresql://vantage6:vantage6@localhost:5432/vantage6') }}
+  {% else %}
+  # The image of the database
+  image:
+    {% if database.image is defined %}
+    repository: {{ database.image.repository | default('postgres') }}
+    tag: {{ database.image.tag | default('13') }}
+    {% else %}
+    repository: postgres
+    tag: 13
+    {% endif %}
+
+  # The username of the database
+  username: {{ database.username | default('vantage6') }}
+
+  # The password of the database
+  password: {{ database.password | default('vantage6') }}
+
+  # The name of the database
+  name: {{ database.name | default('vantage6') }}
+
+  #hostpath of the database mount
+  volumePath: {{ database.volumePath }}
+
+  # The name of the k8s node where the database is running
+  k8sNodeName: {{ database.k8sNodeName }}
+  {% endif %}

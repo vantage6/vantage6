@@ -1,16 +1,20 @@
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     start_port_forward,
 )
-from vantage6.cli.common.utils import attach_logs
-from vantage6.cli.config import CliConfig
+from vantage6.cli.common.utils import (
+    attach_logs,
+    create_directory_if_not_exists,
+    select_context_and_namespace,
+)
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import ChartName
 
 
 @click.command()
@@ -42,19 +46,16 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    cli_config = CliConfig()
-
-    context, namespace = cli_config.compare_changes_config(
+    context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,
     )
 
-    # check that log directory exists - or create it
-    ctx.log_dir.mkdir(parents=True, exist_ok=True)
+    create_directory_if_not_exists(ctx.log_dir)
 
     helm_install(
         release_name=ctx.helm_release_name,
-        chart_name="server",
+        chart_name=ChartName.SERVER,
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
@@ -64,8 +65,8 @@ def cli_server_start(
     info("Port forwarding for server")
     start_port_forward(
         service_name=f"{ctx.helm_release_name}-vantage6-server-service",
-        service_port=ctx.config["server"].get("port", 7601),
-        port=port or ctx.config["server"].get("port", 7601),
+        service_port=ctx.config["server"].get("port", Ports.DEV_SERVER.value),
+        port=port or ctx.config["server"].get("port", Ports.DEV_SERVER.value),
         ip=ip,
         context=context,
         namespace=namespace,
@@ -75,8 +76,8 @@ def cli_server_start(
     info("Port forwarding for UI")
     start_port_forward(
         service_name=f"{ctx.helm_release_name}-vantage6-frontend-service",
-        service_port=ctx.config["ui"].get("port", 7600),
-        port=ui_port or ctx.config["ui"].get("port", 7600),
+        service_port=ctx.config["ui"].get("port", Ports.DEV_UI.value),
+        port=ui_port or ctx.config["ui"].get("port", Ports.DEV_UI.value),
         ip=ip,
         context=context,
         namespace=namespace,

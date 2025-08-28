@@ -3,7 +3,7 @@ from __future__ import annotations
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli import __version__
-from vantage6.cli.configuration_manager import ServerConfigurationManager
+from vantage6.cli.configuration_manager import AlgorithmStoreConfigurationManager
 from vantage6.cli.context.base_server import BaseServerContext
 from vantage6.cli.globals import (
     DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
@@ -24,7 +24,7 @@ class AlgorithmStoreContext(BaseServerContext):
         System wide or user configuration, by default S_FOL
     """
 
-    INST_CONFIG_MANAGER = ServerConfigurationManager
+    INST_CONFIG_MANAGER = AlgorithmStoreConfigurationManager
 
     def __init__(self, instance_name: str, system_folders: bool = S_FOL):
         super().__init__(
@@ -59,7 +59,7 @@ class AlgorithmStoreContext(BaseServerContext):
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, system_folders: bool = S_FOL
+        cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
     ) -> AlgorithmStoreContext:
         """
         Create a server context from an external configuration file. External
@@ -72,6 +72,8 @@ class AlgorithmStoreContext(BaseServerContext):
             Path of the configuration file
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        in_container : bool, optional
+            Whether the application is running inside a container, by default False
 
         Returns
         -------
@@ -82,6 +84,7 @@ class AlgorithmStoreContext(BaseServerContext):
             path,
             ServerType.ALGORITHM_STORE,
             system_folders,
+            in_container,
         )
 
     @classmethod

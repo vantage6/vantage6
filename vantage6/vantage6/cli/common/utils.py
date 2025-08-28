@@ -1,5 +1,6 @@
 import json
 import subprocess
+from pathlib import Path
 from subprocess import Popen
 from typing import Iterable
 
@@ -11,8 +12,51 @@ from colorama import Fore, Style
 from vantage6.common import error, warning
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
+from vantage6.cli.config import CliConfig
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import validate_input_cmd_args
+
+
+def select_context_and_namespace(
+    context: str | None = None,
+    namespace: str | None = None,
+) -> tuple[str, str]:
+    """
+    Select the context and namespace to use.
+
+    This uses the CLI config to compare the provided context and namespace with the
+    last used context and namespace. If the provided context and namespace are not
+    the same as the last used context and namespace, the CLI config is updated.
+
+    Parameters
+    ----------
+    context : str, optional
+        The Kubernetes context to use.
+    namespace : str, optional
+        The Kubernetes namespace to use.
+
+    Returns
+    -------
+    tuple[str, str]
+        The context and namespace to use
+    """
+    cli_config = CliConfig()
+
+    return cli_config.compare_changes_config(
+        context=context,
+        namespace=namespace,
+    )
+
+
+def create_directory_if_not_exists(directory: Path) -> None:
+    """
+    Create a directory.
+    """
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        error(f"Failed to create directory {directory}: {e}")
+        exit(1)
 
 
 def find_running_service_names(
@@ -23,7 +67,7 @@ def find_running_service_names(
     namespace: str | None = None,
 ) -> list[str]:
     """
-    List running Vantage6 servers that were installed via helm_install.
+    List running Vantage6 servers.
 
     Parameters
     ----------
@@ -118,6 +162,24 @@ def find_running_service_names(
             matching_services.append(release_name)
 
     return matching_services
+
+
+def select_running_service(
+    running_services: list[str],
+    instance_type: InstanceType,
+) -> str:
+    """
+    Select a running service from the list of running services.
+    """
+    try:
+        name = q.select(
+            f"Select the {instance_type.value} you wish to inspect:",
+            choices=running_services,
+        ).unsafe_ask()
+    except KeyboardInterrupt:
+        error("Aborted by user!")
+        exit(1)
+    return name
 
 
 def get_server_name(
@@ -290,3 +352,22 @@ def attach_logs(*labels: list[str]) -> None:
     command = ["kubectl", "logs", "--follow", "--selector", ",".join(labels)]
     process = Popen(command, stdout=None, stderr=None)
     process.wait()
+
+
+def get_main_cli_command_name(instance_type: InstanceType) -> str:
+    """
+    Get the main CLI command name for a given instance type.
+
+    Parameters
+    ----------
+    instance_type : InstanceType
+        The type of instance to get the main CLI command name for
+    """
+    if instance_type == InstanceType.SERVER:
+        return "server"
+    elif instance_type == InstanceType.ALGORITHM_STORE:
+        return "algorithm-store"
+    elif instance_type == InstanceType.NODE:
+        return "node"
+    else:
+        raise ValueError(f"Invalid instance type: {instance_type}")

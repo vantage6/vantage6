@@ -31,9 +31,17 @@ class ServerContext(BaseServerContext):
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = ServerConfigurationManager
 
-    def __init__(self, instance_name: str, system_folders: bool = S_FOL):
+    def __init__(
+        self,
+        instance_name: str,
+        system_folders: bool = S_FOL,
+        in_container: bool = False,
+    ):
         super().__init__(
-            InstanceType.SERVER, instance_name, system_folders=system_folders
+            InstanceType.SERVER,
+            instance_name,
+            system_folders=system_folders,
+            in_container=in_container,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -86,7 +94,7 @@ class ServerContext(BaseServerContext):
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, system_folders: bool = S_FOL
+        cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
     ) -> ServerContext:
         """
         Create a server context from an external configuration file. External
@@ -99,6 +107,8 @@ class ServerContext(BaseServerContext):
             Path of the configuration file
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        in_container : bool, optional
+            Whether the application is running inside a container, by default False
 
         Returns
         -------
@@ -109,6 +119,7 @@ class ServerContext(BaseServerContext):
             path,
             ServerType.V6SERVER,
             system_folders,
+            in_container,
         )
 
     @classmethod
