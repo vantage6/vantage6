@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import subprocess
 
-
 from vantage6.common import error, info, warning
+
 from vantage6.cli.utils import validate_input_cmd_args
 
 
