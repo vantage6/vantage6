@@ -1,28 +1,27 @@
-import unittest
+import contextlib
 import logging
 import os
-import contextlib
-
-from unittest.mock import MagicMock, patch
-from pathlib import Path
+import unittest
 from io import BytesIO, StringIO
-from click.testing import CliRunner
-from docker.errors import APIError
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from vantage6.common.globals import Ports
-from vantage6.cli.globals import APPNAME
+from click.testing import CliRunner
+
 from vantage6.common import STRING_ENCODING
+from vantage6.common.globals import Ports
+
 from vantage6.cli.common.utils import print_log_worker
+from vantage6.cli.globals import APPNAME
+from vantage6.cli.node.attach import cli_node_attach
+from vantage6.cli.node.common import create_client_and_authenticate
+from vantage6.cli.node.create_private_key import cli_node_create_private_key
+from vantage6.cli.node.files import cli_node_files
 from vantage6.cli.node.list import cli_node_list
 from vantage6.cli.node.new import cli_node_new_configuration
-from vantage6.cli.node.files import cli_node_files
-from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.restart import cli_node_restart
+from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.stop import cli_node_stop
-from vantage6.cli.node.attach import cli_node_attach
-from vantage6.cli.node.create_private_key import cli_node_create_private_key
-from vantage6.cli.node.clean import cli_node_clean
-from vantage6.cli.node.common import create_client_and_authenticate
 
 
 class NodeCLITest(unittest.TestCase):
@@ -302,25 +301,6 @@ class NodeCLITest(unittest.TestCase):
         runner.invoke(cli_node_attach)
         attach_logs.assert_called_once_with("app=node")
 
-    @patch("vantage6.cli.node.clean.q")
-    @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.clean.check_docker_running", return_value=True)
-    def test_clean(self, check_docker, volumes, q):
-        """Clean Docker volumes without errors."""
-        volume1 = MagicMock()
-        volume1.name = "some-name-tmpvol"
-        volumes.list.return_value = [volume1]
-
-        question = MagicMock(name="pop-the-question")
-        question.ask.return_value = True
-        q.confirm.return_value = question
-
-        runner = CliRunner()
-        result = runner.invoke(cli_node_clean)
-
-        # check exit code
-        self.assertEqual(result.exit_code, 0)
-
     @patch("vantage6.cli.node.create_private_key.create_client_and_authenticate")
     @patch("vantage6.cli.node.common.NodeContext")
     @patch("vantage6.cli.node.create_private_key.NodeContext")
@@ -385,24 +365,6 @@ class NodeCLITest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli_node_create_private_key, ["--name", "application"])
 
-        self.assertEqual(result.exit_code, 1)
-
-    @patch("vantage6.cli.node.clean.q")
-    @patch("docker.DockerClient.volumes")
-    @patch("vantage6.common.docker.addons.check_docker_running")
-    def test_clean_docker_error(self, check_docker, volumes, q):
-        volume1 = MagicMock()
-        volume1.name = "some-name-tmpvol"
-        volume1.remove.side_effect = APIError("Testing")
-        volumes.list.return_value = [volume1]
-        question = MagicMock(name="pop-the-question")
-        question.ask.return_value = True
-        q.confirm.return_value = question
-
-        runner = CliRunner()
-        result = runner.invoke(cli_node_clean)
-
-        # check exit code
         self.assertEqual(result.exit_code, 1)
 
     def test_print_log_worker(self):
