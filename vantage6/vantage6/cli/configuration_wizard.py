@@ -8,8 +8,9 @@ from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
-    DATABASE_TYPES,
     DEFAULT_API_PATH,
+    FILE_BASED_DATABASE_TYPES,
+    SERVICE_BASED_DATABASE_TYPES,
     InstanceType,
     NodePolicy,
     Ports,
@@ -85,35 +86,19 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         ]
     )
 
-    config["databases"] = list()
+    config["databases"] = {"fileBased": [], "serviceBased": []}
     while q.confirm("Do you want to add a database?").unsafe_ask():
-        db_label = q.unsafe_prompt(
-            [
-                {
-                    "type": "text",
-                    "name": "label",
-                    "message": "Enter unique label for the database:",
-                    "default": "default",
-                }
-            ]
-        )
-        db_path = q.unsafe_prompt(
-            [{"type": "text", "name": "uri", "message": "Database URI:"}]
-        )
-        db_type = q.select("Database type:", choices=DATABASE_TYPES).unsafe_ask()
-
-        config["databases"].append(
-            {"label": db_label.get("label"), "uri": db_path.get("uri"), "type": db_type}
-        )
-
-    is_add_vpn = q.confirm(
-        "Do you want to connect to a VPN server?", default=False
-    ).unsafe_ask()
-    if is_add_vpn:
-        config["vpn_subnet"] = q.text(
-            message="Subnet of the VPN server you want to connect to:",
-            default="10.76.0.0/16",
+        db_label = q.select(
+            "What type of database do you want to add?",
+            choices=["File database", "Database reachable by URI"],
         ).unsafe_ask()
+
+        if db_label == "File database":
+            config["databases"]["fileBased"].append(_get_file_based_database_config())
+        else:
+            config["databases"]["serviceBased"].append(
+                _get_service_based_database_config()
+            )
 
     is_policies = q.confirm(
         "Do you want to limit the algorithms allowed to run on your node? This "
@@ -212,7 +197,81 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         "private_key": private_key,
     }
 
-    return config
+    # pack the entire config in a dict with the 'node' key at top level
+    return {"node": config}
+
+
+def _get_file_based_database_config() -> dict:
+    """
+    Prompt the user for the file-based database configuration
+    """
+    db_label = _get_database_label()
+    while True:
+        db_path = q.text(
+            "Path to the database file:",
+        ).unsafe_ask()
+        if Path(db_path).exists():
+            break
+        else:
+            error("The path to the database file does not exist. Please try again.")
+    db_dir = Path(db_path).parent
+    db_filename = Path(db_path).name
+    db_type = q.select("Database type:", choices=FILE_BASED_DATABASE_TYPES).unsafe_ask()
+    return {
+        "name": db_label,
+        "uri": db_path,
+        "type": db_type,
+        "volumePath": db_dir,
+        "originalName": db_filename,
+    }
+
+
+def _get_service_based_database_config() -> dict:
+    """
+    Prompt the user for the service-based database configuration
+
+    Returns
+    -------
+    dict
+        Dictionary with the service-based database configuration
+    """
+    db_label = _get_database_label()
+    db_uri = q.text(
+        "Database URI:",
+    ).unsafe_ask()
+    db_type = q.select(
+        "Database type:", choices=SERVICE_BASED_DATABASE_TYPES
+    ).unsafe_ask()
+
+    env_vars = {}
+    info("You can add environment variables to the database configuration.")
+    info("These variables will be available to the algorithms on your node.")
+    info("Example: MY_POSTGRES_USER=vantage6, MY_POSTGRES_PASSWORD=vantage6")
+    while q.confirm("Do you want to add an environment variable?").unsafe_ask():
+        env_var_name = q.text(
+            "Enter the name of the environment variable:"
+        ).unsafe_ask()
+        env_var_value = q.text(
+            "Enter the value of the environment variable:"
+        ).unsafe_ask()
+        env_vars[env_var_name] = env_var_value
+
+    return {
+        "name": db_label,
+        "uri": db_uri,
+        "type": db_type,
+        "env": env_vars,
+    }
+
+
+def _get_database_label() -> str:
+    """
+    Prompt the user for the label of the database
+    """
+    return q.text(
+        "Enter unique label for the database:",
+        default="default",
+    ).unsafe_ask()
 
 
 def _get_allowed_algorithms() -> list[str]:

@@ -15,7 +15,7 @@ node:
   keycloakUrl: {{ node.keycloakUrl | default('http://vantage6-auth-keycloak.vantage6.svc.cluster.local') }}
   keycloakRealm: {{ node.keycloakRealm | default('vantage6') }}
 
-  # TODO v5+ set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
+  # TODO v5+ set the url/port directly on node-configmap.yaml using \{\{ .Release.Name \}\}-vantage6-server-service
   {% if node.server is defined %}
   server:
     url: {{ node.server.url | default('http://vantage6-server-vantage6-server-service') }}
@@ -44,7 +44,7 @@ node:
     level: {{ node.logging.level | default('INFO') }}
 
     # Location to the log file
-    file: {{ node.logging.file | default('server.log') }}
+    file: {{ node.logging.file | default('node.log') }}
 
     # Size in kb of a single log file
     max_size: {{ node.logging.max_size | default(1024) }}
@@ -149,68 +149,144 @@ node:
   # It is recommended to do this through Kubernetes secrets. If you specify the
   # details here, secrets will be used. File-based databases are automatically made
   # available to your node.
+  {% if node.databases is defined %}
   databases:
+    {% if node.databases.fileBased is defined %}
     fileBased:
-    - name: default
-      uri: /mnt/data/olympic_athletes_2016.csv
-      type: csv
-      volumePath: /mnt/data
-      originalName: olympic_athletes_2016.csv
+    {% for db in node.databases.fileBased %}
+    - name: {{ db.name }}
+      uri: {{ db.uri }}
+      type: {{ db.type }}
+      volumePath: {{ db.volumePath }}
+      originalName: {{ db.originalName }}
+    {% endfor %}
+    {% endif %}
+    {% if node.databases.serviceBased is defined %}
     serviceBased:
-    # Name is the LABEL in the DATABASE_LABELS variable
-    - name: myPostgres
-      uri: postgres://vantage6-postgres:5432/vantage6
-      type: other
-
-      # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
-      # case, the node will set the DATABASE_MYPOSTGRES_USER and
-      # DATABASE_MYPOSTGRES_PASSWORD environment variables.
+    {% for db in node.databases.serviceBased %}
+    - name: {{ db.name }}
+      uri: {{ db.uri }}
+      type: {{ db.type }}
       env:
-        USER: vantage6
-        PASSWORD: vantage6
+        {% for key, value in db.env.items() %}
+        {{ key }}: {{ value }}
+        {% endfor %}
+    {% endfor %}
+    {% endif %}
+  {% else %}
+  databases: []
+  {% endif %}
 
   # Whether or not your node shares some configuration (e.g. which images are
   # allowed to run on your node) with the central server. This can be useful
   # for other organizations in your collaboration to understand why a task
   # is not completed. Obviously, no sensitive data is shared. Default true
-  share_config: true
+  share_config: {{ node.share_config | default(true) }}
 
   # Whether or not to share algorithm logs with the server. Otherwise they will
   # only be displayed as part of the node logs. Default is true.
   # NOTE: It's recommented to set this to false when using sensitive data
-  share_algorithm_logs: true
-
+  share_algorithm_logs: {{ node.share_algorithm_logs | default(true) }}
 
   # Define who is allowed to run which algorithms on this node.
+  {% if node.policies is defined %}
   policies:
-    # # Control which algorithm images are allowed to run on this node. This is
-    # # expected to be a valid regular expression. If you don't specify this, all algorithm
-    # # images are allowed to run on this node (unless other policies restrict this).
+    # Control which algorithm images are allowed to run on this node. This is
+    # expected to be a valid regular expression. If you don't specify this, all algorithm
+    # images are allowed to run on this node (unless other policies restrict this).
+    {% if node.policies.allowed_algorithms is defined %}
+    allowed_algorithms:
+      {% for algo in node.policies.allowed_algorithms %}
+      - {{ algo }}
+      {% endfor %}
+    {% else %}
+    # allowed_algorithms:
+    #   - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+    #   - ^myalgorithm\.ai/some-algorithm
+    {% endif %}
+
+    # It is also possible to allow all algorithms from particular algorithm stores. Set
+    # these stores here. They may be strings or regular expressions. If you don't specify
+    # this, algorithms from any store are allowed (unless other policies prevent this).
+    {% if node.policies.allowed_algorithm_stores is defined %}
+    allowed_algorithm_stores:
+      {% for store in node.policies.allowed_algorithm_stores %}
+      - {{ store }}
+      {% endfor %}
+    {% else %}
+    # allowed_algorithm_stores:
+    #   # allow all algorithms from the vantage6 community store
+    #   - https://store.cotopaxi.vantage6.ai
+    #   # allow any store that is a subdomain of vantage6.ai
+    #   - ^https://[a-z]+\.vantage6\.ai$
+    {% endif %}
+
+    # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+    # choose to only allow algorithms that both policies allow, or you can allow
+    # algorithms that either of them allows. By default, only algorithms that are given
+    # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
+    # setting this to the default value `false`.
+    allow_either_whitelist_or_store: {{ node.policies.allow_either_whitelist_or_store | default(false) }}
+
+    # Define which users are allowed to run algorithms on your node by their ID
+    {% if node.policies.allowed_users is defined %}
+    allowed_users:
+      {% for user in node.policies.allowed_users %}
+      - {{ user }}
+      {% endfor %}
+    {% else %}
+    # allowed_users:
+    #   - 2
+    {% endif %}
+
+    # Define which organizations are allowed to run images on your node by
+    # their ID or name
+    {% if node.policies.allowed_organizations is defined %}
+    allowed_organizations:
+      {% for org in node.policies.allowed_organizations %}
+      - {{ org }}
+      {% endfor %}
+    {% else %}
+    # allowed_organizations:
+    #   - 6
+    #   - root
+    {% endif %}
+
+    # Set to true to always require that the algorithm image is successfully pulled. This
+    # ensures that no potentially outdated local images are used if internet connection
+    # is not available. This option should be set to false if you are testing with local
+    # algorithm images. Default value is true.
+    require_algorithm_pull: {{ node.policies.require_algorithm_pull | default(true) }}
+  {% else %}
+  policies:
+    # Control which algorithm images are allowed to run on this node. This is
+    # expected to be a valid regular expression. If you don't specify this, all algorithm
+    # images are allowed to run on this node (unless other policies restrict this).
     # allowed_algorithms:
     #   - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
     #   - ^myalgorithm\.ai/some-algorithm
 
-    # # It is also possible to allow all algorithms from particular algorithm stores. Set
-    # # these stores here. They may be strings or regular expressions. If you don't specify
-    # # this, algorithms from any store are allowed (unless other policies prevent this).
+    # It is also possible to allow all algorithms from particular algorithm stores. Set
+    # these stores here. They may be strings or regular expressions. If you don't specify
+    # this, algorithms from any store are allowed (unless other policies prevent this).
     # allowed_algorithm_stores:
     #   # allow all algorithms from the vantage6 community store
     #   - https://store.cotopaxi.vantage6.ai
     #   # allow any store that is a subdomain of vantage6.ai
     #   - ^https://[a-z]+\.vantage6\.ai$
 
-    # # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
-    # # choose to only allow algorithms that both policies allow, or you can allow
-    # # algorithms that either of them allows. By default, only algorithms that are given
-    # # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
-    # # setting this to the default value `false`.
+    # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+    # choose to only allow algorithms that both policies allow, or you can allow
+    # algorithms that either of them allows. By default, only algorithms that are given
+    # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
+    # setting this to the default value `false`.
     # allow_either_whitelist_or_store: false
 
-    # # Define which users are allowed to run algorithms on your node by their ID
+    # Define which users are allowed to run algorithms on your node by their ID
     # allowed_users:
     #   - 2
-    # # Define which organizations are allowed to run images on your node by
-    # # their ID or name
+    # Define which organizations are allowed to run images on your node by
+    # their ID or name
     # allowed_organizations:
     #   - 6
     #   - root
@@ -220,27 +296,41 @@ node:
     # is not available. This option should be set to false if you are testing with local
     # algorithm images. Default value is true.
     require_algorithm_pull: true
+  {% endif %}
 
   # Prometheus settings, for sending system metadata to the server.
+  {% if node.prometheus is defined %}
+  prometheus:
+    # Whether or not to enable Prometheus reporting. Default is false.
+    enabled: {{ node.prometheus.enabled | default(false) }}
+
+    # Interval (in seconds) at which the node sends system metadata to the server.
+    # This should align with the Prometheus scrape_interval to avoid stale data.
+    report_interval_seconds: {{ node.prometheus.report_interval_seconds | default(45) }}
+  {% else %}
   prometheus:
     # Whether or not to enable Prometheus reporting. Default is false.
     enabled: false
 
     # Interval (in seconds) at which the node sends system metadata to the server.
     # This should align with the Prometheus scrape_interval to avoid stale data.
-    report_interval_seconds: 45
+    # report_interval_seconds: 45
+  {% endif %}
 
+  {% if node.debug is defined %}
   # Debug settings
   debug:
     # Set to `true` to enable print debug messages from Flask/socketio.
-    socketio: false
+    socketio: {{ node.debug.socketio | default(false) }}
 
     # Set to `true` to set the Flask app used for proxy service into debug mode.
-    proxy_server: false
+    proxy_server: {{ node.debug.proxy_server | default(false) }}
+  {% endif %}
 
-  # dev:
-  #   # Set extension for the task directory. In the development environment, the task
-  #   # directory is mounted as a volume. If multiple nodes are then running on the same
-  #   # machine, this extension is added to the task directory to avoid conflicts.
-  #   task_dir_extension: my_node_1
-
+  {% if node.dev is defined %}
+  dev:
+    # Set extension for the task directory. In the development environment, the task
+    # directory is mounted as a volume. If multiple nodes are then running on the same
+    # machine, this extension is added to the task directory to avoid conflicts.
+    task_dir_extension: {{ node.dev.task_dir_extension }}
+  {% endif %}

@@ -35,6 +35,8 @@ DEFAULT_CHART_REPO = "https://harbor2.vantage6.ai/chartrepo/infrastructure"
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
+FILE_BASED_DATABASE_TYPES = ["csv", "parquet", "excel", "other"]
+SERVICE_BASED_DATABASE_TYPES = ["sql", "sparql", "other"]
 
 PING_INTERVAL_SECONDS = 60
 

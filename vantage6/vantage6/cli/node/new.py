@@ -1,13 +1,9 @@
 import click
-from colorama import Fore, Style
 
-from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_wizard import configuration_wizard
-from vantage6.cli.context.node import NodeContext
+from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 @click.command()
@@ -23,38 +19,24 @@ from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
     "system_folders",
     flag_value=False,
     default=N_FOL,
-    help="Store this configuration in the user folders. This is the " "default",
+    help="Store this configuration in the user folders. This is the default.",
 )
-def cli_node_new_configuration(name: str, system_folders: bool) -> None:
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option(
+    "--namespace",
+    default=None,
+    help="Kubernetes namespace to use",
+)
+def cli_node_new_configuration(
+    name: str,
+    system_folders: bool,
+    namespace: str,
+    context: str,
+) -> None:
     """
     Create a new node configuration.
 
     Checks if the configuration already exists. If this is not the case
     a questionnaire is invoked to create a new configuration file.
     """
-    name = prompt_config_name(name)
-    # check if config name is allowed docker name
-    check_config_name_allowed(name)
-
-    # check that this config does not exist
-    if NodeContext.config_exists(name, system_folders):
-        error(f"Configuration {name} already exists!")
-        exit(1)
-
-    # Check that we can write in this folder
-    if not ensure_config_dir_writable(system_folders):
-        error("Cannot write configuration file. Exiting...")
-        exit(1)
-
-    # create config in ctx location
-    flag = "--system" if system_folders else ""
-    try:
-        cfg_file = configuration_wizard(InstanceType.NODE, name, system_folders)
-    except KeyboardInterrupt:
-        error("Configuration creation aborted.")
-        exit(1)
-    info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
-    info(
-        f"You can start the node by running "
-        f"{Fore.GREEN}v6 node start {flag}{Style.RESET_ALL}"
-    )
+    new(name, system_folders, namespace, context, InstanceType.NODE)
