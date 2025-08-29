@@ -1,33 +1,246 @@
-api_path: {{ api_path }}
-encryption:
-  enabled: false
-  private_key: null
-logging:
-  backup_count: 5
-  datefmt: '%Y-%m-%d %H:%M:%S'
-  file: {{ logging["file"] }}
-  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-  level: DEBUG
-  max_size: 1024
-  use_console: true
-  loggers:
-  - level: warning
-    name: urllib3
-  - level: warning
-    name: requests
-  - level: warning
-    name: engineio.client
-  - level: warning
-    name: docker.utils.config
-  - level: warning
-    name: docker.auth
-  - level: warning
-    name: kubernetes.client.rest
-node_proxy_port: {{ node_proxy_port }}
-port: {{ port }}
-server_url: {{ server_url }}
-task_dir: {{ task_dir}}
-dev:
-  task_dir_extension: {{ task_dir_extension }}
-task_namespace: {{ task_namespace }}
-{{- user_provided_config -}}
+# override the chart name
+nameOverride: {{ nameOverride | default('vantage6-node') }}
+# Optional, by default the Release.Namespace is used
+# namespace: vantage6-node
+node:
+
+  # Set to false to prevent creation of node secrets (useful when secrets are managed
+  # externally)
+  createSecrets: {{ node.createSecrets | default(true) }}
+
+  name: {{ node.name | default('put-your-node-name-here') }}
+  apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
+
+  # Keycloak configuration
+  keycloakUrl: {{ node.keycloakUrl | default('http://vantage6-auth-keycloak.vantage6.svc.cluster.local') }}
+  keycloakRealm: {{ node.keycloakRealm | default('vantage6') }}
+
+  # TODO v5+ set the url/port directly on node-configmap.yaml using {{ .Release.Name }}-vantage6-server-service
+  {% if node.server is defined %}
+  server:
+    url: {{ node.server.url | default('http://vantage6-server-vantage6-server-service') }}
+    port: {{ node.server.port | default(7601) }}
+    path: {{ node.server.path | default('/server') }}
+  {% else %}
+  server:
+    url: http://vantage6-server-vantage6-server-service
+    port: 7601
+    path: /server
+  {% endif %}
+
+
+  image: {{ node.image | default('harbor2.vantage6.ai/infrastructure/node:latest') }}
+
+  # Namespace in which the task kubernetes resources are created. This must be a
+  # namespace where the node has access to create pods.
+  taskNamespace: {{ node.taskNamespace | default('vantage6-tasks') }}
+
+  # Kubernetes node name, used for local persistent volumes
+  k8sNodeName: {{ node.k8sNodeName | default('docker-desktop') }}
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: {{ node.logging.level | default('INFO') }}
+
+    # Location to the log file
+    file: {{ node.logging.file | default('server.log') }}
+
+    # Size in kb of a single log file
+    max_size: {{ node.logging.max_size | default(1024) }}
+    use_console: {{ node.logging.use_console | default(true) }}
+
+    # Date format for the log file
+    datefmt: "{{ node.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+
+    # Format for the log file
+    format: "{{ node.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: {{ node.logging.backup_count | default(5) }}
+
+    # Loggers to include in the log file
+    loggers:
+    {% if node.logging.loggers is defined %}
+    {% for logger in node.logging.loggers %}
+    - level: {{ logger.level }}
+      name: {{ logger.name }}
+    {% endfor %}
+    {% endif %}
+    {% if node.logging.loggers is not defined %}
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+    {% endif %}
+
+  {% if node.encryption is defined %}
+  encryption:
+    # Whether encryption is enabled or not. This should be the same as the `encrypted`
+    # setting of the collaboration to which this node belongs.
+    enabled: {{ node.encryption.enabled | default(false) }}
+
+    # Location to the private key file. Required if encryption is enabled.
+    {% if node.encryption.enabled | default(false) %}
+    private_key: {{ node.encryption.private_key | default('/path/to/private_key.pem') }}
+    {% else %}
+    # private_key: /path/to/private_key.pem
+    {% endif %}
+  {% else %}
+  encryption:
+    # Whether encryption is enabled or not. This should be the same as the `encrypted`
+    # setting of the collaboration to which this node belongs.
+    enabled: false
+
+    # Location to the private key file. Required if encryption is enabled.
+    # private_key: /path/to/private_key.pem
+  {% endif %}
+
+  # Port for the node proxy to run on
+  proxyPort: {{ node.proxyPort | default(7654) }}
+
+  # Storage settings on host of the node machine. This defines where the database is
+  # stored as well as the task directory (which will contain the input/output of the
+  # tasks).
+  {% if node.persistence is defined %}
+  persistence:
+    tasks:
+      storageClass: {{ node.persistence.tasks.storageClass | default('local-storage') }}
+      size: {{ node.persistence.tasks.size | default('10Gi') }}
+      hostPath: {{ node.persistence.tasks.hostPath | default('/path/to/where/task/files/are/stored') }}
+    database:
+      storageClass: {{ node.persistence.database.storageClass | default('local-storage') }}
+      size: {{ node.persistence.database.size | default('5Gi') }}
+  {% else %}
+  persistence:
+    tasks:
+      storageClass: local-storage
+      size: 10Gi
+      hostPath: /path/to/where/task/files/are/stored
+    database:
+      storageClass: local-storage
+      size: 5Gi
+  {% endif %}
+
+
+  # It is also possible not to specify the details of the service-based databases
+  # here. The node will then automatically detect the databases in the environment
+  # variables. This allows parent charts to specify the databases in their own
+  # values.yaml file or define them runtime using the CLI.
+  #
+  # In this case, the node expects the following environment variables to be set:
+  #
+  # DATABASE_LABELS: comma-separated list of database labels
+  # DATABASE_[LABEL]_URI: URI of the database
+  # DATABASE_[LABEL]_TYPE: type of the database
+  #
+  # Optionally, you can also specify additional environment variables for each
+  # database by setting the DATABASE_[LABEL]_SOME_OTHER_KEY variable.
+  #
+  # DATABASE_[LABEL]_SOME_OTHER_KEY: some_other_value
+  #
+  # It is recommended to do this through Kubernetes secrets. If you specify the
+  # details here, secrets will be used. File-based databases are automatically made
+  # available to your node.
+  databases:
+    fileBased:
+    - name: default
+      uri: /mnt/data/olympic_athletes_2016.csv
+      type: csv
+      volumePath: /mnt/data
+      originalName: olympic_athletes_2016.csv
+    serviceBased:
+    # Name is the LABEL in the DATABASE_LABELS variable
+    - name: myPostgres
+      uri: postgres://vantage6-postgres:5432/vantage6
+      type: other
+
+      # The env is the DATABASE_[LABEL]_SOME_OTHER_KEY variable. So in this example
+      # case, the node will set the DATABASE_MYPOSTGRES_USER and
+      # DATABASE_MYPOSTGRES_PASSWORD environment variables.
+      env:
+        USER: vantage6
+        PASSWORD: vantage6
+
+  # Whether or not your node shares some configuration (e.g. which images are
+  # allowed to run on your node) with the central server. This can be useful
+  # for other organizations in your collaboration to understand why a task
+  # is not completed. Obviously, no sensitive data is shared. Default true
+  share_config: true
+
+  # Whether or not to share algorithm logs with the server. Otherwise they will
+  # only be displayed as part of the node logs. Default is true.
+  # NOTE: It's recommented to set this to false when using sensitive data
+  share_algorithm_logs: true
+
+
+  # Define who is allowed to run which algorithms on this node.
+  policies:
+    # # Control which algorithm images are allowed to run on this node. This is
+    # # expected to be a valid regular expression. If you don't specify this, all algorithm
+    # # images are allowed to run on this node (unless other policies restrict this).
+    # allowed_algorithms:
+    #   - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+    #   - ^myalgorithm\.ai/some-algorithm
+
+    # # It is also possible to allow all algorithms from particular algorithm stores. Set
+    # # these stores here. They may be strings or regular expressions. If you don't specify
+    # # this, algorithms from any store are allowed (unless other policies prevent this).
+    # allowed_algorithm_stores:
+    #   # allow all algorithms from the vantage6 community store
+    #   - https://store.cotopaxi.vantage6.ai
+    #   # allow any store that is a subdomain of vantage6.ai
+    #   - ^https://[a-z]+\.vantage6\.ai$
+
+    # # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+    # # choose to only allow algorithms that both policies allow, or you can allow
+    # # algorithms that either of them allows. By default, only algorithms that are given
+    # # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
+    # # setting this to the default value `false`.
+    # allow_either_whitelist_or_store: false
+
+    # # Define which users are allowed to run algorithms on your node by their ID
+    # allowed_users:
+    #   - 2
+    # # Define which organizations are allowed to run images on your node by
+    # # their ID or name
+    # allowed_organizations:
+    #   - 6
+    #   - root
+
+    # Set to true to always require that the algorithm image is successfully pulled. This
+    # ensures that no potentially outdated local images are used if internet connection
+    # is not available. This option should be set to false if you are testing with local
+    # algorithm images. Default value is true.
+    require_algorithm_pull: true
+
+  # Prometheus settings, for sending system metadata to the server.
+  prometheus:
+    # Whether or not to enable Prometheus reporting. Default is false.
+    enabled: false
+
+    # Interval (in seconds) at which the node sends system metadata to the server.
+    # This should align with the Prometheus scrape_interval to avoid stale data.
+    report_interval_seconds: 45
+
+  # Debug settings
+  debug:
+    # Set to `true` to enable print debug messages from Flask/socketio.
+    socketio: false
+
+    # Set to `true` to set the Flask app used for proxy service into debug mode.
+    proxy_server: false
+
+  # dev:
+  #   # Set extension for the task directory. In the development environment, the task
+  #   # directory is mounted as a volume. If multiple nodes are then running on the same
+  #   # machine, this extension is added to the task directory to avoid conflicts.
+  #   task_dir_extension: my_node_1
+
