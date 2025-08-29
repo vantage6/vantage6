@@ -341,6 +341,16 @@ def get_name_from_container_name(container_name: str) -> str:
     return "-".join(container_name.split("-")[1:-1])
 
 
+def get_config_name_from_service_name(service_name: str) -> str:
+    """
+    Get the config name from a service name.
+    """
+    # helm release name is structured as:
+    # f"{APPNAME}-{name}-{scope}-{instance_type}"
+    # we want to get the name from the service name
+    return "-".join(service_name.split("-")[1:-2])
+
+
 def attach_logs(*labels: list[str]) -> None:
     """
     Attach to the logs of the given labels.
