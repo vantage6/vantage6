@@ -214,8 +214,9 @@ def _get_file_based_database_config() -> dict:
             break
         else:
             error("The path to the database file does not exist. Please try again.")
-    db_dir = Path(db_path).parent
-    db_filename = Path(db_path).name
+    db_path_resolved = Path(db_path).resolve()
+    db_dir = db_path_resolved.parent
+    db_filename = db_path_resolved.name
     db_type = q.select("Database type:", choices=FILE_BASED_DATABASE_TYPES).unsafe_ask()
     return {
         "name": db_label,

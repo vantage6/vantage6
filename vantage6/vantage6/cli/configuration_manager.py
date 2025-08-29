@@ -1,6 +1,6 @@
 from typing import Self
 
-from schema import And, Optional, Or, Use
+from schema import And, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
 
@@ -48,19 +48,20 @@ class NodeConfiguration(Configuration):
     """
 
     VALIDATORS = {
-        "node": {
-            "server_url": Use(str),
-            "port": Or(Use(int), None),
-            "task_dir": Use(str),
-            # TODO: remove `dict` validation from databases
-            "api_path": Use(str),
-            "logging": LOGGING_VALIDATORS,
-            "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
-            Optional("node_extra_env"): dict,
-            Optional("node_extra_mounts"): [str],
-            Optional("node_extra_hosts"): dict,
-            Optional("share_algorithm_logs"): Use(bool),
-        }
+        # # TODO enable validators for node. To see if it works, use v6 node list
+        # "node": {
+        #     "server_url": Use(str),
+        #     "port": Or(Use(int), None),
+        #     "task_dir": Use(str),
+        #     # TODO: remove `dict` validation from databases
+        #     "api_path": Use(str),
+        #     "logging": LOGGING_VALIDATORS,
+        #     "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
+        #     Optional("node_extra_env"): dict,
+        #     Optional("node_extra_mounts"): [str],
+        #     Optional("node_extra_hosts"): dict,
+        #     Optional("share_algorithm_logs"): Use(bool),
+        # }
     }
 
 

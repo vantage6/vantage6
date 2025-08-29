@@ -5,6 +5,7 @@ import os.path
 from pathlib import Path
 
 from vantage6.common.context import AppContext
+from vantage6.common.docker.addons import running_in_docker
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli import __version__
@@ -150,7 +151,10 @@ class NodeContext(AppContext):
             dictionary with database names as keys and their corresponding
             paths as values.
         """
-        return self.config["databases"]
+        if running_in_docker():
+            return self.config["databases"]
+        else:
+            return self.config["node"]["databases"]
 
     @property
     def docker_container_name(self) -> str:
@@ -230,19 +234,6 @@ class NodeContext(AppContext):
         self.data_dir = dirs.get("data")
         self.config_dir = dirs.get("config")
 
-    @staticmethod
-    def instance_folders(*_args, **_kwargs) -> dict:
-        """Log, data and config folders are always mounted. The node manager
-        should take care of this.
-        """
-        mnt = Path("/mnt")
-
-        return {
-            "log": mnt / "log",
-            "data": mnt / "data",
-            "config": mnt / "config",
-        }
-
     def __create_node_identifier(self) -> str:
         """
         Create a unique identifier for the node.
@@ -252,6 +243,9 @@ class NodeContext(AppContext):
         str
             Unique identifier for the node
         """
-        return hashlib.sha256(
-            os.environ.get("V6_API_KEY").encode(STRING_ENCODING)
-        ).hexdigest()[:16]
+        if running_in_docker():
+            api_key = os.environ.get("V6_API_KEY")
+        else:
+            api_key = self.config["node"]["apiKey"]
+
+        return hashlib.sha256(api_key.encode(STRING_ENCODING)).hexdigest()[:16]
