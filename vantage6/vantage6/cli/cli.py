@@ -1,15 +1,18 @@
 import click
 
-from vantage6.cli.server.attach import cli_server_attach
-from vantage6.cli.server.files import cli_server_files
-from vantage6.cli.server.import_ import cli_server_import
-from vantage6.cli.server.list import cli_server_configuration_list
-from vantage6.cli.server.new import cli_server_new
-from vantage6.cli.server.remove import cli_server_remove
-from vantage6.cli.server.shell import cli_server_shell
-from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.server.stop import cli_server_stop
-from vantage6.cli.server.version import cli_server_version
+from vantage6.cli.algorithm.create import cli_algorithm_create
+from vantage6.cli.algorithm.generate_algorithm_json import (
+    cli_algorithm_generate_algorithm_json,
+)
+from vantage6.cli.algorithm.update import cli_algorithm_update
+from vantage6.cli.algostore.attach import cli_algo_store_attach
+from vantage6.cli.algostore.files import cli_algo_store_files
+from vantage6.cli.algostore.list import cli_algo_store_configuration_list
+from vantage6.cli.algostore.new import cli_algo_store_new
+from vantage6.cli.algostore.remove import cli_algo_store_remove
+from vantage6.cli.algostore.start import cli_algo_store_start
+from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.globals import CLICommandName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.clean import cli_node_clean
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -22,29 +25,26 @@ from vantage6.cli.node.set_api_key import cli_node_set_api_key
 from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.version import cli_node_version
-from vantage6.cli.algorithm.create import cli_algorithm_create
-from vantage6.cli.algorithm.update import cli_algorithm_update
-from vantage6.cli.algorithm.generate_algorithm_json import (
-    cli_algorithm_generate_algorithm_json,
-)
+from vantage6.cli.server.attach import cli_server_attach
+from vantage6.cli.server.files import cli_server_files
+from vantage6.cli.server.import_ import cli_server_import
+from vantage6.cli.server.list import cli_server_configuration_list
+from vantage6.cli.server.new import cli_server_new
+from vantage6.cli.server.remove import cli_server_remove
+from vantage6.cli.server.shell import cli_server_shell
+from vantage6.cli.server.start import cli_server_start
+from vantage6.cli.server.stop import cli_server_stop
+from vantage6.cli.server.version import cli_server_version
 
 # from vantage6.cli.test.client_script import cli_test_client_script
-from vantage6.cli.test.feature_tester import cli_test_features
-
 # from vantage6.cli.test.integration_test import cli_test_integration
-from vantage6.cli.algostore.attach import cli_algo_store_attach
-from vantage6.cli.algostore.new import cli_algo_store_new
-from vantage6.cli.algostore.start import cli_algo_store_start
-from vantage6.cli.algostore.stop import cli_algo_store_stop
-from vantage6.cli.algostore.files import cli_algo_store_files
-from vantage6.cli.algostore.list import cli_algo_store_configuration_list
-from vantage6.cli.algostore.remove import cli_algo_store_remove
+from vantage6.cli.test.feature_tester import cli_test_features
 from vantage6.cli.use.context import cli_use_context
 from vantage6.cli.use.namespace import cli_use_namespace
 
 
 # Define the server group
-@click.group(name="server")
+@click.group(name=CLICommandName.SERVER)
 def cli_server() -> None:
     """
     Manage your vantage6 server instances.
@@ -65,7 +65,7 @@ cli_server.add_command(cli_server_version, name="version")
 
 
 # Define the node group
-@click.group(name="node")
+@click.group(name=CLICommandName.NODE)
 def cli_node() -> None:
     """
     Manage your vantage6 node instances.
@@ -88,7 +88,7 @@ cli_node.add_command(cli_node_version, name="version")
 
 
 # Define the dev group
-@click.group(name="dev")
+@click.group(name=CLICommandName.DEV)
 def cli_dev() -> None:
     """
     Quickly manage a test network with a server and several nodes.
@@ -101,7 +101,7 @@ def cli_dev() -> None:
 
 
 # Define the algorithm group
-@click.group(name="algorithm")
+@click.group(name=CLICommandName.ALGORITHM)
 def cli_algorithm() -> None:
     """
     Manage your vantage6 algorithms.
@@ -117,7 +117,7 @@ cli_algorithm.add_command(
 
 
 # Define the test group
-@click.group(name="test")
+@click.group(name=CLICommandName.TEST)
 def cli_test() -> None:
     """
     Execute tests on your vantage6 infrastructure.
@@ -131,7 +131,7 @@ cli_test.add_command(cli_test_features, name="feature-test")
 
 
 # Define the algorithm-store group
-@click.group(name="algorithm-store")
+@click.group(name=CLICommandName.ALGORITHM_STORE)
 def cli_algo_store() -> None:
     """
     Manage your vantage6 algorithm store server instances.
@@ -149,7 +149,7 @@ cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 
 
 # Add the use group
-@click.group(name="use")
+@click.group(name=CLICommandName.USE)
 def cli_use() -> None:
     """
     Manage Kubernetes context and namespace.

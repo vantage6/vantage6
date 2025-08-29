@@ -14,6 +14,7 @@ from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli.config import CliConfig
 from vantage6.cli.context import select_context_class
+from vantage6.cli.globals import CLICommandName
 from vantage6.cli.utils import validate_input_cmd_args
 
 
@@ -364,10 +365,10 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
         The type of instance to get the main CLI command name for
     """
     if instance_type == InstanceType.SERVER:
-        return "server"
+        return CLICommandName.SERVER.value
     elif instance_type == InstanceType.ALGORITHM_STORE:
-        return "algorithm-store"
+        return CLICommandName.ALGORITHM_STORE.value
     elif instance_type == InstanceType.NODE:
-        return "node"
+        return CLICommandName.NODE.value
     else:
         raise ValueError(f"Invalid instance type: {instance_type}")
