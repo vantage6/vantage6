@@ -5,18 +5,16 @@ from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
-    check_already_running,
     helm_install,
+    prestart_checks,
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
     attach_logs,
     create_directory_if_not_exists,
-    select_context_and_namespace,
 )
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import ChartName
-from vantage6.cli.utils import check_config_name_allowed
 
 
 @click.command()
@@ -53,16 +51,7 @@ def cli_server_start(
     """
     info("Starting server...")
 
-    check_config_name_allowed(ctx.name)
-
-    check_already_running(
-        ctx.helm_release_name, InstanceType.SERVER, name, system_folders
-    )
-
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    prestart_checks(ctx, InstanceType.SERVER, name, system_folders, context, namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
 

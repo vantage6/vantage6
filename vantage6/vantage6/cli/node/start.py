@@ -5,18 +5,16 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
-    check_already_running,
     helm_install,
+    prestart_checks,
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
     attach_logs,
     create_directory_if_not_exists,
-    select_context_and_namespace,
 )
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName
-from vantage6.cli.utils import check_config_name_allowed
 
 from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
 
@@ -43,16 +41,7 @@ def cli_node_start(
     """
     info("Starting node...")
 
-    check_config_name_allowed(ctx.name)
-
-    check_already_running(
-        ctx.helm_release_name, InstanceType.NODE, name, system_folders
-    )
-
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    prestart_checks(ctx, InstanceType.NODE, name, system_folders, context, namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)

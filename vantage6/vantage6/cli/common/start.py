@@ -10,6 +10,7 @@ import docker
 from docker.client import DockerClient
 
 from vantage6.common import error, info, warning
+from vantage6.common.context import AppContext
 from vantage6.common.docker.addons import pull_image
 from vantage6.common.globals import (
     DEFAULT_ALGO_STORE_IMAGE,
@@ -21,9 +22,34 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.cli.common.utils import find_running_service_names
+from vantage6.cli.common.utils import (
+    find_running_service_names,
+    select_context_and_namespace,
+)
 from vantage6.cli.globals import ChartName
-from vantage6.cli.utils import validate_input_cmd_args
+from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
+
+
+def prestart_checks(
+    ctx: AppContext,
+    instance_type: InstanceType,
+    name: str,
+    system_folders: bool,
+    context: str,
+    namespace: str,
+) -> None:
+    """
+    Run pre-start checks for an instance.
+    """
+
+    check_config_name_allowed(ctx.name)
+
+    check_already_running(ctx.helm_release_name, instance_type, name, system_folders)
+
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
 
 def pull_infra_image(
