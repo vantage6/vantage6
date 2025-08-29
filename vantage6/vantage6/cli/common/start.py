@@ -21,6 +21,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
+from vantage6.cli.common.utils import find_running_service_names
 from vantage6.cli.globals import ChartName
 from vantage6.cli.utils import validate_input_cmd_args
 
@@ -307,3 +308,35 @@ def start_port_forward(
     except Exception as e:
         error(f"Failed to start port forwarding: {e}")
         return
+
+
+def check_already_running(
+    helm_release_name: str, instance_type: InstanceType, name: str, system_folders: bool
+) -> None:
+    """
+    Check if the instance is already running.
+
+    Parameters
+    ----------
+    helm_release_name : str
+        The name of the Helm release.
+    instance_type : InstanceType
+        The type of instance to check
+    name : str
+        The name of the instance to check
+    system_folders : bool
+        Whether to use system folders or not
+
+    Returns
+    -------
+    bool
+        True if the instance is already running, False otherwise
+    """
+    running_services = find_running_service_names(
+        instance_type=instance_type,
+        only_system_folders=system_folders,
+        only_user_folders=not system_folders,
+    )
+    if helm_release_name in running_services:
+        error(f"Instance '{name}' is already running.")
+        exit(1)

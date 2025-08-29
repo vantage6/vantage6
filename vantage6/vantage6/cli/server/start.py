@@ -5,6 +5,7 @@ from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
+    check_already_running,
     helm_install,
     start_port_forward,
 )
@@ -15,6 +16,7 @@ from vantage6.cli.common.utils import (
 )
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import ChartName
+from vantage6.cli.utils import check_config_name_allowed
 
 
 @click.command()
@@ -32,9 +34,13 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context(type_=InstanceType.SERVER)
+@click_insert_context(
+    type_=InstanceType.SERVER, include_name=True, include_system_folders=True
+)
 def cli_server_start(
     ctx: ServerContext,
+    name: str,
+    system_folders: bool,
     context: str,
     namespace: str,
     ip: str,
@@ -46,6 +52,13 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
+
+    check_config_name_allowed(ctx.name)
+
+    check_already_running(
+        ctx.helm_release_name, InstanceType.SERVER, name, system_folders
+    )
+
     context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,

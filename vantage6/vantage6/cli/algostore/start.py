@@ -8,6 +8,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
+    check_already_running,
     helm_install,
     start_port_forward,
 )
@@ -18,6 +19,7 @@ from vantage6.cli.common.utils import (
 )
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import ChartName
+from vantage6.cli.utils import check_config_name_allowed
 
 
 @click.command()
@@ -30,9 +32,13 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context(InstanceType.ALGORITHM_STORE)
+@click_insert_context(
+    InstanceType.ALGORITHM_STORE, include_name=True, include_system_folders=True
+)
 def cli_algo_store_start(
     ctx: AlgorithmStoreContext,
+    name: str,
+    system_folders: bool,
     context: str,
     namespace: str,
     ip: str,
@@ -43,6 +49,13 @@ def cli_algo_store_start(
     Start the algorithm store.
     """
     info("Starting algorithm store...")
+
+    check_config_name_allowed(ctx.name)
+
+    check_already_running(
+        ctx.helm_release_name, InstanceType.ALGORITHM_STORE, name, system_folders
+    )
+
     context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,

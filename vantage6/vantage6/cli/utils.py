@@ -32,8 +32,6 @@ def check_config_name_allowed(name: str) -> None:
             f"Name '{name}' is not allowed. Please use only the following "
             "characters: a-zA-Z0-9_.-"
         )
-        # FIXME: FM, 2023-01-03: I dont think this is a good side effect. This
-        # should be handled by the caller.
         exit(1)
 
 
