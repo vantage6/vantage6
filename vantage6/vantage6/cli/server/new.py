@@ -1,8 +1,15 @@
-import click
+from typing import Any
 
-from vantage6.common.globals import InstanceType
+import click
+import questionary as q
+
+from vantage6.common.globals import (
+    InstanceType,
+)
 
 from vantage6.cli.common.new import new
+from vantage6.cli.config import CliConfig
+from vantage6.cli.configuration_wizard import add_common_server_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
@@ -38,4 +45,65 @@ def cli_server_new(
     """
     Create a new server configuration.
     """
-    new(name, system_folders, namespace, context, InstanceType.SERVER)
+    new(
+        questionnaire_function=server_configuration_questionaire,
+        name=name,
+        system_folders=system_folders,
+        namespace=namespace,
+        context=context,
+        type_=InstanceType.SERVER,
+    )
+
+
+def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
+    """
+    Kubernetes-specific questionnaire to generate Helm values for server.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the server instance.
+
+    Returns
+    -------
+    dict[str, Any]
+        dictionary with Helm values for the server configuration
+    """
+    # Get active kube namespace
+    cli_config = CliConfig()
+    kube_namespace = cli_config.get_last_namespace()
+
+    # Initialize config with basic structure
+    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
+
+    config, is_production = add_common_server_config(
+        config, InstanceType.SERVER, instance_name
+    )
+    if not is_production:
+        config["server"]["jwt"] = {
+            "secret": "constant_development_secret`",
+        }
+        config["server"]["dev"] = {
+            "host_uri": "host.docker.internal",
+            "store_in_local_cluster": True,
+        }
+
+    # TODO v5+ these should be removed, latest should usually be used so question is
+    # not needed. However, for now we want to specify alpha/beta images.
+    # === Server settings ===
+    config["server"]["image"] = q.text(
+        "Server Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/server:latest",
+    ).unsafe_ask()
+
+    # === UI settings ===
+    config["ui"]["image"] = q.text(
+        "UI Docker image:",
+        default="harbor2.vantage6.ai/infrastructure/ui:latest",
+    ).unsafe_ask()
+
+    # === Keycloak settings ===
+    keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
+    config["server"]["keycloakUrl"] = keycloak_url
+
+    return config

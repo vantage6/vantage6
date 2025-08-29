@@ -6,12 +6,12 @@ from vantage6.common.globals import InstanceType, Ports
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
+    prestart_checks,
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
     attach_logs,
     create_directory_if_not_exists,
-    select_context_and_namespace,
 )
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import ChartName
@@ -32,9 +32,13 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
-@click_insert_context(type_=InstanceType.SERVER)
+@click_insert_context(
+    type_=InstanceType.SERVER, include_name=True, include_system_folders=True
+)
 def cli_server_start(
     ctx: ServerContext,
+    name: str,
+    system_folders: bool,
     context: str,
     namespace: str,
     ip: str,
@@ -46,10 +50,8 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+
+    prestart_checks(ctx, InstanceType.SERVER, name, system_folders, context, namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
 

@@ -85,3 +85,23 @@ class ChartName(StrEnumBase):
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"
+
+
+class CLICommandName(StrEnumBase):
+    """Enum containing CLI command names"""
+
+    SERVER = "server"
+    ALGORITHM_STORE = "algorithm-store"
+    NODE = "node"
+    ALGORITHM = "algorithm"
+    TEST = "test"
+    DEV = "dev"
+    USE = "use"
+
+
+class InfraComponentName(StrEnumBase):
+    """Enum containing infrastructure components"""
+
+    SERVER = "server"
+    ALGORITHM_STORE = "store"
+    NODE = "node"

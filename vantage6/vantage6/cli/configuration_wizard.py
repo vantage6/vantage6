@@ -1,22 +1,15 @@
-import os
 from pathlib import Path
-from typing import Any
 
 import questionary as q
 
-from vantage6.common import error, info, warning
-from vantage6.common.client.node_client import NodeClient
+from vantage6.common import error, info
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
-    DATABASE_TYPES,
     DEFAULT_API_PATH,
     InstanceType,
-    NodePolicy,
     Ports,
-    RequiredNodeEnvVars,
 )
 
-from vantage6.cli.config import CliConfig
 from vantage6.cli.configuration_manager import (
     AlgorithmStoreConfigurationManager,
     NodeConfigurationManager,
@@ -25,266 +18,7 @@ from vantage6.cli.configuration_manager import (
 from vantage6.cli.context import select_context_class
 
 
-def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
-    """
-    Questionary to generate a config file for the node instance.
-
-    Parameters
-    ----------
-    dirs : dict
-        Dictionary with the directories of the node instance.
-    instance_name : str
-        Name of the node instance.
-
-    Returns
-    -------
-    dict
-        Dictionary with the new node configuration
-    """
-    config = q.unsafe_prompt(
-        [
-            {"type": "text", "name": "api_key", "message": "Enter given api-key:"},
-            {
-                "type": "text",
-                "name": "server_url",
-                "message": "The base-URL of the server:",
-                "default": "http://localhost",
-            },
-        ]
-    )
-    # remove trailing slash from server_url if entered by user
-    config["server_url"] = config["server_url"].rstrip("/")
-
-    # set default port to the https port if server_url is https
-    default_port = (
-        str(Ports.HTTPS)
-        if config["server_url"].startswith("https")
-        else str(Ports.DEV_SERVER)
-    )
-
-    config = config | q.unsafe_prompt(
-        [
-            {
-                "type": "text",
-                "name": "port",
-                "message": "Enter port to which the server listens:",
-                "default": default_port,
-            },
-            {
-                "type": "text",
-                "name": "api_path",
-                "message": "Path of the api:",
-                "default": "/api",
-            },
-            {
-                "type": "text",
-                "name": "task_dir",
-                "message": "Task directory path:",
-                "default": str(dirs["data"]),
-            },
-        ]
-    )
-
-    config["databases"] = list()
-    while q.confirm("Do you want to add a database?").unsafe_ask():
-        db_label = q.unsafe_prompt(
-            [
-                {
-                    "type": "text",
-                    "name": "label",
-                    "message": "Enter unique label for the database:",
-                    "default": "default",
-                }
-            ]
-        )
-        db_path = q.unsafe_prompt(
-            [{"type": "text", "name": "uri", "message": "Database URI:"}]
-        )
-        db_type = q.select("Database type:", choices=DATABASE_TYPES).unsafe_ask()
-
-        config["databases"].append(
-            {"label": db_label.get("label"), "uri": db_path.get("uri"), "type": db_type}
-        )
-
-    is_add_vpn = q.confirm(
-        "Do you want to connect to a VPN server?", default=False
-    ).unsafe_ask()
-    if is_add_vpn:
-        config["vpn_subnet"] = q.text(
-            message="Subnet of the VPN server you want to connect to:",
-            default="10.76.0.0/16",
-        ).unsafe_ask()
-
-    is_policies = q.confirm(
-        "Do you want to limit the algorithms allowed to run on your node? This "
-        "should always be done for production scenarios.",
-        default=True,
-    ).unsafe_ask()
-    policies = {}
-    if is_policies:
-        info(
-            "You can limit the algorithms that can run on your node in two ways: by "
-            "allowing specific algorithms or by allowing all algorithms in a given "
-            "algorithm store."
-        )
-        ask_single_algorithms = q.confirm(
-            "Do you want to enter a list of allowed algorithms?"
-        ).unsafe_ask()
-        if ask_single_algorithms:
-            policies[NodePolicy.ALLOWED_ALGORITHMS.value] = _get_allowed_algorithms()
-        ask_algorithm_stores = q.confirm(
-            "Do you want to allow algorithms from specific algorithm stores?"
-        ).unsafe_ask()
-        if ask_algorithm_stores:
-            policies[NodePolicy.ALLOWED_ALGORITHM_STORES.value] = (
-                _get_allowed_algorithm_stores()
-            )
-        if ask_single_algorithms and ask_algorithm_stores:
-            require_both_whitelists = q.confirm(
-                "Do you want to allow only algorithms that are both in the list of "
-                "allowed algorithms *AND* are part of one of the allowed algorithm "
-                "stores? If not, algorithms will be allowed if they are in either the "
-                "list of allowed algorithms or one of the allowed algorithm stores.",
-                default=True,
-            ).unsafe_ask()
-            policies["allow_either_whitelist_or_store"] = not require_both_whitelists
-    if policies:
-        config["policies"] = policies
-
-    res = q.select(
-        "Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "NOTSET"],
-    ).unsafe_ask()
-
-    config["logging"] = {
-        "level": res,
-        "use_console": True,
-        "backup_count": 5,
-        "max_size": 1024,
-        "format": "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s",
-        "datefmt": "%Y-%m-%d %H:%M:%S",
-        "loggers": [
-            {"name": "urllib3", "level": "warning"},
-            {"name": "requests", "level": "warning"},
-            {"name": "engineio.client", "level": "warning"},
-            {"name": "docker.utils.config", "level": "warning"},
-            {"name": "docker.auth", "level": "warning"},
-        ],
-    }
-
-    # Check if we can login to the server to retrieve collaboration settings
-    client = NodeClient(
-        instance_name,
-        config["api_key"],
-        server_url=f"{config['server_url']}:{config['port']}{config['api_path']}",
-        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
-    )
-    try:
-        client.authenticate()
-    except Exception as e:
-        error(f"Could not authenticate with server: {e}")
-        error("Please check (1) your API key and (2) if your server is online")
-        warning(
-            "If you continue, you should provide your collaboration settings manually."
-        )
-        if q.confirm("Do you want to abort?", default=True).unsafe_ask():
-            exit(0)
-
-    if client.whoami is not None:
-        encryption = client.is_encrypted_collaboration()
-        # TODO when we build collaboration policies, update this to provide
-        # the node admin with a list of all policies, and whether or not
-        # to accept them
-        q.confirm(
-            f"Encryption is {'enabled' if encryption else 'disabled'}"
-            f" for this collaboration. Accept?",
-            default=True,
-        ).unsafe_ask()
-    else:
-        encryption = q.confirm("Enable encryption?", default=True).unsafe_ask()
-
-    private_key = (
-        "" if not encryption else q.text("Path to private key file:").unsafe_ask()
-    )
-
-    config["encryption"] = {
-        "enabled": encryption is True or encryption == "true",
-        "private_key": private_key,
-    }
-
-    return config
-
-
-def _get_allowed_algorithms() -> list[str]:
-    """
-    Prompt the user for the allowed algorithms on their node
-
-    Returns
-    -------
-    list[str]
-        List of allowed algorithms or regular expressions to match them
-    """
-    info("Below you can add algorithms that are allowed to run on your node.")
-    info(
-        "You can use regular expressions to match multiple algorithms, or you can "
-        "use strings to provide one algorithm at a time."
-    )
-    info("Examples:")
-    info(r"^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
-    info(
-        r"^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
-        "harbor2.vantage6.ai/algorithms"
-    )
-    info(
-        r"^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
-        "specific hash of average algorithm"
-    )
-    allowed_algorithms = []
-    while True:
-        algo = q.text(message="Enter your algorithm expression:").unsafe_ask()
-        allowed_algorithms.append(algo)
-        if not q.confirm(
-            "Do you want to add another algorithm expression?", default=True
-        ).unsafe_ask():
-            break
-    return allowed_algorithms
-
-
-def _get_allowed_algorithm_stores() -> list[str]:
-    """
-    Prompt the user for the allowed algorithm stores on their node
-
-    Returns
-    -------
-    list[str]
-        List of allowed algorithm stores
-    """
-    info("Below you can add algorithm stores that are allowed to run on your node.")
-    info(
-        "You can use regular expressions to match multiple algorithm stores, or you can"
-        " use strings to provide one algorithm store at a time."
-    )
-    info("Examples:")
-    info(
-        "https://store.cotopaxi.vantage6.ai    Allow all algorithms from the "
-        "community store"
-    )
-    info(
-        r"^https://*\.vantage6\.ai$               Allow all algorithms from any "
-        "store hosted on vantage6.ai"
-    )
-    allowed_algorithm_stores = []
-    while True:
-        store = q.text(message="Enter the URL of the algorithm store:").unsafe_ask()
-        allowed_algorithm_stores.append(store)
-        if not q.confirm(
-            "Do you want to add another algorithm store?", default=True
-        ).unsafe_ask():
-            break
-    return allowed_algorithm_stores
-
-
-def _add_common_server_config(
+def add_common_server_config(
     config: dict, instance_type: InstanceType, instance_name: str
 ) -> dict:
     """
@@ -364,60 +98,6 @@ def _add_common_server_config(
     return config, is_production
 
 
-def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
-    """
-    Kubernetes-specific questionnaire to generate Helm values for server.
-
-    Parameters
-    ----------
-    instance_name : str
-        Name of the server instance.
-
-    Returns
-    -------
-    dict[str, Any]
-        dictionary with Helm values for the server configuration
-    """
-    # Get active kube namespace
-    cli_config = CliConfig()
-    kube_namespace = cli_config.get_last_namespace()
-
-    # Initialize config with basic structure
-    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
-
-    config, is_production = _add_common_server_config(
-        config, InstanceType.SERVER, instance_name
-    )
-    if not is_production:
-        config["server"]["jwt"] = {
-            "secret": "constant_development_secret`",
-        }
-        config["server"]["dev"] = {
-            "host_uri": "host.docker.internal",
-            "store_in_local_cluster": True,
-        }
-
-    # TODO v5+ these should be removed, latest should usually be used so question is
-    # not needed. However, for now we want to specify alpha/beta images.
-    # === Server settings ===
-    config["server"]["image"] = q.text(
-        "Server Docker image:",
-        default="harbor2.vantage6.ai/infrastructure/server:latest",
-    ).unsafe_ask()
-
-    # === UI settings ===
-    config["ui"]["image"] = q.text(
-        "UI Docker image:",
-        default="harbor2.vantage6.ai/infrastructure/ui:latest",
-    ).unsafe_ask()
-
-    # === Keycloak settings ===
-    keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
-    config["server"]["keycloakUrl"] = keycloak_url
-
-    return config
-
-
 def _add_production_server_config(config: dict) -> dict:
     """
     Add the production server configuration to the config
@@ -445,75 +125,8 @@ def _add_production_server_config(config: dict) -> dict:
     return config
 
 
-def algo_store_configuration_questionaire(instance_name: str) -> dict:
-    """
-    Questionary to generate a config file for the algorithm store server
-    instance.
-
-    Parameters
-    ----------
-    instance_name : str
-        Name of the server instance.
-
-    Returns
-    -------
-    dict
-        Dictionary with the new server configuration
-    """
-    config = {"store": {}, "database": {}}
-
-    config, is_production = _add_common_server_config(
-        config, InstanceType.ALGORITHM_STORE, instance_name
-    )
-    if not is_production:
-        config["store"]["dev"] = {
-            "host_uri": "host.docker.internal",
-            "disable_review": True,
-            "review_own_algorithm": True,
-        }
-
-    default_v6_server_uri = f"http://localhost:{Ports.DEV_SERVER}{DEFAULT_API_PATH}"
-    default_root_username = "admin"
-
-    v6_server_uri = q.text(
-        "What is the Vantage6 server linked to the algorithm store? "
-        "Provide the link to the server endpoint.",
-        default=default_v6_server_uri,
-    ).unsafe_ask()
-
-    root_username = q.text(
-        "What is the username of the root user?",
-        default=default_root_username,
-    ).unsafe_ask()
-
-    config["root_user"] = {
-        "v6_server_uri": v6_server_uri,
-        "username": root_username,
-    }
-
-    # ask about openness of the algorithm store
-    config["policies"] = {}
-    is_open = q.confirm(
-        "Do you want to open the algorithm store to the public? This will allow anyone "
-        "to view the algorithms, but they cannot modify them.",
-        default=False,
-    ).unsafe_ask()
-    if is_open:
-        open_algos_policy = "public"
-    else:
-        is_open_to_whitelist = q.confirm(
-            "Do you want to allow all authenticated users to access "
-            "the algorithms in the store? If not allowing this, you will have to assign"
-            " the appropriate permissions to each user individually.",
-            default=True,
-        ).unsafe_ask()
-        open_algos_policy = "authenticated" if is_open_to_whitelist else "private"
-    config["policies"]["algorithm_view"] = open_algos_policy
-
-    return config
-
-
 def configuration_wizard(
+    questionnaire_function: callable,
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
@@ -523,6 +136,8 @@ def configuration_wizard(
 
     Parameters
     ----------
+    questionnaire_function : callable
+        Function to generate the configuration
     type_ : InstanceType
         Type of the instance to create a configuration for
     instance_name : str
@@ -540,19 +155,20 @@ def configuration_wizard(
 
     # invoke questionaire to create configuration file
     if type_ == InstanceType.NODE:
-        conf_manager = NodeConfigurationManager
-        config = node_configuration_questionaire(dirs, instance_name)
-    elif type_ == InstanceType.SERVER:
-        conf_manager = ServerConfigurationManager
-        config = server_configuration_questionaire(instance_name)
+        config = questionnaire_function(dirs, instance_name)
     else:
-        conf_manager = AlgorithmStoreConfigurationManager
-        config = algo_store_configuration_questionaire(instance_name)
+        config = questionnaire_function(instance_name)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
     # key (although there might be environments present)
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
+    if type_ == InstanceType.NODE:
+        conf_manager = NodeConfigurationManager
+    elif type_ == InstanceType.SERVER:
+        conf_manager = ServerConfigurationManager
+    else:
+        conf_manager = AlgorithmStoreConfigurationManager
 
     if Path(config_file).exists():
         config_manager = conf_manager.from_file(config_file)

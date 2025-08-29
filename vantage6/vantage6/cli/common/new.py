@@ -11,8 +11,31 @@ from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 def new(
-    name: str, system_folders: bool, namespace: str, context: str, type_: InstanceType
-):
+    questionnaire_function: callable,
+    name: str,
+    system_folders: bool,
+    namespace: str,
+    context: str,
+    type_: InstanceType,
+) -> None:
+    """
+    Create a new configuration.
+
+    Parameters
+    ----------
+    questionnaire_function : callable
+        Function to generate the configuration
+    name : str
+        Name of the configuration
+    system_folders : bool
+        Whether to store the configuration in the system folders
+    namespace : str
+        Namespace to use
+    context : str
+        Context to use
+    type_ : InstanceType
+        Type of the configuration (node, server, algorithm store, etc)
+    """
     cli_config = CliConfig()
     context, namespace = cli_config.compare_changes_config(
         context=context,
@@ -47,7 +70,9 @@ def new(
 
     # create config in ctx location
     try:
-        cfg_file = configuration_wizard(type_, name, system_folders)
+        cfg_file = configuration_wizard(
+            questionnaire_function, type_, name, system_folders
+        )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
         exit(1)

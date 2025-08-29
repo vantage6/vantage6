@@ -14,6 +14,7 @@ from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli.config import CliConfig
 from vantage6.cli.context import select_context_class
+from vantage6.cli.globals import CLICommandName
 from vantage6.cli.utils import validate_input_cmd_args
 
 
@@ -173,7 +174,7 @@ def select_running_service(
     """
     try:
         name = q.select(
-            f"Select the {instance_type.value} you wish to inspect:",
+            f"Select a {instance_type.value}:",
             choices=running_services,
         ).unsafe_ask()
     except KeyboardInterrupt:
@@ -340,6 +341,16 @@ def get_name_from_container_name(container_name: str) -> str:
     return "-".join(container_name.split("-")[1:-1])
 
 
+def get_config_name_from_service_name(service_name: str) -> str:
+    """
+    Get the config name from a service name.
+    """
+    # helm release name is structured as:
+    # f"{APPNAME}-{name}-{scope}-{instance_type}"
+    # we want to get the name from the service name
+    return "-".join(service_name.split("-")[1:-2])
+
+
 def attach_logs(*labels: list[str]) -> None:
     """
     Attach to the logs of the given labels.
@@ -364,10 +375,40 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
         The type of instance to get the main CLI command name for
     """
     if instance_type == InstanceType.SERVER:
-        return "server"
+        return CLICommandName.SERVER.value
     elif instance_type == InstanceType.ALGORITHM_STORE:
-        return "algorithm-store"
+        return CLICommandName.ALGORITHM_STORE.value
     elif instance_type == InstanceType.NODE:
-        return "node"
+        return CLICommandName.NODE.value
     else:
         raise ValueError(f"Invalid instance type: {instance_type}")
+
+
+def check_running(
+    helm_release_name: str, instance_type: InstanceType, name: str, system_folders: bool
+) -> bool:
+    """
+    Check if the instance is already running.
+
+    Parameters
+    ----------
+    helm_release_name : str
+        The name of the Helm release.
+    instance_type : InstanceType
+        The type of instance to check
+    name : str
+        The name of the instance to check
+    system_folders : bool
+        Whether to use system folders or not
+
+    Returns
+    -------
+    bool
+        True if the instance is already running, False otherwise
+    """
+    running_services = find_running_service_names(
+        instance_type=instance_type,
+        only_system_folders=system_folders,
+        only_user_folders=not system_folders,
+    )
+    return helm_release_name in running_services

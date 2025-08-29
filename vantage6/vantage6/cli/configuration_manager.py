@@ -1,10 +1,14 @@
 from typing import Self
 
-from schema import And, Optional, Or, Use
+from schema import And, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
 
-from vantage6.cli.globals import ALGO_STORE_TEMPLATE_FILE, SERVER_TEMPLATE_FILE
+from vantage6.cli.globals import (
+    ALGO_STORE_TEMPLATE_FILE,
+    NODE_TEMPLATE_FILE,
+    SERVER_TEMPLATE_FILE,
+)
 
 LOGGING_VALIDATORS = {
     "level": And(
@@ -44,17 +48,20 @@ class NodeConfiguration(Configuration):
     """
 
     VALIDATORS = {
-        "server_url": Use(str),
-        "port": Or(Use(int), None),
-        "task_dir": Use(str),
-        # TODO: remove `dict` validation from databases
-        "api_path": Use(str),
-        "logging": LOGGING_VALIDATORS,
-        "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
-        Optional("node_extra_env"): dict,
-        Optional("node_extra_mounts"): [str],
-        Optional("node_extra_hosts"): dict,
-        Optional("share_algorithm_logs"): Use(bool),
+        # # TODO enable validators for node. To see if it works, use v6 node list
+        # "node": {
+        #     "server_url": Use(str),
+        #     "port": Or(Use(int), None),
+        #     "task_dir": Use(str),
+        #     # TODO: remove `dict` validation from databases
+        #     "api_path": Use(str),
+        #     "logging": LOGGING_VALIDATORS,
+        #     "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
+        #     Optional("node_extra_env"): dict,
+        #     Optional("node_extra_mounts"): [str],
+        #     Optional("node_extra_hosts"): dict,
+        #     Optional("share_algorithm_logs"): Use(bool),
+        # }
     }
 
 
@@ -92,6 +99,12 @@ class NodeConfigurationManager(ConfigurationManager):
             A new instance of the NodeConfigurationManager.
         """
         return super().from_file(path, conf_class=NodeConfiguration)
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the node.
+        """
+        return super()._get_config_template(NODE_TEMPLATE_FILE)
 
 
 class ServerConfigurationManager(ConfigurationManager):

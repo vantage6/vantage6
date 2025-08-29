@@ -1,17 +1,10 @@
 import click
-from colorama import Fore, Style
 
-from vantage6.common import error, info
+from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.stop import helm_uninstall, stop_port_forward
-from vantage6.cli.common.utils import (
-    find_running_service_names,
-    select_context_and_namespace,
-    select_running_service,
-)
-from vantage6.cli.context import get_context
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
+from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
 
 
 @click.command()
@@ -43,38 +36,16 @@ def cli_server_stop(
     """
     Stop an running server.
     """
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
-
-    running_servers = find_running_service_names(
+    execute_stop(
+        stop_function=_stop_server,
         instance_type=InstanceType.SERVER,
-        only_system_folders=system_folders,
-        only_user_folders=not system_folders,
-        context=context,
+        infra_component=InfraComponentName.SERVER,
+        stop_all=all_servers,
+        to_stop=name,
         namespace=namespace,
+        context=context,
+        system_folders=system_folders,
     )
-
-    if not running_servers:
-        error("No running servers found.")
-        return
-
-    if all_servers:
-        for server in running_servers:
-            _stop_server(server["name"], namespace, context)
-    else:
-        if not name:
-            server_name = select_running_service(running_servers, InstanceType.SERVER)
-        else:
-            ctx = get_context(InstanceType.SERVER, name, system_folders)
-            server_name = ctx.helm_release_name
-
-        if server_name in running_servers:
-            _stop_server(server_name, namespace, context)
-            info(f"Stopped the {Fore.GREEN}{server_name}{Style.RESET_ALL} server.")
-        else:
-            error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running?!")
 
 
 def _stop_server(server_name: str, namespace: str, context: str) -> None:
