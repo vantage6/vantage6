@@ -5,7 +5,6 @@ import os.path
 from pathlib import Path
 
 from vantage6.common.context import AppContext
-from vantage6.common.docker.addons import running_in_docker
 from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
 
 from vantage6.cli import __version__
@@ -151,7 +150,7 @@ class NodeContext(AppContext):
             dictionary with database names as keys and their corresponding
             paths as values.
         """
-        if running_in_docker():
+        if self.in_container:
             return self.config["databases"]
         else:
             return self.config["node"]["databases"]
@@ -243,7 +242,7 @@ class NodeContext(AppContext):
         str
             Unique identifier for the node
         """
-        if running_in_docker():
+        if self.in_container:
             api_key = os.environ.get("V6_API_KEY")
         else:
             api_key = self.config["node"]["apiKey"]
