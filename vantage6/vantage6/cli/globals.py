@@ -97,3 +97,11 @@ class CLICommandName(StrEnumBase):
     TEST = "test"
     DEV = "dev"
     USE = "use"
+
+
+class InfraComponentName(StrEnumBase):
+    """Enum containing infrastructure components"""
+
+    SERVER = "server"
+    ALGORITHM_STORE = "store"
+    NODE = "node"

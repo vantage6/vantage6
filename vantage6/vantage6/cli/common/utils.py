@@ -174,7 +174,7 @@ def select_running_service(
     """
     try:
         name = q.select(
-            f"Select the {instance_type.value} you wish to inspect:",
+            f"Select a {instance_type.value}:",
             choices=running_services,
         ).unsafe_ask()
     except KeyboardInterrupt:
