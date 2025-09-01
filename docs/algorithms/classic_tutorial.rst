@@ -380,7 +380,7 @@ For our average algorithm the implementation will look as follows:
        # also possible to subscribe to a websocket channel to get status
        # updates.
        info("Waiting for results")
-       results = client.retrieve_results(task_id=task.get("id"))
+       results = client.wait_for_results(task_id=task.get("id"))
 
        # Now we can combine the partials to a global average.
        global_sum = 0

@@ -125,7 +125,7 @@ class AlgorithmClient(ClientBase):
         """
         return NotImplementedError("Algorithm containers cannot refresh their token!")
 
-    def retrieve_results(self, task_id: int, interval: float = 1) -> None:
+    def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Retrieve results from the server for a given task id.
         Parameters

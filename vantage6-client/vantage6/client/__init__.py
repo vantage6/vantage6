@@ -194,7 +194,7 @@ class UserClient(ClientBase):
             self.log.info("--> %s", response["msg"])
             return
 
-    def retrieve_results(self, task_id: int, interval: float = 1) -> dict:
+    def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
         Polls the server to check when results are ready, and returns the
         results when the task is completed.

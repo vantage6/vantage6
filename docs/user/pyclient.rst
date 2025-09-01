@@ -462,7 +462,7 @@ every 3 seconds to see if the task has been completed:
 
    print("Waiting for results")
    task_id = average_task['id']
-   result = client.retrieve_results(task_id)
+   result = client.wait_for_results(task_id)
 
 You can also check the status of the task using:
 

@@ -164,7 +164,7 @@ Central function
 
        # wait for the federated part to complete
        # and return
-       results = client.retrieve_results(task_id=tesk.get("id"))
+       results = client.wait_for_results(task_id=tesk.get("id"))
 
        return results
 
@@ -327,7 +327,7 @@ execution result. For example, to test the average algorithm, the script could l
         )
 
         # wait for the task to complete
-        task_result = client.retrieve_results(task["id"])
+        task_result = client.wait_for_results(task["id"])
 
         # verify the result
         assert task_result.get("data")[0].get("result") == '{"average": 27.613448844884488}'
