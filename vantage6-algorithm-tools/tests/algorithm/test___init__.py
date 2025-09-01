@@ -1,19 +1,33 @@
+import base64
 import unittest
-import os
-import sys
 import json
+import uuid
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from unittest.mock import patch, MagicMock
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
 
 
-class TestAlgorithmClient(unittest.TestCase):
+def encode_result(result_dict: dict) -> str:
+    """Encode the result dictionary as a base64 string."""
+    return (
+        base64.urlsafe_b64encode(json.dumps(result_dict).encode()).decode().rstrip("=")
+    )
 
+
+class TestAlgorithmClient(unittest.TestCase):
     def setUp(self):
+        payload = {
+            "sub": {
+                "image": "dummy",
+                "databases": [],
+                "node_id": 1,
+                "collaboration_id": 1,
+            }
+        }
+        dummy_token = f"dummyheader.{encode_result(payload)}.dummysignature"
         self.client = AlgorithmClient(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOnsiaW1hZ2UiOiJtb2NrX2ltYWdlIiwiZGF0YWJhc2VzIjpbXSwibm9kZV9pZCI6MSwiY29sbGFib3JhdGlvbl9pZCI6MSwic3R1ZHlfaWQiOm51bGwsInN0b3JlX2lkIjpudWxsLCJvcmdhbml6YXRpb25faWQiOjF9LCJleHAiOjE2ODk5OTk5OTl9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+            token=dummy_token,
             host="http://dummy_host",
             port=1234,
         )
@@ -63,37 +77,38 @@ class TestAlgorithmClient(unittest.TestCase):
     def test_result_from_task(self, mock_multi_page_request):
         mock_multi_page_request.return_value = [
             {
-                "result": "eyJmb28iOiAiYmFyIn0=",  # base64 for '{"foo": "bar"}'
+                "result": encode_result({"foo": "bar"}),  # base64 for '{"foo": "bar"}'
                 "data_storage_used": None,
-            },
-            {"result": None, "data_storage_used": None},
+            }
         ]
 
         results = self.client.result.from_task(task_id=1)
 
         self.assertEqual(results[0], {"foo": "bar"})
 
-    def test_result_from_task_azure(self):
-        with patch.object(
-            self.client.result.parent, "download_run_data_from_server"
-        ) as mock_download_run_data_from_server, patch.object(
-            self.client.result.parent, "_multi_page_request"
-        ) as mock_multi_page_request:
-            # Simulate a result where data_storage_used is 'azure'
-            mock_multi_page_request.return_value = [
-                {
-                    "result": "123e4567-e89b-12d3-a456-426614174000",
-                    "data_storage_used": DataStorageUsed.AZURE.value,
-                },
-                {"result": None, "data_storage_used": DataStorageUsed.AZURE.value},
-            ]
-            expected_value = {"foo": "bar"}
-            mock_download_run_data_from_server.return_value = json.dumps(
-                expected_value
-            ).encode(STRING_ENCODING)
-            results = self.client.result.from_task(task_id=1)
+    @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
+    @patch(
+        "vantage6.common.client.client_base.ClientBase.download_run_data_from_server"
+    )
+    def test_result_from_task_azure(
+        self, mock_multi_page_request, mock_download_run_data_from_server
+    ):
+        dummy_uuid = str(uuid.uuid4())
+        # Simulate a result where data_storage_used is 'azure'
+        mock_multi_page_request.return_value = [
+            {
+                "result": dummy_uuid,
+                "data_storage_used": DataStorageUsed.AZURE.value,
+            },
+            {"result": None, "data_storage_used": DataStorageUsed.AZURE.value},
+        ]
+        expected_value = {"foo": "bar"}
+        mock_download_run_data_from_server.return_value = json.dumps(
+            expected_value
+        ).encode(STRING_ENCODING)
+        results = self.client.result.from_task(task_id=1)
 
-            self.assertEqual(results[0], {"foo": "bar"})
+        self.assertEqual(results[0], expected_value)
 
     def test_result_from_task_relational(self):
         with patch.object(
