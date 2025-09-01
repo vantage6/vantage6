@@ -397,7 +397,7 @@ Azure Blob Storage
 """"""""""""""""""
 
 For algorithms that require large inputs or outputs, the default relational 
-database is not well suited. Azure blob storage can optionally be used
+database is not well suited. Azure blob storage can be used
 instead. In this case, references to the inputs and results will be stored
 in the database, whereas the actual data is stored in `Azure Blob Storage 
 <https://azure.microsoft.com/en-us/products/storage/blobs>`__.
