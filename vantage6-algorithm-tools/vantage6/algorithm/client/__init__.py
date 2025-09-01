@@ -127,11 +127,15 @@ class AlgorithmClient(ClientBase):
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
-        Retrieve results from the server for a given task id.
+        Poll the central server until results are available and then return
+        them
+
         Parameters
         ----------
         task_id: int
-            ID of the task for which results should be retrieved.
+            ID of the task for which the results should be obtained.
+        interval: float
+            Interval in seconds to wait between checking server for results.
 
         Returns
         -------
