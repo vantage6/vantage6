@@ -1979,13 +1979,11 @@ class UserClient(ClientBase):
                 and len(data) > 0
                 and data[0].get("data_storage_used") == DataStorageUsed.AZURE.value
             ):
-                result_json = data[0].get("result")
+                result_uuid = data[0].get("result")
                 msg = self.parent.request(
-                    f"blobstream/delete/{result_json}", method="delete"
+                    f"blobstream/delete/{result_uuid}", method="delete"
                 )
                 self.parent.log.info(f"--> {msg}")
-            else:
-                print("No result found")
             msg = self.parent.request(f"task/{id_}", method="delete")
 
             self.parent.log.info(f"--> {msg}")
