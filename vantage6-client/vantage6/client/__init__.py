@@ -2244,11 +2244,11 @@ class UserClient(ClientBase):
             """
             self.parent.log.info("--> Attempting to decrypt results!")
 
-            runs = self.parent.request("result", params={"task_id": task_id})
-            self.parent.log.info("Received results from server: %s", runs)
-            results = self._decrypt_result(runs, is_single_result=False)
+            results = self.parent.request("result", params={"task_id": task_id})
+            self.parent.log.info("Received results from server: %s", results)
+            decrypted_results = self._decrypt_result(results, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
-            return results
+            return decrypted_results
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
