@@ -8,7 +8,7 @@ from typing import Any
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.serialization import serialize
-from vantage6.common.globals import DataStorageUsed
+from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -305,7 +305,7 @@ class AlgorithmClient(ClientBase):
                         run_data = self.parent.download_run_data_from_server(
                             result_data
                         )
-                        return json.loads(run_data.decode("utf-8"))
+                        return json.loads(run_data.decode(STRING_ENCODING))
                     else:
                         return json.loads(base64s_to_bytes(result_data).decode())
                 except Exception as e:

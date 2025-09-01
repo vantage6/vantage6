@@ -6,7 +6,7 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from unittest.mock import patch, MagicMock
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.common.globals import DataStorageUsed
+from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
 
 
 class TestAlgorithmClient(unittest.TestCase):
@@ -90,7 +90,7 @@ class TestAlgorithmClient(unittest.TestCase):
             expected_value = {"foo": "bar"}
             mock_download_run_data_from_server.return_value = json.dumps(
                 expected_value
-            ).encode("utf-8")
+            ).encode(STRING_ENCODING)
             results = self.client.result.from_task(task_id=1)
 
             self.assertEqual(results[0], {"foo": "bar"})

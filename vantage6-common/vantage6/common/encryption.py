@@ -32,7 +32,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
-from vantage6.common.globals import DEFAULT_CHUNK_SIZE
+from vantage6.common.globals import DEFAULT_CHUNK_SIZE, STRING_ENCODING
 
 SEPARATOR = "$"
 
@@ -127,7 +127,7 @@ class CryptorBase(metaclass=Singleton):
         """
         # If the data comes from blob storage, decode it to a string first.
         if isinstance(data, bytes):
-            return self.str_to_bytes(data.decode("utf-8"))
+            return self.str_to_bytes(data.decode(STRING_ENCODING))
         elif isinstance(data, str):
             return self.str_to_bytes(data)
 
@@ -426,7 +426,7 @@ class RSACryptor(CryptorBase):
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
         if skip_base64_encoding_of_msg:
-            header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode("utf-8")
+            header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode(STRING_ENCODING)
             return header + encrypted_msg_bytes
         else:
             encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)
@@ -488,7 +488,7 @@ class RSACryptor(CryptorBase):
             raise ValueError("Header format is invalid — missing separators.")
 
         header_bytes = data[: sep_indices[1] + 1]
-        header_str = header_bytes.decode("utf-8")
+        header_str = header_bytes.decode(STRING_ENCODING)
         header_parts = header_str.split(SEPARATOR, 2)
         if len(header_parts) != 3:
             raise ValueError(
@@ -500,7 +500,7 @@ class RSACryptor(CryptorBase):
         iv_bytes = self.str_to_bytes(iv_b64)
         shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
         try:
-            shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
+            shared_key = base64s_to_bytes(shared_key.decode(STRING_ENCODING))
         except UnicodeDecodeError:
             pass
         if len(shared_key) != 32:
@@ -554,7 +554,7 @@ class RSACryptor(CryptorBase):
         # TODO v5+ add additional encoding step in Python so that we always have the
         # same process
         try:
-            shared_key = base64s_to_bytes(shared_key.decode("utf-8"))
+            shared_key = base64s_to_bytes(shared_key.decode(STRING_ENCODING))
         except UnicodeDecodeError:
             pass
 
@@ -570,10 +570,10 @@ class RSACryptor(CryptorBase):
         # apparently not needed.
         # TODO v5+ adapt as stated above in decrypting shared key
         try:
-            json.loads(result.decode("utf-8"))
+            json.loads(result.decode(STRING_ENCODING))
         except json.decoder.JSONDecodeError:
             try:
-                result = base64s_to_bytes(result.decode("utf-8"))
+                result = base64s_to_bytes(result.decode(STRING_ENCODING))
             except UnicodeDecodeError:
                 pass
         return result
@@ -654,7 +654,7 @@ class RSACryptor(CryptorBase):
         iv_b64 = self.bytes_to_str(iv_bytes)
 
         header_str = f"{encrypted_key_b64}{SEPARATOR}{iv_b64}{SEPARATOR}"
-        header_bytes = header_str.encode("utf-8")
+        header_bytes = header_str.encode(STRING_ENCODING)
         # Yield the header first, then encrypt the rest of the data
         # chunk by chunk as it is being streamed.
         yield header_bytes
@@ -691,7 +691,7 @@ class RSACryptor(CryptorBase):
             if c == SEPARATOR.encode():
                 sep_count += 1
 
-        header_str = header_bytes.decode("utf-8")
+        header_str = header_bytes.decode(STRING_ENCODING)
         encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
         encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
         iv_bytes = self.str_to_bytes(iv_b64)

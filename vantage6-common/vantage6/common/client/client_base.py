@@ -557,7 +557,7 @@ class ClientBase(object):
             uuid = run_data
             self.log.debug(f"Parsing uuid from input: {uuid}")
             if isinstance(uuid, bytes):
-                uuid = uuid.decode("utf-8")
+                uuid = uuid.decode(STRING_ENCODING)
             uuid = uuid.strip("'\"")
             try:
                 run_data = self.download_run_data_from_server(uuid)

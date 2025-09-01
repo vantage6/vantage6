@@ -1,5 +1,6 @@
 import qrcode
 import uuid
+from globals import STRING_ENCODING
 
 
 def print_qr_code(json_data: dict) -> None:
@@ -51,7 +52,7 @@ def show_qr_code_image(qr_uri: str) -> None:
 def is_uuid(value):
     try:
         if isinstance(value, bytes):
-            value = value.decode("utf-8")
+            value = value.decode(STRING_ENCODING)
         uuid.UUID(value)
         return True
     except (ValueError, TypeError, AttributeError):
