@@ -15,27 +15,29 @@ class AzureStorageService:
     def __init__(
         self,
         container_name: str,
-        blob_service_client: BlobServiceClient = None,
-        connection_string: str = None,
+        blob_service_client: BlobServiceClient
     ):
-        """Initialize the AzureStorageService.
+        """
+        Initialize the AzureStorageService.
 
-        Args:
-            container_name (str): The name of the Azure Blob Storage container.
-            blob_service_client (BlobServiceClient, optional): An existing BlobServiceClient instance. Defaults to None.
-            connection_string (str, optional): The connection string for the Azure Blob Storage account. Defaults to None.
-
-        Raises:
-            ValueError: If neither blob_service_client nor connection_string is provided.
+        Parameters
+        ----------
+        container_name : str
+            The name of the storage container in azure in which the blobs are 
+            stored. Containers in azure are stored on three levels:
+            1. Storage Account
+            2. Container
+            3. Blob 
+        blob_service_client : BlobServiceClient
+            An existing BlobServiceClient instance. Defaults to None.
         """
 
-        self.container_name = container_name
+        if container_name:
+            self.container_name = container_name
+        else:
+            raise ValueError("Container name must be provided.")
 
-        if connection_string:
-            self.blob_service_client = BlobServiceClient.from_connection_string(
-                connection_string
-            )
-        elif blob_service_client:
+        if blob_service_client:
             self.blob_service_client = blob_service_client
         else:
             raise ValueError(
@@ -49,6 +51,16 @@ class AzureStorageService:
     def get_blob(self, blob_name: str) -> bytes:
         """
         Retrieve a blob from Azure Blob Storage by its name.
+
+        Parameters
+        ----------
+        blob_name : str
+            The name of the blob to retrieve.
+
+        Returns
+        -------
+        bytes
+            The content of the blob.
         """
         log.debug(f"Retrieving blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(
@@ -60,6 +72,14 @@ class AzureStorageService:
     def store_blob(self, blob_name: str, data: Union[IO, bytes]) -> None:
         """
         Store data as a blob in Azure Blob Storage.
+
+        Parameters
+        ----------
+        blob_name : str
+            The name of the blob to create or overwrite.
+        data : Union[IO, bytes]
+            The data to store in the blob. Can be a bytes object or a file-like
+            object.
         """
         log.debug(f"Storing blob: {blob_name} in container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(
@@ -74,6 +94,11 @@ class AzureStorageService:
     def delete_blob(self, blob_name: str) -> None:
         """
         Delete a blob from Azure Blob Storage by its name.
+
+        Parameters
+        ----------
+        blob_name : str
+            The name of the blob to delete.
         """
         log.debug(f"Deleting blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(
@@ -85,6 +110,16 @@ class AzureStorageService:
         """
         Stream a blob from Azure Blob Storage.
         Returns a StorageStreamDownloader object.
+
+        Parameters
+        ----------
+        blob_name : str
+            The name of the blob to stream.
+
+        Returns
+        -------
+        StorageStreamDownloader
+            A stream object to read the blob's content in chunks.
         """
         log.debug(f"Streaming blob: {blob_name} from container: {self.container_name}")
         blob_client = self.blob_service_client.get_blob_client(

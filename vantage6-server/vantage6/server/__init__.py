@@ -237,21 +237,18 @@ class ServerApp:
                 account_url=f"https://{storage_account_name}.blob.core.windows.net/",
                 credential=credential,
             )
-            self.storage_adapter = AzureStorageService(
-                blob_service_client=self.blob_service_client,
-                container_name=container_name,
-            )
-            return
 
         if connection_string:
-            self.storage_adapter = AzureStorageService(
-                connection_string=connection_string,
-                container_name=container_name,
+            self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+        if not self.blob_service_client:
+            log.warning(
+                "Azure Blob Storage configuration is incomplete. Large result store not set up."
             )
             return
-
-        log.warning(
-            "Azure Blob Storage configuration is incomplete. Large result store not set up."
+        self.storage_adapter = AzureStorageService(
+            blob_service_client=self.blob_service_client,
+            container_name=container_name,
         )
 
     @staticmethod
