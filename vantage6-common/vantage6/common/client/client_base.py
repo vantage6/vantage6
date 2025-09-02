@@ -770,8 +770,9 @@ class ClientBase(object):
             )
 
         if not (200 <= response.status_code < 300):
-            self.log.error(f"Failed to upload blob to server: {response.text}")
-            return None
+            error_msg = (f"Failed to upload blob to server: {response.text}")
+            self.log.error(error_msg)
+            raise RuntimeError(error_msg)
 
         run_data_uuid_response = response.json()
         run_data_uuid = run_data_uuid_response.get("uuid")
