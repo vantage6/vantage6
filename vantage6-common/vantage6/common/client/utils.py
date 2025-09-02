@@ -50,10 +50,21 @@ def show_qr_code_image(qr_uri: str) -> None:
 
 
 def is_uuid(value):
+    """
+    Check if value is a valid UUID.
+    
+     Parameters
+    ----------
+    value : str
+    
+     Returns
+    -------
+    `True` if value is a valid UUID, otherwise `False`.
+    """
     try:
         if isinstance(value, bytes):
             value = value.decode(STRING_ENCODING)
-        uuid.UUID(value)
-        return True
+        uuid_obj = uuid.UUID(value)
     except (ValueError, TypeError, AttributeError):
         return False
+    return str(uuid_obj) == value
