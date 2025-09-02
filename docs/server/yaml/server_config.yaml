@@ -231,9 +231,16 @@ large_result_store:
   type: "azure"
   # The name of the Blob Storage container to use for storing large results.
   container_name: test-container
-# Connection string to the Storage account. Useful for testing purposes, such as connecting to Azurite.
+  
+  # Use this block for connection string authentication:
+  # -------------------------------------------------------
+  # Connection string to the Storage account. Useful for testing purposes, such as connecting to Azurite.
   # The example connection string uses the default account name and key for Azurite.
   connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
+  # -------------------------------------------------------
+  
+  # Or use this block for service principal authentication:
+  # -------------------------------------------------------
   # Credentials for accessing the Blob Storage. If provided, these will be used instead of the connection string.
   # tenant_id, client_id, and client_secret are required for authentication.
   tenant_id: "your-tenant-id"
@@ -241,3 +248,4 @@ large_result_store:
   client_secret: "your-client-secret"
   # Name of the storage account.
   storage_account_name: "your-storage-account-name"
+  # -------------------------------------------------------
