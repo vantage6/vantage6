@@ -522,7 +522,7 @@ class ClientBase(object):
         self._access_token = response.json()["access_token"]
         self.__refresh_token = response.json()["refresh_token"]
 
-    def fetch_and_decrypt_run_data(
+    def _fetch_and_decrypt_run_data(
         self,
         run_data: str,
         data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL,
@@ -535,7 +535,7 @@ class ClientBase(object):
 
         Parameters
         ----------
-        run_data : str | bytes
+        run_data : str
             The run data to be fetched and decrypted. If it is a UUID, it will
             be used to download the data from blob storage.
         data_storage_used : DataStorageUsed, optional
@@ -627,7 +627,7 @@ class ClientBase(object):
         def _decrypt_and_decode(
             value: str, field: str, data_storage_used: DataStorageUsed
         ) -> str:
-            decrypted = self.fetch_and_decrypt_run_data(value, data_storage_used)
+            decrypted = self._fetch_and_decrypt_run_data(value, data_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got" " %s.",
@@ -727,7 +727,7 @@ class ClientBase(object):
             time.sleep(interval)
             interval = min(interval * INTERVAL_MULTIPLIER, MAX_INTERVAL)
 
-    def upload_run_data_to_server(
+    def _upload_run_data_to_server(
         self, run_data_bytes: bytes, pub_key: str | None = None
     ) -> str | None:
         """
@@ -741,6 +741,7 @@ class ClientBase(object):
             Public key of the organization uploading the data. This is only required when
             streaming data from the algorithm container, since data is then streamed through
             the node proxy, and encryption takes place there chunk by chunk.
+
         Returns
         -------
         str | None
@@ -806,8 +807,9 @@ class ClientBase(object):
 
         """
         if not is_uuid(run_data_uuid):
-            self.log.error(f"Input is not a valid UUID: {run_data_uuid}")
-            raise ValueError(f"Input is not a valid UUID: {run_data_uuid}")
+            error_msg = f"Input is not a valid UUID: {run_data_uuid}"
+            self.log.error(error_msg)
+            raise ValueError(error_msg)
         uuid_obj = uuid.UUID(run_data_uuid)
         self.log.debug(f"Downloading run data with UUID: {uuid_obj}")
         base_path = self.generate_path_to("blobstream", False)

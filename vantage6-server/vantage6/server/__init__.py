@@ -6,9 +6,9 @@ through the API the server hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
-import enum
 import os
 from gevent import monkey
+import enum
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):

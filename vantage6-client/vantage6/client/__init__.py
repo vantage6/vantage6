@@ -1871,7 +1871,7 @@ class UserClient(ClientBase):
                     encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(
                         serialized_input, pub_key, skip_base64_encoding_of_msg=True
                     )
-                    organization_input = self.parent.upload_run_data_to_server(
+                    organization_input = self.parent._upload_run_data_to_server(
                         encrypted_input
                     )
                 else:

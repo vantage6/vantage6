@@ -386,33 +386,33 @@ class AlgorithmClient(ClientBase):
             description = (
                 description or f"task from container on node_id={self.parent.node_id}"
             )
+            organization_json_list = []
+
             # Note that the input is not encrypted here, but in the proxy server (self.parent.request())
-            if input_:
-                organization_json_list = []
-                # serializing input. Note that the input is not encrypted here, but
-                # in the proxy server (self.parent.request())
-                serialized_input = serialize(input_)
-                blob_store_enabled = self.parent.check_if_blob_store_enabled()
-                for org_id in organizations:
-                    pub_key = self.parent.request(f"organization/{org_id}").get(
-                        "public_key"
+            # serializing input. Note that the input is not encrypted here, but
+            # in the proxy server (self.parent.request())
+            serialized_input = serialize(input_)
+            blob_store_enabled = self.parent.check_if_blob_store_enabled()
+            for org_id in organizations:
+                pub_key = self.parent.request(f"organization/{org_id}").get(
+                    "public_key"
+                )
+                self.parent.log.info(
+                    f"Using public key for organization {org_id}: {pub_key}"
+                )
+                # If blob store is enabled, upload the input data to blob storage
+                # and set a UUID reference for the input.
+                if input_ and blob_store_enabled:
+                    self.parent.log.debug(
+                        "Blob store is enabled, uploading input data to blob storage."
                     )
-                    self.parent.log.info(
-                        f"Using public key for organization {org_id}: {pub_key}"
+                    input_uuid = self.parent._upload_run_data_to_server(
+                        serialized_input, pub_key=pub_key
                     )
-                    # If blob store is enabled, upload the input data to blob storage
-                    # and set a UUID reference for the input.
-                    if blob_store_enabled:
-                        self.parent.log.debug(
-                            "Blob store is enabled, uploading input data to blob storage."
-                        )
-                        input_uuid = self.parent.upload_run_data_to_server(
-                            serialized_input, pub_key=pub_key
-                        )
-                        org_input = input_uuid
-                    else:
-                        org_input = bytes_to_base64s(serialized_input)
-                    organization_json_list.append({"id": org_id, "input": org_input})
+                    org_input = input_uuid
+                else:
+                    org_input = bytes_to_base64s(serialized_input)
+                organization_json_list.append({"id": org_id, "input": org_input})
 
             json_body = {
                 "name": name,

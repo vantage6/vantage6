@@ -187,7 +187,7 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                run["input"] = self.parent.fetch_and_decrypt_run_data(
+                run["input"] = self.parent._fetch_and_decrypt_run_data(
                     run["input"], run["data_storage_used"]
                 )
 
@@ -247,7 +247,7 @@ class NodeClient(ClientBase):
                 # If blob store is enabled, stream the result to the server, which
                 # will stream it to the blob store and return the UUID reference to use.
                 if blob_store_enabled:
-                    result_uuid = self.parent.upload_run_data_to_server(data["result"])
+                    result_uuid = self.parent._upload_run_data_to_server(data["result"])
                     self.parent.log.debug(
                         f"Result uploaded to server with UUID: {result_uuid}"
                     )
