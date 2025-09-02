@@ -747,10 +747,8 @@ class ClientBase(object):
         str | None
             UUID of the uploaded run data, or None if upload failed.
         """
-        headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/octet-stream",
-        }
+        headers = self.headers
+        headers["Content-Type"] = "application/octet-stream"
         if pub_key:
             headers["X-Public-Key"] = pub_key
         url = self.generate_path_to("blobstream", False)
@@ -865,10 +863,8 @@ class ClientBase(object):
         """
         base_url = self.generate_path_to("blobstream", False)
         status_url = f"{base_url}/status"
-        headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/octet-stream",
-        }
+        headers = self.headers
+        headers["Content-Type"] = "application/octet-stream"
         response = requests.get(status_url, headers=headers)
         if not response.ok:
             self.log.error(
