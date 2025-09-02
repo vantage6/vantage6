@@ -397,7 +397,7 @@ class AlgorithmClient(ClientBase):
                 pub_key = self.parent.request(f"organization/{org_id}").get(
                     "public_key"
                 )
-                self.parent.log.info(
+                self.parent.log.debug(
                     f"Using public key for organization {org_id}: {pub_key}"
                 )
                 # If blob store is enabled, upload the input data to blob storage
