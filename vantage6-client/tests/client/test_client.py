@@ -160,21 +160,24 @@ class TestClient(TestCase):
         self.whoami.organization_id = FAKE_ID
         return {"token": "fake-token"}
 
-    @staticmethod
-    def setup_client() -> UserClient:
-        mock_requests = MagicMock()
-        mock_requests.post.return_value.status_code = 200
-        mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
-        mock_jwt = TestClient._create_mock_jwt()
+    @patch("vantage6.client.UserClient.authenticate", new=_mock_authenticate)
+    @patch("vantage6.common.client.client_base.requests")
+    @patch("vantage6.client.requests")
+    @patch("vantage6.client.jwt")
+    def setup_client(
+        self, mock_jwt, mock_requests_client, mock_requests_common_base
+    ) -> UserClient:
+        """
+        Zet een mock UserClient op voor testen met @patch decorators.
+        """
 
-        with (
-            patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt),
-            patch("vantage6.common.client.client_base.requests", mock_requests),
-            patch("vantage6.client.UserClient.authenticate", new=mock_authenticate),
-        ):
-            client = UserClient(f"http://{HOST}", PORT)
-            client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
-            return client
+        for mock_req in (mock_requests_client, mock_requests_common_base):
+            mock_req.post.return_value.status_code = 200
+            mock_req.post.return_value.json.return_value = {"token": "fake-token"}
+
+        client = UserClient(f"http://{HOST}", PORT)
+        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+        return client
 
     @staticmethod
     def _create_mock_jwt() -> MagicMock:
