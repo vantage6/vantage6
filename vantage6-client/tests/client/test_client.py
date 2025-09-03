@@ -91,9 +91,10 @@ class TestClient(TestCase):
         mock_requests.post.return_value.status_code = 200
 
         mock_jwt = TestClient._create_mock_jwt()
-        with patch.multiple(
-            "vantage6.client", requests=mock_requests, jwt=mock_jwt
-        ), patch("vantage6.common.client.client_base.requests", mock_requests):
+        with (
+            patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt),
+            patch("vantage6.common.client.client_base.requests", mock_requests),
+        ):
             client = TestClient.setup_client()
 
             client.task.create(
@@ -143,14 +144,21 @@ class TestClient(TestCase):
         mock_requests.get.return_value.json.side_effect = mock_result_response
         mock_requests.get.return_value.json.return_value = mock_result_response
 
-        with patch.multiple(
-            "vantage6.client", requests=mock_requests, jwt=mock_jwt
-        ), patch("vantage6.common.client.client_base.requests", mock_requests):
+        with (
+            patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt),
+            patch("vantage6.common.client.client_base.requests", mock_requests),
+        ):
             client = TestClient.setup_client()
             client.request = MagicMock(return_value=mock_result_response)
 
         results = client.result.from_task(task_id=FAKE_ID)
         return results
+
+    def _mock_authenticate(self, username, password, mfa_code=None):
+        self._access_token = "fake-token"
+        self.whoami = MagicMock()
+        self.whoami.organization_id = FAKE_ID
+        return {"token": "fake-token"}
 
     @staticmethod
     def setup_client() -> UserClient:
@@ -159,20 +167,13 @@ class TestClient(TestCase):
         mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
         mock_jwt = TestClient._create_mock_jwt()
 
-        def mock_authenticate(self, username, password, mfa_code=None):
-            self._access_token = "fake-token"
-            self.whoami = MagicMock()
-            self.whoami.organization_id = FAKE_ID
-            return {"token": "fake-token"}
-
-        with patch.multiple(
-            "vantage6.client", requests=mock_requests, jwt=mock_jwt
-        ), patch("vantage6.common.client.client_base.requests", mock_requests), patch(
-            "vantage6.client.UserClient.authenticate", new=mock_authenticate
+        with (
+            patch.multiple("vantage6.client", requests=mock_requests, jwt=mock_jwt),
+            patch("vantage6.common.client.client_base.requests", mock_requests),
+            patch("vantage6.client.UserClient.authenticate", new=mock_authenticate),
         ):
             client = UserClient(f"http://{HOST}", PORT)
             client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
-            client.setup_encryption(None)
             return client
 
     @staticmethod
