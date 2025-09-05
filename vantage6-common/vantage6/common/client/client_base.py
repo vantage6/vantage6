@@ -13,8 +13,7 @@ from vantage6.common.globals import (
     MAX_INTERVAL,
     STRING_ENCODING,
     REQUEST_TIMEOUT,
-    DEFAULT_CHUNK_SIZE,
-    DataStorageUsed,
+    DEFAULT_CHUNK_SIZE
 )
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
@@ -525,7 +524,7 @@ class ClientBase(object):
     def _fetch_and_decrypt_run_data(
         self,
         run_data: str,
-        data_storage_used: DataStorageUsed = DataStorageUsed.RELATIONAL,
+        blob_storage_used: bool = False,
     ) -> bytes:
         """Fetch and decrypt the run data of an algorithm run
 
@@ -538,9 +537,9 @@ class ClientBase(object):
         run_data : str
             The run data to be fetched and decrypted. If it is a UUID, it will
             be used to download the data from blob storage.
-        data_storage_used : DataStorageUsed, optional
-            The type of data storage used for the run data,
-            by default DataStorageUsed.RELATIONAL
+        blob_storage_used : bool, optional
+            Whether blob storage is used for the run data,
+            by default False
 
         Returns
         -------
@@ -552,7 +551,7 @@ class ClientBase(object):
         ValueError
             If the UUID is not valid or if decryption fails
         """
-        if data_storage_used == DataStorageUsed.AZURE.value:
+        if blob_storage_used:
             # If blob storage is used, the data is a UUID reference to the blob
             uuid = run_data
             self.log.debug(f"Parsing uuid from input: {uuid}")
@@ -625,9 +624,9 @@ class ClientBase(object):
         """
 
         def _decrypt_and_decode(
-            value: str, field: str, data_storage_used: DataStorageUsed
+            value: str, field: str, blob_storage_used: bool
         ) -> str:
-            decrypted = self._fetch_and_decrypt_run_data(value, data_storage_used)
+            decrypted = self._fetch_and_decrypt_run_data(value, blob_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got" " %s.",
@@ -652,14 +651,14 @@ class ClientBase(object):
         if is_single_resource:
             if data.get(field):
                 data[field] = _decrypt_and_decode(
-                    data[field], field, data["data_storage_used"]
+                    data[field], field, data["blob_storage_used"]
                 )
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data["data"]:
                 if resource.get(field):
                     resource[field] = _decrypt_and_decode(
-                        resource[field], field, resource["data_storage_used"]
+                        resource[field], field, resource["blob_storage_used"]
                     )
         return data
 

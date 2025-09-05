@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from vantage6.common.task_status import TaskStatus
-from vantage6.common.globals import DataStorageUsed
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.service.azure_storage_service import AzureStorageService
@@ -50,7 +49,7 @@ def cleanup_runs_data(days: int, azure_config, include_input: bool = False):
             for run in runs:
                 if (
                     run.result is not None
-                    and run.data_storage_used == DataStorageUsed.AZURE
+                    and run.blob_storage_used == True
                 ):
                     log.debug(f"Deleting blob: {run.result}")
                     storage_adapter.delete_blob(run.result)

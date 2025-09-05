@@ -188,7 +188,7 @@ class NodeClient(ClientBase):
             # Multiple runs
             for run in run_data:
                 run["input"] = self.parent._fetch_and_decrypt_run_data(
-                    run["input"], run["data_storage_used"]
+                    run["input"], run["blob_storage_used"]
                 )
 
             return run_data

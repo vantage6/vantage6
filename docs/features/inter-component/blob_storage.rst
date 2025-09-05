@@ -81,6 +81,6 @@ input or result into memory at once.
 Database
 ~~~~~~~~
 
-A data_storage_used column is added to the `runs` table to indicate which storage backend was used for that run.
+A blob_storage column is added to the `runs` table to indicate whether blob storage and streaming was used for that run.
 This ensures for any run it is clear whether the input or result field should be interpreted directly, or first 
-retrieved. For existing installations, empty values for `data_storage_used` are assumed to be `relational`.
+retrieved. For existing installations, empty values for `blob_storage_used` is assumed to be False.

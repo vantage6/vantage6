@@ -8,7 +8,7 @@ from typing import Any
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.serialization import serialize
-from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -301,7 +301,7 @@ class AlgorithmClient(ClientBase):
                 if not result_data:
                     return None
                 try:
-                    if run.get("data_storage_used") == DataStorageUsed.AZURE.value:
+                    if run.get("blob_storage_used") == True:
                         run_data = self.parent.download_run_data_from_server(
                             result_data
                         )

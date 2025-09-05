@@ -69,7 +69,7 @@ export class TaskService {
     if (Array.isArray(task.results) && task.results.length > 0) {
       for (const result of task.results) {
         if (result.result) {
-          if (result.data_storage_used === 'azure') {
+          if (result.blob_storage_used) {
             this.snackBarService.showMessage(this.translateService.instant('task.alert-blob-read-result'));
             break;
           }

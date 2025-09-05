@@ -93,11 +93,3 @@ class AuthStatus(str, Enum):
 
     ONLINE = "online"
     OFFLINE = "offline"
-
-
-# This enum is used to specify where inputs and results are stored for the run.
-class DataStorageUsed(Enum):
-    RELATIONAL = "relational"  # Relational database storage - default
-    FILE = "file"  # File based storage - not yet implemented
-    AZURE = "azure"  # Azure Blob Storage
-    S3 = "s3"  # Amazon S3 storage - not yet implemented

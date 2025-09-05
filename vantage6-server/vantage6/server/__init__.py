@@ -51,8 +51,7 @@ from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     AuthStatus,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
-    DataStorageUsed,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT
 )
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
@@ -211,11 +210,7 @@ class ServerApp:
 
         self.storage_adapter = None
         config = self.ctx.config.get("large_result_store", {})
-        store_type = DataStorageUsed(
-            config.get("type", DataStorageUsed.RELATIONAL.value)
-        )
-
-        if store_type != DataStorageUsed.AZURE:
+        if not config:
             log.info(
                 "No large result store configured, using relational database for input and result storage"
             )

@@ -45,7 +45,7 @@ class TestUserClient(unittest.TestCase):
             "data": [
                 {
                     "result": "123e4567-e89b-12d3-a456-426614174000",
-                    "data_storage_used": "Azure",
+                    "blob_storage_used": True,
                 }
             ]
         }

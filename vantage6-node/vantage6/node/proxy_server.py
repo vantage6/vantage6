@@ -20,7 +20,6 @@ from flask import Flask, request, stream_with_context, Response as FlaskResponse
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
-from vantage6.common.globals import DataStorageUsed
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -244,8 +243,6 @@ def proxy_task():
 
     log.debug("%s organizations", len(organizations))
 
-    blob_store_enabled = client.check_if_blob_store_enabled()
-
     # For every organization we need to encrypt the input field. This is done
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved an the input is
@@ -276,8 +273,7 @@ def proxy_task():
         # If blob store is enabled, we skip base64 encoding of the message.
         encrypted_input = client.cryptor.encrypt_bytes_to_str(
             base64s_to_bytes(input_),
-            public_key,
-            skip_base64_encoding_of_msg=blob_store_enabled,
+            public_key
         )
 
         log.debug("Input successfully encrypted for organization %s!", organization_id)
@@ -287,7 +283,7 @@ def proxy_task():
         log.debug("Applying end-to-end encryption")
 
         for org in organizations:
-            if not blob_store_enabled:
+            if not client.check_if_blob_store_enabled():
                 if is_uuid(org.get("input")):
                     log.warning(
                         "Input is a UUID, are you sending blob based inputs "
@@ -353,8 +349,8 @@ def proxy_result() -> Response:
 
     for result in results["data"]:
         if (
-            not result["data_storage_used"]
-            or result["data_storage_used"] == DataStorageUsed.RELATIONAL.value
+            not result["blob_storage_used"]
+            or result["blob_storage_used"] == False
         ):
             result = decrypt_result(result)
 
@@ -396,8 +392,8 @@ def proxy_results(id_: int) -> Response:
     # Try to decrypt the results
     result = get_response_json_and_handle_exceptions(response)
     if (
-        not result["data_storage_used"]
-        or result["data_storage_used"] == DataStorageUsed.RELATIONAL.value
+        not result["blob_storage_used"]
+        or result["blob_storage_used"] == False
     ):
         result = decrypt_result(result)
 
@@ -417,6 +413,7 @@ def stream_handler(id: str) -> FlaskResponse:
     ----------
     id : str
         The id of the blob to be streamed.
+
     Returns
     -------
     FlaskResponse

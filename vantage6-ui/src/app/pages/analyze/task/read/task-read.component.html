@@ -111,8 +111,8 @@
               <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-input-visualization' | translate }}"> </app-alert>
               <p>{{ displayTextResult(result.decoded_result) }}</p>
             </div>
-            <app-alert *ngIf="result.data_storage_used === 'azure'" label="{{ 'task.alert-blob-read-result' | translate }}"> </app-alert>
-            <app-alert *ngIf="result.data_storage_used !== 'azure' && !result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <app-alert *ngIf="result.blob_storage_used" label="{{ 'task.alert-blob-read-result' | translate }}"> </app-alert>
+            <app-alert *ngIf="!result.blob_storage_used && !result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
             <br />
             <button mat-flat-button color="primary" (click)="downloadResult(result)">
               {{ "task-read.card-results.actions.download-result" | translate }}
@@ -208,8 +208,8 @@
           </div>
         </div>
       </ng-container>
-      <app-alert *ngIf="task.runs[0]?.data_storage_used !== 'azure' && !task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
-      <app-alert *ngIf="task.runs[0]?.data_storage_used === 'azure'" label="{{ 'task.alert-blob-read-input' | translate }}"> </app-alert>
+      <app-alert *ngIf="!task.runs[0]?.blob_storage_used && !task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
+      <app-alert *ngIf="task.runs[0]?.blob_storage_used" label="{{ 'task.alert-blob-read-input' | translate }}"> </app-alert>
       <br />
       <button *ngIf="!task.input && task.runs[0]?.input" mat-flat-button color="primary" (click)="downloadInput(task.runs[0])">
         {{ "task-read.card-results.actions.download-input" | translate }}
@@ -252,7 +252,7 @@
             </div>
             <div class="data-list__item">
               <b>{{ "task-run.data-storage-used" | translate }}</b>
-              <span>{{ run.data_storage_used || "-" }}</span>
+              <span>{{ run.blob_storage_used || "-" }}</span>
             </div>
           </div>
           <div class="run__actions">

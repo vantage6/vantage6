@@ -10,7 +10,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 from sqlalchemy.sql import visitors
 
-from vantage6.common.globals import STRING_ENCODING, NodePolicy, DataStorageUsed
+from vantage6.common.globals import STRING_ENCODING, NodePolicy
 from vantage6.common.task_status import TaskStatus, has_task_finished
 from vantage6.common.encryption import DummyCryptor
 from vantage6.backend.common import get_server_url
@@ -761,15 +761,10 @@ class Tasks(TaskBase):
         # to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
         # send encrypted input.
-        data_storage_used = DataStorageUsed(
-            config.get("large_result_store", {}).get(
-                "type", DataStorageUsed.RELATIONAL.value
-            )
-        )
+        blob_storage_used = bool(config.get("large_result_store", {}))
 
-        log.debug(f"storing in: {data_storage_used}")
         is_valid_input, error_msg = Tasks._check_input(
-            organizations_json_list, collaboration, data_storage_used
+            organizations_json_list, collaboration, blob_storage_used
         )
         if not is_valid_input:
             return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
@@ -850,7 +845,7 @@ class Tasks(TaskBase):
                 organization=organization,
                 input=input_,
                 status=TaskStatus.PENDING,
-                data_storage_used=data_storage_used,
+                blob_storage_used=blob_storage_used,
             )
             run.save()
 
@@ -954,7 +949,7 @@ class Tasks(TaskBase):
     def _check_input(
         organizations_json_list: list[dict],
         collaboration: db.Collaboration,
-        data_storage_used: DataStorageUsed,
+        blob_storage_used: bool,
     ) -> tuple[bool, str]:
         """
         Check if the input is valid for the collaboration. If the collaboration
@@ -967,6 +962,8 @@ class Tasks(TaskBase):
             List of organizations which contains the input per organization.
         collaboration : db.Collaboration
             Collaboration object.
+        blob_storage_used : bool
+            Whether or not blob storage is used for storing data.
 
         Returns
         -------
@@ -977,7 +974,7 @@ class Tasks(TaskBase):
         """
         if not organizations_json_list:
             return False, "No organizations provided in the request."
-        if data_storage_used == DataStorageUsed.AZURE:
+        if blob_storage_used:
             return Tasks.check_input_uuid(organizations_json_list)
         else:
             return Tasks._check_input_encryption(organizations_json_list, collaboration)

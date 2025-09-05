@@ -6,7 +6,7 @@ import jwt
 
 from unittest.mock import patch, MagicMock
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING
 
 
 def encode_result(result_dict: dict) -> str:
@@ -79,7 +79,7 @@ class TestAlgorithmClient(unittest.TestCase):
         mock_multi_page_request.return_value = [
             {
                 "result": encode_result({"foo": "bar"}),  # base64 for '{"foo": "bar"}'
-                "data_storage_used": None,
+                "blob_storage_used": None,
             }
         ]
 
@@ -91,15 +91,15 @@ class TestAlgorithmClient(unittest.TestCase):
         "vantage6.common.client.client_base.ClientBase.download_run_data_from_server"
     )
     def test_result_from_task_azure(
-        self, mock_multi_page_request, mock_download_run_data_from_server
+        self, mock_multi_page_request
     ):
         with patch.object(self.client.result.parent, "_multi_page_request") as mock_multi_page_request, \
         patch.object(self.client.result.parent, "download_run_data_from_server") as mock_download_run_data:
-            # Simulate a result where data_storage_used is 'azure'
+            # Simulate a result where blob_storage_used is True
             mock_multi_page_request.return_value = [
                 {
                     "result": uuid.uuid4(),
-                    "data_storage_used": DataStorageUsed.AZURE.value,
+                    "blob_storage_used": True,
                 }
             ]
             expected_value = {"foo": "bar"}
@@ -112,7 +112,7 @@ class TestAlgorithmClient(unittest.TestCase):
         mock_multi_page_request.return_value = [
             {
                 "result": encode_result({"foo": "bar"}),
-                "data_storage_used": DataStorageUsed.RELATIONAL.value,
+                "blob_storage_used": False,
             },
         ]
 

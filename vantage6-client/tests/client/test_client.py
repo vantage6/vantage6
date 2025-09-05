@@ -127,7 +127,7 @@ class TestClient(TestCase):
             "data": [
                 {
                     "result": mock_result,
-                    "data_storage_used": "relational",
+                    "blob_storage_used": False,
                     "user": user,
                     "organization": organization,
                 }

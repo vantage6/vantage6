@@ -11,7 +11,7 @@ import traceback
 
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME, AuthStatus, DataStorageUsed
+from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common import WhoAmI
 from vantage6.common.serialization import serialize
@@ -1977,7 +1977,7 @@ class UserClient(ClientBase):
             if (
                 isinstance(data, list)
                 and len(data) > 0
-                and data[0].get("data_storage_used") == DataStorageUsed.AZURE.value
+                and data[0].get("blob_storage_used") == True
             ):
                 result_uuid = data[0].get("result")
                 msg = self.parent.request(
