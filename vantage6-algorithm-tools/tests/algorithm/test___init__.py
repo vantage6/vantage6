@@ -107,19 +107,18 @@ class TestAlgorithmClient(unittest.TestCase):
             results = self.client.result.from_task(task_id=1)
             self.assertEqual(results[0], expected_value)
 
-    def test_result_from_task_relational(self):
-        with patch.object(
-            self.client.result.parent, "_multi_page_request"
-        ) as mock_multi_page_request:
-            mock_multi_page_request.return_value = [
-                {
-                    "result": "eyJmb28iOiAiYmFyIn0=",  # base64 for '{"foo": "bar"}'
-                    "data_storage_used": DataStorageUsed.RELATIONAL.value,
-                }
-            ]
+    @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
+    def test_result_from_task_relational(self, mock_multi_page_request):
+        mock_multi_page_request.return_value = [
+            {
+                "result": encode_result({"foo": "bar"}),
+                "data_storage_used": DataStorageUsed.RELATIONAL.value,
+            },
+        ]
 
-            results = self.client.result.from_task(task_id=1)
-            self.assertEqual(results[0], {"foo": "bar"})
+        results = self.client.result.from_task(task_id=1)
+
+        self.assertEqual(results[0], {"foo": "bar"})
 
 
 if __name__ == "__main__":
