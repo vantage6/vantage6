@@ -1,6 +1,7 @@
 import logging
-import uwsgi
-from flask import request, Response, stream_with_context
+import uuid
+import uwsgi  # type: ignore (built from source in Dockerfile)
+from flask import g, request, Response, stream_with_context
 
 from flask_restful import Api
 from http import HTTPStatus
@@ -16,8 +17,7 @@ from vantage6.server.resource import (
     only_for,
     ServicesResources,
 )
-
-import uuid
+from vantage6.server.model import Run as db_Run
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -97,12 +97,12 @@ def permissions(permissions: PermissionManager):
     add(
         scope=S.ORGANIZATION,
         operation=P.VIEW,
-        description="view any blob of a task created by your organization",
+        description="view any blob of a run created by your organization",
     )
     add(
         scope=S.OWN,
         operation=P.VIEW,
-        description="view any blob of a task created by you",
+        description="view any blob of a run created by you",
     )
 
 
@@ -119,6 +119,14 @@ class BlobStreamBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
+    
+    def get_run_by_input_or_result(self, id: str) -> db_Run | None:
+        run = (
+            self.session.query(db_Run)
+            .filter((db_Run.input == id) | (db_Run.result == id))
+            .first()
+        )
+        return run
 
 
 class BlobStreamStatus(BlobStreamBase):
@@ -139,7 +147,6 @@ class BlobStreamStatus(BlobStreamBase):
 
         description: >-
             Returns whether or not blob storage is enabled. \n
-            If enabled, results can be streamed from blob storage.
 
         responses:
           200:
@@ -151,6 +158,7 @@ class BlobStreamStatus(BlobStreamBase):
           - bearerAuth: []
         """
         log.debug("Checking if blob store is enabled")
+
         if self.storage_adapter:
             return {"blob_store_enabled": True}, HTTPStatus.CREATED
         else:
@@ -180,12 +188,12 @@ class BlobStream(BlobStreamBase):
             |Rule name|Scope|Operation|Assigned to node|Assigned to container|
             Description|\n
             |--|--|--|--|--|--|\n
-            |Blob|Global|View|❌|❌|View any blob|\n
-            |Blob|Collaboration|View|✅|✅|View the blobs of your
+            |Blobstream|Global|View|❌|❌|View any blob|\n
+            |Blobstream|Collaboration|View|✅|✅|View the blobs of your
             organization's collaborations|\n
-            |Blob|Organization|View|❌|❌|View any blob from a task created by
+            |Blobstream|Organization|View|❌|❌|View any blob from a task created by
             your organization|\n
-            |Blob|Own|View|❌|❌|View any blob from a task created by you|\n
+            |Blobstream|Own|View|❌|❌|View any blob from a task created by you|\n
 
             Accessible to users.
 
@@ -194,6 +202,8 @@ class BlobStream(BlobStreamBase):
             description: Ok
           401:
             description: Unauthorized
+          404:
+            description: Not Found
           500:
             description: Internal Server Error
           501:
@@ -204,6 +214,15 @@ class BlobStream(BlobStreamBase):
 
         tags: ["Algorithm"]
         """
+        run = self.get_run_by_input_or_result(id)
+        if not run:
+            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
+        if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
+            self.r.v_own.can() and run.task.init_user_id == g.user.id
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         if not self.storage_adapter:
             log.warning(
@@ -251,6 +270,23 @@ class BlobStream(BlobStreamBase):
 
         tags: ["Algorithm"]
         """
+        run = self.get_run_by_input_or_result(id)
+        if not run:
+            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
+        if run.organization_id != g.node.organization_id:
+            log.warning(
+                f"{g.node.name} tries to update a run that does not belong "
+                f"to them ({run.organization_id}/{g.node.organization_id})."
+            )
+            return {
+                "msg": "You do not have permissions to update this run"
+            }, HTTPStatus.UNAUTHORIZED
+
+        if run.finished_at is not None:
+            return {
+                "msg": "Cannot update blobs of an already finished algorithm run"
+            }, HTTPStatus.BAD_REQUEST
+
         if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to blob storage, result streaming is not available."
@@ -278,6 +314,22 @@ class BlobStream(BlobStreamBase):
 
     @only_for(("node", "user", "container"))
     def delete(self, id):
+        run = self.get_run_by_input_or_result(id)
+        if not run:
+            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
+        if run.organization_id != g.node.organization_id:
+            log.warning(
+                f"{g.node.name} tries to delete a blob that does not belong "
+                f"to them ({run.organization_id}/{g.node.organization_id})."
+            )
+            return {
+                "msg": "You do not have permissions to delete this blob"
+            }, HTTPStatus.UNAUTHORIZED
+
+        if run.finished_at is not None:
+            return {
+                "msg": "Cannot update blobs of an already finished algorithm run"
+            }, HTTPStatus.BAD_REQUEST
         if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to azure blob storage, result streaming is not available."
