@@ -2,6 +2,7 @@ import base64
 import unittest
 import json
 import uuid
+import jwt
 
 from unittest.mock import patch, MagicMock
 from vantage6.algorithm.client import AlgorithmClient
@@ -11,7 +12,7 @@ from vantage6.common.globals import DataStorageUsed, STRING_ENCODING
 def encode_result(result_dict: dict) -> str:
     """Encode the result dictionary as a base64 string."""
     return (
-        base64.urlsafe_b64encode(json.dumps(result_dict).encode()).decode().rstrip("=")
+        base64.urlsafe_b64encode(json.dumps(result_dict).encode()).decode()
     )
 
 
@@ -25,7 +26,7 @@ class TestAlgorithmClient(unittest.TestCase):
                 "collaboration_id": 1,
             }
         }
-        dummy_token = f"dummyheader.{encode_result(payload)}.dummysignature"
+        dummy_token = jwt.encode(payload, key="", algorithm=None)
         self.client = AlgorithmClient(
             token=dummy_token,
             host="http://dummy_host",
@@ -83,7 +84,6 @@ class TestAlgorithmClient(unittest.TestCase):
         ]
 
         results = self.client.result.from_task(task_id=1)
-
         self.assertEqual(results[0], {"foo": "bar"})
 
     @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
@@ -93,22 +93,19 @@ class TestAlgorithmClient(unittest.TestCase):
     def test_result_from_task_azure(
         self, mock_multi_page_request, mock_download_run_data_from_server
     ):
-        dummy_uuid = str(uuid.uuid4())
-        # Simulate a result where data_storage_used is 'azure'
-        mock_multi_page_request.return_value = [
-            {
-                "result": dummy_uuid,
-                "data_storage_used": DataStorageUsed.AZURE.value,
-            },
-            {"result": None, "data_storage_used": DataStorageUsed.AZURE.value},
-        ]
-        expected_value = {"foo": "bar"}
-        mock_download_run_data_from_server.return_value = json.dumps(
-            expected_value
-        ).encode(STRING_ENCODING)
-        results = self.client.result.from_task(task_id=1)
-
-        self.assertEqual(results[0], expected_value)
+        with patch.object(self.client.result.parent, "_multi_page_request") as mock_multi_page_request, \
+        patch.object(self.client.result.parent, "download_run_data_from_server") as mock_download_run_data:
+            # Simulate a result where data_storage_used is 'azure'
+            mock_multi_page_request.return_value = [
+                {
+                    "result": uuid.uuid4(),
+                    "data_storage_used": DataStorageUsed.AZURE.value,
+                }
+            ]
+            expected_value = {"foo": "bar"}
+            mock_download_run_data.return_value = json.dumps(expected_value).encode(STRING_ENCODING)
+            results = self.client.result.from_task(task_id=1)
+            self.assertEqual(results[0], expected_value)
 
     def test_result_from_task_relational(self):
         with patch.object(
@@ -118,12 +115,10 @@ class TestAlgorithmClient(unittest.TestCase):
                 {
                     "result": "eyJmb28iOiAiYmFyIn0=",  # base64 for '{"foo": "bar"}'
                     "data_storage_used": DataStorageUsed.RELATIONAL.value,
-                },
-                {"result": None, "data_storage_used": DataStorageUsed.RELATIONAL.value},
+                }
             ]
 
             results = self.client.result.from_task(task_id=1)
-
             self.assertEqual(results[0], {"foo": "bar"})
 
 

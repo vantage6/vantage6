@@ -26,8 +26,7 @@ def cleanup_runs_data(days: int, azure_config, include_input: bool = False):
     session = DatabaseSessionManager.get_session()
     storage_adapter = AzureStorageService(
         container_name=azure_config.get("container_name"),
-        blob_service_client=azure_config.get("blob_service_client"),
-        connection_string=azure_config.get("connection_string"),
+        blob_service_client=azure_config.get("blob_service_client")
     )
 
     if not days or days < 1:
