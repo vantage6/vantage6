@@ -100,6 +100,8 @@ class TestResources(unittest.TestCase):
     @classmethod
     def setUp(cls):
         # set session.session
+        cls.GEVENT_SUPPORT = True
+        cls.SOCKETIO_TESTING = True
         DatabaseSessionManager.get_session()
 
     @classmethod
@@ -253,6 +255,7 @@ class TestResources(unittest.TestCase):
         return self.login(user.username)
 
     def test_version(self):
+        # Problems with socketio
         rv = self.app.get("/api/version")
         r = json.loads(rv.data)
         self.assertIn("version", r)
@@ -4454,3 +4457,7 @@ class TestResources(unittest.TestCase):
         org.delete()
         org2.delete()
         col.delete()
+
+
+if __name__ == "__main__":
+    unittest.main()

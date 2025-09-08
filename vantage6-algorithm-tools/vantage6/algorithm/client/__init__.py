@@ -1,13 +1,14 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
 import jwt
-import json as json_lib
+import json
 
 from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common import base64s_to_bytes, bytes_to_base64s
 from vantage6.common.serialization import serialize
+from vantage6.common.globals import STRING_ENCODING
 
 # make sure the version is available
 from vantage6.algorithm.client._version import __version__  # noqa: F401
@@ -127,7 +128,7 @@ class AlgorithmClient(ClientBase):
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Poll the central server until results are available and then return
-        them.
+        them
 
         Parameters
         ----------
@@ -141,7 +142,9 @@ class AlgorithmClient(ClientBase):
         list
             List of task results.
         """
+        self.log.debug(f"Waiting for results for task_id {task_id}...")
         self.wait_for_task_completion(self.request, task_id, interval, False)
+
         return self.result.from_task(task_id)
 
     def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
@@ -258,7 +261,7 @@ class AlgorithmClient(ClientBase):
             result = None
             if response.get("result"):
                 try:
-                    result = json_lib.loads(
+                    result = json.loads(
                         base64s_to_bytes(response.get("result")).decode()
                     )
                 except Exception as e:
@@ -277,6 +280,10 @@ class AlgorithmClient(ClientBase):
             Results are decrypted by the proxy server and decoded here before
             returning them to the algorithm.
 
+            If blob storage was used to store the results, the results
+            will be streamed from blob storage, through the server and proxy,
+            and decryption will take place on a chunk-by-chunk basis.
+
             Parameters
             ----------
             task_id: int
@@ -288,24 +295,31 @@ class AlgorithmClient(ClientBase):
                 List of results. The type of the results depends on the
                 algorithm.
             """
+
+            def decode_result(run):
+                result_data = run.get("result")
+                if not result_data:
+                    return None
+                try:
+                    if run.get("blob_storage_used") == True:
+                        run_data = self.parent.download_run_data_from_server(
+                            result_data
+                        )
+                        return json.loads(run_data.decode(STRING_ENCODING))
+                    else:
+                        return json.loads(base64s_to_bytes(result_data).decode())
+                except Exception as e:
+                    self.parent.log.error(
+                        f"Unable to load results for task {task_id}: {e}"
+                    )
+                    return None
+
             results = self.parent._multi_page_request(
                 "result", params={"task_id": task_id}
             )
-
             # Encryption is not done at the client level for the container. The
             # algorithm developer is responsible for decrypting the results.
-            decoded_results = []
-            try:
-                decoded_results = [
-                    json_lib.loads(base64s_to_bytes(result.get("result")).decode())
-                    for result in results
-                    if result.get("result")
-                ]
-            except Exception as e:
-                self.parent.log.error("Unable to load results")
-                self.parent.log.error(e)
-
-            return decoded_results
+            return [decode_result(run) for run in results if run.get("result")]
 
     class Task(ClientBase.SubClient):
         """
@@ -344,6 +358,10 @@ class AlgorithmClient(ClientBase):
             same job_id) at the central server. The docker image must
             be the same as the docker image of this container self.
 
+            If blob storage is configured at the server, the input data
+            will be uploaded to blob storage and a UUID reference will be
+            passed as a result instead.
+
             Parameters
             ----------
             input_ : dict
@@ -368,13 +386,33 @@ class AlgorithmClient(ClientBase):
             description = (
                 description or f"task from container on node_id={self.parent.node_id}"
             )
+            organization_json_list = []
 
+            # Note that the input is not encrypted here, but in the proxy server (self.parent.request())
             # serializing input. Note that the input is not encrypted here, but
             # in the proxy server (self.parent.request())
-            serialized_input = bytes_to_base64s(serialize(input_))
-            organization_json_list = []
+            serialized_input = serialize(input_)
+            blob_store_enabled = self.parent.check_if_blob_store_enabled()
             for org_id in organizations:
-                organization_json_list.append({"id": org_id, "input": serialized_input})
+                pub_key = self.parent.request(f"organization/{org_id}").get(
+                    "public_key"
+                )
+                self.parent.log.debug(
+                    f"Using public key for organization {org_id}: {pub_key}"
+                )
+                # If blob store is enabled, upload the input data to blob storage
+                # and set a UUID reference for the input.
+                if input_ and blob_store_enabled:
+                    self.parent.log.debug(
+                        "Blob store is enabled, uploading input data to blob storage."
+                    )
+                    input_uuid = self.parent._upload_run_data_to_server(
+                        serialized_input, pub_key=pub_key
+                    )
+                    org_input = input_uuid
+                else:
+                    org_input = bytes_to_base64s(serialized_input)
+                organization_json_list.append({"id": org_id, "input": org_input})
 
             json_body = {
                 "name": name,

@@ -102,6 +102,8 @@
     "filter-function": "Filter function",
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
+    "alert-blob-read-input": "Input is stored in blob storage. Please use the UUID in the python client to retrieve the input.",
+    "alert-blob-read-result": "Result is stored in blob storage. Please use the UUID in the python client to retrieve the result.",
     "alert-failed-read-input": "Failed to parse input.",
     "alert-failed-read-input-function": "Failed to parse input, therefore, information about the function cannot be displayed.",
     "alert-failed-read-input-visualization": "Failed to parse input, therefore, no visualization can be displayed.",

@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey
+from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -49,6 +49,9 @@ class Run(Base):
         Organization that executed the task
     ports : list[:class:`.~vantage6.server.model.algorithm_port.AlgorithmPort`]
         List of ports that are part of this result
+    blob_storage_used : bool
+        Whether blob storage is used for the input and result data
+        Defaults to False
     """
 
     # fields
@@ -62,6 +65,14 @@ class Run(Base):
     status = Column(Text)
     log = Column(Text)
     cleanup_at = Column(DateTime, nullable=True)
+    # Native Enum will only be used in PostgreSQL, as it is not supported in SQLite.
+    # This is handled automatically by SQLAlchemy.
+    blob_storage_used = Column(
+        Boolean,
+        default=False,
+        name="blob_storage_used",
+        nullable=True
+    )
 
     # relationships
     task = relationship("Task", back_populates="runs")
@@ -126,3 +137,9 @@ class Run(Base):
             f"status: {self.status}"
             ">"
         )
+
+    # Ensure that blob_storage_used is always a boolean, even if None
+    # (e.g. when the database field is NULL)
+    @property
+    def blob_storage_used(self): # pylint: disable=function-redefined
+        return bool(self.__dict__.get('blob_storage_used'))

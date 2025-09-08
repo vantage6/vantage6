@@ -8,6 +8,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
+import enum
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -50,7 +51,7 @@ from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     AuthStatus,
-    DEFAULT_PROMETHEUS_EXPORTER_PORT,
+    DEFAULT_PROMETHEUS_EXPORTER_PORT
 )
 from vantage6.backend.common.globals import HOST_URI_ENV, DEFAULT_SUPPORT_EMAIL_ADDRESS
 from vantage6.backend.common.jsonable import jsonable
@@ -77,9 +78,14 @@ from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
+from vantage6.server.service.azure_storage_service import AzureStorageService
+from azure.identity import ClientSecretCredential
+from azure.storage.blob import BlobServiceClient
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
+
+from requests import Response as RequestsResponse
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -136,6 +142,7 @@ class ServerApp:
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
+        self.setup_large_result_store()
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -194,6 +201,50 @@ class ServerApp:
             )
 
         log.info("Initialization done")
+
+    def setup_large_result_store(self):
+        """
+        Setup the large result store for storing large results.
+        If configured, inputs and results will be stored in blob Storage.
+        """
+
+        self.storage_adapter = None
+        config = self.ctx.config.get("large_result_store", {})
+        if not config:
+            log.info(
+                "No large result store configured, using relational database for input and result storage"
+            )
+            return
+
+        log.info("Using Azure Blob Storage as large result store")
+        tenant_id = config.get("tenant_id")
+        client_id = config.get("client_id")
+        client_secret = config.get("client_secret")
+        storage_account_name = config.get("storage_account_name")
+        container_name = config.get("container_name")
+        connection_string = config.get("connection_string")
+
+        if tenant_id and client_id and client_secret and storage_account_name:
+            credential = ClientSecretCredential(
+                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+            )
+            self.blob_service_client = BlobServiceClient(
+                account_url=f"https://{storage_account_name}.blob.core.windows.net/",
+                credential=credential,
+            )
+
+        if connection_string:
+            self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+        if not self.blob_service_client:
+            log.warning(
+                "Azure Blob Storage configuration is incomplete. Large result store not set up."
+            )
+            return
+        self.storage_adapter = AzureStorageService(
+            blob_service_client=self.blob_service_client,
+            container_name=container_name,
+        )
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
@@ -505,14 +556,27 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
+            # Don't attempt json conversion if it's already a response.
+            # Used for streaming endpoints where responses cannot be jsonified.
+            elif isinstance(data, RequestsResponse):
+                resp = make_response(data, code)
+                return resp
 
-            resp = make_response(json.dumps(data), code)
-            resp.headers.extend(headers or {})
+            # if the response is an enum, convert it to its value
+            def enum_serializer(obj):
+                if isinstance(obj, enum.Enum):
+                    return obj.value
+                raise TypeError(
+                    f"Object of type {obj.__class__.__name__} is not JSON serializable"
+                )
+
+            resp = make_response(json.dumps(data, default=enum_serializer), code)
+            if isinstance(headers, dict):
+                resp.headers.extend(headers)
             return resp
 
     def configure_jwt(self):
@@ -677,9 +741,19 @@ class ServerApp:
             "config": self.ctx.config,
         }
 
+        blobstream_services = {"storage_adapter": self.storage_adapter, **services}
         for res in RESOURCES:
-            module = importlib.import_module("vantage6.server.resource." + res)
-            module.setup(self.api, self.ctx.config["api_path"], services)
+            try:
+                module = importlib.import_module("vantage6.server.resource." + res)
+                if res in ["blobstream"]:
+                    module.setup(
+                        self.api, self.ctx.config["api_path"], blobstream_services
+                    )
+                else:
+                    module.setup(self.api, self.ctx.config["api_path"], services)
+            except Exception as e:
+                log.error(f"Failed to import or set up resource '{res}': {e}")
+                log.debug("Exception details:", exc_info=True)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see
@@ -800,7 +874,7 @@ class ServerApp:
 
     def __node_status_worker(self) -> None:
         """
-        Set node status to offline if they haven't send a ping message in a
+        Set node status to offline if they haven't sent a ping message in a
         while.
         """
         # start periodic check if nodes are responsive
@@ -822,8 +896,8 @@ class ServerApp:
                     if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception:
-                log.exception("Node-status thread had an exception")
+            except Exception as e:
+                log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):
@@ -836,6 +910,7 @@ class ServerApp:
             try:
                 cleanup.cleanup_runs_data(
                     self.ctx.config.get("runs_data_cleanup_days"),
+                    self.ctx.config.get("large_result_store", {}),
                     include_input=include_input,
                 )
             except Exception as e:

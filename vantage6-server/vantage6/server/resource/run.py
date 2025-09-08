@@ -3,6 +3,7 @@ from typing import Union
 import sqlalchemy as sa
 
 from flask import g, request
+
 from flask_restful import Api
 from http import HTTPStatus
 from sqlalchemy import desc
@@ -629,6 +630,9 @@ class Run(SingleRunBase):
                   status:
                     type: string
                     description: Status of the task
+                  blob_storage_used:
+                    type: boolean
+                    description: Whether blob storage is used for the input and result data
 
         responses:
           200:
@@ -685,6 +689,7 @@ class Run(SingleRunBase):
         run.result = data.get("result")
         run.log = data.get("log")
         run.status = data.get("status", run.status)
+        run.blob_storage_used = data.get("blob_storage_used", run.blob_storage_used)
         run.save()
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
