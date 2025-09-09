@@ -50,7 +50,6 @@ setup(
         "requests-oauthlib==1.3.1",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        "uwsgi==2.0.30",
         "werkzeug==3.1.3",
         f'vantage6 == {version_ns["__version__"]}',
         f'vantage6-common == {version_ns["__version__"]}',
