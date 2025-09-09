@@ -8,7 +8,6 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
-import enum
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -16,6 +15,7 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
+import enum
 import importlib
 import logging
 import uuid
@@ -23,10 +23,14 @@ import json
 import time
 import datetime as dt
 import traceback
+from requests import Response as RequestsResponse
+
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 
+from azure.identity import ClientSecretCredential
+from azure.storage.blob import BlobServiceClient
 from flask import (
     Flask,
     make_response,
@@ -79,13 +83,11 @@ from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 from vantage6.server.service.azure_storage_service import AzureStorageService
-from azure.identity import ClientSecretCredential
-from azure.storage.blob import BlobServiceClient
+
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
 
-from requests import Response as RequestsResponse
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -209,20 +211,20 @@ class ServerApp:
         """
 
         self.storage_adapter = None
-        config = self.ctx.config.get("large_result_store", {})
-        if not config:
+        large_result_config = self.ctx.config.get("large_result_store", {})
+        if not large_result_config:
             log.info(
                 "No large result store configured, using relational database for input and result storage"
             )
             return
 
         log.info("Using Azure Blob Storage as large result store")
-        tenant_id = config.get("tenant_id")
-        client_id = config.get("client_id")
-        client_secret = config.get("client_secret")
-        storage_account_name = config.get("storage_account_name")
-        container_name = config.get("container_name")
-        connection_string = config.get("connection_string")
+        tenant_id = large_result_config.get("tenant_id")
+        client_id = large_result_config.get("client_id")
+        client_secret = large_result_config.get("client_secret")
+        storage_account_name = large_result_config.get("storage_account_name")
+        container_name = large_result_config.get("container_name")
+        connection_string = large_result_config.get("connection_string")
 
         if tenant_id and client_id and client_secret and storage_account_name:
             credential = ClientSecretCredential(
@@ -566,17 +568,8 @@ class ServerApp:
                 resp = make_response(data, code)
                 return resp
 
-            # if the response is an enum, convert it to its value
-            def enum_serializer(obj):
-                if isinstance(obj, enum.Enum):
-                    return obj.value
-                raise TypeError(
-                    f"Object of type {obj.__class__.__name__} is not JSON serializable"
-                )
-
-            resp = make_response(json.dumps(data, default=enum_serializer), code)
-            if isinstance(headers, dict):
-                resp.headers.extend(headers)
+            resp = make_response(json.dumps(data), code)
+            resp.headers.extend(headers or {})
             return resp
 
     def configure_jwt(self):

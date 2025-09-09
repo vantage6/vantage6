@@ -1855,8 +1855,6 @@ class UserClient(ClientBase):
 
             organization_json_list = []
 
-            blob_store_enabled = self.parent.check_if_blob_store_enabled()
-
             self.parent.log.debug("Encrypting input for each organization")
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get(
@@ -1867,7 +1865,7 @@ class UserClient(ClientBase):
                 )
                 # If a blob store is configured, store the data there and use a UUID reference in the input.
                 # In this case, base64 encoding of the message can be skipped since the data will never be part of a larger JSON object.
-                if blob_store_enabled:
+                if self.parent.check_if_blob_store_enabled():
                     encrypted_input = self.parent.cryptor.encrypt_bytes_to_str(
                         serialized_input, pub_key, skip_base64_encoding_of_msg=True
                     )

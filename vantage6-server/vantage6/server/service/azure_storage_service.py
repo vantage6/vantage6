@@ -138,9 +138,11 @@ class AzureStorageService:
         """
         if target.blob_storage_used:
             try:
-                self.delete_blob(target.result)
+                if target.result:
+                    self.delete_blob(target.result)
+                if target.input:
+                    self.delete_blob(target.input)
             except Exception as e:
                 error_msg = f"Failed to delete blob for run {target.id}: {e}"
                 log.error(error_msg)
-                connection.rollback()
                 raise RuntimeError(error_msg)
