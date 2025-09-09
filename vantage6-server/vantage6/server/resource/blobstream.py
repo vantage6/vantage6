@@ -119,10 +119,10 @@ class BlobStreamBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
-    
-    def get_run_by_input_or_result(self, id: str) -> db_Run | None:
+
+    def get_run_by_input_or_result(self, id) -> db_Run | None:
         run = (
-            self.session.query(db_Run)
+            g.session.query(db_Run)
             .filter((db_Run.input == id) | (db_Run.result == id))
             .first()
         )
@@ -270,23 +270,6 @@ class BlobStream(BlobStreamBase):
 
         tags: ["Algorithm"]
         """
-        run = self.get_run_by_input_or_result(id)
-        if not run:
-            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
-        if run.organization_id != g.node.organization_id:
-            log.warning(
-                f"{g.node.name} tries to update a run that does not belong "
-                f"to them ({run.organization_id}/{g.node.organization_id})."
-            )
-            return {
-                "msg": "You do not have permissions to update this run"
-            }, HTTPStatus.UNAUTHORIZED
-
-        if run.finished_at is not None:
-            return {
-                "msg": "Cannot update blobs of an already finished algorithm run"
-            }, HTTPStatus.BAD_REQUEST
-
         if not self.storage_adapter:
             log.warning(
                 "The large result store is not set to blob storage, result streaming is not available."

@@ -1,6 +1,6 @@
 import qrcode
 import uuid
-from globals import STRING_ENCODING
+from vantage6.common.globals import STRING_ENCODING
 
 
 def print_qr_code(json_data: dict) -> None:
