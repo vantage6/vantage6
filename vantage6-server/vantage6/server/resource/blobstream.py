@@ -160,9 +160,9 @@ class BlobStreamStatus(BlobStreamBase):
         log.debug("Checking if blob store is enabled")
 
         if self.storage_adapter:
-            return {"blob_store_enabled": True}, HTTPStatus.CREATED
+            return {"blob_store_enabled": True}, HTTPStatus.OK
         else:
-            return {"blob_store_enabled": False}, HTTPStatus.CREATED
+            return {"blob_store_enabled": False}, HTTPStatus.OK
 
 
 class BlobStream(BlobStreamBase):
