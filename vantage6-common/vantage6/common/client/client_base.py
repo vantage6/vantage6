@@ -574,7 +574,7 @@ class ClientBase(object):
 
         Parameters
         ----------
-        input_: str
+        input_: str | bytes
             The encrypted algorithm input
 
         Returns

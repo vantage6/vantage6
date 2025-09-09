@@ -33,7 +33,7 @@ def run():
     algorithm_test_suites = find_tests(
         str(Path(__file__).parent / "vantage6-algorithm-tools")
     )
-    success_algorithm = run_tests(algorithm_test_suites)
+    success_algorithm_tools = run_tests(algorithm_test_suites)
 
     sys.exit(
         not (
@@ -41,7 +41,7 @@ def run():
             and success_cli
             and success_common
             and success_algorithm_store
-            and success_algorithm
+            and success_algorithm_tools
         )
     )
 

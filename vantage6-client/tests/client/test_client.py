@@ -14,16 +14,17 @@ HOST = "mock_server"
 PORT = 1234
 
 # Mock credentials
-FAKE_USERNAME = "vantage6_test"
-FAKE_PASSWORD = "secretpassword"
-FAKE_ID = 1
+DUMMY_USERNAME = "vantage6_test"
+DUMMY_PASSWORD = "secretpassword"
+DUMMY_ID = 1
+DUMMY_FIRST_NAME = "name"
 
 TASK_NAME = "test-task"
 TASK_IMAGE = "mock-image"
 COLLABORATION_ID = 1
 ORGANIZATION_IDS = [1]
 SAMPLE_INPUT = {"method": "test-task"}
-FAKE_NAME = "john doe"
+DUMMY_NAME = "john doe"
 
 
 class TestClient(TestCase):
@@ -34,7 +35,7 @@ class TestClient(TestCase):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
         mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
-        mock_jwt.decode.return_value = {"sub": FAKE_ID}
+        mock_jwt.decode.return_value = {"sub": DUMMY_ID}
         self._access_token = "fake-token"
 
         post_input = TestClient.post_task_on_mock_client(SAMPLE_INPUT)
@@ -48,12 +49,12 @@ class TestClient(TestCase):
         mock_requests.get.return_value.status_code = 200
         mock_requests.post.return_value.status_code = 200
         mock_requests.post.return_value.json.return_value = {"token": "fake-token"}
-        mock_jwt.decode.return_value = {"sub": FAKE_ID}
-        mock_result = json.dumps({FAKE_ID: "some_value"}).encode()
+        mock_jwt.decode.return_value = {"sub": DUMMY_ID}
+        mock_result = json.dumps({DUMMY_ID: "some_value"}).encode()
 
         results = TestClient._receive_results_on_mock_client(mock_result)
         result = results["data"][0]["result"]
-        assert result == '{"1": "some_value"}'
+        assert result == f'{DUMMY_ID}: "some_value"'
 
     def test_parse_arg_databases(self):
         dbs_in = [{"label": "dblabel"}]
@@ -121,8 +122,8 @@ class TestClient(TestCase):
     @staticmethod
     def _receive_results_on_mock_client(mock_result):
         mock_result = base64.b64encode(mock_result).decode(STRING_ENCODING)
-        user = {"id": FAKE_ID, "firstname": "naam", "organization": {"id": FAKE_ID}}
-        organization = {"id": FAKE_ID, "name": FAKE_NAME}
+        user = {"id": DUMMY_ID, "firstname": DUMMY_FIRST_NAME, "organization": {"id": DUMMY_ID}}
+        organization = {"id": DUMMY_ID, "name": DUMMY_NAME}
         mock_result_response = {
             "data": [
                 {
@@ -151,13 +152,13 @@ class TestClient(TestCase):
             client = TestClient.setup_client()
             client.request = MagicMock(return_value=mock_result_response)
 
-        results = client.result.from_task(task_id=FAKE_ID)
+        results = client.result.from_task(task_id=DUMMY_ID)
         return results
 
     def _mock_authenticate(self, username, password, mfa_code=None):
         self._access_token = "fake-token"
         self.whoami = MagicMock()
-        self.whoami.organization_id = FAKE_ID
+        self.whoami.organization_id = DUMMY_ID
         return {"token": "fake-token"}
 
     @patch("vantage6.client.UserClient.authenticate", new=_mock_authenticate)
@@ -176,13 +177,13 @@ class TestClient(TestCase):
             mock_req.post.return_value.json.return_value = {"token": "fake-token"}
 
         client = UserClient(f"http://{HOST}", PORT)
-        client.authenticate(FAKE_USERNAME, FAKE_PASSWORD)
+        client.authenticate(DUMMY_USERNAME, DUMMY_PASSWORD)
         return client
 
     @staticmethod
     def _create_mock_jwt() -> MagicMock:
         mock_jwt = MagicMock()
-        mock_jwt.decode.return_value = {"sub": FAKE_ID}
+        mock_jwt.decode.return_value = {"sub": DUMMY_ID}
         return mock_jwt
 
 

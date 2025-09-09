@@ -1,8 +1,6 @@
 import unittest
-import os
-import sys
+import uuid
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from unittest.mock import patch, MagicMock
 from vantage6.client import UserClient
 from vantage6.common.encryption import DummyCryptor
@@ -15,13 +13,9 @@ class TestUserClient(unittest.TestCase):
     def test_wait_for_results(
         self, mock_setup_encryption, mock_authenticate, mock_requests_get
     ):
-
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.iter_content.return_value = [b'{"key": "value"}']
-        mock_response.text = (
-            '{"key": "value"}'  # Ensure text attribute is set for logging
-        )
+        mock_response.text = '{"key": "value"}'  # Ensure text attribute is set for logging
         mock_response._decrypt_result = lambda: [{"key": "value"}]
         mock_requests_get.return_value.__enter__.return_value = mock_response
 
@@ -44,7 +38,7 @@ class TestUserClient(unittest.TestCase):
         client_instance.request.return_value = {
             "data": [
                 {
-                    "result": "123e4567-e89b-12d3-a456-426614174000",
+                    "result": str(uuid.uuid4()),
                     "blob_storage_used": True,
                 }
             ]

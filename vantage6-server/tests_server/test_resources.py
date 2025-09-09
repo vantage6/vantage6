@@ -255,7 +255,6 @@ class TestResources(unittest.TestCase):
         return self.login(user.username)
 
     def test_version(self):
-        # Problems with socketio
         rv = self.app.get("/api/version")
         r = json.loads(rv.data)
         self.assertIn("version", r)
