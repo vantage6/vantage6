@@ -568,17 +568,8 @@ class ServerApp:
                 resp = make_response(data, code)
                 return resp
 
-            # if the response is an enum, convert it to its value
-            def enum_serializer(obj):
-                if isinstance(obj, enum.Enum):
-                    return obj.value
-                raise TypeError(
-                    f"Object of type {obj.__class__.__name__} is not JSON serializable"
-                )
-
-            resp = make_response(json.dumps(data, default=enum_serializer), code)
-            if isinstance(headers, dict):
-                resp.headers.extend(headers)
+            resp = make_response(json.dumps(data), code)
+            resp.headers.extend(headers or {})
             return resp
 
     def configure_jwt(self):
