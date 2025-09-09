@@ -145,8 +145,8 @@ task_input_schema = TaskInputSchema()
 
 
 class TaskBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         # permissions for the run resource are also relevant for the task
         # resource as they are sometimes included

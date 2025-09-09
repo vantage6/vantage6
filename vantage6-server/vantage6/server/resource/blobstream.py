@@ -115,8 +115,8 @@ class BlobStreamBase(ServicesResources):
     This class provides methods for streaming large results from the storage adapter.
     """
 
-    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
         self.storage_adapter = storage_adapter
 
@@ -135,9 +135,9 @@ class BlobStreamStatus(BlobStreamBase):
     Returns whether the blob store is enabled.
     """
 
-    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(
-            socketio, mail, api, permissions, config, storage_adapter=storage_adapter
+            socketio, storage_adapter, mail, api, permissions, config
         )
 
     @only_for(("node", "user", "container"))
@@ -171,9 +171,9 @@ class BlobStream(BlobStreamBase):
     This resource allows for streaming large results from blob Storage.
     """
 
-    def __init__(self, socketio, mail, api, permissions, config, storage_adapter=None):
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(
-            socketio, mail, api, permissions, config, storage_adapter=storage_adapter
+            socketio, storage_adapter, mail, api, permissions, config
         )
 
     @only_for(("node", "user", "container"))
