@@ -487,10 +487,12 @@ def stream_handler(id: str) -> FlaskResponse:
 def stream_handler_delete(id: str) -> FlaskResponse:
     """
     Proxy stream handler for DELETE requests, delete a blob by its id from the Azure server.
+    
     Parameters
     ----------
     id : str
         The id of the blob to be deleted.
+
     Returns
     -------
     FlaskResponse
