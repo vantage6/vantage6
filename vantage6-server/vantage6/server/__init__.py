@@ -211,20 +211,20 @@ class ServerApp:
         """
 
         self.storage_adapter = None
-        config = self.ctx.config.get("large_result_store", {})
-        if not config:
+        large_result_config = self.ctx.config.get("large_result_store", {})
+        if not large_result_config:
             log.info(
                 "No large result store configured, using relational database for input and result storage"
             )
             return
 
         log.info("Using Azure Blob Storage as large result store")
-        tenant_id = config.get("tenant_id")
-        client_id = config.get("client_id")
-        client_secret = config.get("client_secret")
-        storage_account_name = config.get("storage_account_name")
-        container_name = config.get("container_name")
-        connection_string = config.get("connection_string")
+        tenant_id = large_result_config.get("tenant_id")
+        client_id = large_result_config.get("client_id")
+        client_secret = large_result_config.get("client_secret")
+        storage_account_name = large_result_config.get("storage_account_name")
+        container_name = large_result_config.get("container_name")
+        connection_string = large_result_config.get("connection_string")
 
         if tenant_id and client_id and client_secret and storage_account_name:
             credential = ClientSecretCredential(
