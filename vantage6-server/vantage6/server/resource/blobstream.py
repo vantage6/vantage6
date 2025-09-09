@@ -271,10 +271,9 @@ class BlobStream(BlobStreamBase):
         tags: ["Algorithm"]
         """
         if not self.storage_adapter:
-            log.warning(
-                "The large result store is not set to blob storage, result streaming is not available."
-            )
-            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+            not_available_msg = "The large result store is not set to blob storage, result streaming is not available."
+            log.warning(not_available_msg)
+            return {"msg": not_available_msg}, HTTPStatus.NOT_IMPLEMENTED
         result_uuid = str(uuid.uuid4())
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding
