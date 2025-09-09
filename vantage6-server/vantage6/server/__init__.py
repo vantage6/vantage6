@@ -728,25 +728,16 @@ class ServerApp:
         # make use of 'em.
         services = {
             "socketio": self.socketio,
+            "storage_adapter": self.storage_adapter,
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
             "config": self.ctx.config,
         }
 
-        blobstream_services = {"storage_adapter": self.storage_adapter, **services}
         for res in RESOURCES:
-            try:
-                module = importlib.import_module("vantage6.server.resource." + res)
-                if res in ["blobstream"]:
-                    module.setup(
-                        self.api, self.ctx.config["api_path"], blobstream_services
-                    )
-                else:
-                    module.setup(self.api, self.ctx.config["api_path"], services)
-            except Exception as e:
-                log.error(f"Failed to import or set up resource '{res}': {e}")
-                log.debug("Exception details:", exc_info=True)
+            module = importlib.import_module("vantage6.server.resource." + res)
+            module.setup(self.api, self.ctx.config["api_path"], services)
 
     # TODO consider moving this method elsewhere. This is not trivial at the
     # moment because of the circular import issue with `db`, see
