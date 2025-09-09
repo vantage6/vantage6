@@ -8,7 +8,6 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import os
 from gevent import monkey
-import enum
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
@@ -16,6 +15,7 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
+import enum
 import importlib
 import logging
 import uuid
@@ -23,10 +23,14 @@ import json
 import time
 import datetime as dt
 import traceback
+from requests import Response as RequestsResponse
+
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 
+from azure.identity import ClientSecretCredential
+from azure.storage.blob import BlobServiceClient
 from flask import (
     Flask,
     make_response,
@@ -79,13 +83,11 @@ from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 from vantage6.server.service.azure_storage_service import AzureStorageService
-from azure.identity import ClientSecretCredential
-from azure.storage.blob import BlobServiceClient
+
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
 
-from requests import Response as RequestsResponse
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
