@@ -100,8 +100,6 @@ class TestResources(unittest.TestCase):
     @classmethod
     def setUp(cls):
         # set session.session
-        cls.GEVENT_SUPPORT = True
-        cls.SOCKETIO_TESTING = True
         DatabaseSessionManager.get_session()
 
     @classmethod
