@@ -5,12 +5,13 @@ from datetime import datetime, timedelta, timezone
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.model import Run
 from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
 
-def cleanup_runs_data(days: int, include_input: bool = False):
+def cleanup_runs_data(config: dict, include_input: bool = False):
     """
     Clear the `result` and (optionally) `input` field for `Run` instances older
     than the specified number of days.
@@ -20,6 +21,13 @@ def cleanup_runs_data(days: int, include_input: bool = False):
     days : int
         The number of days after which results should be cleared.
     """
+    days = config.get("runs_data_cleanup_days")
+    azure_config = config.get("large_result_store", {})
+    if azure_config:
+        storage_adapter = AzureStorageService(
+            container_name=azure_config.get("container_name"),
+            blob_service_client=azure_config.get("blob_service_client"),
+        )
     threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
     session = DatabaseSessionManager.get_session()
 
@@ -42,8 +50,22 @@ def cleanup_runs_data(days: int, include_input: bool = False):
             )
 
             for run in runs:
+                if (
+                    run.result is not None
+                    and run.blob_storage_used == True
+                    and storage_adapter
+                ):
+                    log.debug(f"Deleting blob: {run.result}")
+                    storage_adapter.delete_blob(run.result)
                 run.result = ""
                 if include_input:
+                    if (
+                        run.input is not None
+                        and run.blob_storage_used == True
+                        and storage_adapter
+                    ):
+                        log.debug(f"Deleting blob: {run.input}")
+                        storage_adapter.delete_blob(run.input)
                     run.input = ""
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info(f"Cleared result for Run ID {run.id}.")

@@ -895,7 +895,7 @@ class ServerApp:
         while True:
             try:
                 cleanup.cleanup_runs_data(
-                    self.ctx.config.get("runs_data_cleanup_days"),
+                    self.ctx.config,
                     include_input=include_input,
                 )
             except Exception as e:

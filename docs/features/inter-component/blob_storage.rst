@@ -59,9 +59,6 @@ as reference in the `input` or `result` field in the database. To ensure backwar
 checks are made throughout the code to determine if the run was performed using the relational 
 database, in which case the input or result should be interpreted as is, as opposed to first retrieving
 the data from blob storage.
- 
-.. figure:: /images/architecture-diagram.png
-.. figure:: /images/sequence-diagram.png
 
 The `blobstream` endpoint on the server enables streaming of large input and result data 
 directly to and from blob storage. This reduces memory usage by never storing the entire input 
