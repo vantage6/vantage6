@@ -302,7 +302,7 @@ class AlgorithmClient(ClientBase):
                     return None
                 try:
                     if run.get("blob_storage_used") == True:
-                        run_data = self.parent.download_run_data_from_server(
+                        run_data = self.parent._download_run_data_from_server(
                             result_data
                         )
                         return json.loads(run_data.decode(STRING_ENCODING))

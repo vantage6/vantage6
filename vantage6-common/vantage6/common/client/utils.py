@@ -1,7 +1,5 @@
 import qrcode
 import uuid
-from vantage6.common.globals import STRING_ENCODING
-
 
 def print_qr_code(json_data: dict) -> None:
     """
@@ -49,21 +47,20 @@ def show_qr_code_image(qr_uri: str) -> None:
     qr.print_ascii()
 
 
-def is_uuid(value):
+def is_uuid(value: str) -> bool:
     """
     Check if value is a valid UUID.
     
      Parameters
     ----------
     value : str
+        The value to check.
     
      Returns
     -------
     `True` if value is a valid UUID, otherwise `False`.
     """
     try:
-        if isinstance(value, bytes):
-            value = value.decode(STRING_ENCODING)
         uuid_obj = uuid.UUID(value)
     except (ValueError, TypeError, AttributeError):
         return False

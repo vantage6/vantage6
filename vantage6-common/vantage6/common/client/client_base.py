@@ -559,7 +559,7 @@ class ClientBase(object):
                 uuid = uuid.decode(STRING_ENCODING)
             uuid = uuid.strip("'\"")
             try:
-                run_data = self.download_run_data_from_server(uuid)
+                run_data = self._download_run_data_from_server(uuid)
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
@@ -781,7 +781,7 @@ class ClientBase(object):
         self.log.info(f"Run data uploaded to server with UUID: {run_data_uuid}")
         return run_data_uuid
 
-    def download_run_data_from_server(self, run_data_uuid) -> dict:
+    def _download_run_data_from_server(self, run_data_uuid: str) -> dict:
         """
         Download run data (either input or result)
         from the server using its UUID.

@@ -20,6 +20,8 @@ from flask import Flask, request, stream_with_context, Response as FlaskResponse
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
+from vantage6.common.globals import STRING_ENCODING
+
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -284,7 +286,7 @@ def proxy_task():
 
         for org in organizations:
             if not client.check_if_blob_store_enabled():
-                if is_uuid(org.get("input")):
+                if is_uuid(org.get("input").decode(STRING_ENCODING)):
                     log.warning(
                         "Input is a UUID, are you sending blob based inputs "
                         "to a non-blob store enabled server?"

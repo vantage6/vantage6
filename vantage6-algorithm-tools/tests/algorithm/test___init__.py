@@ -88,13 +88,13 @@ class TestAlgorithmClient(unittest.TestCase):
 
     @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
     @patch(
-        "vantage6.common.client.client_base.ClientBase.download_run_data_from_server"
+        "vantage6.common.client.client_base.ClientBase._download_run_data_from_server"
     )
     def test_result_from_task_azure(
-        self, mock_multi_page_request
+        self, mock_multi_page_request, mock_download_run_data
     ):
         with patch.object(self.client.result.parent, "_multi_page_request") as mock_multi_page_request, \
-        patch.object(self.client.result.parent, "download_run_data_from_server") as mock_download_run_data:
+        patch.object(self.client.result.parent, "_download_run_data_from_server") as mock_download_run_data:
             # Simulate a result where blob_storage_used is True
             mock_multi_page_request.return_value = [
                 {
