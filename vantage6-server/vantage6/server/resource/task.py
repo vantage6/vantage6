@@ -32,6 +32,7 @@ from vantage6.server.resource.common.output_schema import (
 from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 
 module_name = __name__.split(".")[-1]
