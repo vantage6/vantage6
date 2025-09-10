@@ -91,7 +91,7 @@ class TestAlgorithmClient(unittest.TestCase):
         "vantage6.common.client.client_base.ClientBase.download_run_data_from_server"
     )
     def test_result_from_task_azure(
-        self, mock_multi_page_request
+        self, mock_download_run_data, mock_multi_page_request
     ):
         with patch.object(self.client.result.parent, "_multi_page_request") as mock_multi_page_request, \
         patch.object(self.client.result.parent, "download_run_data_from_server") as mock_download_run_data:

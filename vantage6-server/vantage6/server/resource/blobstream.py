@@ -295,38 +295,6 @@ class BlobStream(BlobStreamBase):
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
 
-    @only_for(("node", "user", "container"))
-    def delete(self, id):
-        run = self.get_run_by_input_or_result(id)
-        if not run:
-            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
-        if run.organization_id != g.node.organization_id:
-            log.warning(
-                f"{g.node.name} tries to delete a blob that does not belong "
-                f"to them ({run.organization_id}/{g.node.organization_id})."
-            )
-            return {
-                "msg": "You do not have permissions to delete this blob"
-            }, HTTPStatus.UNAUTHORIZED
-
-        if run.finished_at is not None:
-            return {
-                "msg": "Cannot update blobs of an already finished algorithm run"
-            }, HTTPStatus.BAD_REQUEST
-        if not self.storage_adapter:
-            log.warning(
-                "The large result store is not set to azure blob storage, result streaming is not available."
-            )
-            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
-        try:
-            log.debug("Deleting result for run")
-            self.storage_adapter.delete_blob(id)
-        except Exception as e:
-            log.error(f"Error deleting result: {e}")
-            return {"msg": "Error deleting result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-        return HTTPStatus.OK
-
 
 class UwsgiChunkedStream:
     """

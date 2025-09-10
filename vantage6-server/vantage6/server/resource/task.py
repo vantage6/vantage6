@@ -32,6 +32,7 @@ from vantage6.server.resource.common.output_schema import (
 from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 
 module_name = __name__.split(".")[-1]
@@ -1271,6 +1272,19 @@ class Task(TaskBase):
         # retrieve runs that belong to this task
         log.info(f"Removing task id={task.id}")
         for run in task.runs:
+            # delete blob storage data if applicable
+            try:
+                if (run.result is not None and run.blob_storage_used):
+                    storage_adapter = AzureStorageService(
+                        container_name=self.config.get("container_name"),
+                        blob_service_client=self.config.get("blob_service_client")
+                    )
+                    log.debug(f"Deleting blob: {run.result}")
+                    storage_adapter.delete_blob(run.result)
+            except Exception as e:
+                log.error(
+                        f"Could not delete blob storage data for run id={run.id}: {e}"
+                    )
             log.info(f" Removing run id={run.id}")
             run.delete()
 

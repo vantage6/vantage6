@@ -1970,18 +1970,6 @@ class UserClient(ClientBase):
             id_ : int
                 Id of the task to be removed
             """
-            run = self.parent.request("result", params={"task_id": id_})
-            data = run.get("data")
-            if (
-                isinstance(data, list)
-                and len(data) > 0
-                and data[0].get("blob_storage_used") == True
-            ):
-                result_uuid = data[0].get("result")
-                msg = self.parent.request(
-                    f"blobstream/delete/{result_uuid}", method="delete"
-                )
-                self.parent.log.info(f"--> {msg}")
             msg = self.parent.request(f"task/{id_}", method="delete")
 
             self.parent.log.info(f"--> {msg}")
