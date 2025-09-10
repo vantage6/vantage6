@@ -7,6 +7,22 @@ from vantage6.common.encryption import DummyCryptor
 
 
 class TestUserClient(unittest.TestCase):
+    def setUp(self):
+        self.client_instance = UserClient(host="http://dummy_host", port=1234)
+        self.client_instance.cryptor = DummyCryptor()
+        self.client_instance.task = MagicMock()
+        self.client_instance.task.get.return_value = {"status": "PENDING"}
+        self.client_instance.request = MagicMock()
+        self.client_instance.request.return_value = {
+            "data": [
+                {
+                    "result": str(uuid.uuid4()),
+                    "blob_storage_used": True,
+                }
+            ]
+        }
+        self.client_instance.request.status_code = 200
+
     @patch("requests.get")
     @patch("vantage6.client.UserClient.authenticate")
     @patch("vantage6.client.UserClient.setup_encryption")
@@ -23,30 +39,7 @@ class TestUserClient(unittest.TestCase):
         mock_setup_encryption = DummyCryptor()
         mock_setup_encryption.return_value = True
 
-        # Create an instance of UserClient
-        client_instance = UserClient(host="http://dummy_host", port=1234)
-
-        # Initialize the cryptor attribute
-        client_instance.cryptor = DummyCryptor()
-
-        # Mock the task.get method
-        client_instance.task = MagicMock()
-        client_instance.task.get.return_value = {"status": "PENDING"}
-
-        # Mock the request method
-        client_instance.request = MagicMock()
-        client_instance.request.return_value = {
-            "data": [
-                {
-                    "result": str(uuid.uuid4()),
-                    "blob_storage_used": True,
-                }
-            ]
-        }
-        client_instance.request.status_code = 200
-
-        # Call the method under test
-        results = client_instance.wait_for_results(task_id=1, interval=0.1)
+        results = self.client_instance.wait_for_results(task_id=1, interval=0.1)
         self.assertEqual(len(results), 1)
 
 
