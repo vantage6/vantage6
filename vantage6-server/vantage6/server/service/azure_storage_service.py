@@ -14,22 +14,18 @@ class AzureStorageService:
     A service for managing Azure Blob Storage.
     """
 
-    def __init__(
-        self,
-        container_name: str,
-        blob_service_client: BlobServiceClient
-    ):
+    def __init__(self, container_name: str, blob_service_client: BlobServiceClient):
         """
         Initialize the AzureStorageService.
 
         Parameters
         ----------
         container_name : str
-            The name of the storage container in azure in which the blobs are 
+            The name of the storage container in azure in which the blobs are
             stored. Containers in azure are stored on three levels:
             1. Storage Account
             2. Container
-            3. Blob 
+            3. Blob
         blob_service_client : BlobServiceClient
             An existing BlobServiceClient instance. Defaults to None.
         """
@@ -49,8 +45,7 @@ class AzureStorageService:
         self.container_client = self.blob_service_client.get_container_client(
             container_name
         )
-        event.listen(Run, 'after_delete', self.delete_blob_after_run_delete)
-
+        event.listen(Run, "after_delete", self.delete_blob_after_run_delete)
 
     def get_blob(self, blob_name: str) -> bytes:
         """

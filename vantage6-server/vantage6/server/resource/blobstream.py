@@ -136,9 +136,7 @@ class BlobStreamStatus(BlobStreamBase):
     """
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
-        super().__init__(
-            socketio, storage_adapter, mail, api, permissions, config
-        )
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self):
@@ -172,9 +170,7 @@ class BlobStream(BlobStreamBase):
     """
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
-        super().__init__(
-            socketio, storage_adapter, mail, api, permissions, config
-        )
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
 
     @only_for(("node", "user", "container"))
     def get(self, id):
@@ -216,7 +212,9 @@ class BlobStream(BlobStreamBase):
         """
         run = self.get_run_by_input_or_result(id)
         if not run:
-            return {"msg": f"No run found with input or result id={id}"}, HTTPStatus.NOT_FOUND
+            return {
+                "msg": f"No run found with input or result id={id}"
+            }, HTTPStatus.NOT_FOUND
         if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
             self.r.v_own.can() and run.task.init_user_id == g.user.id
         ):
@@ -293,6 +291,7 @@ class BlobStream(BlobStreamBase):
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {"uuid": result_uuid}, HTTPStatus.CREATED
+
 
 class UwsgiChunkedStream:
     """

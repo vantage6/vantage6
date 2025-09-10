@@ -46,4 +46,3 @@ def cli_node_clean() -> None:
         info("Temporary Docker volumes removed successfully.")
     else:
         info("Cancelled, no volumes were removed.")
-

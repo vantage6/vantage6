@@ -426,7 +426,9 @@ class RSACryptor(CryptorBase):
         encrypted_key = self.bytes_to_str(encrypted_key_bytes)
         iv = self.bytes_to_str(iv_bytes)
         if skip_base64_encoding_of_msg:
-            header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode(STRING_ENCODING)
+            header = f"{encrypted_key}{SEPARATOR}{iv}{SEPARATOR}".encode(
+                STRING_ENCODING
+            )
             return header + encrypted_msg_bytes
         else:
             encrypted_msg = self.bytes_to_str(encrypted_msg_bytes)

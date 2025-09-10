@@ -31,7 +31,9 @@ class TestUserClient(unittest.TestCase):
     ):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = '{"key": "value"}'  # Ensure text attribute is set for logging
+        mock_response.text = (
+            '{"key": "value"}'  # Ensure text attribute is set for logging
+        )
         mock_response._decrypt_result = lambda: [{"key": "value"}]
         mock_requests_get.return_value.__enter__.return_value = mock_response
 

@@ -11,9 +11,7 @@ from vantage6.common.globals import STRING_ENCODING
 
 def encode_result(result_dict: dict) -> str:
     """Encode the result dictionary as a base64 string."""
-    return (
-        base64.urlsafe_b64encode(json.dumps(result_dict).encode()).decode()
-    )
+    return base64.urlsafe_b64encode(json.dumps(result_dict).encode()).decode()
 
 
 class TestAlgorithmClient(unittest.TestCase):
@@ -93,8 +91,11 @@ class TestAlgorithmClient(unittest.TestCase):
     def test_result_from_task_azure(
         self, mock_multi_page_request, mock_download_run_data
     ):
-        with patch.object(self.client.result.parent, "_multi_page_request") as mock_multi_page_request, \
-        patch.object(self.client.result.parent, "_download_run_data_from_server") as mock_download_run_data:
+        with patch.object(
+            self.client.result.parent, "_multi_page_request"
+        ) as mock_multi_page_request, patch.object(
+            self.client.result.parent, "_download_run_data_from_server"
+        ) as mock_download_run_data:
             # Simulate a result where blob_storage_used is True
             mock_multi_page_request.return_value = [
                 {
@@ -103,7 +104,9 @@ class TestAlgorithmClient(unittest.TestCase):
                 }
             ]
             expected_value = {"foo": "bar"}
-            mock_download_run_data.return_value = json.dumps(expected_value).encode(STRING_ENCODING)
+            mock_download_run_data.return_value = json.dumps(expected_value).encode(
+                STRING_ENCODING
+            )
             results = self.client.result.from_task(task_id=1)
             self.assertEqual(results[0], expected_value)
 

@@ -13,7 +13,7 @@ from vantage6.common.globals import (
     MAX_INTERVAL,
     STRING_ENCODING,
     REQUEST_TIMEOUT,
-    DEFAULT_CHUNK_SIZE
+    DEFAULT_CHUNK_SIZE,
 )
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
@@ -623,9 +623,7 @@ class ClientBase(object):
             Data on the algorithm run(s) with decrypted input
         """
 
-        def _decrypt_and_decode(
-            value: str, field: str, blob_storage_used: bool
-        ) -> str:
+        def _decrypt_and_decode(value: str, field: str, blob_storage_used: bool) -> str:
             decrypted = self._fetch_and_decrypt_run_data(value, blob_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
@@ -769,7 +767,7 @@ class ClientBase(object):
             )
 
         if not (200 <= response.status_code < 300):
-            error_msg = (f"Failed to upload blob to server: {response.text}")
+            error_msg = f"Failed to upload blob to server: {response.text}"
             self.log.error(error_msg)
             raise RuntimeError(error_msg)
 

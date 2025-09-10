@@ -274,8 +274,7 @@ def proxy_task():
         client: NodeClient = app.config.get("SERVER_IO")
         # If blob store is enabled, we skip base64 encoding of the message.
         encrypted_input = client.cryptor.encrypt_bytes_to_str(
-            base64s_to_bytes(input_),
-            public_key
+            base64s_to_bytes(input_), public_key
         )
 
         log.debug("Input successfully encrypted for organization %s!", organization_id)
@@ -350,10 +349,7 @@ def proxy_result() -> Response:
     results = get_response_json_and_handle_exceptions(response)
 
     for result in results["data"]:
-        if (
-            not result["blob_storage_used"]
-            or result["blob_storage_used"] == False
-        ):
+        if not result["blob_storage_used"] or result["blob_storage_used"] == False:
             result = decrypt_result(result)
 
     return results, response.status_code
@@ -393,10 +389,7 @@ def proxy_results(id_: int) -> Response:
 
     # Try to decrypt the results
     result = get_response_json_and_handle_exceptions(response)
-    if (
-        not result["blob_storage_used"]
-        or result["blob_storage_used"] == False
-    ):
+    if not result["blob_storage_used"] or result["blob_storage_used"] == False:
         result = decrypt_result(result)
 
     return result, response.status_code
@@ -483,6 +476,7 @@ def stream_handler(id: str) -> FlaskResponse:
             backend_response.status_code,
             backend_response.headers.items(),
         )
+
 
 @app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:

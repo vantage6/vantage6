@@ -68,10 +68,7 @@ class Run(Base):
     # Native Enum will only be used in PostgreSQL, as it is not supported in SQLite.
     # This is handled automatically by SQLAlchemy.
     blob_storage_used = Column(
-        "blob_storage_used",
-        Boolean,
-        default=False,
-        nullable=True
+        "blob_storage_used", Boolean, default=False, nullable=True
     )
 
     # relationships

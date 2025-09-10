@@ -122,7 +122,11 @@ class TestClient(TestCase):
     @staticmethod
     def _receive_results_on_mock_client(mock_result):
         mock_result = base64.b64encode(mock_result).decode(STRING_ENCODING)
-        user = {"id": DUMMY_ID, "firstname": DUMMY_FIRST_NAME, "organization": {"id": DUMMY_ID}}
+        user = {
+            "id": DUMMY_ID,
+            "firstname": DUMMY_FIRST_NAME,
+            "organization": {"id": DUMMY_ID},
+        }
         organization = {"id": DUMMY_ID, "name": DUMMY_NAME}
         mock_result_response = {
             "data": [

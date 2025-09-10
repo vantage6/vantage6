@@ -1,6 +1,7 @@
 import qrcode
 import uuid
 
+
 def print_qr_code(json_data: dict) -> None:
     """
     Print the QR code for 2fa with additional info of how to use it.
@@ -50,12 +51,12 @@ def show_qr_code_image(qr_uri: str) -> None:
 def is_uuid(value: str) -> bool:
     """
     Check if value is a valid UUID.
-    
+
      Parameters
     ----------
     value : str
         The value to check.
-    
+
      Returns
     -------
     `True` if value is a valid UUID, otherwise `False`.
