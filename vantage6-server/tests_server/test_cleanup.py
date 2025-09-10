@@ -50,7 +50,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
+        cleanup.cleanup_runs_data(30, include_input=True)
         self.session.refresh(run)
         self.assertEqual(run.result, "")
         self.assertEqual(run.input, "")
@@ -69,7 +69,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
+        cleanup.cleanup_runs_data(30, include_input=True)
         self.session.refresh(run)
         self.assertEqual(run.result, self.uuid)
         self.assertEqual(run.input, "input")
@@ -86,7 +86,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
+        cleanup.cleanup_runs_data(30, include_input=True)
         self.session.refresh(run)
         self.assertEqual(run.result, self.uuid)
         self.assertEqual(run.input, "input")
@@ -179,7 +179,7 @@ class TestCleanupRunsCount(unittest.TestCase):
         runs = self.create_runs()
 
         # clean up result and input from runs older than 30 days
-        cleanup.cleanup_runs_data(30, self.azure_config, include_input=True)
+        cleanup.cleanup_runs_data(30, include_input=True)
 
         # db has been changed, refresh objects
         for run in runs:

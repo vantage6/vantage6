@@ -1234,28 +1234,14 @@ class Node:
         """
         self.log.info("Cleaning up node...")
         if hasattr(self, "socketIO") and self.socketIO:
-            try:
-                self.socketIO.disconnect()
-            except Exception as e:
-                self.log.exception("Error disconnecting socketIO during cleanup")
-
+            self.socketIO.disconnect()
         if hasattr(self, "vpn_manager") and self.vpn_manager:
-            try:
-                self.vpn_manager.exit_vpn()
-            except Exception as e:
-                self.log.exception("Error exiting VPN during cleanup")
-
+            self.vpn_manager.exit_vpn()
         if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
             for tunnel in self.ssh_tunnels:
-                try:
-                    tunnel.stop()
-                except Exception as e:
-                    self.log.exception("Error stopping SSH tunnel during cleanup")
+                tunnel.stop()
         if hasattr(self, "_Node__docker") and self.__docker:
-            try:
-                self.__docker.cleanup()
-            except Exception as e:
-                self.log.exception("Error cleaning up Docker manager during cleanup")
+            self.__docker.cleanup()
 
         self.log.info("Bye!")
 

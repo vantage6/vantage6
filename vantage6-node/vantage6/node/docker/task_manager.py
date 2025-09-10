@@ -283,7 +283,7 @@ class DockerTaskManager(DockerBaseManager):
         return vpn_ports
 
     def cleanup(self) -> None:
-        """Cleanup the docker containers generated for this task"""
+        """Cleanup the containers generated for this task"""
         remove_container(self.helper_container, kill=True)
         remove_container(self.container, kill=True)
 
