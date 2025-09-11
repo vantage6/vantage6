@@ -36,7 +36,10 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     formatted data to import.
     """
     info("Validating server version")
-    response = requests.get(f"{ctx.config['server']['url']}/api/version")
+    print(ctx.config)
+    response = requests.get(
+        f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version"
+    )
     if response.status_code != 200:
         error("Unable to get server version")
         return
@@ -47,6 +50,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         return
 
     # Compare it to this package version
+    server_version = body["version"]
     if server_version != __version__:
         error(
             f"You are using CLI version {__version__} but the server is running "
@@ -56,21 +60,47 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         return
 
     info("Validating import file")
+    import yaml
+
     with open(file, "r") as f:
         import_data = yaml.safe_load(f)
     # TODO: validate import file
 
     # TODO: Call the vantage6 APIs (core and auth?) to import the data
     client = UserClient(
-        server_url=ctx.config["server"]["url"],
-        uth_url=ctx.config["server"]["keycloakUrl"],
-        auth_realm=ctx.config["server"]["keycloakRealm"],
-        auth_client=ctx.config["server"]["keycloakClient"],
+        server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
+        auth_url=ctx.config["ui"]["keycloakPublicUrl"],
+        auth_realm=ctx.config["ui"]["keycloakRealm"],
+        auth_client=ctx.config["ui"]["keycloakClient"],
         log_level="info",
     )
 
     info("Authenticate using admin credentials")
     client.authenticate()
+
+    # TODO: drop all functionality
+    info("Dropping all existing data")
+    if drop_all:
+
+        while collaborations := client.collaboration.list(scope="global")["data"]:
+            for collaboration in collaborations:
+                info(f"Deleting collaboration {collaboration['name']}")
+                client.collaboration.delete(collaboration["id"], delete_dependents=True)
+
+        print(client.user.list())
+        while users := [
+            u for u in client.user.list()["data"] if u["username"] != "admin"
+        ]:
+            for user in users:
+                info(f"Deleting user {user['username']}")
+                client.user.delete(user["id"])
+
+        while orgs := [
+            o for o in client.organization.list()["data"] if o["name"] != "root"
+        ]:
+            for org in orgs:
+                info(f"Deleting organization {org['name']}")
+                client.organization.delete(org["id"], delete_dependents=True)
 
     info("Importing organizations")
     organizations = []
@@ -78,7 +108,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         org = client.organization.create(
             name=organization["name"],
             address1=organization["address1"],
-            address2=organization["address2"],
+            address2=organization["address2"] or "",
             zipcode=organization["zipcode"],
             country=organization["country"],
             domain=organization["domain"],
@@ -87,14 +117,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         organizations.append(org)
 
         info("Collecting root role and rule")
-        root_role_id = client.role.list(name="Root")[0]["id"]
+        root_role_id = client.role.list(name="Root", include_root=True)["data"][0]["id"]
 
         info(f"Importing users for organization {org['name']}")
         for user in organization["users"]:
             user = client.user.create(
                 username=user["username"],
-                firstname=user["firstname"],
-                lastname=user["lastname"],
                 password=user["password"],
                 organization=org["id"],
                 roles=[root_role_id],
@@ -113,7 +141,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
 
         collaboration = client.collaboration.create(
             name=collaboration["name"],
-            organization_ids=organization_ids,
+            organizations=organization_ids,
             encrypted=collaboration["encrypted"],
         )
 
