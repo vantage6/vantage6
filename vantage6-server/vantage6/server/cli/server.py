@@ -17,7 +17,6 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 
 from vantage6.server import __version__
-from vantage6.server.controller import fixture
 from vantage6.server.model.base import Database
 
 help_ = {
