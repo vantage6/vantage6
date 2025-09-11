@@ -97,40 +97,6 @@ def cli_server() -> None:
 
 
 #
-#   import
-#
-@cli_server.command(name="import")
-@click.argument("file_", type=click.Path(exists=True))
-@click.option("--drop-all", is_flag=True, default=False)
-@click_insert_context
-def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
-    """
-    Import organizations/collaborations/users and tasks. Mainly useful for
-    testing purposes.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        The context of the server instance.
-    file_ : str
-        The YAML file with resources to import.
-    drop_all : bool
-        Whether to drop all tables before importing.
-    """
-    # Note: ctx appears to be unused but is needed for the click_insert_context
-    # to select the server in which to import the data.
-    info("Reading yaml file.")
-    with open(file_) as f:
-        entities = yaml.safe_load(f.read())
-
-    info("Adding entities to database.")
-    # TODO v5+ this will probably no longer work since API keys are no longer in here
-    # Should we get rid of this command or make something new? Also delete load()
-    # function if we remove it. See issue #2023
-    fixture.load(entities, drop_all=drop_all)
-
-
-#
 #   shell
 #
 @cli_server.command(name="shell")
