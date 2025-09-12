@@ -7,11 +7,7 @@ from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import (
-    INTERVAL_MULTIPLIER,
-    MAX_INTERVAL,
-    STRING_ENCODING
-)
+from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
 from vantage6.common.client.blob_storage import BlobStorageMixin
