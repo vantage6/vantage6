@@ -18,7 +18,7 @@ import os
 import logging
 import base64
 import json
-import IO
+from typing import IO
 
 from pathlib import Path
 
@@ -308,6 +308,161 @@ class RSACryptor(CryptorBase):
             private_key_file.read_bytes(), password=None, backend=default_backend()
         )
 
+    def _parse_header(self, header: bytes | str) -> tuple:
+        """
+        Parse header to extract encrypted_key, iv, and the encrypted message.
+
+        Parameters
+        ----------
+        header : str
+            The header to parse. Should contain three parts separated by the SEPARATOR.
+
+        Returns
+        -------
+        tuple
+            Tuple containing:
+            - encrypted_key_b64 (str): base64 encoded encrypted AES key
+            - iv_b64 (str): base64 encoded initialization vector
+            - encrypted_msg (str): base64 encoded or raw encrypted message
+        """
+        header_str = header
+        parts = header_str.split(SEPARATOR, 2)
+        if len(parts) != 3:
+            raise ValueError(
+                "Header format is invalid — expected three parts separated by '$'."
+            )
+        return parts
+
+    def _decode_shared_key(self, encrypted_key_bytes: bytes) -> bytes:
+        """
+        Decrypt and decode the shared AES key.
+
+        Parameters
+        ----------
+        encrypted_key_bytes : bytes
+            The encrypted AES key as bytes, typically extracted from the header.
+
+        Returns
+        -------
+        bytes
+            The decrypted AES key (should be 32 bytes for AES-256).
+        """
+        # Decrypt the shared key using asymmetric encryption
+        shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
+        # In the UI, the bytes have to be base64 encoded before encryption (we cannot
+        # encrypt bytes directly in javascript) - so if this key was encrypted in the
+        # UI, we need to decode it here as extra step. If it fails, ignore it as it is
+        # apparently not needed.
+        # TODO v5+ add additional encoding step in Python so that we always have the
+        # same process
+        try:
+            shared_key = self.str_to_bytes(shared_key.decode(STRING_ENCODING))
+        except UnicodeDecodeError:
+            pass
+        if len(shared_key) != SHARED_ENCRYPT_KEY_LENGTH:
+            raise ValueError(
+                f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256."
+            )
+        return shared_key
+
+    def _aes_ctr_decrypt(
+        self, encrypted_msg_bytes: bytes, shared_key: bytes, iv_bytes: bytes
+    ) -> bytes:
+        """
+        Decrypt bytes using AES-CTR mode.
+
+        Parameters
+        ----------
+        encrypted_msg_bytes : bytes
+            The encrypted message bytes to decrypt.
+        shared_key : bytes
+            The AES key to use for decryption (must be 32 bytes for AES-256).
+        iv_bytes : bytes
+            The initialization vector for AES-CTR (must be 16 bytes).
+
+        Returns
+        -------
+        bytes
+            The decrypted message bytes.
+        """
+        cipher = self._create_aes_cipher(shared_key, iv_bytes)
+        decryptor = cipher.decryptor()
+        return decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
+
+    def _read_header_from_stream(self, stream) -> tuple:
+        """
+        Read and parse the header from a stream until two separators are found.
+
+        Parameters
+        ----------
+        stream : file-like
+            The input stream to read from (must support .read()).
+
+        Returns
+        -------
+        tuple
+            Tuple containing:
+            - encrypted_key_b64 (str): base64 encoded encrypted AES key
+            - iv_b64 (str): base64 encoded initialization vector
+            - encrypted_msg (str): base64 encoded or raw encrypted message
+        """
+        sep_bytes = SEPARATOR.encode()
+        header_bytes = b""
+        # Read chunks until we find two separators
+        # This is necessary to extract the encrypted key and IV.
+        while header_bytes.count(sep_bytes) < 2:
+            c = stream.read(1)
+            if not c:
+                raise RuntimeError("Stream ended before header was fully read")
+            header_bytes += c
+        header_str = header_bytes.decode(STRING_ENCODING)
+        return self._parse_header(header_str)
+
+    def _load_public_key(self, pubkey_base64s: str):
+        """
+        Load a PEM public key from a base64 string.
+
+        Parameters
+        ----------
+        pubkey_base64s : str
+            The public key in base64 string format.
+
+        Returns
+        -------
+        public key object
+            The loaded public key.
+
+        Raises
+        ------
+        ValueError
+            If the public key cannot be loaded.
+        """
+        try:
+            return load_pem_public_key(
+                self.str_to_bytes(pubkey_base64s), backend=default_backend()
+            )
+        except Exception as e:
+            self.log.error(f"Failed to load public key: {e}")
+            raise ValueError("Invalid public key provided for encryption.") from e
+
+    def _create_aes_cipher(self, key: bytes, iv: bytes):
+        """
+        Create an AES cipher object in CTR mode.
+
+        Parameters
+        ----------
+        key : bytes
+            The AES key (must be 32 bytes for AES-256).
+        iv : bytes
+            The initialization vector (must be 16 bytes).
+
+        Returns
+        -------
+        Cipher
+            The AES cipher object.
+        """
+        return Cipher(algorithms.AES(key), modes.CTR(iv), backend=default_backend())
+
     @staticmethod
     def create_new_rsa_key(path: Path) -> rsa.RSAPrivateKey:
         """
@@ -413,16 +568,12 @@ class RSACryptor(CryptorBase):
         # encrypt the data symmetrically with the shared key. This is done because
         # symmetric encryption is faster than asymmetric encryption and results in a
         # smaller result.
-        cipher = Cipher(
-            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-        )
+        cipher = self._create_aes_cipher(shared_key, iv_bytes)
         encryptor = cipher.encryptor()
         encrypted_msg_bytes = encryptor.update(data) + encryptor.finalize()
 
         try:
-            pubkey = load_pem_public_key(
-                base64s_to_bytes(pubkey_base64s), backend=default_backend()
-            )
+            pubkey = self._load_public_key(pubkey_base64s)
         except Exception as e:
             self.log.error(f"Failed to load public key: {e}")
             raise ValueError("Invalid public key provided for encryption.") from e
@@ -492,35 +643,15 @@ class RSACryptor(CryptorBase):
         second_sep = data.find(sep_bytes, first_sep + 1)
         if second_sep == -1:
             raise ValueError("Header format is invalid — missing second separator.")
-
-        header_bytes = data[:second_sep + 1]
+        header_bytes = data[: second_sep + 1]
         header_str = header_bytes.decode(STRING_ENCODING)
-        header_parts = header_str.split(SEPARATOR, 2)
-        if len(header_parts) != 3:
-            raise ValueError(
-                "Header format is invalid — expected three parts separated by '$'."
-            )
-        encrypted_key_b64, iv_b64, _ = header_parts
+        encrypted_key_b64, iv_b64, _ = self._parse_header(header_str)
         encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
         # Only decode iv and shared key, the encrypted message is already in bytes
         iv_bytes = self.str_to_bytes(iv_b64)
-        shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
-        try:
-            shared_key = base64s_to_bytes(shared_key.decode(STRING_ENCODING))
-        except UnicodeDecodeError:
-            pass
-        if len(shared_key) != SHARED_ENCRYPT_KEY_LENGTH:
-            raise ValueError(
-                f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256."
-            )
+        shared_key = self._decode_shared_key(encrypted_key_bytes)
         body = data[second_sep + 1 :]
-        cipher = Cipher(
-            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-        )
-        decryptor = cipher.decryptor()
-        decrypted = decryptor.update(body) + decryptor.finalize()
-
-        return decrypted
+        return self._aes_ctr_decrypt(body, shared_key, iv_bytes)
 
     def decrypt_str_to_bytes(self, data: str) -> bytes:
         """
@@ -545,31 +676,13 @@ class RSACryptor(CryptorBase):
         """
         # Note that the decryption process is the reverse of the encryption process
         # in the function above
-        (encrypted_key, iv, encrypted_msg) = data.split(SEPARATOR)
+        encrypted_key, iv, encrypted_msg = self._parse_header(data)
         # Convert the strings to back to bytes
         encrypted_key_bytes = self.str_to_bytes(encrypted_key)
         iv_bytes = self.str_to_bytes(iv)
         encrypted_msg_bytes = self.str_to_bytes(encrypted_msg)
-
-        # Decrypt the shared key using asymmetric encryption
-        shared_key = self.private_key.decrypt(encrypted_key_bytes, padding.PKCS1v15())
-        # In the UI, the bytes have to be base64 encoded before encryption (we cannot
-        # encrypt bytes directly in javascript) - so if this key was encrypted in the
-        # UI, we need to decode it here as extra step. If it fails, ignore it as it is
-        # apparently not needed.
-        # TODO v5+ add additional encoding step in Python so that we always have the
-        # same process
-        try:
-            shared_key = base64s_to_bytes(shared_key.decode(STRING_ENCODING))
-        except UnicodeDecodeError:
-            pass
-
-        # Use the shared key for symmetric decryption of the payload
-        cipher = Cipher(
-            algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
-        )
-        decryptor = cipher.decryptor()
-        result = decryptor.update(encrypted_msg_bytes) + decryptor.finalize()
+        shared_key = self._decode_shared_key(encrypted_key_bytes)
+        result = self._aes_ctr_decrypt(encrypted_msg_bytes, shared_key, iv_bytes)
 
         # In the UI, the result has an extra base64 encoding step also for the
         # symmetrical part of the encryption. If it fails, ignore it as it is
@@ -607,7 +720,7 @@ class RSACryptor(CryptorBase):
             Processed data chunks.
         """
         self.log.debug("Processing stream with AES-CTR encryption/decryption")
-        cipher = Cipher(algorithms.AES(key), modes.CTR(iv), backend=default_backend())
+        cipher = self._create_aes_cipher(key, iv)
         cryptor = cipher.encryptor()
 
         while True:
@@ -648,9 +761,7 @@ class RSACryptor(CryptorBase):
         iv_bytes = os.urandom(IV_LENGTH)
         self.log.debug("Encrypting stream with hybrid RSA/AES encryption")
         try:
-            pubkey = load_pem_public_key(
-                base64s_to_bytes(pubkey_base64s), backend=default_backend()
-            )
+            pubkey = self._load_public_key(pubkey_base64s)
         except Exception as e:
             self.log.error(f"Failed to load public key: {e}")
             raise ValueError("Invalid public key provided for encryption.") from e
@@ -685,21 +796,7 @@ class RSACryptor(CryptorBase):
         self.log.debug(
             f"Decrypting stream with hybrid RSA/AES decryption (stream={type(stream).__name__})"
         )
-        sep_bytes = SEPARATOR.encode()
-        header_bytes = b""
-        # Read chunks until we find two separators
-        # This is necessary to extract the encrypted key and IV.
-        while header_bytes.count(sep_bytes) < 2:
-            c = stream.read(1)
-            if not c:
-                raise RuntimeError("Stream ended before header was fully read")
-            header_bytes += c
-
-        # Find the position of the second separator
-        first_sep = header_bytes.find(sep_bytes)
-        second_sep = header_bytes.find(sep_bytes, first_sep + 1)
-        header_str = header_bytes[:second_sep + 1].decode(STRING_ENCODING)
-        encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
+        encrypted_key_b64, iv_b64, _ = self._read_header_from_stream(stream)
         encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
         iv_bytes = self.str_to_bytes(iv_b64)
 

@@ -3,7 +3,6 @@ import logging
 import time
 import requests
 import json as json_lib
-import uuid
 from pathlib import Path
 
 from vantage6.common.exceptions import AuthenticationException
@@ -11,9 +10,7 @@ from vantage6.common.encryption import RSACryptor, DummyCryptor
 from vantage6.common.globals import (
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
-    STRING_ENCODING,
-    REQUEST_TIMEOUT,
-    DEFAULT_CHUNK_SIZE,
+    STRING_ENCODING
 )
 from vantage6.common.client.utils import print_qr_code, is_uuid
 from vantage6.common.task_status import has_task_finished
@@ -72,7 +69,7 @@ def _log_progress(
         logging.info(message)
 
 
-class ClientBase(object, BlobStorageMixin):
+class ClientBase(BlobStorageMixin):
     """Common interface to the central server.
 
     Contains the basis for all other clients, e.g. UserClient, NodeClient and
