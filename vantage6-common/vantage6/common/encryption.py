@@ -18,6 +18,7 @@ import os
 import logging
 import base64
 import json
+import IO
 
 from pathlib import Path
 
@@ -35,6 +36,8 @@ from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to
 from vantage6.common.globals import DEFAULT_CHUNK_SIZE, STRING_ENCODING
 
 SEPARATOR = "$"
+SHARED_ENCRYPT_KEY_LENGTH = 32
+IV_LENGTH = 16
 
 
 # ------------------------------------------------------------------------------
@@ -132,7 +135,10 @@ class CryptorBase(metaclass=Singleton):
             return self.str_to_bytes(data)
 
     def encrypt_stream(
-        self, stream, pubkey_base64s: str = None, chunk_size=DEFAULT_CHUNK_SIZE
+        self,
+        stream: IO[bytes],
+        pubkey_base64s: str = None,
+        chunk_size=DEFAULT_CHUNK_SIZE,
     ):
         """
         Base64-encode a stream, yielding encoded chunks.
@@ -214,7 +220,9 @@ class CryptorBase(metaclass=Singleton):
             yield decoded
         # Decode any remaining data in the buffer
         if buffer:
-            # Pad buffer to a multiple of 4 for base64 decoding
+            # Pad buffer to a multiple of 4 for base64 decoding.
+            # The '=' padding is ignored by the base64 decoder and only serves to
+            # ensure the input length is valid for decoding.
             padding_len = (-len(buffer)) % 4
             if padding_len:
                 buffer += b"=" * padding_len
@@ -399,8 +407,8 @@ class RSACryptor(CryptorBase):
         """
 
         # Use the shared key for symmetric encryption of the payload
-        shared_key = os.urandom(32)
-        iv_bytes = os.urandom(16)
+        shared_key = os.urandom(SHARED_ENCRYPT_KEY_LENGTH)
+        iv_bytes = os.urandom(IV_LENGTH)
 
         # encrypt the data symmetrically with the shared key. This is done because
         # symmetric encryption is faster than asymmetric encryption and results in a
@@ -450,11 +458,11 @@ class RSACryptor(CryptorBase):
             The decrypted data.
         """
         if isinstance(data, bytes):
-            return self.decrypt_bytes(data)
+            return self.decrypt_bytes_blob_storage(data)
         elif isinstance(data, str):
             return self.decrypt_str_to_bytes(data)
 
-    def decrypt_bytes(self, data: bytes) -> bytes:
+    def decrypt_bytes_blob_storage(self, data: bytes) -> bytes:
         """
         Decrypt *bytes* data coming from blob storage.
         This function expects the data to be in the format:
@@ -478,18 +486,14 @@ class RSACryptor(CryptorBase):
         # Similar to decrypt_str_to_bytes, find the separator in order to
         # split key, iv and encrypted message.
         sep_bytes = SEPARATOR.encode()
-        sep_count = 0
-        sep_indices = []
-        for i in range(len(data)):
-            if data[i : i + 1] == sep_bytes:
-                sep_count += 1
-                sep_indices.append(i)
-                if sep_count == 2:
-                    break
-        if sep_count < 2:
-            raise ValueError("Header format is invalid — missing separators.")
+        first_sep = data.find(sep_bytes)
+        if first_sep == -1:
+            raise ValueError("Header format is invalid — missing first separator.")
+        second_sep = data.find(sep_bytes, first_sep + 1)
+        if second_sep == -1:
+            raise ValueError("Header format is invalid — missing second separator.")
 
-        header_bytes = data[: sep_indices[1] + 1]
+        header_bytes = data[:second_sep + 1]
         header_str = header_bytes.decode(STRING_ENCODING)
         header_parts = header_str.split(SEPARATOR, 2)
         if len(header_parts) != 3:
@@ -505,11 +509,11 @@ class RSACryptor(CryptorBase):
             shared_key = base64s_to_bytes(shared_key.decode(STRING_ENCODING))
         except UnicodeDecodeError:
             pass
-        if len(shared_key) != 32:
+        if len(shared_key) != SHARED_ENCRYPT_KEY_LENGTH:
             raise ValueError(
                 f"Decrypted AES key length is {len(shared_key)} bytes, expected 32 bytes for AES-256."
             )
-        body = data[sep_indices[1] + 1 :]
+        body = data[second_sep + 1 :]
         cipher = Cipher(
             algorithms.AES(shared_key), modes.CTR(iv_bytes), backend=default_backend()
         )
@@ -640,8 +644,8 @@ class RSACryptor(CryptorBase):
         bytes
             Header followed by encrypted data chunks.
         """
-        shared_key = os.urandom(32)
-        iv_bytes = os.urandom(16)
+        shared_key = os.urandom(SHARED_ENCRYPT_KEY_LENGTH)
+        iv_bytes = os.urandom(IV_LENGTH)
         self.log.debug("Encrypting stream with hybrid RSA/AES encryption")
         try:
             pubkey = load_pem_public_key(
@@ -681,19 +685,20 @@ class RSACryptor(CryptorBase):
         self.log.debug(
             f"Decrypting stream with hybrid RSA/AES decryption (stream={type(stream).__name__})"
         )
-        sep_count = 0
+        sep_bytes = SEPARATOR.encode()
         header_bytes = b""
-        # Read the stream until we find two separators.
+        # Read chunks until we find two separators
         # This is necessary to extract the encrypted key and IV.
-        while sep_count < 2:
+        while header_bytes.count(sep_bytes) < 2:
             c = stream.read(1)
             if not c:
                 raise RuntimeError("Stream ended before header was fully read")
             header_bytes += c
-            if c == SEPARATOR.encode():
-                sep_count += 1
 
-        header_str = header_bytes.decode(STRING_ENCODING)
+        # Find the position of the second separator
+        first_sep = header_bytes.find(sep_bytes)
+        second_sep = header_bytes.find(sep_bytes, first_sep + 1)
+        header_str = header_bytes[:second_sep + 1].decode(STRING_ENCODING)
         encrypted_key_b64, iv_b64, _ = header_str.split(SEPARATOR, 2)
         encrypted_key_bytes = self.str_to_bytes(encrypted_key_b64)
         iv_bytes = self.str_to_bytes(iv_b64)

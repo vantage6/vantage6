@@ -99,7 +99,7 @@ class TestAlgorithmClient(unittest.TestCase):
             # Simulate a result where blob_storage_used is True
             mock_multi_page_request.return_value = [
                 {
-                    "result": uuid.uuid4(),
+                    "result": str(uuid.uuid4()),
                     "blob_storage_used": True,
                 }
             ]
