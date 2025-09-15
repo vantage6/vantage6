@@ -43,7 +43,7 @@ from vantage6.cli.use.namespace import cli_use_namespace
 
 
 # Define the server group
-@click.group(name=CLICommandName.SERVER)
+@click.group(name=CLICommandName.SERVER.value)
 def cli_server() -> None:
     """
     Manage your vantage6 server instances.
@@ -64,7 +64,7 @@ cli_server.add_command(cli_server_version, name="version")
 
 
 # Define the node group
-@click.group(name=CLICommandName.NODE)
+@click.group(name=CLICommandName.NODE.value)
 def cli_node() -> None:
     """
     Manage your vantage6 node instances.
@@ -86,7 +86,7 @@ cli_node.add_command(cli_node_version, name="version")
 
 
 # Define the dev group
-@click.group(name=CLICommandName.DEV)
+@click.group(name=CLICommandName.DEV.value)
 def cli_dev() -> None:
     """
     Quickly manage a test network with a server and several nodes.
@@ -99,7 +99,7 @@ def cli_dev() -> None:
 
 
 # Define the algorithm group
-@click.group(name=CLICommandName.ALGORITHM)
+@click.group(name=CLICommandName.ALGORITHM.value)
 def cli_algorithm() -> None:
     """
     Manage your vantage6 algorithms.
@@ -115,7 +115,7 @@ cli_algorithm.add_command(
 
 
 # Define the test group
-@click.group(name=CLICommandName.TEST)
+@click.group(name=CLICommandName.TEST.value)
 def cli_test() -> None:
     """
     Execute tests on your vantage6 infrastructure.
@@ -129,7 +129,7 @@ cli_test.add_command(cli_test_features, name="feature-test")
 
 
 # Define the algorithm-store group
-@click.group(name=CLICommandName.ALGORITHM_STORE)
+@click.group(name=CLICommandName.ALGORITHM_STORE.value)
 def cli_algo_store() -> None:
     """
     Manage your vantage6 algorithm store server instances.
@@ -147,7 +147,7 @@ cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 
 
 # Add the use group
-@click.group(name=CLICommandName.USE)
+@click.group(name=CLICommandName.USE.value)
 def cli_use() -> None:
     """
     Manage Kubernetes context and namespace.
