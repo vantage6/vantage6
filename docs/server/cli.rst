@@ -7,8 +7,7 @@ Core
 ----
 
 This section explains which commands are available to manage your server. It
-also explains how to set up a test server locally and how to manage resources
-via an IPython shell.
+also explains how to set up a test server locally.
 
 Quick start
 ^^^^^^^^^^^
@@ -71,11 +70,8 @@ e.g. ``v6 server start --help``.
 | ``v6 server    | List the available server instances                 |
 | list``         |                                                     |
 +----------------+-----------------------------------------------------+
-| ``v6 server    | Run a server instance python shell                  |
-| shell``        |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Import server entities as a batch                   |
-| import``       |                                                     |
+| ``v6 server    | Import server entities such as organizations, users |
+| import``       | and collaborations                                  |
 +----------------+-----------------------------------------------------+
 | ``v6 server    | Shows the versions of all the components of the     |
 | version``      | running server                                      |
