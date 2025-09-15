@@ -1,5 +1,6 @@
 import click
 import requests
+import yaml
 
 from vantage6.common import info, warning, error
 from vantage6.common.globals import (
@@ -15,7 +16,6 @@ from vantage6.cli.utils import check_config_name_allowed
 from vantage6.client import UserClient
 
 
-# TODO this method has a lot of duplicated code from `start`
 @click.command()
 @click.argument("file", type=click.Path(exists=True))
 @click.option(
@@ -29,14 +29,38 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     """
     Import vantage6 resources into a server instance.
 
-    This allows you to create organizations, collaborations, users, tasks, etc
-    from a yaml file.
+    This allows you to create organizations, collaborations, users, tasks, etc. from a
+    yaml file. This method expects the server configuration file to be located on the
+    same machine as this method is invoked from.
 
-    The FILE_ argument should be a path to a yaml file containing the vantage6
-    formatted data to import.
+    The FILE_ argument should be a path to a yaml file containing the vantage6 formatted
+    data to import. The format is as follows:
+
+    ```yaml
+    organizations:
+    - name: organization1
+      domain: example.com
+      address1: 123 Main St
+      address2: Apt 4B
+      zipcode: 12345
+      country: USA
+      users:
+      - username: user1
+        password: Password123!
+        organization: organization1
+        roles:
+          - admin
+    collaborations:
+    - name: collaboration1
+      participants:
+      - name: organization1
+        api_key: api_key1
+      - name: organization2
+        api_key: api_key2
+      encrypted: true
+    ```
     """
     info("Validating server version")
-    print(ctx.config)
     response = requests.get(
         f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version"
     )
@@ -59,14 +83,11 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         )
         return
 
-    info("Validating import file")
-    import yaml
-
+    info("Loading and validating import file")
     with open(file, "r") as f:
         import_data = yaml.safe_load(f)
     # TODO: validate import file
 
-    # TODO: Call the vantage6 APIs (core and auth?) to import the data
     client = UserClient(
         server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
         auth_url=ctx.config["ui"]["keycloakPublicUrl"],
@@ -75,32 +96,16 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         log_level="info",
     )
 
-    info("Authenticate using admin credentials")
+    info("Authenticate using admin credentials (opens browser for login)")
     client.authenticate()
 
-    # TODO: drop all functionality
+    # TODO: validate that the user has the correct permissions to import data
+
     info("Dropping all existing data")
-    if drop_all:
+    _drop_all(client)
 
-        while collaborations := client.collaboration.list(scope="global")["data"]:
-            for collaboration in collaborations:
-                info(f"Deleting collaboration {collaboration['name']}")
-                client.collaboration.delete(collaboration["id"], delete_dependents=True)
-
-        print(client.user.list())
-        while users := [
-            u for u in client.user.list()["data"] if u["username"] != "admin"
-        ]:
-            for user in users:
-                info(f"Deleting user {user['username']}")
-                client.user.delete(user["id"])
-
-        while orgs := [
-            o for o in client.organization.list()["data"] if o["name"] != "root"
-        ]:
-            for org in orgs:
-                info(f"Deleting organization {org['name']}")
-                client.organization.delete(org["id"], delete_dependents=True)
+    info("Collecting root role and rule")
+    root_role_id = client.role.list(name="Root", include_root=True)["data"][0]["id"]
 
     info("Importing organizations")
     organizations = []
@@ -116,18 +121,14 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         )
         organizations.append(org)
 
-        info("Collecting root role and rule")
-        root_role_id = client.role.list(name="Root", include_root=True)["data"][0]["id"]
-
         info(f"Importing users for organization {org['name']}")
         for user in organization["users"]:
-            user = client.user.create(
+            client.user.create(
                 username=user["username"],
                 password=user["password"],
                 organization=org["id"],
                 roles=[root_role_id],
             )
-            users.append(user)
 
     info("Importing collaborations")
     for collaboration in import_data["collaborations"]:
@@ -145,4 +146,26 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
             encrypted=collaboration["encrypted"],
         )
 
-    pass
+
+def _drop_all(client: UserClient) -> None:
+    """
+    Drop all existing data from the server.
+    """
+    while collaborations := client.collaboration.list(scope="global")["data"]:
+        for collaboration in collaborations:
+            info(f"Deleting collaboration {collaboration['name']}")
+            client.collaboration.delete(collaboration["id"], delete_dependents=True)
+
+    # TODO: For some reason, the `delete_dependents` parameter is not working for users,
+    # so we delete them here first.
+    while users := [u for u in client.user.list()["data"] if u["username"] != "admin"]:
+        for user in users:
+            info(f"Deleting user {user['username']}")
+            client.user.delete(user["id"])
+
+    while orgs := [
+        o for o in client.organization.list()["data"] if o["name"] != "root"
+    ]:
+        for org in orgs:
+            info(f"Deleting organization {org['name']}")
+            client.organization.delete(org["id"], delete_dependents=True)
