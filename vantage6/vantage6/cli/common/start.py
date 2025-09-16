@@ -270,6 +270,8 @@ def start_port_forward(
                         "kubectl",
                         "get",
                         "endpoints",
+                        "--namespace",
+                        namespace,  # TODO: check this if Namespace is None
                         service_name,
                         "-o",
                         "jsonpath={.subsets[*].addresses[*].ip}",
