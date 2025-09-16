@@ -73,6 +73,7 @@ class InstanceType(StrEnumBase):
     SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
     UI = "ui"
+    AUTH = "auth"
 
 
 class NodePolicy(StrEnumBase):

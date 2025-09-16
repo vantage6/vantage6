@@ -12,6 +12,7 @@ from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.auth.new import cli_auth_new
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -146,6 +147,18 @@ cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
 cli_algo_store.add_command(cli_algo_store_remove, name="remove")
 
 
+# Define the auth group
+@click.group(name=CLICommandName.AUTH.value)
+def cli_auth() -> None:
+    """
+    Manage your vantage6 authentication server instances.
+    """
+
+
+# Define the commands for the auth group
+cli_auth.add_command(cli_auth_new, name="new")
+
+
 # Add the use group
 @click.group(name=CLICommandName.USE.value)
 def cli_use() -> None:
@@ -178,3 +191,4 @@ cli_complete.add_command(cli_algorithm)
 cli_complete.add_command(cli_test)
 cli_complete.add_command(cli_algo_store)
 cli_complete.add_command(cli_use)
+cli_complete.add_command(cli_auth)
