@@ -27,38 +27,17 @@ from vantage6.client import UserClient
 @click_insert_context(type_=InstanceType.SERVER)
 def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     """
-    Import vantage6 resources into a server instance.
+    Import vantage6 resources into a server instance from a yaml FILE.
 
     This allows you to create organizations, collaborations, users, tasks, etc. from a
-    yaml file. This method expects the server configuration file to be located on the
+    yaml FILE. This method expects the server configuration file to be located on the
     same machine as this method is invoked from.
 
-    The FILE_ argument should be a path to a yaml file containing the vantage6 formatted
-    data to import. The format is as follows:
+    This import assigns the root role to all users, which contains all permissions. So
+    use this with caution.
 
-    ```yaml
-    organizations:
-    - name: organization1
-      domain: example.com
-      address1: 123 Main St
-      address2: Apt 4B
-      zipcode: 12345
-      country: USA
-      users:
-      - username: user1
-        password: Password123!
-        organization: organization1
-        roles:
-          - admin
-    collaborations:
-    - name: collaboration1
-      participants:
-      - name: organization1
-        api_key: api_key1
-      - name: organization2
-        api_key: api_key2
-      encrypted: true
-    ```
+    The FILE argument should be a path to a yaml file containing the vantage6 formatted
+    data to import.
     """
     info("Validating server version")
     response = requests.get(
@@ -117,7 +96,6 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
             zipcode=organization["zipcode"],
             country=organization["country"],
             domain=organization["domain"],
-            public_key=organization["public_key"],
         )
         organizations.append(org)
 
@@ -140,17 +118,36 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
                 if org["name"] == participant["name"]:
                     organization_ids.append(org["id"])
 
-        collaboration = client.collaboration.create(
+        col = client.collaboration.create(
             name=collaboration["name"],
             organizations=organization_ids,
             encrypted=collaboration["encrypted"],
         )
+
+        info("Registering nodes for collaboration")
+        nodes = []
+        for participant in collaboration["participants"]:
+            for org in organizations:
+                if org["name"] == participant["name"]:
+                    node = client.node.create(
+                        name=f"{collaboration['name']}-{org['name'].replace(' ', '-')}-node",
+                        organization=org["id"],
+                        collaboration=col["id"],
+                    )
+                    nodes.append(node)
+
+        return nodes
 
 
 def _drop_all(client: UserClient) -> None:
     """
     Drop all existing data from the server.
     """
+    while nodes := client.node.list()["data"]:
+        for node in nodes:
+            info(f"Deleting node {node['name']}")
+            client.node.delete(node["id"])
+
     while collaborations := client.collaboration.list(scope="global")["data"]:
         for collaboration in collaborations:
             info(f"Deleting collaboration {collaboration['name']}")

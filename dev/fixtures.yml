@@ -1,0 +1,58 @@
+organizations:
+
+  - name:       IKNL
+    domain:     iknl.nl
+    address1:   Godebaldkwartier 419
+    address2:   NA
+    zipcode:    3511DT
+    country:    Netherlands
+    users:
+      - username: iknl-admin
+        password: Password123!
+      - username: frank
+        password: Password123!
+      - username: melle
+        password: Password123!
+
+  - name:       Small Organization
+    domain:     small-organization.example
+    address1:   Big Ambitions Drive 4
+    address2:   NA
+    zipcode:    1234AB
+    country:    Nowhereland
+    users:
+      - username: small-organization
+        password: Password123!
+      - username: stan
+        password: Password123!
+
+  - name:       Big Organization
+    domain:     big-organization.example
+    address1:   Offshore Accounting Drive 19
+    address2:   NA
+    zipcode:    "54331"
+    country:    Nowhereland
+    users:
+      - username: big-organization
+        password: Password123!
+
+collaborations:
+
+  - name: ZEPPELIN
+    participants:
+      - name: IKNL
+      - name: Small Organization
+      - name: Big Organization
+    encrypted: false
+
+  - name: PIPELINE
+    participants:
+      - name: IKNL
+      - name: Big Organization
+    encrypted: false
+
+  - name: SLIPPERS
+    participants:
+      - name: Small Organization
+      - name: Big Organization
+    encrypted: false
