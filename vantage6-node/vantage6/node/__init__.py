@@ -1249,7 +1249,7 @@ class Node:
             for tunnel in self.ssh_tunnels:
                 try:
                     tunnel.stop()
-                except Exception as e:
+                except Exception:
                     self.log.exception("Error stopping SSH tunnel during cleanup")
         if hasattr(self, "_Node__docker") and self.__docker:
             try:
