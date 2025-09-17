@@ -21,7 +21,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     @patch("vantage6.server.resource.node.create_service_account_in_keycloak")
     def test_node_without_id(self, mock_create_node_in_keycloak):
         mock_create_node_in_keycloak.return_value = KeycloakServiceAccount(

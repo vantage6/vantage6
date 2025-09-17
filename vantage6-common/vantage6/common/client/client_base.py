@@ -328,9 +328,9 @@ class ClientBase(object):
             If the client is not authenticated
         """
         assert self._access_token, "Encryption can only be setup after authentication"
-        assert (
-            self.whoami.organization_id
-        ), "Organization unknown... Did you authenticate?"
+        assert self.whoami.organization_id, (
+            "Organization unknown... Did you authenticate?"
+        )
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
@@ -448,7 +448,7 @@ class ClientBase(object):
             decrypted = self._decrypt_data(value)
             if not isinstance(decrypted, bytes):
                 self.log.error(
-                    "The field %s is not properly encoded. Expected bytes, got" " %s.",
+                    "The field %s is not properly encoded. Expected bytes, got %s.",
                     field,
                     type(decrypted),
                 )

@@ -18,7 +18,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_view_study_permissions(self):
         # setup organization and collaboration
         org = Organization()

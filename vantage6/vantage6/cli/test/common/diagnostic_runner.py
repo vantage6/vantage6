@@ -62,7 +62,7 @@ class DiagnosticRunner:
                 set(self.organization_ids).intersection(online_orgs)
             )
 
-        info(f"Running diagnostics to {len(self.organization_ids)} " "organization(s)")
+        info(f"Running diagnostics to {len(self.organization_ids)} organization(s)")
         info(f"  organizations: {self.organization_ids}")
         info(f"  collaboration: {self.collaboration_id}")
 

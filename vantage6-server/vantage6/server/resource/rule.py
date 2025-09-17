@@ -147,7 +147,7 @@ class Rules(ServicesResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.role_rule_association)
@@ -166,7 +166,7 @@ class Rules(ServicesResources):
                 user = db.User.get(args["user_id"])
                 if not user:
                     return {
-                        "msg": f'User with id={args["user_id"]} does not exist!'
+                        "msg": f"User with id={args['user_id']} does not exist!"
                     }, HTTPStatus.BAD_REQUEST
 
             # Create two subqueries - one for role-based permissions and one for direct

@@ -75,7 +75,7 @@ class RabbitMQManager:
         # check if a RabbitMQ container is already running
         self.rabbit_container = get_container(docker_client=self.docker, name=self.host)
         if self.rabbit_container:
-            info("RabbitMQ is already running! Linking the server to that " "queue")
+            info("RabbitMQ is already running! Linking the server to that queue")
             if not self.network_mgr.contains(self.rabbit_container):
                 self.network_mgr.connect(self.rabbit_container)
             return
@@ -161,8 +161,10 @@ class RabbitMQManager:
                 "bind": "/etc/rabbitmq/definitions.json",
                 "mode": "ro",
             },
-            self.ctx.data_dir
-            / RABBIT_CONFIG: {"bind": "/etc/rabbitmq/rabbitmq.config", "mode": "ro"},
+            self.ctx.data_dir / RABBIT_CONFIG: {
+                "bind": "/etc/rabbitmq/rabbitmq.config",
+                "mode": "ro",
+            },
             rabbit_data_dir: {"bind": "/var/lib/rabbitmq", "mode": "rw"},
         }
 

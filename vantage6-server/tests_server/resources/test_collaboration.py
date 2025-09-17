@@ -19,7 +19,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_collaboration(self):
         org = Organization()
         rule_view = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)

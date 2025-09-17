@@ -10,9 +10,10 @@ standard deviations for scaling operations.
 import numpy as np
 import pandas as pd
 
+from vantage6.algorithm.tools.exceptions import UserInputError
+
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import dataframe
-from vantage6.algorithm.tools.exceptions import UserInputError
 
 
 @preprocessing
@@ -153,7 +154,7 @@ def standard_scale(
     else:
         if len(means) != len(stds) or len(means) != len(columns):
             raise ValueError(
-                "Length of means and stds must match the number of specified" "columns"
+                "Length of means and stds must match the number of specified columns"
             )
 
     df_scaled = df.copy()
@@ -328,7 +329,7 @@ def encode(
         unique_vals = set(encoded_df[col].unique()) - set(mapping.keys())
         if raise_on_unknown and unique_vals:
             raise ValueError(
-                f"Unknown categories {unique_vals} encountered in column" f"{col}."
+                f"Unknown categories {unique_vals} encountered in column {col}."
             )
         encoded_df[col] = encoded_df[col].apply(lambda x: mapping.get(x, unknown_value))
 

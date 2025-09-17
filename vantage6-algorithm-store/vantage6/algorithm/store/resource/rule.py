@@ -142,7 +142,7 @@ class Rules(AlgorithmStoreResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.role_rule_association)
@@ -156,7 +156,7 @@ class Rules(AlgorithmStoreResources):
                 user = db.User.get(args["user_id"])
                 if not user:
                     return {
-                        "msg": f'User with id={args["user_id"]} does not exist!'
+                        "msg": f"User with id={args['user_id']} does not exist!"
                     }, HTTPStatus.BAD_REQUEST
             else:
                 user = g.user
@@ -170,8 +170,7 @@ class Rules(AlgorithmStoreResources):
                 # .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
                 .filter(
                     # or_(
-                    db.User.id
-                    == user.id
+                    db.User.id == user.id
                     # db.UserPermission.c.user_id == user.id,
                     # )
                 )

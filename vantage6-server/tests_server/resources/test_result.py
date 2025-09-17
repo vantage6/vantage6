@@ -9,7 +9,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_result_with_id(self):
         headers = self.login_as_root()
         run = self.create_run()

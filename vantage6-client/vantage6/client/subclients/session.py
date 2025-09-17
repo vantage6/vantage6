@@ -300,7 +300,6 @@ class SessionSubClient(ClientBase.SubClient):
         console.print(tree)
 
     def task_tree(self, session: int | None = None) -> None:
-
         # TODO FM 02-08-2024: Maybe move this to the task subclient?
         # TODO FM 02-08-2024: This needs to be cleaned
 

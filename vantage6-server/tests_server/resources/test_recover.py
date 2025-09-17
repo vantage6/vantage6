@@ -16,7 +16,6 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     @patch("vantage6.server.resource.recover.ResetAPIKey._change_api_key_in_keycloak")
     def test_reset_api_key(self, mock_change_api_key_in_keycloak):
         mock_change_api_key_in_keycloak.return_value = "new_api_key"

@@ -55,9 +55,7 @@ class User(Base):
             String representation of the user
         """
         return (
-            f"<User "
-            f"id={self.id}, username='{self.username}', roles='{self.roles}', "
-            f">"
+            f"<User id={self.id}, username='{self.username}', roles='{self.roles}', >"
         )
 
     def can(self, resource: str, operation: Operation) -> bool:

@@ -39,7 +39,7 @@ def cli_node_list() -> None:
             if f"{APPNAME}-{config.name}-system" in running_node_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25}System ")
+        click.echo(f"{config.name:25}{status:25}System ")
 
     # user folders
     configs, f2 = NodeContext.available_configurations(system_folders=False)
@@ -49,8 +49,8 @@ def cli_node_list() -> None:
             if f"{APPNAME}-{config.name}-user" in running_node_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25}User   ")
+        click.echo(f"{config.name:25}{status:25}User   ")
 
     click.echo("-" * 53)
     if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")

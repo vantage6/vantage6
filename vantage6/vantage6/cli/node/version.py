@@ -16,7 +16,7 @@ from vantage6.cli.node.common import find_running_node_names
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",
