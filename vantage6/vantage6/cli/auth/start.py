@@ -11,7 +11,6 @@ from vantage6.cli.common.start import (
 )
 from vantage6.cli.common.utils import (
     attach_logs,
-    create_directory_if_not_exists,
 )
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.globals import ChartName
@@ -53,7 +52,8 @@ def cli_auth_start(
 
     prestart_checks(ctx, InstanceType.AUTH, name, system_folders, context, namespace)
 
-    create_directory_if_not_exists(ctx.log_dir)
+    # TODO: re-enable when we save the auth logs
+    # create_directory_if_not_exists(ctx.log_dir)
 
     helm_install(
         release_name=ctx.helm_release_name,

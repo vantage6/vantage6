@@ -12,7 +12,11 @@ from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.auth.attach import cli_auth_attach
+from vantage6.cli.auth.files import cli_auth_files
+from vantage6.cli.auth.list import cli_auth_configuration_list
 from vantage6.cli.auth.new import cli_auth_new
+from vantage6.cli.auth.remove import cli_auth_remove
 from vantage6.cli.auth.start import cli_auth_start
 from vantage6.cli.auth.stop import cli_auth_stop
 from vantage6.cli.globals import CLICommandName
@@ -161,6 +165,10 @@ def cli_auth() -> None:
 cli_auth.add_command(cli_auth_new, name="new")
 cli_auth.add_command(cli_auth_start, name="start")
 cli_auth.add_command(cli_auth_stop, name="stop")
+cli_auth.add_command(cli_auth_attach, name="attach")
+cli_auth.add_command(cli_auth_files, name="files")
+cli_auth.add_command(cli_auth_configuration_list, name="list")
+cli_auth.add_command(cli_auth_remove, name="remove")
 
 
 # Add the use group
