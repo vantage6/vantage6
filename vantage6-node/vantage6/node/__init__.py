@@ -24,7 +24,6 @@ see if there are new tasks available.
 
 import datetime
 import importlib.metadata
-import json
 import logging
 import os
 import queue
@@ -872,4 +871,4 @@ class Node:
 # ------------------------------------------------------------------------------
 def run(ctx):
     """Start the node."""
-    node = Node(ctx)
+    Node(ctx)

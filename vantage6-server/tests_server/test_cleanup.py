@@ -160,6 +160,7 @@ class TestCleanupRunsCount(unittest.TestCase):
             select(Run).filter(Run.cleanup_at != None)
         ).all()
         remaining_runs = self.session.scalars(
+            # ruff: noqa: E711
             select(Run).filter(Run.cleanup_at == None)
         ).all()
 

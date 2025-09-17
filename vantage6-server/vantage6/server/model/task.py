@@ -238,7 +238,7 @@ class Task(Base):
         # A task is open if it has no dependencies or all dependencies are finished,
         # AND at least one run is alive
         no_deps = len(self.depends_on) == 0
-        deps_finished = self.depends_on.any(models.Run.finished_at.is_(None)) == False
+        deps_finished = not self.depends_on.any(models.Run.finished_at.is_(None))
         alive_run = any(run.finished_at is None for run in self.runs)
         return (no_deps or deps_finished) and alive_run
 
@@ -267,7 +267,7 @@ class Task(Base):
         # A task is waiting if it has dependencies and dependencies are not all
         # finished, AND at least one run is not finished
         deps = len(self.depends_on) == 0
-        deps_finished = self.depends_on.any(models.Run.finished_at.is_(None)) == False
+        deps_finished = not self.depends_on.any(models.Run.finished_at.is_(None))
         waiting_run = any(run.finished_at is None for run in self.runs)
         return deps and not deps_finished and waiting_run
 

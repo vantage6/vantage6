@@ -1,4 +1,4 @@
-# pylint: disable=unused-import
+# ruff: noqa: F401
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.argument import Argument

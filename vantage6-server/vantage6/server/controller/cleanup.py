@@ -37,6 +37,7 @@ def cleanup_runs_data(days: int, include_args: bool = False):
             runs = session.scalars(
                 select(Run).filter(
                     Run.finished_at < threshold_date,
+                    # ruff: noqa: E711
                     Run.cleanup_at == None,
                     Run.status == RunStatus.COMPLETED,
                 )
