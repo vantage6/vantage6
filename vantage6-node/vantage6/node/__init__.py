@@ -1242,7 +1242,7 @@ class Node:
         if hasattr(self, "vpn_manager") and self.vpn_manager:
             try:
                 self.vpn_manager.exit_vpn()
-            except Exception as e:
+            except Exception:
                 self.log.exception("Error exiting VPN during cleanup")
 
         if hasattr(self, "ssh_tunnels") and self.ssh_tunnels:
