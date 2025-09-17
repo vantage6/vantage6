@@ -1,14 +1,16 @@
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
+    start_port_forward,
 )
 from vantage6.cli.common.utils import (
+    attach_logs,
     create_directory_if_not_exists,
 )
 from vantage6.cli.context.auth import AuthContext
@@ -61,16 +63,18 @@ def cli_auth_start(
         namespace=namespace,
     )
 
-    # # port forward for auth service
-    # info("Port forwarding for auth service")
-    # start_port_forward(
-    #     service_name=f"{ctx.helm_release_name}-vantage6-auth-service",
-    #     service_port=ctx.config["server"].get("port", Ports.DEV_SERVER.value),
-    #     port=port or ctx.config["server"].get("port", Ports.DEV_SERVER.value),
-    #     ip=ip,
-    #     context=context,
-    #     namespace=namespace,
-    # )
+    # port forward for auth service
+    info("Port forwarding for auth service")
+    start_port_forward(
+        service_name=f"{ctx.helm_release_name}-keycloak",
+        service_port=Ports.HTTP.value,
+        port=port or Ports.DEV_AUTH.value,
+        ip=ip,
+        context=context,
+        namespace=namespace,
+    )
 
-    # if attach:
-    #     attach_logs("app=vantage6-server", "component=vantage6-server")
+    if attach:
+        attach_logs(
+            f"app.kubernetes.io/instance={ctx.helm_release_name}",
+        )

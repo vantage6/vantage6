@@ -105,6 +105,7 @@ class Ports(IntEnum):
     DEV_SERVER = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
+    DEV_AUTH = 8080
 
 
 class ContainerEnvNames(StrEnumBase):

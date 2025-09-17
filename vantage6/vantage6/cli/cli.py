@@ -14,6 +14,7 @@ from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
 from vantage6.cli.auth.new import cli_auth_new
 from vantage6.cli.auth.start import cli_auth_start
+from vantage6.cli.auth.stop import cli_auth_stop
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -159,6 +160,7 @@ def cli_auth() -> None:
 # Define the commands for the auth group
 cli_auth.add_command(cli_auth_new, name="new")
 cli_auth.add_command(cli_auth_start, name="start")
+cli_auth.add_command(cli_auth_stop, name="stop")
 
 
 # Add the use group
