@@ -1236,7 +1236,7 @@ class Node:
         if hasattr(self, "socketIO") and self.socketIO:
             try:
                 self.socketIO.disconnect()
-            except Exception as e:
+            except Exception:
                 self.log.exception("Error disconnecting socketIO during cleanup")
 
         if hasattr(self, "vpn_manager") and self.vpn_manager:
