@@ -1254,7 +1254,7 @@ class Node:
         if hasattr(self, "_Node__docker") and self.__docker:
             try:
                 self.__docker.cleanup()
-            except Exception as e:
+            except Exception:
                 self.log.exception("Error cleaning up Docker manager during cleanup")
 
         self.log.info("Bye!")
