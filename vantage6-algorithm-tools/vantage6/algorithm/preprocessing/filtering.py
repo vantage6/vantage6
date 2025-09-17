@@ -4,6 +4,7 @@ pandas DataFrames, such as selecting and filtering rows and columns.
 """
 
 import pandas as pd
+
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import dataframe
 

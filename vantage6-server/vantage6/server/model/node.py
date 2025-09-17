@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import bcrypt
 from sqlalchemy import Column, ForeignKey, Integer, String, select
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 
 from vantage6.common.globals import AuthStatus
 

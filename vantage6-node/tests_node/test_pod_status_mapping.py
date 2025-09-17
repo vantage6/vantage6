@@ -2,19 +2,21 @@ import logging
 import unittest
 
 from kubernetes.client import (
-    V1Pod,
-    V1PodStatus,
-    V1ContainerStatus,
-    V1PodCondition,
     V1ContainerState,
     V1ContainerStateRunning,
-    V1ContainerStateWaiting,
     V1ContainerStateTerminated,
+    V1ContainerStateWaiting,
+    V1ContainerStatus,
+    V1Pod,
+    V1PodCondition,
+    V1PodStatus,
 )
+
+from vantage6.common.enum import RunStatus
+
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_job_pod_run_status,
 )
-from vantage6.common.enum import RunStatus
 
 
 def get_null_logger(name="null_logger"):

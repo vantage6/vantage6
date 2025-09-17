@@ -1,21 +1,21 @@
-import docker
+import base64
+import hashlib
 import json
 import os
 import shutil
-import base64
-import hashlib
 import time
-
 from pathlib import Path
 
-from vantage6.common.globals import APPNAME
-from vantage6.common import debug, info, error
+import docker
+
+from vantage6.common import debug, error, info, split_rabbitmq_uri
 from vantage6.common.docker.addons import get_container
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.common import split_rabbitmq_uri
+from vantage6.common.globals import APPNAME
+
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 from vantage6.cli.globals import RABBIT_TIMEOUT
+from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 
 DEFAULT_RABBIT_IMAGE = "harbor2.vantage6.ai/infrastructure/rabbitmq"
 RABBIT_CONFIG = "rabbitmq.config"

@@ -1,9 +1,10 @@
 import click
 
 from vantage6.common import info
-from vantage6.cli.context.server import ServerContext
-from vantage6.cli.common.decorator import click_insert_context
 from vantage6.common.globals import InstanceType
+
+from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.context.server import ServerContext
 
 
 @click.command()

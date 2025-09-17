@@ -1,11 +1,13 @@
 import json
-
 from typing import Any
+
 from rich.console import Console
 from rich.table import Table
 
+from vantage6.common import debug, info
+
 from vantage6.client import UserClient
-from vantage6.common import info, debug
+
 from vantage6.cli.globals import DIAGNOSTICS_IMAGE
 
 

@@ -1,17 +1,18 @@
 import logging
-
 from http import HTTPStatus
+
 from flask import g
 from flask.globals import request
 from flask_restful import Api
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
-from vantage6.server.resource import with_user, ServicesResources
 from vantage6.common import logger_name
-from vantage6.server import db
-from vantage6.server.resource.common.output_schema import RuleSchema
+
 from vantage6.backend.common.resource.pagination import Pagination
 
+from vantage6.server import db
+from vantage6.server.resource import ServicesResources, with_user
+from vantage6.server.resource.common.output_schema import RuleSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

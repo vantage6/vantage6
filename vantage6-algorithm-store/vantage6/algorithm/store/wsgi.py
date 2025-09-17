@@ -6,6 +6,7 @@ server is started using the `v6 server start` command, it is started from here.
 import sys
 
 from vantage6.common import error
+
 from vantage6.algorithm.store import run_server
 
 if len(sys.argv) < 2:

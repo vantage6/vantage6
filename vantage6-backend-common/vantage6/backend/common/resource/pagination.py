@@ -5,7 +5,6 @@ import math
 from urllib.parse import urlencode
 
 import flask
-import sqlalchemy
 from flask import g
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm.decl_api import DeclarativeMeta

@@ -1,17 +1,16 @@
 import logging
-import uuid
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.server.model import (
-    Rule,
-    Organization,
-    Node,
-    Collaboration,
-)
-from vantage6.server.model.rule import Scope, Operation
-from .test_resource_base import TestResourceBase
 
+from vantage6.server.model import (
+    Collaboration,
+    Organization,
+    Rule,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)

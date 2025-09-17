@@ -1,18 +1,18 @@
 import abc
 import itertools
+import json as json_lib
 import logging
 import time
-import json as json_lib
 from pathlib import Path
 
 import requests
 
-from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import (
-    STRING_ENCODING,
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
+    STRING_ENCODING,
 )
 
 module_name = __name__.split(".")[1]

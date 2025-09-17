@@ -1,16 +1,17 @@
 import json
 import logging
-from datetime import datetime
-
-from typing import Any
-from importlib import import_module
 from copy import deepcopy
+from datetime import datetime
+from importlib import import_module
+from typing import Any
 
 import pandas as pd
 
 from vantage6.common.globals import AuthStatus
-from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
+
 from vantage6.algorithm.tools.util import info
+
+from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 
 module_name = __name__.split(".")[1]
 

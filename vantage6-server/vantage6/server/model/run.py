@@ -1,14 +1,15 @@
 import datetime
 import logging
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, select
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, select
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from vantage6.common import logger_name
-from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.common.enum import AlgorithmStepType
-from vantage6.server.model import Node, Collaboration, Organization
+
+from vantage6.server.model import Collaboration, Node, Organization
+from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model.task import Task
 
 log_ = logging.getLogger(logger_name(__name__))

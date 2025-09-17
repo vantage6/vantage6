@@ -1,7 +1,8 @@
 from vantage6.common.serialization import serialize
+
 from vantage6.client import ClientBase
 from vantage6.client.filter import post_filtering
-from vantage6.client.rich.table import rich_dataframe_table, rich_dataframe_schema_table
+from vantage6.client.rich.table import rich_dataframe_schema_table, rich_dataframe_table
 
 
 class DataFrameSubClient(ClientBase.SubClient):

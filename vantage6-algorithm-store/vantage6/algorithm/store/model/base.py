@@ -7,16 +7,16 @@ two different classes for it.
 """
 
 import logging
-from typing import Any
 
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.session import Session
 
-from vantage6.common import logger_name, Singleton
+from vantage6.common import Singleton, logger_name
+
 from vantage6.backend.common.base import (
-    BaseModelBase,
-    BaseDatabaseSessionManager,
     BaseDatabase,
+    BaseDatabaseSessionManager,
+    BaseModelBase,
 )
 
 module_name = logger_name(__name__)

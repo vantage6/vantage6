@@ -131,7 +131,7 @@ try:
         f.write(report_deletion + "\n" + report_creation + "\n" + report_store)
 
 
-except Exception as e:
+except Exception:
     print("=" * 80)
     print("Failed to populate server")
     print(traceback.format_exc())

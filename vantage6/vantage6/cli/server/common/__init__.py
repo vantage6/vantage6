@@ -1,10 +1,10 @@
-from docker.client import DockerClient
 from colorama import Fore, Style
+from docker.client import DockerClient
 
 from vantage6.common import error, info
-from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import remove_container, get_container
 from vantage6.common.context import AppContext
+from vantage6.common.docker.addons import get_container, remove_container
+from vantage6.common.globals import APPNAME
 
 from vantage6.cli.context.server import ServerContext
 

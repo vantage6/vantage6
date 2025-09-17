@@ -1,9 +1,8 @@
 from __future__ import annotations
-from sqlalchemy import Column, Text, Integer, ForeignKey, Boolean
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import select
-
 
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
