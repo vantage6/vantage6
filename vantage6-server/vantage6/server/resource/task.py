@@ -1009,7 +1009,7 @@ class Tasks(TaskBase):
                 uuid.UUID(input_)
             except ValueError:
                 return False, (
-                    "Your task's input cannot be parsed. YNote that if you are using "
+                    "Your task's input cannot be parsed. Note that if you are using "
                     "the user interface or Python client, this should be done "
                     "for you."
                 )
