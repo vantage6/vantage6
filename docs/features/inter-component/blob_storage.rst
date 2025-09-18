@@ -80,4 +80,4 @@ Database
 
 A blob_storage column is added to the `runs` table to indicate whether blob storage and streaming was used for that run.
 This ensures for any run it is clear whether the input or result field should be interpreted directly, or first 
-retrieved. For existing installations, empty values for `blob_storage_used` is assumed to be False.
+retrieved. For existing installations, empty values for `blob_storage_used` are assumed to be False.
