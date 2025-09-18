@@ -109,25 +109,25 @@ node:
   # Storage settings on host of the node machine. This defines where the database is
   # stored as well as the task directory (which will contain the input/output of the
   # tasks).
-  {% if node.persistence is defined %}
   persistence:
     tasks:
+      {% if node.persistence is defined and node.persistence.tasks is defined %}
       storageClass: {{ node.persistence.tasks.storageClass | default('local-storage') }}
       size: {{ node.persistence.tasks.size | default('10Gi') }}
       hostPath: {{ node.persistence.tasks.hostPath | default('/path/to/where/task/files/are/stored') }}
-    database:
-      storageClass: {{ node.persistence.database.storageClass | default('local-storage') }}
-      size: {{ node.persistence.database.size | default('5Gi') }}
-  {% else %}
-  persistence:
-    tasks:
+      {% else %}
       storageClass: local-storage
       size: 10Gi
       hostPath: /path/to/where/task/files/are/stored
+      {% endif %}
     database:
+      {% if node.persistence is defined and node.persistence.database is defined %}
+      storageClass: {{ node.persistence.database.storageClass | default('local-storage') }}
+      size: {{ node.persistence.database.size | default('5Gi') }}
+      {% else %}
       storageClass: local-storage
       size: 5Gi
-  {% endif %}
+      {% endif %}
 
 
   # It is also possible not to specify the details of the service-based databases
