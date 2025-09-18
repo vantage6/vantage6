@@ -19,7 +19,7 @@ configuration file:
     storage_account_name: "your-storage-account-name"
 
 At the moment, only the 'azure' storage type is supported. The 'test-container' refers to the azure blob container 
-(unrelated to docker containers) in which all blobs are stored. This container should be created in advance manually. 
+(unrelated to Docker containers) in which all blobs are stored. This container should be created in advance manually. 
 Tenant id, client id and client secret are required for authentication (For help on setting up a managed identity, 
 see `here <https://learn.microsoft.com/en-us/azure/storage/blobs/authorize-access-azure-active-directory>`__). 
 
