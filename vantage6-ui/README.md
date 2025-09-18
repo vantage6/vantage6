@@ -13,9 +13,9 @@
 
 ---
 
-This part of the repository contains the code for the vantage6 user interface (UI).
-This is a web application that allows you to communicate easily with your vantage6
-server.
+This part of the repository contains the code for the vantage6 user interface
+(UI). This is a web application that allows you to communicate easily with
+your vantage6 server.
 
 ## How to use
 
@@ -26,11 +26,11 @@ a user account.
 
 ### Running the UI locally
 
-The UI is started locally with the ``v6 server start`` command. It will also be included
-in a sandbox environment that can be started with ``v6 sandbox start``. Both commands
-will automatically start a user interface on `http://localhost:7600`. Port 7600 is the
-default: it is possible to configure running it on another port by changing the
-configuration file.
+The UI is started locally with the ``v6 server start`` command. It will also be
+included in a sandbox environment that can be started with
+``v6 sandbox start``. Both commands will automatically start a user interface
+on `http://localhost:7600`. Port 7600 is the default: it is possible to configure
+running it on another port by changing the configuration file.
 
 For developers, it is recommended to use ``v6 dev`` commands. Local code changes are
 then synced to the UI deployment. This UI deployment is also available on
@@ -38,8 +38,8 @@ then synced to the UI deployment. This UI deployment is also available on
 
 ### Deployment
 
-There are several ways in which you may deploy the UI. The most convenient way is to use
-the CLI:
+There are several ways in which you may deploy the UI. The most convenient way is
+to use the CLI:
 
 ```
 v6 server start
@@ -47,18 +47,22 @@ v6 server start
 
 This command starts up the UI together with the vantage6 server.
 
-Alternatively. Angular's [deployment documentation](https://angular.io/guide/deployment)
-offers a number of options to deploy the UI code directly without container technology.
+Alternatively. Angular's
+[deployment documentation](https://angular.io/guide/deployment)
+offers a number of options to deploy the UI code directly without container
+technology.
 
-Finally, note that kubernetes uses the Docker image `harbor2.vantage6.ai/infrastructure/ui`
-to run the UI. One could also run the UI with a command such as:
+Finally, note that kubernetes uses the Docker image
+`harbor2.vantage6.ai/infrastructure/ui` to run the UI. One could also run the UI
+with a command such as:
 
 ```
-docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
+docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" \
+  -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
 ```
 
-This is recommended for v4 deployments, but no longer in v5. Please checkout this README
-in a `release/4.x` branch (e.g. release/4.13) to view more details.
+This is recommended for v4 deployments, but no longer in v5. Please checkout
+this README in a `release/4.x` branch (e.g. release/4.13) to view more details.
 
 #### Security settings
 
@@ -67,7 +71,7 @@ will be generated when you deploy the UI through the kubernetes interface.
 The CSP headers are set so that your UI can only access the vantage6 server and
 algorithm stores.
 
-Note that it is important that the UI has settings on the allowed algorithm stores to
-set a proper security policy. If the UI allows all algorithm store, the CSP policy
-will be very lenient, because it will allow connecting to any URL to facilitate
-connecting to any algorithm store.
+Note that it is important that the UI has settings on the allowed algorithm
+stores to set a proper security policy. If the UI allows all algorithm store,
+the CSP policy will be very lenient, because it will allow connecting to any
+URL to facilitate connecting to any algorithm store.
