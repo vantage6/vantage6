@@ -133,6 +133,8 @@ class CryptorBase(metaclass=Singleton):
             return self.str_to_bytes(data.decode(STRING_ENCODING))
         elif isinstance(data, str):
             return self.str_to_bytes(data)
+        else:
+            raise ValueError("Data must be either a string or bytes.")
 
     def encrypt_stream(
         self,
