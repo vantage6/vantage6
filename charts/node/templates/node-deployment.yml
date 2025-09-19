@@ -33,9 +33,9 @@ spec:
         - name: PROXY_SERVER_HOST
           value: http://{{ .Release.Name }}-node-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         - name: KEYCLOAK_URL
-          value: "{{ .Values.node.keycloakUrl }}"
+          value: {{ .Values.node.keycloakUrl | quote }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.node.keycloakRealm }}
+          value: {{ .Values.node.keycloakRealm | quote }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
