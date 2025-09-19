@@ -15,7 +15,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   {{- range .Values.node.databases.fileBased }}
   local:
-    path: {{ .volumePath }}
+    path: {{ .volumePath | quote }}
   {{- end }}
   nodeAffinity:
     required:

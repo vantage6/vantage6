@@ -39,7 +39,7 @@ spec:
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
-        command: ["vnode-local", "start", "-c", "/app/config/config.yml", "--dockerized"]
+        command: ["vnode-local", "start", "-c", "/app/config/config.yml"]
         volumeMounts:
         - name: task-files-root
           mountPath: /app/tasks
