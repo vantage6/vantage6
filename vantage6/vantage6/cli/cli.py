@@ -12,6 +12,10 @@ from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.dev.clean import cli_clean_dev_env
+from vantage6.cli.dev.rebuild import cli_rebuild_dev_env
+from vantage6.cli.dev.start import cli_start_dev_env
+from vantage6.cli.dev.stop import cli_stop_dev_env
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -89,13 +93,17 @@ cli_node.add_command(cli_node_version, name="version")
 @click.group(name=CLICommandName.DEV.value)
 def cli_dev() -> None:
     """
-    Quickly manage a test network with a server and several nodes.
+    Spin up a local development network.
 
-    These commands are helpful for local testing of your vantage6 environment.
+    In this environment, any code changes you make will be reflected in the running
+    services.
     """
 
 
-# TODO add commands for the dev group
+cli_dev.add_command(cli_start_dev_env, name="start")
+cli_dev.add_command(cli_stop_dev_env, name="stop")
+cli_dev.add_command(cli_rebuild_dev_env, name="rebuild")
+cli_dev.add_command(cli_clean_dev_env, name="clean")
 
 
 # Define the algorithm group
