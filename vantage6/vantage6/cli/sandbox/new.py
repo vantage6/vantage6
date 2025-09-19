@@ -3,6 +3,7 @@ from pathlib import Path
 
 import click
 import pandas as pd
+from vantage6.common.configuration_manager import ConfigurationManager
 import yaml
 from colorama import Fore, Style
 from jinja2 import Environment, FileSystemLoader
@@ -21,6 +22,7 @@ from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
+from vantage6.cli.common.utils import select_context_and_namespace
 
 
 def create_node_data_files(
@@ -69,7 +71,7 @@ def create_node_config_file(
     config: dict,
     server_name: str,
     datasets: list[tuple[str, Path]] = (),
-) -> None:
+) -> str:
     """Create a node configuration file (YAML).
 
     Creates a node configuration for a simulated organization. Organization ID
@@ -79,16 +81,21 @@ def create_node_config_file(
     Parameters
     ----------
     server_url : str
-        Url of the dummy server.
+        Url of the sandbox server.
     port : int
-        Port of the dummy server.
+        Port of the sandbox server.
     config : dict
         Configuration dictionary containing org_id, api_key, node name and
         additional user_defined_config.
     server_name : str
-        Configuration name of the dummy server.
+        Configuration name of the sandbox server.
     datasets : list[tuple[str, Path]]
         List of tuples containing the labels and the paths to the datasets
+
+    Returns
+    -------
+    str
+        Path to the node configuration file.
     """
     environment = Environment(
         loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
@@ -106,7 +113,7 @@ def create_node_config_file(
 
     path_to_data_dir = Path(folders["data"])
     path_to_data_dir.mkdir(parents=True, exist_ok=True)
-    full_path = Path(folders["config"] / f"{node_name}.yaml")
+    full_path = Path(folders["config"] / f"{node_name}.sandbox.yaml")
 
     if full_path.exists():
         error(f"Node configuration file already exists: {full_path}")
@@ -115,13 +122,25 @@ def create_node_config_file(
     node_config = template.render(
         {
             "node": {
+                "proxyPort": 7676 + int(config["org_id"]),
                 "api_key": config["api_key"],
-                "logging": {
-                    "file": f"{node_name}.log",
-                },
+                "image": "harbor2.vantage6.ai/infrastructure/node:frank",
+                "logging": {"file": f"{node_name}.log", "loggers": []},
+                # TODO: the keycloak instance should be spun up together with the server
+                "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
+                "keycloakRealm": "vantage6",
                 "additional_config": config["user_defined_config"],
                 "dev": {
                     "task_dir_extension": str(path_to_data_dir),
+                },
+                "persistence": {
+                    "tasks": {
+                        "hostPath": str(path_to_data_dir),
+                        "size": "1Gi",
+                    },
+                    "database": {
+                        "size": "1Gi",
+                    },
                 },
                 "databases": {
                     "fileBased": [
@@ -129,10 +148,11 @@ def create_node_config_file(
                             "name": dataset[0],
                             "uri": dataset[1],
                             "type": "csv",
-                            "volumePath": str(path_to_data_dir),
+                            "volumePath": Path(dataset[1]).parent,
                             "originalName": dataset[0],
                         }
-                        for dataset in datasets
+                        # TODO there is an issue with supplying multiple datasets
+                        for dataset in [datasets[0]]
                     ]
                 },
                 "server": {
@@ -153,8 +173,11 @@ def create_node_config_file(
         f.write(node_config)
 
     info(
-        f"Spawned node for organization {Fore.GREEN}{config['org_id']}{Style.RESET_ALL}"
+        f"Created node configuration file for organization {Fore.GREEN}"
+        f"{config['org_id']}{Style.RESET_ALL}"
     )
+
+    return full_path
 
 
 def _read_extra_config_file(extra_config_file: Path | None) -> str:
@@ -217,7 +240,10 @@ def generate_node_configs(
     # Add default datasets to the list of dataset provided
     for default_dataset in DefaultDatasets:
         extra_datasets.append(
-            (default_dataset.name.lower(), data_directory / default_dataset.value)
+            (
+                default_dataset.name.lower().replace("_", "-"),
+                data_directory / default_dataset.value,
+            )
         )
 
     # Check for duplicate dataset labels
@@ -239,14 +265,15 @@ def generate_node_configs(
     for dataset in extra_datasets:
         node_data_files.append(create_node_data_files(num_nodes, server_name, dataset))
 
+    config_files = []
     for i in range(num_nodes):
         config = {
             "org_id": i + 1,
-            "api_key": generate_apikey(),
-            "node_name": f"{server_name}_node_{i + 1}",
+            "api_key": "TODO",
+            "node_name": f"{server_name}-node-{i + 1}",
             "user_defined_config": extra_config,
         }
-        create_node_config_file(
+        config_file = create_node_config_file(
             server_url,
             port,
             config,
@@ -254,8 +281,9 @@ def generate_node_configs(
             [files[i] for files in node_data_files],
         )
         configs.append(config)
+        config_files.append(config_file)
 
-    return configs
+    return config_files, configs
 
 
 def create_vserver_import_config(node_configs: list[dict], server_name: str) -> Path:
@@ -291,9 +319,7 @@ def create_vserver_import_config(node_configs: list[dict], server_name: str) -> 
         org_data = {"name": f"org_{org_id}"}
 
         organizations.append(org_data)
-        collaboration["participants"].append(
-            {"name": f"org_{org_id}", "api_key": config["api_key"]}
-        )
+        collaboration["participants"].append({"name": f"org_{org_id}"})
     organizations[0]["make_admin"] = True
     info(
         f"Organization {Fore.GREEN}{node_configs[0]['org_id']}"
@@ -374,6 +400,11 @@ def create_vserver_config(
         extra_config += f"images:\n  ui: {ui_image}"
 
     template = environment.get_template("server_config.j2")
+
+    # TODO: make this configurable, or the dev folder or something
+    data_dir = Path(f"/Users/frankmartin/Data/{server_name}")
+    data_dir.mkdir(parents=True, exist_ok=True)
+
     server_config = template.render(
         {
             "server": {
@@ -387,13 +418,12 @@ def create_vserver_config(
                     }
                 ],
                 "logging": {},
-                "keycloakUrl": "http://vantage6-auth-keycloak.vantage6-server.svc.cluster.local",
+                "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
                 "additional_config": extra_config,
             },
             "rabbitmq": {},
             "database": {
-                # TODO: make this configurable
-                "volumePath": "/Users/frankmartin/Data",
+                "volumePath": str(data_dir),
                 "k8sNodeName": "docker-desktop",
             },
             "ui": {
@@ -411,7 +441,7 @@ def create_vserver_config(
 
     config_dir = Path(folders["config"] / server_name)
     config_dir.mkdir(parents=True, exist_ok=True)
-    full_path = folders["config"] / f"{server_name}.yaml"
+    full_path = folders["config"] / f"{server_name}.sandbox.yaml"
     if full_path.exists():
         error(f"Server configuration file already exists: {full_path}")
         exit(1)
@@ -548,7 +578,7 @@ def demo_network(
     tuple[list[dict], Path, Path]
         Tuple containing node, server import and server configurations.
     """
-    node_configs = generate_node_configs(
+    node_config_files, node_configs = generate_node_configs(
         num_nodes,
         server_url,
         server_port,
@@ -569,12 +599,13 @@ def demo_network(
     store_config = create_algo_store_config(
         server_name, server_url, server_port, algorithm_store_port, extra_store_config
     )
-    return (node_configs, server_import_config, server_config, store_config)
+    return (node_config_files, server_import_config, server_config, store_config)
 
 
 # TODO:
 # - [ ] Add option to set namespace and context
 # - [ ] Accept the additional config files for the server, node and algorithm store
+# - [ ] Exit gracefully when one of the steps fails
 @click.command()
 @click.option(
     "-n", "--name", default=None, type=str, help="Name for your development setup"
@@ -612,6 +643,8 @@ def demo_network(
     default=Ports.DEV_ALGO_STORE.value,
     help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
 )
+# TODO: this should be `--server-image`
+# TODO: I am missing the `--store-image` option
 @click.option(
     "-i",
     "--image",
@@ -657,6 +690,8 @@ def demo_network(
     help="Add a dataset to the nodes. The first argument is the label of the database, "
     "the second is the path to the dataset file.",
 )
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.pass_context
 def cli_new_sandbox(
     click_ctx: click.Context,
@@ -672,70 +707,98 @@ def cli_new_sandbox(
     extra_node_config: Path = None,
     extra_store_config: Path = None,
     add_dataset: list[tuple[str, Path]] = (),
+    context: str = None,
+    namespace: str = None,
 ) -> dict:
-    """Creates a sandbox vantage6 network.
-
-    Creates server instance as well as its import configuration file. Server
-    name is set to 'dev_default_server'. Generates `n` node configurations, but
-    by default this is set to 3. Then runs a Batch import of
-    organizations/collaborations/users and tasks.
+    """
+    Create a sandbox environment.
     """
     server_name = prompt_config_name(name)
-    if not ServerContext.config_exists(server_name, False):
-        demo = demo_network(
-            num_nodes,
-            server_url,
-            server_port,
-            server_name,
-            extra_server_config,
-            extra_node_config,
-            extra_store_config,
-            ui_image,
-            ui_port,
-            algorithm_store_port,
-            list(add_dataset),
+    if not ServerContext.config_exists(server_name, False, is_sandbox=True):
+        node_config_files, server_import_config, server_config, store_config = (
+            demo_network(
+                num_nodes,
+                server_url,
+                server_port,
+                server_name,
+                extra_server_config,
+                extra_node_config,
+                extra_store_config,
+                ui_image,
+                ui_port,
+                algorithm_store_port,
+                list(add_dataset),
+            )
         )
         info(
-            f"Created {Fore.GREEN}{len(demo[0])}{Style.RESET_ALL} node "
+            f"Created {Fore.GREEN}{len(node_config_files)}{Style.RESET_ALL} node "
             f"configuration(s), attaching them to {Fore.GREEN}{server_name}"
             f"{Style.RESET_ALL}."
         )
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
-    (node_config, server_import_config, server_config, store_config) = demo
-    ctx = get_server_context(server_name, False, ServerContext)
+
+    ctx = get_server_context(server_name, False, ServerContext, is_sandbox=True)
+
+    # Prompt for the k8s namespace and context
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
     # First we need to start the server, store and auth
     info("Starting vantage6 core")
     click_ctx.invoke(
         cli_server_start,
         ctx=ctx,
-        name=server_name,
+        name=ctx.name,
         system_folders=False,
-        namespace="vantage6-sandbox",
-        context="docker-desktop",
-        attach=True,
+        namespace=namespace,
+        context=context,
+        attach=False,
     )
+
+    # Wait a moment for the server to be fully ready
+    import time
+
+    time.sleep(5)
 
     # Then start the import process
     info("Starting import process")
-    click_ctx.invoke(
-        cli_server_import, ctx=ctx, file=server_import_config, drop_all=False
+    # TODO: The clients and users are not deleted. The server will fail the import if
+    # they already exist.
+    node_details_from_server = click_ctx.invoke(
+        cli_server_import,
+        ctx=ctx,
+        file=server_import_config,
+        drop_all=False,
     )
+
+    print(node_details_from_server)
+
+    info("Updating node configuration files with API keys")
+    # TODO: @bart this is where I left off. I tried to update the config files with the
+    # API keys, it should be something like this:
+    # for idx, node_detail in enumerate(node_details_from_server):
+    #     node_config_file = node_config_files[idx]
+    #     cm = ConfigurationManager.from_file(node_config_files, is_sandbox=True)
+    #     cm.config["node"]["api_key"] = node_detail["api_key"]
+    #     cm.save(node_config_file)
 
     click_ctx.invoke(
         cli_server_stop,
         name=server_name,
-        context="docker-desktop",
-        namespace="vantage6-sandbox",
+        context=context,
+        namespace=namespace,
         system_folders=False,
         all_servers=True,
+        is_sandbox=True,
     )
 
     info("Sandbox environment was set up successfully!")
     info("Start it using the following command:")
-    info(f"{Fore.GREEN}v6 sandbox start {Style.RESET_ALL}")
+    info(f"{Fore.GREEN}v6 sandbox start{Style.RESET_ALL}")
 
     # find user credentials to print. Read from server import file
     with open(server_import_config, "r") as f:
@@ -753,7 +816,7 @@ def cli_new_sandbox(
         pass
 
     return {
-        "node_configs": node_config,
+        "node_configs": node_config_files,
         "server_import_config": server_import_config,
         "server_config": server_config,
         "store_config": store_config,

@@ -50,7 +50,6 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-
     prestart_checks(ctx, InstanceType.SERVER, name, system_folders, context, namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
@@ -66,6 +65,7 @@ def cli_server_start(
     # port forward for server
     info("Port forwarding for server")
     start_port_forward(
+        # TODO: make this dynamic
         service_name=f"{ctx.helm_release_name}-vantage6-server-service",
         service_port=ctx.config["server"].get("port", Ports.DEV_SERVER.value),
         port=port or ctx.config["server"].get("port", Ports.DEV_SERVER.value),

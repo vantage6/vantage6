@@ -29,12 +29,16 @@ from vantage6.cli.globals import (
     "system folders. This is the default.",
 )
 @click.option("--all", "all_nodes", flag_value=True, help="Stop all running nodes")
+@click.option(
+    "--sandbox", "is_sandbox", flag_value=True, help="Stop a sandbox environment"
+)
 def cli_node_stop(
     name: str,
     context: str,
     namespace: str,
     system_folders: bool,
     all_nodes: bool,
+    is_sandbox: bool = False,
 ) -> None:
     """
     Stop one or all running nodes.
@@ -48,6 +52,7 @@ def cli_node_stop(
         namespace=namespace,
         context=context,
         system_folders=system_folders,
+        is_sandbox=is_sandbox,
     )
 
 

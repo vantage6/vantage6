@@ -181,7 +181,9 @@ def configuration_wizard(
     return config_file
 
 
-def select_configuration_questionaire(type_: InstanceType, system_folders: bool) -> str:
+def select_configuration_questionaire(
+    type_: InstanceType, system_folders: bool, is_sandbox: bool = False
+) -> str:
     """
     Ask which configuration the user wants to use. It shows only configurations
     that are in the default folder.
@@ -192,19 +194,23 @@ def select_configuration_questionaire(type_: InstanceType, system_folders: bool)
         Type of the instance to create a configuration for
     system_folders : bool
         Whether to use the system folders or not
-
+    is_sandbox : bool
+        Whether to show only the sandbox configurations or not
     Returns
     -------
     str
         Name of the configuration
     """
     context = select_context_class(type_)
-    configs, _ = context.available_configurations(system_folders)
+    configs, _ = context.available_configurations(system_folders, is_sandbox)
+
+    print(f"configs: {configs}")
 
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
     choices = []
     for config_collection in configs:
+        print(f"config_collection: {config_collection.name}")
         choices.append(
             q.Choice(title=f"{config_collection.name:25}", value=config_collection.name)
         )

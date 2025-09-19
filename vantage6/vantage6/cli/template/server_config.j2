@@ -179,6 +179,10 @@ server:
   #   - https://portal.cotopaxi.vantage6.ai
   #   - http://localhost:7600
   {% endif %}
+  {% if server.additional_config is defined %}
+  {{ server.additional_config }}
+  {% endif %}
+
 
 rabbitmq:
   # The image of the RabbitMQ server
@@ -226,7 +230,7 @@ database:
   # The name of the database
   name: {{ database.name | default('vantage6') }}
 
-  #hostpath of the database mount
+  # hostpath of the database mount
   volumePath: {{ database.volumePath }}
 
   # The name of the k8s node where the database is running
@@ -238,7 +242,7 @@ ui:
   # The image of the UI
   image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
   # Service port for the UI
-  port: 7600
+  port: {{ ui.port | default(7600) }}
   # keycloak realm
   keycloakRealm: {{ ui.keycloakRealm | default('vantage6') }}
   # keycloak client

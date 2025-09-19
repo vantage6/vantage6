@@ -26,6 +26,7 @@ def execute_stop(
     namespace: str,
     context: str,
     system_folders: bool,
+    is_sandbox: bool = False,
 ):
     """
     Execute the stop function for a given instance type and infra component.
@@ -48,12 +49,13 @@ def execute_stop(
         The context of the service.
     system_folders : bool
         Whether to use system folders.
+    is_sandbox : bool
+        Whether the configuration is a sandbox configuration, by default False
     """
     context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,
     )
-
     running_services = find_running_service_names(
         instance_type=instance_type,
         only_system_folders=system_folders,
@@ -73,7 +75,9 @@ def execute_stop(
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
         else:
-            ctx = get_context(instance_type, to_stop, system_folders)
+            ctx = get_context(
+                instance_type, to_stop, system_folders, is_sandbox=is_sandbox
+            )
             helm_name = ctx.helm_release_name
 
         if helm_name in running_services:

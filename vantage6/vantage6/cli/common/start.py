@@ -217,7 +217,7 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
-    ip: str | None,
+    ip: str = "localhost",
     context: str | None = None,
     namespace: str | None = None,
 ) -> None:

@@ -36,12 +36,14 @@ class ServerContext(BaseServerContext):
         instance_name: str,
         system_folders: bool = S_FOL,
         in_container: bool = False,
+        is_sandbox: bool = False,
     ):
         super().__init__(
             InstanceType.SERVER,
             instance_name,
             system_folders=system_folders,
             in_container=in_container,
+            is_sandbox=is_sandbox,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -123,7 +125,9 @@ class ServerContext(BaseServerContext):
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
+    def config_exists(
+        cls, instance_name: str, system_folders: bool = S_FOL, is_sandbox: bool = False
+    ) -> bool:
         """
         Check if a configuration file exists.
 
@@ -134,19 +138,23 @@ class ServerContext(BaseServerContext):
             of the configuration file.
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
-
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
             Whether the configuration file exists or not
         """
         return super().config_exists(
-            InstanceType.SERVER, instance_name, system_folders=system_folders
+            InstanceType.SERVER,
+            instance_name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
     def available_configurations(
-        cls, system_folders: bool = S_FOL
+        cls, system_folders: bool = S_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
@@ -155,6 +163,8 @@ class ServerContext(BaseServerContext):
         ----------
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
 
         Returns
         -------
@@ -162,4 +172,6 @@ class ServerContext(BaseServerContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(InstanceType.SERVER, system_folders)
+        return super().available_configurations(
+            InstanceType.SERVER, system_folders, is_sandbox
+        )

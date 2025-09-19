@@ -38,6 +38,7 @@ class AppContext(metaclass=Singleton):
         print_log_header: bool = True,
         logger_prefix: str = "",
         in_container: bool = False,
+        is_sandbox: bool = False,
     ) -> None:
         """
         Create a new AppContext instance.
@@ -58,6 +59,8 @@ class AppContext(metaclass=Singleton):
             Print a banner to the log file.
         in_container: bool
             Whether the application is running inside a container, by default False
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         """
         self.LOGGER_PREFIX = logger_prefix
         self.initialize(
@@ -67,6 +70,7 @@ class AppContext(metaclass=Singleton):
             config_file,
             print_log_header,
             in_container,
+            is_sandbox,
         )
 
     def initialize(
@@ -77,6 +81,7 @@ class AppContext(metaclass=Singleton):
         config_file: str | None = None,
         print_log_header: bool = True,
         in_container: bool = False,
+        is_sandbox: bool = False,
     ) -> None:
         """
         Initialize the AppContext instance.
@@ -97,14 +102,19 @@ class AppContext(metaclass=Singleton):
             Print a banner to the log file.
         in_container: bool
             Whether the application is running inside a container, by default False
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
+        if is_sandbox:
+            self.name = self.name.replace(".sandbox", "")
         self.instance_type: InstanceType = instance_type
         self.in_container = in_container
         self.config_file = self.find_config_file(
-            instance_type, self.name, system_folders, config_file
+            instance_type, self.name, system_folders, config_file, is_sandbox=is_sandbox
         )
+        self.is_sandbox = is_sandbox
 
         # look up system / user directories. This way we can check if the
         # config file container custom directories
@@ -152,6 +162,7 @@ class AppContext(metaclass=Singleton):
         instance_type: InstanceType,
         system_folders: bool = False,
         in_container: bool = False,
+        is_sandbox: bool = False,
     ) -> Self:
         """
         Create a new AppContext instance from an external config file.
@@ -166,13 +177,16 @@ class AppContext(metaclass=Singleton):
             Use system folders rather than user folders
         in_container: bool
             Whether the application is running inside a container, by default False
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         AppContext
             A new AppContext instance
         """
         instance_name = Path(path).stem
+        if is_sandbox:
+            instance_name = instance_name.replace(".sandbox", "")
 
         self_ = cls.__new__(cls)
         self_.initialize(
@@ -181,6 +195,7 @@ class AppContext(metaclass=Singleton):
             system_folders,
             path,
             in_container=in_container,
+            is_sandbox=is_sandbox,
         )
 
         return self_
@@ -191,6 +206,7 @@ class AppContext(metaclass=Singleton):
         instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
+        is_sandbox: bool = False,
     ) -> bool:
         """Check if a config file exists for the given instance type and name.
 
@@ -202,7 +218,8 @@ class AppContext(metaclass=Singleton):
             Name of the configuration
         system_folders: bool
             Use system folders rather than user folders
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
@@ -210,14 +227,18 @@ class AppContext(metaclass=Singleton):
         """
         try:
             config_file = cls.find_config_file(
-                instance_type, instance_name, system_folders, verbose=False
+                instance_type,
+                instance_name,
+                system_folders,
+                verbose=False,
+                is_sandbox=is_sandbox,
             )
 
         except Exception:
             return False
 
         # check that configuration is present in config-file
-        config = cls.INST_CONFIG_MANAGER.from_file(config_file)
+        config = cls.INST_CONFIG_MANAGER.from_file(config_file, is_sandbox=is_sandbox)
         return bool(config)
 
     @staticmethod
@@ -295,7 +316,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def available_configurations(
-        cls, instance_type: InstanceType, system_folders: bool
+        cls, instance_type: InstanceType, system_folders: bool, is_sandbox: bool = False
     ) -> tuple[list[ConfigurationManager], list[Path]]:
         """
         Returns a list of configuration managers and a list of paths to
@@ -307,6 +328,9 @@ class AppContext(metaclass=Singleton):
             Type of instance that is checked
         system_folders: bool
             Use system folders rather than user folders
+        is_sandbox: bool
+            When True, instead of showing the regular configurations, show the sandbox
+            configurations.
 
         Returns
         -------
@@ -315,20 +339,25 @@ class AppContext(metaclass=Singleton):
             configuration files that could not be loaded.
         """
         folders = cls.instance_folders(instance_type, "", system_folders)
-
         # potential configuration files
-        config_files = Path(folders["config"]).glob("*.yaml")
-
+        config_files = Path(folders["config"]).glob(
+            "*.yaml" if not is_sandbox else "*.sandbox.yaml"
+        )
+        print(f"config_files: {config_files}")
         configs = []
         failed = []
         for file_ in config_files:
             try:
-                conf_manager = cls.INST_CONFIG_MANAGER.from_file(file_)
+                conf_manager = cls.INST_CONFIG_MANAGER.from_file(
+                    file_, is_sandbox=is_sandbox
+                )
                 if conf_manager.is_empty:
                     failed.append(file_)
                 else:
                     configs.append(conf_manager)
-            except Exception:
+            except Exception as e:
+                print(f"Error loading configuration file: {e}")
+
                 failed.append(file_)
 
         return configs, failed
@@ -425,6 +454,7 @@ class AppContext(metaclass=Singleton):
         system_folders: bool,
         config_file: str | None = None,
         verbose: bool = True,
+        is_sandbox: bool = False,
     ) -> str:
         """
         Find a configuration file.
@@ -442,7 +472,8 @@ class AppContext(metaclass=Singleton):
             configuration is used.
         verbose: bool
             Print the directories that are searched for the configuration file.
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         str
@@ -453,9 +484,13 @@ class AppContext(metaclass=Singleton):
         Exception
             If the configuration file is not found
         """
-
         if config_file is None:
-            config_file = f"{instance_name}.yaml"
+            config_file = (
+                f"{instance_name}.yaml"
+                if not is_sandbox
+                else f"{instance_name}.sandbox.yaml"
+            )
+        print(f"Looking for configuration file: {config_file}")
 
         config_dir = cls.instance_folders(
             instance_type, instance_name, system_folders

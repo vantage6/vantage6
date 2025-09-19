@@ -39,7 +39,8 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     The FILE argument should be a path to a yaml file containing the vantage6 formatted
     data to import.
     """
-    info("Validating server version")
+    info("Validating server version: ")
+    info(f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version")
     response = requests.get(
         f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version"
     )
@@ -80,8 +81,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
 
     # TODO: validate that the user has the correct permissions to import data
 
-    info("Dropping all existing data")
-    _drop_all(client)
+    if drop_all:
+        info("Dropping all existing data")
+        _drop_all(client)
 
     info("Collecting root role and rule")
     root_role_id = client.role.list(name="Root", include_root=True)["data"][0]["id"]
@@ -100,7 +102,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         organizations.append(org)
 
         info(f"Importing users for organization {org['name']}")
-        for user in organization["users"]:
+        for user in organization.get("users", []):
             client.user.create(
                 username=user["username"],
                 password=user["password"],
@@ -109,6 +111,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
             )
 
     info("Importing collaborations")
+    all_nodes = []
     for collaboration in import_data["collaborations"]:
 
         # Collecting organization ids
@@ -125,7 +128,6 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         )
 
         info("Registering nodes for collaboration")
-        nodes = []
         for participant in collaboration["participants"]:
             for org in organizations:
                 if org["name"] == participant["name"]:
@@ -134,9 +136,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
                         organization=org["id"],
                         collaboration=col["id"],
                     )
-                    nodes.append(node)
+                    all_nodes.append(node)
 
-        return nodes
+    return all_nodes
 
 
 def _drop_all(client: UserClient) -> None:

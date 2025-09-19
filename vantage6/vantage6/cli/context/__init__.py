@@ -50,7 +50,7 @@ def select_context_class(
 
 
 def get_context(
-    type_: InstanceType, name: str, system_folders: bool
+    type_: InstanceType, name: str, system_folders: bool, is_sandbox: bool = False
 ) -> ServerContext | NodeContext | AlgorithmStoreContext:
     """
     Load the server context from the configuration file.
@@ -63,14 +63,15 @@ def get_context(
         Name of the instance
     system_folders : bool
         Wether to use system folders or if False, the user folders
-
+    is_sandbox : bool
+        Whether the configuration is a sandbox configuration, by default False
     Returns
     -------
     AppContext
         Specialized subclass context of AppContext for the given instance type
     """
     ctx_class = select_context_class(type_)
-    if not ctx_class.config_exists(name, system_folders):
+    if not ctx_class.config_exists(name, system_folders, is_sandbox=is_sandbox):
         scope = "system" if system_folders else "user"
         error(
             f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
@@ -83,6 +84,6 @@ def get_context(
     ctx_class.LOGGING_ENABLED = False
 
     # create server context, and initialize db
-    ctx = ctx_class(name, system_folders=system_folders)
+    ctx = ctx_class(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
     return ctx

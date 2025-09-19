@@ -95,7 +95,7 @@ class CLICommandName(StrEnumBase):
     NODE = "node"
     ALGORITHM = "algorithm"
     TEST = "test"
-    DEV = "dev"
+    SANDBOX = "sandbox"
     USE = "use"
 
 

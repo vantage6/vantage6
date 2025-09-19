@@ -101,8 +101,8 @@ def cli_node_start(
     # start port forward for the node proxy server
     start_port_forward(
         service_name=f"{ctx.helm_release_name}-node-service",
-        service_port=ctx.config["node"].get("port", DEFAULT_PROXY_SERVER_PORT),
-        port=ctx.config["node"].get("port", DEFAULT_PROXY_SERVER_PORT),
+        service_port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
+        port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
         context=context,
         namespace=namespace,
     )

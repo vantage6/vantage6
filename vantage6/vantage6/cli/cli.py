@@ -34,6 +34,9 @@ from vantage6.cli.server.shell import cli_server_shell
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
 from vantage6.cli.server.version import cli_server_version
+from vantage6.cli.sandbox.new import cli_new_sandbox
+from vantage6.cli.sandbox.start import cli_sandbox_start
+from vantage6.cli.sandbox.stop import cli_sandbox_stop
 
 # from vantage6.cli.test.client_script import cli_test_client_script
 # from vantage6.cli.test.integration_test import cli_test_integration
@@ -85,17 +88,18 @@ cli_node.add_command(cli_node_stop, name="stop")
 cli_node.add_command(cli_node_version, name="version")
 
 
-# Define the dev group
-@click.group(name=CLICommandName.DEV)
-def cli_dev() -> None:
+# Define the sandbox group
+@click.group(name=CLICommandName.SANDBOX.value)
+def cli_sandbox() -> None:
     """
-    Quickly manage a test network with a server and several nodes.
-
-    These commands are helpful for local testing of your vantage6 environment.
+    Setup and manage a sandbox environment.
     """
 
 
-# TODO add commands for the dev group
+cli_sandbox.add_command(cli_new_sandbox, name="new")
+cli_sandbox.add_command(cli_sandbox_start, name="start")
+cli_sandbox.add_command(cli_sandbox_stop, name="stop")
+# cli_sandbox.add_command(cli_sandbox_remove, name="remove")
 
 
 # Define the algorithm group
@@ -173,7 +177,7 @@ def cli_complete() -> None:
 # Add the subcommands to the overall group
 cli_complete.add_command(cli_node)
 cli_complete.add_command(cli_server)
-cli_complete.add_command(cli_dev)
+cli_complete.add_command(cli_sandbox)
 cli_complete.add_command(cli_algorithm)
 cli_complete.add_command(cli_test)
 cli_complete.add_command(cli_algo_store)
