@@ -14,7 +14,7 @@ spec:
   storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
   persistentVolumeReclaimPolicy: Retain
   local:
-    path: {{ .Values.node.persistence.tasks.hostPath }}
+    path: {{ .Values.node.persistence.tasks.hostPath | quote }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
