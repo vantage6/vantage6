@@ -29,8 +29,6 @@ from requests import Response as RequestsResponse
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 
-from azure.identity import ClientSecretCredential
-from azure.storage.blob import BlobServiceClient
 from flask import (
     Flask,
     make_response,
@@ -219,36 +217,7 @@ class ServerApp:
             return
 
         log.info("Using Azure Blob Storage as large result store")
-        tenant_id = large_result_config.get("tenant_id")
-        client_id = large_result_config.get("client_id")
-        client_secret = large_result_config.get("client_secret")
-        storage_account_name = large_result_config.get("storage_account_name")
-        container_name = large_result_config.get("container_name")
-        connection_string = large_result_config.get("connection_string")
-
-        if tenant_id and client_id and client_secret and storage_account_name:
-            credential = ClientSecretCredential(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
-            )
-            self.blob_service_client = BlobServiceClient(
-                account_url=f"https://{storage_account_name}.blob.core.windows.net/",
-                credential=credential,
-            )
-
-        if connection_string:
-            self.blob_service_client = BlobServiceClient.from_connection_string(
-                connection_string
-            )
-
-        if not self.blob_service_client:
-            log.warning(
-                "Azure Blob Storage configuration is incomplete. Large result store not set up."
-            )
-            return
-        self.storage_adapter = AzureStorageService(
-            blob_service_client=self.blob_service_client,
-            container_name=container_name,
-        )
+        self.storage_adapter = AzureStorageService(config=large_result_config)
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
