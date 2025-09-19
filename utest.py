@@ -2,11 +2,12 @@
 from pathlib import Path
 from vantage6.common.utest import run_tests, find_tests
 import sys
+import types
 
 # The uwsgi Python package is a C extension that is only available when running
 # inside a uwsgi process.
-import types
-
+# Required here because the blobstream resource imports uwsgi, and it is built
+# in the Dockerfile and not in the requirements.txt.
 sys.modules["uwsgi"] = types.SimpleNamespace()
 
 
