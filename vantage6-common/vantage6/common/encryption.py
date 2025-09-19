@@ -541,7 +541,7 @@ class RSACryptor(CryptorBase):
         data: bytes,
         pubkey_base64s: str,
         skip_base64_encoding_of_msg: bool = False,
-    ) -> str:
+    ) -> str | bytes:
         """
         Encrypt bytes in `data` using a (base64 encoded) public key.
 
