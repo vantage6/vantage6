@@ -147,7 +147,6 @@ class CryptorBase(metaclass=Singleton):
         as well as staying consistent with existing cryptorbase method
         names like `encrypt_bytes_to_str`.
 
-
         Parameters
         ----------
         stream : file-like

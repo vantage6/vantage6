@@ -251,8 +251,8 @@
               <span>{{ run.node.name }}</span>
             </div>
             <div class="data-list__item">
-              <b>{{ "task-run.data-storage-used" | translate }}</b>
-              <span>{{ run.blob_storage_used || "-" }}</span>
+              <b>{{ "task-run.blob-storage-used" | translate }}</b>
+              <span>{{ (run.blob_storage_used ? "general.yes" : "general.no") | translate }}</span>
             </div>
           </div>
           <div class="run__actions">

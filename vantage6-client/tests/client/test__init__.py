@@ -8,6 +8,7 @@ from vantage6.common.encryption import DummyCryptor
 
 class TestUserClient(unittest.TestCase):
     def setUp(self):
+        self.dummy_uuid = str(uuid.uuid4())
         self.client_instance = UserClient(host="http://dummy_host", port=1234)
         self.client_instance.cryptor = DummyCryptor()
         self.client_instance.task = MagicMock()
@@ -16,7 +17,7 @@ class TestUserClient(unittest.TestCase):
         self.client_instance.request.return_value = {
             "data": [
                 {
-                    "result": str(uuid.uuid4()),
+                    "result": str(self.dummy_uuid),
                     "blob_storage_used": True,
                 }
             ]
@@ -42,6 +43,12 @@ class TestUserClient(unittest.TestCase):
         mock_setup_encryption.return_value = True
 
         results = self.client_instance.wait_for_results(task_id=1, interval=0.1)
+        mock_requests_get.assert_called_once_with(
+            f"http://dummy_host:1234/api/blobstream/{self.dummy_uuid}",
+            headers={"Content-Type": "application/octet-stream"},
+            stream=True,
+            timeout=300,
+        )
         self.assertEqual(len(results), 1)
 
 

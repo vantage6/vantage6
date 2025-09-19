@@ -558,23 +558,23 @@ class ClientBase(BlobStorageMixin):
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
         # Naming of this function is misleading, as it is also used to decrypt results
-        return self._decrypt_input(run_data)
+        return self._decrypt_run_data(run_data)
 
-    def _decrypt_input(self, input_: str | bytes) -> bytes:
-        """Helper to decrypt the input of an algorithm run
+    def _decrypt_run_data(self, run_data_: str | bytes) -> bytes:
+        """Helper to decrypt the run data of an algorithm run
 
         Keys are replaced, but object reference remains intact: changes are
         made *in-place*.
 
         Parameters
         ----------
-        input_: str | bytes
-            The encrypted algorithm input
+        run_data_: str | bytes
+            The encrypted algorithm run data
 
         Returns
         -------
         bytes
-            The decrypted algorithm run input
+            The decrypted algorithm run data
 
         Raises
         ------
@@ -587,12 +587,12 @@ class ClientBase(BlobStorageMixin):
             # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
-            input_ = cryptor.decrypt(input_)
+            run_data_ = cryptor.decrypt(run_data_)
 
         except Exception as e:
             self.log.exception(e)
 
-        return input_
+        return run_data_
 
     def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
         """

@@ -63,14 +63,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
 
-    api.add_resource(
-        BlobStream,
-        api_base + "/blobstream/delete/<string:id>",
-        endpoint="blob_stream_delete_with_id",
-        methods=("DELETE",),
-        resource_class_kwargs=services,
-    )
-
 
 # -----------------------------------------------------------------------------
 # Permissions

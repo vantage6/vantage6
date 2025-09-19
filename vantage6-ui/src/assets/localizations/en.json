@@ -116,7 +116,8 @@
     "finished-at": "Finished",
     "node": "Assigned node",
     "show-log": "Show logs",
-    "alert-node-offline": "Task can't start, node is offline."
+    "alert-node-offline": "Task can't start, node is offline.",
+    "blob-storage-used": "Blob storage used"
   },
   "task-list": {
     "title": "Tasks"

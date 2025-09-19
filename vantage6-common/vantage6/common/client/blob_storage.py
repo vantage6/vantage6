@@ -15,7 +15,7 @@ class BlobStorageMixin:
 
     def _upload_run_data_to_server(
         self, run_data_bytes: bytes, pub_key: str | None = None
-    ) -> str | None:
+    ) -> str:
         """
         Upload run data (result or input) to the server in chunks.
 
@@ -68,7 +68,7 @@ class BlobStorageMixin:
         self.log.info(f"Run data uploaded to server with UUID: {run_data_uuid}")
         return run_data_uuid
 
-    def _download_run_data_from_server(self, run_data_uuid: str) -> dict:
+    def _download_run_data_from_server(self, run_data_uuid: str) -> bytes:
         """
         Download run data (either input or result)
         from the server using its UUID.
@@ -80,7 +80,7 @@ class BlobStorageMixin:
 
         Returns
         -------
-        dict
+        bytes
             The downloaded run data as bytes.
 
         Raises
