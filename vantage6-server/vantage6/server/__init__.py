@@ -21,6 +21,7 @@ if not os.environ.get("READTHEDOCS"):
 # pylint: disable=wrong-import-position, wrong-import-order
 import datetime as dt
 import importlib
+import importlib.metadata
 import logging
 import time
 import uuid
@@ -152,7 +153,7 @@ class ServerApp(Vantage6App):
         try:
             socketio = SocketIO(
                 self.app,
-                async_mode="gevent_uwsgi",
+                async_mode="threading",
                 message_queue=msg_queue,
                 ping_timeout=60,
                 cors_allowed_origins=cors_settings,

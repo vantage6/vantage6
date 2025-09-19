@@ -7,14 +7,6 @@ vantage6 server. This allows both coupling a community store and a private
 store to a vantage6 server.
 """
 
-import os
-
-from gevent import monkey
-
-# This is a workaround for readthedocs
-if not os.environ.get("READTHEDOCS"):
-    monkey.patch_all()
-
 import importlib
 import importlib.metadata
 import logging

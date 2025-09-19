@@ -11,18 +11,18 @@ if [ -z "$VANTAGE6_SERVER_CONFIG_LOCATION" ]; then
     VANTAGE6_SERVER_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+# Ensure wsgi picks up the config in dev
+export VANTAGE6_CONFIG_LOCATION="${VANTAGE6_SERVER_CONFIG_LOCATION}"
 
-
-uwsgi \
-    --py-autoreload 1 \
-    --reload-mercy 1 \
-    --http :7601 \
-    --gevent 1000 \
-    --http-websockets \
-    --master \
-    --callable app \
-    --disable-logging \
-    --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
-    --pyargv "${VANTAGE6_SERVER_CONFIG_LOCATION}"
+# Run with Gunicorn in dev mode (autoreload)
+exec gunicorn \
+    vantage6.server.wsgi:app \
+    --bind 0.0.0.0:7601 \
+    --worker-class gevent \
+    --workers 1 \
+    --timeout 120 \
+    --graceful-timeout 30 \
+    --reload \
+    --reload-engine poll
 
 echo "exit dev_server.sh"

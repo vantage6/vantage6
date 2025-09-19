@@ -11,13 +11,13 @@ fi
 
 
 
-uwsgi \
-    --http :80 \
-    --gevent 1000 \
-    --http-websockets \
-    --master --callable app --disable-logging \
-    --wsgi-file \
-        /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
-    --pyargv "${VANTAGE6_CONFIG_LOCATION}"
+# Run with Gunicorn (wsgi reads config path from VANTAGE6_CONFIG_LOCATION)
+exec gunicorn \
+    vantage6.algorithm.store.wsgi:app \
+    --bind 0.0.0.0:80 \
+    --worker-class gthread \
+    --workers 2 \
+    --timeout 120 \
+    --graceful-timeout 30
 
 echo "[server.sh exit]"

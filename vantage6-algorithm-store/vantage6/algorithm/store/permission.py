@@ -67,7 +67,7 @@ class PermissionManager(PermissionManagerBase):
             role.save()
 
         rule = Rule.get_by_(name=resource, operation=operation)
-        rule_params = f"{resource},{operation}"
+        rule_params = f"{resource},{operation.value}"
 
         if not rule:
             log.error(f"Rule ({rule_params}) not found!")
@@ -109,7 +109,7 @@ class PermissionManager(PermissionManagerBase):
             log.debug(
                 "New auth rule '%s' with operation=%s is stored in the DB",
                 resource,
-                operation,
+                operation.value,
             )
 
         # assign all new rules to root user

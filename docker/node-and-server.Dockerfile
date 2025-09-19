@@ -35,14 +35,8 @@ RUN uv pip install --system -e vantage6-backend-common
 RUN uv pip install --system -e vantage6-server
 RUN uv pip install --system -e vantage6-node
 
-# Overwrite uWSGI installation from the requirements.txt
-# Install uWSGI from source (for RabbitMQ)
-RUN apt-get install --no-install-recommends --no-install-suggests -y \
-  libssl-dev python3-setuptools
-RUN CFLAGS="-I/usr/local/opt/openssl/include" \
-  LDFLAGS="-L/usr/local/opt/openssl/lib" \
-  UWSGI_PROFILE_OVERRIDE=ssl=true \
-  uv pip install --system --no-binary=uwsgi uwsgi
+# Install Gunicorn application server
+RUN uv pip install --system gunicorn
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 

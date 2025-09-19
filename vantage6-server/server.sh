@@ -9,14 +9,13 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
-
-
-uwsgi \
-    --http :80 \
-    --gevent 1000 \
-    --http-websockets \
-    --master --callable app --disable-logging \
-    --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
-    --pyargv "${VANTAGE6_CONFIG_LOCATION}"
+# Run with Gunicorn (wsgi reads config path from VANTAGE6_CONFIG_LOCATION)
+exec gunicorn \
+    vantage6.server.wsgi:app \
+    --bind 0.0.0.0:80 \
+    --worker-class sync \
+    --workers 2 \
+    --timeout 120 \
+    --graceful-timeout 30
 
 echo "[server.sh exit]"

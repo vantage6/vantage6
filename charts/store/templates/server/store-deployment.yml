@@ -26,16 +26,21 @@ spec:
           value: {{ .Values.store.keycloakUrl }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.store.keycloakRealm }}
+        - name: VANTAGE6_CONFIG_LOCATION
+          value: /mnt/config.yaml
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-store-secrets
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [
-          "uwsgi", "--http", ":{{ .Values.store.internal.port }}", "--gevent", "1000", "--http-websockets",
-          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
-          "/vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py",
-          "--pyargv", "/mnt/config.yaml",
+          "gunicorn",
+          "vantage6.algorithm.store.wsgi:app",
+          "--bind", "0.0.0.0:{{ .Values.store.internal.port }}",
+          "--worker-class", "gthread",
+          "--workers", "2",
+          "--timeout", "120",
+          "--graceful-timeout", "30"
         ]
         volumeMounts:
         - name: config-file
