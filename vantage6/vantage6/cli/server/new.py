@@ -109,6 +109,10 @@ def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
         default="harbor2.vantage6.ai/infrastructure/ui:latest",
     ).unsafe_ask()
 
+    # TODO v5+ we need to add a question to ask which algorithm stores are allowed, to
+    # set the CSP headers in the UI. This is not done now because it becomes easier when
+    # store and keycloak service can also be setup in the `v6 server new` command.
+
     # === Keycloak settings ===
     cli_config = CliConfig()
     kube_namespace = cli_config.get_last_namespace()
