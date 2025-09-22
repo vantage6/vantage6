@@ -344,7 +344,6 @@ class RunInputSchema(Schema):
     log = fields.String()
     result = fields.String()
     status = fields.String(validate=OneOf([s.value for s in TaskStatus]))
-    blob_storage_used = fields.Boolean()
 
 
 class TaskInputSchema(_NameValidationSchema):

@@ -64,40 +64,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     )
 
 
-# -----------------------------------------------------------------------------
-# Permissions
-# -----------------------------------------------------------------------------
-def permissions(permissions: PermissionManager):
-    """
-    Define the permissions for this resource.
-
-    Parameters
-    ----------
-    permissions : PermissionManager
-        Permission manager instance to which permissions are added
-    """
-    add = permissions.appender(module_name)
-
-    add(scope=S.GLOBAL, operation=P.VIEW, description="view any blob")
-    add(
-        scope=S.COLLABORATION,
-        operation=P.VIEW,
-        assign_to_container=True,
-        assign_to_node=True,
-        description="view blobs of your organizations collaborations",
-    )
-    add(
-        scope=S.ORGANIZATION,
-        operation=P.VIEW,
-        description="view any blob of a run created by your organization",
-    )
-    add(
-        scope=S.OWN,
-        operation=P.VIEW,
-        description="view any blob of a run created by you",
-    )
-
-
 # ------------------------------------------------------------------------------
 # Resources / API's
 # ------------------------------------------------------------------------------
@@ -109,7 +75,7 @@ class BlobStreamBase(ServicesResources):
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
-        self.r: RuleCollection = getattr(self.permissions, module_name)
+        self.r_run: RuleCollection = getattr(self.permissions, "run")
         self.storage_adapter = storage_adapter
 
     def get_run_by_input_or_result(self, id) -> db_Run | None:
@@ -207,18 +173,15 @@ class BlobStream(BlobStreamBase):
             return {
                 "msg": f"No run found with input or result id={id}"
             }, HTTPStatus.NOT_FOUND
-        if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
-            self.r.v_own.can() and run.task.init_user_id == g.user.id
-        ):
+        if not self.r_run.allowed_for_org(P.VIEW, run.task.init_org_id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
         if not self.storage_adapter:
-            log.warning(
-                "The large result store is not set to blob storage, result streaming is not available."
-            )
-            return {"msg": "Not implemented"}, HTTPStatus.NOT_IMPLEMENTED
+            not_available_msg = "The large result store is not set to blob storage, result streaming is not available."
+            log.warning(not_available_msg)
+            return {"msg": not_available_msg}, HTTPStatus.NOT_IMPLEMENTED
         try:
             log.debug(f"Streaming result for run id={id}")
             blob_stream = self.storage_adapter.stream_blob(id)
