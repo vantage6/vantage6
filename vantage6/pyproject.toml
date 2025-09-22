@@ -56,6 +56,7 @@ where = ["vantage6/cli"]
 "vantage6/cli/" = [
     "rabbimq/rabbitmq.config",
     "template/node_config.j2",
+    "template/node_config_nonk8s.j2",
     "template/server_config.j2",
     "template/server_import_config.j2",
     "template/algo_store_config.j2",

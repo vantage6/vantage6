@@ -162,7 +162,7 @@ def create_fixtures(
                     lstrip_blocks=True,
                     autoescape=True,
                 )
-                template = environment.get_template("node_config.j2")
+                template = environment.get_template("node_config_nonk8s.j2")
 
                 node_config = template.render(
                     {
