@@ -9,8 +9,6 @@ from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.server.permission import (
     RuleCollection,
-    PermissionManager,
-    Scope as S,
     Operation as P,
 )
 from vantage6.server.resource import (
