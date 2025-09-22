@@ -9,10 +9,9 @@ is a subset of organizations that form a collaboration. The table is structured 
 same way as the Member table.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from vantage6.server.model.base import Base
-
 
 Member = Table(
     "Member",

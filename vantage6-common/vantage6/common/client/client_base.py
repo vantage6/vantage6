@@ -1,18 +1,18 @@
 import abc
 import itertools
+import json as json_lib
 import logging
 import time
-import json as json_lib
 from pathlib import Path
 
 import requests
 
-from vantage6.common.encryption import RSACryptor, DummyCryptor
+from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import (
-    STRING_ENCODING,
     INTERVAL_MULTIPLIER,
     MAX_INTERVAL,
+    STRING_ENCODING,
 )
 
 module_name = __name__.split(".")[1]
@@ -328,9 +328,9 @@ class ClientBase(object):
             If the client is not authenticated
         """
         assert self._access_token, "Encryption can only be setup after authentication"
-        assert (
-            self.whoami.organization_id
-        ), "Organization unknown... Did you authenticate?"
+        assert self.whoami.organization_id, (
+            "Organization unknown... Did you authenticate?"
+        )
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
@@ -448,7 +448,7 @@ class ClientBase(object):
             decrypted = self._decrypt_data(value)
             if not isinstance(decrypted, bytes):
                 self.log.error(
-                    "The field %s is not properly encoded. Expected bytes, got" " %s.",
+                    "The field %s is not properly encoded. Expected bytes, got %s.",
                     field,
                     type(decrypted),
                 )

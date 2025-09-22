@@ -73,6 +73,7 @@ class InstanceType(StrEnumBase):
     SERVER = "server"
     ALGORITHM_STORE = "algorithm-store"
     UI = "ui"
+    AUTH = "auth"
 
 
 class NodePolicy(StrEnumBase):
@@ -104,6 +105,7 @@ class Ports(IntEnum):
     DEV_SERVER = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
+    DEV_AUTH = 8080
 
 
 class ContainerEnvNames(StrEnumBase):

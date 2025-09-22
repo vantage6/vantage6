@@ -1,4 +1,4 @@
-from sqlalchemy import Column as Column_, Integer, ForeignKey, String, and_, delete
+from sqlalchemy import Column as Column_, ForeignKey, Integer, String, and_, delete
 from sqlalchemy.orm import relationship
 
 from vantage6.server.model.base import Base, DatabaseSessionManager

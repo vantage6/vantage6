@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String, ForeignKey, Integer
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base

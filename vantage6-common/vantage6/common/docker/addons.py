@@ -1,15 +1,14 @@
+import hashlib
+import json
 import logging
 import pathlib
 import re
-import json
-import hashlib
 from http import HTTPStatus
 
 import requests
-from requests.auth import HTTPBasicAuth
-
-from docker.utils import parse_repository_tag
 from docker.auth import resolve_repository_name
+from docker.utils import parse_repository_tag
+from requests.auth import HTTPBasicAuth
 
 from vantage6.common import logger_name
 

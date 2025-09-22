@@ -1,30 +1,30 @@
 import logging
-
-from flask import request, g
-from flask_restful import Api
 from http import HTTPStatus
+
+from flask import request
+from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
 
-from vantage6.server import db
 from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.server import db
+from vantage6.server.permission import (
+    Operation as P,
+    PermissionManager,
+    RuleCollection,
+    Scope as S,
+)
+from vantage6.server.resource import ServicesResources, only_for, with_user
 from vantage6.server.resource.common.input_schema import (
     StudyChangeOrganizationSchema,
     StudyInputSchema,
-)
-from vantage6.server.permission import (
-    RuleCollection,
-    Scope as S,
-    Operation as P,
-    PermissionManager,
 )
 from vantage6.server.resource.common.output_schema import (
     OrganizationSchema,
     StudySchema,
     StudyWithOrgsSchema,
 )
-from vantage6.server.resource import with_user, only_for, ServicesResources
-
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -800,7 +800,7 @@ class StudyOrganization(ServicesResources):
             }, HTTPStatus.NOT_FOUND
 
         # check that organization is collaboration member
-        if not organization in study.collaboration.organizations:
+        if organization not in study.collaboration.organizations:
             return {
                 "msg": "Organization is not a member of the collaboration!"
             }, HTTPStatus.BAD_REQUEST

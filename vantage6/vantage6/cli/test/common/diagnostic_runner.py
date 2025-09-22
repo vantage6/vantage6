@@ -1,11 +1,13 @@
 import json
-
 from typing import Any
+
 from rich.console import Console
 from rich.table import Table
 
+from vantage6.common import debug, info
+
 from vantage6.client import UserClient
-from vantage6.common import info, debug
+
 from vantage6.cli.globals import DIAGNOSTICS_IMAGE
 
 
@@ -62,7 +64,7 @@ class DiagnosticRunner:
                 set(self.organization_ids).intersection(online_orgs)
             )
 
-        info(f"Running diagnostics to {len(self.organization_ids)} " "organization(s)")
+        info(f"Running diagnostics to {len(self.organization_ids)} organization(s)")
         info(f"  organizations: {self.organization_ids}")
         info(f"  collaboration: {self.collaboration_id}")
 

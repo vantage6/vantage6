@@ -4,8 +4,9 @@ from sqlalchemy.orm import relationship
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 
-import vantage6.server.model as models
 from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.server.model.task import Task
+from vantage6.server.model.task_database import TaskDatabase
 
 
 class Dataframe(Base):
@@ -123,7 +124,7 @@ class Dataframe(Base):
         )
 
     @hybrid_property
-    def active_compute_tasks(self) -> list[models.Task]:
+    def active_compute_tasks(self) -> list[Task]:
         """
         Get all *compute* tasks that are not finished on this dataframe.
 
@@ -134,12 +135,12 @@ class Dataframe(Base):
         """
         db_session = DatabaseSessionManager.get_session()
         active_compute_tasks = db_session.scalars(
-            select(models.Task)
-            .join(models.TaskDatabase)
-            .filter(AlgorithmStepType.is_compute(models.Task.action))
-            .filter(models.Task.is_waiting)
-            .filter(models.TaskDatabase.dataframe_id == self.id)
-            .filter(models.Task.session_id == self.session_id)
+            select(Task)
+            .join(TaskDatabase)
+            .filter(AlgorithmStepType.is_compute(Task.action))
+            .filter(Task.is_waiting)
+            .filter(TaskDatabase.dataframe_id == self.id)
+            .filter(Task.session_id == self.session_id)
         ).all()
         db_session.commit()
         return active_compute_tasks

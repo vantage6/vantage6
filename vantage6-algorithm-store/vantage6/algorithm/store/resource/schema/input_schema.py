@@ -6,7 +6,7 @@ import json
 
 import marshmallow.validate as validate
 from jsonschema import validate as json_validate
-from marshmallow import Schema, ValidationError, fields, validates, validates_schema
+from marshmallow import Schema, ValidationError, fields, validates_schema
 
 from vantage6.common.enum import (
     AlgorithmArgumentType,

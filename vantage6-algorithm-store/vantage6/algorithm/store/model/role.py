@@ -1,13 +1,16 @@
 from __future__ import annotations
-from sqlalchemy import Column, Text, Boolean, select
+
+import logging
+
+from sqlalchemy import Boolean, Column, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
-from vantage6.backend.common.permission_models import RoleInterface
 from vantage6.common import logger_name
 
-import logging
+from vantage6.backend.common.permission_models import RoleInterface
+
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

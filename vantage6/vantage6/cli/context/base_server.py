@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import os.path
-
-from sqlalchemy.engine.url import make_url
-
 from vantage6.common.context import AppContext
 
 from vantage6.cli.globals import (

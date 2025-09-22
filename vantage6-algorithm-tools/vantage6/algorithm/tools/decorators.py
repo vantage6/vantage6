@@ -1,9 +1,9 @@
 import os
-from pathlib import Path
-from functools import wraps
 from dataclasses import dataclass
+from functools import wraps
+from pathlib import Path
 
-from vantage6.algorithm.tools.util import info, error, warn
+from vantage6.algorithm.tools.util import error, info, warn
 
 OHDSI_AVAILABLE = True
 try:

@@ -56,11 +56,12 @@ DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
 PROMETHEUS_CONFIG = "prometheus.yml"
 PROMETHEUS_DIR = "prometheus"
 
-# template folder
+# template configuration files
 TEMPLATE_FOLDER = PACKAGE_FOLDER / APPNAME / "cli" / "template"
 SERVER_TEMPLATE_FILE = "server_config.j2"
 NODE_TEMPLATE_FILE = "node_config.j2"
 ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
+AUTH_TEMPLATE_FILE = "auth_config.j2"
 
 
 # datasets included in the nodes of the dev network
@@ -97,6 +98,7 @@ class CLICommandName(StrEnumBase):
     TEST = "test"
     DEV = "dev"
     USE = "use"
+    AUTH = "auth"
 
 
 class InfraComponentName(StrEnumBase):
@@ -105,3 +107,4 @@ class InfraComponentName(StrEnumBase):
     SERVER = "server"
     ALGORITHM_STORE = "store"
     NODE = "node"
+    AUTH = "auth"

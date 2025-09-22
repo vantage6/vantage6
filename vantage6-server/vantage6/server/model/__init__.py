@@ -1,26 +1,25 @@
-from vantage6.server.model.base import Base  # noqa: F401
-from vantage6.server.model.role_rule_association import (
-    role_rule_association,
-)  # noqa: F401
-from vantage6.server.model.authenticatable import Authenticatable  # noqa: F401
-from vantage6.server.model.user import User  # noqa: F401
-from vantage6.server.model.organization import Organization  # noqa: F401
-from vantage6.server.model.collaboration import Collaboration  # noqa: F401
-from vantage6.server.model.member import Member, StudyMember  # noqa: F401
-from vantage6.server.model.node_config import NodeConfig  # noqa: F401
-from vantage6.server.model.node import Node  # noqa: F401
-from vantage6.server.model.task import Task  # noqa: F401
-from vantage6.server.model.run import Run  # noqa: F401
-from vantage6.server.model.permission import Permission, UserPermission  # noqa: F401
-from vantage6.server.model.role import Role  # noqa: F401
-from vantage6.server.model.rule import Rule  # noqa: F401
-from vantage6.server.model.task_database import TaskDatabase  # noqa: F401
-from vantage6.server.model.algorithm_store import AlgorithmStore  # noqa: F401
-from vantage6.server.model.study import Study  # noqa: F401
-from vantage6.server.model.session import Session  # noqa: F401
-from vantage6.server.model.dataframe import Dataframe  # noqa: F401
-from vantage6.server.model.column import Column  # noqa: F401
-from vantage6.server.model.task_depends_on import task_depends_on  # noqa: F401
-from vantage6.server.model.dataframe_to_be_deleted_at_node import (  # noqa: F401
+# ruff: noqa: F401
+from vantage6.server.model.algorithm_store import AlgorithmStore
+from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.base import Base
+from vantage6.server.model.collaboration import Collaboration
+from vantage6.server.model.column import Column
+from vantage6.server.model.dataframe import Dataframe
+from vantage6.server.model.dataframe_to_be_deleted_at_node import (
     DataframeToBeDeletedAtNode,
 )
+from vantage6.server.model.member import Member, StudyMember
+from vantage6.server.model.node import Node
+from vantage6.server.model.node_config import NodeConfig
+from vantage6.server.model.organization import Organization
+from vantage6.server.model.permission import Permission, UserPermission
+from vantage6.server.model.role import Role
+from vantage6.server.model.role_rule_association import role_rule_association
+from vantage6.server.model.rule import Rule
+from vantage6.server.model.run import Run
+from vantage6.server.model.session import Session
+from vantage6.server.model.study import Study
+from vantage6.server.model.task import Task
+from vantage6.server.model.task_database import TaskDatabase
+from vantage6.server.model.task_depends_on import task_depends_on
+from vantage6.server.model.user import User
