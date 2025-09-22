@@ -1,12 +1,10 @@
 from colorama import Fore, Style
 from docker.client import DockerClient
 
-from vantage6.common import error, info
+from vantage6.common import error
 from vantage6.common.context import AppContext
 from vantage6.common.docker.addons import get_container, remove_container
 from vantage6.common.globals import APPNAME
-
-from vantage6.cli.context.server import ServerContext
 
 
 def get_server_context(
@@ -45,24 +43,3 @@ def get_server_context(
     ctx = ctx_class(name, system_folders=system_folders)
 
     return ctx
-
-
-def stop_ui(client: DockerClient, ctx: ServerContext) -> None:
-    """
-    Check if the UI container is running, and if so, stop and remove it.
-
-    Parameters
-    ----------
-    client : DockerClient
-        Docker client
-    ctx : ServerContext
-        Server context object
-    """
-    ui_container_name = f"{APPNAME}-{ctx.name}-{ctx.scope}-ui"
-    ui_container = get_container(client, name=ui_container_name)
-    if ui_container:
-        remove_container(ui_container, kill=True)
-        info(
-            f"Stopped the {Fore.GREEN}{ui_container_name}"
-            f"{Style.RESET_ALL} User Interface container."
-        )

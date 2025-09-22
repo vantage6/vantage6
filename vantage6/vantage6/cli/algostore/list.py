@@ -11,6 +11,4 @@ def cli_algo_store_configuration_list() -> None:
     """
     Print the available server configurations.
     """
-    check_docker_running()
-
     get_server_configuration_list(InstanceType.ALGORITHM_STORE)

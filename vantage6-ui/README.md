@@ -13,8 +13,9 @@
 
 ---
 
-This part of the repository contains the code for our User Interface.
-This is a web application that allows you to communicate easily with your **vantage6** server.
+This part of the repository contains the code for the vantage6 user interface
+(UI). This is a web application that allows you to communicate easily with
+your vantage6 server.
 
 ## How to use
 
@@ -25,66 +26,52 @@ a user account.
 
 ### Running the UI locally
 
-The easiest way to run the UI locally is using the ``--with-ui`` flag in the
-``v6 server start`` command. That will automatically start a UI container, by default
-on port 7600.
+The UI is started locally with the ``v6 server start`` command. It will also be
+included in a sandbox environment that can be started with
+``v6 sandbox start``. Both commands will automatically start a user interface
+on `http://localhost:7600`. Port 7600 is the default: it is possible to configure
+running it on another port by changing the configuration file.
 
-Alternatively, you can run the UI natively in [Angular](https://github.com/angular/angular-cli).
-For general information on how to work with Angular, we refer to
-the [Angular CLI home page](https://angular.io/cli). You may need to install these
-[requirements](https://angular.io/guide/setup-local) to run Angular
-applications locally.
-
-Before running the application, you may need to update the configuration. Update
-the file in `src/environments/environment.development.ts` to set where your vantage6
-server is running (or, alternatively, update `environment.ts` if you want to run a
-production application).
-
-When you have completed the steps above, run
-
-```
-ng serve
-```
-
-for a development server. Navigate to `http://localhost:4200/` to use it.
+For developers, it is recommended to use ``v6 dev`` commands. Local code changes are
+then synced to the UI deployment. This UI deployment is also available on
+`http://localhost:7600`.
 
 ### Deployment
 
-Angular production servers can be deployed in many ways. Angular's
-[deployment documentation](https://angular.io/guide/deployment) offers a number
-of options.
-
-Alternatively, we provide the Docker image `harbor2.vantage6.ai/infrastructure/ui`
-to help you deploy your own UI. In that case, run
+There are several ways in which you may deploy the UI. The most convenient way is
+to use the CLI:
 
 ```
-docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
+v6 server start
 ```
 
-to run a UI on port 8080 that communicates with your own server. For instance,
-you can point to a local server with default settings if you set
-SERVER_URL=`http://localhost:7601` and API_PATH=`/api`.
-If you don't enter environment variables, the UI points to
-`https://cotopaxi.vantage6.ai` by default.
+This command starts up the UI together with the vantage6 server.
 
-Note that you can also use another UI image tag than `ui:latest`. For example,
-you can specify a version of the UI such as `ui:4.3.0`. Another option is
-to use the tag `ui:cotopaxi`, which defaults to the latest v4 version.
+Alternatively. Angular's
+[deployment documentation](https://angular.io/guide/deployment)
+offers a number of options to deploy the UI code directly without container
+technology.
+
+Finally, note that kubernetes uses the Docker image
+`harbor2.vantage6.ai/infrastructure/ui` to run the UI. One could also run the UI
+with a command such as:
+
+```
+docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" \
+  -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
+```
+
+This is recommended for v4 deployments, but no longer in v5. Please checkout
+this README in a `release/4.x` branch (e.g. release/4.13) to view more details.
 
 #### Security settings
 
-Finally, there is also an environment variable `ALLOWED_ALGORITHM_STORES` that
-you can specify. If you do so, the appropriate
-[CSP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) will be
-set so that your UI can only access the vantage6 server and algorithm stores
-to collect data from. You define them same as other environment variables, with
-spaces in between each algorithm store you want to allow traffic from:
+The appropriate [CSP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+will be generated when you deploy the UI through the kubernetes interface.
+The CSP headers are set so that your UI can only access the vantage6 server and
+algorithm stores.
 
-```
-docker run --env ALLOWED_ALGORITHM_STORES="store.cotopaxi.vantage6.ai myotherstore.com" ...
-```
-
-Note that if you do _not_ specify this environment variable, the CSP policy
-will be very lenient. In order for the UI to work properly, algorithm store
-resources should be obtained, so if no algorithm stores are provided, the CSP policies
-will be very lenient.
+Note that it is important that the UI has settings on the allowed algorithm
+stores to set a proper security policy. If the UI allows all algorithm store,
+the CSP policy will be very lenient, because it will allow connecting to any
+URL to facilitate connecting to any algorithm store.

@@ -1,0 +1,33 @@
+api_path: {{ api_path }}
+encryption:
+  enabled: false
+  private_key: null
+logging:
+  backup_count: 5
+  datefmt: '%Y-%m-%d %H:%M:%S'
+  file: {{ logging["file"] }}
+  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
+  level: DEBUG
+  max_size: 1024
+  use_console: true
+  loggers:
+  - level: warning
+    name: urllib3
+  - level: warning
+    name: requests
+  - level: warning
+    name: engineio.client
+  - level: warning
+    name: docker.utils.config
+  - level: warning
+    name: docker.auth
+  - level: warning
+    name: kubernetes.client.rest
+node_proxy_port: {{ node_proxy_port }}
+port: {{ port }}
+server_url: {{ server_url }}
+task_dir: {{ task_dir}}
+dev:
+  task_dir_extension: {{ task_dir_extension }}
+task_namespace: {{ task_namespace }}
+{{- user_provided_config -}}
