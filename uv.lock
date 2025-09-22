@@ -2060,7 +2060,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.0a34"
+version = "5.0.0a35"
 source = { editable = "." }
 dependencies = [
     { name = "vantage6-algorithm-store" },
