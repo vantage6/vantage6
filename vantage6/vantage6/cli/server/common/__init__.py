@@ -1,10 +1,7 @@
 from colorama import Fore, Style
-from docker.client import DockerClient
 
 from vantage6.common import error
 from vantage6.common.context import AppContext
-from vantage6.common.docker.addons import get_container, remove_container
-from vantage6.common.globals import APPNAME
 
 
 def get_server_context(
