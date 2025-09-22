@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, select
+from sqlalchemy import Column, Integer, String, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -55,9 +55,7 @@ class User(Base):
             String representation of the user
         """
         return (
-            f"<User "
-            f"id={self.id}, username='{self.username}', roles='{self.roles}', "
-            f">"
+            f"<User id={self.id}, username='{self.username}', roles='{self.roles}', >"
         )
 
     def can(self, resource: str, operation: Operation) -> bool:

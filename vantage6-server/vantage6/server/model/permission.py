@@ -9,10 +9,9 @@ them to execute one specific action. This table is used to store those, and
 may contain multiple entries for the same user.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from vantage6.server.model.base import Base
-
 
 Permission = Table(
     "Permission",

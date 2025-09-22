@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from __future__ import unicode_literals, print_function
-
-import sys
-import os
+from __future__ import print_function, unicode_literals
 
 import logging
+import os
+import sys
 import unittest
 from datetime import datetime
 

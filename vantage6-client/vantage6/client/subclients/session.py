@@ -1,8 +1,8 @@
+from rich.columns import Columns
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
-from rich.panel import Panel
-from rich.columns import Columns
 
 from vantage6.client import ClientBase
 from vantage6.client.filter import post_filtering
@@ -300,7 +300,6 @@ class SessionSubClient(ClientBase.SubClient):
         console.print(tree)
 
     def task_tree(self, session: int | None = None) -> None:
-
         # TODO FM 02-08-2024: Maybe move this to the task subclient?
         # TODO FM 02-08-2024: This needs to be cleaned
 

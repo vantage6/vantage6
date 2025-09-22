@@ -2,10 +2,11 @@ import unittest
 from http import HTTPStatus
 from unittest.mock import patch
 
-from tests_store.base.unittest_base import TestResources
 from vantage6.backend.common import session
-from vantage6.algorithm.store.model.rule import Rule, Operation
+
+from tests_store.base.unittest_base import TestResources
 from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
 class TestRoleResource(TestResources):

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, Boolean, select
+
+from sqlalchemy import Boolean, Column, String, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 

@@ -2,19 +2,21 @@ import logging
 import unittest
 
 from kubernetes.client import (
-    V1Pod,
-    V1PodStatus,
-    V1ContainerStatus,
-    V1PodCondition,
     V1ContainerState,
     V1ContainerStateRunning,
-    V1ContainerStateWaiting,
     V1ContainerStateTerminated,
+    V1ContainerStateWaiting,
+    V1ContainerStatus,
+    V1Pod,
+    V1PodCondition,
+    V1PodStatus,
 )
+
+from vantage6.common.enum import RunStatus
+
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_job_pod_run_status,
 )
-from vantage6.common.enum import RunStatus
 
 
 def get_null_logger(name="null_logger"):
@@ -25,9 +27,7 @@ def get_null_logger(name="null_logger"):
 
 
 class TestPodStatus(unittest.TestCase):
-
     def setUp(self):
-
         self.silent_logger = get_null_logger()
 
         self.running_container_state = V1ContainerState(
@@ -87,9 +87,9 @@ class TestPodStatus(unittest.TestCase):
     def test_container_related_err(self):
         self.mock_pod.status.phase = "Pending"
         self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
-        self.mock_pod.status.container_statuses[0].state.waiting.reason = (
-            "ImagePullBackOff"
-        )
+        self.mock_pod.status.container_statuses[
+            0
+        ].state.waiting.reason = "ImagePullBackOff"
         self.assertEqual(
             compute_job_pod_run_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
@@ -111,9 +111,9 @@ class TestPodStatus(unittest.TestCase):
     def test_container_runtime_error(self):
         self.mock_pod.status.phase = "Pending"
         self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
-        self.mock_pod.status.container_statuses[0].state.waiting.reason = (
-            "CrashLoopBackOff"
-        )
+        self.mock_pod.status.container_statuses[
+            0
+        ].state.waiting.reason = "CrashLoopBackOff"
         self.assertEqual(
             compute_job_pod_run_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod

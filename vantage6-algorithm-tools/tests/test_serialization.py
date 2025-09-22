@@ -1,7 +1,7 @@
+import pandas as pd
 from pytest import mark
 
 from vantage6.common import serialization
-import pandas as pd
 
 
 @mark.parametrize(

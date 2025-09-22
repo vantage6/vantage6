@@ -1,11 +1,12 @@
 import logging
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
 from flask import url_for
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
 from vantage6.common import logger_name
-from vantage6.backend.common.resource.pagination import Pagination
 
+from vantage6.backend.common.resource.pagination import Pagination
 
 log = logging.getLogger(logger_name(__name__))
 

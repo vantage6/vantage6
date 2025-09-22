@@ -1,10 +1,12 @@
-import yaml
-import docker
 from pathlib import Path
 
-from vantage6.common import info, error
+import docker
+import yaml
+
+from vantage6.common import error, info
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import DEFAULT_PROMETHEUS_EXPORTER_PORT
+
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import (
     DEFAULT_PROMETHEUS_IMAGE,

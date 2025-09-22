@@ -1,6 +1,5 @@
 """Client for the algorithm container to communicate with the vantage6 server."""
 
-import importlib.metadata
 import json as json_lib
 from typing import Any
 

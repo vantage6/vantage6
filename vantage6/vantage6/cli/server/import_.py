@@ -102,7 +102,7 @@ def cli_server_import(
             # We're dealing with a relative path here -> make it absolute
             db_path = ctx.data_dir / url.database
 
-        basename = os.path.basename(db_path)
+        # basename = os.path.basename(db_path)
         dirname = os.path.dirname(db_path)
         os.makedirs(dirname, exist_ok=True)
 

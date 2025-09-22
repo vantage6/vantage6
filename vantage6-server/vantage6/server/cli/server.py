@@ -1,10 +1,8 @@
 from functools import wraps
 
 import click
-import IPython
 import yaml
 from colorama import Fore, Style
-from traitlets.config import get_config
 
 from vantage6.common import (
     error,

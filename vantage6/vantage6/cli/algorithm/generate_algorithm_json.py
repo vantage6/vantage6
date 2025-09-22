@@ -276,23 +276,23 @@ class Function:
         else:
             type_ = param.annotation
 
-        if type_ == str:
+        if type_ is str:
             return AlgorithmArgumentType.STRING
-        elif type_ == dict:
+        elif type_ is dict:
             return AlgorithmArgumentType.JSON
-        elif type_ == int:
+        elif type_ is int:
             return AlgorithmArgumentType.INTEGER
-        elif type_ == float:
+        elif type_ is float:
             return AlgorithmArgumentType.FLOAT
-        elif type_ == bool:
+        elif type_ is bool:
             return AlgorithmArgumentType.BOOLEAN
-        elif type_ == list:
+        elif type_ is list:
             return AlgorithmArgumentType.STRINGS
-        elif type_ == list[str]:
+        elif type_ is list[str]:
             return AlgorithmArgumentType.STRINGS
-        elif type_ == list[int]:
+        elif type_ is list[int]:
             return AlgorithmArgumentType.INTEGERS
-        elif type_ == list[float]:
+        elif type_ is list[float]:
             return AlgorithmArgumentType.FLOATS
         else:
             warning(

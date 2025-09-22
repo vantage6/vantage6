@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from vantage6.common.utest import run_tests, find_tests
+
+from vantage6.common.utest import find_tests, run_tests
 
 
 def run():

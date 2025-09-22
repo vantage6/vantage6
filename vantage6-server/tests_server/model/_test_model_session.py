@@ -9,9 +9,7 @@ from .test_model_base import TestModelBase
 
 
 class TestModelSession(TestModelBase):
-
     def test_creation(self):
-
         # create a session
         session = Session(name="test_session", user_id=1, collaboration_id=1)
         session.save()
@@ -26,7 +24,6 @@ class TestModelSession(TestModelBase):
         self.assertEqual(session.scope, Scope.OWN.value)
 
     def test_unique_constraint(self):
-
         # each label should be unique within a collaboration
         session = Session(name="test_session", user_id=1, collaboration_id=1)
         session.save()
@@ -36,7 +33,6 @@ class TestModelSession(TestModelBase):
         self.addCleanup(session.delete)
 
     def test_is_ready(self):
-
         session = Session(name="test_session", user_id=1, collaboration_id=1)
         session.save()
         self.addCleanup(session.delete)
