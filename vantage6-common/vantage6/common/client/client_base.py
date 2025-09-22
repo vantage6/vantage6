@@ -569,7 +569,7 @@ class ClientBase(BlobStorageMixin):
         Parameters
         ----------
         run_data_: str | bytes
-            The encrypted algorithm run data
+            The encrypted algorithm run data (input or results)
 
         Returns
         -------
