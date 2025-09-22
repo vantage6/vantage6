@@ -12,6 +12,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.configuration_manager import (
     AlgorithmStoreConfigurationManager,
+    AuthConfigurationManager,
     NodeConfigurationManager,
     ServerConfigurationManager,
 )
@@ -167,8 +168,12 @@ def configuration_wizard(
         conf_manager = NodeConfigurationManager
     elif type_ == InstanceType.SERVER:
         conf_manager = ServerConfigurationManager
-    else:
+    elif type_ == InstanceType.ALGORITHM_STORE:
         conf_manager = AlgorithmStoreConfigurationManager
+    elif type_ == InstanceType.AUTH:
+        conf_manager = AuthConfigurationManager
+    else:
+        raise ValueError(f"Invalid instance type: {type_}")
 
     if Path(config_file).exists():
         config_manager = conf_manager.from_file(config_file)
