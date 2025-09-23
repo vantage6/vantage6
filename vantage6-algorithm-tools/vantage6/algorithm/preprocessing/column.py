@@ -9,11 +9,9 @@ import pandas as pd
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
-from vantage6.algorithm.decorator.data import dataframe
 
 
 @preprocessing
-@dataframe(1)
 def rename_columns(
     df: pd.DataFrame, old_names: list[str], new_names: list[str], strict: bool = False
 ) -> pd.DataFrame:
@@ -56,7 +54,6 @@ def rename_columns(
 
 
 @preprocessing
-@dataframe(1)
 def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.DataFrame:
     """
     Create a new column in a DataFrame based on the given expression.
@@ -97,7 +94,6 @@ def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.Dat
 
 
 @preprocessing
-@dataframe(1)
 def redefine_column(
     df: pd.DataFrame, column_name: str, expression: str
 ) -> pd.DataFrame:
@@ -141,7 +137,6 @@ def redefine_column(
 
 
 @preprocessing
-@dataframe(1)
 def change_column_type(
     df: pd.DataFrame, columns: list[str], target_type: str
 ) -> pd.DataFrame:

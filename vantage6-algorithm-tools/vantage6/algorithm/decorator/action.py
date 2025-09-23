@@ -15,6 +15,8 @@ from vantage6.algorithm.tools.exceptions import (
 )
 from vantage6.algorithm.tools.util import get_action, get_env_var
 
+from vantage6.algorithm.decorator.data import dataframe
+
 
 def _exit_if_action_mismatch(function_action: AlgorithmStepType):
     """
@@ -201,6 +203,9 @@ def data_extraction(func: callable) -> callable:
     return wrapper
 
 
+# Note that preprocessing functions always have one dataframe argument, which we provide
+# already here by using the @dataframe decorator.
+@dataframe(1)
 def preprocessing(func: callable) -> callable:
     """Decorator for pre-processing functions."""
 

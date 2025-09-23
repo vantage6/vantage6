@@ -13,11 +13,9 @@ import pandas as pd
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
-from vantage6.algorithm.decorator.data import dataframe
 
 
 @preprocessing
-@dataframe(1)
 def min_max_scale(
     df: pd.DataFrame,
     min_vals: list[float],
@@ -91,7 +89,6 @@ def min_max_scale(
 
 
 @preprocessing
-@dataframe(1)
 def standard_scale(
     df: pd.DataFrame,
     means: list[float],
@@ -165,7 +162,6 @@ def standard_scale(
 
 
 @preprocessing
-@dataframe(1)
 def one_hot_encode(
     df: pd.DataFrame,
     column: str,
@@ -253,7 +249,6 @@ def one_hot_encode(
 
 
 @preprocessing
-@dataframe(1)
 def encode(
     df: pd.DataFrame,
     columns: list[str],
@@ -337,7 +332,6 @@ def encode(
 
 
 @preprocessing
-@dataframe(1)
 def discretize_column(
     df: pd.DataFrame,
     column_name: str,
@@ -403,7 +397,6 @@ def discretize_column(
 
 
 @preprocessing
-@dataframe(1)
 def extract_from_string(
     df: pd.DataFrame,
     column: str,
@@ -459,7 +452,6 @@ def extract_from_string(
 
 
 @preprocessing
-@dataframe(1)
 def impute(
     df: pd.DataFrame,
     columns: list[str] | None = None,
