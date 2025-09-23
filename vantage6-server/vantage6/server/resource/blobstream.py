@@ -7,15 +7,14 @@ from flask_restful import Api
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.server.permission import (
-    RuleCollection,
-    Operation as P,
-)
+from vantage6.common.task_status import has_task_finished
+from vantage6.server.permission import RuleCollection, Operation as P, Scope
 from vantage6.server.resource import (
     only_for,
     ServicesResources,
 )
-from vantage6.server.model import Run as db_Run
+from vantage6.server.model import Run as db_Run, Task as db_Task
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -74,6 +73,7 @@ class BlobStreamBase(ServicesResources):
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r_run: RuleCollection = getattr(self.permissions, "run")
+        self.r_task: RuleCollection = getattr(self.permissions, "task")
         self.storage_adapter = storage_adapter
 
     def get_run_by_input_or_result(self, id) -> db_Run | None:
@@ -225,6 +225,23 @@ class BlobStream(BlobStreamBase):
             not_available_msg = "The large result store is not set to blob storage, result streaming is not available."
             log.warning(not_available_msg)
             return {"msg": not_available_msg}, HTTPStatus.NOT_IMPLEMENTED
+
+        if g.user and not self.r_task.has_at_least_scope(Scope.COLLABORATION, P.CREATE):
+            return {
+                "msg": "You do not have permission to create tasks."
+            }, HTTPStatus.UNAUTHORIZED
+        if g.container:
+            container = g.container
+            if has_task_finished(db_Task.get(container["task_id"]).status):
+                log.warning(
+                    f"Container from node={container['node_id']} "
+                    f"attempts to upload blob for a sub-task of a completed "
+                    f"task={container['task_id']}"
+                )
+                return {
+                    "msg": "Cannot upload blob for a sub-task of a completed task."
+                }, HTTPStatus.FORBIDDEN
+
         result_uuid = str(uuid.uuid4())
         transfer_encoding = request.headers.get("Transfer-Encoding", "").lower()
         is_chunked = "chunked" in transfer_encoding

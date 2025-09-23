@@ -51,14 +51,10 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.assertEqual(run.log, "log should be preserved")
         self.assertIsNotNone(run.cleanup_at)
 
-    @patch("vantage6.server.model.task.Task")
-    def test_cleanup_completed_old_blob(self, mock_task):
-        mock_blob_client = MagicMock()
-        mock_blob_client.delete_blob.return_value = None
-
-        mock_blob_service_client = MagicMock()
-        mock_blob_service_client.get_blob_client.return_value = mock_blob_client
-
+    @patch(
+        "vantage6.server.service.azure_storage_service.AzureStorageService.delete_blob"
+    )
+    def test_cleanup_completed_old_blob(self, mock_delete_blob):
         task = Task(
             name="test-task",
             description="Test task for cleanup",
@@ -80,8 +76,9 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         config = {
             "runs_data_cleanup_days": 30,
             "large_result_store": {
+                "type": "azure",
                 "container_name": "test-container",
-                "blob_service_client": mock_blob_service_client,
+                "connection_string": "DefaultEndpointsProtocol=https;AccountName=dummyname;AccountKey=dummykey",
             },
         }
 
@@ -91,15 +88,8 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         cleanup.cleanup_runs_data(config, include_input=True)
         self.session.refresh(run)
 
-        expected_calls = [
-            call(container="test-container", blob=self.uuid),
-            call().delete_blob(),
-            call(container="test-container", blob="input"),
-            call().delete_blob(),
-        ]
-        mock_blob_service_client.get_blob_client.assert_has_calls(
-            expected_calls, any_order=False
-        )
+        expected_calls = [call(self.uuid), call("input")]
+        mock_delete_blob.assert_has_calls(expected_calls, any_order=False)
 
     def test_no_cleanup_recent_completed_run(self):
         # Ineligible: completed, but not old enough

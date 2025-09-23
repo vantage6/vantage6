@@ -24,10 +24,7 @@ def cleanup_runs_data(config: dict, include_input: bool = False):
     days = config.get("runs_data_cleanup_days")
     azure_config = config.get("large_result_store", {})
     if azure_config:
-        storage_adapter = AzureStorageService(
-            container_name=azure_config.get("container_name"),
-            blob_service_client=azure_config.get("blob_service_client"),
-        )
+        storage_adapter = AzureStorageService(azure_config)
     threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
     session = DatabaseSessionManager.get_session()
 

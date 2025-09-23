@@ -26,6 +26,8 @@ class AzureStorageService:
         config : dict
             Configuration dictionary containing Azure Blob Storage settings.
         """
+        self.blob_service_client = None
+
         tenant_id = config.get("tenant_id")
         client_id = config.get("client_id")
         client_secret = config.get("client_secret")
