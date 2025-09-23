@@ -5,7 +5,7 @@ Algorithm code structure
 
 .. note::
 
-  These guidelines are Python specific.
+  This information is specific to Python algorithms.
 
 Here we provide some more information on algorithm code is organized.
 Most of these structures are generated automatically when you create a
@@ -26,6 +26,11 @@ results of the remote parts. The remote part is usually executed at each of the
 nodes included in the analysis. While this structure is common for vantage6
 algorithms, it is not required.
 
+You may also define algorithm functions to extract data from the node data sources,
+or to preprocess data that has been extracted. These functions are usually called
+when a session is created, before running the analyses. More information about sessions
+can be found in the :ref:`algo-sessions` section.
+
 If you do follow this structure however, we recommend the following file
 structure:
 
@@ -35,16 +40,21 @@ structure:
    ├── __init__.py
    ├── central.py
    └── partial.py
+   └── preprocessing.py
+   └── extraction.py
 
-where ``__init__.py`` contains the following:
+where ``__init__.py`` contains something like the following:
 
 .. code:: python
 
    from .central import my_central_function
-   from .partial import my_partial_function
+   from .partial import my_partial_function1, my_partial_function2
+   from .preprocessing import my_preprocessing_function
+   from .extraction import my_data_extraction_function
 
-and where ``central.py`` and ``partial.py`` obviously contain the implementation
-of those functions.
+The other files obviously contain the implementation of those functions. You may create
+as many files and functions as you wish, but note that only functions that are
+imported in ``__init__.py`` will be available to the vantage6 user.
 
 .. _implementing-decorators:
 
@@ -58,8 +68,8 @@ Let's say you are implementing a function called ``my_function``:
    def my_function(column_name: str):
        pass
 
-You have complete freedom as to what arguments you define in your function;
-``column_name`` is just an example. Note that these arguments
+You have complete freedom as to what arguments you define in your function -
+``column_name`` is just an example. These arguments
 have to be provided by the user when the algorithm is called. This is explained
 :ref:`here <pyclient-create-task>` for the Python client.
 
@@ -76,11 +86,41 @@ can be provided to your algorithm function in the following way:
         pass
 
 The ``@dataframe(2)`` decorator indicates that the first two arguments of the
-function are dataframes that should be provided by the vantage6 infrastructure.
-In this case, the user would have to specify two databases when calling the
-algorithm. Note that depending on the type of the database used, the user may
-also have to specify additional parameters such as a SQL query or the name of a
-worksheet in an Excel file.
+function are dataframes that are provided by the vantage6 infrastructure.
+In this case, the user will have to specify two dataframes when calling the
+algorithm.
+
+Another useful decorator is the ``@algorithm_client`` decorator:
+
+.. code:: python
+
+    import pandas as pd
+    from vantage6.client.algorithm_client import AlgorithmClient
+    from vantage6.algorithm.decorator.algorithm_client import algorithm_client
+    from vantage6.algorithm.decorator.data import dataframe
+
+    @dataframe(1)
+    @algorithm_client
+    def my_function(client: AlgorithmClient, df1: pd.DataFrame, column_name: str):
+        pass
+
+This decorator provides the algorithm with a client that can be used to interact
+with the vantage6 central server. For instance, you can use this client in
+the central part of an algorithm to create a subtasks for each node with
+``client.task.create()``. A full list of all commands that are available
+can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
+
+.. warning::
+
+    The decorators ``@dataframe`` and ``@algorithm_client`` each have one reserved
+    keyword: ``mock_data`` for the ``@dataframe`` decorator and ``mock_client`` for
+    the ``@algorithm_client`` decorator. These keywords cannot be used as
+    argument names in your algorithm functions. They are used instead by the
+    :ref:`MockAlgorithmClient <mock-test-algo-dev>` to mock the data and the
+    algorithm client. This is useful for testing your algorithm locally.
+
+Advanced decorators
+------------------
 
 For some data sources it's not trivial to construct a dataframe from the data.
 One of these data sources is the OHDSI OMOP CDM database. For this data source,
@@ -125,38 +165,6 @@ argument.
     object can be passed directly on to the functions from
     `python-ohdsi <https://python-ohdsi.readthedocs.io/>`.
 
-Another useful decorator is the ``@algorithm_client`` decorator:
-
-.. code:: python
-
-    import pandas as pd
-    from vantage6.client.algorithm_client import AlgorithmClient
-    from vantage6.algorithm.decorator.algorithm_client import algorithm_client
-    from vantage6.algorithm.decorator.data import dataframe
-
-    @dataframe(1)
-    @algorithm_client
-    def my_function(client: AlgorithmClient, df1: pd.DataFrame, column_name: str):
-        pass
-
-This decorator provides the algorithm with a client that can be used to interact
-with the vantage6 central server. For instance, you can use this client in
-the central part of an algorithm to create a subtasks for each node with
-``client.task.create()``. A full list of all commands that are available
-can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
-
-.. warning::
-
-    The decorators ``@dataframe`` and ``@algorithm_client`` each have one reserved
-    keyword: ``mock_data`` for the ``@dataframe`` decorator and ``mock_client`` for
-    the ``@algorithm_client`` decorator. These keywords should not be used as
-    argument names in your algorithm functions.
-
-    The reserved keywords are used by the
-    :ref:`MockAlgorithmClient <mock-test-algo-dev>` to mock the data and the
-    algorithm client. This is useful for testing your algorithm locally.
-
-
 Algorithm wrappers
 ------------------
 
@@ -177,14 +185,6 @@ The ``wrap_algorithm`` function will wrap your algorithm to ensure that the
 vantage6 algorithm tools are available to it. Note that the ``wrap_algorithm``
 function will also read the ``PKG_NAME`` environment variable from the
 ``Dockerfile`` so make sure that this variable is set correctly.
-
-For R, the command is slightly different:
-
-.. code:: r
-
-   CMD Rscript -e "vtg::docker.wrapper('$PKG_NAME')"
-
-Also, note that when using R, this only works for CSV files.
 
 Dockerfile structure
 --------------------
