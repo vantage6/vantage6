@@ -176,6 +176,67 @@ Partial function
            "result": sum(data[colum_name].to_list())
        }
 
+Data extraction function
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import os
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.data import dataframe
+   from vantage6.algorithm.tools.util import info
+
+   @dataframe(1)
+   def my_data_extraction_function(db_connection_details: dict):
+       info("Extracting data")
+
+       # for a CSV database, the URI is the path to the CSV file
+       df = pd.read_csv(db_connection_details["uri"])
+
+       # for a SQL database, the URI is the connection string. Environment variables
+       # such as username+password can be provided in the node configuration file.
+       df = pd.read_sql_query(
+         db_connection_details["uri"],
+         db_connection_details["query"],
+         os.getenv("USERNAME"),
+         os.getenv("PASSWORD"),
+      )
+
+       return df
+
+Preprocessing function
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.action import preprocessing
+   from vantage6.algorithm.tools.util import info
+
+   @preprocessing
+   def my_preprocessing_function(df: pd.DataFrame):
+       # do some preprocessing with the data
+       df["column_name"] = df["column_name"] + 1
+       return df
+
+Functions provided by the vantage6 infrastructure
+-------------------------------------------------
+
+There are already some data extraction and preprocessing functions provided by the
+vantage6 infrastructure. These contain the most common data extractions (such as
+CSV, Excel, Parquet and basic SQL wrappers) and common preprocessing transformations.
+
+You can make these functions available in your algorithm by importing them from the
+vantage6 algorithm tools:
+
+.. code:: python
+
+   # in your algorithm's __init__.py file
+   from vantage6.algorithm.data_extraction import *
+   from vantage6.algorithm.preprocessing import *
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
