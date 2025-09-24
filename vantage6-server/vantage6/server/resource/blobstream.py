@@ -228,7 +228,7 @@ class BlobStream(BlobStreamBase):
 
         if g.user and not self.r_task.has_at_least_scope(Scope.COLLABORATION, P.CREATE):
             return {
-                "msg": "You do not have permission to create tasks."
+                "msg": "You do not have permission to upload blobs. This requires permission to create tasks which you don't have."
             }, HTTPStatus.UNAUTHORIZED
         if g.container:
             container = g.container
