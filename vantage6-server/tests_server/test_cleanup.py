@@ -2,7 +2,7 @@ import unittest
 
 from datetime import datetime, timedelta, timezone
 import uuid
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
