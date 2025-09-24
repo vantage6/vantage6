@@ -27,7 +27,6 @@ Release notes
     (`Issue#2263 <https://github.com/vantage6/vantage6/issues/2263>`_,
     `PR#2265 <https://github.com/vantage6/vantage6/pull/2265>`_).
 
-
 4.12.2
 -----
 
