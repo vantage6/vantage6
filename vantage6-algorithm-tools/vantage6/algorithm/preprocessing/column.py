@@ -6,12 +6,14 @@ expressions.
 
 import pandas as pd
 
+from vantage6.algorithm.tools.error_handling import handle_pandas_errors
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import dataframe
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def rename_columns(
@@ -55,6 +57,7 @@ def rename_columns(
     )
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.DataFrame:
@@ -96,6 +99,7 @@ def assign_column(df: pd.DataFrame, column_name: str, expression: str) -> pd.Dat
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def redefine_column(
@@ -140,6 +144,7 @@ def redefine_column(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def change_column_type(
