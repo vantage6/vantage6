@@ -36,7 +36,7 @@ setup(
         "colorama==0.4.6",
         "cryptography==44.0.1",
         "docker>=7.1.0",
-        "pyfiglet==0.8.post1",
+        "pyfiglet==1.0.4",
         "pyjwt==2.9.0",
         "PyYAML>=6.0.1",
         "python-dateutil==2.8.2",
