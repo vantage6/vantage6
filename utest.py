@@ -2,6 +2,13 @@
 from pathlib import Path
 from vantage6.common.utest import run_tests, find_tests
 import sys
+import types
+
+# The uwsgi Python package is a C extension that is only available when running
+# inside a uwsgi process.
+# Required here because the blobstream resource imports uwsgi, and it is built
+# in the Dockerfile and not in the requirements.txt.
+sys.modules["uwsgi"] = types.SimpleNamespace()
 
 
 def run():
@@ -23,12 +30,19 @@ def run():
     )
     success_algorithm_store = run_tests(algorithm_store_test_suites)
 
+    # run algorithm tests
+    algorithm_test_suites = find_tests(
+        str(Path(__file__).parent / "vantage6-algorithm-tools")
+    )
+    success_algorithm_tools = run_tests(algorithm_test_suites)
+
     sys.exit(
         not (
             success_server
             and success_cli
             and success_common
             and success_algorithm_store
+            and success_algorithm_tools
         )
     )
 

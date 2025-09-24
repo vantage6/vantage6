@@ -51,8 +51,8 @@ column_name_input_schema = ColumnNameInputSchema()
 class ColumnNames(ServicesResources):
     """Resource for requesting column names from a node database."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         # Use task permissions for this resource
         self.r_task: RuleCollection = getattr(self.permissions, "task")
 

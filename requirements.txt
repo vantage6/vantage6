@@ -1,6 +1,8 @@
 aniso8601==9.0.1
 appdirs==1.4.4
 attrs==22.2.0
+azure-identity==1.22.0
+azure-storage-blob==12.25.1
 backcall==0.2.0
 bcrypt==4.0.1
 bidict==0.22.1
@@ -33,7 +35,7 @@ jsonschema==4.21.1
 kombu==5.2.4
 MarkupSafe==2.1.2
 marshmallow==3.20.2
-marshmallow-sqlalchemy==0.15.0
+marshmallow-sqlalchemy==0.29.0
 mistune==2.0.4
 numpy==1.24.2
 oauthlib==3.2.2

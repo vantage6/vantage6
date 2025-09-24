@@ -111,7 +111,9 @@
               <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-input-visualization' | translate }}"> </app-alert>
               <p>{{ displayTextResult(result.decoded_result) }}</p>
             </div>
-            <app-alert *ngIf="!result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <app-alert *ngIf="result.blob_storage_used" label="{{ 'task.alert-blob-read-result' | translate }}"> </app-alert>
+            <app-alert *ngIf="!result.blob_storage_used && !result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <br />
             <button mat-flat-button color="primary" (click)="downloadResult(result)">
               {{ "task-read.card-results.actions.download-result" | translate }}
             </button>
@@ -206,7 +208,8 @@
           </div>
         </div>
       </ng-container>
-      <app-alert *ngIf="!task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
+      <app-alert *ngIf="!task.runs[0]?.blob_storage_used && !task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
+      <app-alert *ngIf="task.runs[0]?.blob_storage_used" label="{{ 'task.alert-blob-read-input' | translate }}"> </app-alert>
       <br />
       <button *ngIf="!task.input && task.runs[0]?.input" mat-flat-button color="primary" (click)="downloadInput(task.runs[0])">
         {{ "task-read.card-results.actions.download-input" | translate }}
@@ -246,6 +249,10 @@
             <div class="data-list__item">
               <b>{{ "task-run.node" | translate }}</b>
               <span>{{ run.node.name }}</span>
+            </div>
+            <div class="data-list__item">
+              <b>{{ "task-run.blob-storage-used" | translate }}</b>
+              <span>{{ (run.blob_storage_used ? "general.yes" : "general.no") | translate }}</span>
             </div>
           </div>
           <div class="run__actions">
