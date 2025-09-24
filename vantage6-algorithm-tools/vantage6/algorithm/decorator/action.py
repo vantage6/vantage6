@@ -203,9 +203,6 @@ def data_extraction(func: callable) -> callable:
     return wrapper
 
 
-# Note that preprocessing functions always have one dataframe argument, which we provide
-# already here by using the @dataframe decorator.
-@dataframe(1)
 def preprocessing(func: callable) -> callable:
     """Decorator for pre-processing functions."""
 
@@ -219,8 +216,12 @@ def preprocessing(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
+    # Mark the step type for introspection
     wrapper.vantage6_decorator_step_type = AlgorithmStepType.PREPROCESSING
-    return wrapper
+
+    # Preprocessing functions always take one dataframe argument. Apply the
+    # dataframe decorator to the wrapper so data is injected at CALL time
+    return dataframe(1)(wrapper)
 
 
 def federated(func: callable) -> callable:

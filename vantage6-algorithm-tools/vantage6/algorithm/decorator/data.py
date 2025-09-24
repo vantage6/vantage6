@@ -161,7 +161,7 @@ def dataframe(*sources: str | int) -> callable:
                 )
                 exit(1)
 
-            if func.vantage6_dataframe_decorated:
+            if getattr(func, "vantage6_dataframe_decorated", False):
                 error(
                     "The @dataframe decorator cannot be used multiple times. Exiting..."
                 )
@@ -179,6 +179,13 @@ def dataframe(*sources: str | int) -> callable:
                         idx_dataframes += 1
                         args = (df, *args)
                 elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                    if action == AlgorithmStepType.PREPROCESSING:
+                        error(
+                            "The @dataframes or @dataframe("
+                            f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
+                            "for preprocessing functions. Exiting..."
+                        )
+                        exit(1)
                     requested_dataframes = dataframes_grouped[idx_dataframes]
                     data_ = {
                         df_name: _read_df_from_disk(df_name)
@@ -210,13 +217,4 @@ def dataframes(func: callable) -> callable:
     databases that the user who creates the task provides.
     """
     info("Using dataframes decorator")
-
-    action = get_action()
-    if not AlgorithmStepType.is_compute(action):
-        error(
-            "The @dataframes decorator can only be used for compute functions. "
-            "Exiting..."
-        )
-        exit(1)
-
     return dataframe(DATAFRAME_MULTIPLE_KEYWORD)(func)
