@@ -46,9 +46,9 @@ RUN pip install -e /vantage6/vantage6-server
 RUN apt-get install --no-install-recommends --no-install-suggests -y \
   libssl-dev python3-setuptools
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
-    LDFLAGS="-L/usr/local/opt/openssl/lib" \
-    UWSGI_PROFILE_OVERRIDE=ssl=true \
-    pip install uwsgi -Iv
+  LDFLAGS="-L/usr/local/opt/openssl/lib" \
+  UWSGI_PROFILE_OVERRIDE=ssl=true \
+  pip install uwsgi -Iv
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 
