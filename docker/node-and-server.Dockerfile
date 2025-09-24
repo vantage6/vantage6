@@ -45,8 +45,8 @@ RUN pip install -e /vantage6/vantage6-server
 # Install uWSGI from source (for RabbitMQ)
 RUN apt-get install --no-install-recommends --no-install-suggests -y \
   libssl-dev python3-setuptools
-RUN CFLAGS="-I/usr/include/openssl" \
-    LDFLAGS="-L/usr/lib/x86_64-linux-gnu" \
+RUN CFLAGS="-I/usr/local/opt/openssl/include" \
+    LDFLAGS="-L/usr/local/opt/openssl/lib" \
     UWSGI_PROFILE_OVERRIDE=ssl=true \
     pip install uwsgi -Iv
 
