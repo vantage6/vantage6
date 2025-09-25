@@ -20,7 +20,6 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.common.globals import (
-    APPNAME,
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_WITHIN_GROUP_SEPARATOR,
     DEFAULT_ALPINE_IMAGE,
