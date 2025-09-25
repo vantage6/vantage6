@@ -1,6 +1,14 @@
 import logging
 import uuid
-import uwsgi  # type: ignore (built from source in Dockerfile)
+
+# uwsgi is not available when running outside of a uwsgi process.
+# (see https://uwsgi-docs.readthedocs.io/en/latest/PythonModule.html)
+# This prevents a ModuleNotFoundError if this resource is loaded
+# outside of such a server, e.g. when importing data in v6 dev create-demo-network.
+try:
+    import uwsgi  # type: ignore (built from source in Dockerfile)
+except ImportError:
+    uwsgi = None
 from flask import g, request, Response, stream_with_context
 
 from flask_restful import Api
