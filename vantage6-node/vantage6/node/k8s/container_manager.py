@@ -20,6 +20,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskDatabaseType
 from vantage6.common.globals import (
+    APPNAME,
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_WITHIN_GROUP_SEPARATOR,
     DEFAULT_ALPINE_IMAGE,
@@ -53,6 +54,7 @@ from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_job_pod_run_status,
 )
 from vantage6.node.k8s.run_io import RunIO
+from vantage6.node.k8s.task_cleanup import delete_job_related_pods
 from vantage6.node.util import get_parent_id
 
 
@@ -1283,8 +1285,12 @@ class ContainerManager:
                     parent_id=job.metadata.annotations["task_parent_id"],
                 )
 
-                self.__delete_job_related_pods(
-                    run_io=run_io, namespace=self.task_namespace
+                delete_job_related_pods(
+                    run_id=run_io.run_id,
+                    container_name=run_io.container_name,
+                    namespace=self.task_namespace,
+                    core_api=self.core_api,
+                    batch_api=self.batch_api,
                 )
                 completed_job = True
 
@@ -1339,126 +1345,6 @@ class ContainerManager:
             )
 
         return pods_tty_logs
-
-    def __delete_job_related_pods(self, run_io: RunIO, namespace: str):
-        """
-        Deletes all the PODs created by a Kubernetes job in a given namespace
-        """
-        self.log.info(
-            "Cleaning up kubernetes Job %s (run_id = %s) and related PODs",
-            run_io.container_name,
-            run_io.run_id,
-        )
-
-        self.__delete_job(run_io.container_name, namespace)
-
-        job_selector = f"job-name={run_io.container_name}"
-        job_pods_list = self.core_api.list_namespaced_pod(
-            namespace, label_selector=job_selector
-        )
-        for job_pod in job_pods_list.items:
-            self.__delete_pod(job_pod.metadata.name, namespace)
-
-        self.__delete_secret(run_io.container_name, namespace)
-
-    def __delete_secret(self, secret_name: str, namespace: str) -> None:
-        """
-        Deletes a secret in a given namespace
-
-        Parameters
-        ----------
-        secret_name: str
-            Name of the secret
-        namespace: str
-            Namespace where the secret is located
-        """
-        try:
-            self.core_api.delete_namespaced_secret(
-                name=secret_name, namespace=namespace
-            )
-            self.log.info(
-                "Removed kubernetes Secret %s in namespace %s",
-                secret_name,
-                namespace,
-            )
-        except ApiException as exc:
-            if exc.status == 404:
-                self.log.debug(
-                    "No secret %s to remove in namespace %s", secret_name, namespace
-                )
-            else:
-                self.log.error("Exception when deleting namespaced secret: %s", exc)
-
-    def __delete_job(self, job_name: str, namespace: str) -> None:
-        """
-        Deletes a job in a given namespace
-
-        Parameters
-        ----------
-        job_name: str
-            Name of the job
-        namespace: str
-            Namespace where the job is located
-        """
-        self.log.info(
-            "Cleaning up kubernetes Job %s and related PODs",
-            job_name,
-        )
-        try:
-            # Check if the job exists before attempting to delete it
-            job = self.batch_api.read_namespaced_job(name=job_name, namespace=namespace)
-            if job:
-                self.batch_api.delete_namespaced_job(name=job_name, namespace=namespace)
-            else:
-                self.log.warning(
-                    "Job %s not found in namespace %s, skipping deletion",
-                    job_name,
-                    namespace,
-                )
-        except ApiException as exc:
-            if exc.status == 404:
-                self.log.warning(
-                    "Job %s not found in namespace %s, skipping deletion",
-                    job_name,
-                    namespace,
-                )
-            else:
-                self.log.error("Exception when deleting namespaced job: %s", exc)
-
-    def __delete_pod(self, pod_name: str, namespace: str) -> None:
-        """
-        Deletes a job in a given namespace
-
-        Parameters
-        ----------
-        pod_name: str
-            Name of the job
-        namespace: str
-            Namespace where the job is located
-        """
-        self.log.info(
-            "Cleaning up kubernetes pod %s in namespace %s", pod_name, namespace
-        )
-        try:
-            # Check if the job exists before attempting to delete it
-            job = self.core_api.read_namespaced_pod(name=pod_name, namespace=namespace)
-            if job:
-                self.core_api.delete_namespaced_pod(name=pod_name, namespace=namespace)
-            else:
-                self.log.warning(
-                    "Pod %s not found in namespace %s, skipping deletion",
-                    pod_name,
-                    namespace,
-                )
-        except ApiException as exc:
-            if exc.status == 404:
-                self.log.warning(
-                    "Pod %s not found in namespace %s, skipping deletion",
-                    pod_name,
-                    namespace,
-                )
-            else:
-                self.log.error("Exception when deleting namespaced job: %s", exc)
 
     def _encode_environment_variables(self, environment_variables: dict) -> dict:
         """
@@ -1683,7 +1569,13 @@ class ContainerManager:
             logs += "\n\nAlgorithm was killed by user request."
         elif initiator == KillInitiator.NODE_SHUTDOWN:
             logs += "\n\nAlgorithm was killed because the node was shut down."
-        self.__delete_job_related_pods(run_io, self.task_namespace)
+        delete_job_related_pods(
+            run_id=run_io.run_id,
+            container_name=run_io.container_name,
+            namespace=self.task_namespace,
+            core_api=self.core_api,
+            batch_api=self.batch_api,
+        )
         return KilledRun(
             run_id=job_to_kill.metadata.annotations["run_id"],
             task_id=job_to_kill.metadata.annotations["task_id"],
