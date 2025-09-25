@@ -40,9 +40,9 @@ class Configuration(collections.UserDict):
         schema = Schema(
             self.VALIDATORS.get(key, lambda x: True), ignore_extra_keys=True
         )
-        assert schema.is_valid(
-            value
-        ), f"Invalid value '{value}' provided for field '{key}'"
+        assert schema.is_valid(value), (
+            f"Invalid value '{value}' provided for field '{key}'"
+        )
         super().__setitem__(key, value)
 
     def __getitem__(self, key: str) -> Any:

@@ -1,7 +1,8 @@
 from unittest import TestCase
 
-from vantage6.common.docker.addons import parse_image_name
 from docker.errors import InvalidRepository
+
+from vantage6.common.docker.addons import parse_image_name
 
 
 # These tests are adapted from [1]. We do this because parse_image_name uses

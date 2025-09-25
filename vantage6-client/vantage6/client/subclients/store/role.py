@@ -1,6 +1,8 @@
 from typing import Any, List
-from vantage6.client.filter import post_filtering
+
 from vantage6.common.client.client_base import ClientBase
+
+from vantage6.client.filter import post_filtering
 
 
 class StoreRoleSubClient(ClientBase.SubClient):

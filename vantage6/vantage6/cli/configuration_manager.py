@@ -6,6 +6,7 @@ from vantage6.common.configuration_manager import Configuration, ConfigurationMa
 
 from vantage6.cli.globals import (
     ALGO_STORE_TEMPLATE_FILE,
+    AUTH_TEMPLATE_FILE,
     NODE_TEMPLATE_FILE,
     SERVER_TEMPLATE_FILE,
 )
@@ -47,6 +48,8 @@ class NodeConfiguration(Configuration):
     validators.
     """
 
+    # TODO perhaps we can remove these classes and do validation of the configuration
+    # file more easily with helm values.yaml checks.
     VALIDATORS = {
         # # TODO enable validators for node. To see if it works, use v6 node list
         # "node": {
@@ -63,6 +66,10 @@ class NodeConfiguration(Configuration):
         #     Optional("share_algorithm_logs"): Use(bool),
         # }
     }
+
+
+class AuthConfiguration(Configuration):
+    VALIDATORS = {}
 
 
 class TestConfiguration(Configuration):
@@ -197,6 +204,30 @@ class AlgorithmStoreConfigurationManager(ConfigurationManager):
             The configuration template for the algorithm store.
         """
         return super()._get_config_template(ALGO_STORE_TEMPLATE_FILE)
+
+
+class AuthConfigurationManager(ConfigurationManager):
+    """
+    Maintains the auth's configuration.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(conf_class=AuthConfiguration, name=name)
+
+    @classmethod
+    def from_file(cls, path: str) -> Self:
+        return super().from_file(path, conf_class=AuthConfiguration)
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the auth.
+        """
+        return super()._get_config_template(AUTH_TEMPLATE_FILE)
 
 
 class TestingConfigurationManager(ConfigurationManager):

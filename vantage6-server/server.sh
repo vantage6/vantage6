@@ -13,7 +13,7 @@ fi
 
 uwsgi \
     --http :80 \
-    --gevent 1000 \
+    --gevent 100 \
     --http-websockets \
     --master --callable app --disable-logging \
     --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \

@@ -16,6 +16,8 @@ fi
 uwsgi \
     --py-autoreload 1 \
     --reload-mercy 1 \
+    --gevent 100 \
+    --http-websockets \
     --http :7602 \
     --master \
     --callable app \

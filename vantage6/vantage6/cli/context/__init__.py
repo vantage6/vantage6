@@ -14,6 +14,7 @@ from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 
@@ -45,6 +46,8 @@ def select_context_class(
         return AlgorithmStoreContext
     elif type_ == InstanceType.NODE:
         return NodeContext
+    elif type_ == InstanceType.AUTH:
+        return AuthContext
     else:
         raise NotImplementedError
 

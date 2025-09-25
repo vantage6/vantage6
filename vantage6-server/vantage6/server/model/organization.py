@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 import base64
 
-from sqlalchemy import Column, String, LargeBinary, select
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, LargeBinary, String, select
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.globals import STRING_ENCODING
+
 from vantage6.server.model.base import Base, DatabaseSessionManager
 
 

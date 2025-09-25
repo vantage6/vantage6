@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Integer, ForeignKey, select, Boolean
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.authenticatable import Authenticatable
+from vantage6.server.model.base import DatabaseSessionManager
 from vantage6.server.model.rule import Operation, Rule, Scope
 
 

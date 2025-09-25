@@ -1,15 +1,9 @@
 from functools import wraps
 
 import click
-import IPython
-import yaml
 from colorama import Fore, Style
-from traitlets.config import get_config
 
-from vantage6.common import (
-    error,
-    info,
-)
+from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_wizard import select_configuration_questionaire
@@ -93,48 +87,6 @@ def click_insert_context(func: callable) -> callable:
 def cli_server() -> None:
     """Subcommand `vserver-local`."""
     pass
-
-
-#
-#   shell
-#
-@cli_server.command(name="shell")
-@click_insert_context
-def cli_server_shell(ctx: ServerContext) -> None:
-    """
-    Run an iPython shell.
-
-    Note that using the shell is not recommended, as there are no checks on
-    the validity of the data you are entering. It is better to use the UI,
-    Python client, or the API.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        The context of the server instance.
-    """
-    # Note: ctx appears to be unused but is needed for the click_insert_context
-    # to select the server and start the database connection.
-    c = get_config()
-    c.InteractiveShellEmbed.colors = "Linux"
-
-    # Suppress logging (e.g. on tab-completion)
-    import logging
-
-    logging.getLogger("parso.cache").setLevel(logging.WARNING)
-    logging.getLogger("parso.python.diff").setLevel(logging.WARNING)
-    logging.getLogger("asyncio").setLevel(logging.WARNING)
-
-    logging.warning(
-        "Using the shell is not recommended! There are no checks on "
-        "the validity of the data you are entering."
-    )
-    logging.warning("Please use the User interface, Python client, or API.")
-    del logging
-
-    import vantage6.server.db as db  # noqa: F401
-
-    IPython.embed(config=c)
 
 
 #

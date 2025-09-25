@@ -1,14 +1,15 @@
-import sys
-import os
 import base64
 import binascii
+import os
+import sys
 
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import (
-    STRING_ENCODING,
     ENV_VAR_EQUALS_REPLACEMENT,
+    STRING_ENCODING,
     ContainerEnvNames,
 )
-from vantage6.common.enum import AlgorithmStepType
+
 from vantage6.algorithm.tools.exceptions import EnvironmentVariableError
 
 

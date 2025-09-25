@@ -1,24 +1,25 @@
 import logging
-
-from flask import request, g
-from flask_restful import Api
 from http import HTTPStatus
+
+from flask import g, request
+from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import select
 
 from vantage6.common import logger_name
-from vantage6.server import db
+
 from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.server import db
 from vantage6.server.permission import (
-    Scope as S,
     Operation as P,
     PermissionManager,
     RuleCollection,
+    Scope as S,
 )
+from vantage6.server.resource import ServicesResources, only_for, with_user
 from vantage6.server.resource.common.input_schema import OrganizationInputSchema
-from vantage6.server.resource import only_for, with_user, ServicesResources
 from vantage6.server.resource.common.output_schema import OrganizationSchema
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -332,7 +333,7 @@ class Organizations(OrganizationBase):
         organization = db.Organization(
             name=name,
             address1=data.get("address1", ""),
-            address2=data.get("address2" ""),
+            address2=data.get("address2", ""),
             zipcode=data.get("zipcode", ""),
             country=data.get("country", ""),
             public_key=data.get("public_key", ""),

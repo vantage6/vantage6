@@ -7,7 +7,6 @@ cannot be derived from the function signature.
 # TODO conditional operators
 from vantage6.common.enum import AlgorithmArgumentType
 
-
 PREPROCESSING_FUNCTIONS_JSON_DATA = {
     "collapse": {
         "arguments": {

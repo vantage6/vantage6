@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6"
-version = "5.0.0a34"
+version = "5.0.0a36"
 description = "Vantage6 - Privacy-preserving federated learning"
 readme = "README.md"
 license = {text = "MIT"}
@@ -29,14 +29,14 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "vantage6-common==5.0.0a34",
-    "vantage6-client==5.0.0a34",
-    "vantage6==5.0.0a34",
-    "vantage6-algorithm-tools==5.0.0a34",
-    "vantage6-backend-common==5.0.0a34",
-    "vantage6-node==5.0.0a34",
-    "vantage6-server==5.0.0a34",
-    "vantage6-algorithm-store==5.0.0a34",
+    "vantage6-common==5.0.0a36",
+    "vantage6-client==5.0.0a36",
+    "vantage6==5.0.0a36",
+    "vantage6-algorithm-tools==5.0.0a36",
+    "vantage6-backend-common==5.0.0a36",
+    "vantage6-node==5.0.0a36",
+    "vantage6-server==5.0.0a36",
+    "vantage6-algorithm-store==5.0.0a36",
 ]
 
 [project.optional-dependencies]

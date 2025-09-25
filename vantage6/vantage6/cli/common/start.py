@@ -200,7 +200,7 @@ def helm_install(
         )
         info(
             f"Successfully installed release '{release_name}' using chart "
-            f"'{chart_name}'."
+            f"'{chart_name.value}'."
         )
     except subprocess.CalledProcessError:
         error(f"Failed to install release '{release_name}'.")

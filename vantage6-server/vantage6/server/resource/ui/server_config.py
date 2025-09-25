@@ -2,14 +2,14 @@
 Resource to get details on the server configuration from the UI.
 """
 
+import logging
 from http import HTTPStatus
 
-import logging
 from flask_restful import Api
 
 from vantage6.common import logger_name
-from vantage6.server.resource import ServicesResources, with_user
 
+from vantage6.server.resource import ServicesResources, with_user
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

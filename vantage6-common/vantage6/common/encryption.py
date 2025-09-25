@@ -14,23 +14,22 @@ these public keys is outside the scope of this module).
 """
 
 # TODO handle no public key from other organization (should that happen here?)
-import os
-import logging
 import json
-
+import logging
+import os
 from pathlib import Path
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key,
 )
 
-from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
+from vantage6.common import Singleton, base64s_to_bytes, bytes_to_base64s, logger_name
 
 SEPARATOR = "$"
 

@@ -1,24 +1,22 @@
 import logging
-import uuid
 from http import HTTPStatus
 
 from vantage6.common import logger_name
-from vantage6.server.model import (
-    Rule,
-    Organization,
-    Node,
-    Collaboration,
-)
-from vantage6.server.model.rule import Scope, Operation
-from .test_resource_base import TestResourceBase
 
+from vantage6.server.model import (
+    Collaboration,
+    Organization,
+    Rule,
+)
+from vantage6.server.model.rule import Operation, Scope
+
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_organization(self):
         rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
@@ -43,7 +41,7 @@ class TestResources(TestResourceBase):
             self.assertIn(attr, org)
 
         # Retrieve a single organization
-        url = f'/api/organization/{org["id"]}'
+        url = f"/api/organization/{org['id']}"
         org = self.app.get(url, headers=headers).json
         self.assertEqual(org["id"], orgs[0]["id"])
         self.assertEqual(org["name"], orgs[0]["name"])

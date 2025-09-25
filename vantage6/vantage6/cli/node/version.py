@@ -1,12 +1,13 @@
 import click
-import questionary as q
 import docker
+import questionary as q
 
 from vantage6.common import error
-from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import check_docker_running
-from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.common.globals import APPNAME
+
 from vantage6.cli import __version__
+from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.node.common import find_running_node_names
 
 
@@ -16,7 +17,7 @@ from vantage6.cli.node.common import find_running_node_names
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",

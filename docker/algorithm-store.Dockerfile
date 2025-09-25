@@ -35,8 +35,7 @@ RUN uv pip install --system -e vantage6-algorithm-store
 
 # Overwrite uWSGI installation from the requirements.txt
 # Install uWSGI from source (for RabbitMQ)
-RUN apt-get install --no-install-recommends --no-install-suggests -y \
-  libssl-dev python3-setuptools
+RUN apt-get install --no-install-recommends --no-install-suggests -y libssl-dev
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \

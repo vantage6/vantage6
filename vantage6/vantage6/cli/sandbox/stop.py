@@ -1,24 +1,26 @@
 import click
 
-# from vantage6.cli.context.node import NodeContext
-from vantage6.cli.server.stop import cli_server_stop
-from vantage6.cli.node.stop import cli_node_stop
+from vantage6.common import error, info
+
+# from vantage6.cli.common.decorator import click_insert_context
+from vantage6.common.globals import InstanceType
+
+from vantage6.cli.common.utils import (
+    find_running_service_names,
+    select_context_and_namespace,
+    select_running_service,
+)
+from vantage6.cli.context import get_context
 
 # from vantage6.cli.node.stop import cli_node_stop
 # from vantage6.cli.algostore.stop import cli_algo_store_stop
 # from vantage6.cli.common.stop import helm_uninstall
 # from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context import get_context
+from vantage6.cli.node.stop import cli_node_stop
 
-# from vantage6.cli.common.decorator import click_insert_context
-from vantage6.common.globals import InstanceType
-from vantage6.common import info, error
-from vantage6.cli.common.utils import (
-    select_context_and_namespace,
-    find_running_service_names,
-    select_running_service,
-)
+# from vantage6.cli.context.node import NodeContext
+from vantage6.cli.server.stop import cli_server_stop
 
 
 @click.command()

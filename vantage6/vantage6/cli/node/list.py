@@ -3,8 +3,9 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import warning
-from vantage6.common.globals import APPNAME
 from vantage6.common.docker.addons import check_docker_running
+from vantage6.common.globals import APPNAME
+
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common import find_running_node_names
 
@@ -39,7 +40,7 @@ def cli_node_list() -> None:
             if f"{APPNAME}-{config.name}-system" in running_node_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25}System ")
+        click.echo(f"{config.name:25}{status:25}System ")
 
     # user folders
     configs, f2 = NodeContext.available_configurations(system_folders=False)
@@ -49,8 +50,8 @@ def cli_node_list() -> None:
             if f"{APPNAME}-{config.name}-user" in running_node_names
             else stopped
         )
-        click.echo(f"{config.name:25}" f"{status:25}User   ")
+        click.echo(f"{config.name:25}{status:25}User   ")
 
     click.echo("-" * 53)
     if len(f1) + len(f2):
-        warning(f"{Fore.RED}Failed imports: {len(f1)+len(f2)}{Style.RESET_ALL}")
+        warning(f"{Fore.RED}Failed imports: {len(f1) + len(f2)}{Style.RESET_ALL}")

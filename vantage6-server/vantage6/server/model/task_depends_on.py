@@ -4,10 +4,9 @@ line contains a task (ID) that depends_on another task (ID). Each task can depen
 multiple other tasks and each task can be depended on by multiple other tasks.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from .base import Base
-
 
 task_depends_on = Table(
     "task_depends_on",

@@ -1,9 +1,12 @@
 # TODO this file is awkward...
+# ruff: noqa: F401
 from vantage6.server.model import (
-    Base,
     AlgorithmStore,
     Authenticatable,
+    Base,
     Collaboration,
+    Column,
+    Dataframe,
     Member,
     Node,
     NodeConfig,
@@ -12,6 +15,7 @@ from vantage6.server.model import (
     Role,
     Rule,
     Run,
+    Session,
     Study,
     StudyMember,
     Task,
@@ -19,8 +23,5 @@ from vantage6.server.model import (
     User,
     UserPermission,
     role_rule_association,
-    Session,
-    Dataframe,
-    Column,
     task_depends_on,
 )

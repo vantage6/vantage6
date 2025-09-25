@@ -3,19 +3,20 @@
 # SQLAlchemy metadata. This is required for SQLAlchemy to be able to map the
 # classes to the database tables, and e.g. initialize the database tables on
 # startup.
+# ruff: noqa: F401
 from vantage6.algorithm.store.model import (
-    Base,
     Algorithm,
+    AllowedArgumentValue,
     Argument,
+    Base,
     Database,
     Function,
     Permission,
+    Policy,
+    Review,
     Role,
     Rule,
     User,
-    Review,
-    Policy,
     UserPermission,
     role_rule_association,
-    AllowedArgumentValue,
 )

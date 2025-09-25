@@ -1,17 +1,18 @@
 import logging
-
 from http import HTTPStatus
+
 from flask import g
 from flask.globals import request
 from flask_restful import Api
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
-from vantage6.server.resource import with_user, ServicesResources
 from vantage6.common import logger_name
-from vantage6.server import db
-from vantage6.server.resource.common.output_schema import RuleSchema
+
 from vantage6.backend.common.resource.pagination import Pagination
 
+from vantage6.server import db
+from vantage6.server.resource import ServicesResources, with_user
+from vantage6.server.resource.common.output_schema import RuleSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -147,7 +148,7 @@ class Rules(ServicesResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.role_rule_association)
@@ -166,7 +167,7 @@ class Rules(ServicesResources):
                 user = db.User.get(args["user_id"])
                 if not user:
                     return {
-                        "msg": f'User with id={args["user_id"]} does not exist!'
+                        "msg": f"User with id={args['user_id']} does not exist!"
                     }, HTTPStatus.BAD_REQUEST
 
             # Create two subqueries - one for role-based permissions and one for direct

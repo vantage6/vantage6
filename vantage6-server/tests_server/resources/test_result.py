@@ -1,15 +1,14 @@
 import logging
 
 from vantage6.common import logger_name
-from .test_resource_base import TestResourceBase
 
+from .test_resource_base import TestResourceBase
 
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-
     def test_result_with_id(self):
         headers = self.login_as_root()
         run = self.create_run()

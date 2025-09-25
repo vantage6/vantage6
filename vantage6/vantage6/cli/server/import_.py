@@ -2,18 +2,18 @@ import click
 import requests
 import yaml
 
-from vantage6.common import info, warning, error
+from vantage6.common import error, info, warning
 from vantage6.common.globals import (
     APPNAME,
     InstanceType,
 )
 
+from vantage6.client import UserClient
+
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.utils import check_config_name_allowed
-
-from vantage6.client import UserClient
 
 
 @click.command()
@@ -113,7 +113,6 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Importing collaborations")
     all_nodes = []
     for collaboration in import_data["collaborations"]:
-
         # Collecting organization ids
         organization_ids = []
         for participant in collaboration["participants"]:
