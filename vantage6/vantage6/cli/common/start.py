@@ -22,10 +22,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.cli.common.utils import (
-    check_running,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
 
@@ -35,8 +32,6 @@ def prestart_checks(
     instance_type: InstanceType,
     name: str,
     system_folders: bool,
-    context: str,
-    namespace: str,
 ) -> None:
     """
     Run pre-start checks for an instance.
@@ -47,11 +42,6 @@ def prestart_checks(
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")
         exit(1)
-
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
 
 
 def pull_infra_image(
@@ -217,9 +207,9 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
+    namespace: str,
     ip: str = "localhost",
     context: str | None = None,
-    namespace: str | None = None,
 ) -> None:
     """
     Port forward a kubernetes service.
@@ -271,7 +261,7 @@ def start_port_forward(
                         "get",
                         "endpoints",
                         "--namespace",
-                        namespace,  # TODO: check this if Namespace is None
+                        namespace,
                         service_name,
                         "-o",
                         "jsonpath={.subsets[*].addresses[*].ip}",

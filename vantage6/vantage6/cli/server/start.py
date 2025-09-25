@@ -12,6 +12,7 @@ from vantage6.cli.common.start import (
 from vantage6.cli.common.utils import (
     attach_logs,
     create_directory_if_not_exists,
+    select_context_and_namespace,
 )
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import ChartName
@@ -50,7 +51,12 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    prestart_checks(ctx, InstanceType.SERVER, name, system_folders, context, namespace)
+    prestart_checks(ctx, InstanceType.SERVER, name, system_folders)
+
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
     create_directory_if_not_exists(ctx.log_dir)
 
