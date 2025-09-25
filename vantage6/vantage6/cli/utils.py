@@ -15,6 +15,34 @@ import questionary as q
 from vantage6.common import error, info, warning
 
 
+def _is_valid_k8s_dns_name(name: str) -> bool:
+    """
+    Validate a Kubernetes DNS-1035 label.
+
+    Rules:
+      - lower case alphanumeric or '-'
+      - start with a letter
+      - end with alphanumeric
+      - length 1-63
+    """
+    if len(name) == 0 or len(name) > 63:
+        return False
+    return re.match(r"^[a-z]([-a-z0-9]*[a-z0-9])?$", name) is not None
+
+
+def _check_k8s_dns_name(name: str) -> None:
+    """
+    Exit with error if the provided name is not a valid DNS-1035 label.
+    """
+    if not _is_valid_k8s_dns_name(name):
+        error(
+            f"Invalid name: '{name}'. Name must comply with the following rules: "
+            "letters, numbers, or '-', start with a letter, end with letter or number, "
+            "and be at most 63 characters."
+        )
+        exit(1)
+
+
 def check_config_name_allowed(name: str) -> None:
     """
     Check if configuration name is allowed
@@ -97,6 +125,7 @@ def prompt_config_name(name: str | None) -> None:
         if name.count(" ") > 0:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
+    _check_k8s_dns_name(name)
     return name
 
 

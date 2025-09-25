@@ -3,26 +3,24 @@ from pathlib import Path
 
 import click
 import pandas as pd
-from vantage6.common.configuration_manager import ConfigurationManager
 import yaml
 from colorama import Fore, Style
 from jinja2 import Environment, FileSystemLoader
 
-import vantage6.cli.sandbox.data as data_dir
-
-from vantage6.common import ensure_config_dir_writable, error, generate_apikey, info
+from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
 
+import vantage6.cli.sandbox.data as data_dir
+from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import PACKAGE_FOLDER, DefaultDatasets
 from vantage6.cli.server.common import get_server_context
+from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
-from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.utils import prompt_config_name
-from vantage6.cli.common.utils import select_context_and_namespace
 
 
 def create_node_data_files(
@@ -401,8 +399,12 @@ def create_vserver_config(
 
     template = environment.get_template("server_config.j2")
 
-    # TODO: make this configurable, or the dev folder or something
-    data_dir = Path(f"/Users/frankmartin/Data/{server_name}")
+    folders = ServerContext.instance_folders(
+        instance_type=InstanceType.SERVER,
+        instance_name=server_name,
+        system_folders=False,
+    )
+    data_dir = Path(folders["dev"])
     data_dir.mkdir(parents=True, exist_ok=True)
 
     server_config = template.render(
@@ -603,7 +605,6 @@ def demo_network(
 
 
 # TODO:
-# - [ ] Add option to set namespace and context
 # - [ ] Accept the additional config files for the server, node and algorithm store
 # - [ ] Exit gracefully when one of the steps fails
 @click.command()
@@ -748,7 +749,7 @@ def cli_new_sandbox(
     )
 
     # First we need to start the server, store and auth
-    info("Starting vantage6 core")
+    info("Starting vantage6 server")
     click_ctx.invoke(
         cli_server_start,
         ctx=ctx,
