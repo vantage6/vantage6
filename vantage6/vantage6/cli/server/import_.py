@@ -2,9 +2,8 @@ import click
 import requests
 import yaml
 
-from vantage6.common import error, info, warning
+from vantage6.common import error, info
 from vantage6.common.globals import (
-    APPNAME,
     InstanceType,
 )
 
@@ -13,7 +12,6 @@ from vantage6.client import UserClient
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.utils import check_config_name_allowed
 
 
 @click.command()

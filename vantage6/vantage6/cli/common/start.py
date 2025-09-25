@@ -207,9 +207,9 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
-    namespace: str,
     ip: str = "localhost",
     context: str | None = None,
+    namespace: str | None = None,
 ) -> None:
     """
     Port forward a kubernetes service.
@@ -254,22 +254,22 @@ def start_port_forward(
     timeout = 300  # seconds
     while time.time() - start_time < timeout:
         try:
-            result = (
-                subprocess.check_output(
-                    [
-                        "kubectl",
-                        "get",
-                        "endpoints",
-                        "--namespace",
-                        namespace,
-                        service_name,
-                        "-o",
-                        "jsonpath={.subsets[*].addresses[*].ip}",
-                    ]
-                )
-                .decode()
-                .strip()
-            )
+            command = [
+                "kubectl",
+                "get",
+                "endpoints",
+                service_name,
+                "-o",
+                "jsonpath={.subsets[*].addresses[*].ip}",
+            ]
+
+            if context:
+                command.extend(["--context", context])
+
+            if namespace:
+                command.extend(["--namespace", namespace])
+
+            result = subprocess.check_output(command).decode().strip()
 
             if result:
                 info(f"Service '{service_name}' is ready.")
@@ -280,7 +280,8 @@ def start_port_forward(
         time.sleep(2)
     else:
         error(
-            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} seconds."
+            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} "
+            "seconds."
         )
         return
 
