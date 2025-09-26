@@ -33,6 +33,37 @@ from vantage6.cli.utils import prompt_config_name
 class SandboxConfigManager:
     """
     Class to store the sandbox configurations.
+
+    Parameters
+    ----------
+    server_name : str
+        Name of the server.
+    num_nodes : int
+        Number of nodes to create.
+    server_url : str
+        URL of the server.
+    server_port : int
+        Port of the server.
+    ui_port : int
+        Port of the UI.
+    algorithm_store_port : int
+        Port of the algorithm store.
+    image : str
+        Image of the server.
+    ui_image : str
+        Image of the UI.
+    extra_server_config : Path
+        Path to the extra server configuration file.
+    extra_node_config : Path
+        Path to the extra node configuration file.
+    extra_store_config : Path
+        Path to the extra algorithm store configuration file.
+    extra_datasets : list[tuple[str, Path]]
+        List of tuples with the label and path to the dataset file.
+    context : str
+        Kubernetes context.
+    namespace : str
+        Kubernetes namespace.
     """
 
     def __init__(
@@ -48,7 +79,7 @@ class SandboxConfigManager:
         extra_server_config: Path,
         extra_node_config: Path,
         extra_store_config: Path,
-        add_dataset: list[tuple[str, Path]],
+        extra_dataset: tuple[str, Path],
         context: str,
         namespace: str,
     ):
@@ -63,7 +94,10 @@ class SandboxConfigManager:
         self.extra_server_config = extra_server_config
         self.extra_node_config = extra_node_config
         self.extra_store_config = extra_store_config
-        self.add_dataset = add_dataset
+        if extra_dataset:
+            self.node_datasets = [extra_dataset]
+        else:
+            self.node_datasets = []
         self.context = context
         self.namespace = namespace
 
@@ -85,11 +119,24 @@ class SandboxConfigManager:
 
         self._create_algo_store_config()
 
-    def _create_node_data_files(self) -> None:
-        """Create data files for nodes."""
+    def _create_node_data_files(self, node_dataset: tuple[str, Path]) -> None:
+        """
+        Create data files for nodes.
+
+        Parameters
+        ----------
+        node_dataset : tuple[str, Path]
+            Tuple with the label and path to the dataset file.
+
+        Returns
+        -------
+        list[tuple[str, Path]]
+            List of tuples with the label and path to the dataset file.
+        """
         info(f"Creating data files for {self.num_nodes} nodes.")
+        db_label, db_path = node_dataset
         data_files = []
-        full_df = pd.read_csv(self.add_dataset[1])
+        full_df = pd.read_csv(db_path)
         length_df = len(full_df)
         for i in range(self.num_nodes):
             node_name = f"{self.server_name}_node_{i + 1}"
@@ -101,17 +148,31 @@ class SandboxConfigManager:
             start = i * length_df // self.num_nodes
             end = (i + 1) * length_df // self.num_nodes
             data = full_df[start:end]
-            data_file = data_folder / f"df_{self.add_dataset[0]}_{node_name}.csv"
+            data_file = data_folder / f"df_{db_label}_{node_name}.csv"
 
             # write data to file
             data.to_csv(data_file, index=False)
-            data_files.append((self.add_dataset[0], data_file))
+            data_files.append((db_label, data_file))
         return data_files
 
     def _create_node_config_file(
         self, config: dict, datasets: list[tuple[str, Path]] | None = None
     ) -> None:
-        """Create a node configuration file (YAML)."""
+        """
+        Create a node configuration file (YAML).
+
+        Parameters
+        ----------
+        config : dict
+            Configuration dictionary.
+        datasets : list[tuple[str, Path]] | None
+            List of tuples with the label and path to the dataset file.
+
+        Returns
+        -------
+        Path
+            Path to the node configuration file.
+        """
         environment = Environment(
             loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
             trim_blocks=True,
@@ -222,7 +283,9 @@ class SandboxConfigManager:
         return ""
 
     def _generate_node_configs(self) -> None:
-        """Generates ``num_nodes`` node configuration files."""
+        """
+        Generates ``num_nodes`` node configuration files.
+        """
         node_data_files = []
         extra_config = self._read_extra_config_file(self.extra_node_config)
 
@@ -230,7 +293,7 @@ class SandboxConfigManager:
 
         # Add default datasets to the list of dataset provided
         for default_dataset in DefaultDatasets:
-            self.add_dataset.append(
+            self.node_datasets.append(
                 (
                     default_dataset.name.lower().replace("_", "-"),
                     data_directory / default_dataset.value,
@@ -241,7 +304,7 @@ class SandboxConfigManager:
         seen_labels = set()
         duplicates = [
             label
-            for label in [dataset[0] for dataset in self.add_dataset]
+            for label in [dataset[0] for dataset in self.node_datasets]
             if (label in seen_labels or seen_labels.add(label))
         ]
 
@@ -254,10 +317,8 @@ class SandboxConfigManager:
 
         # create the data files for the nodes and get the path and label for each
         # dataset
-        for dataset in self.add_dataset:
-            node_data_files.append(
-                self._create_node_data_files(self.num_nodes, self.server_name, dataset)
-            )
+        for dataset in self.node_datasets:
+            node_data_files.append(self._create_node_data_files(dataset))
 
         for i in range(self.num_nodes):
             config = {
@@ -341,6 +402,11 @@ class SandboxConfigManager:
             Extra configuration to be added to the server configuration.
         data_dir : Path
             Path to the data directory.
+
+        Returns
+        -------
+        dict
+            Dictionary with server configuration values.
         """
         return {
             "server": {
@@ -389,8 +455,9 @@ class SandboxConfigManager:
             extra_config += f"images:\n  ui: {self.ui_image}"
 
         # Create the server config file
-        new(
+        self.server_config_file = new(
             config_producing_func=self.__server_config_return_func,
+            config_producing_func_args=(extra_config, data_dir),
             name=self.server_name,
             system_folders=False,
             namespace=self.namespace,
@@ -536,7 +603,7 @@ class SandboxConfigManager:
 @click.option(
     "--add-dataset",
     type=(str, click.Path()),
-    default=(),
+    default=None,
     multiple=True,
     help="Add a dataset to the nodes. The first argument is the label of the database, "
     "the second is the path to the dataset file.",
@@ -552,14 +619,14 @@ def cli_new_sandbox(
     server_port: int,
     ui_port: int,
     algorithm_store_port: int,
-    image: str = None,
-    ui_image: str = None,
-    extra_server_config: Path = None,
-    extra_node_config: Path = None,
-    extra_store_config: Path = None,
-    add_dataset: list[tuple[str, Path]] = (),
-    context: str = None,
-    namespace: str = None,
+    image: str | None = None,
+    ui_image: str | None = None,
+    extra_server_config: Path | None = None,
+    extra_node_config: Path | None = None,
+    extra_store_config: Path | None = None,
+    add_dataset: tuple[str, Path] | None = None,
+    context: str | None = None,
+    namespace: str | None = None,
 ) -> dict:
     """
     Create a sandbox environment.

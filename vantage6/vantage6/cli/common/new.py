@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from colorama import Fore, Style
 
 from vantage6.common import ensure_config_dir_writable, error, info
@@ -19,7 +21,7 @@ def new(
     context: str,
     type_: InstanceType,
     is_sandbox: bool = False,
-) -> None:
+) -> Path | None:
     """
     Create a new configuration.
 
@@ -39,6 +41,11 @@ def new(
         Context to use
     type_ : InstanceType
         Type of the configuration (node, server, algorithm store, etc)
+
+    Returns
+    -------
+    Path | None
+        Path to the configuration file. None if the process is aborted for any reason.
     """
     cli_config = CliConfig()
     context, namespace = cli_config.compare_changes_config(
@@ -94,3 +101,4 @@ def new(
         f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name} "
         f"start {flag}{Style.RESET_ALL}"
     )
+    return cfg_file

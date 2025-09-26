@@ -1,3 +1,4 @@
+# TODO v5+ check if this file, and others in this folder, are still needed
 RABBITMQ_DEFINITIONS = {
     "rabbit_version": "3.6.6",
     "users": [
