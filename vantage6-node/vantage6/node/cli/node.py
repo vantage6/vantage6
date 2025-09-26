@@ -14,7 +14,7 @@ import click
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_wizard import (
+from vantage6.cli.configuration_create import (
     select_configuration_questionaire,
 )
 from vantage6.cli.context import NodeContext

@@ -12,7 +12,7 @@ from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
 
 from vantage6.client import UserClient
 
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionaire
 from vantage6.cli.context.node import NodeContext
 
 

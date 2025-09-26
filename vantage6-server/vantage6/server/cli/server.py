@@ -6,7 +6,7 @@ from colorama import Fore, Style
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionaire
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 

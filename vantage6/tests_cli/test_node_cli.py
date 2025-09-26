@@ -84,14 +84,14 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n",
         )
 
-    @patch("vantage6.cli.node.new.configuration_wizard")
+    @patch("vantage6.cli.node.new.make_configuration")
     @patch("vantage6.cli.node.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_config(self, context, permissions, wizard):
+    def test_new_config(self, context, permissions, make_configuration):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
         permissions.return_value = True
-        wizard.return_value = "/some/file/path"
+        make_configuration.return_value = "/some/file/path"
 
         runner = CliRunner()
         result = runner.invoke(
@@ -108,8 +108,8 @@ class NodeCLITest(unittest.TestCase):
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.new.configuration_wizard")
-    def test_new_config_replace_whitespace_in_name(self, _):
+    @patch("vantage6.cli.node.new.make_configuration")
+    def test_new_config_replace_whitespace_in_name(self, make_configuration):
         """Whitespaces are replaced in the name."""
 
         runner = CliRunner()

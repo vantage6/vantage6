@@ -5,7 +5,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import get_main_cli_command_name
 from vantage6.cli.config import CliConfig
-from vantage6.cli.configuration_wizard import make_configuration
+from vantage6.cli.configuration_create import make_configuration
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
