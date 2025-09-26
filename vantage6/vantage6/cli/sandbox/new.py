@@ -45,8 +45,12 @@ class SandboxConfigManager:
         Port of the UI.
     algorithm_store_port : int
         Port of the algorithm store.
-    image : str
+    server_image : str
         Image of the server.
+    node_image : str
+        Image of the node.
+    store_image : str
+        Image of the algorithm store.
     ui_image : str
         Image of the UI.
     extra_server_config : Path
@@ -71,7 +75,9 @@ class SandboxConfigManager:
         server_port: int,
         ui_port: int,
         algorithm_store_port: int,
-        image: str,
+        server_image: str,
+        node_image: str,
+        store_image: str,
         ui_image: str,
         extra_server_config: Path,
         extra_node_config: Path,
@@ -86,7 +92,9 @@ class SandboxConfigManager:
         self.server_port = server_port
         self.ui_port = ui_port
         self.algorithm_store_port = algorithm_store_port
-        self.image = image
+        self.server_image = server_image
+        self.node_image = node_image
+        self.store_image = store_image
         self.ui_image = ui_image
         self.extra_server_config = extra_server_config
         self.extra_node_config = extra_node_config
@@ -109,6 +117,8 @@ class SandboxConfigManager:
     def _initialize_configs(self) -> None:
         """Generates the demo network."""
         self._generate_node_configs()
+
+        self._create_auth_config()
 
         self._create_vserver_import_config()
 
@@ -205,7 +215,11 @@ class SandboxConfigManager:
             "node": {
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "api_key": node_specific_config["api_key"],
-                "image": "harbor2.vantage6.ai/infrastructure/node:frank",
+                "image": (
+                    self.node_image
+                    # TODO v5+ update
+                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a36"
+                ),
                 "logging": {
                     "file": f"{node_specific_config['node_name']}.log",
                 },
@@ -421,7 +435,9 @@ class SandboxConfigManager:
                 "port": self.ui_port,
                 # TODO: v5+ set to latest v5 image
                 # TODO: make this configurable
-                "image": "harbor2.vantage6.ai/infrastructure/ui:5.0.0a36",
+                "image": (
+                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a36"
+                ),
             },
         }
 
@@ -488,8 +504,41 @@ class SandboxConfigManager:
                 "logging": {},
                 "vantage6ServerUri": f"{self.server_url}:{self.server_port}",
                 "additional_config": extra_config,
+                "image": (
+                    self.store_image
+                    or "harbor2.vantage6.ai/infrastructure/store:5.0.0a36"
+                ),
             },
             "database": {},
+        }
+
+    def _create_auth_config(self) -> None:
+        """Create auth configuration file (YAML)."""
+        self.auth_config_file = new(
+            config_producing_func=self.__auth_config_return_func,
+            config_producing_func_args=(),
+            name=f"{self.server_name}-auth",
+            system_folders=False,
+            namespace=self.namespace,
+            context=self.context,
+            type_=InstanceType.AUTH,
+            is_sandbox=True,
+        )
+
+    def __auth_config_return_func(self) -> dict:
+        """
+        Return a dict with auth configuration values to be used in creating the
+        config file.
+        """
+
+        return {
+            "keycloak": {
+                "production": False,
+                "redirectUris": [
+                    "http://localhost:7600",
+                    "http://localhost:7681",
+                ],
+            },
         }
 
 
@@ -533,11 +582,9 @@ class SandboxConfigManager:
     default=Ports.DEV_ALGO_STORE.value,
     help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
 )
-# TODO: this should be `--server-image`
-# TODO: I am missing the `--store-image` option
+# TODO: I am missing the `--store-image` option, also --node-image
 @click.option(
-    "-i",
-    "--image",
+    "--server-image",
     type=str,
     default=None,
     help="Server docker image to use when setting up resources for "
@@ -549,6 +596,19 @@ class SandboxConfigManager:
     default=None,
     help="UI docker image to specify in configuration files. Will be used on startup of"
     " the network",
+)
+@click.option(
+    "--store-image",
+    type=str,
+    default=None,
+    help="Algorithm store docker image to use when setting up resources for "
+    "the development algorithm store",
+)
+@click.option(
+    "--node-image",
+    type=str,
+    default=None,
+    help="Node docker image to use when setting up resources for the development node",
 )
 @click.option(
     "--extra-server-config",
@@ -591,8 +651,10 @@ def cli_new_sandbox(
     server_port: int,
     ui_port: int,
     algorithm_store_port: int,
-    image: str | None = None,
+    server_image: str | None = None,
     ui_image: str | None = None,
+    store_image: str | None = None,
+    node_image: str | None = None,
     extra_server_config: Path | None = None,
     extra_node_config: Path | None = None,
     extra_store_config: Path | None = None,
@@ -606,20 +668,22 @@ def cli_new_sandbox(
     server_name = prompt_config_name(name)
     if not ServerContext.config_exists(server_name, False, is_sandbox=True):
         sb_config_manager = SandboxConfigManager(
-            server_name,
-            num_nodes,
-            server_url,
-            server_port,
-            ui_port,
-            algorithm_store_port,
-            image,
-            ui_image,
-            extra_server_config,
-            extra_node_config,
-            extra_store_config,
-            add_dataset,
-            context,
-            namespace,
+            server_name=server_name,
+            num_nodes=num_nodes,
+            server_url=server_url,
+            server_port=server_port,
+            ui_port=ui_port,
+            algorithm_store_port=algorithm_store_port,
+            server_image=server_image,
+            ui_image=ui_image,
+            store_image=store_image,
+            node_image=node_image,
+            extra_server_config=extra_server_config,
+            extra_node_config=extra_node_config,
+            extra_store_config=extra_store_config,
+            extra_dataset=add_dataset,
+            context=context,
+            namespace=namespace,
         )
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
