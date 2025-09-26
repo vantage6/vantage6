@@ -1,6 +1,6 @@
 import click
 
-from vantage6.common import error, info
+from vantage6.common import error
 
 # from vantage6.cli.common.decorator import click_insert_context
 from vantage6.common.globals import InstanceType
@@ -90,7 +90,7 @@ def cli_sandbox_stop(
 
     # stop the algorithm store
     # click_ctx.invoke(
-    #     cli_algo_store_stop, name=f"{ctx.name}_store", system_folders=False
+    #     cli_algo_store_stop, name=f"{ctx.name}-store", system_folders=False
     # )
 
     # # stop the nodes

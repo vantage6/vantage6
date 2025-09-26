@@ -343,7 +343,6 @@ class AppContext(metaclass=Singleton):
         config_files = Path(folders["config"]).glob(
             "*.yaml" if not is_sandbox else "*.sandbox.yaml"
         )
-        print(f"config_files: {config_files}")
         configs = []
         failed = []
         for file_ in config_files:

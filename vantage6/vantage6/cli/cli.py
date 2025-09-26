@@ -36,6 +36,7 @@ from vantage6.cli.node.start import cli_node_start
 from vantage6.cli.node.stop import cli_node_stop
 from vantage6.cli.node.version import cli_node_version
 from vantage6.cli.sandbox.new import cli_new_sandbox
+from vantage6.cli.sandbox.remove import cli_sandbox_remove
 from vantage6.cli.sandbox.start import cli_sandbox_start
 from vantage6.cli.sandbox.stop import cli_sandbox_stop
 from vantage6.cli.server.attach import cli_server_attach
@@ -108,7 +109,7 @@ def cli_sandbox() -> None:
 cli_sandbox.add_command(cli_new_sandbox, name="new")
 cli_sandbox.add_command(cli_sandbox_start, name="start")
 cli_sandbox.add_command(cli_sandbox_stop, name="stop")
-# cli_sandbox.add_command(cli_sandbox_remove, name="remove")
+cli_sandbox.add_command(cli_sandbox_remove, name="remove")
 
 
 # Define the dev group

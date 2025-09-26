@@ -59,7 +59,7 @@ class SandboxConfigManager:
         Path to the extra node configuration file.
     extra_store_config : Path
         Path to the extra algorithm store configuration file.
-    extra_datasets : list[tuple[str, Path]]
+    extra_dataset : tuple[str, Path] | None
         List of tuples with the label and path to the dataset file.
     context : str
         Kubernetes context.
@@ -82,7 +82,7 @@ class SandboxConfigManager:
         extra_server_config: Path,
         extra_node_config: Path,
         extra_store_config: Path,
-        extra_dataset: tuple[str, Path],
+        extra_dataset: tuple[str, Path] | None,
         context: str,
         namespace: str,
     ):
@@ -735,6 +735,10 @@ def cli_new_sandbox(
     #     cm = ConfigurationManager.from_file(node_config_files, is_sandbox=True)
     #     cm.config["node"]["api_key"] = node_detail["api_key"]
     #     cm.save(node_config_file)
+    # Reply from Bart: I think we should do this in a very different way: we start up
+    # the server and use the client to generate nodes. Only then should we create the
+    # node config files. It makes sense to me to try to sync the scripts from the dev
+    # env with the sandbox env, so that we don't need to maintain two processes.
 
     click_ctx.invoke(
         cli_server_stop,

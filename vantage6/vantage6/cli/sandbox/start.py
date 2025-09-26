@@ -1,21 +1,15 @@
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import DEFAULT_API_PATH, InstanceType
-
-from vantage6.client import Client
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context import get_context
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import COMMUNITY_STORE
 from vantage6.cli.node.start import cli_node_start
-from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.utils import prompt_config_name
 
 
 @click.command()
@@ -57,7 +51,7 @@ def cli_sandbox_start(
 
     # run the store
     # info("Starting algorithm store...")
-    # cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}_store", "--user"]
+    # cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}-store", "--user"]
     # if store_image:
     #     cmd.extend(["--image", store_image])
     # subprocess.run(cmd, check=True)
