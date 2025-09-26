@@ -53,7 +53,7 @@ def cli_node_new_configuration(
     a questionnaire is invoked to create a new configuration file.
     """
     new(
-        questionnaire_function=node_configuration_questionaire,
+        config_producing_func=node_configuration_questionaire,
         name=name,
         system_folders=system_folders,
         namespace=namespace,

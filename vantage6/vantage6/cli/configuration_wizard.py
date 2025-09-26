@@ -126,8 +126,8 @@ def _add_production_server_config(config: dict) -> dict:
     return config
 
 
-def configuration_wizard(
-    questionnaire_function: callable,
+def make_configuration(
+    config_producing_func: callable,
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
@@ -137,7 +137,7 @@ def configuration_wizard(
 
     Parameters
     ----------
-    questionnaire_function : callable
+    config_producing_func : callable
         Function to generate the configuration
     type_ : InstanceType
         Type of the instance to create a configuration for
@@ -156,9 +156,9 @@ def configuration_wizard(
 
     # invoke questionaire to create configuration file
     if type_ == InstanceType.NODE:
-        config = questionnaire_function(dirs, instance_name)
+        config = config_producing_func(dirs, instance_name)
     else:
-        config = questionnaire_function(instance_name)
+        config = config_producing_func(instance_name)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
@@ -209,13 +209,10 @@ def select_configuration_questionaire(
     context = select_context_class(type_)
     configs, _ = context.available_configurations(system_folders, is_sandbox)
 
-    print(f"configs: {configs}")
-
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)
     choices = []
     for config_collection in configs:
-        print(f"config_collection: {config_collection.name}")
         choices.append(
             q.Choice(title=f"{config_collection.name:25}", value=config_collection.name)
         )

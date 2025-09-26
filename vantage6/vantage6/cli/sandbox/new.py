@@ -15,7 +15,14 @@ from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import PACKAGE_FOLDER, DefaultDatasets
+from vantage6.cli.globals import (
+    ALGO_STORE_TEMPLATE_FILE,
+    NODE_TEMPLATE_FILE,
+    PACKAGE_FOLDER,
+    SERVER_IMPORT_TEMPLATE_FILE,
+    SERVER_TEMPLATE_FILE,
+    DefaultDatasets,
+)
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.server.start import cli_server_start
@@ -111,7 +118,7 @@ class SandboxConfigManager:
             lstrip_blocks=True,
             autoescape=True,
         )
-        template = environment.get_template("node_config.j2")
+        template = environment.get_template(NODE_TEMPLATE_FILE)
 
         # TODO: make this name specific to the server it connects
         node_name = config["node_name"]
@@ -139,7 +146,9 @@ class SandboxConfigManager:
                     "logging": {"file": f"{node_name}.log", "loggers": []},
                     # TODO: the keycloak instance should be spun up together with the
                     # server
-                    "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
+                    "keycloakUrl": (
+                        "http://vantage6-auth-keycloak.default.svc.cluster.local"
+                    ),
                     "keycloakRealm": "vantage6",
                     "additional_config": config["user_defined_config"],
                     "dev": {
@@ -278,7 +287,7 @@ class SandboxConfigManager:
             lstrip_blocks=True,
             autoescape=True,
         )
-        template = environment.get_template("server_import_config.j2")
+        template = environment.get_template(SERVER_IMPORT_TEMPLATE_FILE)
 
         organizations = []
         collaboration = {"name": "demo", "participants": []}
@@ -336,7 +345,7 @@ class SandboxConfigManager:
                 extra_config += "\n"
             extra_config += f"images:\n  ui: {self.ui_image}"
 
-        template = environment.get_template("server_config.j2")
+        template = environment.get_template(SERVER_TEMPLATE_FILE)
 
         folders = ServerContext.instance_folders(
             instance_type=InstanceType.SERVER,
@@ -413,7 +422,7 @@ class SandboxConfigManager:
 
         extra_config = self._read_extra_config_file(self.extra_store_config)
 
-        template = environment.get_template("algo_store_config.j2")
+        template = environment.get_template(ALGO_STORE_TEMPLATE_FILE)
         store_config = template.render(
             {
                 "store": {

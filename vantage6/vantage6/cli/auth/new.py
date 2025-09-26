@@ -44,7 +44,7 @@ def cli_auth_new(
     Create a new server configuration.
     """
     new(
-        questionnaire_function=auth_configuration_questionaire,
+        config_producing_func=auth_configuration_questionaire,
         name=name,
         system_folders=system_folders,
         namespace=namespace,

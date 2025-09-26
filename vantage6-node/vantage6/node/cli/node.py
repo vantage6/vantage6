@@ -16,7 +16,7 @@ import questionary as q
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_wizard import (
-    configuration_wizard,
+    make_configuration,
     select_configuration_questionaire,
 )
 from vantage6.cli.context import NodeContext
@@ -83,7 +83,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
             )
 
             if q.confirm(question).ask():
-                configuration_wizard(InstanceType.NODE, name, system_folders)
+                make_configuration(InstanceType.NODE, name, system_folders)
 
             else:
                 sys.exit(0)

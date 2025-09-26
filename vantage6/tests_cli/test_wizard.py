@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from vantage6.common.globals import InstanceType, NodePolicy
 
 from vantage6.cli.configuration_wizard import (
-    configuration_wizard,
+    make_configuration,
     node_configuration_questionaire,
     select_configuration_questionaire,
     server_configuration_questionaire,
@@ -121,10 +121,10 @@ class WizardTest(unittest.TestCase):
     ):
         context.instance_folders.return_value = {"config": "/some/path/"}
 
-        file_ = configuration_wizard(InstanceType.NODE, "vtg6", False)
+        file_ = make_configuration(InstanceType.NODE, "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard(InstanceType.SERVER, "vtg6", True)
+        file_ = make_configuration(InstanceType.SERVER, "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
     @patch("vantage6.cli.configuration_wizard.AppContext.available_configurations")

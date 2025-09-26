@@ -57,7 +57,7 @@ def cli_server_new(
     #     print("awefawef")
 
     new(
-        questionnaire_function=server_configuration_questionaire,
+        config_producing_func=server_configuration_questionaire,
         name=name,
         system_folders=system_folders,
         namespace=namespace,
