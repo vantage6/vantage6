@@ -285,7 +285,7 @@ def proxy_task():
 
         for org in organizations:
             if not client.check_if_blob_store_enabled():
-                if is_uuid(org.get("input").decode(STRING_ENCODING)):
+                if is_uuid(org.get("input")):
                     log.warning(
                         "Input is a UUID, are you sending blob based inputs "
                         "to a non-blob store enabled server?"
