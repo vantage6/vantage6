@@ -7,18 +7,15 @@ import yaml
 from colorama import Fore, Style
 from jinja2 import Environment, FileSystemLoader
 
-from vantage6.common import ensure_config_dir_writable, error, info
+from vantage6.common import error, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
 
 import vantage6.cli.sandbox.data as node_datafiles_dir
 from vantage6.cli.common.new import new
 from vantage6.cli.common.utils import select_context_and_namespace
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import (
-    ALGO_STORE_TEMPLATE_FILE,
-    NODE_TEMPLATE_FILE,
     PACKAGE_FOLDER,
     SERVER_IMPORT_TEMPLATE_FILE,
     DefaultDatasets,
@@ -156,7 +153,7 @@ class SandboxConfigManager:
         return data_files
 
     def _create_node_config_file(
-        self, config: dict, datasets: list[tuple[str, Path]] | None = None
+        self, config: dict, datasets: list[tuple[str, Path]]
     ) -> None:
         """
         Create a node configuration file (YAML).
@@ -165,7 +162,7 @@ class SandboxConfigManager:
         ----------
         config : dict
             Configuration dictionary.
-        datasets : list[tuple[str, Path]] | None
+        datasets : list[tuple[str, Path]]
             List of tuples with the label and path to the dataset file.
 
         Returns
@@ -173,15 +170,6 @@ class SandboxConfigManager:
         Path
             Path to the node configuration file.
         """
-        environment = Environment(
-            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-            trim_blocks=True,
-            lstrip_blocks=True,
-            autoescape=True,
-        )
-        template = environment.get_template(NODE_TEMPLATE_FILE)
-
-        # TODO: make this name specific to the server it connects
         node_name = config["node_name"]
         folders = NodeContext.instance_folders("node", node_name, False)
         path_to_dev_dir = Path(folders["dev"] / self.server_name)
@@ -189,77 +177,76 @@ class SandboxConfigManager:
 
         path_to_data_dir = Path(folders["data"])
         path_to_data_dir.mkdir(parents=True, exist_ok=True)
-        full_path = Path(folders["config"] / f"{node_name}.sandbox.yaml")
 
-        if full_path.exists():
-            error(f"Node configuration file already exists: {full_path}")
-            exit(1)
+        node_config = new(
+            config_producing_func=self.__node_config_return_func,
+            config_producing_func_args=(config, datasets, path_to_data_dir),
+            name=node_name,
+            system_folders=False,
+            namespace=self.namespace,
+            context=self.context,
+            type_=InstanceType.NODE,
+            is_sandbox=True,
+        )
 
-        if datasets is None:
-            datasets = []
+        return node_config
 
-        node_config = template.render(
-            {
-                "node": {
-                    "proxyPort": 7676 + int(config["org_id"]),
-                    "api_key": config["api_key"],
-                    "image": "harbor2.vantage6.ai/infrastructure/node:frank",
-                    "logging": {"file": f"{node_name}.log", "loggers": []},
-                    # TODO: the keycloak instance should be spun up together with the
-                    # server
-                    "keycloakUrl": (
-                        "http://vantage6-auth-keycloak.default.svc.cluster.local"
-                    ),
-                    "keycloakRealm": "vantage6",
-                    "additional_config": config["user_defined_config"],
-                    "dev": {
-                        "task_dir_extension": str(path_to_data_dir),
+    def __node_config_return_func(
+        self,
+        node_specific_config: dict,
+        datasets: list[tuple[str, Path]],
+        path_to_data_dir: Path,
+    ) -> dict:
+        """
+        Return a dict with node configuration values to be used in creating the
+        config file.
+        """
+        return {
+            "node": {
+                "proxyPort": 7676 + int(node_specific_config["org_id"]),
+                "api_key": node_specific_config["api_key"],
+                "image": "harbor2.vantage6.ai/infrastructure/node:frank",
+                "logging": {
+                    "file": f"{node_specific_config['node_name']}.log",
+                },
+                # TODO: the keycloak instance should be spun up together with the
+                # server
+                "keycloakUrl": (
+                    "http://vantage6-auth-keycloak.default.svc.cluster.local"
+                ),
+                "keycloakRealm": "vantage6",
+                "additional_config": node_specific_config["user_defined_config"],
+                "dev": {
+                    "task_dir_extension": str(path_to_data_dir),
+                },
+                "persistence": {
+                    "tasks": {
+                        "hostPath": str(path_to_data_dir),
+                        "size": "1Gi",
                     },
-                    "persistence": {
-                        "tasks": {
-                            "hostPath": str(path_to_data_dir),
-                            "size": "1Gi",
-                        },
-                        "database": {
-                            "size": "1Gi",
-                        },
-                    },
-                    "databases": {
-                        "fileBased": [
-                            {
-                                "name": dataset[0],
-                                "uri": dataset[1],
-                                "type": "csv",
-                                "volumePath": Path(dataset[1]).parent,
-                                "originalName": dataset[0],
-                            }
-                            # TODO there is an issue with supplying multiple datasets
-                            for dataset in [datasets[0]]
-                        ]
-                    },
-                    "server": {
-                        "url": self.server_url,
-                        "port": self.server_port,
+                    "database": {
+                        "size": "1Gi",
                     },
                 },
-            }
-        )
-
-        # Check that we can write the node config
-        if not ensure_config_dir_writable():
-            error("Cannot write configuration file. Exiting...")
-            exit(1)
-
-        Path(full_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(full_path, "x", encoding="utf-8") as f:
-            f.write(node_config)
-
-        info(
-            f"Created node configuration file for organization {Fore.GREEN}"
-            f"{config['org_id']}{Style.RESET_ALL}"
-        )
-
-        return Path(full_path)
+                "databases": {
+                    "fileBased": [
+                        {
+                            "name": dataset[0],
+                            "uri": dataset[1],
+                            "type": "csv",
+                            "volumePath": Path(dataset[1]).parent,
+                            "originalName": dataset[0],
+                        }
+                        # TODO there is an issue with supplying multiple datasets
+                        for dataset in [datasets[0]]
+                    ]
+                },
+                "server": {
+                    "url": self.server_url,
+                    "port": self.server_port,
+                },
+            },
+        }
 
     @staticmethod
     def _read_extra_config_file(extra_config_file: Path | None) -> str:
@@ -376,7 +363,8 @@ class SandboxConfigManager:
         self.server_import_config_file = demo_dir / f"{self.server_name}.yaml"
         if self.server_import_config_file.exists():
             error(
-                f"Server configuration file already exists: {self.server_import_config_file}"
+                "Server configuration file already exists: "
+                f"{self.server_import_config_file}"
             )
             exit(1)
 
@@ -468,57 +456,41 @@ class SandboxConfigManager:
 
     def _create_algo_store_config(self) -> None:
         """Create algorithm store configuration file (YAML)."""
-        environment = Environment(
-            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-            trim_blocks=True,
-            lstrip_blocks=True,
-            autoescape=True,
-        )
 
         extra_config = self._read_extra_config_file(self.extra_store_config)
 
-        template = environment.get_template(ALGO_STORE_TEMPLATE_FILE)
-        store_config = template.render(
-            {
-                "store": {
-                    "internal": {
-                        "port": self.algorithm_store_port,
-                    },
-                    "logging": {},
-                    "vantage6ServerUri": f"{self.server_url}:{self.server_port}",
-                    "additional_config": extra_config,
-                },
-                "database": {},
-            }
-        )
-        folders = AlgorithmStoreContext.instance_folders(
-            instance_type=InstanceType.ALGORITHM_STORE,
-            instance_name=f"{self.server_name}_store",
+        self.algo_store_config_file = new(
+            config_producing_func=self.__algo_store_config_return_func,
+            config_producing_func_args=(extra_config,),
+            name=f"{self.server_name}-store",
             system_folders=False,
+            namespace=self.namespace,
+            context=self.context,
+            type_=InstanceType.ALGORITHM_STORE,
+            is_sandbox=True,
         )
 
-        config_dir = Path(folders["config"] / f"{self.server_name}_store")
-        config_dir.mkdir(parents=True, exist_ok=True)
-        self.algo_store_config_file = (
-            folders["config"] / f"{self.server_name}_store.yaml"
-        )
-        if self.algo_store_config_file.exists():
-            error(
-                f"Algorithm store configuration file already exists: "
-                f"{self.algo_store_config_file}"
-            )
-            exit(1)
+    def __algo_store_config_return_func(self, extra_config: str) -> dict:
+        """
+        Return a dict with algorithm store configuration values to be used in creating
+        the config file.
 
-        try:
-            with open(self.algo_store_config_file, "x") as f:
-                f.write(store_config)
-                info(
-                    "Algorithm store configuration ready, writing to "
-                    f"{Fore.GREEN}{self.algo_store_config_file}{Style.RESET_ALL}"
-                )
-        except Exception as e:
-            error(f"Could not write algorithm store configuration file: {e}")
-            exit(1)
+        Returns
+        -------
+        dict
+            Dictionary with algorithm store configuration values.
+        """
+        return {
+            "store": {
+                "internal": {
+                    "port": self.algorithm_store_port,
+                },
+                "logging": {},
+                "vantage6ServerUri": f"{self.server_url}:{self.server_port}",
+                "additional_config": extra_config,
+            },
+            "database": {},
+        }
 
 
 # TODO:
