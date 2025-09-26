@@ -86,8 +86,8 @@ class NodeConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=NodeConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(conf_class=NodeConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
     def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
@@ -126,8 +126,10 @@ class ServerConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=ServerConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(
+            conf_class=ServerConfiguration, name=name, is_sandbox=is_sandbox
+        )
 
     @classmethod
     def from_file(cls, path, is_sandbox: bool = False) -> Self:
@@ -171,8 +173,10 @@ class AlgorithmStoreConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=AlgorithmStoreConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(
+            conf_class=AlgorithmStoreConfiguration, name=name, is_sandbox=is_sandbox
+        )
 
     @classmethod
     def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
@@ -216,8 +220,8 @@ class AuthConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(conf_class=AuthConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        super().__init__(conf_class=AuthConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
     def from_file(cls, path: str) -> Self:

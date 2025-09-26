@@ -132,6 +132,7 @@ def make_configuration(
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
+    is_sandbox: bool = False,
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -148,6 +149,8 @@ def make_configuration(
         Name of the instance
     system_folders : bool
         Whether to use the system folders or not
+    is_sandbox : bool
+        Whether to create a sandbox configuration or not
 
     Returns
     -------
@@ -178,12 +181,12 @@ def make_configuration(
         raise ValueError(f"Invalid instance type: {type_}")
 
     if Path(config_file).exists():
-        config_manager = conf_manager.from_file(config_file)
+        config_manager = conf_manager.from_file(config_file, is_sandbox=is_sandbox)
     else:
-        config_manager = conf_manager(instance_name)
+        config_manager = conf_manager(instance_name, is_sandbox=is_sandbox)
 
     config_manager.put(config)
-    config_manager.save(config_file)
+    config_file = config_manager.save(config_file)
 
     return config_file
 

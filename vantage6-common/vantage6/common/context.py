@@ -490,7 +490,6 @@ class AppContext(metaclass=Singleton):
                 if not is_sandbox
                 else f"{instance_name}.sandbox.yaml"
             )
-        print(f"Looking for configuration file: {config_file}")
 
         config_dir = cls.instance_folders(
             instance_type, instance_name, system_folders

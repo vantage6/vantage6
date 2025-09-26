@@ -41,6 +41,8 @@ def new(
         Context to use
     type_ : InstanceType
         Type of the configuration (node, server, algorithm store, etc)
+    is_sandbox : bool
+        Whether to create a sandbox configuration or not
 
     Returns
     -------
@@ -90,6 +92,7 @@ def new(
             type_=type_,
             instance_name=name,
             system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
