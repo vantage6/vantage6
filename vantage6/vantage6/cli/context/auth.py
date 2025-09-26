@@ -19,6 +19,8 @@ class AuthContext(AppContext):
         of the configuration file.
     system_folders : bool, optional
         System wide or user configuration, by default S_FOL
+    is_sandbox : bool, optional
+        Whether the configuration is a sandbox configuration, by default False
     """
 
     # The auth configuration manager is aware of the structure of the auth
@@ -29,11 +31,13 @@ class AuthContext(AppContext):
         self,
         instance_name: str,
         system_folders: bool = S_FOL,
+        is_sandbox: bool = False,
     ):
         super().__init__(
             InstanceType.AUTH,
             instance_name,
             system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -65,7 +69,12 @@ class AuthContext(AppContext):
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
+    def config_exists(
+        cls,
+        instance_name: str,
+        system_folders: bool = S_FOL,
+        is_sandbox: bool = False,
+    ) -> bool:
         """
         Check if a configuration file exists.
 
@@ -76,6 +85,8 @@ class AuthContext(AppContext):
             of the configuration file.
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
 
         Returns
         -------
@@ -83,12 +94,15 @@ class AuthContext(AppContext):
             Whether the configuration file exists or not
         """
         return super().config_exists(
-            InstanceType.AUTH, instance_name, system_folders=system_folders
+            InstanceType.AUTH,
+            instance_name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
     def available_configurations(
-        cls, system_folders: bool = S_FOL
+        cls, system_folders: bool = S_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
         Find all available auth configurations in the default folders.
@@ -97,6 +111,8 @@ class AuthContext(AppContext):
         ----------
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
 
         Returns
         -------
@@ -104,4 +120,6 @@ class AuthContext(AppContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(InstanceType.AUTH, system_folders)
+        return super().available_configurations(
+            InstanceType.AUTH, system_folders, is_sandbox
+        )

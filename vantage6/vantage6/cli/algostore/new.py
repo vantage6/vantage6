@@ -44,6 +44,7 @@ def cli_algo_store_new(
 
     new(
         config_producing_func=algo_store_configuration_questionaire,
+        config_producing_func_args=(name,),
         name=name,
         system_folders=system_folders,
         namespace=namespace,

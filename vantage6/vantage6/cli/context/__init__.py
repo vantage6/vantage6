@@ -21,7 +21,7 @@ from vantage6.cli.context.server import ServerContext
 
 def select_context_class(
     type_: InstanceType,
-) -> ServerContext | NodeContext | AlgorithmStoreContext:
+) -> ServerContext | NodeContext | AlgorithmStoreContext | AuthContext:
     """
     Select the context class based on the type of instance.
 
@@ -32,7 +32,7 @@ def select_context_class(
 
     Returns
     -------
-    ServerContext | NodeContext | AlgorithmStoreContext
+    ServerContext | NodeContext | AlgorithmStoreContext | AuthContext
         Specialized subclass of AppContext for the given instance type
 
     Raises

@@ -58,6 +58,7 @@ def cli_server_new(
 
     new(
         config_producing_func=server_configuration_questionaire,
+        config_producing_func_args=(name,),
         name=name,
         system_folders=system_folders,
         namespace=namespace,

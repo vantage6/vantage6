@@ -12,6 +12,7 @@ from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 def new(
     config_producing_func: callable,
+    config_producing_func_args: tuple,
     name: str,
     system_folders: bool,
     namespace: str,
@@ -26,6 +27,8 @@ def new(
     ----------
     config_producing_func : callable
         Function to generate the configuration
+    config_producing_func_args : tuple
+        Arguments to pass to the config producing function
     name : str
         Name of the configuration
     system_folders : bool
@@ -56,6 +59,9 @@ def new(
             exit(1)
     except Exception as e:
         error(e)
+        import traceback
+
+        traceback.print_exc()
         exit(1)
 
     command_name = get_main_cli_command_name(type_)
@@ -72,7 +78,11 @@ def new(
     # create config in ctx location
     try:
         cfg_file = make_configuration(
-            config_producing_func, type_, name, system_folders
+            config_producing_func=config_producing_func,
+            config_producing_func_args=config_producing_func_args,
+            type_=type_,
+            instance_name=name,
+            system_folders=system_folders,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")

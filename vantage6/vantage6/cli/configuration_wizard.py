@@ -128,6 +128,7 @@ def _add_production_server_config(config: dict) -> dict:
 
 def make_configuration(
     config_producing_func: callable,
+    config_producing_func_args: tuple,
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
@@ -139,6 +140,8 @@ def make_configuration(
     ----------
     config_producing_func : callable
         Function to generate the configuration
+    config_producing_func_args : tuple
+        Arguments to pass to the config producing function
     type_ : InstanceType
         Type of the instance to create a configuration for
     instance_name : str
@@ -154,11 +157,10 @@ def make_configuration(
     # for defaults and where to save the config
     dirs = AppContext.instance_folders(type_, instance_name, system_folders)
 
-    # invoke questionaire to create configuration file
-    if type_ == InstanceType.NODE:
-        config = config_producing_func(dirs, instance_name)
-    else:
-        config = config_producing_func(instance_name)
+    # invoke function to create configuration file. Usually this is a questionaire
+    # but it can also be a function that immediately returns a dict with the
+    # configuration.
+    config = config_producing_func(*config_producing_func_args)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this

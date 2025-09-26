@@ -45,6 +45,7 @@ def cli_auth_new(
     """
     new(
         config_producing_func=auth_configuration_questionaire,
+        config_producing_func_args=tuple(),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -53,7 +54,7 @@ def cli_auth_new(
     )
 
 
-def auth_configuration_questionaire(instance_name: str) -> dict[str, Any]:
+def auth_configuration_questionaire() -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for the Keycloak helm
     chart.

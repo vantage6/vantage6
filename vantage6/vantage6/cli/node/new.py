@@ -6,6 +6,7 @@ import questionary as q
 
 from vantage6.common import error, info, warning
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     FILE_BASED_DATABASE_TYPES,
     SERVICE_BASED_DATABASE_TYPES,
@@ -17,6 +18,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.utils import prompt_config_name
 
 
 @click.command()
@@ -52,8 +54,12 @@ def cli_node_new_configuration(
     Checks if the configuration already exists. If this is not the case
     a questionnaire is invoked to create a new configuration file.
     """
+    name = prompt_config_name(name)
+    dirs = AppContext.instance_folders(InstanceType.NODE, name, system_folders)
+    default_data_dir = str(dirs["data"])
     new(
         config_producing_func=node_configuration_questionaire,
+        config_producing_func_args=(default_data_dir, name),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -62,14 +68,14 @@ def cli_node_new_configuration(
     )
 
 
-def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
+def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
     """
     Questionary to generate a config file for the node instance.
 
     Parameters
     ----------
-    dirs : dict
-        Dictionary with the directories of the node instance.
+    data_dir : str
+        Path to the data directory of the node instance.
     instance_name : str
         Name of the node instance.
 
@@ -117,7 +123,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
                 "type": "text",
                 "name": "task_dir",
                 "message": "Task directory path:",
-                "default": str(dirs["data"]),
+                "default": data_dir,
             },
         ]
     )

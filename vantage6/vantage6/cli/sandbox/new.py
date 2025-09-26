@@ -10,7 +10,8 @@ from jinja2 import Environment, FileSystemLoader
 from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
 
-import vantage6.cli.sandbox.data as data_dir
+import vantage6.cli.sandbox.data as node_datafiles_dir
+from vantage6.cli.common.new import new
 from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
@@ -20,7 +21,6 @@ from vantage6.cli.globals import (
     NODE_TEMPLATE_FILE,
     PACKAGE_FOLDER,
     SERVER_IMPORT_TEMPLATE_FILE,
-    SERVER_TEMPLATE_FILE,
     DefaultDatasets,
 )
 from vantage6.cli.server.common import get_server_context
@@ -226,7 +226,7 @@ class SandboxConfigManager:
         node_data_files = []
         extra_config = self._read_extra_config_file(self.extra_node_config)
 
-        data_directory = impresources.files(data_dir)
+        data_directory = impresources.files(node_datafiles_dir)
 
         # Add default datasets to the list of dataset provided
         for default_dataset in DefaultDatasets:
@@ -330,22 +330,49 @@ class SandboxConfigManager:
             error(f"Could not write server import configuration file: {e}")
             exit(1)
 
+    def __server_config_return_func(self, extra_config: str, data_dir: Path) -> dict:
+        """
+        Return a dict with server configuration values to be used in creating the
+        config file.
+
+        Parameters
+        ----------
+        extra_config : str
+            Extra configuration to be added to the server configuration.
+        data_dir : Path
+            Path to the data directory.
+        """
+        return {
+            "server": {
+                "baseUrl": f"{self.server_url}:{self.server_port}",
+                # TODO: v5+ set to latest v5 image
+                # TODO make this configurable
+                "image": "harbor2.vantage6.ai/infrastructure/server:5.0.0a36",
+                "algorithm_stores": [
+                    {
+                        "name": "local",
+                        "url": f"{self.server_url}:{self.algorithm_store_port}",
+                    }
+                ],
+                "logging": {},
+                "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
+                "additional_config": extra_config,
+            },
+            "rabbitmq": {},
+            "database": {
+                "volumePath": str(data_dir),
+                "k8sNodeName": "docker-desktop",
+            },
+            "ui": {
+                "port": self.ui_port,
+                # TODO: v5+ set to latest v5 image
+                # TODO: make this configurable
+                "image": "harbor2.vantage6.ai/infrastructure/ui:5.0.0a36",
+            },
+        }
+
     def _create_vserver_config(self) -> None:
         """Creates server configuration file (YAML)."""
-        environment = Environment(
-            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-            trim_blocks=True,
-            lstrip_blocks=True,
-            autoescape=True,
-        )
-
-        extra_config = self._read_extra_config_file(self.extra_server_config)
-        if self.ui_image is not None:
-            if extra_config:
-                extra_config += "\n"
-            extra_config += f"images:\n  ui: {self.ui_image}"
-
-        template = environment.get_template(SERVER_TEMPLATE_FILE)
 
         folders = ServerContext.instance_folders(
             instance_type=InstanceType.SERVER,
@@ -355,61 +382,22 @@ class SandboxConfigManager:
         data_dir = Path(folders["dev"])
         data_dir.mkdir(parents=True, exist_ok=True)
 
-        server_config = template.render(
-            {
-                "server": {
-                    "baseUrl": f"{self.server_url}:{self.server_port}",
-                    # TODO: v5+ set to latest v5 image
-                    # TODO make this configurable
-                    "image": "harbor2.vantage6.ai/infrastructure/server:5.0.0a36",
-                    "algorithm_stores": [
-                        {
-                            "name": "local",
-                            "url": f"{self.server_url}:{self.algorithm_store_port}",
-                        }
-                    ],
-                    "logging": {},
-                    "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
-                    "additional_config": extra_config,
-                },
-                "rabbitmq": {},
-                "database": {
-                    "volumePath": str(data_dir),
-                    "k8sNodeName": "docker-desktop",
-                },
-                "ui": {
-                    "port": self.ui_port,
-                    # TODO: v5+ set to latest v5 image
-                    # TODO: make this configurable
-                    "image": "harbor2.vantage6.ai/infrastructure/ui:5.0.0a36",
-                },
-            }
-        )
-        folders = ServerContext.instance_folders(
-            instance_type=InstanceType.SERVER,
-            instance_name=self.server_name,
+        extra_config = self._read_extra_config_file(self.extra_server_config)
+        if self.ui_image is not None:
+            if extra_config:
+                extra_config += "\n"
+            extra_config += f"images:\n  ui: {self.ui_image}"
+
+        # Create the server config file
+        new(
+            config_producing_func=self.__server_config_return_func,
+            name=self.server_name,
             system_folders=False,
+            namespace=self.namespace,
+            context=self.context,
+            type_=InstanceType.SERVER,
+            is_sandbox=True,
         )
-
-        config_dir = Path(folders["config"] / self.server_name)
-        config_dir.mkdir(parents=True, exist_ok=True)
-        self.server_config_file = folders["config"] / f"{self.server_name}.sandbox.yaml"
-        if self.server_config_file.exists():
-            error(
-                f"Server configuration file already exists: {self.server_config_file}"
-            )
-            exit(1)
-
-        try:
-            with open(self.server_config_file, "x") as f:
-                f.write(server_config)
-                info(
-                    "Server configuration read, writing to "
-                    f"{Fore.GREEN}{self.server_config_file}{Style.RESET_ALL}"
-                )
-        except Exception as e:
-            error(f"Could not write server configuration file: {e}")
-            exit(1)
 
     def _create_algo_store_config(self) -> None:
         """Create algorithm store configuration file (YAML)."""
