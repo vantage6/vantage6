@@ -428,6 +428,7 @@ class SandboxConfigManager:
             },
             "rabbitmq": {},
             "database": {
+                # TODO v5+ make configurable so that sandbox may work on WSL
                 "volumePath": str(data_dir),
                 "k8sNodeName": "docker-desktop",
             },
