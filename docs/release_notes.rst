@@ -5,7 +5,7 @@ Release notes
 4.13.0
 -----
 
-*24 September 2025*
+*29 September 2025*
 
 - **Feature**
 
