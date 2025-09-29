@@ -15,6 +15,7 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
+import enum
 import importlib
 import logging
 import uuid
@@ -22,6 +23,8 @@ import json
 import time
 import datetime as dt
 import traceback
+from requests import Response as RequestsResponse
+
 
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
@@ -77,9 +80,12 @@ from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
+from vantage6.server.service.azure_storage_service import AzureStorageService
+
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -136,6 +142,7 @@ class ServerApp:
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
+        self.setup_large_result_store()
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -194,6 +201,23 @@ class ServerApp:
             )
 
         log.info("Initialization done")
+
+    def setup_large_result_store(self):
+        """
+        Setup the large result store for storing large results.
+        If configured, inputs and results will be stored in blob Storage.
+        """
+
+        self.storage_adapter = None
+        large_result_config = self.ctx.config.get("large_result_store", {})
+        if not large_result_config:
+            log.info(
+                "No large result store configured, using relational database for input and result storage"
+            )
+            return
+
+        log.info("Using Azure Blob Storage as large result store")
+        self.storage_adapter = AzureStorageService(config=large_result_config)
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
@@ -505,11 +529,15 @@ class ServerApp:
             headers: dict
                 Additional headers to be added to the response
             """
-
             if isinstance(data, db.Base):
                 data = jsonable(data)
             elif isinstance(data, list) and len(data) and isinstance(data[0], db.Base):
                 data = jsonable(data)
+            # Don't attempt json conversion if it's already a response.
+            # Used for streaming endpoints where responses cannot be jsonified.
+            elif isinstance(data, RequestsResponse):
+                resp = make_response(data, code)
+                return resp
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
@@ -671,6 +699,7 @@ class ServerApp:
         # make use of 'em.
         services = {
             "socketio": self.socketio,
+            "storage_adapter": self.storage_adapter,
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
@@ -800,7 +829,7 @@ class ServerApp:
 
     def __node_status_worker(self) -> None:
         """
-        Set node status to offline if they haven't send a ping message in a
+        Set node status to offline if they haven't sent a ping message in a
         while.
         """
         # start periodic check if nodes are responsive
@@ -822,8 +851,8 @@ class ServerApp:
                     if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception:
-                log.exception("Node-status thread had an exception")
+            except Exception as e:
+                log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):
@@ -835,7 +864,7 @@ class ServerApp:
         while True:
             try:
                 cleanup.cleanup_runs_data(
-                    self.ctx.config.get("runs_data_cleanup_days"),
+                    self.ctx.config,
                     include_input=include_input,
                 )
             except Exception as e:

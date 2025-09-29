@@ -6,7 +6,7 @@
 # * harbor2.vantage6.ai/infrastructure/server:x.x.x
 #
 ARG TAG=latest
-ARG BASE=4.12
+ARG BASE=4.13
 FROM harbor2.vantage6.ai/infrastructure/infrastructure-base:${BASE}
 
 LABEL version=${TAG}
@@ -55,4 +55,4 @@ RUN chmod +x /vantage6/vantage6-server/server.sh
 # expose the proxy server port
 ARG port=80
 EXPOSE ${port}
-ENV PROXY_SERVER_PORT ${port}
+ENV PROXY_SERVER_PORT=${port}

@@ -29,6 +29,11 @@ vantage6 server itself.
   If you want to send emails to your users, e.g. to help them reset their
   password, you need to set up an SMTP server.
 
+:ref:`azure-blob-storage`
+  In order to facilitate usage of large inputs and results for your algorithms,
+  it is possible to use Azure Blob Storage for storage rather than the relational
+  database.
+
 Below, we explain how to install and deploy these components.
 
 .. _install-ui:
@@ -384,3 +389,17 @@ the server can send an email to a user when they lost their password. There
 are many ways to set up an SMTP server, and we will not go into detail here.
 Just remember that you need to configure the server to use your SMTP server
 (see :ref:`server-config-file-structure`).
+
+
+.. _azure-blob-storage:
+
+Azure Blob Storage
+""""""""""""""""""
+
+For algorithms that require large inputs or outputs, the default relational 
+database is not well suited. Azure blob storage can be used
+instead. In this case, references to the inputs and results will be stored
+in the database, whereas the actual data is stored in `Azure Blob Storage 
+<https://azure.microsoft.com/en-us/products/storage/blobs>`__. See
+:ref:`server-configure` for more details on the configuration,
+and :ref:`blob-storage` for more information.

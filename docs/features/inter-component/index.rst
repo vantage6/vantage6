@@ -11,3 +11,4 @@ different vantage6 components.
    socket
    encryption
    vpn
+   blob_storage

@@ -45,9 +45,8 @@ def check_docker_running() -> None:
     try:
         docker_client = docker.from_env()
         docker_client.ping()
-    except Exception as exc:
+    except Exception:
         log.error("Cannot reach the Docker engine! Please make sure Docker is running.")
-        log.exception(exc)
         log.warning("Exiting...")
         exit(1)
 

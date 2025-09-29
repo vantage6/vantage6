@@ -133,8 +133,8 @@ def permissions(permissions: PermissionManager) -> None:
 # Resources / API's
 # ------------------------------------------------------------------------------
 class CollaborationBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     def _select_schema(self) -> CollaborationSchema:
@@ -656,8 +656,8 @@ class Collaboration(CollaborationBase):
 class CollaborationOrganization(ServicesResources):
     """Resource for /api/collaboration/<int:id>/organization."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user
@@ -826,8 +826,8 @@ class CollaborationOrganization(ServicesResources):
 class CollaborationNode(ServicesResources):
     """Resource for /api/collaboration/<int:id>/node."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r: RuleCollection = getattr(self.permissions, module_name)
 
     @with_user

@@ -1,6 +1,32 @@
 Release notes
 =============
 
+
+4.13.0
+-----
+
+*29 September 2025*
+
+- **Feature**
+
+  - Support storing large algorithm results and input  in blob storage instead of
+    inside the database (`Issue#268 <https://github.com/vantage6/vantage6/issues/268>`_
+    , `PR#2246 <https://github.com/vantage6/vantage6/pull/2246>`_).
+
+- **Change**
+
+  - Improve error message in ``v6 server version`` so that it is clear when Docker is
+    not running (`Issue#2271 <https://github.com/vantage6/vantage6/issues/2271>`_,
+    `PR#2277 <https://github.com/vantage6/vantage6/pull/2277>`_).
+
+- **Bugfix**
+
+  - Fix deprecation warning of Pyfiglet in CLI
+    (`Issue#2238 <https://github.com/vantage6/vantage6/issues/2238>`_).
+  - Fix error in ``v6 node new`` by updating the questionary package
+    (`Issue#2263 <https://github.com/vantage6/vantage6/issues/2263>`_,
+    `PR#2265 <https://github.com/vantage6/vantage6/pull/2265>`_).
+
 4.12.2
 -----
 

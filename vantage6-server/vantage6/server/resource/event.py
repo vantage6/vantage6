@@ -110,8 +110,8 @@ kill_node_tasks_schema = KillNodeTasksInputSchema()
 class KillTask(ServicesResources):
     """Provide endpoint to kill all containers executing a certain task"""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r = getattr(self.permissions, module_name)
 
     @with_user
@@ -195,8 +195,8 @@ class KillTask(ServicesResources):
 class KillNodeTasks(ServicesResources):
     """Provide endpoint to kill all tasks on a certain node"""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r = getattr(self.permissions, "task")
 
     @with_user

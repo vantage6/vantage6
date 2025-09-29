@@ -4454,3 +4454,7 @@ class TestResources(unittest.TestCase):
         org.delete()
         org2.delete()
         col.delete()
+
+
+if __name__ == "__main__":
+    unittest.main()
