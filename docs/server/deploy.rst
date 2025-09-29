@@ -134,6 +134,8 @@ may want to use a different image tag, or you may want to use a different port.
         - "8000:80"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
+        labels:
+        - vantage6-type: "server"
         command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
 
 If you wanted to set up a strong initial super user password, you can make use
