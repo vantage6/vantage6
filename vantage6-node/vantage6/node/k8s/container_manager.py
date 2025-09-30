@@ -436,6 +436,14 @@ class ContainerManager:
 
         env_vars[ContainerEnvNames.ALGORITHM_METHOD.value] = task_info["method"]
         env_vars[ContainerEnvNames.FUNCTION_ACTION.value] = action.value
+        env_vars[ContainerEnvNames.TASK_ID.value] = str(task_id)
+        env_vars[ContainerEnvNames.NODE_ID.value] = str(self.client.whoami.id_)
+        env_vars[ContainerEnvNames.ORGANIZATION_ID.value] = str(
+            self.client.whoami.organization_id
+        )
+        env_vars[ContainerEnvNames.COLLABORATION_ID.value] = str(
+            self.client.collaboration_id
+        )
 
         # Encode the environment variables to avoid issues with special characters and
         # for security reasons. The environment variables are encoded in base64.
