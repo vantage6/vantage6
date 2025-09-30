@@ -4,7 +4,7 @@ from shutil import rmtree
 
 import click
 
-from vantage6.common import info
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.remove import execute_remove
@@ -38,9 +38,13 @@ def cli_sandbox_remove(
     """
 
     if not name:
-        name = select_configuration_questionaire(
-            type_=InstanceType.SERVER, system_folders=False, is_sandbox=True
-        )
+        try:
+            name = select_configuration_questionaire(
+                type_=InstanceType.SERVER, system_folders=False, is_sandbox=True
+            )
+        except Exception:
+            error("No configurations could be found!")
+            exit()
 
     ctx = get_context(InstanceType.SERVER, name, system_folders=False, is_sandbox=True)
 

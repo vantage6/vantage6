@@ -70,7 +70,13 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
     else:
         # in case no name is supplied, ask user to select one
         if not name:
-            name = select_configuration_questionaire(InstanceType.NODE, system_folders)
+            try:
+                name = select_configuration_questionaire(
+                    InstanceType.NODE, system_folders
+                )
+            except Exception:
+                error("No configurations could be found!")
+                exit()
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked

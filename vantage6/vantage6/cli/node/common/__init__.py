@@ -64,13 +64,13 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
         client.authenticate()
     except Exception as exc:
         error("Could not authenticate with server!")
-        debug(exc)
+        debug(str(exc))
         exit(1)
 
     return client
 
 
-def select_node(name: str, system_folders: bool) -> tuple[str, str]:
+def select_node(name: str, system_folders: bool) -> str:
     """
     Let user select node through questionnaire if name is not given.
 
@@ -79,11 +79,15 @@ def select_node(name: str, system_folders: bool) -> tuple[str, str]:
     str
         Name of the configuration file
     """
-    name = (
-        name
-        if name
-        else select_configuration_questionaire(InstanceType.NODE, system_folders)
-    )
+    try:
+        name = (
+            name
+            if name
+            else select_configuration_questionaire(InstanceType.NODE, system_folders)
+        )
+    except Exception:
+        error("No configurations could be found!")
+        exit()
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
