@@ -65,6 +65,7 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
             connection = _create_omop_database_connection(connection_details)
             if include_metadata:
                 metadata = get_ohdsi_metadata(connection_details)
+                return func(connection, metadata, *args, **kwargs)
             else:
                 return func(connection, *args, **kwargs)
 
