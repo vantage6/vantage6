@@ -8,7 +8,7 @@ import jwt
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
-from vantage6.algorithm.tools.util import info, get_action
+from vantage6.algorithm.tools.util import get_action, info
 
 
 @dataclass
