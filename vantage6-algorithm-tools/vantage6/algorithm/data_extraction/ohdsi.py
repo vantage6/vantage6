@@ -1,9 +1,12 @@
+import os
+
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 
 from vantage6.algorithm.tools.util import error, info
 from vantage6.algorithm.decorator.action import data_extraction
+from vantage6.common.globals import ContainerEnvNames
 
 OHDSI_AVAILABLE = True
 try:
@@ -185,7 +188,7 @@ def get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
         error("Exiting...")
         exit(1)
 
-    tmp = Path("/tmp") / "vantage6"
+    tmp = Path(os.environ[ContainerEnvNames.SESSION_FOLDER.value])
     metadata = OHDSIMetaData(
         database=connection_details["cdm_database"],
         cdm_schema=connection_details["cdm_schema"],
