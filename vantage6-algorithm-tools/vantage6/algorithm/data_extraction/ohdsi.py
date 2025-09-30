@@ -1,12 +1,13 @@
 import os
-
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 
-from vantage6.algorithm.tools.util import error, info
-from vantage6.algorithm.decorator.action import data_extraction
 from vantage6.common.globals import ContainerEnvNames
+
+from vantage6.algorithm.tools.util import error, info
+
+from vantage6.algorithm.decorator.action import data_extraction
 
 OHDSI_AVAILABLE = True
 try:
