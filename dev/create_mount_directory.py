@@ -6,7 +6,7 @@ into one of the development containers.
 import argparse
 from pathlib import Path
 
-from scripts.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
 
 def create_mount_directory(dir_path: Path):

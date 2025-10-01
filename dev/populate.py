@@ -3,15 +3,9 @@ Script to populate the server with basic fixtures.
 """
 
 import argparse
-import time
-import traceback
 from pathlib import Path
 
-from scripts.connect_store import connect_store
-from scripts.delete_fixtures import delete_fixtures
-from scripts.load_fixtures import create_fixtures
-
-from vantage6.client import Client
+from vantage6.cli.sandbox.populate import populate_server
 
 #
 # Arguments
@@ -60,79 +54,19 @@ dev_data_dir = Path("dev") / ".data"
 dev_data_dir.mkdir(exist_ok=True)
 
 #
-# Connect to server
+# Call common script in CLI to populate the server
 #
-# Even though the deployment of the server is ready, the server might not be fully
-# initialized yet. The first step it to wait till we can authenticate with the keycloak
-# service, then we check if the server is fully initialized by checking if the admin
-# user is present.
-client = Client(
+report_populate_server = populate_server(
     server_url="http://localhost:7601/server",
     auth_url="http://localhost:8080",
-    log_level="error",
+    number_of_nodes=number_of_nodes,
+    task_directory=task_directory,
+    task_namespace=task_namespace,
+    node_starting_port_number=node_starting_port_number,
+    dev_data_dir=dev_data_dir,
+    dev_dir=dev_dir,
 )
-print("Waiting for authentication...")
-max_attempts = 120
-attempt = 1
 
-while attempt <= max_attempts:
-    try:
-        print(".", end="", flush=True)
-        client.authenticate()
-        print("Successfully authenticated with server!")
-        break
-    except Exception as e:
-        if attempt == max_attempts:
-            print(
-                f"Failed to authenticate after {max_attempts} attempts. "
-                "Server may not be online."
-            )
-            raise e
-
-        time.sleep(5)
-        attempt += 1
-
-print("Waiting for the admin user to be present...")
-attempt = 1
-while attempt <= max_attempts:
-    try:
-        users = client.user.list(fields=("name"))
-        if len(users) > 0:
-            print("Admin user found!")
-            break
-    except Exception as e:
-        if attempt == max_attempts:
-            print(f"Failed to check if server is online after {max_attempts} attempts.")
-            raise e
-
-        time.sleep(5)
-        attempt += 1
-
-#
-# Create new fixtures
-#
-# This script can be run multiple times, so we delete the existing fixtures first. We
-# also want the development environment to start in case something fails.
-#
-try:
-    report_deletion = delete_fixtures(client)
-    report_creation = create_fixtures(
-        client,
-        number_of_nodes,
-        task_directory,
-        task_namespace,
-        node_starting_port_number,
-        dev_data_dir,
-    )
-    report_store = connect_store(client, dev_dir)
-
-    # Create marker file
-    with open(populate_marker, "w") as f:
-        f.write(report_deletion + "\n" + report_creation + "\n" + report_store)
-
-
-except Exception:
-    print("=" * 80)
-    print("Failed to populate server")
-    print(traceback.format_exc())
-    print("=" * 80)
+# Create marker file
+with open(populate_marker, "w") as f:
+    f.write(report_populate_server)

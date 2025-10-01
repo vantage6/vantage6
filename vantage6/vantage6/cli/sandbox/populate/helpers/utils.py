@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def replace_wsl_path(path: str) -> str:
+def replace_wsl_path(path: Path) -> Path:
     """
     Replace the WSL path with the regular path.
 

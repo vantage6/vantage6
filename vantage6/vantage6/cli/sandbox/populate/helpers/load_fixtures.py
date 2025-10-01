@@ -6,11 +6,11 @@ import traceback
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
-from scripts.utils import replace_wsl_path
 
 from vantage6.client import Client
 
 from vantage6.cli.globals import APPNAME, PACKAGE_FOLDER
+from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
