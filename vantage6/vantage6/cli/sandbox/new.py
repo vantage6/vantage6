@@ -1,3 +1,5 @@
+import subprocess
+import time
 from importlib import resources as impresources
 from pathlib import Path
 
@@ -9,6 +11,8 @@ from jinja2 import Environment, FileSystemLoader
 
 from vantage6.common import error, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
+
+from vantage6.client import Client
 
 import vantage6.cli.sandbox.data as node_datafiles_dir
 from vantage6.cli.common.new import new
@@ -26,6 +30,8 @@ from vantage6.cli.server.start import cli_server_start
 from vantage6.cli.server.stop import cli_server_stop
 from vantage6.cli.utils import prompt_config_name
 
+LOCALHOST = "http://localhost"
+
 
 class SandboxConfigManager:
     """
@@ -37,58 +43,57 @@ class SandboxConfigManager:
         Name of the server.
     num_nodes : int
         Number of nodes to create.
-    server_url : str
-        URL of the server.
     server_port : int
         Port of the server.
     ui_port : int
         Port of the UI.
     algorithm_store_port : int
         Port of the algorithm store.
-    server_image : str
+    server_image : str | None
         Image of the server.
-    node_image : str
+    node_image : str | None
         Image of the node.
-    store_image : str
+    store_image : str | None
         Image of the algorithm store.
-    ui_image : str
+    ui_image : str | None
         Image of the UI.
-    extra_server_config : Path
+    extra_server_config : Path | None
         Path to the extra server configuration file.
-    extra_node_config : Path
+    extra_node_config : Path | None
         Path to the extra node configuration file.
-    extra_store_config : Path
+    extra_store_config : Path | None
         Path to the extra algorithm store configuration file.
     extra_dataset : tuple[str, Path] | None
         List of tuples with the label and path to the dataset file.
-    context : str
+    context : str | None
         Kubernetes context.
-    namespace : str
+    namespace : str | None
         Kubernetes namespace.
+    k8s_node_name : str
+        Kubernetes node name.
     """
 
     def __init__(
         self,
         server_name: str,
         num_nodes: int,
-        server_url: str,
         server_port: int,
         ui_port: int,
         algorithm_store_port: int,
-        server_image: str,
-        node_image: str,
-        store_image: str,
-        ui_image: str,
-        extra_server_config: Path,
-        extra_node_config: Path,
-        extra_store_config: Path,
+        server_image: str | None,
+        node_image: str | None,
+        store_image: str | None,
+        ui_image: str | None,
+        extra_server_config: Path | None,
+        extra_node_config: Path | None,
+        extra_store_config: Path | None,
         extra_dataset: tuple[str, Path] | None,
-        context: str,
-        namespace: str,
-    ):
+        context: str | None,
+        namespace: str | None,
+        k8s_node_name: str,
+    ) -> None:
         self.server_name = server_name
         self.num_nodes = num_nodes
-        self.server_url = server_url
         self.server_port = server_port
         self.ui_port = ui_port
         self.algorithm_store_port = algorithm_store_port
@@ -111,6 +116,7 @@ class SandboxConfigManager:
         self.server_import_config_file = None
         self.server_config_file = None
         self.store_config_file = None
+        self.k8s_node_name = k8s_node_name
 
         self._initialize_configs()
 
@@ -256,7 +262,7 @@ class SandboxConfigManager:
                     ]
                 },
                 "server": {
-                    "url": self.server_url,
+                    "url": LOCALHOST,
                     "port": self.server_port,
                 },
             },
@@ -412,25 +418,25 @@ class SandboxConfigManager:
         """
         return {
             "server": {
-                "baseUrl": f"{self.server_url}:{self.server_port}",
+                "baseUrl": f"{LOCALHOST}:{self.server_port}",
                 # TODO: v5+ set to latest v5 image
                 # TODO make this configurable
                 "image": "harbor2.vantage6.ai/infrastructure/server:5.0.0a36",
                 "algorithm_stores": [
                     {
                         "name": "local",
-                        "url": f"{self.server_url}:{self.algorithm_store_port}",
+                        "url": f"{LOCALHOST}:{self.algorithm_store_port}",
                     }
                 ],
                 "logging": {},
-                "keycloakUrl": "http://vantage6-auth-keycloak.default.svc.cluster.local",
+                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-keycloak.{self.namespace}.svc.cluster.local",
                 "additional_config": extra_config,
             },
             "rabbitmq": {},
             "database": {
                 # TODO v5+ make configurable so that sandbox may work on WSL
                 "volumePath": str(data_dir),
-                "k8sNodeName": "docker-desktop",
+                "k8sNodeName": self.k8s_node_name,
             },
             "ui": {
                 "port": self.ui_port,
@@ -503,7 +509,7 @@ class SandboxConfigManager:
                     "port": self.algorithm_store_port,
                 },
                 "logging": {},
-                "vantage6ServerUri": f"{self.server_url}:{self.server_port}",
+                "vantage6ServerUri": f"{LOCALHOST}:{self.server_port}",
                 "additional_config": extra_config,
                 "image": (
                     self.store_image
@@ -536,11 +542,41 @@ class SandboxConfigManager:
             "keycloak": {
                 "production": False,
                 "redirectUris": [
-                    "http://localhost:7600",
-                    "http://localhost:7681",
+                    f"{LOCALHOST}:7600",
+                    f"{LOCALHOST}:7681",
                 ],
             },
         }
+
+
+def wait_for_server_to_be_ready(server_port: int) -> None:
+    """
+    Wait for the server to be initialized.
+
+    Parameters
+    ----------
+    server_port : int
+        Port of the server.
+    """
+    client = Client(
+        server_url=f"{LOCALHOST}:{server_port}",
+        auth_url=f"{LOCALHOST}:8080",
+        log_level="error",
+    )
+    max_retries = 100
+    wait_time = 3
+    for _ in range(max_retries):
+        try:
+            result = client.util.get_server_health()
+            if result and result.get("healthy"):
+                info("Server is ready.")
+                return
+        except Exception:
+            info("Waiting for server to be ready...")
+            time.sleep(wait_time)
+    else:
+        error("Server did not become ready in time. Exiting...")
+        exit(1)
 
 
 # TODO:
@@ -555,14 +591,6 @@ class SandboxConfigManager:
     type=int,
     default=3,
     help="Generate this number of nodes in the development network",
-)
-# TODO I think we can remove this option as it should be the same for all?
-@click.option(
-    "--server-url",
-    type=str,
-    default="http://localhost",
-    help="Server URL to point to. If you are using the default setup using Docker "
-    "Desktop, the default http://localhost should not be changed.",
 )
 @click.option(
     "-p",
@@ -643,12 +671,14 @@ class SandboxConfigManager:
 )
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--k8s-node-name", default="docker-desktop", help="Kubernetes node name to use"
+)
 @click.pass_context
 def cli_new_sandbox(
     click_ctx: click.Context,
     name: str,
     num_nodes: int,
-    server_url: str,
     server_port: int,
     ui_port: int,
     algorithm_store_port: int,
@@ -662,7 +692,8 @@ def cli_new_sandbox(
     add_dataset: tuple[str, Path] | None = None,
     context: str | None = None,
     namespace: str | None = None,
-) -> dict:
+    k8s_node_name: str = "docker-desktop",
+) -> None:
     """
     Create a sandbox environment.
     """
@@ -671,7 +702,6 @@ def cli_new_sandbox(
         sb_config_manager = SandboxConfigManager(
             server_name=server_name,
             num_nodes=num_nodes,
-            server_url=server_url,
             server_port=server_port,
             ui_port=ui_port,
             algorithm_store_port=algorithm_store_port,
@@ -685,6 +715,7 @@ def cli_new_sandbox(
             extra_dataset=add_dataset,
             context=context,
             namespace=namespace,
+            k8s_node_name=k8s_node_name,
         )
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
@@ -698,7 +729,34 @@ def cli_new_sandbox(
         namespace=namespace,
     )
 
-    # First we need to start the server, store and auth
+    # First we need to start the keycloak service
+    info("Starting keycloak service")
+    cmd = [
+        "v6",
+        "auth",
+        "start",
+        "--name",
+        f"{server_name}-auth.sandbox",
+        "--user",
+        "--context",
+        context,
+        "--namespace",
+        namespace,
+        "--sandbox",
+    ]
+    subprocess.run(cmd, check=True)
+    # click_ctx.invoke(cmd)
+    #     cli_auth_start,
+    #     ctx=ctx,
+    #     name=f"{server_name}-auth",
+    #     system_folders=False,
+    #     context=context,
+    #     namespace=namespace,
+    # )
+    # Note: the CLI auth start function is blocking until the auth service is ready,
+    # so no need to wait for it to be ready here.
+
+    # Then we need to start the server
     info("Starting vantage6 server")
     click_ctx.invoke(
         cli_server_start,
@@ -709,11 +767,9 @@ def cli_new_sandbox(
         context=context,
         attach=False,
     )
+    wait_for_server_to_be_ready(server_port)
 
-    # Wait a moment for the server to be fully ready
-    import time
-
-    time.sleep(5)
+    raise
 
     # Then start the import process
     info("Starting import process")

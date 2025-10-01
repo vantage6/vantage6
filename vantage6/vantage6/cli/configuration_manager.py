@@ -224,8 +224,14 @@ class AuthConfigurationManager(ConfigurationManager):
         super().__init__(conf_class=AuthConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
-    def from_file(cls, path: str) -> Self:
-        return super().from_file(path, conf_class=AuthConfiguration)
+    def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the AuthConfigurationManager from a
+        configuration file.
+        """
+        return super().from_file(
+            path, conf_class=AuthConfiguration, is_sandbox=is_sandbox
+        )
 
     def get_config_template(self) -> str:
         """

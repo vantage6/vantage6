@@ -7,7 +7,7 @@ from vantage6.common.globals import InstanceType, NodePolicy
 from vantage6.cli.configuration_create import (
     make_configuration,
     node_configuration_questionaire,
-    select_configuration_questionaire,
+    select_configuration_questionnaire,
     server_configuration_questionaire,
 )
 
@@ -136,6 +136,6 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.select.return_value.unsafe_ask.return_value = "vtg6"
-            name = select_configuration_questionaire(InstanceType.NODE, True)
+            name = select_configuration_questionnaire(InstanceType.NODE, True)
 
         self.assertEqual(name, "vtg6")

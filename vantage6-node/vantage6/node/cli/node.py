@@ -15,7 +15,7 @@ from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_create import (
-    select_configuration_questionaire,
+    select_configuration_questionnaire,
 )
 from vantage6.cli.context import NodeContext
 
@@ -71,7 +71,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
         # in case no name is supplied, ask user to select one
         if not name:
             try:
-                name = select_configuration_questionaire(
+                name = select_configuration_questionnaire(
                     InstanceType.NODE, system_folders
                 )
             except Exception:

@@ -33,8 +33,12 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.AUTH, include_name=True, include_system_folders=True
+    type_=InstanceType.AUTH,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 def cli_auth_start(
     ctx: AuthContext,
@@ -61,6 +65,7 @@ def cli_auth_start(
     # TODO: re-enable when we save the auth logs
     # create_directory_if_not_exists(ctx.log_dir)
 
+    info("Starting auth service. This may take a few minutes...")
     helm_install(
         release_name=ctx.helm_release_name,
         chart_name=ChartName.AUTH,
@@ -82,5 +87,5 @@ def cli_auth_start(
 
     if attach:
         attach_logs(
-            f"app.kubernetes.io/instance={ctx.helm_release_name}",
+            [f"app.kubernetes.io/instance={ctx.helm_release_name}"],
         )

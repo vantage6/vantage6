@@ -191,7 +191,7 @@ def make_configuration(
     return config_file
 
 
-def select_configuration_questionaire(
+def select_configuration_questionnaire(
     type_: InstanceType, system_folders: bool, is_sandbox: bool = False
 ) -> str:
     """

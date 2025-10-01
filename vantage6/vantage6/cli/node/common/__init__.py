@@ -12,7 +12,7 @@ from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
 
 from vantage6.client import UserClient
 
-from vantage6.cli.configuration_create import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 
 
@@ -83,7 +83,7 @@ def select_node(name: str, system_folders: bool) -> str:
         name = (
             name
             if name
-            else select_configuration_questionaire(InstanceType.NODE, system_folders)
+            else select_configuration_questionnaire(InstanceType.NODE, system_folders)
         )
     except Exception:
         error("No configurations could be found!")

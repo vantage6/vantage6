@@ -101,7 +101,7 @@ def remove_file(file: str | Path, file_type: str) -> None:
         warning(f"Could not remove {file_type} file: {file} does not exist")
 
 
-def prompt_config_name(name: str | None) -> None:
+def prompt_config_name(name: str | None) -> str:
     """
     Get a new configuration name from the user, or simply return the name if
     it is not None.
@@ -121,6 +121,9 @@ def prompt_config_name(name: str | None) -> None:
             name = q.text("Please enter a configuration-name:").unsafe_ask()
         except KeyboardInterrupt:
             error("Aborted by user!")
+            exit(1)
+        if not name:
+            error("No configuration name provided!")
             exit(1)
         if name.count(" ") > 0:
             name = name.replace(" ", "-")

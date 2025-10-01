@@ -8,7 +8,7 @@ from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.remove import execute_remove
-from vantage6.cli.configuration_create import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context import get_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
@@ -39,7 +39,7 @@ def cli_sandbox_remove(
 
     if not name:
         try:
-            name = select_configuration_questionaire(
+            name = select_configuration_questionnaire(
                 type_=InstanceType.SERVER, system_folders=False, is_sandbox=True
             )
         except Exception:

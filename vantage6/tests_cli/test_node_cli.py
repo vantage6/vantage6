@@ -172,7 +172,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.node.common.NodeContext")
     @patch("vantage6.cli.node.files.NodeContext")
-    @patch("vantage6.cli.node.common.select_configuration_questionaire")
+    @patch("vantage6.cli.node.common.select_configuration_questionnaire")
     def test_files(self, select_config, context, common_context):
         """No errors produced when retrieving filepaths."""
 

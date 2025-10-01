@@ -1,3 +1,5 @@
+import subprocess
+
 import click
 
 from vantage6.common import error
@@ -87,6 +89,16 @@ def cli_sandbox_stop(
         all_servers=False,
         is_sandbox=True,
     )
+
+    # TODO: stop the auth service
+    cmd = [
+        "v6",
+        "auth",
+        "stop",
+        "--name",
+        f"{name}-auth.sandbox",
+    ]
+    subprocess.run(cmd, check=True)
 
     # stop the algorithm store
     # click_ctx.invoke(
