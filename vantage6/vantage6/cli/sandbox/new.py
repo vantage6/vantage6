@@ -713,28 +713,28 @@ def cli_new_sandbox(
     )
 
     server_name = prompt_config_name(name)
-    if not ServerContext.config_exists(server_name, False, is_sandbox=True):
-        sb_config_manager = SandboxConfigManager(
-            server_name=server_name,
-            num_nodes=num_nodes,
-            server_port=server_port,
-            ui_port=ui_port,
-            algorithm_store_port=algorithm_store_port,
-            server_image=server_image,
-            ui_image=ui_image,
-            store_image=store_image,
-            node_image=node_image,
-            extra_server_config=extra_server_config,
-            extra_node_config=extra_node_config,
-            extra_store_config=extra_store_config,
-            extra_dataset=add_dataset,
-            context=context,
-            namespace=namespace,
-            k8s_node_name=k8s_node_name,
-        )
-    else:
+    if ServerContext.config_exists(server_name, False, is_sandbox=True):
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
+
+    sb_config_manager = SandboxConfigManager(
+        server_name=server_name,
+        num_nodes=num_nodes,
+        server_port=server_port,
+        ui_port=ui_port,
+        algorithm_store_port=algorithm_store_port,
+        server_image=server_image,
+        ui_image=ui_image,
+        store_image=store_image,
+        node_image=node_image,
+        extra_server_config=extra_server_config,
+        extra_node_config=extra_node_config,
+        extra_store_config=extra_store_config,
+        extra_dataset=add_dataset,
+        context=context,
+        namespace=namespace,
+        k8s_node_name=k8s_node_name,
+    )
 
     ctx = get_server_context(server_name, False, ServerContext, is_sandbox=True)
 
