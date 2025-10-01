@@ -96,7 +96,7 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
             """
             connection = _create_omop_database_connection(connection_details)
             if include_metadata:
-                metadata = get_ohdsi_metadata(connection_details)
+                metadata = _get_ohdsi_metadata(connection_details)
                 return func(connection, metadata, *args, **kwargs)
             else:
                 return func(connection, *args, **kwargs)
@@ -148,7 +148,7 @@ def _create_omop_database_connection(connection_details: dict) -> callable:
     )
 
 
-def get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
+def _get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
     """
     Collect the OHDSI metadata and store it in a dataclass.
 
@@ -162,7 +162,7 @@ def get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
 
     Example
     -------
-    >>> get_ohdsi_metadata({
+    >>> _get_ohdsi_metadata({
     >>>     "cdm_database": "my_database",
     >>>     "cdm_schema": "my_schema",
     >>>     "results_schema": "my_results_schema",
