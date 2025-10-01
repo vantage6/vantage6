@@ -37,6 +37,32 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
     be added to the front of the argument list. This connection object is the
     OHDSI DatabaseConnector object.
 
+    It expects that the following connection details are set in the node configuration:
+    - dbms: type of database to connect to
+    - uri: URI to connect to the database
+    - user: username to connect to the database
+    - password: password to connect to the database
+
+    These should be provided in the vantage6 node configuration file in the
+    `database`. For example:
+
+    ```yaml
+    ...
+    databases:
+      - label: my_database
+        type: OMOP
+        uri: jdbc:postgresql://my_host:5454/postgres
+        env:
+            DBMS: "postgresql"
+            USER: "my_user"
+            PASSWORD: "my_password"
+            CDM_DATABASE: "my_user"
+            CDM_SCHEMA: "my_password"
+            RESULTS_SCHEMA: "my_password"
+            DBMS: "postgresql"
+    ...
+    ```
+
     Parameters
     ----------
     include_metadata : bool
@@ -46,14 +72,13 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
 
     Example
     -------
-    For a single OMOP data source:
-
     >>> @omop_data_extraction
     >>> def my_algorithm(connection: RS4, meta: OHDSIMetaData,
     >>>                  <other arguments>):
     >>>     pass
 
-    In the case you do not want to include the metadata:
+    In the case you do not want to include the metadata, you can set the
+    `include_metadata` argument to False.
 
     >>> @omop_data_extraction(include_metadata=False)
     >>> def my_algorithm(connection: RS4, <other arguments>):
@@ -82,28 +107,6 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
 def _create_omop_database_connection(connection_details: dict) -> callable:
     """
     Create a connection to an OMOP database.
-
-    It expects that the following connection details are set:
-    - dbms: type of database to connect to
-    - uri: URI to connect to the database
-    - user: username to connect to the database
-    - password: password to connect to the database
-
-    These should be provided in the vantage6 node configuration file in the
-    `database`. For example:
-
-    ```yaml
-    ...
-    databases:
-      - label: my_database
-        type: OMOP
-        uri: jdbc:postgresql://host.docker.internal:5454/postgres
-        env:
-            DBMS: "postgresql"
-            USER: "my_user"
-            PASSWORD: "my_password"
-    ...
-    ```
 
     Parameters
     ----------
@@ -147,21 +150,7 @@ def get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
     """
     Collect the OHDSI metadata and store it in a dataclass.
 
-    ```yaml
-    ...
-    databases:
-      - label: my_database
-        type: OMOP
-        uri: jdbc:postgresql://host.docker.internal:5454/postgres
-        env:
-            CDM_DATABASE: "my_user"
-            CDM_SCHEMA: "my_password"
-            RESULTS_SCHEMA: "my_password"
-            DBMS: "postgresql"
-    ...
-    ```
-
-    In case these are not within the `connection_details`, the algorithm execution is
+    In there are missing OMOP database connection details, the algorithm execution is
     terminated.
 
     Parameters
