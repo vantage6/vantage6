@@ -38,10 +38,13 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
     OHDSI DatabaseConnector object.
 
     It expects that the following connection details are set in the node configuration:
-    - dbms: type of database to connect to
     - uri: URI to connect to the database
+    - dbms: type of database to connect to
     - user: username to connect to the database
     - password: password to connect to the database
+    - cdm_database: name of the CDM database
+    - cdm_schema: name of the CDM schema
+    - results_schema: name of the results schema
 
     These should be provided in the vantage6 node configuration file in the
     `database`. For example:
@@ -57,9 +60,8 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
             USER: "my_user"
             PASSWORD: "my_password"
             CDM_DATABASE: "my_user"
-            CDM_SCHEMA: "my_password"
-            RESULTS_SCHEMA: "my_password"
-            DBMS: "postgresql"
+            CDM_SCHEMA: "my_schema"
+            RESULTS_SCHEMA: "my_results_schema"
     ...
     ```
 
