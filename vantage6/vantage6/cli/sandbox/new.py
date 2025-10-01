@@ -13,6 +13,7 @@ from vantage6.common import error, info
 from vantage6.common.globals import APPNAME, InstanceType, Ports
 
 from vantage6.client import Client
+from vantage6.client.utils import LogLevel
 
 import vantage6.cli.sandbox.data as node_datafiles_dir
 from vantage6.cli.common.new import new
@@ -421,7 +422,10 @@ class SandboxConfigManager:
                 "baseUrl": f"{LOCALHOST}:{self.server_port}",
                 # TODO: v5+ set to latest v5 image
                 # TODO make this configurable
-                "image": "harbor2.vantage6.ai/infrastructure/server:5.0.0a36",
+                "image": (
+                    self.server_image
+                    or "harbor2.vantage6.ai/infrastructure/server:5.0.0a36"
+                ),
                 "algorithm_stores": [
                     {
                         "name": "local",
@@ -429,7 +433,7 @@ class SandboxConfigManager:
                     }
                 ],
                 "logging": {},
-                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-keycloak.{self.namespace}.svc.cluster.local",
+                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
                 "additional_config": extra_config,
             },
             "rabbitmq": {},
@@ -456,7 +460,7 @@ class SandboxConfigManager:
             instance_name=self.server_name,
             system_folders=False,
         )
-        data_dir = Path(folders["dev"])
+        data_dir = Path(folders["dev"]) / self.server_name
         data_dir.mkdir(parents=True, exist_ok=True)
 
         extra_config = self._read_extra_config_file(self.extra_server_config)
@@ -559,22 +563,26 @@ def wait_for_server_to_be_ready(server_port: int) -> None:
         Port of the server.
     """
     client = Client(
-        server_url=f"{LOCALHOST}:{server_port}",
-        auth_url=f"{LOCALHOST}:8080",
-        log_level="error",
+        # TODO replace default API path global
+        server_url=f"{LOCALHOST}:{server_port}/server",
+        auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
+        log_level=LogLevel.ERROR,
     )
     max_retries = 100
     wait_time = 3
+    ready = False
     for _ in range(max_retries):
         try:
             result = client.util.get_server_health()
             if result and result.get("healthy"):
                 info("Server is ready.")
-                return
+                ready = True
+                break
         except Exception:
             info("Waiting for server to be ready...")
             time.sleep(wait_time)
-    else:
+
+    if not ready:
         error("Server did not become ready in time. Exiting...")
         exit(1)
 
@@ -697,6 +705,13 @@ def cli_new_sandbox(
     """
     Create a sandbox environment.
     """
+
+    # Prompt for the k8s namespace and context
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
+
     server_name = prompt_config_name(name)
     if not ServerContext.config_exists(server_name, False, is_sandbox=True):
         sb_config_manager = SandboxConfigManager(
@@ -723,12 +738,6 @@ def cli_new_sandbox(
 
     ctx = get_server_context(server_name, False, ServerContext, is_sandbox=True)
 
-    # Prompt for the k8s namespace and context
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
-
     # First we need to start the keycloak service
     info("Starting keycloak service")
     cmd = [
@@ -745,14 +754,6 @@ def cli_new_sandbox(
         "--sandbox",
     ]
     subprocess.run(cmd, check=True)
-    # click_ctx.invoke(cmd)
-    #     cli_auth_start,
-    #     ctx=ctx,
-    #     name=f"{server_name}-auth",
-    #     system_folders=False,
-    #     context=context,
-    #     namespace=namespace,
-    # )
     # Note: the CLI auth start function is blocking until the auth service is ready,
     # so no need to wait for it to be ready here.
 

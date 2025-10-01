@@ -75,6 +75,8 @@ def execute_stop(
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
         else:
+            if is_sandbox and to_stop.endswith(".sandbox"):
+                to_stop = to_stop[:-8]
             ctx = get_context(
                 instance_type, to_stop, system_folders, is_sandbox=is_sandbox
             )

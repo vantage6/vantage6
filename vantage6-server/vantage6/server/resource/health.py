@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 from flask.globals import g
 from flask_restful import Api
+from sqlalchemy import text
 
 from vantage6.common import logger_name
 
@@ -61,7 +62,7 @@ class Health(ServicesResources):
         # test DB
         db_ok = False
         try:
-            g.session.execute("SELECT 1")
+            g.session.execute(text("SELECT 1"))
             db_ok = True
         except Exception as e:
             log.error("DB not responding")

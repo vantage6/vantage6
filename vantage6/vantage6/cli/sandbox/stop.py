@@ -97,6 +97,7 @@ def cli_sandbox_stop(
         "stop",
         "--name",
         f"{name}-auth.sandbox",
+        "--sandbox",
     ]
     subprocess.run(cmd, check=True)
 
