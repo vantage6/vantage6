@@ -69,7 +69,7 @@ can be provided to your algorithm function in the following way:
 .. code:: python
 
     import pandas as pd
-    from vantage6.algorithm.tools.decorator import data
+    from vantage6.algorithm.decorator import dataframe
 
     @dataframe(2)
     def my_function(df1: pd.DataFrame, df2: pd.DataFrame, column_name: str):
@@ -82,18 +82,17 @@ algorithm. Note that depending on the type of the database used, the user may
 also have to specify additional parameters such as a SQL query or the name of a
 worksheet in an Excel file.
 
-For some data sources it's not trivial to construct a dataframe from the data.
+For some data sources it's not trivial to construct a data frame from the data.
 One of these data sources is the OHDSI OMOP CDM database. For this data source,
-the ``@database_connection`` is available:
+the ``@omop_data_extraction`` is available:
 
 .. code:: python
 
     from rpy2.robjects import RS4
-    from vantage6.algorithm.tools.decorators import (
-        database_connection, OHDSIMetaData
-    )
+    from vantage6.algorithm.decorators import omop_data_extraction
+    from vantage6.algorithm.decorator.ohdsi import OHDSIMetaData
 
-    @database_connection(types=["OMOP"], include_metadata=True)
+    @omop_data_extraction(include_metadata=True)
     def my_function(connection: RS4, metadata: OHDSIMetaData,
                     <other_arguments>):
         pass
@@ -103,24 +102,11 @@ used to interact with the database. For instance, you can use this connection
 to execute functions from
 `python-ohdsi <https://python-ohdsi.readthedocs.io/>`_ package. The
 ``include_metadata`` argument indicates whether the metadata of the database
-should also be provided. It is possible to connect to multiple databases at
-once, but you can also specify a single database by using the ``types``
-argument.
-
-.. code:: python
-
-    from rpy2.robjects import RS4
-    from vantage6.algorithm.tools.decorators import database_connection
-
-    @database_connection(types=["OMOP", "OMOP"], include_metadata=False)
-    def my_function(connection1: RS4, connection2: Connection,
-                    <other_arguments>):
-        pass
+should also be provided.
 
 .. note::
 
-    The ``@database_connection`` decorator is current only available for
-    OMOP CDM databases. The connection object ``RS4`` is an R object, mapped
+    The returned ``connection object`` (``RS4``) is an R object, mapped
     to Python using the `rpy2 <https://rpy2.github.io/>`_, package. This
     object can be passed directly on to the functions from
     `python-ohdsi <https://python-ohdsi.readthedocs.io/>`.
