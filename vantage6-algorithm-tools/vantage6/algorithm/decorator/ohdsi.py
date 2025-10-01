@@ -122,13 +122,10 @@ def _create_omop_database_connection(connection_details: dict) -> callable:
         error("Did you use 'algorithm-ohdsi-base' image to build this algorithm?")
         exit(1)
 
-    if (
-        "dbms" not in connection_details
-        or "uri" not in connection_details
-        or "user" not in connection_details
-        or "password" not in connection_details
-    ):
-        error("Missing connection details. Exiting...")
+    expected_keys = ["dbms", "uri", "user", "password"]
+    if not set(expected_keys).issubset(connection_details):
+        missing_keys = set(expected_keys) - set(connection_details)
+        error(f"Missing connection details: {missing_keys}. Exiting...")
         exit(1)
 
     info("Creating OHDSI database connection")
