@@ -12,10 +12,8 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import select_context_and_namespace
-from vantage6.cli.context import get_context
-from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.node.start import cli_node_start
+from vantage6.cli.sandbox.config.node import NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
 from vantage6.cli.server.start import cli_server_start
 
@@ -25,6 +23,19 @@ LOCALHOST = "http://localhost"
 @click.command()
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--re-initialize",
+    is_flag=True,
+    default=False,
+    help="Re-initialize the sandbox",
+)
+@click.option(
+    "--num-nodes",
+    type=int,
+    default=3,
+    help="Generate this number of nodes in the development network. Only used if "
+    "--re-initialize is set to True.",
+)
 @click_insert_context(
     type_=InstanceType.SERVER,
     include_name=True,
@@ -39,6 +50,8 @@ def cli_sandbox_start(
     system_folders: bool,
     context: str | None,
     namespace: str | None,
+    re_initialize: bool,
+    num_nodes: int,
 ) -> None:
     """
     Start a sandbox environment.
@@ -48,63 +61,26 @@ def cli_sandbox_start(
         namespace=namespace,
     )
 
-    info("Starting vantage6 core")
-    click_ctx.invoke(
-        cli_server_start,
+    execute_sandbox_start(
+        click_ctx=click_ctx,
         ctx=ctx,
-        name=name,
-        system_folders=system_folders,
-        namespace=namespace,
+        server_name=ctx.name,
         context=context,
-        attach=False,
+        namespace=namespace,
+        num_nodes=num_nodes,
+        initialize=re_initialize,
     )
-
-    # run the store
-    # info("Starting algorithm store...")
-    # cmd = ["v6", "algorithm-store", "start", "--name", f"{ctx.name}-store", "--user"]
-    # if store_image:
-    #     cmd.extend(["--image", store_image])
-    # subprocess.run(cmd, check=True)
-
-    # # run all nodes that belong to this server
-    configs, _ = NodeContext.available_configurations(
-        system_folders=False, is_sandbox=True
-    )
-    node_names = [
-        config.name for config in configs if config.name.startswith(f"{ctx.name}-node-")
-    ]
-
-    # TODO this should not be necessary, but somehow I get key errors when using the
-    # from_external_config_file function. So this needs to be fixed
-    ctx = get_context(InstanceType.NODE, node_names[0], False, is_sandbox=True)
-    for name in node_names:
-        # We cannot use the get_context function here because the node context is a
-        # singleton, so we override the values using the `from_external_config_file`
-        # function.
-        file_ = NodeContext.find_config_file(
-            InstanceType.NODE, name, False, is_sandbox=True
-        )
-        ctx = NodeContext.from_external_config_file(file_, is_sandbox=True)
-
-        click_ctx.invoke(
-            cli_node_start,
-            ctx=ctx,
-            name=ctx.name,
-            system_folders=False,
-            namespace=namespace,
-            context=context,
-            attach=False,
-        )
 
 
 def execute_sandbox_start(
     click_ctx: click.Context,
     ctx: ServerContext,
     server_name: str,
-    server_port: int,
     context: str,
     namespace: str,
     num_nodes: int,
+    initialize: bool,
+    node_image: str | None = None,
 ) -> None:
     # First we need to start the keycloak service
     info("Starting keycloak service")
@@ -154,7 +130,8 @@ def execute_sandbox_start(
     ]
     subprocess.run(cmd, check=True)
 
-    wait_for_server_to_be_ready(server_port)
+    server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
+    wait_for_server_to_be_ready(server_url)
 
     # TODO also wait for store to be ready but maybe that needs to be done in the
     # populate function.
@@ -162,7 +139,7 @@ def execute_sandbox_start(
     # Then we need to populate the server
     info("Populating server")
     node_details = populate_server_sandbox(
-        server_url=f"{LOCALHOST}:{server_port}/server",
+        server_url=server_url,
         auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
         number_of_nodes=num_nodes,
     )
@@ -171,6 +148,19 @@ def execute_sandbox_start(
 
     print("Node details:")
     pprint.pprint(node_details)
+
+    # Create node config files from the nodes that were just registered in the server
+    node_config_manager = NodeSandboxConfigManager(
+        server_name=server_name,
+        num_nodes=num_nodes,
+        server_port=ctx.config["server"]["port"],
+        node_image=node_image,
+        extra_node_config=None,
+        extra_dataset=None,
+        context=context,
+        namespace=namespace,
+    )
+    node_config_manager.generate_node_configs()
 
     raise
 
@@ -230,18 +220,18 @@ def execute_sandbox_start(
         pass
 
 
-def wait_for_server_to_be_ready(server_port: int) -> None:
+def wait_for_server_to_be_ready(server_url: str) -> None:
     """
     Wait for the server to be initialized.
 
     Parameters
     ----------
-    server_port : int
-        Port of the server.
+    server_url : str
+        URL of the server.
     """
     client = Client(
         # TODO replace default API path global
-        server_url=f"{LOCALHOST}:{server_port}/server",
+        server_url=server_url,
         auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
         log_level=LogLevel.ERROR,
     )

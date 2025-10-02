@@ -33,7 +33,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_dataset: tuple[str, Path] | None,
         context: str,
         namespace: str,
-        k8s_node_name: str,
     ) -> None:
         self.server_name = server_name
         self.num_nodes = num_nodes
@@ -46,7 +45,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_datasets = []
         self.context = context
         self.namespace = namespace
-        self.k8s_node_name = k8s_node_name
 
         self.node_configs = []
         self.node_config_files = []

@@ -73,9 +73,9 @@ server:
 
   dev:
     host_uri: host.docker.internal
-    # This should be set to true if you are running the algorithm store in the same
-    # cluster and namespace as the server
-    store_in_local_cluster: false
+    # store address of the algorithm store. This can be provided to the server for
+    # a custom address of the local algorithm store within the k8s cluster.
+    store_address: http://vantage6-store-store.service.default.svc.cluster.local
 
   # # If you want to couple algorithm stores to the server on startup, you can add them here.
   # # The name is used to identify the algorithm store in the server's database.

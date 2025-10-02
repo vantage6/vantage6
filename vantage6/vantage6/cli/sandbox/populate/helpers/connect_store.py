@@ -36,9 +36,6 @@ def _wait_for_store_to_be_online(
     ready = False
     for _ in range(max_retries):
         try:
-            print(
-                f"Checking if store is online at {local_store_url}{local_store_api_path}/version..."
-            )
             result = requests.get(f"{local_store_url}{local_store_api_path}/version")
             if result.status_code == HTTPStatus.OK:
                 ready = True

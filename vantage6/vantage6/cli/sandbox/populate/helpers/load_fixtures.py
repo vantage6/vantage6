@@ -309,8 +309,10 @@ def print_creation_details(creation_details: dict) -> str:
         for node in creation_details["nodes"]["created"]:
             summary += f"\n    - {node['name']} (Org: {node['organization']})"
             summary += f"\n      API Key: {node['api_key']}"
-            summary += f"\n      Config: {node['config_file']}"
-            summary += f"\n      Env: {node['env_file']}"
+            if "config_file" in node:
+                summary += f"\n      Config: {node['config_file']}"
+            if "env_file" in node:
+                summary += f"\n      Env: {node['env_file']}"
     if creation_details["nodes"]["existing"]:
         summary += "\n  Existing:"
         for node in creation_details["nodes"]["existing"]:
@@ -467,7 +469,8 @@ def create_fixtures(
                 print(f"Error creating node {name}: {str(e)}")
 
     # Print creation details
+    printed_summary = print_creation_details(creation_details)
     if return_as_dict:
         return creation_details
     else:
-        return print_creation_details(creation_details)
+        return printed_summary

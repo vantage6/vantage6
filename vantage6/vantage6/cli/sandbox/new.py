@@ -168,8 +168,9 @@ def cli_new_sandbox(
         click_ctx=click_ctx,
         ctx=ctx,
         server_name=server_name,
-        server_port=server_port,
         context=context,
         namespace=namespace,
         num_nodes=num_nodes,
+        initialize=True,
+        node_image=node_image,
     )

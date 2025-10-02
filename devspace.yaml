@@ -259,7 +259,6 @@ deployments:
             secret: development-constant-secret!
           dev:
             host_uri: ${HOST_URI}
-            store_in_local_cluster: true
             allow_drop_all: true
         ui:
           image: ${UI_IMAGE}

@@ -93,7 +93,8 @@ def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
         }
         config["server"]["dev"] = {
             "host_uri": "host.docker.internal",
-            "store_in_local_cluster": True,
+            # TODO v5+ adapt to name space and service name etc, check from sandbox
+            "store_address": "http://vantage6-store-store.service.default.svc.cluster.local",
         }
 
     # TODO v5+ these should be removed, latest should usually be used so question is

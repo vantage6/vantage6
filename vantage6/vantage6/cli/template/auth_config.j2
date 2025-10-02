@@ -111,8 +111,13 @@ keycloak:
         # clientSessionMaxLifespan to higher values to effectively lengthen the session.
         ssoSessionIdleTimeout: {{ keycloak.ssoSessionIdleTimeout | default(1800) }}
 
-        # password policy configuration. If you prefer not to have a
+        # password policy configuration. If you prefer not to have a password policy,
+        # you can set this to an empty string.
+        {% if keycloak.production %}
         passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
+        {% else %}
+        passwordPolicy: ""
+        {% endif %}
 
         # do not allow users to edit their username - this would lead to problems with
         # syncing the user between keycloak and vantage6 server/store. This setting
@@ -152,16 +157,34 @@ keycloak:
           # assigned admin permissions on initial startup.
           - username: {{ keycloak.adminUser | default('admin') }}
             enabled: true
+            {% if not keycloak.production %}
+            email: admin@vantage6.org
+            firstName: Admin
+            lastName: Admin
+            {% endif %}
             credentials:
               - type: password
+                {% if keycloak.production %}
                 value: {{ keycloak.adminPassword | default('Admin123!') }}
+                {% else %}
+                value: {{ keycloak.adminPassword | default('admin') }}
+                {% endif %}
             requiredActions:
               {% if keycloak.production %}
+              # this requires all users to update their password on first login and
+              # configure two-factor authentication
               - CONFIGURE_TOTP
               - UPDATE_PASSWORD
+              {% elif keycloak.no_password_update_required%}
+              # enable configure OTP only if you want to use two-factor authentication
+              # - CONFIGURE_TOTP
+              # enable password update if you want every user to have to change their
+              # password on first login
+              # - UPDATE_PASSWORD
               {% else %}
               # enable configure OTP only if you want to use two-factor authentication
               # - CONFIGURE_TOTP
+              # this requires all users to update their password on first login
               - UPDATE_PASSWORD
               {% endif %}
           # create a service account user for the backend admin client. The

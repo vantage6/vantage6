@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.new import new
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -135,12 +135,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                         if self.k8s_node_name == "docker-desktop"
                         else "172.17.0.1"
                     ),
-                    "store_in_local_cluster": True,
+                    "store_address": f"http://vantage6-{self.server_name}-store-user-algorithm-store-store-service.{self.namespace}.svc.cluster.local:{Ports.DEV_ALGO_STORE}",
                 },
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak"
-                    f".{self.namespace}.svc.cluster.local",
-                ),
+                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
                 "additional_config": extra_config,
             },
             "rabbitmq": {},
@@ -281,6 +278,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         return {
             "keycloak": {
                 "production": False,
+                "no_password_update_required": True,
                 "redirectUris": [
                     f"{LOCALHOST}:7600",
                     f"{LOCALHOST}:7681",
