@@ -5,7 +5,8 @@ Script to populate the server with basic fixtures.
 import argparse
 from pathlib import Path
 
-from vantage6.cli.sandbox.populate import populate_server
+from vantage6.cli.sandbox.populate import populate_server_dev
+from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
 
 #
 # Arguments
@@ -53,19 +54,22 @@ dev_dir.mkdir(exist_ok=True)
 dev_data_dir = Path("dev") / ".data"
 dev_data_dir.mkdir(exist_ok=True)
 
+# create object with details for node config creation
+node_config_creation_details = NodeConfigCreationDetails(
+    node_starting_port_number=node_starting_port_number,
+    dev_dir=dev_dir,
+    task_directory=task_directory,
+    task_namespace=task_namespace,
+)
+
 #
 # Call common script in CLI to populate the server
 #
-report_populate_server = populate_server(
+report_populate_server = populate_server_dev(
     server_url="http://localhost:7601/server",
     auth_url="http://localhost:8080",
     number_of_nodes=number_of_nodes,
-    task_directory=task_directory,
-    task_namespace=task_namespace,
-    node_starting_port_number=node_starting_port_number,
-    dev_data_dir=dev_data_dir,
-    dev_dir=dev_dir,
-    clear_dev_folders=True,
+    node_config_creation_details=node_config_creation_details,
 )
 
 # Create marker file

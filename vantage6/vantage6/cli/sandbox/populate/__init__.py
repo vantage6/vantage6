@@ -12,18 +12,14 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli.sandbox.populate.helpers.connect_store import connect_store
 from vantage6.cli.sandbox.populate.helpers.delete_fixtures import delete_fixtures
 from vantage6.cli.sandbox.populate.helpers.load_fixtures import create_fixtures
+from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
 
 
-def populate_server(
+def populate_server_dev(
     server_url: str,
     auth_url: str,
     number_of_nodes: int,
-    task_directory: str,
-    task_namespace: str,
-    node_starting_port_number: int,
-    dev_data_dir: Path,
-    dev_dir: Path,
-    clear_dev_folders: bool = False,
+    node_config_creation_details: NodeConfigCreationDetails,
 ) -> str | None:
     """
     Populate the server with basic fixtures.
@@ -36,19 +32,14 @@ def populate_server(
         The URL of the auth service to connect to.
     number_of_nodes : int
         The number of nodes to create.
-    task_directory : str
-        The directory containing the task files.
-    task_namespace : str
-        The namespace of the task.
-    node_starting_port_number : int
-        The starting port number for the nodes.
-    dev_data_dir : Path
-        The directory to store the development data.
-    dev_dir : Path
-        The directory to store the development files.
+    node_config_creation_details : NodeConfigCreationDetails | None
+        The details of the node config creation. If None, the node configs will not be
+        created.
     clear_dev_folders : bool
         Whether to clear everything inthe dev directory before creating the new
         resources.
+    create_node_configs: bool
+        Whether to create the node configs. Default is True.
 
     Returns
     -------
@@ -69,13 +60,10 @@ def populate_server(
         report_creation = create_fixtures(
             client,
             number_of_nodes,
-            task_directory,
-            task_namespace,
-            node_starting_port_number,
-            dev_data_dir,
-            clear_dev_folders=clear_dev_folders,
+            node_config_creation_details=node_config_creation_details,
+            clear_dev_folders=True,
         )
-        report_store = connect_store(client, dev_dir)
+        report_store = connect_store(client)
 
         return report_deletion + "\n" + report_creation + "\n" + report_store
 
@@ -84,6 +72,54 @@ def populate_server(
         print("Failed to populate server")
         print(traceback.format_exc())
         print("=" * 80)
+
+
+def populate_server_sandbox(
+    server_url: str,
+    auth_url: str,
+    number_of_nodes: int,
+) -> dict:
+    """
+    Populate sandbox server with basic resources.
+
+    Parameters
+    ----------
+    server_url : str
+        The URL of the server to connect to.
+    auth_url : str
+        The URL of the auth service to connect to.
+    number_of_nodes : int
+        The number of nodes to create.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the report of the creation process.
+    """
+    client = _initalize_client(server_url, auth_url)
+
+    try:
+        delete_fixtures(client)
+        report_creation = create_fixtures(
+            client,
+            number_of_nodes,
+            clear_dev_folders=False,
+            return_as_dict=True,
+        )
+        connect_store(client)
+    except Exception:
+        print("=" * 80)
+        print("Failed to populate server")
+        print(traceback.format_exc())
+        print("=" * 80)
+        exit(1)
+
+    import pprint
+
+    pprint.pprint(report_creation)
+
+    # return the details of the created nodes so that config files can be created
+    return report_creation["nodes"]["created"]
 
 
 def _initalize_client(server_url, auth_url) -> Client:

@@ -2,20 +2,61 @@
 Development script to connect the server to the local store.
 """
 
-from pathlib import Path
+import time
+from http import HTTPStatus
 
 import requests
 
+from vantage6.common import error, info
 from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.client import Client
 
 
-def connect_store(client: Client, dev_dir: Path) -> str:
+def _wait_for_store_to_be_online(
+    local_store_url: str, local_store_api_path: str
+) -> None:
+    """
+    Wait for the store to be online.
+
+    Parameters
+    ---------
+    client: Client
+        The client to use to connect to the server.
+    local_store_url: str
+        The URL of the local store.
+    local_store_api_path: str
+        The API path of the local store.
+    """
+    info(
+        f"Waiting for store to be online at {local_store_url}{local_store_api_path}..."
+    )
+    max_retries = 100
+    wait_time = 3
+    ready = False
+    for _ in range(max_retries):
+        try:
+            print(
+                f"Checking if store is online at {local_store_url}{local_store_api_path}/version..."
+            )
+            result = requests.get(f"{local_store_url}{local_store_api_path}/version")
+            if result.status_code == HTTPStatus.OK:
+                ready = True
+                break
+        except Exception:
+            info(f"Store not ready yet, waiting {wait_time} seconds...")
+            time.sleep(wait_time)
+
+    if not ready:
+        error("Store did not become ready in time. Exiting...")
+        exit(1)
+
+
+def connect_store(client: Client) -> str:
     """
     Connect the server to the local store.
 
-    Arguments
+    Parameters
     ---------
     client: Client
         The client to use to connect to the server.
@@ -32,6 +73,7 @@ def connect_store(client: Client, dev_dir: Path) -> str:
     local_store_url = "http://localhost:7602"
     local_store_api_path = "/store"
     client.store.store_id = 1
+    _wait_for_store_to_be_online(local_store_url, local_store_api_path)
     if local_store_url not in existing_urls:
         summary += "Registering local store\n"
         store = client.store.create(

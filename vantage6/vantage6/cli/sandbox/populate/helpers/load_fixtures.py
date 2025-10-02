@@ -10,7 +10,10 @@ from jinja2 import Environment, FileSystemLoader
 from vantage6.client import Client
 
 from vantage6.cli.globals import APPNAME, PACKAGE_FOLDER
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import (
+    NodeConfigCreationDetails,
+    replace_wsl_path,
+)
 
 
 def clear_dev_folder(dev_dir: Path, name: str) -> None:
@@ -349,12 +352,34 @@ def print_creation_details(creation_details: dict) -> str:
 def create_fixtures(
     client: Client,
     number_of_nodes: int,
-    task_directory: str,
-    task_namespace: str,
-    node_starting_port_number: int,
-    dev_dir: Path,
+    return_as_dict: bool = False,
+    node_config_creation_details: NodeConfigCreationDetails | None = None,
     clear_dev_folders: bool = False,
-) -> str:
+) -> str | dict:
+    """
+    Create the fixtures for the server.
+
+    Parameters
+    ----------
+    client: Client
+        The client to use to create the fixtures.
+    number_of_nodes: int
+        The number of nodes to create.
+    return_as_dict: bool
+        Whether to return the creation details as a dictionary or as a summary string.
+        Default is False.
+    node_config_creation_details: NodeConfigCreationDetails | None
+        The details to use to create the node configs. If not provided, the node configs
+        will not be created.
+    clear_dev_folders: bool
+        Whether to clear the dev folders.
+
+    Returns
+    -------
+    str | dict
+        The creation summary or the creation details as a dictionary.
+    """
+
     # Track creation details
     creation_details = {
         "organizations": {"created": [], "existing": [], "root_org_patched": []},
@@ -366,9 +391,11 @@ def create_fixtures(
     }
 
     # Remove old config files
-    if clear_dev_folders:
-        for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
-            clear_dev_folder(dev_dir, node_dir.name)
+    if clear_dev_folders and node_config_creation_details:
+        for node_dir in [
+            d for d in node_config_creation_details.dev_dir.iterdir() if d.is_dir()
+        ]:
+            clear_dev_folder(node_config_creation_details.dev_dir, node_dir.name)
             creation_details["dev_folders_cleared"].append(node_dir.name)
 
     # Create organizations
@@ -411,22 +438,36 @@ def create_fixtures(
                     collaboration=collaboration,
                     organization=organizations[i - 1],
                 )
-                creation_details["nodes"]["created"].append(
-                    create_node_config(
-                        node_number=i,
-                        node_name=name,
-                        dev_dir=dev_dir,
-                        task_directory=task_directory,
-                        task_namespace=task_namespace,
-                        node_starting_port_number=node_starting_port_number,
-                        node=node,
-                        organization=organizations[i - 1],
+                if node_config_creation_details:
+                    creation_details["nodes"]["created"].append(
+                        create_node_config(
+                            node_number=i,
+                            node_name=name,
+                            dev_dir=node_config_creation_details.dev_dir,
+                            task_directory=node_config_creation_details.task_directory,
+                            task_namespace=node_config_creation_details.task_namespace,
+                            node_starting_port_number=(
+                                node_config_creation_details.node_starting_port_number
+                            ),
+                            node=node,
+                            organization=organizations[i - 1],
+                        )
                     )
-                )
+                else:
+                    creation_details["nodes"]["created"].append(
+                        {
+                            "name": name,
+                            "organization": organizations[i - 1]["name"],
+                            "api_key": node["api_key"],
+                        }
+                    )
 
             except Exception as e:
                 traceback.print_exc()
                 print(f"Error creating node {name}: {str(e)}")
 
     # Print creation details
-    return print_creation_details(creation_details)
+    if return_as_dict:
+        return creation_details
+    else:
+        return print_creation_details(creation_details)

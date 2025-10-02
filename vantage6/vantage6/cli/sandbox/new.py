@@ -7,10 +7,9 @@ import click
 import pandas as pd
 import yaml
 from colorama import Fore, Style
-from jinja2 import Environment, FileSystemLoader
 
 from vantage6.common import error, info
-from vantage6.common.globals import APPNAME, InstanceType, Ports
+from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
@@ -18,13 +17,13 @@ from vantage6.client.utils import LogLevel
 import vantage6.cli.sandbox.data as node_datafiles_dir
 from vantage6.cli.common.new import new
 from vantage6.cli.common.utils import select_context_and_namespace
+from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import (
-    PACKAGE_FOLDER,
-    SERVER_IMPORT_TEMPLATE_FILE,
     DefaultDatasets,
 )
+from vantage6.cli.sandbox.populate import populate_server_sandbox
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.server.import_ import cli_server_import
 from vantage6.cli.server.start import cli_server_start
@@ -89,8 +88,8 @@ class SandboxConfigManager:
         extra_node_config: Path | None,
         extra_store_config: Path | None,
         extra_dataset: tuple[str, Path] | None,
-        context: str | None,
-        namespace: str | None,
+        context: str,
+        namespace: str,
         k8s_node_name: str,
     ) -> None:
         self.server_name = server_name
@@ -124,8 +123,6 @@ class SandboxConfigManager:
 
         self._create_auth_config()
 
-        self._create_vserver_import_config()
-
         self._create_vserver_config()
 
         self._create_algo_store_config()
@@ -137,7 +134,7 @@ class SandboxConfigManager:
         node_data_files = []
         extra_config = self._read_extra_config_file(self.extra_node_config)
 
-        data_directory = impresources.files(node_datafiles_dir)
+        data_directory = Path(str(impresources.files(node_datafiles_dir)))
 
         # Add default datasets to the list of dataset provided
         for default_dataset in DefaultDatasets:
@@ -188,7 +185,9 @@ class SandboxConfigManager:
             f"{Style.RESET_ALL}."
         )
 
-    def _create_node_data_files(self, node_dataset: tuple[str, Path]) -> None:
+    def _create_node_data_files(
+        self, node_dataset: tuple[str, Path]
+    ) -> list[tuple[str, Path]]:
         """
         Create data files for nodes.
 
@@ -209,7 +208,9 @@ class SandboxConfigManager:
         length_df = len(full_df)
         for i in range(self.num_nodes):
             node_name = f"{self.server_name}_node_{i + 1}"
-            dev_folder = NodeContext.instance_folders("node", node_name, False)["dev"]
+            dev_folder = NodeContext.instance_folders(
+                InstanceType.NODE, node_name, False
+            )["dev"]
             data_folder = Path(dev_folder / self.server_name)
             data_folder.mkdir(parents=True, exist_ok=True)
 
@@ -226,7 +227,7 @@ class SandboxConfigManager:
 
     def _create_node_config_file(
         self, config: dict, datasets: list[tuple[str, Path]]
-    ) -> None:
+    ) -> Path:
         """
         Create a node configuration file (YAML).
 
@@ -243,7 +244,7 @@ class SandboxConfigManager:
             Path to the node configuration file.
         """
         node_name = config["node_name"]
-        folders = NodeContext.instance_folders("node", node_name, False)
+        folders = NodeContext.instance_folders(InstanceType.NODE, node_name, False)
         path_to_dev_dir = Path(folders["dev"] / self.server_name)
         path_to_dev_dir.mkdir(parents=True, exist_ok=True)
 
@@ -345,58 +346,6 @@ class SandboxConfigManager:
                 return f.read()
         return ""
 
-    def _create_vserver_import_config(self) -> None:
-        """Create server configuration import file (YAML)."""
-        environment = Environment(
-            loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
-            trim_blocks=True,
-            lstrip_blocks=True,
-            autoescape=True,
-        )
-        template = environment.get_template(SERVER_IMPORT_TEMPLATE_FILE)
-
-        organizations = []
-        collaboration = {"name": "demo", "participants": []}
-        for config in self.node_configs:
-            org_id = config["org_id"]
-            org_data = {"name": f"org_{org_id}"}
-
-            organizations.append(org_data)
-            collaboration["participants"].append({"name": f"org_{org_id}"})
-        organizations[0]["make_admin"] = True
-        info(
-            f"Organization {Fore.GREEN}{self.node_configs[0]['org_id']}"
-            f"{Style.RESET_ALL} is the admin"
-        )
-
-        server_import_config = template.render(
-            organizations=organizations, collaboration=collaboration
-        )
-        folders = ServerContext.instance_folders(
-            InstanceType.SERVER, self.server_name, False
-        )
-
-        demo_dir = Path(folders["dev"])
-        demo_dir.mkdir(parents=True, exist_ok=True)
-        self.server_import_config_file = demo_dir / f"{self.server_name}.yaml"
-        if self.server_import_config_file.exists():
-            error(
-                "Server configuration file already exists: "
-                f"{self.server_import_config_file}"
-            )
-            exit(1)
-
-        try:
-            with open(self.server_import_config_file, "x") as f:
-                f.write(server_import_config)
-                info(
-                    "Server import configuration ready, writing to "
-                    f"{Fore.GREEN}{self.server_import_config_file}{Style.RESET_ALL}"
-                )
-        except Exception as e:
-            error(f"Could not write server import configuration file: {e}")
-            exit(1)
-
     def __server_config_return_func(self, extra_config: str, data_dir: Path) -> dict:
         """
         Return a dict with server configuration values to be used in creating the
@@ -483,9 +432,17 @@ class SandboxConfigManager:
 
         extra_config = self._read_extra_config_file(self.extra_store_config)
 
+        folders = AlgorithmStoreContext.instance_folders(
+            instance_type=InstanceType.ALGORITHM_STORE,
+            instance_name=f"{self.server_name}-store",
+            system_folders=False,
+        )
+        data_dir = Path(folders["dev"]) / self.server_name
+        data_dir.mkdir(parents=True, exist_ok=True)
+
         self.algo_store_config_file = new(
             config_producing_func=self.__algo_store_config_return_func,
-            config_producing_func_args=(extra_config,),
+            config_producing_func_args=(extra_config, data_dir),
             name=f"{self.server_name}-store",
             system_folders=False,
             namespace=self.namespace,
@@ -494,7 +451,9 @@ class SandboxConfigManager:
             is_sandbox=True,
         )
 
-    def __algo_store_config_return_func(self, extra_config: str) -> dict:
+    def __algo_store_config_return_func(
+        self, extra_config: str, data_dir: Path
+    ) -> dict:
         """
         Return a dict with algorithm store configuration values to be used in creating
         the config file.
@@ -509,15 +468,31 @@ class SandboxConfigManager:
                 "internal": {
                     "port": self.algorithm_store_port,
                 },
-                "logging": {},
+                "logging": {
+                    "level": "DEBUG",
+                },
                 "vantage6ServerUri": f"{LOCALHOST}:{self.server_port}",
                 "additional_config": extra_config,
                 "image": (
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/store:5.0.0a36"
                 ),
+                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
+                "policies": {
+                    "allowLocalhost": True,
+                    "assignReviewOwnAlgorithm": True,
+                },
+                "dev": {
+                    # TODO v5+ host_uri should be configurable (172.17.0.1 on linux, )
+                    "host_uri": f"{LOCALHOST}:{self.server_port}",
+                    "disable_review": True,
+                    "review_own_algorithm": True,
+                },
             },
-            "database": {},
+            "database": {
+                "volumePath": str(data_dir),
+                "k8sNodeName": self.k8s_node_name,
+            },
         }
 
     def _create_auth_config(self) -> None:
@@ -766,7 +741,41 @@ def cli_new_sandbox(
         context=context,
         attach=False,
     )
+
+    # run the store
+    info("Starting algorithm store...")
+    cmd = [
+        "v6",
+        "algorithm-store",
+        "start",
+        "--name",
+        f"{ctx.name}-store.sandbox",
+        "--user",
+        "--context",
+        context,
+        "--namespace",
+        namespace,
+        "--sandbox",
+    ]
+    subprocess.run(cmd, check=True)
+
     wait_for_server_to_be_ready(server_port)
+
+    # TODO also wait for store to be ready but maybe that needs to be done in the
+    # populate function.
+
+    # Then we need to populate the server
+    info("Populating server")
+    node_details = populate_server_sandbox(
+        server_url=f"{LOCALHOST}:{server_port}/server",
+        auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
+        number_of_nodes=num_nodes,
+    )
+
+    import pprint
+
+    print("Node details:")
+    pprint.pprint(node_details)
 
     raise
 

@@ -1,4 +1,13 @@
+from dataclasses import dataclass
 from pathlib import Path
+
+
+@dataclass
+class NodeConfigCreationDetails:
+    node_starting_port_number: int
+    dev_dir: Path
+    task_directory: str
+    task_namespace: str
 
 
 def replace_wsl_path(path: Path) -> Path:

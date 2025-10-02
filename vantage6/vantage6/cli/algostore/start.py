@@ -31,8 +31,12 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    InstanceType.ALGORITHM_STORE, include_name=True, include_system_folders=True
+    InstanceType.ALGORITHM_STORE,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 def cli_algo_store_start(
     ctx: AlgorithmStoreContext,
