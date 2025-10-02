@@ -164,7 +164,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             instance_name=self.server_name,
             system_folders=False,
         )
-        data_dir = Path(folders["dev"]) / self.server_name
+        data_dir = Path(folders["dev"]) / self.server_name / "server"
         data_dir.mkdir(parents=True, exist_ok=True)
 
         extra_config = self._read_extra_config_file(self.extra_server_config)
@@ -195,7 +195,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             instance_name=f"{self.server_name}-store",
             system_folders=False,
         )
-        data_dir = Path(folders["dev"]) / self.server_name
+        data_dir = Path(folders["dev"]) / self.server_name / "store"
         data_dir.mkdir(parents=True, exist_ok=True)
 
         self.algo_store_config_file = new(

@@ -26,7 +26,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
     def __init__(
         self,
         server_name: str,
-        num_nodes: int,
+        api_keys: list[str],
+        node_names: list[str],
         server_port: int,
         node_image: str | None,
         extra_node_config: Path | None,
@@ -35,7 +36,9 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         namespace: str,
     ) -> None:
         self.server_name = server_name
-        self.num_nodes = num_nodes
+        self.api_keys = api_keys
+        self.node_names = node_names
+        self.num_nodes = len(api_keys)
         self.server_port = server_port
         self.node_image = node_image
         self.extra_node_config = extra_node_config
@@ -56,7 +59,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         node_data_files = []
         extra_config = self._read_extra_config_file(self.extra_node_config)
 
-        data_directory = Path(str(impresources.files(node_datafiles_dir)))
+        data_directory = impresources.files(node_datafiles_dir)
 
         # Add default datasets to the list of dataset provided
         for default_dataset in DefaultDatasets:
@@ -87,16 +90,16 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         for dataset in self.node_datasets:
             node_data_files.append(self._create_node_data_files(dataset))
 
-        for i in range(self.num_nodes):
+        for idx, api_key in enumerate(self.api_keys):
             config = {
-                "org_id": i + 1,
-                "api_key": "TODO",
-                "node_name": f"{self.server_name}-node-{i + 1}",
+                "org_id": idx + 1,
+                "api_key": api_key,
+                "node_name": self.node_names[idx],
                 "user_defined_config": extra_config,
             }
             config_file = self._create_node_config_file(
                 config,
-                [files[i] for files in node_data_files],
+                [files[idx] for files in node_data_files],
             )
             self.node_configs.append(config)
             self.node_config_files.append(config_file)
@@ -123,8 +126,10 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         list[tuple[str, Path]]
             List of tuples with the label and path to the dataset file.
         """
-        info(f"Creating data files for {self.num_nodes} nodes.")
         db_label, db_path = node_dataset
+        info(
+            f"Creating data files using dataset '{db_label}' for {self.num_nodes} nodes"
+        )
         data_files = []
         full_df = pd.read_csv(db_path)
         length_df = len(full_df)
@@ -166,7 +171,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             Path to the node configuration file.
         """
         node_name = config["node_name"]
-        folders = NodeContext.instance_folders(InstanceType.NODE, node_name, False)
+        config_name = f"{self.server_name}-{node_name}"
+        folders = NodeContext.instance_folders(InstanceType.NODE, config_name, False)
         path_to_dev_dir = Path(folders["dev"] / self.server_name)
         path_to_dev_dir.mkdir(parents=True, exist_ok=True)
 
@@ -176,7 +182,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         node_config = new(
             config_producing_func=self.__node_config_return_func,
             config_producing_func_args=(config, datasets, path_to_data_dir),
-            name=node_name,
+            name=config_name,
             system_folders=False,
             namespace=self.namespace,
             context=self.context,
@@ -199,7 +205,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         return {
             "node": {
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
-                "api_key": node_specific_config["api_key"],
+                "apiKey": node_specific_config["api_key"],
+                "name": node_specific_config["node_name"],
                 "image": (
                     self.node_image
                     # TODO v5+ update

@@ -174,3 +174,7 @@ def cli_new_sandbox(
         initialize=True,
         node_image=node_image,
     )
+
+    # info("Sandbox environment was set up successfully!")
+    # info("Start it using the following command:")
+    # info(f"{Fore.GREEN}v6 sandbox start{Style.RESET_ALL}")

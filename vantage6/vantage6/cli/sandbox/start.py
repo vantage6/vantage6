@@ -12,6 +12,7 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import select_context_and_namespace
+from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.sandbox.config.node import NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
@@ -61,6 +62,7 @@ def cli_sandbox_start(
         namespace=namespace,
     )
 
+    # TODO if re-initalize is specified, we must remove the existing node configs
     execute_sandbox_start(
         click_ctx=click_ctx,
         ctx=ctx,
@@ -131,10 +133,7 @@ def execute_sandbox_start(
     subprocess.run(cmd, check=True)
 
     server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
-    wait_for_server_to_be_ready(server_url)
-
-    # TODO also wait for store to be ready but maybe that needs to be done in the
-    # populate function.
+    _wait_for_server_to_be_ready(server_url)
 
     # Then we need to populate the server
     info("Populating server")
@@ -144,15 +143,14 @@ def execute_sandbox_start(
         number_of_nodes=num_nodes,
     )
 
-    import pprint
-
-    print("Node details:")
-    pprint.pprint(node_details)
+    api_keys = [node["api_key"] for node in node_details]
+    node_names = [node["name"] for node in node_details]
 
     # Create node config files from the nodes that were just registered in the server
     node_config_manager = NodeSandboxConfigManager(
         server_name=server_name,
-        num_nodes=num_nodes,
+        api_keys=api_keys,
+        node_names=node_names,
         server_port=ctx.config["server"]["port"],
         node_image=node_image,
         extra_node_config=None,
@@ -162,52 +160,42 @@ def execute_sandbox_start(
     )
     node_config_manager.generate_node_configs()
 
-    raise
+    # Then start the nodes
+    info("Starting nodes")
+    for node_config in node_config_manager.node_configs:
+        cmd = [
+            "v6",
+            "node",
+            "start",
+            "--config",
+            node_config,
+        ]
+        subprocess.run(cmd, check=True)
 
-    # Then start the import process
-    info("Starting import process")
-    # TODO: The clients and users are not deleted. The server will fail the import if
-    # they already exist.
-    node_details_from_server = click_ctx.invoke(
-        cli_server_import,
-        ctx=ctx,
-        file=sb_config_manager.server_import_config_file,
-        drop_all=False,
-    )
+    # Print the authentication credentials
+    _print_auth_credentials(server_name)
 
-    print(node_details_from_server)
 
-    info("Updating node configuration files with API keys")
-    # TODO: @bart this is where I left off. I tried to update the config files with the
-    # API keys, it should be something like this:
-    # for idx, node_detail in enumerate(node_details_from_server):
-    #     node_config_file = node_config_files[idx]
-    #     cm = ConfigurationManager.from_file(node_config_files, is_sandbox=True)
-    #     cm.config["node"]["api_key"] = node_detail["api_key"]
-    #     cm.save(node_config_file)
-    # Reply from Bart: I think we should do this in a very different way: we start up
-    # the server and use the client to generate nodes. Only then should we create the
-    # node config files. It makes sense to me to try to sync the scripts from the dev
-    # env with the sandbox env, so that we don't need to maintain two processes.
+def _print_auth_credentials(server_name: str) -> None:
+    """
+    Find user credentials to print, from the auth config file
 
-    click_ctx.invoke(
-        cli_server_stop,
-        name=server_name,
-        context=context,
-        namespace=namespace,
+    Parameters
+    ----------
+    server_name : str
+        Name of the server.
+    """
+    auth_ctx = AuthContext(
+        name=f"{server_name}-auth",
         system_folders=False,
-        all_servers=True,
         is_sandbox=True,
     )
+    print(auth_ctx)
+    auth_config = auth_ctx.config
+    print("Auth config:")
+    import pprint
 
-    info("Sandbox environment was set up successfully!")
-    info("Start it using the following command:")
-    info(f"{Fore.GREEN}v6 sandbox start{Style.RESET_ALL}")
-
-    # find user credentials to print. Read from server import file
-    with open(sb_config_manager.server_import_config_file, "r") as f:
-        server_import_config = yaml.safe_load(f)
-
+    pprint.pprint(auth_config)
     try:
         user = server_import_config["organizations"][0]["users"][0]
         username = user["username"]
@@ -220,7 +208,7 @@ def execute_sandbox_start(
         pass
 
 
-def wait_for_server_to_be_ready(server_url: str) -> None:
+def _wait_for_server_to_be_ready(server_url: str) -> None:
     """
     Wait for the server to be initialized.
 

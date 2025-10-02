@@ -72,7 +72,9 @@ def connect_store(client: Client) -> str:
     local_store_url = "http://localhost:7602"
     local_store_api_path = "/store"
     client.store.store_id = 1
+
     _wait_for_store_to_be_online(local_store_url, local_store_api_path)
+
     if local_store_url not in existing_urls:
         summary += "Registering local store\n"
         store = client.store.create(
@@ -81,6 +83,9 @@ def connect_store(client: Client) -> str:
             name="Local store",
             all_collaborations=True,
         )
+        client.store.set(store["id"])
+    else:
+        store = next(s for s in existing_stores if s["url"] == local_store_url)
         client.store.set(store["id"])
 
     # register also the other users in the local store
