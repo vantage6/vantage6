@@ -119,11 +119,8 @@ class SandboxConfigManager:
         self.store_config_file = None
         self.k8s_node_name = k8s_node_name
 
-        self._initialize_configs()
-
-    def _initialize_configs(self) -> None:
+    def generate_server_configs(self) -> None:
         """Generates the demo network."""
-        self._generate_node_configs()
 
         self._create_auth_config()
 
@@ -132,6 +129,64 @@ class SandboxConfigManager:
         self._create_vserver_config()
 
         self._create_algo_store_config()
+
+    def generate_node_configs(self) -> None:
+        """
+        Generates ``num_nodes`` node configuration files.
+        """
+        node_data_files = []
+        extra_config = self._read_extra_config_file(self.extra_node_config)
+
+        data_directory = impresources.files(node_datafiles_dir)
+
+        # Add default datasets to the list of dataset provided
+        for default_dataset in DefaultDatasets:
+            self.node_datasets.append(
+                (
+                    default_dataset.name.lower().replace("_", "-"),
+                    data_directory / default_dataset.value,
+                )
+            )
+
+        # Check for duplicate dataset labels
+        seen_labels = set()
+        duplicates = [
+            label
+            for label in [dataset[0] for dataset in self.node_datasets]
+            if (label in seen_labels or seen_labels.add(label))
+        ]
+
+        if len(duplicates) > 0:
+            error(
+                f"Duplicate dataset labels found: {duplicates}. "
+                f"Please make sure all dataset labels are unique."
+            )
+            exit(1)
+
+        # create the data files for the nodes and get the path and label for each
+        # dataset
+        for dataset in self.node_datasets:
+            node_data_files.append(self._create_node_data_files(dataset))
+
+        for i in range(self.num_nodes):
+            config = {
+                "org_id": i + 1,
+                "api_key": "TODO",
+                "node_name": f"{self.server_name}-node-{i + 1}",
+                "user_defined_config": extra_config,
+            }
+            config_file = self._create_node_config_file(
+                config,
+                [files[i] for files in node_data_files],
+            )
+            self.node_configs.append(config)
+            self.node_config_files.append(config_file)
+
+        info(
+            f"Created {Fore.GREEN}{len(self.node_config_files)}{Style.RESET_ALL} node "
+            f"configuration(s), attaching them to {Fore.GREEN}{self.server_name}"
+            f"{Style.RESET_ALL}."
+        )
 
     def _create_node_data_files(self, node_dataset: tuple[str, Path]) -> None:
         """
@@ -289,64 +344,6 @@ class SandboxConfigManager:
             with open(extra_config_file, "r", encoding="utf-8") as f:
                 return f.read()
         return ""
-
-    def _generate_node_configs(self) -> None:
-        """
-        Generates ``num_nodes`` node configuration files.
-        """
-        node_data_files = []
-        extra_config = self._read_extra_config_file(self.extra_node_config)
-
-        data_directory = impresources.files(node_datafiles_dir)
-
-        # Add default datasets to the list of dataset provided
-        for default_dataset in DefaultDatasets:
-            self.node_datasets.append(
-                (
-                    default_dataset.name.lower().replace("_", "-"),
-                    data_directory / default_dataset.value,
-                )
-            )
-
-        # Check for duplicate dataset labels
-        seen_labels = set()
-        duplicates = [
-            label
-            for label in [dataset[0] for dataset in self.node_datasets]
-            if (label in seen_labels or seen_labels.add(label))
-        ]
-
-        if len(duplicates) > 0:
-            error(
-                f"Duplicate dataset labels found: {duplicates}. "
-                f"Please make sure all dataset labels are unique."
-            )
-            exit(1)
-
-        # create the data files for the nodes and get the path and label for each
-        # dataset
-        for dataset in self.node_datasets:
-            node_data_files.append(self._create_node_data_files(dataset))
-
-        for i in range(self.num_nodes):
-            config = {
-                "org_id": i + 1,
-                "api_key": "TODO",
-                "node_name": f"{self.server_name}-node-{i + 1}",
-                "user_defined_config": extra_config,
-            }
-            config_file = self._create_node_config_file(
-                config,
-                [files[i] for files in node_data_files],
-            )
-            self.node_configs.append(config)
-            self.node_config_files.append(config_file)
-
-        info(
-            f"Created {Fore.GREEN}{len(self.node_config_files)}{Style.RESET_ALL} node "
-            f"configuration(s), attaching them to {Fore.GREEN}{self.server_name}"
-            f"{Style.RESET_ALL}."
-        )
 
     def _create_vserver_import_config(self) -> None:
         """Create server configuration import file (YAML)."""
@@ -619,7 +616,6 @@ def wait_for_server_to_be_ready(server_port: int) -> None:
     default=Ports.DEV_ALGO_STORE.value,
     help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
 )
-# TODO: I am missing the `--store-image` option, also --node-image
 @click.option(
     "--server-image",
     type=str,
@@ -735,6 +731,8 @@ def cli_new_sandbox(
         namespace=namespace,
         k8s_node_name=k8s_node_name,
     )
+
+    sb_config_manager.generate_server_configs()
 
     ctx = get_server_context(server_name, False, ServerContext, is_sandbox=True)
 

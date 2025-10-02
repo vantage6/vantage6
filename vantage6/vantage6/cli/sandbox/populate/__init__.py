@@ -23,6 +23,7 @@ def populate_server(
     node_starting_port_number: int,
     dev_data_dir: Path,
     dev_dir: Path,
+    clear_dev_folders: bool = False,
 ) -> str | None:
     """
     Populate the server with basic fixtures.
@@ -45,6 +46,9 @@ def populate_server(
         The directory to store the development data.
     dev_dir : Path
         The directory to store the development files.
+    clear_dev_folders : bool
+        Whether to clear everything inthe dev directory before creating the new
+        resources.
 
     Returns
     -------
@@ -69,6 +73,7 @@ def populate_server(
             task_namespace,
             node_starting_port_number,
             dev_data_dir,
+            clear_dev_folders=clear_dev_folders,
         )
         report_store = connect_store(client, dev_dir)
 

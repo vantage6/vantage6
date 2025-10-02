@@ -91,11 +91,11 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     for organization in import_data["organizations"]:
         org = client.organization.create(
             name=organization["name"],
-            address1=organization["address1"],
+            address1=organization["address1"] or "",
             address2=organization["address2"] or "",
-            zipcode=organization["zipcode"],
-            country=organization["country"],
-            domain=organization["domain"],
+            zipcode=organization["zipcode"] or "",
+            country=organization["country"] or "",
+            domain=organization["domain"] or "",
         )
         organizations.append(org)
 
@@ -121,7 +121,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         col = client.collaboration.create(
             name=collaboration["name"],
             organizations=organization_ids,
-            encrypted=collaboration["encrypted"],
+            encrypted=collaboration.get("encrypted", False),
         )
 
         info("Registering nodes for collaboration")

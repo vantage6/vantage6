@@ -65,8 +65,10 @@ report_populate_server = populate_server(
     node_starting_port_number=node_starting_port_number,
     dev_data_dir=dev_data_dir,
     dev_dir=dev_dir,
+    clear_dev_folders=True,
 )
 
 # Create marker file
-with open(populate_marker, "w") as f:
-    f.write(report_populate_server)
+if report_populate_server:
+    with open(populate_marker, "w") as f:
+        f.write(report_populate_server)

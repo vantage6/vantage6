@@ -22,37 +22,33 @@ def clear_dev_folder(dev_dir: Path, name: str) -> None:
         print(f"===> Dev folder for node `{name}` cleared")
 
 
-def create_fixtures(
-    client: Client,
-    number_of_nodes: int,
-    task_directory: str,
-    task_namespace: str,
-    node_starting_port_number: int,
-    dev_dir: Path,
-) -> str:
-    # Track creation details
+def create_organizations(
+    client: Client, number_of_nodes: int
+) -> tuple[list[dict], dict]:
+    """
+    Create organizations. If the organization already exists, it is added to the
+    existing organizations list. If the organization is the root organization, it is
+    patched so that the admin user is also in the organization.
+
+    Returns
+    -------
+    tuple[list[dict], dict]
+        A tuple containing the list of organizations and the creation details.
+    """
+    organizations = []
     creation_details = {
-        "organizations": {"created": [], "existing": [], "root_org_patched": []},
-        "users": {"created": [], "existing": []},
-        "nodes": {"created": [], "existing": []},
-        "collaborations": {"created": [], "existing": []},
-        "sessions": {"created": []},
-        "dev_folders_cleared": [],
+        "created": [],
+        "existing": [],
+        "root_org_patched": [],
     }
 
-    # Remove old config files
-    for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
-        clear_dev_folder(dev_dir, node_dir.name)
-        creation_details["dev_folders_cleared"].append(node_dir.name)
-
-    # Create organizations
-    organizations = []
+    existing_organizations = client.organization.list()["data"]
     for i in range(1, number_of_nodes + 1):
         name = f"org_{i}"
-        if org := next(iter(client.organization.list(name=name)["data"]), None):
-            creation_details["organizations"]["existing"].append(
-                {"name": name, "domain": org["domain"]}
-            )
+        if org := next(
+            iter([org for org in existing_organizations if org["name"] == name]), None
+        ):
+            creation_details["existing"].append({"name": name, "domain": org["domain"]})
             organizations.append(org)
         elif i == 1:
             # Patch the root organization so that admin user is also in the org
@@ -60,152 +56,217 @@ def create_fixtures(
                 id_=1,
                 name=name,
             )
-            creation_details["organizations"]["root_org_patched"].append(
+            creation_details["root_org_patched"].append(
                 {"name": name, "domain": org["domain"]}
             )
             organizations.append(org)
         else:
             org = client.organization.create(
                 name=name,
-                address1=f"address 1 {i}",
-                address2=f"address 2 {i}",
-                zipcode=f"1234AB {i}",
-                country="NL",
+                address1=f"First address line {i}",
+                address2=f"Second address line {i}",
+                zipcode="1234AB",
+                country="Earthland",
                 domain=f"org{i}.org",
             )
-            creation_details["organizations"]["created"].append(
-                {"name": name, "domain": org["domain"]}
-            )
+            creation_details["created"].append({"name": name, "domain": org["domain"]})
             organizations.append(org)
 
-    # Create collaboration
-    if col_1 := next(
-        iter(client.collaboration.list(scope="global", name="collab 1")["data"]), None
-    ):
-        creation_details["collaborations"]["existing"].append(
-            {"name": "collab 1", "id": col_1["id"]}
-        )
+    return organizations, creation_details
+
+
+def create_collaborations(
+    client: Client, organizations: list[dict]
+) -> tuple[list[dict], dict]:
+    """
+    Create collaborations. If the collaboration already exists, it is added to the
+    existing collaborations list.
+
+    Returns
+    -------
+    tuple[dict, dict]
+        A tuple containing the collaboration and the creation details.
+    """
+    creation_details = {"created": [], "existing": []}
+    collab_name = "demo"
+    existing_collaborations = client.collaboration.list(
+        scope="global", name=collab_name
+    )["data"]
+    if collab := next(iter(existing_collaborations), None):
+        creation_details["existing"].append({"name": collab_name, "id": collab["id"]})
     else:
-        col_1 = client.collaboration.create(
-            name="collab 1",
+        collab = client.collaboration.create(
+            name=collab_name,
             organizations=[org["id"] for org in organizations],
             encrypted=False,
         )
-        creation_details["collaborations"]["created"].append(
-            {"name": "collab 1", "id": col_1["id"]}
-        )
+        creation_details["created"].append({"name": collab_name, "id": collab["id"]})
+    return collab, creation_details
 
-    # Create users
-    users = []
+
+def create_users(client: Client, organizations: list[dict]) -> dict:
+    """
+    Create users. If the user already exists, it is added to the existing users list.
+
+    Returns
+    -------
+    dict
+        The creation details.
+    """
+    creation_details = {"created": [], "existing": []}
+    existing_users = client.user.list()["data"]
     for index, org in enumerate(organizations):
         username = f"user_{index + 1}"
-        if user := next(iter(client.user.list(username=username)["data"]), None):
-            creation_details["users"]["existing"].append(
+        if next(
+            iter([user for user in existing_users if user["username"] == username]),
+            None,
+        ):
+            creation_details["existing"].append(
                 {
                     "username": username,
                     "organization": org["name"],
                 }
             )
-            users.append(user)
         else:
             password = "Password123!"
-            user = client.user.create(
+            client.user.create(
                 username=username,
                 password=password,
                 organization=org["id"],
                 roles=[1],  # TODO assign proper roles
             )
-            creation_details["users"]["created"].append(
+            creation_details["created"].append(
                 {
                     "username": username,
                     "password": password,
                     "organization": org["name"],
                 }
             )
-            users.append(user)
+    return creation_details
 
-    # create collaboration session
+
+def register_node(
+    client: Client,
+    node_name: str,
+    collaboration: dict,
+    organization: dict,
+) -> dict:
+    """
+    Register a node at the server.
+
+    Returns
+    -------
+    dict
+        The node registration details.
+    """
+    return client.node.create(
+        collaboration=collaboration["id"],
+        organization=organization["id"],
+        name=node_name,
+    )
+
+
+def create_node_config(
+    node_number: int,
+    node_name: str,
+    dev_dir: Path,
+    task_directory: str,
+    task_namespace: str,
+    node_starting_port_number: int,
+    organization: dict,
+    node: dict,
+) -> dict:
+    """
+    Create a node configuration file.
+
+    Returns
+    -------
+    dict
+        The node configuration details.
+    """
+    # Create a folder for all config files for a single node
+    node_dev_dir = dev_dir / node_name
+    node_dev_dir.mkdir(exist_ok=True)
+
+    # Generate node configuration
+    environment = Environment(
+        loader=FileSystemLoader(PACKAGE_FOLDER / APPNAME / "cli" / "template"),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        autoescape=True,
+    )
+    template = environment.get_template("node_config_nonk8s.j2")
+
+    node_config = template.render(
+        {
+            "logging": {"file": f"node_{node_number}.log"},
+            "port": 7601,
+            "server_url": "http://vantage6-server-vantage6-server-service",
+            "task_dir": f"{task_directory}/node_{node_number}",
+            "task_dir_extension": f"node_{node_number}",
+            "api_path": "/server",
+            "task_namespace": task_namespace,
+            "node_proxy_port": node_starting_port_number + (node_number - 1),
+        }
+    )
+    config_file = node_dev_dir / f"node_org_{node_number}.yaml"
+    with open(config_file, "w") as f:
+        f.write(node_config)
+
+    # also make sure the task directory exists
+    task_dir = Path(f"{task_directory}/node_{node_number}")
+    task_dir = replace_wsl_path(task_dir)
+    task_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create .env file for the node
+    env_file = node_dev_dir / ".env"
+    with open(env_file, "w") as f:
+        f.write(f"V6_API_KEY={node['api_key']}\n")
+        f.write(f"V6_NODE_NAME={node_name}\n")
+
+    return {
+        "name": f"node-{node_number}",
+        "organization": organization["name"],
+        "api_key": node["api_key"],
+        "config_file": str(config_file),
+        "env_file": str(env_file),
+    }
+
+
+def create_session(client: Client, collaboration: dict) -> dict:
+    """
+    Create a session.
+
+    Returns
+    -------
+    dict
+        The session creation details.
+    """
     session = client.session.create(
-        collaboration=col_1["id"],
+        collaboration=collaboration["id"],
         name="session (collaboration scope)",
         scope="collaboration",
     )
-    creation_details["sessions"]["created"].append(
-        {"name": "session (collaboration scope)", "id": session["id"]}
-    )
+    creation_details = {
+        "created": [
+            {
+                "name": "session (collaboration scope)",
+                "id": session["id"],
+            }
+        ],
+    }
+    return creation_details
 
-    # Create nodes
-    for i in range(1, number_of_nodes + 1):
-        name = f"node_{i}"
-        if next(iter(client.node.list(name=name)["data"]), None):
-            creation_details["nodes"]["existing"].append(
-                {"name": name, "organization": organizations[i - 1]["name"]}
-            )
-        else:
-            try:
-                # Create a folder for all config files for a single node
-                node_dev_dir = dev_dir / name
-                node_dev_dir.mkdir(exist_ok=True)
 
-                node = client.node.create(
-                    collaboration=col_1["id"],
-                    organization=organizations[i - 1]["id"],
-                    name=name,
-                )
+def print_creation_details(creation_details: dict) -> str:
+    """
+    Print the creation details.
 
-                # Generate node configuration
-                environment = Environment(
-                    loader=FileSystemLoader(
-                        PACKAGE_FOLDER / APPNAME / "cli" / "template"
-                    ),
-                    trim_blocks=True,
-                    lstrip_blocks=True,
-                    autoescape=True,
-                )
-                template = environment.get_template("node_config_nonk8s.j2")
-
-                node_config = template.render(
-                    {
-                        "logging": {"file": f"node_{i}.log"},
-                        "port": 7601,
-                        "server_url": "http://vantage6-server-vantage6-server-service",
-                        "task_dir": f"{task_directory}/node_{i}",
-                        "task_dir_extension": f"node_{i}",
-                        "api_path": "/server",
-                        "task_namespace": task_namespace,
-                        "node_proxy_port": node_starting_port_number + (i - 1),
-                    }
-                )
-                config_file = node_dev_dir / f"node_org_{i}.yaml"
-                with open(config_file, "w") as f:
-                    f.write(node_config)
-
-                # also make sure the task directory exists
-                task_dir = Path(f"{task_directory}/node_{i}")
-                task_dir = replace_wsl_path(task_dir)
-                task_dir.mkdir(parents=True, exist_ok=True)
-
-                # Create .env file for the node
-                env_file = node_dev_dir / ".env"
-                with open(env_file, "w") as f:
-                    f.write(f"V6_API_KEY={node['api_key']}\n")
-                    f.write(f"V6_NODE_NAME={name}\n")
-
-                creation_details["nodes"]["created"].append(
-                    {
-                        "name": name,
-                        "organization": organizations[i - 1]["name"],
-                        "api_key": node["api_key"],
-                        "config_file": str(config_file),
-                        "env_file": str(env_file),
-                    }
-                )
-
-            except Exception as e:
-                traceback.print_exc()
-                print(f"Error creating node {name}: {str(e)}")
-
-    # Build detailed summary string
+    Returns
+    -------
+    str
+        The creation summary.
+    """
     summary = "=== Creation Summary ===\n"
 
     summary += f"\nOrganizations: {len(creation_details['organizations']['created'])} "
@@ -283,3 +344,89 @@ def create_fixtures(
     summary += "\n\n======================="
     print(summary)
     return summary
+
+
+def create_fixtures(
+    client: Client,
+    number_of_nodes: int,
+    task_directory: str,
+    task_namespace: str,
+    node_starting_port_number: int,
+    dev_dir: Path,
+    clear_dev_folders: bool = False,
+) -> str:
+    # Track creation details
+    creation_details = {
+        "organizations": {"created": [], "existing": [], "root_org_patched": []},
+        "users": {"created": [], "existing": []},
+        "nodes": {"created": [], "existing": []},
+        "collaborations": {"created": [], "existing": []},
+        "sessions": {"created": []},
+        "dev_folders_cleared": [],
+    }
+
+    # Remove old config files
+    if clear_dev_folders:
+        for node_dir in [d for d in dev_dir.iterdir() if d.is_dir()]:
+            clear_dev_folder(dev_dir, node_dir.name)
+            creation_details["dev_folders_cleared"].append(node_dir.name)
+
+    # Create organizations
+    organizations, creation_details["organizations"] = create_organizations(
+        client, number_of_nodes
+    )
+
+    # Create collaboration
+    collaboration, creation_details["collaborations"] = create_collaborations(
+        client, organizations
+    )
+
+    # Create users
+    creation_details["users"] = create_users(client, organizations)
+
+    # create collaboration session
+    creation_details["sessions"] = create_session(client, collaboration)
+
+    # Create nodes
+    for i in range(1, number_of_nodes + 1):
+        name = f"node-{i}"
+        if next(
+            iter(
+                [
+                    node
+                    for node in client.node.list(name=name)["data"]
+                    if node["name"] == name
+                ]
+            ),
+            None,
+        ):
+            creation_details["nodes"]["existing"].append(
+                {"name": name, "organization": organizations[i - 1]["name"]}
+            )
+        else:
+            try:
+                node = register_node(
+                    client,
+                    node_name=name,
+                    collaboration=collaboration,
+                    organization=organizations[i - 1],
+                )
+                creation_details["nodes"]["created"].append(
+                    create_node_config(
+                        node_number=i,
+                        node_name=name,
+                        dev_dir=dev_dir,
+                        task_directory=task_directory,
+                        task_namespace=task_namespace,
+                        node_starting_port_number=node_starting_port_number,
+                        node=node,
+                        organization=organizations[i - 1],
+                    )
+                )
+
+            except Exception as e:
+                traceback.print_exc()
+                print(f"Error creating node {name}: {str(e)}")
+
+    # Print creation details
+    return print_creation_details(creation_details)

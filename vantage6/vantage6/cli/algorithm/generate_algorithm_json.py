@@ -215,7 +215,6 @@ class Function:
                 "display_name": self._pretty_print_name(name),
                 "description": self._extract_parameter_description(name),
                 "type": type_.value if type_ else None,
-                "required": param.default == inspect.Parameter.empty,
                 "has_default_value": param.default != inspect.Parameter.empty,
                 "is_frontend_only": False,
             }
