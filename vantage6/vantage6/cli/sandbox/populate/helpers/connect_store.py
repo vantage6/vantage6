@@ -50,6 +50,8 @@ def _wait_for_store_to_be_online(
     if not ready:
         error("Store did not become ready in time. Exiting...")
         exit(1)
+    else:
+        info("Store is online!")
 
 
 def connect_store(client: Client) -> str:

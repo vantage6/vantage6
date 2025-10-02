@@ -102,9 +102,15 @@ def cli_sandbox_stop(
     subprocess.run(cmd, check=True)
 
     # stop the algorithm store
-    # click_ctx.invoke(
-    #     cli_algo_store_stop, name=f"{ctx.name}-store", system_folders=False
-    # )
+    cmd = [
+        "v6",
+        "algorithm-store",
+        "stop",
+        "--name",
+        f"{name}-store.sandbox",
+        "--sandbox",
+    ]
+    subprocess.run(cmd, check=True)
 
     # # stop the nodes
     # configs, _ = NodeContext.available_configurations(False)
