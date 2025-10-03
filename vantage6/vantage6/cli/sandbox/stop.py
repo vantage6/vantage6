@@ -19,7 +19,6 @@ from vantage6.cli.context import get_context
 # from vantage6.cli.common.stop import helm_uninstall
 # from vantage6.cli.context.server import ServerContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.node.stop import cli_node_stop
 
 # from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.stop import cli_server_stop
@@ -64,20 +63,23 @@ def cli_sandbox_stop(
         ctx = get_context(InstanceType.SERVER, name, False, is_sandbox=True)
         name = ctx.name
 
-    # find all related nodes
-    nodes = NodeContext.available_configurations(False, is_sandbox=True)
-    for node in nodes[0]:
+    # stop the sandbox nodes
+    nodes_user_folder, _ = NodeContext.available_configurations(False, is_sandbox=True)
+    for node in nodes_user_folder:
         if node.name.startswith(f"{name}-node-"):
-            ctx = get_context(InstanceType.NODE, node.name, False, is_sandbox=True)
-            click_ctx.invoke(
-                cli_node_stop,
-                name=ctx.name,
-                context=context,
-                namespace=namespace,
-                system_folders=False,
-                all_nodes=False,
-                is_sandbox=True,
-            )
+            cmd = [
+                "v6",
+                "node",
+                "stop",
+                "--name",
+                node.name,
+                "--sandbox",
+                "--context",
+                context,
+                "--namespace",
+                namespace,
+            ]
+            subprocess.run(cmd, check=True)
 
     # # Stop all server services
     click_ctx.invoke(
@@ -111,13 +113,3 @@ def cli_sandbox_stop(
         "--sandbox",
     ]
     subprocess.run(cmd, check=True)
-
-    # # stop the nodes
-    # configs, _ = NodeContext.available_configurations(False)
-    # node_names = [
-    #     config.name for config in configs if config.name.startswith(f"{ctx.name}_node_")
-    # ]
-    # for name in node_names:
-    #     click_ctx.invoke(
-    #         cli_node_stop, name=name, system_folders=False, all_nodes=False, force=False
-    #     )

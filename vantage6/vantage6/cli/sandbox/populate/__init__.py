@@ -114,10 +114,6 @@ def populate_server_sandbox(
         print("=" * 80)
         exit(1)
 
-    import pprint
-
-    pprint.pprint(report_creation)
-
     # return the details of the created nodes so that config files can be created
     return report_creation["nodes"]["created"]
 

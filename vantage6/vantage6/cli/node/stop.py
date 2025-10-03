@@ -38,7 +38,7 @@ def cli_node_stop(
     namespace: str,
     system_folders: bool,
     all_nodes: bool,
-    is_sandbox: bool = False,
+    is_sandbox: bool,
 ) -> None:
     """
     Stop one or all running nodes.

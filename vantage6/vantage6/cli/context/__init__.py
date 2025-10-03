@@ -68,6 +68,7 @@ def get_context(
         Wether to use system folders or if False, the user folders
     is_sandbox : bool
         Whether the configuration is a sandbox configuration, by default False
+
     Returns
     -------
     AppContext

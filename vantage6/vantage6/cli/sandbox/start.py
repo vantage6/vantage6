@@ -83,6 +83,7 @@ def execute_sandbox_start(
     num_nodes: int,
     initialize: bool,
     node_image: str | None = None,
+    k8s_node_name: str | None = None,
 ) -> None:
     # First we need to start the keycloak service
     info("Starting keycloak service")
@@ -157,6 +158,7 @@ def execute_sandbox_start(
         extra_dataset=None,
         context=context,
         namespace=namespace,
+        k8s_node_name=k8s_node_name,
     )
     node_config_manager.generate_node_configs()
 
@@ -187,7 +189,7 @@ def _print_auth_credentials(server_name: str) -> None:
         Name of the server.
     """
     auth_ctx = AuthContext(
-        name=f"{server_name}-auth",
+        instance_name=f"{server_name}-auth",
         system_folders=False,
         is_sandbox=True,
     )
@@ -198,9 +200,11 @@ def _print_auth_credentials(server_name: str) -> None:
 
     pprint.pprint(auth_config)
     try:
-        user = server_import_config["organizations"][0]["users"][0]
-        username = user["username"]
-        password = user["password"]
+        admin_user = auth_config["keycloak"]["keycloakConfigCli"]["configuration"][
+            "realm"
+        ]["users"][0]
+        username = admin_user["username"]
+        password = admin_user["credentials"][0]["value"]
         info("You can login with the following credentials:")
         info(f"Username: {Fore.GREEN}{username}{Style.RESET_ALL}")
         info(f"Password: {Fore.GREEN}{password}{Style.RESET_ALL}")

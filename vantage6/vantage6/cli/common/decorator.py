@@ -88,7 +88,7 @@ def click_insert_context(
             if sandbox_param is not None:
                 # Pop to avoid passing unknown kwarg to the wrapped function
                 runtime_is_sandbox = bool(kwargs.pop(sandbox_param, False))
-            if runtime_is_sandbox and name.endswith(".sandbox"):
+            if runtime_is_sandbox and name and name.endswith(".sandbox"):
                 name = name[:-8]
 
             # path to configuration file always overrides name

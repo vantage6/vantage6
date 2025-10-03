@@ -173,6 +173,7 @@ def cli_new_sandbox(
         num_nodes=num_nodes,
         initialize=True,
         node_image=node_image,
+        k8s_node_name=k8s_node_name,
     )
 
     # info("Sandbox environment was set up successfully!")

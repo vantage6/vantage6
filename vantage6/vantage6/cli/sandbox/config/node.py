@@ -34,6 +34,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_dataset: tuple[str, Path] | None,
         context: str,
         namespace: str,
+        k8s_node_name: str,
     ) -> None:
         self.server_name = server_name
         self.api_keys = api_keys
@@ -48,6 +49,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_datasets = []
         self.context = context
         self.namespace = namespace
+        self.k8s_node_name = k8s_node_name
 
         self.node_configs = []
         self.node_config_files = []
@@ -221,14 +223,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     or "harbor2.vantage6.ai/infrastructure/node:5.0.0a36"
                 ),
                 "logging": {
+                    "level": "DEBUG",
                     "file": f"{node_specific_config['node_name']}.log",
                 },
                 # TODO: the keycloak instance should be spun up together with the
                 # server
                 "keycloakUrl": (
-                    "http://vantage6-auth-keycloak.default.svc.cluster.local"
+                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local"
                 ),
-                "keycloakRealm": "vantage6",
                 "additional_config": node_specific_config["user_defined_config"],
                 "dev": {
                     "task_dir_extension": str(path_to_data_dir),
@@ -242,6 +244,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                         "size": "1Gi",
                     },
                 },
+                "k8sNodeName": self.k8s_node_name,
                 "databases": {
                     "fileBased": [
                         {
@@ -256,7 +259,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     ]
                 },
                 "server": {
-                    "url": LOCALHOST,
+                    "url": f"http://vantage6-{self.server_name}-user-server-vantage6-server-service.{self.namespace}.svc.cluster.local",
                     "port": self.server_port,
                 },
             },
