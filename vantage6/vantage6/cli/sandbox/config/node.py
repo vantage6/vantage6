@@ -51,6 +51,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
 
         self.node_configs = []
         self.node_config_files = []
+        self.node_config_names = []
 
     def generate_node_configs(self) -> None:
         """
@@ -103,7 +104,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             )
             self.node_configs.append(config)
             self.node_config_files.append(config_file)
-
         info(
             f"Created {Fore.GREEN}{len(self.node_config_files)}{Style.RESET_ALL} node "
             f"configuration(s), attaching them to {Fore.GREEN}{self.server_name}"
@@ -179,6 +179,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         path_to_data_dir = Path(folders["data"])
         path_to_data_dir.mkdir(parents=True, exist_ok=True)
 
+        # delete old node config if it exists
+        NodeContext.remove_config_file_if_exists(
+            InstanceType.NODE, config_name, False, is_sandbox=True
+        )
+
+        # create new node config
         node_config = new(
             config_producing_func=self.__node_config_return_func,
             config_producing_func_args=(config, datasets, path_to_data_dir),
@@ -189,6 +195,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             type_=InstanceType.NODE,
             is_sandbox=True,
         )
+
+        self.node_config_names.append(config_name)
 
         return node_config
 

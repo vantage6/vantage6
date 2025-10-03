@@ -3,6 +3,7 @@ import logging
 import logging.handlers
 import os
 import sys
+from abc import abstractmethod
 from pathlib import Path
 from typing import Self, Tuple
 
@@ -121,7 +122,7 @@ class AppContext(metaclass=Singleton):
         self.set_folders(instance_type, self.name, system_folders)
 
         # after the folders have been set, we can start logging!
-        if self.LOGGING_ENABLED:
+        if self.in_container and self.LOGGING_ENABLED:
             self.setup_logging()
 
         # Log some history
@@ -201,7 +202,17 @@ class AppContext(metaclass=Singleton):
         return self_
 
     @classmethod
+    @abstractmethod
     def config_exists(
+        cls,
+        instance_name: str,
+        system_folders: bool,
+        is_sandbox: bool,
+    ) -> None:
+        """Remove the config file if it exists."""
+
+    @classmethod
+    def base_config_exists(
         cls,
         instance_type: InstanceType,
         instance_name: str,
@@ -234,12 +245,30 @@ class AppContext(metaclass=Singleton):
                 is_sandbox=is_sandbox,
             )
 
-        except Exception:
+        except FileNotFoundError:
             return False
 
         # check that configuration is present in config-file
         config = cls.INST_CONFIG_MANAGER.from_file(config_file, is_sandbox=is_sandbox)
         return bool(config)
+
+    @classmethod
+    def remove_config_file_if_exists(
+        cls,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool,
+        is_sandbox: bool,
+    ) -> None:
+        """
+        Remove the config file if it exists.
+        """
+        if cls.config_exists(instance_name, system_folders, is_sandbox):
+            os.remove(
+                cls.find_config_file(
+                    instance_type, instance_name, system_folders, is_sandbox=is_sandbox
+                )
+            )
 
     @staticmethod
     def type_data_folder(instance_type: InstanceType, system_folders: bool) -> Path:
@@ -480,7 +509,7 @@ class AppContext(metaclass=Singleton):
 
         Raises
         ------
-        Exception
+        FileNotFoundError
             If the configuration file is not found
         """
         if config_file is None:
@@ -507,14 +536,14 @@ class AppContext(metaclass=Singleton):
             if os.path.exists(fullpath):
                 return fullpath
 
+        msg = f'Could not find configuration file "{config_file}"!?'
         if verbose:
-            msg = f'Could not find configuration file "{config_file}"!?'
             print(msg)
             print("Tried the following directories:")
             for d in dirs:
                 print(f" * {d}")
 
-        raise Exception(msg)
+        raise FileNotFoundError(msg)  # type: ignore
 
     def get_data_file(self, filename: str) -> str:
         """

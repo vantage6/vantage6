@@ -162,13 +162,14 @@ def execute_sandbox_start(
 
     # Then start the nodes
     info("Starting nodes")
-    for node_config in node_config_manager.node_configs:
+    for node_config_name in node_config_manager.node_config_names:
         cmd = [
             "v6",
             "node",
             "start",
-            "--config",
-            node_config,
+            "--name",
+            node_config_name,
+            "--sandbox",
         ]
         subprocess.run(cmd, check=True)
 

@@ -108,7 +108,7 @@ class NodeContext(AppContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
+        return super().base_config_exists(
             InstanceType.NODE,
             instance_name,
             system_folders=system_folders,

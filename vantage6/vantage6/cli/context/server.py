@@ -145,7 +145,7 @@ class ServerContext(BaseServerContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
+        return super().base_config_exists(
             InstanceType.SERVER,
             instance_name,
             system_folders=system_folders,

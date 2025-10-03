@@ -111,7 +111,7 @@ class AlgorithmStoreContext(BaseServerContext):
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
+        return super().base_config_exists(
             InstanceType.ALGORITHM_STORE, instance_name, system_folders, is_sandbox
         )
 

@@ -28,7 +28,13 @@ from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
     default=False,
     help="Show node logs on the current console after starting the node",
 )
-@click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(
+    InstanceType.NODE,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
+)
 def cli_node_start(
     ctx: NodeContext,
     name: str,
