@@ -1,5 +1,6 @@
 import subprocess
 import time
+from pathlib import Path
 
 import click
 from colorama import Fore, Style
@@ -13,6 +14,7 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.auth import AuthContext
+from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.sandbox.config.node import NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
@@ -35,7 +37,32 @@ LOCALHOST = "http://localhost"
     type=int,
     default=3,
     help="Generate this number of nodes in the development network. Only used if "
-    "--re-initialize is set to True.",
+    "--re-initialize flag is provided.",
+)
+@click.option(
+    "--extra-node-config",
+    type=click.Path("rb"),
+    default=None,
+    help="YAML File with additional node configuration. This will be "
+    "appended to each of the node configuration files. Only used if --re-initialize "
+    "flag is provided",
+)
+@click.option(
+    "--add-dataset",
+    type=(str, click.Path()),
+    default=None,
+    multiple=True,
+    help="Add a dataset to the nodes. The first argument is the label of the database, "
+    "the second is the path to the dataset file. Only used if the --re-initialize flag "
+    "is provided.",
+)
+@click.option(
+    "--data-dir",
+    type=click.Path(exists=True),
+    default=None,
+    help="Path to a custom data directory to use. This option is especially useful "
+    "on WSL because of mount issues for default directories. Only used if the "
+    "--re-initialize flag is provided.",
 )
 @click_insert_context(
     type_=InstanceType.SERVER,
@@ -53,6 +80,9 @@ def cli_sandbox_start(
     namespace: str | None,
     re_initialize: bool,
     num_nodes: int,
+    extra_node_config: Path | None,
+    add_dataset: tuple[str, Path] | None,
+    custom_data_dir: Path | None,
 ) -> None:
     """
     Start a sandbox environment.
@@ -71,6 +101,9 @@ def cli_sandbox_start(
         namespace=namespace,
         num_nodes=num_nodes,
         initialize=re_initialize,
+        extra_node_config=extra_node_config,
+        add_dataset=add_dataset,
+        custom_data_dir=custom_data_dir,
     )
 
 
@@ -84,6 +117,9 @@ def execute_sandbox_start(
     initialize: bool,
     node_image: str | None = None,
     k8s_node_name: str | None = None,
+    extra_node_config: Path | None = None,
+    add_dataset: tuple[str, Path] | None = None,
+    custom_data_dir: Path | None = None,
 ) -> None:
     # First we need to start the keycloak service
     info("Starting keycloak service")
@@ -137,6 +173,60 @@ def execute_sandbox_start(
     _wait_for_server_to_be_ready(server_url)
 
     # Then we need to populate the server
+    if initialize:
+        node_config_names = initialize(
+            server_url=server_url,
+            server_name=server_name,
+            num_nodes=num_nodes,
+            ctx=ctx,
+            node_image=node_image,
+            extra_node_config=extra_node_config,
+            add_dataset=add_dataset,
+            context=context,
+            namespace=namespace,
+            k8s_node_name=k8s_node_name,
+            custom_data_dir=custom_data_dir,
+        )
+    else:
+        node_configs, _ = NodeContext.available_configurations(
+            system_folders=False, is_sandbox=True
+        )
+        node_config_names = [
+            config.name
+            for config in node_configs
+            if config.name.startswith(f"{server_name}-node-")
+        ]
+
+    # Then start the nodes
+    info("Starting nodes")
+    for node_config_name in node_config_names:
+        cmd = [
+            "v6",
+            "node",
+            "start",
+            "--name",
+            node_config_name,
+            "--sandbox",
+        ]
+        subprocess.run(cmd, check=True)
+
+    # Print the authentication credentials
+    _print_auth_credentials(server_name)
+
+
+def initialize(
+    server_url: str,
+    server_name: str,
+    num_nodes: int,
+    ctx: ServerContext,
+    node_image: str | None,
+    extra_node_config: Path | None,
+    add_dataset: tuple[str, Path] | None,
+    context: str,
+    namespace: str,
+    k8s_node_name: str,
+    custom_data_dir: Path | None,
+) -> list[str]:
     info("Populating server")
     node_details = populate_server_sandbox(
         server_url=server_url,
@@ -154,29 +244,16 @@ def execute_sandbox_start(
         node_names=node_names,
         server_port=ctx.config["server"]["port"],
         node_image=node_image,
-        extra_node_config=None,
-        extra_dataset=None,
+        extra_node_config=extra_node_config,
+        extra_dataset=add_dataset,
         context=context,
         namespace=namespace,
         k8s_node_name=k8s_node_name,
+        custom_data_dir=custom_data_dir,
     )
     node_config_manager.generate_node_configs()
 
-    # Then start the nodes
-    info("Starting nodes")
-    for node_config_name in node_config_manager.node_config_names:
-        cmd = [
-            "v6",
-            "node",
-            "start",
-            "--name",
-            node_config_name,
-            "--sandbox",
-        ]
-        subprocess.run(cmd, check=True)
-
-    # Print the authentication credentials
-    _print_auth_credentials(server_name)
+    return node_config_manager.node_config_names
 
 
 def _print_auth_credentials(server_name: str) -> None:

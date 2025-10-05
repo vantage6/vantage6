@@ -35,6 +35,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         context: str,
         namespace: str,
         k8s_node_name: str,
+        custom_data_dir: Path | None,
     ) -> None:
         self.server_name = server_name
         self.api_keys = api_keys
@@ -50,6 +51,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.context = context
         self.namespace = namespace
         self.k8s_node_name = k8s_node_name
+        self.custom_data_dir = custom_data_dir
 
         self.node_configs = []
         self.node_config_files = []

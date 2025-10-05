@@ -110,6 +110,13 @@ LOCALHOST = "http://localhost"
 @click.option(
     "--k8s-node-name", default="docker-desktop", help="Kubernetes node name to use"
 )
+@click.option(
+    "--data-dir",
+    type=click.Path(exists=True),
+    default=None,
+    help="Path to a custom data directory to use. This option is especially useful "
+    "on WSL because of mount issues for default directories",
+)
 @click.pass_context
 def cli_new_sandbox(
     click_ctx: click.Context,
@@ -129,6 +136,7 @@ def cli_new_sandbox(
     context: str | None = None,
     namespace: str | None = None,
     k8s_node_name: str = "docker-desktop",
+    data_dir: str | None = None,
 ) -> None:
     """
     Create a sandbox environment.
@@ -139,6 +147,12 @@ def cli_new_sandbox(
         context=context,
         namespace=namespace,
     )
+
+    if data_dir is not None:
+        data_dir = Path(data_dir)
+        if not data_dir.exists():
+            error(f"Data directory {data_dir} does not exist!")
+            exit(1)
 
     server_name = prompt_config_name(name)
     if ServerContext.config_exists(server_name, False, is_sandbox=True):
@@ -158,6 +172,7 @@ def cli_new_sandbox(
         context=context,
         namespace=namespace,
         k8s_node_name=k8s_node_name,
+        custom_data_dir=data_dir,
     )
 
     sb_config_manager.generate_server_configs()
@@ -174,6 +189,9 @@ def cli_new_sandbox(
         initialize=True,
         node_image=node_image,
         k8s_node_name=k8s_node_name,
+        extra_node_config=extra_node_config,
+        add_dataset=add_dataset,
+        custom_data_dir=data_dir,
     )
 
     # info("Sandbox environment was set up successfully!")

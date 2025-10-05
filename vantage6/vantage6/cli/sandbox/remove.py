@@ -27,9 +27,20 @@ from vantage6.cli.utils import remove_file
     default=None,
     help="Path to configuration-file; overrides --name",
 )
+@click.option(
+    "--data-dir",
+    type=click.Path(exists=True),
+    default=None,
+    help="Path to a custom data directory to use. This option is especially useful "
+    "on WSL because of mount issues for default directories. Use the same value as "
+    "was provided when creating the sandbox.",
+)
 @click.pass_context
 def cli_sandbox_remove(
-    click_ctx: click.Context, name: str | None, config: str | None
+    click_ctx: click.Context,
+    name: str | None,
+    config: str | None,
+    custom_data_dir: Path | None,
 ) -> None:
     """Remove all related demo network files and folders.
 
@@ -157,3 +168,5 @@ def cli_sandbox_remove(
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders("node", "", False)["dev"]
     rmtree(Path(data_dirs_nodes / ctx.name))
+
+    # TODO remove the right data in the custom data directory if it is provided
