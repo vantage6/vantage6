@@ -37,7 +37,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         k8s_node_name: str,
         custom_data_dir: Path | None,
     ) -> None:
-        self.server_name = server_name
+        super().__init__(server_name, custom_data_dir)
         self.api_keys = api_keys
         self.node_names = node_names
         self.num_nodes = len(api_keys)
@@ -51,7 +51,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.context = context
         self.namespace = namespace
         self.k8s_node_name = k8s_node_name
-        self.custom_data_dir = custom_data_dir
 
         self.node_configs = []
         self.node_config_files = []
@@ -177,6 +176,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         node_name = config["node_name"]
         config_name = f"{self.server_name}-{node_name}"
         folders = NodeContext.instance_folders(InstanceType.NODE, config_name, False)
+
+        # TODO we need to make these WSL compatible
         path_to_dev_dir = Path(folders["dev"] / self.server_name)
         path_to_dev_dir.mkdir(parents=True, exist_ok=True)
 

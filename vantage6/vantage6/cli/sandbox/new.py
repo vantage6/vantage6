@@ -117,6 +117,12 @@ LOCALHOST = "http://localhost"
     help="Path to a custom data directory to use. This option is especially useful "
     "on WSL because of mount issues for default directories",
 )
+@click.option(
+    "--local-chart-dir",
+    type=click.Path(exists=True),
+    default=None,
+    help="Local chart repository to use.",
+)
 @click.pass_context
 def cli_new_sandbox(
     click_ctx: click.Context,
@@ -137,6 +143,7 @@ def cli_new_sandbox(
     namespace: str | None = None,
     k8s_node_name: str = "docker-desktop",
     data_dir: str | None = None,
+    local_chart_dir: Path | None = None,
 ) -> None:
     """
     Create a sandbox environment.
@@ -192,6 +199,7 @@ def cli_new_sandbox(
         extra_node_config=extra_node_config,
         add_dataset=add_dataset,
         custom_data_dir=data_dir,
+        local_chart_dir=local_chart_dir,
     )
 
     # info("Sandbox environment was set up successfully!")

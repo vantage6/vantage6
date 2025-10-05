@@ -33,6 +33,7 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
+@click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click_insert_context(
     type_=InstanceType.SERVER, include_name=True, include_system_folders=True
 )
@@ -46,6 +47,7 @@ def cli_server_start(
     port: int,
     ui_port: int,
     attach: bool,
+    local_chart_dir: str | None,
 ) -> None:
     """
     Start the server.
@@ -66,6 +68,7 @@ def cli_server_start(
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
+        local_chart_dir=local_chart_dir,
     )
 
     # port forward for server

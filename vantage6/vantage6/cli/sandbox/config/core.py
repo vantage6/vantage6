@@ -3,9 +3,7 @@ from pathlib import Path
 from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.new import new
-from vantage6.cli.context import select_context_class
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
 LOCALHOST = "http://localhost"
 
@@ -66,7 +64,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         k8s_node_name: str,
         custom_data_dir: Path | None = None,
     ) -> None:
-        self.server_name = server_name
+        super().__init__(server_name, custom_data_dir)
+
         self.server_port = server_port
         self.ui_port = ui_port
         self.algorithm_store_port = algorithm_store_port
@@ -77,7 +76,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.extra_store_config = extra_store_config
         self.context = context
         self.namespace = namespace
-        self.custom_data_dir = custom_data_dir
 
         self.server_import_config_file = None
         self.server_config_file = None
@@ -180,29 +178,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             type_=InstanceType.SERVER,
             is_sandbox=True,
         )
-
-    def _create_and_get_data_dir(self, instance_type: InstanceType) -> Path:
-        """
-        Create and get the data directory.
-        """
-        ctx_class = select_context_class(instance_type)
-        folders = ctx_class.instance_folders(
-            instance_type=InstanceType.SERVER,
-            instance_name=self.server_name,
-            system_folders=False,
-        )
-
-        subfolder = "server" if instance_type == InstanceType.SERVER else "store"
-        if self.custom_data_dir is not None:
-            data_dir = replace_wsl_path(
-                self.custom_data_dir / self.server_name / subfolder, to_mnt_wsl=True
-            )
-        else:
-            data_dir = Path(folders["dev"]) / self.server_name / subfolder
-        data_dir.mkdir(parents=True, exist_ok=True)
-        # now ensure that the wsl path is properly replaced to /run/desktop/mnt/host/wsl
-        # if it is a WSL path
-        return replace_wsl_path(data_dir, to_mnt_wsl=False)
 
     def _create_algo_store_config(self) -> None:
         """Create algorithm store configuration file (YAML)."""

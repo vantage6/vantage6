@@ -132,6 +132,7 @@ def helm_install(
     values_file: str | PathLike | None = None,
     context: str | None = None,
     namespace: str | None = None,
+    local_chart_dir: str | None = None,
 ) -> None:
     """
     Manage the `helm install` command.
@@ -148,6 +149,8 @@ def helm_install(
         The Kubernetes context to use.
     namespace : str, optional
         The Kubernetes namespace to use.
+    local_chart_dir : str, optional
+        The local directory containing the Helm charts.
     """
     # Input validation
     validate_input_cmd_args(release_name, "release name")
@@ -161,17 +164,31 @@ def helm_install(
     validate_input_cmd_args(context, "context name", allow_none=True)
     validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
+    if local_chart_dir and (
+        local_chart_dir.endswith(chart_name.value)
+        or local_chart_dir.endswith(f"{chart_name.value}/")
+    ):
+        local_chart_dir = str(Path(local_chart_dir).parent)
+
     # Create the command
-    command = [
-        "helm",
-        "install",
-        release_name,
-        chart_name,
-        "--repo",
-        DEFAULT_CHART_REPO,
-        # TODO v5+ remove this flag when we have a stable release
-        "--devel",  # ensure using latest version including pre-releases
-    ]
+    if local_chart_dir:
+        command = [
+            "helm",
+            "install",
+            release_name,
+            f"{local_chart_dir}/{chart_name.value}",
+        ]
+    else:
+        command = [
+            "helm",
+            "install",
+            release_name,
+            chart_name,
+            "--repo",
+            DEFAULT_CHART_REPO,
+            # TODO v5+ remove this flag when we have a stable release
+            "--devel",
+        ]
 
     if values_file:
         command.extend(["-f", str(values_file)])

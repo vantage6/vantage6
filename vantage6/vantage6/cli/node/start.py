@@ -28,6 +28,7 @@ from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
     default=False,
     help="Show node logs on the current console after starting the node",
 )
+@click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     InstanceType.NODE,
@@ -42,6 +43,7 @@ def cli_node_start(
     context: str,
     namespace: str,
     attach: bool,
+    local_chart_dir: str,
 ) -> None:
     """
     Start the node.
@@ -108,6 +110,7 @@ def cli_node_start(
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
+        local_chart_dir=local_chart_dir,
     )
 
     # start port forward for the node proxy server

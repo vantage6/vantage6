@@ -27,6 +27,12 @@ LOCALHOST = "http://localhost"
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
+    "--local-chart-dir",
+    type=click.Path(exists=True),
+    default=None,
+    help="Local chart repository to use.",
+)
+@click.option(
     "--re-initialize",
     is_flag=True,
     default=False,
@@ -58,6 +64,7 @@ LOCALHOST = "http://localhost"
 )
 @click.option(
     "--data-dir",
+    "custom_data_dir",
     type=click.Path(exists=True),
     default=None,
     help="Path to a custom data directory to use. This option is especially useful "
@@ -78,6 +85,7 @@ def cli_sandbox_start(
     system_folders: bool,
     context: str | None,
     namespace: str | None,
+    local_chart_dir: Path | None,
     re_initialize: bool,
     num_nodes: int,
     extra_node_config: Path | None,
@@ -104,6 +112,7 @@ def cli_sandbox_start(
         extra_node_config=extra_node_config,
         add_dataset=add_dataset,
         custom_data_dir=custom_data_dir,
+        local_chart_dir=local_chart_dir,
     )
 
 
@@ -120,6 +129,7 @@ def execute_sandbox_start(
     extra_node_config: Path | None = None,
     add_dataset: tuple[str, Path] | None = None,
     custom_data_dir: Path | None = None,
+    local_chart_dir: str | None = None,
 ) -> None:
     # First we need to start the keycloak service
     info("Starting keycloak service")
@@ -136,6 +146,8 @@ def execute_sandbox_start(
         namespace,
         "--sandbox",
     ]
+    if local_chart_dir:
+        cmd.extend(["--local-chart-dir", local_chart_dir])
     subprocess.run(cmd, check=True)
     # Note: the CLI auth start function is blocking until the auth service is ready,
     # so no need to wait for it to be ready here.
@@ -150,6 +162,7 @@ def execute_sandbox_start(
         namespace=namespace,
         context=context,
         attach=False,
+        local_chart_dir=local_chart_dir,
     )
 
     # run the store
@@ -167,6 +180,8 @@ def execute_sandbox_start(
         namespace,
         "--sandbox",
     ]
+    if local_chart_dir:
+        cmd.extend(["--local-chart-dir", local_chart_dir])
     subprocess.run(cmd, check=True)
 
     server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
@@ -174,7 +189,7 @@ def execute_sandbox_start(
 
     # Then we need to populate the server
     if initialize:
-        node_config_names = initialize(
+        node_config_names = _initialize_sandbox(
             server_url=server_url,
             server_name=server_name,
             num_nodes=num_nodes,
@@ -208,13 +223,15 @@ def execute_sandbox_start(
             node_config_name,
             "--sandbox",
         ]
+        if local_chart_dir:
+            cmd.extend(["--local-chart-dir", local_chart_dir])
         subprocess.run(cmd, check=True)
 
     # Print the authentication credentials
     _print_auth_credentials(server_name)
 
 
-def initialize(
+def _initialize_sandbox(
     server_url: str,
     server_name: str,
     num_nodes: int,

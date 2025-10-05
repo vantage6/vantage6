@@ -29,6 +29,7 @@ from vantage6.cli.utils import remove_file
 )
 @click.option(
     "--data-dir",
+    "custom_data_dir",
     type=click.Path(exists=True),
     default=None,
     help="Path to a custom data directory to use. This option is especially useful "

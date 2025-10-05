@@ -31,6 +31,7 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
+@click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     InstanceType.ALGORITHM_STORE,
@@ -47,6 +48,7 @@ def cli_algo_store_start(
     ip: str,
     port: int,
     attach: bool,
+    local_chart_dir: str,
 ) -> None:
     """
     Start the algorithm store.
@@ -68,6 +70,7 @@ def cli_algo_store_start(
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
+        local_chart_dir=local_chart_dir,
     )
 
     info("Port forwarding for algorithm store")
