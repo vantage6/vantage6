@@ -26,25 +26,6 @@ class RunMetaData:
     action: AlgorithmStepType | None
 
 
-def _extract_token_payload(token: str) -> dict:
-    """
-    Extract the payload from the token.
-
-    Parameters
-    ----------
-    token: str
-        The token as a string.
-
-    Returns
-    -------
-    dict
-        The payload as a dictionary. It contains the keys: `vantage6_client_type`,
-        `node_id`, `organization_id`, `collaboration_id`, `task_id`, `image`,
-        and `databases`.
-    """
-    jwt_payload = jwt.decode(token, options={"verify_signature": False})
-    return jwt_payload["sub"]
-
 
 def metadata(func: callable) -> callable:
     @wraps(func)
