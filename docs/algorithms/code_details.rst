@@ -82,6 +82,22 @@ algorithm. Note that depending on the type of the database used, the user may
 also have to specify additional parameters such as a SQL query or the name of a
 worksheet in an Excel file.
 
+A useful decorator for computation tasks is the ``@metadata`` decorator:
+
+.. code:: python
+
+    from vantage6.algorithm.decorator.metadata import (metadata, RunMetaData)
+
+
+    @metadata
+    def my_function(metadata: RunMetaData, <other_arguments>):
+        # The metadata contains a dataclass with the following attributes:
+        # task_id, node_id, collaboration_id, organization_id, temporary_directory,
+        # output_file, input_file, token, action.
+        #
+        # They can be easily accessed using the dot notation. For example:
+        return metadata.task_id
+
 For some data sources it's not trivial to construct a dataframe from the data.
 One of these data sources is the OHDSI OMOP CDM database. For this data source,
 the ``@database_connection`` is available:
