@@ -22,7 +22,7 @@ class RunMetaData:
     temporary_directory: Path | None
     output_file: Path | None
     input_file: Path | None
-    token: Path | None
+    token: str | None
     action: AlgorithmStepType | None
 
 
