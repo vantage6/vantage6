@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 
-import jwt
-
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
@@ -24,7 +22,6 @@ class RunMetaData:
     input_file: Path | None
     token: str | None
     action: AlgorithmStepType | None
-
 
 
 def metadata(func: callable) -> callable:
