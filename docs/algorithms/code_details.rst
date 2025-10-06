@@ -82,7 +82,7 @@ algorithm. Note that depending on the type of the database used, the user may
 also have to specify additional parameters such as a SQL query or the name of a
 worksheet in an Excel file.
 
-For some data sources it's not trivial to construct a data frame from the data.
+For some data sources it's not trivial to construct a dataframe from the data.
 One of these data sources is the OHDSI OMOP CDM database. For this data source,
 the ``@omop_data_extraction`` is available:
 
