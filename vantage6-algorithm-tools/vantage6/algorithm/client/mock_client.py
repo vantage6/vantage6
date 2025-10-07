@@ -1,18 +1,20 @@
-import os
 import json
 import logging
+import os
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 from importlib import import_module
 from typing import Any
-from contextlib import contextmanager
 
 import pandas as pd
-from vantage6.common.globals import ContainerEnvNames
+
 from vantage6.common.enum import AlgorithmStepType
-from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
+from vantage6.common.globals import AuthStatus, ContainerEnvNames
+
 from vantage6.algorithm.tools.util import info
-from vantage6.common.globals import AuthStatus
+
+from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
 
 module_name = __name__.split(".")[1]
 

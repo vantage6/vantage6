@@ -1,12 +1,15 @@
 import os
 from functools import wraps
+from typing import TYPE_CHECKING, Optional
 
 from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.client.mock_client import MockAlgorithmClient
+
+if TYPE_CHECKING:
+    from vantage6.algorithm.client.mock_client import MockAlgorithmClient
 
 
 def _algorithm_client() -> callable:
@@ -45,7 +48,7 @@ def _algorithm_client() -> callable:
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
         def decorator(
-            *args, mock_client: MockAlgorithmClient | None = None, **kwargs
+            *args, mock_client: Optional["MockAlgorithmClient"] = None, **kwargs
         ) -> callable:
             """
             Wrap the function with the client object
