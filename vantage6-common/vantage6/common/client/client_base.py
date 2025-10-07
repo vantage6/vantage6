@@ -643,14 +643,14 @@ class ClientBase(BlobStorageMixin):
         if is_single_resource:
             if data.get(field):
                 data[field] = _decrypt_and_decode(
-                    data[field], field, data["blob_storage_used"]
+                    data[field], field, data.get("blob_storage_used", False)
                 )
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data["data"]:
                 if resource.get(field):
                     resource[field] = _decrypt_and_decode(
-                        resource[field], field, resource["blob_storage_used"]
+                        resource[field], field, resource.get("blob_storage_used", False)
                     )
         return data
 

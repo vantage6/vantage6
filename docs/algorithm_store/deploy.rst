@@ -42,6 +42,8 @@ of a docker-compose file that can be used to deploy the algorithm store.
         - "8000:5000"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
+        labels:
+        - vantage6-type: "algorithm-store"
         command: ["/bin/bash", "-c", "/vantage6/vantage6-algorithm-store/server.sh"]
 
 .. TODO How to deploy on Azure app service

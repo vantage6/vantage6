@@ -154,11 +154,10 @@ class BlobStorageMixin:
         headers["Content-Type"] = "application/octet-stream"
         response = requests.get(status_url, headers=headers)
         if not response.ok:
-            self.log.error(
-                f"Blob store check failed with status code {response.status_code}: {response.text}"
+            self.log.warning(
+                f"Blob store check failed with status code {response.status_code}. "
+                "Assuming blob store is disabled. Does the server version match this client's version?"
             )
-            raise requests.RequestException(
-                f"Failed to check blob store availability. Status code: {response.status_code}"
-            )
+            return False
         response_json = response.json()
         return response_json.get("blob_store_enabled", False)
