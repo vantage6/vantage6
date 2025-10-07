@@ -57,7 +57,7 @@ INTERVAL_MULTIPLIER = 1.5
 REQUEST_TIMEOUT = 300
 
 # Default chunk size for streaming inputs and results
-DEFAULT_CHUNK_SIZE = 8192
+DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
 class InstanceType(str, Enum):
