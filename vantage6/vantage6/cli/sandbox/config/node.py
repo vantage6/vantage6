@@ -14,6 +14,7 @@ from vantage6.cli.globals import (
     DefaultDatasets,
 )
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
+from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
 LOCALHOST = "http://localhost"
 
@@ -138,21 +139,22 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         length_df = len(full_df)
         for i in range(self.num_nodes):
             node_name = f"{self.server_name}_node_{i + 1}"
-            dev_folder = NodeContext.instance_folders(
-                InstanceType.NODE, node_name, False
-            )["dev"]
-            data_folder = Path(dev_folder / self.server_name)
-            data_folder.mkdir(parents=True, exist_ok=True)
+            path_to_dev_dir = self._create_and_get_data_dir(
+                InstanceType.NODE, is_data_folder=False
+            )
 
             # Split the data over the nodes
             start = i * length_df // self.num_nodes
             end = (i + 1) * length_df // self.num_nodes
             data = full_df[start:end]
-            data_file = data_folder / f"df_{db_label}_{node_name}.csv"
+            data_file = (
+                replace_wsl_path(path_to_dev_dir, to_mnt_wsl=True)
+                / f"df_{db_label}_{node_name}.csv"
+            )
 
             # write data to file
             data.to_csv(data_file, index=False)
-            data_files.append((db_label, data_file))
+            data_files.append((db_label, replace_wsl_path(data_file, to_mnt_wsl=False)))
         return data_files
 
     def _create_node_config_file(
@@ -175,14 +177,10 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         """
         node_name = config["node_name"]
         config_name = f"{self.server_name}-{node_name}"
-        folders = NodeContext.instance_folders(InstanceType.NODE, config_name, False)
 
-        # TODO we need to make these WSL compatible
-        path_to_dev_dir = Path(folders["dev"] / self.server_name)
-        path_to_dev_dir.mkdir(parents=True, exist_ok=True)
-
-        path_to_data_dir = Path(folders["data"])
-        path_to_data_dir.mkdir(parents=True, exist_ok=True)
+        path_to_data_dir = self._create_and_get_data_dir(
+            InstanceType.NODE, is_data_folder=True
+        )
 
         # delete old node config if it exists
         NodeContext.remove_config_file_if_exists(

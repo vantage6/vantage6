@@ -13,7 +13,7 @@ class BaseSandboxConfigManager:
 
     def __init__(self, server_name: str, custom_data_dir: Path | None) -> None:
         self.server_name = server_name
-        self.custom_data_dir = custom_data_dir
+        self.custom_data_dir = Path(custom_data_dir) if custom_data_dir else None
 
     @staticmethod
     def _read_extra_config_file(extra_config_file: Path | None) -> str:
@@ -36,9 +36,24 @@ class BaseSandboxConfigManager:
                 return f.read()
         return ""
 
-    def _create_and_get_data_dir(self, instance_type: InstanceType) -> Path:
+    def _create_and_get_data_dir(
+        self, instance_type: InstanceType, is_data_folder: bool = False
+    ) -> Path:
         """
         Create and get the data directory.
+
+        Parameters
+        ----------
+        instance_type: InstanceType
+            Type of vantage6 component
+        is_data_folder: bool
+            Whether or not to create the data folder or a config folder. This is only
+            used for node databases. Default is False.
+
+        Returns
+        -------
+        Path
+            Path to the data directory
         """
         ctx_class = select_context_class(instance_type)
         folders = ctx_class.instance_folders(
@@ -52,7 +67,11 @@ class BaseSandboxConfigManager:
         elif instance_type == InstanceType.ALGORITHM_STORE:
             subfolder = self.custom_data_dir / self.server_name / "store"
         elif instance_type == InstanceType.NODE:
-            subfolder = self.custom_data_dir / self.server_name / "node"
+            if is_data_folder:
+                last_subfolder = "data"
+            else:
+                last_subfolder = "node"
+            subfolder = self.custom_data_dir / self.server_name / last_subfolder
         else:
             raise ValueError(f"Invalid instance type to get data dir: {instance_type}")
         if self.custom_data_dir is not None:

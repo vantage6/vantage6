@@ -287,12 +287,8 @@ def _print_auth_credentials(server_name: str) -> None:
         system_folders=False,
         is_sandbox=True,
     )
-    print(auth_ctx)
     auth_config = auth_ctx.config
-    print("Auth config:")
-    import pprint
 
-    pprint.pprint(auth_config)
     try:
         admin_user = auth_config["keycloak"]["keycloakConfigCli"]["configuration"][
             "realm"

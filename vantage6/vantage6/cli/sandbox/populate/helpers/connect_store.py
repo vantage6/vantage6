@@ -118,6 +118,7 @@ def connect_store(client: Client) -> str:
         # Fallback to local file if download fails
         print(f"Warning: Could not download algorithm store from GitHub: {e}")
         print("Not putting the algorithm in the store.")
+        function_metadata = []
 
     summary += "Creating Session Basics algorithm\n"
     client.algorithm.create(
