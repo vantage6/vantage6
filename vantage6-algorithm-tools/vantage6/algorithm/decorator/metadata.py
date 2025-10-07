@@ -46,8 +46,6 @@ def metadata(func: callable) -> callable:
         if action == AlgorithmStepType.CENTRAL_COMPUTE:
             token = os.environ[ContainerEnvNames.CONTAINER_TOKEN.value]
 
-        info("Extracting payload from token")
-
         metadata = RunMetaData(
             task_id=os.environ[ContainerEnvNames.TASK_ID.value],
             node_id=os.environ[ContainerEnvNames.NODE_ID.value],
@@ -59,7 +57,7 @@ def metadata(func: callable) -> callable:
             output_file=Path(os.environ[ContainerEnvNames.OUTPUT_FILE.value]),
             input_file=Path(os.environ[ContainerEnvNames.INPUT_FILE.value]),
             token=token,
-            action=action,
+            action=action.value,
         )
         return func(metadata, *args, **kwargs)
 
