@@ -35,7 +35,7 @@ setup(
         "docker==7.1.0",
         "gevent==25.4.2",
         "jinja2==3.1.6",
-        "python-socketio==5.7.2",
+        "python-socketio==5.14.0",
         "requests==2.32.4",
         "psutil==5.9.0",
         "nvidia-ml-py==12.535.133",
