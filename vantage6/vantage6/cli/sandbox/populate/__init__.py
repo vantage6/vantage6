@@ -4,7 +4,6 @@ Script to populate the server with basic fixtures.
 
 import time
 import traceback
-from pathlib import Path
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
