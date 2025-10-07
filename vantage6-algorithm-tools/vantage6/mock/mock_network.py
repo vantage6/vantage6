@@ -70,6 +70,9 @@ class MockNetwork:
 
         self.server = MockServer(collaboration_id)
 
+        self.user_client = MockUserClient(self)
+        self.algorithm_client = MockAlgorithmClient(self)
+
     @property
     def organization_ids(self) -> list[int]:
         return [node.organization_id for node in self.nodes]
@@ -176,7 +179,7 @@ class MockBaseClient:
             description: str = "mock",
             arguments: dict | None = None,
             action: str = AlgorithmStepType.FEDERATED_COMPUTE.value,
-        ) -> int:
+        ) -> dict:
             """
             Create a new task with the MockProtocol and return the task id.
 
@@ -201,6 +204,26 @@ class MockBaseClient:
             task
                 A dictionary with information on the created task.
             """
+            return self._create(
+                organizations=organizations,
+                method=method,
+                name=name,
+                description=description,
+                arguments=arguments,
+                action=action,
+            )
+
+        def _create(
+            self,
+            organizations: list[int],
+            method: str,
+            name: str = "mock",
+            description: str = "mock",
+            arguments: dict | None = None,
+            action: str = AlgorithmStepType.FEDERATED_COMPUTE.value,
+            dataframe_name: str = "mock_dataframe_1",
+            source_label: str = "mock_dataset_1",
+        ) -> int:
             if not organizations:
                 raise ValueError(
                     "No organization ids provided. Cannot create a task for "
@@ -217,42 +240,39 @@ class MockBaseClient:
 
             # get data for organization
             for org_id in organizations:
-                # When creating a child task, pass the parent's datasets and
-                # client to the child. By passing also the client, the child
-                # has access to the same IDs specified
                 node = self.parent.network.get_node(org_id)
                 data = node.datasets
-                client_copy = deepcopy(self.parent)
-                client_copy.node_id = node.id_
-                client_copy.organization_id = org_id
 
                 # detect which decorators are used and provide the mock client
                 # and/or mocked data that is required to the method
                 mocked_kwargs = {}
                 if getattr(method_fn, "vantage6_algorithm_client_decorated", False):
+                    # When creating a child task, pass the parent's datasets and
+                    # client to the child. By passing also the client, the child
+                    # has access to the same IDs specified
+                    client_copy = deepcopy(self.parent)
+                    client_copy.node_id = node.id_
+                    client_copy.organization_id = org_id
                     mocked_kwargs["mock_client"] = client_copy
+
                 if getattr(method_fn, "vantage6_dataframe_decorated", False):
                     # make a copy of the data to avoid modifying the original data of
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
                 elif getattr(method_fn, "vantage6_decorator_step_type", False):
-                    # TODO
-                    mocked_kwargs["mock_uri"] = data["test_data_1"]["database"]
-                    mocked_kwargs["mock_type"] = data["test_data_1"]["db_type"]
+                    # TODO the label of the dataset is hardcoded here
+                    mocked_kwargs["mock_uri"] = data[source_label]["database"]
+                    mocked_kwargs["mock_type"] = data[source_label]["db_type"]
 
                 task_env_vars = {
                     **node.env,
                     ContainerEnvNames.FUNCTION_ACTION.value: action,
                     ContainerEnvNames.TASK_ID.value: new_task_id,
                     ContainerEnvNames.ALGORITHM_METHOD.value: method,
-                    ContainerEnvNames.SESSION_FOLDER.value: \
-                        f"./tmp/session/{new_task_id}",
-                    ContainerEnvNames.SESSION_FILE.value: \
-                        f"./tmp/session/{new_task_id}/session.parquet",
-                    ContainerEnvNames.INPUT_FILE.value: \
-                        f"./tmp/session/{new_task_id}/input.parquet",
-                    ContainerEnvNames.OUTPUT_FILE.value: \
-                        f"./tmp/session/{new_task_id}/output.parquet",
+                    ContainerEnvNames.SESSION_FOLDER.value: f"./tmp/session/{new_task_id}",
+                    ContainerEnvNames.SESSION_FILE.value: f"./tmp/session/{new_task_id}/session.parquet",
+                    ContainerEnvNames.INPUT_FILE.value: f"./tmp/session/{new_task_id}/input.parquet",
+                    ContainerEnvNames.OUTPUT_FILE.value: f"./tmp/session/{new_task_id}/output.parquet",
                     ContainerEnvNames.CONTAINER_TOKEN.value: "TODO",
                 }
 
@@ -262,11 +282,11 @@ class MockBaseClient:
                 last_result_id = len(self.parent.network.server.results) + 1
                 if action == AlgorithmStepType.DATA_EXTRACTION.value:
                     for node in self.parent.network.nodes:
-                        node.dataframes["my_dataframe"] = result.to_pandas()
+                        node.dataframes[dataframe_name] = result.to_pandas()
                         self.parent.network.server.results.append(
                             {
                                 "id": last_result_id,
-                                "result": json.dumps({"msg": "OK"}), # TODO
+                                "result": json.dumps({}),
                                 "run": {
                                     "id": last_result_id,
                                     "link": f"/api/run/{last_result_id}",
@@ -537,13 +557,19 @@ class MockUserClient(MockBaseClient):
         self.dataframe = self.Dataframe(self)
 
     class Dataframe(MockBaseClient.SubClient):
-
-        def create(self, label: str, method: str, arguments: dict, **kwargs) -> dict:
-            return self.parent.Task.create(
+        def create(
+            self, label: str, method: str, arguments: dict, name: str, **kwargs
+        ) -> dict:
+            """
+            Not available: `image`, `session`, `store`, `display`
+            """
+            return self.parent.Task._create(
                 self,
                 organizations=self.parent.network.organization_ids,
                 method=method,
                 arguments=arguments,
+                dataframe_name=name,
+                source_label=label,
                 action=AlgorithmStepType.DATA_EXTRACTION.value,
             )
 
