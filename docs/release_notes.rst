@@ -1,6 +1,21 @@
 Release notes
 =============
 
+4.13.1
+------
+
+*7 October 2025*
+
+- **Change**
+
+  - Update default streaming chunk size to improve performance
+    (`PR#2304 <https://github.com/vantage6/vantage6/pull/2304>`_).
+
+- **Bugfix**
+
+  - Fix creating task conflict from older versions with 4.13.0 because it
+    searched for non-existing blob storage endpoint
+    (`PR#2303 <https://github.com/vantage6/vantage6/pull/2303>`_).
 
 4.13.0
 -----
