@@ -1,19 +1,36 @@
+import os
 import json
 import logging
 from copy import deepcopy
 from datetime import datetime
 from importlib import import_module
 from typing import Any
+from contextlib import contextmanager
 
 import pandas as pd
-
+from vantage6.common.globals import ContainerEnvNames
+from vantage6.common.enum import AlgorithmStepType
+from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
+from vantage6.algorithm.tools.util import info
 from vantage6.common.globals import AuthStatus
 
-from vantage6.algorithm.tools.util import info
-
-from vantage6.algorithm.data_extraction.mock_extract import load_mock_data
-
 module_name = __name__.split(".")[1]
+
+@contextmanager
+def env_vars(**kwargs):
+    """Context manager to temporarily set environment variables"""
+    old_values = {}
+    try:
+        for key, value in kwargs.items():
+            old_values[key] = os.environ.get(key)
+            os.environ[key] = str(value)
+        yield
+    finally:
+        for key, old_value in old_values.items():
+            if old_value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = old_value
 
 
 class MockAlgorithmClient:
@@ -241,7 +258,28 @@ class MockAlgorithmClient:
                     # subsequent tasks
                     mocked_kwargs["mock_data"] = [d.copy() for d in data]
 
-                result = method_fn(**arguments, **mocked_kwargs)
+                task_env_vars = {
+                        ContainerEnvNames.FUNCTION_ACTION.value: \
+                            AlgorithmStepType.FEDERATED_COMPUTE.value,
+                        ContainerEnvNames.TASK_ID.value: new_task_id,
+                        ContainerEnvNames.ALGORITHM_METHOD.value: method,
+                        ContainerEnvNames.NODE_ID.value: client_copy.node_id,
+                        ContainerEnvNames.CONTAINER_TOKEN.value: "TODO",
+                        ContainerEnvNames.ORGANIZATION_ID.value: org_id,
+                        ContainerEnvNames.COLLABORATION_ID.value: \
+                            self.parent.collaboration_id,
+                        ContainerEnvNames.SESSION_FOLDER.value: \
+                            f"./tmp/session/{new_task_id}",
+                        ContainerEnvNames.SESSION_FILE.value: \
+                            f"./tmp/session/{new_task_id}/session.parquet",
+                        ContainerEnvNames.INPUT_FILE.value: \
+                            f"./tmp/session/{new_task_id}/input.parquet",
+                        ContainerEnvNames.OUTPUT_FILE.value: \
+                            f"./tmp/session/{new_task_id}/output.parquet",
+                    }
+
+                with env_vars(**task_env_vars):
+                    result = method_fn(**arguments, **mocked_kwargs)
 
                 self.last_result_id += 1
                 self.parent.results.append(
