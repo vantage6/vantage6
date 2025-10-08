@@ -64,7 +64,6 @@ def connect_store(client: Client) -> str:
     """
 
     existing_stores = client.store.list().get("data", [])
-    existing_urls = [store["url"] for store in existing_stores]
     summary = "=== Store Connection Summary ===\n"
 
     # URL should be retrieved from the store, see issue:
@@ -75,18 +74,15 @@ def connect_store(client: Client) -> str:
 
     _wait_for_store_to_be_online(local_store_url, local_store_api_path)
 
-    if local_store_url not in existing_urls:
-        summary += "Registering local store\n"
-        store = client.store.create(
-            algorithm_store_url=local_store_url,
-            api_path=local_store_api_path,
-            name="Local store",
-            all_collaborations=True,
-        )
-        client.store.set(store["id"])
-    else:
-        store = next(s for s in existing_stores if s["url"] == local_store_url)
-        client.store.set(store["id"])
+    # note that the store is already coupled to the server in the sandbox/devspace
+    # config. To find the store, either check that it is a localhost URL or that it
+    # contains "svc.cluster.local" (which is for local k8s services)
+    store = next(
+        s
+        for s in existing_stores
+        if s["url"] == local_store_url or "svc.cluster.local" in s["url"]
+    )
+    client.store.set(store["id"])
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]

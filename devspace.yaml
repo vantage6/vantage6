@@ -260,6 +260,11 @@ deployments:
           dev:
             host_uri: ${HOST_URI}
             allow_drop_all: true
+            store_address: http://vantage6-store-store.service.${CURRENT_NAMESPACE}.svc.cluster.local
+          algorithm_stores:
+            - name: Local store
+              url: http://vantage6-store-store.service.${CURRENT_NAMESPACE}.svc.cluster.local
+              api_path: /store
         ui:
           image: ${UI_IMAGE}
           keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}

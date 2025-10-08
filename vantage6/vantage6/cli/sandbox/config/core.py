@@ -108,6 +108,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         dict
             Dictionary with server configuration values.
         """
+        store_address = f"http://vantage6-{self.server_name}-store-user-algorithm-store-store-service.{self.namespace}.svc.cluster.local:{Ports.DEV_ALGO_STORE}"
         return {
             "server": {
                 "baseUrl": f"{LOCALHOST}:{self.server_port}",
@@ -119,8 +120,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ),
                 "algorithm_stores": [
                     {
-                        "name": "local",
-                        "url": f"{LOCALHOST}:{self.algorithm_store_port}",
+                        "name": "Local store",
+                        "url": store_address,
+                        "api_path": "/store",
                     }
                 ],
                 "logging": {
@@ -135,14 +137,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                         if self.k8s_node_name == "docker-desktop"
                         else "172.17.0.1"
                     ),
-                    "store_address": f"http://vantage6-{self.server_name}-store-user-algorithm-store-store-service.{self.namespace}.svc.cluster.local:{Ports.DEV_ALGO_STORE}",
+                    "store_address": store_address,
                 },
                 "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
                 "additional_config": extra_config,
             },
             "rabbitmq": {},
             "database": {
-                # TODO v5+ make configurable so that sandbox may work on WSL
                 "volumePath": str(data_dir),
                 "k8sNodeName": self.k8s_node_name,
             },

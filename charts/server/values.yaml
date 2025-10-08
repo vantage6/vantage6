@@ -81,8 +81,9 @@ server:
   # # The name is used to identify the algorithm store in the server's database.
   # # The url is the URL of the algorithm store's API.
   # algorithm_stores:
-  #   - name: local store
+  #   - name: Local store
   #     url: http://localhost:7602/api
+  #     api_path: /api
 
   # # Cleanup settings: This is used to cleanup the database from old results.
   # # Every hour, results older than the threshold for completed runs are deleted.

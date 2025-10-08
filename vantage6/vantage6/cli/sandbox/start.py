@@ -152,20 +152,8 @@ def execute_sandbox_start(
     # Note: the CLI auth start function is blocking until the auth service is ready,
     # so no need to wait for it to be ready here.
 
-    # Then we need to start the server
-    info("Starting vantage6 server")
-    click_ctx.invoke(
-        cli_server_start,
-        ctx=ctx,
-        name=ctx.name,
-        system_folders=False,
-        namespace=namespace,
-        context=context,
-        attach=False,
-        local_chart_dir=local_chart_dir,
-    )
-
-    # run the store
+    # run the store. The store is started before the server so that the server can
+    # couple to the store on startup.
     info("Starting algorithm store...")
     cmd = [
         "v6",
@@ -183,6 +171,19 @@ def execute_sandbox_start(
     if local_chart_dir:
         cmd.extend(["--local-chart-dir", local_chart_dir])
     subprocess.run(cmd, check=True)
+
+    # Then we need to start the server
+    info("Starting vantage6 server")
+    click_ctx.invoke(
+        cli_server_start,
+        ctx=ctx,
+        name=ctx.name,
+        system_folders=False,
+        namespace=namespace,
+        context=context,
+        attach=False,
+        local_chart_dir=local_chart_dir,
+    )
 
     server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
     _wait_for_server_to_be_ready(server_url)

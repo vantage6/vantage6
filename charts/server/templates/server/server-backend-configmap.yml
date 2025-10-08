@@ -59,6 +59,7 @@ data:
       {{- range .Values.server.algorithm_stores }}
       - name: {{ .name }}
         url: {{ .url }}
+        api_path: {{ .api_path }}
       {{- end }}
     {{- end }}
     {{- if .Values.server.runs_data_cleanup_days }}

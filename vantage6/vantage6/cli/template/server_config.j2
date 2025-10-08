@@ -109,11 +109,13 @@ server:
     {% for store in server.algorithm_stores %}
     - name: {{ store.name }}
       url: {{ store.url }}
+      api_path: {{ store.api_path }}
     {% endfor %}
   {% else %}
   # algorithm_stores:
-  # - name: local store
+  # - name: Local store
   #   url: http://localhost:7602/api
+  #   api_path: /api
   {% endif %}
 
   # Cleanup settings: This is used to cleanup the database from old results.
