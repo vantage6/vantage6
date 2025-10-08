@@ -62,7 +62,7 @@ Next, you can start the network by running:
 
 Using the default settings, this will start up a server, three nodes, an algorithm store
 and a user interface. The nodes contain some
-`test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/dev/data/olympic_athletes_2016.csv>`_
+`test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/sandbox/data/olympic_athletes_2016.csv>`_
 about olympic medal winners. Note also that the server is coupled automatically to the
 community algorithm store, thereby making the community algorithms directly available to
 you.

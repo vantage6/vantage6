@@ -131,8 +131,10 @@ def execute_sandbox_start(
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
 ) -> None:
+    if k8s_node_name is None:
+        k8s_node_name = ctx.config["database"]["k8sNodeName"]
+
     # First we need to start the keycloak service
-    info("Starting keycloak service")
     cmd = [
         "v6",
         "auth",

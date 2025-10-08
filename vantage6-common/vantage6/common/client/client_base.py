@@ -185,12 +185,6 @@ class ClientBase(object):
                     "Algorithm store not set. Please set the algorithm store first with"
                     " `client.algorithm_store.set()`."
                 ) from exc
-            # if the algorithm store URL contains "svc.cluster.local", it is a local
-            # kubernetes service. To reach that from outside the cluster, we need to use
-            # a localhost URL instead
-            if "svc.cluster.local" in base_path:
-                port_and_api_path = base_path.split(":")[-1]
-                base_path = "http://localhost:" + port_and_api_path
         if endpoint.startswith("/"):
             path = base_path + endpoint
         else:

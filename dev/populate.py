@@ -57,7 +57,7 @@ dev_data_dir.mkdir(exist_ok=True)
 # create object with details for node config creation
 node_config_creation_details = NodeConfigCreationDetails(
     node_starting_port_number=node_starting_port_number,
-    dev_dir=dev_dir,
+    dev_dir=dev_data_dir,
     task_directory=task_directory,
     task_namespace=task_namespace,
 )

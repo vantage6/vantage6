@@ -77,12 +77,14 @@ def connect_store(client: Client) -> str:
     # note that the store is already coupled to the server in the sandbox/devspace
     # config. To find the store, either check that it is a localhost URL or that it
     # contains "svc.cluster.local" (which is for local k8s services)
-    store = next(
-        s
-        for s in existing_stores
-        if s["url"] == local_store_url or "svc.cluster.local" in s["url"]
-    )
-    client.store.set(store["id"])
+    try:
+        store = next(s for s in existing_stores if s["url"] == local_store_url)
+        client.store.set(store["id"])
+    except StopIteration:
+        error(
+            "Local algorithm store not found. Please register its resources manually."
+        )
+        return
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]
