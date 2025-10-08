@@ -12,7 +12,7 @@ class MockNetwork:
         self,
         module_name: str,
         datasets: dict[str, dict[str, str | pd.DataFrame]],
-        collaboration_id: int | None = 1,
+        collaboration_id: int = 1,
         organization_ids: list[int] | None = None,
         node_ids: list[int] | None = None,
     ):
@@ -28,12 +28,13 @@ class MockNetwork:
         Parameters
         ----------
         module_name : str
-            The name of the module that contains the algorithm.
+            The name of the Python module that contains the algorithm.
         datasets : dict[str, dict[str, str | pd.DataFrame]]
             A dictionary that contains the datasets for each organization. The keys
             are the labels of the datasets used instead of the label specified in the
             node configuration. The values are either a string (path to file or SQL
-            connection string) or a pandas DataFrame.
+            connection string) or a pandas DataFrame. In case a DataFrame is provided,
+            automatically a data extraction step is performed.
         collaboration_id : int | None
             The id of the collaboration.
         organization_ids : list[int] | None
@@ -53,6 +54,18 @@ class MockNetwork:
             The user client of the mock network.
         algorithm_client : MockAlgorithmClient
             The algorithm client of the mock network.
+
+        Methods
+        -------
+        get_node(id_: int) -> MockNode
+            Get the node with the given id.
+
+        Properties
+        ----------
+        organization_ids -> list[int]
+            The ids of the organizations.
+        node_ids -> list[int]
+            The ids of the nodes.
 
         Examples
         --------
@@ -161,6 +174,11 @@ class MockNetwork:
         ----------
         id_ : int
             The id of the node.
+
+        Raises
+        ------
+        StopIteration
+            If the node with the given id is not found.
 
         Returns
         -------
