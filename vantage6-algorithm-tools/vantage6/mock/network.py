@@ -11,7 +11,7 @@ class MockNetwork:
     def __init__(
         self,
         module_name: str,
-        datasets: dict[str, dict[str, str | pd.DataFrame]],
+        datasets: list[dict[str, dict[str, str | pd.DataFrame]]],
         collaboration_id: int = 1,
         organization_ids: list[int] | None = None,
         node_ids: list[int] | None = None,
@@ -29,7 +29,7 @@ class MockNetwork:
         ----------
         module_name : str
             The name of the Python module that contains the algorithm.
-        datasets : dict[str, dict[str, str | pd.DataFrame]]
+        datasets : list[dict[str, dict[str, str | pd.DataFrame]]]
             A dictionary that contains the datasets for each organization. The keys
             are the labels of the datasets used instead of the label specified in the
             node configuration. The values are either a string (path to file or SQL

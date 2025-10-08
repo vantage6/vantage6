@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from vantage6.common.globals import AuthStatus
@@ -90,9 +90,9 @@ class MockServer:
         last_run_id = len(self.runs) + 1
         run = {
             "id": last_run_id,
-            "started_at": datetime.now().isoformat(),
-            "assigned_at": datetime.now().isoformat(),
-            "finished_at": datetime.now().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "assigned_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": datetime.now(timezone.utc).isoformat(),
             "log": "mock_log",
             "ports": [],
             "status": "completed",

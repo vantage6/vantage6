@@ -113,7 +113,7 @@ class MockNode:
             # When creating a child task, pass the parent's datasets and
             # client to the child. By passing also the client, the child
             # has access to the same IDs specified
-            client_copy = deepcopy(self.parent)
+            client_copy = deepcopy(self.network.algorithm_client)
             client_copy.node_id = self.id_
             client_copy.organization_id = self.organization_id
             mocked_kwargs["mock_client"] = client_copy
