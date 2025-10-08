@@ -5,8 +5,8 @@ import pandas as pd
 import pyarrow as pa
 
 from vantage6.common.enum import AlgorithmStepType
-
 from vantage6.common.globals import ContainerEnvNames
+
 from vantage6.mock.node import MockNode
 
 

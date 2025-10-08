@@ -1,5 +1,4 @@
 import json
-from datetime import datetime, timezone
 from unittest import TestCase
 
 from vantage6.mock.server import MockServer

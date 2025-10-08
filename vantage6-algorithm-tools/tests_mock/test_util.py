@@ -1,8 +1,4 @@
 from unittest import TestCase
-from unittest.mock import patch
-
-import pandas as pd
-import pyarrow as pa
 
 from vantage6.mock.util import env_vars
 
