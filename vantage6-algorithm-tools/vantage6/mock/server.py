@@ -16,7 +16,7 @@ class MockServer:
         Parameters
         ----------
         collaboration_id : int
-            The id of the collaboration.
+            The id of the collaboration, used to format the responses.
         """
 
         # These contain the task, runs and results as dictionaries that are the same
@@ -32,6 +32,21 @@ class MockServer:
         self.study_id = 1
 
     def save_result(self, result: Any, task_id: int):
+        """
+        Save a result to the mock server.
+
+        Parameters
+        ----------
+        result : Any
+            The result to save.
+        task_id : int
+            The id of the task.
+
+        Returns
+        -------
+        dict
+            The saved result.
+        """
         last_result_id = len(self.results) + 1
         result = {
             "id": last_result_id,
@@ -50,7 +65,28 @@ class MockServer:
         self.results.append(result)
         return result
 
-    def save_run(self, arguments: dict, task_id: int, result_id: int, org_id: int):
+    def save_run(
+        self, arguments: dict, task_id: int, result_id: int, org_id: int
+    ) -> dict:
+        """
+        Save a run to the mock server.
+
+        Parameters
+        ----------
+        arguments : dict
+            The arguments to save.
+        task_id : int
+            The id of the task.
+        result_id : int
+            The id of the result.
+        org_id : int
+            The id of the organization.
+
+        Returns
+        -------
+        dict
+            The saved run.
+        """
         last_run_id = len(self.runs) + 1
         run = {
             "id": last_run_id,
@@ -87,11 +123,31 @@ class MockServer:
 
     def save_task(
         self,
-        init_organization_id: int,
         name: str,
         description: str,
         databases: list[dict[str, str]],
-    ):
+        init_organization_id: int,
+    ) -> dict:
+        """
+        Save a task to the mock server.
+
+        Parameters
+        ----------
+        name : str
+            The name of the task.
+        description : str
+            The description of the task.
+        databases : list[dict[str, str]]
+            The required databases for the task. This can either be a source database
+            or a dataframe.
+        init_organization_id : int
+            The id of the organization that created the task.
+
+        Returns
+        -------
+        dict
+            The saved task.
+        """
         new_task_id = len(self.tasks) + 1
         task = {
             "id": new_task_id,
