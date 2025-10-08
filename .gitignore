@@ -31,3 +31,6 @@ dev/.db/
 
 # Helm
 charts/**/*.tgz
+
+# MacOS
+.DS_Store
