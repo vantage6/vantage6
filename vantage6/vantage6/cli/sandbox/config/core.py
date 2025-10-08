@@ -77,7 +77,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.context = context
         self.namespace = namespace
 
-        self.server_import_config_file = None
         self.server_config_file = None
         self.store_config_file = None
         self.k8s_node_name = k8s_node_name

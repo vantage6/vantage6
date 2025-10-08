@@ -62,6 +62,5 @@ where = ["vantage6/cli"]
     "template/auth_config.j2",
     "sandbox/data/olympic_athletes_2016.csv",
     "sandbox/data/km_dataset.csv",
-    "sandbox/data/fixtures.yml",
     "prometheus/prometheus.yml",
 ]

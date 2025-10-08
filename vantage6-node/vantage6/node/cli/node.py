@@ -11,7 +11,7 @@ from pathlib import Path
 
 import click
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_create import (
@@ -82,6 +82,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
         # be invoked
         if not NodeContext.config_exists(name, system_folders):
             error(f"Configuration '{name}' does not exist!")
+            info("Run `v6 node new` to create a new node configuration.")
             exit(1)
 
         # create dummy node context

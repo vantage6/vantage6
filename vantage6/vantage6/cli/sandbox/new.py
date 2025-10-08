@@ -201,7 +201,3 @@ def cli_new_sandbox(
         custom_data_dir=data_dir,
         local_chart_dir=local_chart_dir,
     )
-
-    # info("Sandbox environment was set up successfully!")
-    # info("Start it using the following command:")
-    # info(f"{Fore.GREEN}v6 sandbox start{Style.RESET_ALL}")
