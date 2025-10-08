@@ -61,26 +61,29 @@ class BaseSandboxConfigManager:
             instance_name=self.server_name,
             system_folders=False,
         )
+        main_data_dir = (
+            Path(folders["dev"]) if not self.custom_data_dir else self.custom_data_dir
+        )
 
         if instance_type == InstanceType.SERVER:
-            subfolder = self.custom_data_dir / self.server_name / "server"
+            data_dir = main_data_dir / self.server_name / "server"
         elif instance_type == InstanceType.ALGORITHM_STORE:
-            subfolder = self.custom_data_dir / self.server_name / "store"
+            data_dir = main_data_dir / self.server_name / "store"
         elif instance_type == InstanceType.NODE:
             if is_data_folder:
                 last_subfolder = "data"
             else:
                 last_subfolder = "node"
-            subfolder = self.custom_data_dir / self.server_name / last_subfolder
+            data_dir = main_data_dir / self.server_name / last_subfolder
         else:
             raise ValueError(f"Invalid instance type to get data dir: {instance_type}")
-        if self.custom_data_dir is not None:
-            data_dir = replace_wsl_path(
-                self.custom_data_dir / subfolder, to_mnt_wsl=True
-            )
-        else:
-            data_dir = Path(folders["dev"]) / self.server_name / subfolder
+
+        # For the directory to be created, ensure that if a WSL path is used, the path
+        # is converted to /mnt/wsl to create the directory on the host (not
+        # /run/desktop/mnt/host/wsl as will raise non-existent directory errors)
+        data_dir = replace_wsl_path(data_dir, to_mnt_wsl=True)
         data_dir.mkdir(parents=True, exist_ok=True)
         # now ensure that the wsl path is properly replaced to /run/desktop/mnt/host/wsl
-        # if it is a WSL path
+        # if it is a WSL path, because that path will be used in the node configuration
+        # files and is required to successfully mount the volumes.
         return replace_wsl_path(data_dir, to_mnt_wsl=False)
