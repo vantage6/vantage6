@@ -6,6 +6,7 @@ from vantage6.common.enum import AlgorithmStepType
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
 
+
 class MockBaseClient:
     def __init__(self, network: "MockNetwork"):
         self.network = network
@@ -319,9 +320,7 @@ class MockUserClient(MockBaseClient):
                 node.simulate_dataframe_creation(method, arguments, label, name)
                 # In case of a dataframe we do not store a result, as the dataframe
                 # creation on the node is the result of this action.
-                result_response = self.parent.network.server.save_result(
-                    {}, task["id"]
-                )
+                result_response = self.parent.network.server.save_result({}, task["id"])
                 self.parent.network.server.save_run(
                     arguments, task["id"], result_response["id"], org_id
                 )

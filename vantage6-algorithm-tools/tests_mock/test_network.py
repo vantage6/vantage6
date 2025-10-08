@@ -18,13 +18,9 @@ class TestMockNetworkDataframe(TestCase):
         self.network = MockNetwork(
             module_name="test_algorithm",
             datasets=[
-                {
-                    "label_1": {"database": self.data1, "db_type": "csv"}
-                },
-                {
-                    "label_2": {"database": self.data2, "db_type": "csv"}
-                }
-            ]
+                {"label_1": {"database": self.data1, "db_type": "csv"}},
+                {"label_2": {"database": self.data2, "db_type": "csv"}},
+            ],
         )
 
     def test_network_initialization(self):
@@ -79,12 +75,13 @@ class TestMockNetworkDataframe(TestCase):
         self.assertEqual(self.network.nodes[0].collaboration_id, 1)
         self.assertEqual(self.network.nodes[1].collaboration_id, 1)
 
+
 class TestMockNetworkURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
             module_name="test_algorithm",
-            datasets=[{"label_1": {"database": "mock_data.csv", "db_type": "csv"}}]
+            datasets=[{"label_1": {"database": "mock_data.csv", "db_type": "csv"}}],
         )
 
     def test_network_initialization(self):
@@ -92,8 +89,7 @@ class TestMockNetworkURI(TestCase):
         self.assertEqual(len(self.network.nodes), 1)
         self.assertEqual(len(self.network.nodes[0].dataframes), 0)
         self.assertEqual(
-            self.network.nodes[0].datasets["label_1"]["database"],
-            "mock_data.csv"
+            self.network.nodes[0].datasets["label_1"]["database"], "mock_data.csv"
         )
 
     def test_node_initialization(self):
@@ -102,4 +98,3 @@ class TestMockNetworkURI(TestCase):
         self.assertEqual(self.network.nodes[0].id_, 0)
         self.assertEqual(self.network.nodes[0].organization_id, 0)
         self.assertEqual(self.network.nodes[0].collaboration_id, 1)
-

@@ -148,8 +148,10 @@ class TestMockNodeDataframe(TestCase):
         mock_method_no_decorator.vantage6_decorator_step_type = None
 
         # Get step type - should return None since no decorator
-        with patch('vantage6.mock.node.error'):  # Suppress print output
-            step_type = self.node._get_step_type_from_method_fn(mock_method_no_decorator)
+        with patch("vantage6.mock.node.error"):  # Suppress print output
+            step_type = self.node._get_step_type_from_method_fn(
+                mock_method_no_decorator
+            )
 
         # Verify None is returned when no decorator present
         self.assertIsNone(step_type)
