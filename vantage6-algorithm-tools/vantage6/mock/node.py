@@ -27,7 +27,7 @@ class MockNode:
         Create a mock node.
 
         Typically, you do not need to create a mock node manually. Instead, you should
-        use the MockNetwork class to create a mock network.
+        use the ``MockNetwork`` class to create a mock network.
 
         Parameters
         ----------
@@ -64,32 +64,6 @@ class MockNode:
             ContainerEnvNames.COLLABORATION_ID.value: self.collaboration_id,
         }
 
-    def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
-        step_type = getattr(method_fn, "vantage6_decorator_step_type", None)
-        if not step_type:
-            error("The method is not decorated with a vantage6 step type decorator.")
-            # TODO we need to raise or exit here
-            return
-        return step_type
-
-    def _get_method_fn_from_method(self, method: str) -> Callable:
-        module = import_module(self.network.module_name)
-        return getattr(module, method)
-
-    def _task_env_vars(self, action: str, method: str) -> dict:
-        task_id = len(self.network.server.tasks)
-        return {
-            **self.env,
-            ContainerEnvNames.FUNCTION_ACTION.value: action,
-            ContainerEnvNames.ALGORITHM_METHOD.value: method,
-            ContainerEnvNames.TASK_ID.value: task_id,
-            ContainerEnvNames.SESSION_FOLDER.value: (f"./tmp/session/{task_id}"),
-            ContainerEnvNames.SESSION_FILE.value: f"./tmp/session/{task_id}/session.parquet",
-            ContainerEnvNames.INPUT_FILE.value: f"./tmp/session/{task_id}/input.parquet",
-            ContainerEnvNames.OUTPUT_FILE.value: f"./tmp/session/{task_id}/output.parquet",
-            ContainerEnvNames.CONTAINER_TOKEN.value: "TODO",
-        }
-
     def simulate_task_run(
         self,
         method: str,
@@ -97,6 +71,26 @@ class MockNode:
         databases: list[dict[str, str]],
         action: AlgorithmStepType,
     ):
+        """
+        Simulate a task run which has been initiated by the `client.task.create` method.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method that should be called.
+        arguments : dict
+            The arguments that should be passed to the method.
+        databases : list[dict[str, str]]
+            The databases that should be used by the method. Each dict should contain
+            at least a 'label' key that refers to a dataframe.
+        action : AlgorithmStepType
+            The action that should be performed.
+
+        Returns
+        -------
+        dict
+            The result of the task run.
+        """
         method_fn = self._get_method_fn_from_method(method)
 
         # Every function should have at least a step type decorator, for example:
@@ -147,7 +141,23 @@ class MockNode:
 
     def simulate_dataframe_creation(
         self, method: str, arguments: dict, source_label: str, dataframe_name: str
-    ):
+    ) -> None:
+        """
+        Simulate a dataframe creation which has been initiated by the `client.dataframe.create` method.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method that should be called.
+        arguments : dict
+            The arguments that should be passed to the method.
+        source_label : str
+            The label of the source dataframe. This label should match the label that
+            the user provided when creating the ``MockNetwork``.
+        dataframe_name : str
+            The name of the dataframe. This name will be used to identify the dataframe
+            when using the ``client.task.create`` method.
+        """
         method_fn = self._get_method_fn_from_method(method)
 
         task_env_vars = self._task_env_vars(
@@ -167,8 +177,58 @@ class MockNode:
         )
         self.dataframes[dataframe_name] = result.to_pandas()
 
-        return result
-
     def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):
+        """
+        Run a method with the given arguments and task environment variables.
+
+        Parameters
+        ----------
+        method_fn : Callable
+            The method to run.
+        arguments : dict
+            The arguments to pass to the method.
+        task_env_vars : dict
+            The task environment variables.
+
+        Returns
+        -------
+        Any
+            The result of the method run.
+        """
         with env_vars(**task_env_vars):
             return method_fn(**arguments)
+
+    def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
+        """
+        Get the step type from the method function.
+        """
+        step_type = getattr(method_fn, "vantage6_decorator_step_type", None)
+        if not step_type:
+            error("The method is not decorated with a vantage6 step type decorator.")
+            # TODO we need to raise or exit here
+            return
+        return step_type
+
+    def _get_method_fn_from_method(self, method: str) -> Callable:
+        """
+        Get the method function from the method name.
+        """
+        module = import_module(self.network.module_name)
+        return getattr(module, method)
+
+    def _task_env_vars(self, action: str, method: str) -> dict:
+        """
+        Get the task environment variables.
+        """
+        task_id = len(self.network.server.tasks)
+        return {
+            **self.env,
+            ContainerEnvNames.FUNCTION_ACTION.value: action,
+            ContainerEnvNames.ALGORITHM_METHOD.value: method,
+            ContainerEnvNames.TASK_ID.value: task_id,
+            ContainerEnvNames.SESSION_FOLDER.value: (f"./tmp/session/{task_id}"),
+            ContainerEnvNames.SESSION_FILE.value: f"./tmp/session/{task_id}/session.parquet",
+            ContainerEnvNames.INPUT_FILE.value: f"./tmp/session/{task_id}/input.parquet",
+            ContainerEnvNames.OUTPUT_FILE.value: f"./tmp/session/{task_id}/output.parquet",
+            ContainerEnvNames.CONTAINER_TOKEN.value: "some-jwt-token",
+        }
