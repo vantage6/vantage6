@@ -19,6 +19,9 @@ def run():
     parser.add_argument(
         "--algorithm-store", action="store_true", help="Run algorithm store tests"
     )
+    parser.add_argument(
+        "--algorithm-tools", action="store_true", help="Run algorithm tools tests"
+    )
     parser.add_argument("--server", action="store_true", help="Run server tests")
     parser.add_argument("--node", action="store_true", help="Run node tests")
     parser.add_argument("--all", action="store_true", help="Run all test suites")
@@ -27,7 +30,7 @@ def run():
 
     # If no specific tests are selected, run all by default
     if not any(
-        [args.common, args.cli, args.algorithm_store, args.server, args.node, args.all]
+        [args.common, args.cli, args.algorithm_store, args.algorithm_tools, args.server, args.node, args.all]
     ):
         args.all = True
 
@@ -53,6 +56,12 @@ def run():
         )
         success_algorithm_store = run_tests(algorithm_store_test_suites)
         success = success and success_algorithm_store
+
+    # run algorithm tools tests
+    if args.algorithm_tools or args.all:
+        algorithm_tools_test_suites = find_tests(str(Path(__file__).parent / "vantage6-algorithm-tools"))
+        success_algorithm_tools = run_tests(algorithm_tools_test_suites)
+        success = success and success_algorithm_tools
 
     # run server tests
     if args.server or args.all:
