@@ -1,5 +1,5 @@
-from ast import Call
 import json
+from ast import Call
 from copy import deepcopy
 from datetime import datetime
 from importlib import import_module
@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 import pandas as pd
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import AuthStatus, ContainerEnvNames
 
@@ -60,26 +60,47 @@ class MockNetwork:
             The user client of the mock network.
         algorithm_client : MockAlgorithmClient
             The algorithm client of the mock network.
-        organization_ids : list[int]
-            The ids of the organizations.
-        collaboration_id : int
-            The id of the collaboration.
-        module_name : str
-            The name of the module that contains the algorithm.
 
         Examples
         --------
+
+        An example of how to create a dataframe and then use this dataframe in a task:
+
         >>> from vantage6.mock.mock_network import MockNetwork
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
         >>>     datasets={"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
         >>> )
         >>> client = network.user_client
-        >>> client.create_new_task(
-        >>>     input_={
-        >>>         "method": "my_method",
-        >>>         "kwargs": {"dataset": "dataset_1"},
+        >>> client.dataframe.create(
+        >>>     label="dataset_1", method="my_method", arguments={}
+        >>> )
+        >>> client.task.create(
+        >>>     method="my_method",
+        >>>     organizations=[0],
+        >>>     arguments={
+        >>>         "example_argument": 10
         >>>     },
+        >>>     databases=[{"label": "dataset_1"}]
+        >>> )
+        >>> results = client.result.from_task(task.get("id"))
+        >>> print(results)
+
+        Or in case you do not want to test data extraction you can provide a pandas
+        DataFrame instead of a string for the database value:
+
+        >>> network = MockNetwork(
+        >>>     module_name="my_algorithm",
+        >>>     datasets={"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+        >>> )
+        >>> client = network.user_client
+        >>> client.task.create(
+        >>>     method="my_method",
+        >>>     organizations=[0],
+        >>>     arguments={
+        >>>         "example_argument": 10
+        >>>     },
+        >>>     databases=[{"label": "dataset_1"}]
         >>> )
         >>> results = client.result.from_task(task.get("id"))
         >>> print(results)
@@ -282,7 +303,7 @@ class MockNode:
         id_: int,
         organization_id: int,
         collaboration_id: int,
-        datasets: dict[str, dict[str, str] | pd.DataFrame],
+        datasets: list[dict[str, dict[str, str] | pd.DataFrame]],
         network: "MockNetwork",
     ):
         """
@@ -299,7 +320,7 @@ class MockNode:
             The id of the organization.
         collaboration_id : int
             The id of the collaboration.
-        datasets : dict[str, dict[str, str] | pd.DataFrame]
+        datasets : list[dict[str, dict[str, str] | pd.DataFrame]]
             The datasets of the node.
         network : MockNetwork
             The network that the node belongs to.
@@ -316,8 +337,8 @@ class MockNode:
         # In case a pandas dataframe is provided we assume the user directly wants to
         # use it rather than running an extraction job first.
         for label, dataset in datasets.items():
-            if isinstance(dataset, pd.DataFrame):
-                self.dataframes[label] = dataset
+            if isinstance(dataset["database"], pd.DataFrame):
+                self.dataframes[label] = dataset["database"]
 
         # Environment variables that are passed on the execution of the algorithm
         self.env = {
