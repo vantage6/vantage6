@@ -86,6 +86,7 @@ def main() -> int:
         print(f"No Vantage6 task jobs found to delete in namespace '{namespace}'")
     else:
         print(f"Deleted {deletions} Vantage6 task job(s) in namespace '{namespace}'")
+    return 0
 
 
 if __name__ == "__main__":
