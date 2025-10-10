@@ -62,7 +62,6 @@ SERVER_TEMPLATE_FILE = "server_config.j2"
 NODE_TEMPLATE_FILE = "node_config.j2"
 ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
 AUTH_TEMPLATE_FILE = "auth_config.j2"
-SERVER_IMPORT_TEMPLATE_FILE = "server_import_config.j2"
 
 
 # datasets included in the nodes of the dev network
