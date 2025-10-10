@@ -234,7 +234,7 @@ publish:
 	cd vantage6-algorithm-store && make publish
 
 # Default test subpackages if none specified
-TEST_SUBPACKAGES ?= common,cli,algorithm-store,server
+TEST_SUBPACKAGES ?= common,cli,algorithm-store,server,algorithm-tools
 
 test:
 	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
