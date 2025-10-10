@@ -4,14 +4,14 @@ from unittest.mock import MagicMock, patch
 
 from vantage6.common.globals import InstanceType, NodePolicy
 
-from vantage6.cli.configuration_wizard import (
-    configuration_wizard,
+from vantage6.cli.configuration_create import (
+    make_configuration,
     node_configuration_questionaire,
-    select_configuration_questionaire,
+    select_configuration_questionnaire,
     server_configuration_questionaire,
 )
 
-module_path = "vantage6.cli.configuration_wizard"
+module_path = "vantage6.cli.configuration_create"
 
 
 class WizardTest(unittest.TestCase):
@@ -29,7 +29,7 @@ class WizardTest(unittest.TestCase):
                     result[name] = None
         return result
 
-    @patch("vantage6.cli.configuration_wizard.NodeClient.authenticate")
+    @patch("vantage6.cli.configuration_create.NodeClient.authenticate")
     def test_node_wizard(self, authenticate):
         """An error is printed when docker is not running"""
         authenticate.return_value = None
@@ -115,19 +115,19 @@ class WizardTest(unittest.TestCase):
     @patch(f"{module_path}.server_configuration_questionaire")
     @patch(f"{module_path}.ServerConfigurationManager")
     @patch(f"{module_path}.NodeConfigurationManager")
-    @patch("vantage6.cli.configuration_wizard.AppContext")
-    def test_configuration_wizard_interface(
+    @patch("vantage6.cli.configuration_create.AppContext")
+    def test_configuration_create_interface(
         self, context, node_m, server_m, server_q, node_q
     ):
         context.instance_folders.return_value = {"config": "/some/path/"}
 
-        file_ = configuration_wizard(InstanceType.NODE, "vtg6", False)
+        file_ = make_configuration(InstanceType.NODE, "vtg6", False)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = configuration_wizard(InstanceType.SERVER, "vtg6", True)
+        file_ = make_configuration(InstanceType.SERVER, "vtg6", True)
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-    @patch("vantage6.cli.configuration_wizard.AppContext.available_configurations")
+    @patch("vantage6.cli.configuration_create.AppContext.available_configurations")
     def test_select_configuration(self, available_configurations):
         config = MagicMock()
         config.name = "vtg6"
@@ -136,6 +136,6 @@ class WizardTest(unittest.TestCase):
 
         with patch(f"{module_path}.q") as q:
             q.select.return_value.unsafe_ask.return_value = "vtg6"
-            name = select_configuration_questionaire(InstanceType.NODE, True)
+            name = select_configuration_questionnaire(InstanceType.NODE, True)
 
         self.assertEqual(name, "vtg6")

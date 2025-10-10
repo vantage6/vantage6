@@ -26,9 +26,12 @@ data:
       level: {{ .Values.node.logging.level }}
       max_size: {{ .Values.node.logging.max_size }}
       use_console: {{ .Values.node.logging.use_console }}
+      {{- if .Values.node.logging.loggers }}
+      loggers:
       {{- range .Values.node.logging.loggers }}
       - level: {{ .level }}
         name: {{ .name }}
+      {{- end }}
       {{- end }}
     policies:
       {{- if .Values.node.policies.allowed_algorithms }}

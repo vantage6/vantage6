@@ -32,6 +32,7 @@ def cli_server_stop(
     namespace: str,
     system_folders: bool,
     all_servers: bool,
+    is_sandbox: bool = False,
 ):
     """
     Stop an running server.
@@ -45,6 +46,7 @@ def cli_server_stop(
         namespace=namespace,
         context=context,
         system_folders=system_folders,
+        is_sandbox=is_sandbox,
     )
 
 

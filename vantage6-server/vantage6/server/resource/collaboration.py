@@ -447,7 +447,7 @@ class Collaboration(CollaborationBase):
         # check that collaboration exists
         if not collaboration:
             return {
-                "msg": f"collaboration having id={id} not found"
+                "msg": f"Collaboration with id={id} not found"
             }, HTTPStatus.NOT_FOUND
 
         # obtain the organization id of the authenticated

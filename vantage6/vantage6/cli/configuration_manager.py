@@ -86,11 +86,11 @@ class NodeConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=NodeConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(conf_class=NodeConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
-    def from_file(cls, path: str) -> Self:
+    def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
         """
         Create a new instance of the NodeConfigurationManager from a
         configuration file.
@@ -105,7 +105,9 @@ class NodeConfigurationManager(ConfigurationManager):
         NodeConfigurationManager
             A new instance of the NodeConfigurationManager.
         """
-        return super().from_file(path, conf_class=NodeConfiguration)
+        return super().from_file(
+            path, conf_class=NodeConfiguration, is_sandbox=is_sandbox
+        )
 
     def get_config_template(self) -> str:
         """
@@ -124,11 +126,13 @@ class ServerConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=ServerConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(
+            conf_class=ServerConfiguration, name=name, is_sandbox=is_sandbox
+        )
 
     @classmethod
-    def from_file(cls, path) -> Self:
+    def from_file(cls, path, is_sandbox: bool = False) -> Self:
         """
         Create a new instance of the ServerConfigurationManager from a
         configuration file.
@@ -143,7 +147,9 @@ class ServerConfigurationManager(ConfigurationManager):
         ServerConfigurationManager
             A new instance of the ServerConfigurationManager.
         """
-        return super().from_file(path, conf_class=ServerConfiguration)
+        return super().from_file(
+            path, conf_class=ServerConfiguration, is_sandbox=is_sandbox
+        )
 
     def get_config_template(self) -> str:
         """
@@ -167,11 +173,13 @@ class AlgorithmStoreConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=AlgorithmStoreConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(
+            conf_class=AlgorithmStoreConfiguration, name=name, is_sandbox=is_sandbox
+        )
 
     @classmethod
-    def from_file(cls, path: str) -> Self:
+    def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
         """
         Create a new instance of the AlgorithmStoreConfigurationManager from a
         configuration file.
@@ -186,7 +194,9 @@ class AlgorithmStoreConfigurationManager(ConfigurationManager):
         AlgorithmStoreConfigurationManager
             A new instance of the AlgorithmStoreConfigurationManager.
         """
-        return super().from_file(path, conf_class=AlgorithmStoreConfiguration)
+        return super().from_file(
+            path, conf_class=AlgorithmStoreConfiguration, is_sandbox=is_sandbox
+        )
 
     def get_config_template(self) -> str:
         """
@@ -210,12 +220,18 @@ class AuthConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(conf_class=AuthConfiguration, name=name)
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        super().__init__(conf_class=AuthConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
-    def from_file(cls, path: str) -> Self:
-        return super().from_file(path, conf_class=AuthConfiguration)
+    def from_file(cls, path: str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the AuthConfigurationManager from a
+        configuration file.
+        """
+        return super().from_file(
+            path, conf_class=AuthConfiguration, is_sandbox=is_sandbox
+        )
 
     def get_config_template(self) -> str:
         """
@@ -229,5 +245,7 @@ class TestingConfigurationManager(ConfigurationManager):
         super().__init__(conf_class=TestConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path):
-        return super().from_file(path, conf_class=TestConfiguration)
+    def from_file(cls, path, is_sandbox: bool = False):
+        return super().from_file(
+            path, conf_class=TestConfiguration, is_sandbox=is_sandbox
+        )

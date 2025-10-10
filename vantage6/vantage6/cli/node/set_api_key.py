@@ -3,7 +3,7 @@ import questionary as q
 
 from vantage6.common import ensure_config_dir_writable, error, info
 
-from vantage6.cli.configuration_wizard import NodeConfigurationManager
+from vantage6.cli.configuration_create import NodeConfigurationManager
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.node.common import select_node

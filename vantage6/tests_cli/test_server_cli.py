@@ -113,15 +113,15 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.new.configuration_wizard")
+    @patch("vantage6.cli.server.new.make_configuration")
     @patch("vantage6.cli.server.new.ensure_config_dir_writable")
     @patch("vantage6.cli.server.new.ServerContext")
-    def test_new(self, context, permissions, wizard):
+    def test_new(self, context, permissions, make_configuration):
         """New configuration without errors."""
 
         context.config_exists.return_value = False
         permissions.return_value = True
-        wizard.return_value = "/some/file.yaml"
+        make_configuration.return_value = "/some/file.yaml"
 
         runner = CliRunner()
         result = runner.invoke(cli_server_new, ["--name", "iknl"])

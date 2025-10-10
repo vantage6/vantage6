@@ -65,6 +65,20 @@ class AlgorithmStoreBase(ServicesResources):
         super().__init__(socketio, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
+    @staticmethod
+    def _convert_k8s_url_to_localhost(store: db.AlgorithmStore) -> None:
+        """
+        Convert the Kubernetes URL to a localhost URL.
+
+        This is done because the store URL is represented internally as a k8s URL so
+        that the server can communicate with it. However, when the store is requested,
+        it should be represented as a localhost URL so that the client can communicate
+        with it.
+        """
+        if "svc.cluster.local" in store.url:
+            port_and_api_path = store.url.split(":")[-1]
+            store.url = "http://localhost:" + port_and_api_path
+
 
 class AlgorithmStores(AlgorithmStoreBase):
     """Resource for /algorithm"""
@@ -197,6 +211,10 @@ class AlgorithmStores(AlgorithmStoreBase):
             page = Pagination.from_query(q, request, db.AlgorithmStore)
         except (ValueError, AttributeError) as e:
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        # Convert any local Kubernetes URLs to a localhost URL for the client
+        for store in page.page.items:
+            self._convert_k8s_url_to_localhost(store)
 
         # serialize models
         return self.response(page, algorithm_store_schema)
@@ -356,6 +374,9 @@ class AlgorithmStore(AlgorithmStoreBase):
                 return {
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
+
+        # Convert the Kubernetes URL to a localhost URL for the client
+        self._convert_k8s_url_to_localhost(algorithm_store)
 
         return (
             algorithm_store_schema.dump(algorithm_store, many=False),

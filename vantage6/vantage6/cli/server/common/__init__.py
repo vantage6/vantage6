@@ -5,7 +5,7 @@ from vantage6.common.context import AppContext
 
 
 def get_server_context(
-    name: str, system_folders: bool, ctx_class: AppContext
+    name: str, system_folders: bool, ctx_class: AppContext, is_sandbox: bool = False
 ) -> AppContext:
     """
     Load the server context from the configuration file.
@@ -18,13 +18,14 @@ def get_server_context(
         Wether to use system folders or if False, the user folders
     ctx_class : AppContext
         Context class to be used. Derivative of AppContext class
-
+    is_sandbox : bool
+        Whether the configuration is a sandbox configuration, by default False
     Returns
     -------
     ServerContext
         Server context object
     """
-    if not ctx_class.config_exists(name, system_folders):
+    if not ctx_class.config_exists(name, system_folders, is_sandbox=is_sandbox):
         scope = "system" if system_folders else "user"
         error(
             f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
@@ -35,8 +36,6 @@ def get_server_context(
     # We do not want to log this here, we do this in the container and not on
     # the host. We only want CLI logging here.
     ctx_class.LOGGING_ENABLED = False
-
     # create server context, and initialize db
-    ctx = ctx_class(name, system_folders=system_folders)
-
+    ctx = ctx_class(name, system_folders=system_folders, is_sandbox=is_sandbox)
     return ctx

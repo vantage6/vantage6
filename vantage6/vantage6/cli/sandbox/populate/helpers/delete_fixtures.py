@@ -48,11 +48,11 @@ def delete_fixtures(client: Client) -> str:
         deleted_users += 1
     deletion_counts["users"] = deleted_users
 
-    # Delete organizations (excluding root)
+    # Delete organizations (excluding the default organization with id 1)
     orgs = client.organization.list(per_page=999)["data"]
     deleted_orgs = 0
     for org in orgs:
-        if org["name"] == "root":
+        if org["id"] == 1:
             continue
         client.organization.delete(org["id"])
         deleted_orgs += 1

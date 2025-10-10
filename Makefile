@@ -48,7 +48,6 @@ help:
 	@echo "  base-image           : build the infrastructure base image"
 	@echo "  algorithm-base-image : build the algorithm base image"
 	@echo "  support-image        : build the supporing images"
-	@echo "  helm-charts          : build and push the helm charts"
 	@echo "  rebuild              : rebuild all python packages"
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
@@ -169,22 +168,6 @@ ui-image:
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)
-
-CHARTS := auth common node store server
-
-helm-charts:
-    # Update the Helm chart dependencies, package them and clean up the chart deps
-	for chart in $(CHARTS); do \
-		helm dependency update charts/$$chart; \
-		helm package charts/$$chart -d charts/; \
-		rm -rf charts/$$chart/charts; \
-	done
-    # Push Helm charts to registry
-	$(if ${_condition_push},\
-		for chart in $(CHARTS); do \
-			helm push charts/$$chart-*.tgz oci://harbor2.vantage6.ai/infra-charts; \
-		done,\
-		@echo "Skipping push to registry")
 
 rebuild:
 	@echo "------------------------------------"

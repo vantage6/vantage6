@@ -13,6 +13,8 @@ from vantage6.cli.globals import (
     DEFAULT_CLI_CONFIG_FILE,
 )
 
+_CONTEXT_INFO_PRINTED = False
+
 
 class CliConfig:
     """
@@ -255,6 +257,12 @@ class CliConfig:
             if last_namespace != active_namespace:
                 self.set_last_namespace(namespace=active_namespace)
 
-        info(f"Using    context: {Fore.YELLOW}{active_context}{Style.RESET_ALL}")
-        info(f"Using  namespace: {Fore.YELLOW}{active_namespace}{Style.RESET_ALL}")
+        # only print the context and namespace once. This is to avoid printing it many
+        # times, e.g. in sandbox commands
+        global _CONTEXT_INFO_PRINTED
+        if not _CONTEXT_INFO_PRINTED:
+            info(f"Using    context: {Fore.YELLOW}{active_context}{Style.RESET_ALL}")
+            info(f"Using  namespace: {Fore.YELLOW}{active_namespace}{Style.RESET_ALL}")
+            _CONTEXT_INFO_PRINTED = True
+
         return active_context, active_namespace

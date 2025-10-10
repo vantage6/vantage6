@@ -127,5 +127,5 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
     except Exception as exc:
         log.exception(exc)
         raise BadRequestError(
-            "Service account '{client_id}' could not be deleted from Keycloak"
+            f"Service account '{client_id}' could not be deleted from Keycloak"
         ) from exc
