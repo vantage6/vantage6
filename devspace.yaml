@@ -125,12 +125,12 @@ pipelines:
       purge_deployments --all
       run_dependencies --all --pipeline purge
       dev/purge_keycloak_storage.sh
+      python dev/cleanup_task_jobs.py --namespace ${TASK_NAMESPACE}
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH}
-
   stop-dev:
     run: |-
       echo "Purging all deployments..."
