@@ -12,11 +12,9 @@ import pandas as pd
 from vantage6.algorithm.tools.exceptions import DataError, UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
-from vantage6.algorithm.decorator.data import dataframe
 
 
 @preprocessing
-@dataframe(1)
 def to_datetime(
     df: pd.DataFrame,
     columns: list[str],
@@ -82,7 +80,6 @@ def to_datetime(
 
 
 @preprocessing
-@dataframe(1)
 def to_timedelta(
     df: pd.DataFrame,
     input_column: str | None = None,
@@ -180,7 +177,6 @@ def to_timedelta(
 
 
 @preprocessing
-@dataframe(1)
 def timedelta(
     df: pd.DataFrame,
     column: str,
@@ -269,7 +265,6 @@ def timedelta(
 
 
 @preprocessing
-@dataframe(1)
 def calculate_age(
     df: pd.DataFrame,
     column: str,
