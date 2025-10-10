@@ -9,12 +9,14 @@ from datetime import date
 
 import pandas as pd
 
+from vantage6.algorithm.tools.error_handling import handle_pandas_errors
 from vantage6.algorithm.tools.exceptions import DataError, UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import dataframe
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def to_datetime(
@@ -81,6 +83,7 @@ def to_datetime(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def to_timedelta(
@@ -179,6 +182,7 @@ def to_timedelta(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def timedelta(
@@ -268,6 +272,7 @@ def timedelta(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def calculate_age(

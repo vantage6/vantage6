@@ -5,10 +5,13 @@ pandas DataFrames, such as selecting and filtering rows and columns.
 
 import pandas as pd
 
+from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+
 from vantage6.algorithm.decorator.action import preprocessing
 from vantage6.algorithm.decorator.data import dataframe
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
@@ -77,6 +80,7 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
     return df.query(query)
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def filter_range(
@@ -161,6 +165,7 @@ def filter_range(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
@@ -217,6 +222,7 @@ def select_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df[columns]
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
@@ -266,6 +272,7 @@ def drop_columns(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df.drop(columns, axis=1)
 
 
+@handle_pandas_errors
 @preprocessing
 @dataframe(1)
 def filter_by_date(
