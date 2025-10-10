@@ -1,3 +1,5 @@
+.. _algo-sessions:
+
 Sessions
 --------
 

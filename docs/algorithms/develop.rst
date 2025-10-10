@@ -10,7 +10,8 @@ in more detail than in this guide.
 
 Also, note that this guide is mainly aimed at developers who want to develop
 their algorithm in Python, although we will try to clearly indicate where
-this differs from algorithms written in other languages.
+this differs from algorithms written in other languages. Writing your algorithm in
+Python is recommended because it is currently the best supported  language for vantage6.
 
 .. _algo-dev-create-algorithm:
 
@@ -29,11 +30,6 @@ result in a personalized starting point or 'boilerplate' for your algorithm.
 After doing so, you will have a new folder with the name of your algorithm,
 boilerplate code and a checklist in the README.md file that you can follow to
 complete your algorithm.
-
-.. note::
-   There is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
-   but this is not flexible and it is not updated as frequently as the Python
-   boilerplate.
 
 Setting up your environment
 ---------------------------
@@ -79,38 +75,6 @@ to add your own code.
 You may wonder why the boilerplate code is structured the way it is. This
 is explained in the :ref:`code structure section <algo-code_structure>`.
 
-.. _algo-env-vars:
-
-Environment variables
----------------------
-
-The algorithms have access to several environment variables. You can also
-specify additional environment variables via the ``algorithm_env`` option
-in the node configuration files (see the
-:ref:`example node configuration file <node-configure-structure>`).
-
-Environment variables provided by the vantage6 infrastructure are used
-to locate certain files or to add local configuration settings into the
-container. These are usually used in the Python wrapper and you don't normally
-need them in your functions. However, you can access them in your functions
-as follows:
-
-.. code:: python
-
-   def my_function():
-       # environment variable that specifies the input file
-       input_file = os.environ["INPUT_FILE"]
-       # environment variable that specifies the database URI for the database with
-       # the 'default' label
-       default_database_uri = os.environ["DEFAULT_DATABASE_URI"]
-
-       # do something with the input file and database URI
-       pass
-
-The environment variables that you specify in the node configuration file
-can be used in the exact same manner. You can view all environment variables
-that are available to your algorithm by ``print(os.environ)``.
-
 Returning results
 -----------------
 
@@ -130,9 +94,36 @@ These results will be returned to the user after the algorithm has finished.
 
     The results that you return should be JSON serializable. This means that
     you cannot, for example, return a ``pandas.DataFrame`` or a
-    ``numpy.ndarray`` (such objects may not be readable to a non-Python using
-    recipient or may even be insecure to send over the internet). They should
-    be converted to a JSON-serializable format first.
+    ``numpy.ndarray``. Such objects may not be readable to a non-Python-using
+    recipient, or may even be insecure to send over the internet. They should
+    be converted to a JSON-serializable format first (e.g. with ``df.to_json()`` in
+    pandas).
+
+.. _algo-env-vars:
+
+Environment variables
+---------------------
+
+The algorithms have access to several environment variables. You can also
+specify additional environment variables via the ``algorithm_env`` option
+in the node configuration files (see the
+:ref:`example node configuration file <node-configure-structure>`). You can access
+environment variables in your functions as follows:
+
+.. code:: python
+
+   import os
+
+   def my_function():
+       # environment variable that specifies the input file
+       env_var = os.environ["ENV_VAR_SPECIFIED_IN_NODE_CONFIG"]
+
+       # do something with the input file and database URI
+       pass
+
+You can view all environment variables that are available to your algorithm by
+``print(os.environ)``. This includes a number of environment variables that are
+provided by the vantage6 infrastructure.
 
 Example functions
 -----------------
@@ -146,12 +137,12 @@ Central function
 
   from vantage6.algorithm.decorator.algorithm_client import algorithm_client
   from vantage6.algorithm.client import AlgorithmClient
-  # info and error can be used to log algorithm events
   from vantage6.algorithm.tools.util import info, error
 
    @algorithm_client
    def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
+      info("Creating subtask for partial function")
       task = client.task.create(
          method="my_partial_function",
          arguments={
@@ -185,6 +176,67 @@ Partial function
            "result": sum(data[colum_name].to_list())
        }
 
+Data extraction function
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import os
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.data import dataframe
+   from vantage6.algorithm.tools.util import info
+
+   @dataframe(1)
+   def my_data_extraction_function(db_connection_details: dict):
+       info("Extracting data")
+
+       # for a CSV database, the URI is the path to the CSV file
+       df = pd.read_csv(db_connection_details["uri"])
+
+       # for a SQL database, the URI is the connection string. Environment variables
+       # such as username+password can be provided in the node configuration file.
+       df = pd.read_sql_query(
+         db_connection_details["uri"],
+         db_connection_details["query"],
+         os.getenv("USERNAME"),
+         os.getenv("PASSWORD"),
+      )
+
+       return df
+
+Preprocessing function
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.action import preprocessing
+   from vantage6.algorithm.tools.util import info
+
+   @preprocessing
+   def my_preprocessing_function(df: pd.DataFrame):
+       # do some preprocessing with the data
+       df["column_name"] = df["column_name"] + 1
+       return df
+
+Functions provided by the vantage6 infrastructure
+-------------------------------------------------
+
+There are already some data extraction and preprocessing functions provided by the
+vantage6 infrastructure. These contain the most common data extractions (such as
+CSV, Excel, Parquet and basic SQL wrappers) and common preprocessing transformations.
+
+You can make these functions available in your algorithm by importing them from the
+vantage6 algorithm tools:
+
+.. code:: python
+
+   # in your algorithm's __init__.py file
+   from vantage6.algorithm.data_extraction import *
+   from vantage6.algorithm.preprocessing import *
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
@@ -210,14 +262,11 @@ It is important that you add documentation of your algorithm so that users
 know how to use it. In principle, you may choose any format of documentation,
 and you may choose to host it anywhere you like. However, in our experience it
 works well to keep your documentation close to your code. We recommend using the
-``readthedocs`` platform to host your documentation. Alternatively, you could
-use a ``README`` file in the root of your algorithm directory - if the
-documentation is not too extensive, this may be sufficient.
+``readthedocs`` platform to host your documentation. A template for such documentation
+can be generated when running the ``v6 algorithm create`` command.
 
-.. note::
-
-    We intend to provide a template for the documentation of algorithms in the
-    future. This template will be based on the ``readthedocs`` platform.
+Alternatively, you could use a ``README`` file - if the documentation is not too
+extensive, e.g. the algorithm is onlyfor testing purposes, this may be sufficient.
 
 Package & distribute
 --------------------
@@ -305,13 +354,10 @@ execution result. For example, to test the average algorithm, the script could l
 
     def run_test():
         # Create a client and authenticate
-        client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
-        client.authenticate("dev_admin", "password")
-
-        method = "central_average"
-        arguments = {
-            "column_name": "Age",
-        }
+        client = Client(
+            server_url="http://localhost:7601/server", auth_url="http://localhost:8080"
+        )
+        client.authenticate()
 
         # create the task
         task = client.task.create(
@@ -320,8 +366,8 @@ execution result. For example, to test the average algorithm, the script could l
             name="test_average_task",
             image="harbor2.vantage6.ai/demo/average",
             description="",
-            method=method,
-            arguments=arguments,
+            method="central_average",
+            arguments={"column_name": "Age"},
             databases=[{"label": "olympic_athletes"}],
         )
 
