@@ -183,7 +183,8 @@ def dataframe(*sources: str | int) -> callable:
                         error(
                             "The @dataframes or @dataframe("
                             f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
-                            "for preprocessing functions. Exiting..."
+                            "for preprocessing functions. Use @preprocessing instead. "
+                            "Exiting..."
                         )
                         exit(1)
                     requested_dataframes = dataframes_grouped[idx_dataframes]
