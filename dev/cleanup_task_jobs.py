@@ -40,7 +40,7 @@ def _get_job_run_id(job: k8s_client.V1Job) -> int | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Cleanup Vantage6 task jobs")
-    parser.add_argument("--namespace", type=str, default=None, help="Task namespace")
+    parser.add_argument("--namespace", type=str, help="Task namespace")
     args = parser.parse_args()
 
     namespace = args.namespace
