@@ -25,7 +25,7 @@ dependencies = [
     "jinja2==3.1.6",
     "kubernetes==28.1.0",
     "pandas>=2.2.3",
-    "questionary==1.10.0",
+    "questionary==2.1.1",
     "rich==13.5.2",
     "schema==0.7.5",
     "sqlalchemy==2.0.37",
@@ -54,13 +54,12 @@ where = ["vantage6/cli"]
 
 [tool.setuptools.package-data]
 "vantage6/cli/" = [
-    "rabbimq/rabbitmq.config",
     "template/node_config.j2",
     "template/node_config_nonk8s.j2",
     "template/server_config.j2",
     "template/algo_store_config.j2",
     "template/auth_config.j2",
-    "dev/data/olympic_athletes_2016.csv",
-    "dev/data/km_dataset.csv",
+    "sandbox/data/olympic_athletes_2016.csv",
+    "sandbox/data/km_dataset.csv",
     "prometheus/prometheus.yml",
 ]

@@ -66,6 +66,7 @@ def find_running_service_names(
     only_user_folders: bool = False,
     context: str | None = None,
     namespace: str | None = None,
+    sandbox: bool = False,
 ) -> list[str]:
     """
     List running Vantage6 servers.
@@ -82,6 +83,8 @@ def find_running_service_names(
         The Kubernetes context to use.
     namespace : str, optional
         The Kubernetes namespace to use.
+    sandbox : bool, optional
+        Whether to look for sandbox services or not. By default False.
 
     Returns
     -------

@@ -2,20 +2,60 @@
 Development script to connect the server to the local store.
 """
 
-from pathlib import Path
+import time
+from http import HTTPStatus
 
 import requests
 
+from vantage6.common import error, info
 from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.client import Client
 
 
-def connect_store(client: Client, dev_dir: Path) -> str:
+def _wait_for_store_to_be_online(
+    local_store_url: str, local_store_api_path: str
+) -> None:
+    """
+    Wait for the store to be online.
+
+    Parameters
+    ---------
+    client: Client
+        The client to use to connect to the server.
+    local_store_url: str
+        The URL of the local store.
+    local_store_api_path: str
+        The API path of the local store.
+    """
+    info(
+        f"Waiting for store to be online at {local_store_url}{local_store_api_path}..."
+    )
+    max_retries = 100
+    wait_time = 3
+    ready = False
+    for _ in range(max_retries):
+        try:
+            result = requests.get(f"{local_store_url}{local_store_api_path}/version")
+            if result.status_code == HTTPStatus.OK:
+                ready = True
+                break
+        except Exception:
+            info(f"Store not ready yet, waiting {wait_time} seconds...")
+            time.sleep(wait_time)
+
+    if not ready:
+        error("Store did not become ready in time. Exiting...")
+        exit(1)
+    else:
+        info("Store is online!")
+
+
+def connect_store(client: Client) -> str:
     """
     Connect the server to the local store.
 
-    Arguments
+    Parameters
     ---------
     client: Client
         The client to use to connect to the server.
@@ -24,7 +64,6 @@ def connect_store(client: Client, dev_dir: Path) -> str:
     """
 
     existing_stores = client.store.list().get("data", [])
-    existing_urls = [store["url"] for store in existing_stores]
     summary = "=== Store Connection Summary ===\n"
 
     # URL should be retrieved from the store, see issue:
@@ -32,15 +71,20 @@ def connect_store(client: Client, dev_dir: Path) -> str:
     local_store_url = "http://localhost:7602"
     local_store_api_path = "/store"
     client.store.store_id = 1
-    if local_store_url not in existing_urls:
-        summary += "Registering local store\n"
-        store = client.store.create(
-            algorithm_store_url=local_store_url,
-            api_path=local_store_api_path,
-            name="Local store",
-            all_collaborations=True,
-        )
+
+    _wait_for_store_to_be_online(local_store_url, local_store_api_path)
+
+    # note that the store is already coupled to the server in the sandbox/devspace
+    # config. To find the store, either check that it is a localhost URL or that it
+    # contains "svc.cluster.local" (which is for local k8s services)
+    try:
+        store = next(s for s in existing_stores if s["url"] == local_store_url)
         client.store.set(store["id"])
+    except StopIteration:
+        error(
+            "Local algorithm store not found. Please register its resources manually."
+        )
+        return
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]
@@ -72,6 +116,7 @@ def connect_store(client: Client, dev_dir: Path) -> str:
         # Fallback to local file if download fails
         print(f"Warning: Could not download algorithm store from GitHub: {e}")
         print("Not putting the algorithm in the store.")
+        function_metadata = []
 
     summary += "Creating Session Basics algorithm\n"
     client.algorithm.create(

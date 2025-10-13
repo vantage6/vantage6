@@ -26,9 +26,14 @@ spec:
           value: {{ .Values.server.keycloakUrl }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.server.keycloakRealm }}
-{{- if and .Values.server.dev .Values.server.dev.store_in_local_cluster }}
+{{- if .Values.server.dev }}
+  {{- if .Values.server.dev.store_address }}
+        - name: LOCAL_STORE_URL
+          value: {{ .Values.server.dev.store_address | quote }}
+  {{- else }}
         - name: LOCAL_STORE_URL
           value: http://vantage6-store-store-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local:7602
+  {{- end }}
 {{- end }}
         envFrom:
         - secretRef:

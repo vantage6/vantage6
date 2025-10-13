@@ -27,6 +27,8 @@ class NodeContext(AppContext):
         _description_, by default None
     in_container : bool, optional
         Whether the application is running inside a container, by default False
+    is_sandbox : bool, optional
+        Whether the configuration is a sandbox configuration, by default False
     """
 
     # The server configuration manager is aware of the structure of the server
@@ -41,6 +43,7 @@ class NodeContext(AppContext):
         print_log_header: bool = True,
         logger_prefix: str = "",
         in_container: bool = False,
+        is_sandbox: bool = False,
     ):
         super().__init__(
             InstanceType.NODE,
@@ -50,6 +53,7 @@ class NodeContext(AppContext):
             print_log_header=print_log_header,
             logger_prefix=logger_prefix,
             in_container=in_container,
+            is_sandbox=is_sandbox,
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
@@ -57,7 +61,7 @@ class NodeContext(AppContext):
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, system_folders: bool = N_FOL
+        cls, path: str, system_folders: bool = N_FOL, is_sandbox: bool = False
     ) -> NodeContext:
         """
         Create a node context from an external configuration file. External
@@ -77,11 +81,16 @@ class NodeContext(AppContext):
             Node context object
         """
         return super().from_external_config_file(
-            Path(path).resolve(), InstanceType.NODE, system_folders
+            Path(path).resolve(),
+            InstanceType.NODE,
+            system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str, system_folders: bool = N_FOL) -> bool:
+    def config_exists(
+        cls, instance_name: str, system_folders: bool = N_FOL, is_sandbox: bool = False
+    ) -> bool:
         """
         Check if a configuration file exists.
 
@@ -92,19 +101,23 @@ class NodeContext(AppContext):
             of the configuration file.
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
-
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
-            InstanceType.NODE, instance_name, system_folders=system_folders
+        return super().base_config_exists(
+            InstanceType.NODE,
+            instance_name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
     def available_configurations(
-        cls, system_folders: bool = N_FOL
+        cls, system_folders: bool = N_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
@@ -113,6 +126,8 @@ class NodeContext(AppContext):
         ----------
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
 
         Returns
         -------
@@ -120,7 +135,9 @@ class NodeContext(AppContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(InstanceType.NODE, system_folders)
+        return super().available_configurations(
+            InstanceType.NODE, system_folders, is_sandbox
+        )
 
     @staticmethod
     def type_data_folder(system_folders: bool = N_FOL) -> Path:

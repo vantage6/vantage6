@@ -1,21 +1,16 @@
 from functools import wraps
 
 import click
-import yaml
 from colorama import Fore, Style
 
-from vantage6.common import (
-    error,
-    info,
-)
+from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
 
 from vantage6.server import __version__
-from vantage6.server.controller import fixture
 from vantage6.server.model.base import Database
 
 help_ = {
@@ -61,7 +56,7 @@ def click_insert_context(func: callable) -> callable:
         else:
             if not name:
                 try:
-                    name = select_configuration_questionaire(
+                    name = select_configuration_questionnaire(
                         InstanceType.SERVER, system_folders
                     )
                 except Exception:
@@ -92,40 +87,6 @@ def click_insert_context(func: callable) -> callable:
 def cli_server() -> None:
     """Subcommand `vserver-local`."""
     pass
-
-
-#
-#   import
-#
-@cli_server.command(name="import")
-@click.argument("file_", type=click.Path(exists=True))
-@click.option("--drop-all", is_flag=True, default=False)
-@click_insert_context
-def cli_server_import(ctx: ServerContext, file_: str, drop_all: bool) -> None:
-    """
-    Import organizations/collaborations/users and tasks. Mainly useful for
-    testing purposes.
-
-    Parameters
-    ----------
-    ctx : ServerContext
-        The context of the server instance.
-    file_ : str
-        The YAML file with resources to import.
-    drop_all : bool
-        Whether to drop all tables before importing.
-    """
-    # Note: ctx appears to be unused but is needed for the click_insert_context
-    # to select the server in which to import the data.
-    info("Reading yaml file.")
-    with open(file_) as f:
-        entities = yaml.safe_load(f.read())
-
-    info("Adding entities to database.")
-    # TODO v5+ this will probably no longer work since API keys are no longer in here
-    # Should we get rid of this command or make something new? Also delete load()
-    # function if we remove it. See issue #2023
-    fixture.load(entities, drop_all=drop_all)
 
 
 #

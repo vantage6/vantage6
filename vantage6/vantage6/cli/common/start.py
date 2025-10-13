@@ -19,13 +19,11 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
+    LOCALHOST,
     InstanceType,
 )
 
-from vantage6.cli.common.utils import (
-    check_running,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
 
@@ -35,8 +33,6 @@ def prestart_checks(
     instance_type: InstanceType,
     name: str,
     system_folders: bool,
-    context: str,
-    namespace: str,
 ) -> None:
     """
     Run pre-start checks for an instance.
@@ -47,11 +43,6 @@ def prestart_checks(
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")
         exit(1)
-
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
 
 
 def pull_infra_image(
@@ -142,6 +133,7 @@ def helm_install(
     values_file: str | PathLike | None = None,
     context: str | None = None,
     namespace: str | None = None,
+    local_chart_dir: str | None = None,
 ) -> None:
     """
     Manage the `helm install` command.
@@ -158,6 +150,8 @@ def helm_install(
         The Kubernetes context to use.
     namespace : str, optional
         The Kubernetes namespace to use.
+    local_chart_dir : str, optional
+        The local directory containing the Helm charts.
     """
     # Input validation
     validate_input_cmd_args(release_name, "release name")
@@ -171,17 +165,28 @@ def helm_install(
     validate_input_cmd_args(context, "context name", allow_none=True)
     validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
+    if local_chart_dir and local_chart_dir.rstrip("/").endswith(chart_name.value):
+        local_chart_dir = str(Path(local_chart_dir).parent)
+
     # Create the command
-    command = [
-        "helm",
-        "install",
-        release_name,
-        chart_name,
-        "--repo",
-        DEFAULT_CHART_REPO,
-        # TODO v5+ remove this flag when we have a stable release
-        "--devel",  # ensure using latest version including pre-releases
-    ]
+    if local_chart_dir:
+        command = [
+            "helm",
+            "install",
+            release_name,
+            f"{local_chart_dir}/{chart_name.value}",
+        ]
+    else:
+        command = [
+            "helm",
+            "install",
+            release_name,
+            chart_name,
+            "--repo",
+            DEFAULT_CHART_REPO,
+            # TODO v5+ remove this flag when we have a stable release
+            "--devel",
+        ]
 
     if values_file:
         command.extend(["-f", str(values_file)])
@@ -217,7 +222,7 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
-    ip: str | None,
+    ip: str = LOCALHOST,
     context: str | None = None,
     namespace: str | None = None,
 ) -> None:
@@ -232,8 +237,8 @@ def start_port_forward(
         The port on the service to forward.
     port : int
         The port to listen on.
-    ip : str | None
-        The IP address to listen on. If None, defaults to localhost.
+    ip : str
+        The IP address to listen on. Defaults to localhost.
     context : str | None
         The Kubernetes context to use.
     namespace : str | None
@@ -264,20 +269,22 @@ def start_port_forward(
     timeout = 300  # seconds
     while time.time() - start_time < timeout:
         try:
-            result = (
-                subprocess.check_output(
-                    [
-                        "kubectl",
-                        "get",
-                        "endpoints",
-                        service_name,
-                        "-o",
-                        "jsonpath={.subsets[*].addresses[*].ip}",
-                    ]
-                )
-                .decode()
-                .strip()
-            )
+            command = [
+                "kubectl",
+                "get",
+                "endpoints",
+                service_name,
+                "-o",
+                "jsonpath={.subsets[*].addresses[*].ip}",
+            ]
+
+            if context:
+                command.extend(["--context", context])
+
+            if namespace:
+                command.extend(["--namespace", namespace])
+
+            result = subprocess.check_output(command).decode().strip()
 
             if result:
                 info(f"Service '{service_name}' is ready.")
@@ -288,13 +295,14 @@ def start_port_forward(
         time.sleep(2)
     else:
         error(
-            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} seconds."
+            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} "
+            "seconds."
         )
         return
 
     # Create the port forwarding command
     if not ip:
-        ip = "localhost"
+        ip = LOCALHOST
 
     command = [
         "kubectl",

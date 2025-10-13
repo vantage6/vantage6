@@ -25,11 +25,13 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentNa
     flag_value=False,
     help="Search for configuration in the user folders instead of system folders.",
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 def cli_auth_stop(
     name: str,
     context: str,
     namespace: str,
     system_folders: bool,
+    sandbox: bool,
 ):
     """
     Stop a running auth service.
@@ -43,6 +45,7 @@ def cli_auth_stop(
         namespace=namespace,
         context=context,
         system_folders=system_folders,
+        is_sandbox=sandbox,
     )
 
 

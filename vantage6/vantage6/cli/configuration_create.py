@@ -126,25 +126,31 @@ def _add_production_server_config(config: dict) -> dict:
     return config
 
 
-def configuration_wizard(
-    questionnaire_function: callable,
+def make_configuration(
+    config_producing_func: callable,
+    config_producing_func_args: tuple,
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
+    is_sandbox: bool = False,
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
 
     Parameters
     ----------
-    questionnaire_function : callable
+    config_producing_func : callable
         Function to generate the configuration
+    config_producing_func_args : tuple
+        Arguments to pass to the config producing function
     type_ : InstanceType
         Type of the instance to create a configuration for
     instance_name : str
         Name of the instance
     system_folders : bool
         Whether to use the system folders or not
+    is_sandbox : bool
+        Whether to create a sandbox configuration or not
 
     Returns
     -------
@@ -154,11 +160,10 @@ def configuration_wizard(
     # for defaults and where to save the config
     dirs = AppContext.instance_folders(type_, instance_name, system_folders)
 
-    # invoke questionaire to create configuration file
-    if type_ == InstanceType.NODE:
-        config = questionnaire_function(dirs, instance_name)
-    else:
-        config = questionnaire_function(instance_name)
+    # invoke function to create configuration file. Usually this is a questionaire
+    # but it can also be a function that immediately returns a dict with the
+    # configuration.
+    config = config_producing_func(*config_producing_func_args)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
@@ -176,17 +181,19 @@ def configuration_wizard(
         raise ValueError(f"Invalid instance type: {type_}")
 
     if Path(config_file).exists():
-        config_manager = conf_manager.from_file(config_file)
+        config_manager = conf_manager.from_file(config_file, is_sandbox=is_sandbox)
     else:
-        config_manager = conf_manager(instance_name)
+        config_manager = conf_manager(instance_name, is_sandbox=is_sandbox)
 
     config_manager.put(config)
-    config_manager.save(config_file)
+    config_file = config_manager.save(config_file)
 
     return config_file
 
 
-def select_configuration_questionaire(type_: InstanceType, system_folders: bool) -> str:
+def select_configuration_questionnaire(
+    type_: InstanceType, system_folders: bool, is_sandbox: bool = False
+) -> str:
     """
     Ask which configuration the user wants to use. It shows only configurations
     that are in the default folder.
@@ -197,14 +204,15 @@ def select_configuration_questionaire(type_: InstanceType, system_folders: bool)
         Type of the instance to create a configuration for
     system_folders : bool
         Whether to use the system folders or not
-
+    is_sandbox : bool
+        Whether to show only the sandbox configurations or not
     Returns
     -------
     str
         Name of the configuration
     """
     context = select_context_class(type_)
-    configs, _ = context.available_configurations(system_folders)
+    configs, _ = context.available_configurations(system_folders, is_sandbox)
 
     # each collection (file) can contain multiple configs. (e.g. test,
     # dev)

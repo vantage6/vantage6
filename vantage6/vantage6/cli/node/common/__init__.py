@@ -8,11 +8,16 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import debug, error, info
-from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
+from vantage6.common.globals import (
+    APPNAME,
+    HTTP_LOCALHOST,
+    InstanceType,
+    RequiredNodeEnvVars,
+)
 
 from vantage6.client import UserClient
 
-from vantage6.cli.configuration_wizard import select_configuration_questionaire
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 
 
@@ -33,7 +38,7 @@ def create_client(ctx: NodeContext) -> UserClient:
     # if the server is run locally, we need to use localhost here instead of
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
-        host = "http://localhost"
+        host = HTTP_LOCALHOST
     port = ctx.config["port"]
     api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
@@ -64,26 +69,37 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
         client.authenticate()
     except Exception as exc:
         error("Could not authenticate with server!")
-        debug(exc)
+        debug(str(exc))
         exit(1)
 
     return client
 
 
-def select_node(name: str, system_folders: bool) -> tuple[str, str]:
+def select_node(name: str, system_folders: bool) -> str:
     """
     Let user select node through questionnaire if name is not given.
+
+    Parameters
+    ----------
+    name : str
+        Name of the node to select
+    system_folders : bool
+        Whether to use system folders or not
 
     Returns
     -------
     str
         Name of the configuration file
     """
-    name = (
-        name
-        if name
-        else select_configuration_questionaire(InstanceType.NODE, system_folders)
-    )
+    try:
+        name = (
+            name
+            if name
+            else select_configuration_questionnaire(InstanceType.NODE, system_folders)
+        )
+    except Exception:
+        error("No configurations could be found!")
+        exit()
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):

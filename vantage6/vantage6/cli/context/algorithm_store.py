@@ -26,11 +26,14 @@ class AlgorithmStoreContext(BaseServerContext):
 
     INST_CONFIG_MANAGER = AlgorithmStoreConfigurationManager
 
-    def __init__(self, instance_name: str, system_folders: bool = S_FOL):
+    def __init__(
+        self, instance_name: str, system_folders: bool = S_FOL, is_sandbox: bool = False
+    ):
         super().__init__(
             InstanceType.ALGORITHM_STORE,
             instance_name,
             system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
         self.log.info("vantage6 version '%s'", __version__)
 
@@ -88,7 +91,9 @@ class AlgorithmStoreContext(BaseServerContext):
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str, system_folders: bool = S_FOL) -> bool:
+    def config_exists(
+        cls, instance_name: str, system_folders: bool = S_FOL, is_sandbox: bool = False
+    ) -> bool:
         """
         Check if a configuration file exists.
 
@@ -99,14 +104,15 @@ class AlgorithmStoreContext(BaseServerContext):
             of the configuration file.
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
-
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
-            InstanceType.ALGORITHM_STORE, instance_name, system_folders
+        return super().base_config_exists(
+            InstanceType.ALGORITHM_STORE, instance_name, system_folders, is_sandbox
         )
 
     @classmethod
