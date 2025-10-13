@@ -68,9 +68,7 @@ def new(
             exit(1)
     except Exception as e:
         error(e)
-        import traceback
 
-        traceback.print_exc()
         exit(1)
 
     command_name = get_main_cli_command_name(type_)
