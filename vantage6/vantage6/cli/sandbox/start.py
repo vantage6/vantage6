@@ -249,9 +249,13 @@ def _initialize_sandbox(
     api_keys = [node["api_key"] for node in node_details]
     node_names = [node["name"] for node in node_details]
 
-    extra_dataset = NodeDataset(
-        label=add_dataset[0],
-        path=add_dataset[1],
+    extra_dataset = (
+        NodeDataset(
+            label=add_dataset[0],
+            path=add_dataset[1],
+        )
+        if add_dataset is not None and add_dataset != ()
+        else None
     )
 
     # Create node config files from the nodes that were just registered in the server

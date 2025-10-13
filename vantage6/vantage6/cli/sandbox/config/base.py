@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.context import select_context_class
@@ -24,7 +26,7 @@ class BaseSandboxConfigManager:
         self.custom_data_dir = Path(custom_data_dir) if custom_data_dir else None
 
     @staticmethod
-    def _read_extra_config_file(extra_config_file: Path | None) -> str:
+    def _read_extra_config_file(extra_config_file: Path | None) -> dict:
         """Reads extra configuration file.
 
         Parameters
@@ -34,15 +36,17 @@ class BaseSandboxConfigManager:
 
         Returns
         -------
-        str
-            Extra configuration file content
+        dict
+            Extra configuration parsed from YAML. Empty dict if none provided.
         """
         if extra_config_file:
-            # read the YAML file as string, so it can be appended to the
-            # configuration easily
             with open(extra_config_file, "r", encoding="utf-8") as f:
-                return f.read()
-        return ""
+                loaded = yaml.safe_load(f) or {}
+                if not isinstance(loaded, dict):
+                    # Ensure we always return a dictionary
+                    return {"value": loaded}
+                return loaded
+        return {}
 
     def _create_and_get_data_dir(
         self, instance_type: InstanceType, is_data_folder: bool = False

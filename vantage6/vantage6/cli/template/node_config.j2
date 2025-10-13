@@ -334,6 +334,3 @@ node:
     # machine, this extension is added to the task directory to avoid conflicts.
     task_dir_extension: {{ node.dev.task_dir_extension }}
   {% endif %}
-  {% if node.additional_config is defined %}
-  {{ node.additional_config }}
-  {% endif %}

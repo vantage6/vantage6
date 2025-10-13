@@ -133,7 +133,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "org_id": idx + 1,
                 "api_key": api_key,
                 "node_name": self.node_names[idx],
-                "user_defined_config": extra_config,
             }
             config_file = self._create_node_config_file(
                 config,
@@ -225,7 +224,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         # create new node config
         node_config = new(
             config_producing_func=self.__node_config_return_func,
-            config_producing_func_args=(config, datasets, path_to_data_dir),
+            config_producing_func_args=(
+                config,
+                self.extra_node_config,
+                datasets,
+                path_to_data_dir,
+            ),
             name=config_name,
             system_folders=False,
             namespace=self.namespace,
@@ -241,6 +245,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
     def __node_config_return_func(
         self,
         node_specific_config: dict,
+        extra_config: dict,
         datasets: list[tuple[str, Path]],
         path_to_data_dir: Path,
     ) -> dict:
@@ -248,7 +253,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         Return a dict with node configuration values to be used in creating the
         config file.
         """
-        return {
+        config = {
             "node": {
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "apiKey": node_specific_config["api_key"],
@@ -262,12 +267,10 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                     "file": f"{node_specific_config['node_name']}.log",
                 },
-                # TODO: the keycloak instance should be spun up together with the
-                # server
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local"
+                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"{self.namespace}.svc.cluster.local"
                 ),
-                "additional_config": node_specific_config["user_defined_config"],
                 "dev": {
                     "task_dir_extension": str(path_to_data_dir),
                 },
@@ -294,8 +297,17 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     ]
                 },
                 "server": {
-                    "url": f"http://vantage6-{self.server_name}-user-server-vantage6-server-service.{self.namespace}.svc.cluster.local",
+                    "url": (
+                        f"http://vantage6-{self.server_name}-user-server-"
+                        f"vantage6-server-service.{self.namespace}.svc.cluster.local"
+                    ),
                     "port": self.server_port,
                 },
             },
         }
+
+        # merge the extra config with the node config
+        if extra_config is not None:
+            config.update(extra_config)
+
+        return config

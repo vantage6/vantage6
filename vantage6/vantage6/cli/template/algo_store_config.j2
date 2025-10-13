@@ -193,6 +193,3 @@ database:
   # The name of the k8s node where the database is running
   k8sNodeName: {{ database.k8sNodeName }}
   {% endif %}
-  {% if store.additional_config is defined %}
-  {{ store.additional_config }}
-  {% endif %}

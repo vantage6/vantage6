@@ -52,6 +52,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         ui_image: str | None,
         extra_server_config: Path | None,
         extra_store_config: Path | None,
+        extra_auth_config: Path | None,
         context: str,
         namespace: str,
         k8s_node_name: str,
@@ -67,11 +68,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.ui_image = ui_image
         self.extra_server_config = extra_server_config
         self.extra_store_config = extra_store_config
+        self.extra_auth_config = extra_auth_config
         self.context = context
         self.namespace = namespace
 
         self.server_config_file = None
         self.store_config_file = None
+        self.auth_config_file = None
         self.k8s_node_name = k8s_node_name
 
     def generate_server_configs(self) -> None:
@@ -83,15 +86,16 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
         self._create_algo_store_config()
 
-    def __server_config_return_func(self, extra_config: str, data_dir: Path) -> dict:
+    def __server_config_return_func(self, extra_config: dict, data_dir: Path) -> dict:
         """
         Return a dict with server configuration values to be used in creating the
         config file.
 
         Parameters
         ----------
-        extra_config : str
-            Extra configuration to be added to the server configuration.
+        extra_config : dict
+            Extra configuration (parsed from YAML) to be added to the server
+            configuration.
         data_dir : Path
             Path to the data directory.
 
@@ -100,8 +104,14 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         dict
             Dictionary with server configuration values.
         """
-        store_address = f"http://vantage6-{self.server_name}-store-user-algorithm-store-store-service.{self.namespace}.svc.cluster.local:{Ports.DEV_ALGO_STORE}"
-        return {
+        store_service = (
+            f"vantage6-{self.server_name}-store-user-algorithm-store-store-service"
+        )
+        store_address = (
+            f"http://{store_service}.{self.namespace}.svc.cluster.local:"
+            f"{Ports.DEV_ALGO_STORE}"
+        )
+        config = {
             "server": {
                 "baseUrl": f"{HTTP_LOCALHOST}:{self.server_port}",
                 # TODO: v5+ set to latest v5 image
@@ -131,8 +141,10 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     ),
                     "store_address": store_address,
                 },
-                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
-                "additional_config": extra_config,
+                "keycloakUrl": (
+                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"{self.namespace}.svc.cluster.local"
+                ),
             },
             "rabbitmq": {},
             "database": {
@@ -149,6 +161,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             },
         }
 
+        # merge the extra config with the server config
+        if extra_config is not None:
+            config.update(extra_config)
+
+        return config
+
     def _create_vserver_config(self) -> None:
         """Creates server configuration file (YAML)."""
 
@@ -156,9 +174,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
         extra_config = self._read_extra_config_file(self.extra_server_config)
         if self.ui_image is not None:
-            if extra_config:
-                extra_config += "\n"
-            extra_config += f"images:\n  ui: {self.ui_image}"
+            ui_config = extra_config.get("ui", {}) if extra_config is not None else {}
+            ui_config["image"] = self.ui_image
+            extra_config["ui"] = ui_config
 
         # Create the server config file
         self.server_config_file = new(
@@ -191,7 +209,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         )
 
     def __algo_store_config_return_func(
-        self, extra_config: str, data_dir: Path
+        self, extra_config: dict, data_dir: Path
     ) -> dict:
         """
         Return a dict with algorithm store configuration values to be used in creating
@@ -202,7 +220,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         dict
             Dictionary with algorithm store configuration values.
         """
-        return {
+        config = {
             "store": {
                 "internal": {
                     "port": self.algorithm_store_port,
@@ -211,12 +229,14 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                 },
                 "vantage6ServerUri": f"{HTTP_LOCALHOST}:{self.server_port}",
-                "additional_config": extra_config,
                 "image": (
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a36"
                 ),
-                "keycloakUrl": f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local",
+                "keycloakUrl": (
+                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"{self.namespace}.svc.cluster.local"
+                ),
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,
@@ -237,11 +257,17 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             },
         }
 
+        # merge the extra config with the algorithm store config
+        if extra_config is not None:
+            config.update(extra_config)
+
+        return config
+
     def _create_auth_config(self) -> None:
         """Create auth configuration file (YAML)."""
         self.auth_config_file = new(
             config_producing_func=self.__auth_config_return_func,
-            config_producing_func_args=(),
+            config_producing_func_args=(self.extra_auth_config,),
             name=f"{self.server_name}-auth",
             system_folders=False,
             namespace=self.namespace,
@@ -250,13 +276,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             is_sandbox=True,
         )
 
-    def __auth_config_return_func(self) -> dict:
+    def __auth_config_return_func(self, extra_config: dict) -> dict:
         """
         Return a dict with auth configuration values to be used in creating the
         config file.
         """
 
-        return {
+        config = {
             "keycloak": {
                 "production": False,
                 "no_password_update_required": True,
@@ -266,3 +292,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ],
             },
         }
+
+        # merge the extra config with the auth config
+        if extra_config is not None:
+            config.update(extra_config)
+
+        return config
