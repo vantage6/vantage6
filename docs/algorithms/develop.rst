@@ -190,7 +190,7 @@ Partial function
 Testing your algorithm
 ----------------------
 
-It can be helpful to test your algorithm outside of Docker using the ``MockNetwork``.
+It can be helpful to test your algorithm outside of a containerized environment using the ``MockNetwork``.
 This may save time as it does not require you to set up a test infrastructure with a
 vantage6 server and nodes, and allows you to test your algorithm without building a
 Docker image every time. The algorithm boilerplate code comes with a test file that
