@@ -87,13 +87,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.node_configs = []
         self.node_config_files = []
         self.node_config_names = []
+        self.extra_config = None
 
     def generate_node_configs(self) -> None:
         """
         Generates ``num_nodes`` node configuration files.
         """
         node_data_files = []
-        extra_config = self._read_extra_config_file(self.extra_node_config)
+        self.extra_config = self._read_extra_config_file(self.extra_node_config)
 
         data_directory = impresources.files(node_datafiles_dir)
 
@@ -226,7 +227,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             config_producing_func=self.__node_config_return_func,
             config_producing_func_args=(
                 config,
-                self.extra_node_config,
+                self.extra_config,
                 datasets,
                 path_to_data_dir,
             ),
