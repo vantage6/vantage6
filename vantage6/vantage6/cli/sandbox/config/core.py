@@ -14,8 +14,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
     ----------
     server_name : str
         Name of the server.
-    num_nodes : int
-        Number of nodes to create.
     server_port : int
         Port of the server.
     ui_port : int
@@ -24,26 +22,23 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         Port of the algorithm store.
     server_image : str | None
         Image of the server.
-    node_image : str | None
-        Image of the node.
     store_image : str | None
         Image of the algorithm store.
     ui_image : str | None
         Image of the UI.
     extra_server_config : Path | None
         Path to the extra server configuration file.
-    extra_node_config : Path | None
-        Path to the extra node configuration file.
     extra_store_config : Path | None
         Path to the extra algorithm store configuration file.
-    extra_dataset : tuple[str, Path] | None
-        List of tuples with the label and path to the dataset file.
     context : str | None
         Kubernetes context.
     namespace : str | None
         Kubernetes namespace.
     k8s_node_name : str
         Kubernetes node name.
+    custom_data_dir : Path | None
+        Path to the custom data directory. Useful on WSL because of mount issues for
+        default directories.
     """
 
     def __init__(

@@ -9,6 +9,14 @@ from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 class BaseSandboxConfigManager:
     """
     Base class for sandbox configuration managers.
+
+    Parameters
+    ----------
+    server_name : str
+        Name of the server.
+    custom_data_dir : Path | None
+        Path to the custom data directory. Useful on WSL because of mount issues for
+        default directories.
     """
 
     def __init__(self, server_name: str, custom_data_dir: Path | None) -> None:

@@ -16,7 +16,7 @@ from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.sandbox.config.node import NodeSandboxConfigManager
+from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
 from vantage6.cli.server.start import cli_server_start
 
@@ -248,6 +248,11 @@ def _initialize_sandbox(
     api_keys = [node["api_key"] for node in node_details]
     node_names = [node["name"] for node in node_details]
 
+    extra_dataset = NodeDataset(
+        label=add_dataset[0],
+        path=add_dataset[1],
+    )
+
     # Create node config files from the nodes that were just registered in the server
     node_config_manager = NodeSandboxConfigManager(
         server_name=server_name,
@@ -256,7 +261,7 @@ def _initialize_sandbox(
         server_port=ctx.config["server"]["port"],
         node_image=node_image,
         extra_node_config=extra_node_config,
-        extra_dataset=add_dataset,
+        extra_dataset=extra_dataset,
         context=context,
         namespace=namespace,
         k8s_node_name=k8s_node_name,
