@@ -94,16 +94,16 @@ class ConfigurationManager(object):
 
     Parameters
     ----------
-    conf_class: Configuration
-        The class to use for the configuration.
     name: str
         The name of the configuration.
+    conf_class: Configuration
+        The class to use for the configuration.
     """
 
     def __init__(
         self,
+        name: str,
         conf_class: Configuration = Configuration,
-        name: str = None,
         is_sandbox: bool = False,
     ) -> None:
         self.config = {}
