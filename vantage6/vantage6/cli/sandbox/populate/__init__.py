@@ -4,6 +4,9 @@ Script to populate the server with basic fixtures.
 
 import time
 import traceback
+from logging import info
+
+from vantage6.common import error
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
@@ -44,11 +47,6 @@ def populate_server_dev(
     -------
     str | None
         A report of the creation process, or None if an error occurred.
-
-    Raises
-    ------
-    Exception
-        If an error occurs while populating the server.
     """
     client = _initalize_client(server_url, auth_url)
 
@@ -67,10 +65,10 @@ def populate_server_dev(
         return report_deletion + "\n" + report_creation + "\n" + report_store
 
     except Exception:
-        print("=" * 80)
-        print("Failed to populate server")
-        print(traceback.format_exc())
-        print("=" * 80)
+        error("=" * 80)
+        error("Failed to populate server")
+        error(traceback.format_exc())
+        error("=" * 80)
 
 
 def populate_server_sandbox(
@@ -107,10 +105,10 @@ def populate_server_sandbox(
         )
         connect_store(client)
     except Exception:
-        print("=" * 80)
-        print("Failed to populate server")
-        print(traceback.format_exc())
-        print("=" * 80)
+        error("=" * 80)
+        error("Failed to populate server")
+        error(traceback.format_exc())
+        error("=" * 80)
         exit(1)
 
     # return the details of the created nodes so that config files can be created
@@ -141,7 +139,7 @@ def _initalize_client(server_url, auth_url) -> Client:
         log_level=LogLevel.ERROR,
     )
 
-    print("Waiting for authentication...")
+    info("Waiting for authentication...")
     max_attempts = 120
     attempt = 1
 
@@ -149,11 +147,11 @@ def _initalize_client(server_url, auth_url) -> Client:
         try:
             print(".", end="", flush=True)
             client.authenticate()
-            print("Successfully authenticated with server!")
+            info("Successfully authenticated with server!")
             break
         except Exception as e:
             if attempt == max_attempts:
-                print(
+                error(
                     f"Failed to authenticate after {max_attempts} attempts. "
                     "Server may not be online."
                 )

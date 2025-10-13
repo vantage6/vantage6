@@ -34,7 +34,8 @@ from vantage6.cli.server.start import cli_server_start
     "--re-initialize",
     is_flag=True,
     default=False,
-    help="Re-initialize the sandbox",
+    help="Re-initialize the sandbox. This will repopulate the server and create new "
+    "node configurations.",
 )
 @click.option(
     "--num-nodes",

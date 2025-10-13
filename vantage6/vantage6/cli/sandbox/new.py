@@ -14,9 +14,6 @@ from vantage6.cli.server.common import get_server_context
 from vantage6.cli.utils import prompt_config_name
 
 
-# TODO:
-# - [ ] Accept the additional config files for the server, node and algorithm store
-# - [ ] Exit gracefully when one of the steps fails
 @click.command()
 @click.option(
     "-n", "--name", default=None, type=str, help="Name for your development setup"
@@ -44,7 +41,7 @@ from vantage6.cli.utils import prompt_config_name
     "--algorithm-store-port",
     type=int,
     default=Ports.DEV_ALGO_STORE.value,
-    help=(f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}."),
+    help=f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}.",
 )
 @click.option(
     "--server-image",

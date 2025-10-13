@@ -20,7 +20,9 @@ def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
 
     Parameters
     ----------
-    to_mnt_wsl
+    path: Path
+        Path to replace.
+    to_mnt_wsl: bool
         If True, the path will be replaced from the /run/desktop/mnt/host/wsl path to
         the /mnt/wsl path. If false, vice versa. By default, it is False.
     """
