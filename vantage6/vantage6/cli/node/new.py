@@ -9,6 +9,7 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     FILE_BASED_DATABASE_TYPES,
+    HTTP_LOCALHOST,
     SERVICE_BASED_DATABASE_TYPES,
     InstanceType,
     NodePolicy,
@@ -91,7 +92,7 @@ def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
                 "type": "text",
                 "name": "server_url",
                 "message": "The base-URL of the server:",
-                "default": "http://localhost",
+                "default": HTTP_LOCALHOST,
             },
         ]
     )

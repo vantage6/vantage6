@@ -8,7 +8,12 @@ import docker
 from colorama import Fore, Style
 
 from vantage6.common import debug, error, info
-from vantage6.common.globals import APPNAME, InstanceType, RequiredNodeEnvVars
+from vantage6.common.globals import (
+    APPNAME,
+    HTTP_LOCALHOST,
+    InstanceType,
+    RequiredNodeEnvVars,
+)
 
 from vantage6.client import UserClient
 
@@ -33,7 +38,7 @@ def create_client(ctx: NodeContext) -> UserClient:
     # if the server is run locally, we need to use localhost here instead of
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
-        host = "http://localhost"
+        host = HTTP_LOCALHOST
     port = ctx.config["port"]
     api_path = ctx.config["api_path"]
     info(f"Connecting to server at '{host}:{port}{api_path}'")
@@ -73,6 +78,13 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
 def select_node(name: str, system_folders: bool) -> str:
     """
     Let user select node through questionnaire if name is not given.
+
+    Parameters
+    ----------
+    name : str
+        Name of the node to select
+    system_folders : bool
+        Whether to use system folders or not
 
     Returns
     -------

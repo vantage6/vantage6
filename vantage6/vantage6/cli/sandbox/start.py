@@ -6,7 +6,7 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import error, info
-from vantage6.common.globals import InstanceType, Ports
+from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
@@ -19,8 +19,6 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.sandbox.config.node import NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
 from vantage6.cli.server.start import cli_server_start
-
-LOCALHOST = "http://localhost"
 
 
 @click.command()
@@ -71,18 +69,11 @@ LOCALHOST = "http://localhost"
     "on WSL because of mount issues for default directories. Only used if the "
     "--re-initialize flag is provided.",
 )
-@click_insert_context(
-    type_=InstanceType.SERVER,
-    include_name=True,
-    include_system_folders=True,
-    is_sandbox=True,
-)
+@click_insert_context(type_=InstanceType.SERVER, is_sandbox=True)
 @click.pass_context
 def cli_sandbox_start(
     click_ctx: click.Context,
     ctx: ServerContext,
-    name: str,
-    system_folders: bool,
     context: str | None,
     namespace: str | None,
     local_chart_dir: Path | None,
@@ -250,7 +241,7 @@ def _initialize_sandbox(
     info("Populating server")
     node_details = populate_server_sandbox(
         server_url=server_url,
-        auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH}",
         number_of_nodes=num_nodes,
     )
 
@@ -318,7 +309,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     client = Client(
         # TODO replace default API path global
         server_url=server_url,
-        auth_url=f"{LOCALHOST}:{Ports.DEV_AUTH}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH}",
         log_level=LogLevel.ERROR,
     )
     max_retries = 100

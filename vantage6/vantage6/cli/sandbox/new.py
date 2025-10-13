@@ -13,8 +13,6 @@ from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.server.common import get_server_context
 from vantage6.cli.utils import prompt_config_name
 
-LOCALHOST = "http://localhost"
-
 
 # TODO:
 # - [ ] Accept the additional config files for the server, node and algorithm store

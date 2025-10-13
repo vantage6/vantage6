@@ -68,6 +68,11 @@ SESSION_STATE_FILENAME = "session_state"
 # sandbox configuration suffix
 SANDBOX_SUFFIX = ".sandbox"
 
+# Localhost addresses
+LOCALHOST = "localhost"
+HTTP_LOCALHOST = "http://localhost"
+LINUX_LOCALHOST = "http://127.0.0.1"
+
 
 class InstanceType(StrEnumBase):
     """The types of instances that can be created."""

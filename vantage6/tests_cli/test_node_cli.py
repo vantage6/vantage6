@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from vantage6.common import STRING_ENCODING
-from vantage6.common.globals import Ports
+from vantage6.common.globals import LOCALHOST, Ports
 
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.globals import APPNAME
@@ -382,7 +382,7 @@ class NodeCLITest(unittest.TestCase):
     def test_client(self, client, error, debug, info):
         ctx = MagicMock(
             config={
-                "server_url": "localhost",
+                "server_url": LOCALHOST,
                 "port": Ports.DEV_SERVER.value,
                 "api_path": "",
             }

@@ -16,8 +16,6 @@ from vantage6.cli.globals import (
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
 from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
-LOCALHOST = "http://localhost"
-
 
 class NodeSandboxConfigManager(BaseSandboxConfigManager):
     """

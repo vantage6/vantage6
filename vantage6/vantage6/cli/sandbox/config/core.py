@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from vantage6.common.globals import InstanceType, Ports
+from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
 from vantage6.cli.common.new import new
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
-
-LOCALHOST = "http://localhost"
 
 
 class CoreSandboxConfigManager(BaseSandboxConfigManager):
@@ -110,7 +108,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         store_address = f"http://vantage6-{self.server_name}-store-user-algorithm-store-store-service.{self.namespace}.svc.cluster.local:{Ports.DEV_ALGO_STORE}"
         return {
             "server": {
-                "baseUrl": f"{LOCALHOST}:{self.server_port}",
+                "baseUrl": f"{HTTP_LOCALHOST}:{self.server_port}",
                 # TODO: v5+ set to latest v5 image
                 # TODO make this configurable
                 "image": (
@@ -217,7 +215,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "logging": {
                     "level": "DEBUG",
                 },
-                "vantage6ServerUri": f"{LOCALHOST}:{self.server_port}",
+                "vantage6ServerUri": f"{HTTP_LOCALHOST}:{self.server_port}",
                 "additional_config": extra_config,
                 "image": (
                     self.store_image
@@ -268,8 +266,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "production": False,
                 "no_password_update_required": True,
                 "redirectUris": [
-                    f"{LOCALHOST}:7600",
-                    f"{LOCALHOST}:7681",
+                    f"{HTTP_LOCALHOST}:7600",
+                    f"{HTTP_LOCALHOST}:7681",
                 ],
             },
         }

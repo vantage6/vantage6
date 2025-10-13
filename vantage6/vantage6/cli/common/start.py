@@ -19,6 +19,7 @@ from vantage6.common.globals import (
     DEFAULT_NODE_IMAGE,
     DEFAULT_SERVER_IMAGE,
     DEFAULT_UI_IMAGE,
+    LOCALHOST,
     InstanceType,
 )
 
@@ -224,7 +225,7 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
-    ip: str = "localhost",
+    ip: str = LOCALHOST,
     context: str | None = None,
     namespace: str | None = None,
 ) -> None:
@@ -239,8 +240,8 @@ def start_port_forward(
         The port on the service to forward.
     port : int
         The port to listen on.
-    ip : str | None
-        The IP address to listen on. If None, defaults to localhost.
+    ip : str
+        The IP address to listen on. Defaults to localhost.
     context : str | None
         The Kubernetes context to use.
     namespace : str | None
@@ -304,7 +305,7 @@ def start_port_forward(
 
     # Create the port forwarding command
     if not ip:
-        ip = "localhost"
+        ip = LOCALHOST
 
     command = [
         "kubectl",
