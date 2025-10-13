@@ -15,6 +15,8 @@ from vantage6.algorithm.tools.exceptions import (
 )
 from vantage6.algorithm.tools.util import get_action, get_env_var
 
+from vantage6.algorithm.decorator.data import dataframe
+
 
 def _exit_if_action_mismatch(function_action: AlgorithmStepType):
     """
@@ -214,8 +216,12 @@ def preprocessing(func: callable) -> callable:
 
         return _convert_to_parquet(result)
 
+    # Mark the step type for introspection
     wrapper.vantage6_decorator_step_type = AlgorithmStepType.PREPROCESSING
-    return wrapper
+
+    # Preprocessing functions always take one dataframe argument. Apply the
+    # dataframe decorator to the wrapper so data is injected at CALL time
+    return dataframe(1)(wrapper)
 
 
 def federated(func: callable) -> callable:
