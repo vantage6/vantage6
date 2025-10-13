@@ -1,6 +1,6 @@
 import pandas as pd
 
-from vantage6.common import error
+from vantage6.common import info
 
 from vantage6.mock.client import MockAlgorithmClient, MockUserClient
 from vantage6.mock.node import MockNode
@@ -13,8 +13,6 @@ class MockNetwork:
         module_name: str,
         datasets: list[dict[str, dict[str, str | pd.DataFrame]]],
         collaboration_id: int = 1,
-        organization_ids: list[int] | None = None,
-        node_ids: list[int] | None = None,
     ):
         """
         Create a mock network to test algorithms.
@@ -37,12 +35,6 @@ class MockNetwork:
             automatically a data extraction step is performed.
         collaboration_id : int | None
             The id of the collaboration.
-        organization_ids : list[int] | None
-            The ids of the organizations. By default, the ids are set to the range of
-            the number of datasets.
-        node_ids : list[int] | None
-            The ids of the nodes. By default, the ids are set to the range of the number
-            of datasets.
 
         Attributes
         ----------
@@ -111,28 +103,12 @@ class MockNetwork:
         >>> results = client.result.from_task(task.get("id"))
         >>> print(results)
         """
-
-        if organization_ids and len(organization_ids) != len(datasets.keys()):
-            error(
-                f"The number of organization ids {len(organization_ids)} does not match "
-                f"the number of datasets {len(datasets.keys())}"
-            )
-            return
-
-        if node_ids and len(node_ids) != len(datasets.keys()):
-            error(
-                f"The number of node ids {len(node_ids)} does not match the number of "
-                f"datasets {len(datasets.keys())}"
-            )
-
         self.collaboration_id = collaboration_id
         self.module_name = module_name
         self.nodes = []
 
-        organization_ids = (
-            organization_ids if organization_ids else list(range(len(datasets)))
-        )
-        node_ids = node_ids if node_ids else list(range(len(datasets)))
+        organization_ids = list(range(len(datasets)))
+        node_ids = list(range(len(datasets)))
         for org_id, node_id, dataset in zip(organization_ids, node_ids, datasets):
             self.nodes.append(
                 MockNode(node_id, org_id, collaboration_id, dataset, self)
@@ -141,6 +117,8 @@ class MockNetwork:
         self.server = MockServer(collaboration_id)
         self.user_client = MockUserClient(self)
         self.algorithm_client = MockAlgorithmClient(self)
+
+        info(f"Mock network created with {len(self.nodes)} nodes")
 
     @property
     def organization_ids(self) -> list[int]:
