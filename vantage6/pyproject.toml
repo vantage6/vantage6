@@ -54,7 +54,6 @@ where = ["vantage6/cli"]
 
 [tool.setuptools.package-data]
 "vantage6/cli/" = [
-    "rabbitmq/rabbitmq.config",
     "template/node_config.j2",
     "template/node_config_nonk8s.j2",
     "template/server_config.j2",
