@@ -77,6 +77,9 @@ class AlgorithmStoreBase(ServicesResources):
         """
         if "svc.cluster.local" in store.url:
             port_and_api_path = store.url.split(":")[-1]
+            # Note that we do NOT save the converted URL in the database, as the
+            # database needs to contain the original URL for the server to communicate
+            # with the store.
             store.url = "http://localhost:" + port_and_api_path
 
 

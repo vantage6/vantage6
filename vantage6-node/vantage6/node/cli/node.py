@@ -76,7 +76,8 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
                 )
             except Exception:
                 error("No configurations could be found!")
-                exit()
+                info("Run `v6 node new` to create a new node configuration.")
+                exit(1)
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
