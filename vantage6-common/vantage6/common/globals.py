@@ -65,6 +65,9 @@ SESSION_STATE_FILENAME = "session_state"
 # session state file name
 SESSION_STATE_FILENAME = "session_state"
 
+# sandbox configuration suffix
+SANDBOX_SUFFIX = ".sandbox"
+
 
 class InstanceType(StrEnumBase):
     """The types of instances that can be created."""

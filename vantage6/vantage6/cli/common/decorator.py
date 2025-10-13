@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 from vantage6.common import error
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import SANDBOX_SUFFIX, InstanceType
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context import get_context, select_context_class
@@ -88,8 +88,8 @@ def click_insert_context(
             if sandbox_param is not None:
                 # Pop to avoid passing unknown kwarg to the wrapped function
                 runtime_is_sandbox = bool(kwargs.pop(sandbox_param, False))
-            if runtime_is_sandbox and name and name.endswith(".sandbox"):
-                name = name[:-8]
+            if runtime_is_sandbox and name and name.endswith(SANDBOX_SUFFIX):
+                name = name[: -len(SANDBOX_SUFFIX)]
 
             # path to configuration file always overrides name
             if config:

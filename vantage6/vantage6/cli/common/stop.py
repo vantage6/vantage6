@@ -5,7 +5,7 @@ import subprocess
 from colorama import Fore, Style
 
 from vantage6.common import error, info, warning
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import SANDBOX_SUFFIX, InstanceType
 
 from vantage6.cli.common.utils import (
     find_running_service_names,
@@ -75,8 +75,8 @@ def execute_stop(
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
         else:
-            if is_sandbox and to_stop.endswith(".sandbox"):
-                to_stop = to_stop[:-8]
+            if is_sandbox and to_stop.endswith(SANDBOX_SUFFIX):
+                to_stop = to_stop[: -len(SANDBOX_SUFFIX)]
             ctx = get_context(
                 instance_type, to_stop, system_folders, is_sandbox=is_sandbox
             )

@@ -14,7 +14,7 @@ from vantage6.common import Fore, Singleton, Style, __version__, error, get_conf
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.docker.addons import running_in_docker
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
 
 
 class AppContext(metaclass=Singleton):
@@ -109,7 +109,7 @@ class AppContext(metaclass=Singleton):
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
         if is_sandbox:
-            self.name = self.name.replace(".sandbox", "")
+            self.name = self.name.replace(SANDBOX_SUFFIX, "")
         self.instance_type: InstanceType = instance_type
         self.in_container = in_container
         self.config_file = self.find_config_file(
@@ -187,7 +187,7 @@ class AppContext(metaclass=Singleton):
         """
         instance_name = Path(path).stem
         if is_sandbox:
-            instance_name = instance_name.replace(".sandbox", "")
+            instance_name = instance_name.replace(SANDBOX_SUFFIX, "")
 
         self_ = cls.__new__(cls)
         self_.initialize(

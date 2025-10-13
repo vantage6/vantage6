@@ -9,6 +9,8 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, Template
 from schema import Schema, SchemaError
 
+from vantage6.common.globals import SANDBOX_SUFFIX
+
 from vantage6.cli.globals import TEMPLATE_FOLDER
 
 
@@ -200,7 +202,7 @@ class ConfigurationManager(object):
         # We do not want the suffix .sandbox in the name, we capture this property in
         # the is_sandbox property of the Context class.
         if is_sandbox:
-            name = name.replace(".sandbox", "")
+            name = name.replace(SANDBOX_SUFFIX, "")
         assert name, f"Configuration name could not be extracted from filepath={path}"
         conf = cls(name=name, conf_class=conf_class, is_sandbox=is_sandbox)
         conf.load(path)
@@ -225,7 +227,7 @@ class ConfigurationManager(object):
         rendered_config = template.render(self.config)
         # add .sandbox to the path if it is a sandbox configuration
         if self.is_sandbox:
-            name = Path(path).stem + ".sandbox"
+            name = Path(path).stem + SANDBOX_SUFFIX
             path = Path(path).parent / (name + str(Path(path).suffix))
 
         with open(path, "x", encoding="utf-8") as f:
