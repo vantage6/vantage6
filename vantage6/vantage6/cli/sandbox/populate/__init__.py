@@ -47,6 +47,11 @@ def populate_server_dev(
     -------
     str | None
         A report of the creation process, or None if an error occurred.
+
+    Raises
+    ------
+    Exception
+        If connection/authentication to the server fails.
     """
     client = _initalize_client(server_url, auth_url)
 
@@ -92,6 +97,11 @@ def populate_server_sandbox(
     -------
     dict
         A dictionary containing the report of the creation process.
+
+    Raises
+    ------
+    Exception
+        If connection/authentication to the server fails.
     """
     client = _initalize_client(server_url, auth_url)
 
