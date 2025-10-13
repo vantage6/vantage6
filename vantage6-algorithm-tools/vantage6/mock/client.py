@@ -34,6 +34,22 @@ class MockBaseClient:
             self.parent: MockBaseClient = parent
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
+        """
+        Wait for results from a task
+
+        Parameters
+        ----------
+        task_id : int
+            The id of the task.
+        interval : float, optional
+            The interval in seconds to wait between checks if task is finished.
+            Default 1. Unused in the mock client.
+
+        Returns
+        -------
+        list
+            The results of the task.
+        """
         return self.result.from_task(task_id)
 
     class Task(SubClient):
