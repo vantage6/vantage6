@@ -164,9 +164,9 @@ def helm_install(
     validate_input_cmd_args(context, "context name", allow_none=True)
     validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
-    if local_chart_dir and (
-        local_chart_dir.endswith(chart_name.value)
-        or local_chart_dir.endswith(f"{chart_name.value}/")
+    if (
+        local_chart_dir  
+        and local_chart_dir.rstrip('/').endswith(chart_name.value)
     ):
         local_chart_dir = str(Path(local_chart_dir).parent)
 
