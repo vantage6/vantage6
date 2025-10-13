@@ -219,6 +219,8 @@ class AuthConfigurationManager(ConfigurationManager):
     ----------
     name : str
         Name of the configuration file.
+    is_sandbox : bool, optional
+        Whether the configuration is a sandbox configuration, by default False
     """
 
     def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):

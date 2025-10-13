@@ -327,7 +327,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     for _ in range(max_retries):
         try:
             result = client.util.get_server_health()
-            if result and result.get("healthy"):
+            if result and result.get("api"):
                 info("Server is ready.")
                 ready = True
                 break

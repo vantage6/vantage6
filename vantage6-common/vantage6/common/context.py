@@ -262,6 +262,17 @@ class AppContext(metaclass=Singleton):
     ) -> None:
         """
         Remove the config file if it exists.
+
+        Parameters
+        ----------
+        instance_type: InstanceType
+            Type of instance that is checked
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders rather than user folders
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         """
         if cls.config_exists(instance_name, system_folders, is_sandbox):
             os.remove(

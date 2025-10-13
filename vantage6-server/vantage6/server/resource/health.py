@@ -68,4 +68,4 @@ class Health(ServicesResources):
             log.error("DB not responding")
             log.exception(e)
 
-        return {"healthy": True, "database": db_ok}, HTTPStatus.OK
+        return {"api": True, "database": db_ok}, HTTPStatus.OK
