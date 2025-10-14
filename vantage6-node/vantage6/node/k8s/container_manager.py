@@ -32,6 +32,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.node.task_cleanup import delete_job_related_pods
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
@@ -53,7 +54,6 @@ from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_job_pod_run_status,
 )
 from vantage6.node.k8s.run_io import RunIO
-from vantage6.node.k8s.task_cleanup import delete_job_related_pods
 from vantage6.node.util import get_parent_id
 
 
