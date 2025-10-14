@@ -71,6 +71,6 @@ def _stop_node(node_name: str, namespace: str, context: str) -> None:
     """
     helm_uninstall(release_name=node_name, context=context, namespace=namespace)
 
-    stop_port_forward(service_name=f"{node_name}-vantage6-node-service")
+    stop_port_forward(service_name=f"{node_name}-node-service")
 
     info(f"Node {node_name} stopped successfully.")
