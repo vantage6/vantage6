@@ -262,7 +262,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.node_image
                     # TODO v5+ update
-                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a36"
+                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a37"
                 ),
                 "logging": {
                     "level": "DEBUG",

@@ -12,6 +12,7 @@ from vantage6.cli.algostore.new import cli_algo_store_new
 from vantage6.cli.algostore.remove import cli_algo_store_remove
 from vantage6.cli.algostore.start import cli_algo_store_start
 from vantage6.cli.algostore.stop import cli_algo_store_stop
+from vantage6.cli.algostore.version import cli_algo_store_version
 from vantage6.cli.auth.attach import cli_auth_attach
 from vantage6.cli.auth.files import cli_auth_files
 from vantage6.cli.auth.list import cli_auth_configuration_list
@@ -175,6 +176,7 @@ cli_algo_store.add_command(cli_algo_store_stop, name="stop")
 cli_algo_store.add_command(cli_algo_store_files, name="files")
 cli_algo_store.add_command(cli_algo_store_configuration_list, name="list")
 cli_algo_store.add_command(cli_algo_store_remove, name="remove")
+cli_algo_store.add_command(cli_algo_store_version, name="version")
 
 
 # Define the auth group

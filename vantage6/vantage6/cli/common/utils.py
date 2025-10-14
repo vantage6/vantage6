@@ -419,7 +419,9 @@ def check_running(
     return helm_release_name in running_services
 
 
-def get_config_name_from_helm_release_name(helm_release_name: str) -> str:
+def get_config_name_from_helm_release_name(
+    helm_release_name: str, is_store: bool = False
+) -> str:
     """
     Get the config name from a helm release name.
 
@@ -427,6 +429,8 @@ def get_config_name_from_helm_release_name(helm_release_name: str) -> str:
     ----------
     helm_release_name : str
         The name of the Helm release
+    is_store : bool, optional
+        Whether the instance is a store or not. By default False.
 
     Returns
     -------
@@ -436,4 +440,9 @@ def get_config_name_from_helm_release_name(helm_release_name: str) -> str:
     # helm release name is structured as:
     # f"{APPNAME}-{name}-{scope}-{instance_type}"
     # we want to get the name from the service name
-    return "-".join(helm_release_name.split("-")[1:-2])
+    if is_store:
+        # for store, the instance type is `algorithm-store` which contains an additional
+        # hyphen
+        return "-".join(helm_release_name.split("-")[1:-3])
+    else:
+        return "-".join(helm_release_name.split("-")[1:-2])

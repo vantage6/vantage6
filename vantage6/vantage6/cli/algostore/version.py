@@ -2,7 +2,12 @@ import click
 import requests
 
 from vantage6.common import error
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import (
+    DEFAULT_API_PATH,
+    HTTP_LOCALHOST,
+    InstanceType,
+    Ports,
+)
 
 from vantage6.cli import __version__
 from vantage6.cli.common.version import get_and_select_ctx
@@ -20,30 +25,36 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 @click.option(
     "--sandbox", "is_sandbox", flag_value=True, help="Stop a sandbox environment"
 )
-def cli_server_version(
+def cli_algo_store_version(
     name: str, system_folders: bool, context: str, namespace: str, is_sandbox: bool
 ) -> None:
     """
-    Print the version of the vantage6 server.
+    Print the version of the vantage6 algorithm store.
     """
 
     ctx = get_and_select_ctx(
-        InstanceType.SERVER, name, system_folders, context, namespace, is_sandbox
+        InstanceType.ALGORITHM_STORE,
+        name,
+        system_folders,
+        context,
+        namespace,
+        is_sandbox,
     )
-    server_config = ctx.config.get("server", {})
-    base_url = server_config.get("baseUrl", "")
-    api_path = server_config.get("apiPath", "")
-    if not base_url:
-        error("No base URL found in server configuration.")
+    store_config = ctx.config.get("store", {})
+
+    port = store_config.get("port", Ports.DEV_ALGO_STORE.value)
+    api_path = store_config.get("api_path", DEFAULT_API_PATH)
+    if not port:
+        error("No port found in algorithm store configuration.")
         return
     if not api_path:
-        error("No API path found in server configuration.")
+        error("No API path found in algorithm store configuration.")
         return
 
-    response = requests.get(f"{base_url}{api_path}/version")
+    response = requests.get(f"{HTTP_LOCALHOST}:{port}{api_path}/version")
     if response.status_code != 200:
-        error("Failed to get server version.")
+        error("Failed to get algorithm store version.")
         return
-    server_version = response.json().get("version", "")
+    algorithm_store_version = response.json().get("version", "")
 
-    click.echo({"server": server_version, "cli": __version__})
+    click.echo({"algorithm_store": algorithm_store_version, "cli": __version__})
