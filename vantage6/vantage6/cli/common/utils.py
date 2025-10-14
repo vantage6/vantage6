@@ -417,3 +417,23 @@ def check_running(
         only_user_folders=not system_folders,
     )
     return helm_release_name in running_services
+
+
+def get_config_name_from_helm_release_name(helm_release_name: str) -> str:
+    """
+    Get the config name from a helm release name.
+
+    Parameters
+    ----------
+    helm_release_name : str
+        The name of the Helm release
+
+    Returns
+    -------
+    str
+        The config name
+    """
+    # helm release name is structured as:
+    # f"{APPNAME}-{name}-{scope}-{instance_type}"
+    # we want to get the name from the service name
+    return "-".join(helm_release_name.split("-")[1:-2])

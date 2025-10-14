@@ -27,6 +27,7 @@ def execute_stop(
     context: str,
     system_folders: bool,
     is_sandbox: bool = False,
+    stop_function_args: dict | None = None,
 ):
     """
     Execute the stop function for a given instance type and infra component.
@@ -42,7 +43,8 @@ def execute_stop(
     stop_all : bool
         Whether to stop all services.
     to_stop : str | None
-        The name of the service to stop.
+        The name of the service to stop. If None, the user will be asked to select a
+        service.
     namespace : str
         The namespace of the service.
     context : str
@@ -51,7 +53,11 @@ def execute_stop(
         Whether to use system folders.
     is_sandbox : bool
         Whether the configuration is a sandbox configuration, by default False
+    stop_function_args : dict | None
+        Additional arguments to pass to the stop function
     """
+    if stop_function_args is None:
+        stop_function_args = {}
     context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,
@@ -75,15 +81,21 @@ def execute_stop(
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
         else:
-            if is_sandbox and to_stop.endswith(SANDBOX_SUFFIX):
+            if to_stop.endswith(SANDBOX_SUFFIX):
                 to_stop = to_stop[: -len(SANDBOX_SUFFIX)]
+                is_sandbox = True
+            elif is_sandbox:
+                warning(
+                    "Sandbox configuration detected, but no sandbox suffix found. "
+                    "This may lead to issues."
+                )
             ctx = get_context(
                 instance_type, to_stop, system_folders, is_sandbox=is_sandbox
             )
             helm_name = ctx.helm_release_name
 
         if helm_name in running_services:
-            stop_function(helm_name, namespace, context)
+            stop_function(helm_name, namespace, context, **stop_function_args)
             info(
                 f"Stopped the {Fore.GREEN}{helm_name}{Style.RESET_ALL} {infra_component.value}."
             )

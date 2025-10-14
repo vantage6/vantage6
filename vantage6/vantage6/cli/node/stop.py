@@ -1,9 +1,11 @@
 import click
 
-from vantage6.common import info
+from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
+from vantage6.cli.common.utils import get_config_name_from_helm_release_name
+from vantage6.cli.context import get_context
 from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
     InfraComponentName,
@@ -43,8 +45,10 @@ def cli_node_stop(
     """
     Stop one or all running nodes.
     """
+    print("name", name)
     execute_stop(
         stop_function=_stop_node,
+        stop_function_args={"system_folders": system_folders, "is_sandbox": is_sandbox},
         instance_type=InstanceType.NODE,
         infra_component=InfraComponentName.NODE,
         stop_all=all_nodes,
@@ -56,21 +60,53 @@ def cli_node_stop(
     )
 
 
-def _stop_node(node_name: str, namespace: str, context: str) -> None:
+def _stop_node(
+    node_helm_name: str,
+    namespace: str,
+    context: str,
+    system_folders: bool,
+    is_sandbox: bool,
+) -> None:
     """
     Stop a node
 
     Parameters
     ----------
-    node_name : str
+    node_helm_name : str
         Name of the node to stop
     namespace : str
         Kubernetes namespace to use
     context : str
         Kubernetes context to use
+    system_folders: bool
+        Whether to use the system folders or not
+    is_sandbox: bool
+        Whether node is a sandbox node or not
     """
-    helm_uninstall(release_name=node_name, context=context, namespace=namespace)
+    helm_uninstall(release_name=node_helm_name, context=context, namespace=namespace)
 
-    stop_port_forward(service_name=f"{node_name}-node-service")
+    stop_port_forward(service_name=f"{node_helm_name}-node-service")
 
-    info(f"Node {node_name} stopped successfully.")
+    _stop_node_tasks(node_helm_name, system_folders, is_sandbox)
+
+    info(f"Node {node_helm_name} stopped successfully.")
+
+
+def _stop_node_tasks(
+    node_helm_name: str, system_folders: bool, is_sandbox: bool
+) -> None:
+    """
+    Stop the tasks of a node
+    """
+    node_name = get_config_name_from_helm_release_name(node_helm_name)
+    node_ctx = get_context(
+        InstanceType.NODE, node_name, system_folders, is_sandbox=is_sandbox
+    )
+    from pprint import pprint
+
+    pprint(node_ctx.config)
+    task_namespace = node_ctx.config.get("node", {}).get("taskNamespace")
+    pprint(task_namespace)
+    if not task_namespace:
+        warning("Could not find node's task namespace. Node tasks will not be stopped.")
+        return
