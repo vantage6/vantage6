@@ -8,7 +8,10 @@ from vantage6.common import error
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
+from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
+
 from vantage6.mock.util import env_vars
+from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
@@ -101,8 +104,9 @@ class MockNode:
 
         if not AlgorithmStepType.is_compute(step_type):
             error("Trying to run a task that is not a compute step.")
-            # TODO we need to raise or exit here
-            return
+            raise SessionActionMismatchError(
+                "Trying to run a task that is not a compute step."
+            )
 
         task_env_vars = self._task_env_vars(action, method)
 
@@ -123,8 +127,9 @@ class MockNode:
             for db in databases:
                 if db["label"] not in self.dataframes:
                     error(f"Dataframe with label {db['label']} not found.")
-                    # TODO we need to raise or exit here
-                    return
+                    raise DataFrameNotFound(
+                        f"Dataframe with label {db['label']} not found."
+                    )
                 mock_data.append(self.dataframes[db["label"]])
 
             # make a copy of the data to avoid modifying the original data of
@@ -205,8 +210,10 @@ class MockNode:
         step_type = getattr(method_fn, "vantage6_decorator_step_type", None)
         if not step_type:
             error("The method is not decorated with a vantage6 step type decorator.")
-            # TODO we need to raise or exit here
-            return
+            raise SessionActionMismatchError(
+                "The method is not decorated with a vantage6 step type decorator."
+            )
+
         return step_type
 
     def _get_method_fn_from_method(self, method: str) -> Callable:

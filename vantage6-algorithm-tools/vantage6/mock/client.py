@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, Any
 
 from vantage6.common.enum import AlgorithmStepType
 
-from vantage6.algorithm.tools.util import warn
+from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
+from vantage6.algorithm.tools.util import error, warn
+
+from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
@@ -210,8 +213,25 @@ class MockBaseClient:
             # get data for organization
             for org_id in organizations:
                 node = self.parent.network.get_node(org_id)
+                try:
+                    result = node.simulate_task_run(
+                        method, arguments, databases, action
+                    )
+                except SessionActionMismatchError:
+                    error(
+                        "This is not a computation task, are you sure you specified "
+                        "the correct method? Continuing with the next organization."
+                    )
+                    continue
+                except DataFrameNotFound as e:
+                    error(
+                        f"A dataframe you specified does not exist. {e}"
+                    )
+                    continue
+                except Exception as e:
+                    error(f"Error simulating task run for organization {org_id}: {e}")
+                    continue
 
-                result = node.simulate_task_run(method, arguments, databases, action)
                 result_response = self.parent.network.server.save_result(
                     result, task["id"]
                 )
