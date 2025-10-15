@@ -3,13 +3,16 @@ from unittest import TestCase
 import pandas as pd
 
 from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
-
 from vantage6.mock import MockNetwork
 from vantage6.mock.client import MockAlgorithmClient, MockUserClient
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 
 TEST_ALGORITHM_NAME = "test_algorithm"
+DB_LABEL_1 = "label_1"
+DB_LABEL_2 = "label_2"
+MOCK_DATA_CSV = "mock_data.csv"
+
 
 class TestMockNetworkDataframe(TestCase):
     def setUp(self):
@@ -22,13 +25,13 @@ class TestMockNetworkDataframe(TestCase):
             module_name=TEST_ALGORITHM_NAME,
             datasets=[
                 {
-                    "label_1": {
+                    DB_LABEL_1: {
                         "database": self.data1,
                         "db_type": MockDatabaseType.CSV.value,
                     }
                 },
                 {
-                    "label_2": {
+                    DB_LABEL_2: {
                         "database": self.data2,
                         "db_type": MockDatabaseType.CSV.value,
                     }
@@ -42,8 +45,8 @@ class TestMockNetworkDataframe(TestCase):
         self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
 
         # Check if data is properly assigned to nodes
-        node1_data = self.network.nodes[0].dataframes["label_1"]
-        node2_data = self.network.nodes[1].dataframes["label_2"]
+        node1_data = self.network.nodes[0].dataframes[DB_LABEL_1]
+        node2_data = self.network.nodes[1].dataframes[DB_LABEL_2]
 
         pd.testing.assert_frame_equal(node1_data, self.data1)
         pd.testing.assert_frame_equal(node2_data, self.data2)
@@ -94,7 +97,14 @@ class TestMockNetworkURI(TestCase):
         """Set up test fixtures"""
         self.network = MockNetwork(
             module_name=TEST_ALGORITHM_NAME,
-            datasets=[{"label_1": {"database": "mock_data.csv", "db_type": "csv"}}],
+            datasets=[
+                {
+                    DB_LABEL_1: {
+                        "database": MOCK_DATA_CSV,
+                        "db_type": MockDatabaseType.CSV.value,
+                    }
+                }
+            ],
         )
 
     def test_network_initialization(self):
@@ -102,7 +112,7 @@ class TestMockNetworkURI(TestCase):
         self.assertEqual(len(self.network.nodes), 1)
         self.assertEqual(len(self.network.nodes[0].dataframes), 0)
         self.assertEqual(
-            self.network.nodes[0].datasets["label_1"]["database"], "mock_data.csv"
+            self.network.nodes[0].datasets[DB_LABEL_1]["database"], MOCK_DATA_CSV
         )
 
     def test_node_initialization(self):
