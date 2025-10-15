@@ -16,6 +16,7 @@ class MockBaseClient:
         self.run = self.Run(self)
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
+        self.study = self.Study(self)
 
         # Which organization do I belong to?
         self.organization_id = 0
