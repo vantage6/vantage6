@@ -1,11 +1,14 @@
 import click
 import questionary
-from kubernetes import client, config
+from kubernetes import client
 
 from vantage6.common import error
 
 from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
+from vantage6.cli.utils_kubernetes import (
+    create_kubernetes_apis_with_ssl_handling,
+)
 
 
 @click.command()
@@ -16,15 +19,15 @@ def cli_use_namespace(namespace: str):
 
     The namespace will be created if it does not exist.
     """
-    # Load the active context configuration
-    config.load_kube_config()
+    # Configure for MicroK8s if needed
+    core_api, _ = create_kubernetes_apis_with_ssl_handling()
 
     try:
-        v1 = client.CoreV1Api()
-        namespace_list = v1.list_namespace()
+        namespace_list = core_api.list_namespace()
     except Exception:
         error(
-            "Failed to connect to Kubernetes cluster. Check if the cluster is running and reachable."
+            "Failed to connect to Kubernetes cluster. Check if the cluster is running "
+            "and reachable."
         )
         return
 
@@ -46,7 +49,7 @@ def cli_use_namespace(namespace: str):
         namespace_body = client.V1Namespace(
             metadata=client.V1ObjectMeta(name=namespace)
         )
-        v1.create_namespace(namespace_body)
+        core_api.create_namespace(namespace_body)
 
     # Switch to the selected namespace for current context
     switch_context_and_namespace(namespace=namespace)

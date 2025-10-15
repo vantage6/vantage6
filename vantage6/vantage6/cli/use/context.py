@@ -1,11 +1,12 @@
 import click
 import questionary
-from kubernetes import config
+from kubernetes import client, config
 
 from vantage6.common import error
 
 from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
+from vantage6.cli.utils_kubernetes import configure_kubernetes_client_for_microk8s
 
 
 @click.command()
@@ -14,6 +15,12 @@ def cli_use_context(context: str):
     """
     Set which Kubernetes context to use.
     """
+    # Configure for MicroK8s if needed
+    config.load_kube_config()
+    cfg = client.Configuration.get_default_copy()
+    configure_kubernetes_client_for_microk8s(cfg)
+    client.Configuration.set_default(cfg)
+
     # Get available contexts
     contexts, active_context = config.list_kube_config_contexts()
     context_names = [ctx["name"] for ctx in contexts]

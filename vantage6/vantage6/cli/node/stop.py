@@ -1,7 +1,6 @@
 import click
-from kubernetes import client as k8s_client, config as k8s_config
+from kubernetes import client as k8s_client
 from kubernetes.client import ApiException
-from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error, info, warning
 from vantage6.common.globals import APPNAME, InstanceType
@@ -15,6 +14,7 @@ from vantage6.cli.globals import (
     InfraComponentName,
 )
 from vantage6.cli.node.task_cleanup import delete_job_related_pods
+from vantage6.cli.utils_kubernetes import create_kubernetes_apis_with_ssl_handling
 
 
 @click.command()
@@ -142,18 +142,12 @@ def cleanup_task_jobs(
         error("Either all_nodes or node_ctx must be given to cleanup task jobs")
         return False
 
-    # Load Kubernetes configuration (in-cluster first, fallback to kubeconfig)
+    # Load Kubernetes configuration with SSL handling
     try:
-        k8s_config.load_incluster_config()
-    except ConfigException:
-        try:
-            k8s_config.load_kube_config()
-        except ConfigException as exc:
-            error(f"Failed to load Kubernetes configuration: {exc}")
-            return False
-
-    core_api = k8s_client.CoreV1Api()
-    batch_api = k8s_client.BatchV1Api()
+        core_api, batch_api = create_kubernetes_apis_with_ssl_handling()
+    except RuntimeError as exc:
+        error(f"Failed to load Kubernetes configuration: {exc}")
+        return False
 
     jobs = _get_jobs(namespace, batch_api)
 
