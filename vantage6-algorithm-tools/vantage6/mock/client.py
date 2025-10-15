@@ -23,41 +23,42 @@ class MockBaseClient:
         # Which organization do I belong to?
         self.organization_id = 0
 
-        self.set_missing_subclients([
-            '_access_token',
-            '_ClientBase__auth_url',
-            '_ClientBase__check_algorithm_store_valid',
-            '_ClientBase__server_url',
-            '_decrypt_data',
-            '_decrypt_field',
-            '_multi_page_request',
-            '_refresh_token',
-            '_refresh_url',
-            'auth_url',
-            'authenticate',
-            'collaboration_id',
-            'cryptor',
-            'databases',
-            'generate_path_to',
-            'headers',
-            'image',
-            'log',
-            'name',
-            'node_id',
-            'obtain_new_token',
-            'request',
-            'server_url',
-            'session_id',
-            'setup_encryption',
-            'store_id',
-            'study_id',
-            'token',
-            'wait_for_task_completion',
-            'whoami'
-        ])
+        self.set_missing_subclients(
+            [
+                "_access_token",
+                "_ClientBase__auth_url",
+                "_ClientBase__check_algorithm_store_valid",
+                "_ClientBase__server_url",
+                "_decrypt_data",
+                "_decrypt_field",
+                "_multi_page_request",
+                "_refresh_token",
+                "_refresh_url",
+                "auth_url",
+                "authenticate",
+                "collaboration_id",
+                "cryptor",
+                "databases",
+                "generate_path_to",
+                "headers",
+                "image",
+                "log",
+                "name",
+                "node_id",
+                "obtain_new_token",
+                "request",
+                "server_url",
+                "session_id",
+                "setup_encryption",
+                "store_id",
+                "study_id",
+                "token",
+                "wait_for_task_completion",
+                "whoami",
+            ]
+        )
 
     def set_missing_subclients(self, names: list[str]) -> None:
-
         def missing_subclient(name: str):
             warn(f"The subclient {name} is not available in the mock client.")
             return
@@ -86,6 +87,10 @@ class MockBaseClient:
         def __init__(self, parent) -> None:
             self.parent: MockBaseClient = parent
 
+        def missing_method(self, method: str):
+            warn(f"The method {method} is not available in the mock client.")
+            return
+
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
         Wait for results from a task
@@ -110,6 +115,14 @@ class MockBaseClient:
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
+            for method in [
+                "list",
+                "create",
+                "update",
+                "add_organization",
+                "remove_organization",
+            ]:
+                self.__setattr__(method, self.missing_method(method))
 
         def get(self, id_: int) -> dict:
             """
@@ -134,7 +147,8 @@ class MockBaseClient:
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
-            self.last_result_id = 0
+            for method in ["get", "list", "delete", "kill"]:
+                self.__setattr__(method, self.missing_method(method))
 
         def create(
             self,
@@ -211,6 +225,10 @@ class MockBaseClient:
         """
         Run subclient for the MockBaseClient
         """
+
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            self.__setattr__("list", self.missing_method("list"))
 
         def get(self, id_: int) -> dict:
             """
@@ -300,6 +318,11 @@ class MockBaseClient:
         Organization subclient for the MockBaseClient
         """
 
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            for method in ["update", "create", "delete"]:
+                self.__setattr__(method, self.missing_method(method))
+
         def get(self, id_: int) -> dict:
             """
             Get mocked organization by ID
@@ -351,6 +374,18 @@ class MockBaseClient:
         Collaboration subclient for the MockAlgorithmClient
         """
 
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            for method in [
+                "list",
+                "create",
+                "delete",
+                "update",
+                "add_organization",
+                "remove_organization",
+            ]:
+                self.__setattr__(method, self.missing_method(method))
+
         def get(self, is_encrypted: bool = True) -> dict:
             """
             Get mocked collaboration
@@ -382,37 +417,46 @@ class MockUserClient(MockBaseClient):
         self.network = network
         self.dataframe = self.Dataframe(self)
 
-        self.set_missing_subclients([
-            "util",
-            "user",
-            "role",
-            "node",
-            "rule",
-            "store",
-            "algorithm",
-            "session",
-        ])
+        self.set_missing_subclients(
+            [
+                "util",
+                "user",
+                "role",
+                "node",
+                "rule",
+                "store",
+                "algorithm",
+                "session",
+            ]
+        )
 
-        self.set_missing_attributes([
-            '_get_logger',
-            'auth_client',
-            'auth_realm',
-            'authenticate_service_account',
-            'initialize_service_account',
-            'is_service_account',
-            'kc_openid',
-            'Node',
-            'obtain_new_token_interactive',
-            'Role',
-            'Rule',
-            'service_account_client_name',
-            'service_account_client_secret',
-            'setup_collaboration',
-            'User',
-            'Util'
-        ])
+        self.set_missing_attributes(
+            [
+                "_get_logger",
+                "auth_client",
+                "auth_realm",
+                "authenticate_service_account",
+                "initialize_service_account",
+                "is_service_account",
+                "kc_openid",
+                "Node",
+                "obtain_new_token_interactive",
+                "Role",
+                "Rule",
+                "service_account_client_name",
+                "service_account_client_secret",
+                "setup_collaboration",
+                "User",
+                "Util",
+            ]
+        )
 
     class Dataframe(MockBaseClient.SubClient):
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+            for method in ["preprocess", "list", "get", "delete"]:
+                self.__setattr__(method, self.missing_method(method))
+
         def create(
             self,
             label: str,
@@ -421,9 +465,6 @@ class MockUserClient(MockBaseClient):
             name: str = "mock_dataframe",
             **kwargs,
         ) -> dict:
-            """
-            Not available: `image`, `session`, `store`, `display`
-            """
             if not arguments:
                 arguments = {}
 
@@ -447,6 +488,7 @@ class MockUserClient(MockBaseClient):
                 )
 
             return task
+
 
 class MockAlgorithmClient(MockBaseClient):
     def __init__(self, network: "MockNetwork", *args, **kwargs):
