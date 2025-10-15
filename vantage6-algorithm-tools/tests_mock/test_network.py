@@ -2,6 +2,8 @@ from unittest import TestCase
 
 import pandas as pd
 
+from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
+
 from vantage6.mock import MockNetwork
 from vantage6.mock.client import MockAlgorithmClient, MockUserClient
 from vantage6.mock.node import MockNode
@@ -18,8 +20,18 @@ class TestMockNetworkDataframe(TestCase):
         self.network = MockNetwork(
             module_name="test_algorithm",
             datasets=[
-                {"label_1": {"database": self.data1, "db_type": "csv"}},
-                {"label_2": {"database": self.data2, "db_type": "csv"}},
+                {
+                    "label_1": {
+                        "database": self.data1,
+                        "db_type": MockDatabaseType.CSV.value,
+                    }
+                },
+                {
+                    "label_2": {
+                        "database": self.data2,
+                        "db_type": MockDatabaseType.CSV.value,
+                    }
+                },
             ],
         )
 
