@@ -21,6 +21,7 @@ class MockServer:
         collaboration_id : int
             The id of the collaboration, used to format the responses.
         """
+        self.network = network
 
         # These contain the task, runs and results as dictionaries that are the same
         # format as you would get from the server responses.

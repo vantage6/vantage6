@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, Any
 
 from vantage6.common.enum import AlgorithmStepType
 
+from vantage6.algorithm.tools.util import warn
+
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
 
@@ -54,8 +56,7 @@ class MockBaseClient:
         return self.result.from_task(task_id)
 
     class Study(SubClient):
-        """
-        """
+        """ """
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
@@ -327,9 +328,63 @@ class MockBaseClient:
 
 class MockUserClient(MockBaseClient):
     def __init__(self, network: "MockNetwork", *args, **kwargs):
-        super().__init__(network, *args, **kwargs)
+        super().__init__(network)
         self.network = network
         self.dataframe = self.Dataframe(self)
+
+        self.set_missing_subclients([
+            "util",
+            "user",
+            "role",
+            "node",
+            "rule",
+            "store",
+            "algorithm",
+            "session",
+        ])
+
+        self.set_missing_attributes([
+            '_access_token',
+            '_ClientBase__auth_url',
+            '_ClientBase__check_algorithm_store_valid',
+            '_ClientBase__server_url',
+            '_decrypt_data',
+            '_decrypt_field',
+            '_get_logger',
+            '_refresh_token',
+            '_refresh_url',
+            'auth_client',
+            'auth_realm',
+            'auth_url',
+            'authenticate',
+            'authenticate_service_account',
+            'collaboration_id',
+            'cryptor',
+            'generate_path_to',
+            'headers',
+            'initialize_service_account',
+            'is_service_account',
+            'kc_openid',
+            'log',
+            'name',
+            'Node',
+            'obtain_new_token',
+            'obtain_new_token_interactive',
+            'request',
+            'Role',
+            'Rule',
+            'service_account_client_name',
+            'service_account_client_secret',
+            'server_url',
+            'session_id',
+            'setup_collaboration',
+            'setup_encryption',
+            'token',
+            'User',
+            'Util',
+            'wait_for_task_completion',
+            'whoami'
+        ])
 
     class Dataframe(MockBaseClient.SubClient):
         def create(
@@ -367,8 +422,24 @@ class MockUserClient(MockBaseClient):
 
             return task
 
+    def set_missing_subclients(self, names: list[str]) -> None:
+
+        def missing_subclient(name: str):
+            warn(f"The subclient {name} is not available in the mock client.")
+            return
+
+        for name in names:
+            self.__setattr__(name, missing_subclient(name))
+
+    def set_missing_attributes(self, names: list[str]) -> None:
+        def missing_attribute(name: str):
+            warn(f"The attribute {name} is not available in the mock client.")
+            return
+
+        for name in names:
+            self.__setattr__(name, missing_attribute(name))
 
 class MockAlgorithmClient(MockBaseClient):
     def __init__(self, network: "MockNetwork", *args, **kwargs):
-        super().__init__(network, *args, **kwargs)
+        super().__init__(network)
         self.network = network
