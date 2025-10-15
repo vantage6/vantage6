@@ -99,7 +99,7 @@ def _select_loader(database_type: str) -> Callable | None:
         The database type to select the wrapper for.
     Returns
     -------
-    callable | None
+    Callable | None
         The wrapper for the specified database type. None if the database type
         is not supported by a wrapper.
     """
