@@ -83,7 +83,7 @@ def cli_sandbox_stop(
         is_sandbox=True,
     )
 
-    # TODO: stop the auth service
+    # stop the auth service
     cmd = [
         "v6",
         "auth",

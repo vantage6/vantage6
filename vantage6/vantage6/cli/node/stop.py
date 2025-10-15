@@ -6,7 +6,10 @@ from vantage6.common import error, info, warning
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
-from vantage6.cli.common.utils import get_config_name_from_helm_release_name
+from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
+    get_config_name_from_helm_release_name,
+)
 from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import (
@@ -50,6 +53,7 @@ def cli_node_stop(
     """
     Stop one or all running nodes.
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
     execute_stop(
         stop_function=_stop_node,
         stop_function_args={"system_folders": system_folders, "is_sandbox": is_sandbox},

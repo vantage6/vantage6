@@ -5,9 +5,10 @@ import subprocess
 from colorama import Fore, Style
 
 from vantage6.common import error, info, warning
-from vantage6.common.globals import SANDBOX_SUFFIX, InstanceType
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
     find_running_service_names,
     select_context_and_namespace,
     select_running_service,
@@ -81,14 +82,7 @@ def execute_stop(
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
         else:
-            if to_stop.endswith(SANDBOX_SUFFIX):
-                to_stop = to_stop[: -len(SANDBOX_SUFFIX)]
-                is_sandbox = True
-            elif is_sandbox:
-                warning(
-                    "Sandbox configuration detected, but no sandbox suffix found. "
-                    "This may lead to issues."
-                )
+            to_stop, is_sandbox = extract_name_and_is_sandbox(to_stop, is_sandbox)
             ctx = get_context(
                 instance_type, to_stop, system_folders, is_sandbox=is_sandbox
             )

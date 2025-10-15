@@ -1,7 +1,7 @@
 import click
 import requests
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import (
     DEFAULT_API_PATH,
     HTTP_LOCALHOST,
@@ -57,4 +57,6 @@ def cli_algo_store_version(
         return
     algorithm_store_version = response.json().get("version", "")
 
-    click.echo({"algorithm_store": algorithm_store_version, "cli": __version__})
+    info("")
+    info(f"Algorithm store version: {algorithm_store_version}")
+    info(f"CLI version: {__version__}")

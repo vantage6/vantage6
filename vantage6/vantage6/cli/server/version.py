@@ -1,7 +1,7 @@
 import click
 import requests
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
@@ -26,7 +26,6 @@ def cli_server_version(
     """
     Print the version of the vantage6 server.
     """
-
     ctx = get_and_select_ctx(
         InstanceType.SERVER, name, system_folders, context, namespace, is_sandbox
     )
@@ -46,4 +45,6 @@ def cli_server_version(
         return
     server_version = response.json().get("version", "")
 
-    click.echo({"server": server_version, "cli": __version__})
+    info("")
+    info(f"Server version: {server_version}")
+    info(f"CLI version: {__version__}")

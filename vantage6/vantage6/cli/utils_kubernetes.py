@@ -13,7 +13,7 @@ from typing import Optional
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
 
-from vantage6.common import debug, warning
+from vantage6.common import warning
 
 
 def configure_kubernetes_client_for_microk8s(cfg: client.Configuration) -> None:
@@ -25,7 +25,6 @@ def configure_kubernetes_client_for_microk8s(cfg: client.Configuration) -> None:
     """
     # Check if we're using MicroK8s by looking at the current context
     if is_microk8s_context():
-        debug("Detected MicroK8s context, configuring SSL certificate handling")
         _configure_microk8s_ssl(cfg)
 
 
@@ -41,7 +40,6 @@ def _configure_microk8s_ssl(cfg: client.Configuration) -> None:
         # Try to get the MicroK8s certificate and use it properly
         cert_path = _get_microk8s_certificate_path()
         if cert_path and cert_path.exists():
-            debug(f"Using MicroK8s certificate from {cert_path}")
             _configure_with_certificate(cert_path, cfg)
         else:
             warning(
@@ -100,8 +98,6 @@ def _configure_with_certificate(cert_path: Path, cfg: client.Configuration) -> N
 
         # Apply the configuration to the default client
         client.Configuration.set_default(cfg)
-
-        debug(f"Configured Kubernetes client to use certificate: {cert_path}")
 
     except Exception as e:
         warning(f"Failed to configure with certificate {cert_path}: {e}")
@@ -162,7 +158,7 @@ def _validate_certificate(cert_path: Path) -> bool:
         )
 
     except Exception as e:
-        debug(f"Certificate validation failed: {e}")
+        warning(f"Certificate validation failed: {e}")
         return False
 
 
@@ -181,10 +177,9 @@ def load_kubernetes_config_with_fallback() -> bool:
     # Try to load in-cluster config first (for when running inside Kubernetes)
     try:
         config.load_incluster_config()
-        debug("Loaded in-cluster Kubernetes configuration")
         return True
     except ConfigException:
-        debug("Not running in-cluster, trying kubeconfig")
+        pass
 
     # Fallback to kubeconfig
     try:
@@ -194,7 +189,6 @@ def load_kubernetes_config_with_fallback() -> bool:
         configure_kubernetes_client_for_microk8s(cfg)
         client.Configuration.set_default(cfg)
 
-        debug("Loaded kubeconfig successfully")
         return True
     except ConfigException as exc:
         warning(f"Failed to load Kubernetes configuration: {exc}")
@@ -221,6 +215,14 @@ def create_kubernetes_apis_with_ssl_handling() -> tuple[
     batch_api = client.BatchV1Api()
 
     return core_api, batch_api
+
+
+def get_core_api_with_ssl_handling() -> client.CoreV1Api:
+    """
+    Get the CoreV1Api client with SSL handling for development environments.
+    """
+    core_api, _ = create_kubernetes_apis_with_ssl_handling()
+    return core_api
 
 
 def is_microk8s_context() -> bool:

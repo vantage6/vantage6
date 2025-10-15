@@ -1,15 +1,16 @@
 import click
-from kubernetes import client as k8s_client, config as k8s_config
+from kubernetes import config as k8s_config
 from kubernetes.config.config_exception import ConfigException
 from kubernetes.stream import stream
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli import __version__
 from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 @click.command()
@@ -47,7 +48,9 @@ def cli_node_version(
         InstanceType.NODE, name, system_folders, context, namespace, is_sandbox
     )
     version = _get_node_version_from_k8s(ctx.helm_release_name, namespace, context)
-    click.echo({"node": version, "cli": __version__})
+    info("")
+    info(f"Node version: {version}")
+    info(f"CLI version: {__version__}")
 
 
 def _get_node_version_from_k8s(
@@ -85,7 +88,7 @@ def _get_pod_name_for_helm_release(
     except ConfigException as exc:
         raise RuntimeError(f"Failed to load Kubernetes config: {exc}") from exc
 
-    core = k8s_client.CoreV1Api()
+    core = get_core_api_with_ssl_handling()
     selector = f"app={APPNAME}-node,release={helm_release}"
     pods = core.list_namespaced_pod(namespace=namespace, label_selector=selector).items
     if not pods:
@@ -108,7 +111,7 @@ def _exec_pod_command(
     """
     Executes a command inside the specified pod (and optional container) and returns stdout.
     """
-    core = k8s_client.CoreV1Api()
+    core = get_core_api_with_ssl_handling()
     resp = stream(
         core.connect_get_namespaced_pod_exec,
         pod_name,

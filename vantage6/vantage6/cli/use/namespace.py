@@ -7,7 +7,7 @@ from vantage6.common import error
 from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
 from vantage6.cli.utils_kubernetes import (
-    create_kubernetes_apis_with_ssl_handling,
+    get_core_api_with_ssl_handling,
 )
 
 
@@ -20,7 +20,7 @@ def cli_use_namespace(namespace: str):
     The namespace will be created if it does not exist.
     """
     # Configure for MicroK8s if needed
-    core_api, _ = create_kubernetes_apis_with_ssl_handling()
+    core_api, _ = get_core_api_with_ssl_handling()
 
     try:
         namespace_list = core_api.list_namespace()
