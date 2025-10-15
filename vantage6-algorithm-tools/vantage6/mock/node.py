@@ -8,7 +8,11 @@ from vantage6.common import error
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
-from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
+from vantage6.algorithm.tools.exceptions import (
+    AlgorithmModuleNotFoundError,
+    MethodNotFoundError,
+    SessionActionMismatchError,
+)
 
 from vantage6.mock.util import env_vars
 from vantage6.node.k8s.exceptions import DataFrameNotFound
@@ -66,6 +70,13 @@ class MockNode:
             ContainerEnvNames.ORGANIZATION_ID.value: self.organization_id,
             ContainerEnvNames.COLLABORATION_ID.value: self.collaboration_id,
         }
+
+        try:
+            self.algorithm_module = import_module(self.network.module_name)
+        except ModuleNotFoundError as e:
+            raise AlgorithmModuleNotFoundError(
+                f"Module {self.network.module_name} not found. {e}"
+            )
 
     def simulate_task_run(
         self,
@@ -220,8 +231,10 @@ class MockNode:
         """
         Get the method function from the method name.
         """
-        module = import_module(self.network.module_name)
-        return getattr(module, method)
+        try:
+            return getattr(self.algorithm_module, method)
+        except AttributeError as e:
+            raise MethodNotFoundError(f"Method {method} not found. {e}")
 
     def _task_env_vars(self, action: str, method: str) -> dict:
         """

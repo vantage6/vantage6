@@ -2,6 +2,9 @@ import pandas as pd
 
 from vantage6.common import info
 
+from vantage6.algorithm.tools.exceptions import AlgorithmModuleNotFoundError
+from vantage6.algorithm.tools.util import error
+
 from vantage6.mock.client import MockAlgorithmClient, MockUserClient
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
@@ -110,9 +113,17 @@ class MockNetwork:
         organization_ids = list(range(len(datasets)))
         node_ids = list(range(len(datasets)))
         for org_id, node_id, dataset in zip(organization_ids, node_ids, datasets):
-            self.nodes.append(
-                MockNode(node_id, org_id, collaboration_id, dataset, self)
-            )
+            try:
+                self.nodes.append(
+                    MockNode(node_id, org_id, collaboration_id, dataset, self)
+                )
+            except AlgorithmModuleNotFoundError:
+                error(
+                    f"Module {module_name} not found. Are you working in the correct "
+                    "Python environment and did you install the algorithm package you"
+                    "want to test in this environment?"
+                )
+                return
 
         self.server = MockServer(self)
         self.user_client = MockUserClient(self)

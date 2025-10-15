@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, Any
 
 from vantage6.common.enum import AlgorithmStepType
 
-from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
+from vantage6.algorithm.tools.exceptions import (
+    MethodNotFoundError,
+    SessionActionMismatchError,
+)
 from vantage6.algorithm.tools.util import error, warn
 
 from vantage6.node.k8s.exceptions import DataFrameNotFound
@@ -217,17 +220,25 @@ class MockBaseClient:
                     result = node.simulate_task_run(
                         method, arguments, databases, action
                     )
+                except MethodNotFoundError:
+                    error(
+                        f"Method {method} not found in the {node.network.module_name} "
+                        "module. Did you specify the correct method name? And are you "
+                        "sure that the method is available in the top level of your "
+                        "algorithm module?"
+                    )
+                    return
                 except SessionActionMismatchError:
                     error(
-                        "This is not a computation task, are you sure you specified "
-                        "the correct method? Continuing with the next organization."
+                        f"The {method} method is not a computation task, are you sure "
+                        "you specified the correct method?"
                     )
-                    continue
+                    return
                 except DataFrameNotFound as e:
                     error(
-                        f"A dataframe you specified does not exist. {e}"
+                        f"A dataframe you specified does not exist: {e}"
                     )
-                    continue
+                    return
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     continue
