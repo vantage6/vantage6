@@ -1,7 +1,6 @@
 import json
 import subprocess
 from pathlib import Path
-from subprocess import Popen
 from typing import Iterable
 
 import docker
@@ -300,20 +299,6 @@ def get_config_name_from_service_name(service_name: str) -> str:
     # f"{APPNAME}-{name}-{scope}-{instance_type}"
     # we want to get the name from the service name
     return "-".join(service_name.split("-")[1:-2])
-
-
-def attach_logs(*labels: list[str]) -> None:
-    """
-    Attach to the logs of the given labels.
-
-    Parameters
-    ----------
-    labels : list[str]
-        The labels to attach to
-    """
-    command = ["kubectl", "logs", "--follow", "--selector", ",".join(labels)]
-    process = Popen(command, stdout=None, stderr=None)
-    process.wait()
 
 
 def get_main_cli_command_name(instance_type: InstanceType) -> str:
