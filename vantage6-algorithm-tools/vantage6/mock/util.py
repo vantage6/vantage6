@@ -14,10 +14,24 @@ def env_vars(**kwargs):
 
     Example
     -------
-    >>> with env_vars(TEST_ENV_VAR="test"):
+    Overwrite an existing environment variable and restore after the context manager is
+    exited:
+    >>> import os
+    >>> os.environ["TEST_ENV_VAR"] = "original"
+    >>> with env_vars(TEST_ENV_VAR="temporary"):
     >>>     print(os.environ["TEST_ENV_VAR"])
-    >>> test
+    >>> temporary
+    >>> print(os.environ["TEST_ENV_VAR"])
+    >>> original
+
+    Set a new environment variable within the context scope:
+    >>> with env_vars(TEST_ENV_VAR="temporary"):
+    >>>     print(os.environ["TEST_ENV_VAR"])
+    >>> temporary
+    >>> print("TEST_ENV_VAR" in os.environ)
+    >>> False
     """
+
     old_values = {}
     try:
         for key, value in kwargs.items():
