@@ -214,7 +214,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         config_name = f"{self.server_name}-{node_name}"
 
         path_to_data_dir = self._create_and_get_data_dir(
-            InstanceType.NODE, is_data_folder=True
+            InstanceType.NODE, is_data_folder=True, node_name=node_name
         )
 
         # delete old node config if it exists
@@ -272,9 +272,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
                     f"{self.namespace}.svc.cluster.local"
                 ),
-                "dev": {
-                    "task_dir_extension": str(path_to_data_dir),
-                },
                 "persistence": {
                     "tasks": {
                         "hostPath": str(path_to_data_dir),

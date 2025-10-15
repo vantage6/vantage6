@@ -49,7 +49,10 @@ class BaseSandboxConfigManager:
         return {}
 
     def _create_and_get_data_dir(
-        self, instance_type: InstanceType, is_data_folder: bool = False
+        self,
+        instance_type: InstanceType,
+        is_data_folder: bool = False,
+        node_name: str | None = None,
     ) -> Path:
         """
         Create and get the data directory.
@@ -83,7 +86,10 @@ class BaseSandboxConfigManager:
             data_dir = main_data_dir / self.server_name / "store"
         elif instance_type == InstanceType.NODE:
             if is_data_folder:
-                last_subfolder = "data"
+                if node_name:
+                    last_subfolder = f"data_{node_name}"
+                else:
+                    last_subfolder = "data"
             else:
                 last_subfolder = "node"
             data_dir = main_data_dir / self.server_name / last_subfolder
