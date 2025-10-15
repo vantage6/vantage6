@@ -31,7 +31,7 @@ class TestMockUserClient(TestCase):
     def test_same_attributes_as_user_client(self):
         """Test if the MockUserClient has the same attributes as the UserClient"""
         # Get all attributes from the real UserClient
-        user_client_attrs = set(dir(UserClient("","")))
+        user_client_attrs = set(dir(UserClient("", "")))
         mock_client_attrs = set(dir(self.client))
 
         # The user client attributes need to be a subset of the mock client attributes

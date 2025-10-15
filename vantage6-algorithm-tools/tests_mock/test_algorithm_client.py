@@ -8,7 +8,9 @@ from vantage6.mock.client import MockAlgorithmClient
 class TestMockAlgorithmClient(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.network = MockNetwork(module_name="test_algorithm", datasets=[], collaboration_id=1)
+        self.network = MockNetwork(
+            module_name="test_algorithm", datasets=[], collaboration_id=1
+        )
         self.client = MockAlgorithmClient(self.network)
 
     def test_client_initialization(self):
@@ -31,19 +33,19 @@ class TestMockAlgorithmClient(TestCase):
                 "collaboration_id": 1,
                 "study_id": 1,
                 "store_id": 1,
-                "session_id": 1
+                "session_id": 1,
             }
         }
 
         # Patch jwt.decode to return our mock data
-        with patch('jwt.decode', return_value=mock_jwt_data):
+        with patch("jwt.decode", return_value=mock_jwt_data):
             # Get all attributes from the real AlgorithmClient
-            algorithm_client_attrs = set(dir(AlgorithmClient("dummy_token", "http://test.com")))
+            algorithm_client_attrs = set(
+                dir(AlgorithmClient("dummy_token", "http://test.com"))
+            )
             mock_client_attrs = set(dir(self.client))
 
-            print(algorithm_client_attrs-mock_client_attrs)
+            print(algorithm_client_attrs - mock_client_attrs)
 
             # The algorithm client attributes need to be a subset of the mock client attributes
             self.assertTrue(algorithm_client_attrs.issubset(mock_client_attrs))
-
-

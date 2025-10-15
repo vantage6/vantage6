@@ -43,12 +43,12 @@ class MockServer:
             "collaboration": {
                 "id": self.network.collaboration_id,
                 "link": f"/server/collaboration/{self.network.collaboration_id}",
-                "methods": ["PATCH", "GET", "DELETE"]
+                "methods": ["PATCH", "GET", "DELETE"],
             },
             "organizations": f"/server/organization?study_id={self.study_id}",
             "tasks": f"/server/task?study_id={self.study_id}",
             "name": "Mock Study",
-            "id": self.study_id
+            "id": self.study_id,
         }
 
     def save_result(self, result: Any, task_id: int):

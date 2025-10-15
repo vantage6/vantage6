@@ -206,8 +206,6 @@ class MockBaseClient:
             if not arguments:
                 arguments = {}
 
-            # new_task_id = len(self.parent.network.server.tasks) + 1
-
             task = self.parent.network.server.save_task(
                 init_organization_id=self.parent.organization_id,
                 name=name,
