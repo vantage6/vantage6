@@ -70,7 +70,7 @@ class MockNetwork:
         >>> from vantage6.mock.mock_network import MockNetwork
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
-        >>>     datasets={"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+        >>>     datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
         >>> )
         >>> client = network.user_client
         >>> client.dataframe.create(
@@ -92,7 +92,7 @@ class MockNetwork:
 
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
-        >>>     datasets={"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+        >>>     datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
         >>> )
         >>> client = network.user_client
         >>> client.task.create(

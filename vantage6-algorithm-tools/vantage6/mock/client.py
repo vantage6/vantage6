@@ -165,6 +165,8 @@ class MockBaseClient:
             databases: list[list[dict]] | list[dict] | None = None,
             arguments: dict | None = None,
             action: str = AlgorithmStepType.FEDERATED_COMPUTE.value,
+            *_args,
+            **_kwargs,
         ) -> dict:
             """
             Create a new task with the MockProtocol and return the task id.
@@ -235,9 +237,7 @@ class MockBaseClient:
                     )
                     return
                 except DataFrameNotFound as e:
-                    error(
-                        f"A dataframe you specified does not exist: {e}"
-                    )
+                    error(f"A dataframe you specified does not exist: {e}")
                     return
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
