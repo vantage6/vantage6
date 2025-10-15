@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 from vantage6.mock.util import env_vars
@@ -10,20 +11,14 @@ class TestEnvVars(TestCase):
 
         # Test setting new environment variables
         with env_vars(**test_vars):
-            import os
-
             self.assertEqual(os.environ["TEST_VAR1"], "value1")
             self.assertEqual(os.environ["TEST_VAR2"], "value2")
-
-        # Test variables are removed after context
-        import os
 
         self.assertNotIn("TEST_VAR1", os.environ)
         self.assertNotIn("TEST_VAR2", os.environ)
 
     def test_env_vars_existing_variables(self):
         """Test if env_vars properly handles existing environment variables"""
-        import os
 
         # Set an existing variable
         os.environ["EXISTING_VAR"] = "original"
@@ -46,8 +41,6 @@ class TestEnvVars(TestCase):
         test_vars_2 = {"TEST_VAR": "value2"}
 
         with env_vars(**test_vars_1):
-            import os
-
             self.assertEqual(os.environ["TEST_VAR"], "value1")
 
             with env_vars(**test_vars_2):
