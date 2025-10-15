@@ -1,17 +1,21 @@
 import json
 from unittest import TestCase
 
+from vantage6.mock import MockNetwork
 from vantage6.mock.server import MockServer
 
 
 class TestMockServer(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.server = MockServer(collaboration_id=1)
+        self.network = MockNetwork(
+            module_name="test_algorithm", datasets=[], collaboration_id=1
+        )
+        self.server = MockServer(self.network)
 
     def test_initialization(self):
         """Test if server is properly initialized"""
-        self.assertEqual(self.server.collaboration_id, 1)
+        self.assertEqual(self.server.network.collaboration_id, 1)
         self.assertEqual(self.server.session_id, 1)
         self.assertEqual(self.server.study_id, 1)
         self.assertEqual(len(self.server.tasks), 0)

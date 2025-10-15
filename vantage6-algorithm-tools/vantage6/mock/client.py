@@ -23,6 +23,56 @@ class MockBaseClient:
         # Which organization do I belong to?
         self.organization_id = 0
 
+        self.set_missing_subclients([
+            '_access_token',
+            '_ClientBase__auth_url',
+            '_ClientBase__check_algorithm_store_valid',
+            '_ClientBase__server_url',
+            '_decrypt_data',
+            '_decrypt_field',
+            '_multi_page_request',
+            '_refresh_token',
+            '_refresh_url',
+            'auth_url',
+            'authenticate',
+            'collaboration_id',
+            'cryptor',
+            'databases',
+            'generate_path_to',
+            'headers',
+            'image',
+            'log',
+            'name',
+            'node_id',
+            'obtain_new_token',
+            'request',
+            'server_url',
+            'session_id',
+            'setup_encryption',
+            'store_id',
+            'study_id',
+            'token',
+            'wait_for_task_completion',
+            'whoami'
+        ])
+
+    def set_missing_subclients(self, names: list[str]) -> None:
+
+        def missing_subclient(name: str):
+            warn(f"The subclient {name} is not available in the mock client.")
+            return
+
+        for name in names:
+            self.__setattr__(name, missing_subclient(name))
+
+    def set_missing_attributes(self, names: list[str]) -> None:
+        def missing_attribute(name: str):
+            warn(f"The attribute {name} is not available in the mock client.")
+            return
+
+        for name in names:
+            self.__setattr__(name, missing_attribute(name))
+
     class SubClient:
         """
         Create sub groups of commands using this SubClient
@@ -344,46 +394,22 @@ class MockUserClient(MockBaseClient):
         ])
 
         self.set_missing_attributes([
-            '_access_token',
-            '_ClientBase__auth_url',
-            '_ClientBase__check_algorithm_store_valid',
-            '_ClientBase__server_url',
-            '_decrypt_data',
-            '_decrypt_field',
             '_get_logger',
-            '_refresh_token',
-            '_refresh_url',
             'auth_client',
             'auth_realm',
-            'auth_url',
-            'authenticate',
             'authenticate_service_account',
-            'collaboration_id',
-            'cryptor',
-            'generate_path_to',
-            'headers',
             'initialize_service_account',
             'is_service_account',
             'kc_openid',
-            'log',
-            'name',
             'Node',
-            'obtain_new_token',
             'obtain_new_token_interactive',
-            'request',
             'Role',
             'Rule',
             'service_account_client_name',
             'service_account_client_secret',
-            'server_url',
-            'session_id',
             'setup_collaboration',
-            'setup_encryption',
-            'token',
             'User',
-            'Util',
-            'wait_for_task_completion',
-            'whoami'
+            'Util'
         ])
 
     class Dataframe(MockBaseClient.SubClient):
@@ -421,23 +447,6 @@ class MockUserClient(MockBaseClient):
                 )
 
             return task
-
-    def set_missing_subclients(self, names: list[str]) -> None:
-
-        def missing_subclient(name: str):
-            warn(f"The subclient {name} is not available in the mock client.")
-            return
-
-        for name in names:
-            self.__setattr__(name, missing_subclient(name))
-
-    def set_missing_attributes(self, names: list[str]) -> None:
-        def missing_attribute(name: str):
-            warn(f"The attribute {name} is not available in the mock client.")
-            return
-
-        for name in names:
-            self.__setattr__(name, missing_attribute(name))
 
 class MockAlgorithmClient(MockBaseClient):
     def __init__(self, network: "MockNetwork", *args, **kwargs):
