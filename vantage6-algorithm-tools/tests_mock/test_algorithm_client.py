@@ -7,6 +7,7 @@ from vantage6.mock.client import MockAlgorithmClient
 
 TEST_ALGORITHM_NAME = "test_algorithm"
 
+
 class TestMockAlgorithmClient(TestCase):
     def setUp(self):
         """Set up test fixtures"""
