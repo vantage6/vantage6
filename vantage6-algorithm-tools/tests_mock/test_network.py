@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -21,23 +22,24 @@ class TestMockNetworkDataframe(TestCase):
         self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
-        self.network = MockNetwork(
-            module_name=TEST_ALGORITHM_NAME,
-            datasets=[
-                {
-                    DB_LABEL_1: {
-                        "database": self.data1,
-                        "db_type": MockDatabaseType.CSV.value,
-                    }
-                },
-                {
-                    DB_LABEL_2: {
-                        "database": self.data2,
-                        "db_type": MockDatabaseType.CSV.value,
-                    }
-                },
-            ],
-        )
+        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+            self.network = MockNetwork(
+                module_name=TEST_ALGORITHM_NAME,
+                datasets=[
+                    {
+                        DB_LABEL_1: {
+                            "database": self.data1,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
+                    },
+                    {
+                        DB_LABEL_2: {
+                            "database": self.data2,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
+                    },
+                ],
+            )
 
     def test_network_initialization(self):
         """Test if network is properly initialized"""
@@ -72,8 +74,8 @@ class TestMockNetworkDataframe(TestCase):
 
     def test_get_node(self):
         """Test if get_node is properly initialized"""
-        self.assertIsInstance(self.network.get_node(0), MockNode)
         self.assertIsInstance(self.network.get_node(1), MockNode)
+        self.assertIsInstance(self.network.get_node(2), MockNode)
 
     def test_server_initialization(self):
         """Test if server is properly initialized"""
@@ -84,10 +86,10 @@ class TestMockNetworkDataframe(TestCase):
     def test_node_initialization(self):
         """Test if node is properly initialized"""
         self.assertEqual(len(self.network.nodes), 2)
-        self.assertEqual(self.network.nodes[0].id_, 0)
-        self.assertEqual(self.network.nodes[1].id_, 1)
-        self.assertEqual(self.network.nodes[0].organization_id, 0)
-        self.assertEqual(self.network.nodes[1].organization_id, 1)
+        self.assertEqual(self.network.nodes[0].id_, 1)
+        self.assertEqual(self.network.nodes[1].id_, 2)
+        self.assertEqual(self.network.nodes[0].organization_id, 1)
+        self.assertEqual(self.network.nodes[1].organization_id, 2)
         self.assertEqual(self.network.nodes[0].collaboration_id, 1)
         self.assertEqual(self.network.nodes[1].collaboration_id, 1)
 
@@ -95,17 +97,18 @@ class TestMockNetworkDataframe(TestCase):
 class TestMockNetworkURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.network = MockNetwork(
-            module_name=TEST_ALGORITHM_NAME,
-            datasets=[
-                {
-                    DB_LABEL_1: {
-                        "database": MOCK_DATA_CSV,
-                        "db_type": MockDatabaseType.CSV.value,
+        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+            self.network = MockNetwork(
+                module_name=TEST_ALGORITHM_NAME,
+                datasets=[
+                    {
+                        DB_LABEL_1: {
+                            "database": MOCK_DATA_CSV,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
                     }
-                }
-            ],
-        )
+                ],
+            )
 
     def test_network_initialization(self):
         """Test if network is properly initialized"""
@@ -118,6 +121,6 @@ class TestMockNetworkURI(TestCase):
     def test_node_initialization(self):
         """Test if node is properly initialized"""
         self.assertEqual(len(self.network.nodes), 1)
-        self.assertEqual(self.network.nodes[0].id_, 0)
-        self.assertEqual(self.network.nodes[0].organization_id, 0)
+        self.assertEqual(self.network.nodes[0].id_, 1)
+        self.assertEqual(self.network.nodes[0].organization_id, 1)
         self.assertEqual(self.network.nodes[0].collaboration_id, 1)

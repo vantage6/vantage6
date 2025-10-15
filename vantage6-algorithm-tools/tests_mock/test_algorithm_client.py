@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.mock import MockNetwork
@@ -9,9 +10,10 @@ TEST_ALGORITHM_NAME = "test_algorithm"
 class TestMockAlgorithmClient(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.network = MockNetwork(
-            module_name=TEST_ALGORITHM_NAME, datasets=[], collaboration_id=1
-        )
+        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+            self.network = MockNetwork(
+                module_name=TEST_ALGORITHM_NAME, datasets=[], collaboration_id=1
+            )
         self.client = MockAlgorithmClient(self.network)
 
     def test_client_initialization(self):

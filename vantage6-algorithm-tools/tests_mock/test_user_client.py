@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -14,13 +15,14 @@ class TestMockUserClient(TestCase):
         self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
-        self.network = MockNetwork(
-            module_name="test_algorithm",
-            datasets=[
-                {"label_1": {"database": self.data1, "db_type": "csv"}},
-                {"label_2": {"database": self.data2, "db_type": "csv"}},
-            ],
-        )
+        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+            self.network = MockNetwork(
+                module_name="test_algorithm",
+                datasets=[
+                    {"label_1": {"database": self.data1, "db_type": "csv"}},
+                    {"label_2": {"database": self.data2, "db_type": "csv"}},
+                ],
+            )
         self.client = self.network.user_client
 
     def test_client_initialization(self):

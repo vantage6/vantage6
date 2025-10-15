@@ -7,31 +7,42 @@ import pyarrow as pa
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
+from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
+
 from vantage6.mock.node import MockNode
+
+LABEL_1 = "label_1"
 
 
 class TestMockNodeDataframe(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.data = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
-        self.datasets = {"label_1": {"database": self.data, "db_type": "csv"}}
+        self.datasets = {LABEL_1: {"database": self.data, "db_type": "csv"}}
         self.network = MagicMock()
-        self.node = MockNode(
-            id_=0,
-            organization_id=0,
-            collaboration_id=1,
-            datasets=self.datasets,
-            network=self.network,
-        )
+        self.network.module_name = "test_module"
+        self.mock_import_return = MagicMock("algorithm_module")
+        self.mock_import_return.test_method = MagicMock("test_method")
+        with patch(
+            "vantage6.mock.node.import_module", return_value=self.mock_import_return
+        ) as mock_import:
+            self.node = MockNode(
+                id_=1,
+                organization_id=1,
+                collaboration_id=1,
+                datasets=self.datasets,
+                network=self.network,
+            )
+            self.mock_import = mock_import
 
     def test_initialization(self):
         """Test if node is properly initialized"""
-        self.assertEqual(self.node.id_, 0)
-        self.assertEqual(self.node.organization_id, 0)
+        self.assertEqual(self.node.id_, 1)
+        self.assertEqual(self.node.organization_id, 1)
         self.assertEqual(self.node.collaboration_id, 1)
         self.assertEqual(len(self.node.datasets), 1)
-        self.assertIn("label_1", self.node.datasets)
-        pd.testing.assert_frame_equal(self.node.dataframes["label_1"], self.data)
+        self.assertIn(LABEL_1, self.node.datasets)
+        pd.testing.assert_frame_equal(self.node.dataframes[LABEL_1], self.data)
 
     def test_simulate_task_run(self):
         """Test if task run simulation works properly"""
@@ -52,7 +63,7 @@ class TestMockNodeDataframe(TestCase):
             result = self.node.simulate_task_run(
                 method="test_method",
                 arguments={"arg1": "value1"},
-                databases=[{"label": "label_1"}],
+                databases=[{"label": LABEL_1}],
                 action=AlgorithmStepType.FEDERATED_COMPUTE.value,
             )
 
@@ -112,15 +123,15 @@ class TestMockNodeDataframe(TestCase):
             self.node.simulate_dataframe_creation(
                 method="test_method",
                 arguments={"arg1": "value1"},
-                source_label="label_1",
+                source_label=LABEL_1,
                 dataframe_name="test_df",
             )
 
             # Verify the method was called with correct arguments
             mock_method.assert_called_once_with(
                 arg1="value1",
-                mock_uri=self.datasets["label_1"]["database"],
-                mock_type=self.datasets["label_1"]["db_type"],
+                mock_uri=self.datasets[LABEL_1]["database"],
+                mock_type=self.datasets[LABEL_1]["db_type"],
             )
 
             # Verify the dataframe was stored
@@ -148,36 +159,25 @@ class TestMockNodeDataframe(TestCase):
         mock_method_no_decorator.vantage6_decorator_step_type = None
 
         # Get step type - should return None since no decorator
-        with patch("vantage6.mock.node.error"):  # Suppress print output
-            step_type = self.node._get_step_type_from_method_fn(
-                mock_method_no_decorator
-            )
-
-        # Verify None is returned when no decorator present
-        self.assertIsNone(step_type)
+        self.assertRaises(
+            SessionActionMismatchError,
+            self.node._get_step_type_from_method_fn,
+            mock_method_no_decorator,
+        )
 
     def test_get_method_fn_from_method(self):
         """Test if _get_method_fn_from_method works properly"""
-        # Create a mock module with test method
-        mock_module = MagicMock()
-        mock_method = MagicMock()
-        mock_module.test_method = mock_method
+        # Set module name on network mock
+        self.network.module_name = "test_module"
 
-        # Mock import_module to return our mock module
-        with patch(
-            "vantage6.mock.node.import_module", return_value=mock_module
-        ) as mock_import:
-            # Set module name on network mock
-            self.network.module_name = "test_module"
+        # Get method function
+        method_fn = self.node._get_method_fn_from_method("test_method")
 
-            # Get method function
-            method_fn = self.node._get_method_fn_from_method("test_method")
+        # Verify import_module was called with correct module name
+        self.mock_import.assert_called_once_with("test_module")
 
-            # Verify import_module was called with correct module name
-            mock_import.assert_called_once_with("test_module")
-
-            # Verify correct method was returned
-            self.assertEqual(method_fn, mock_method)
+        # Verify correct method was returned
+        self.assertEqual(method_fn, self.mock_import_return.test_method)
 
     def test_task_env_vars(self):
         """Test if _task_env_vars returns correct environment variables"""
@@ -207,24 +207,25 @@ class TestMockNodeDataframe(TestCase):
 class TestMockNodeURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.datasets = {"label_1": {"database": "mock_data.csv", "db_type": "csv"}}
+        self.datasets = {LABEL_1: {"database": "mock_data.csv", "db_type": "csv"}}
         self.network = MagicMock()
-        self.node = MockNode(
-            id_=0,
-            organization_id=0,
-            collaboration_id=1,
-            datasets=self.datasets,
-            network=self.network,
-        )
+        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+            self.node = MockNode(
+                id_=1,
+                organization_id=1,
+                collaboration_id=1,
+                datasets=self.datasets,
+                network=self.network,
+            )
 
     def test_initialization(self):
         """Test if node is properly initialized"""
-        self.assertEqual(self.node.id_, 0)
-        self.assertEqual(self.node.organization_id, 0)
+        self.assertEqual(self.node.id_, 1)
+        self.assertEqual(self.node.organization_id, 1)
         self.assertEqual(self.node.collaboration_id, 1)
         self.assertEqual(len(self.node.datasets), 1)
-        self.assertIn("label_1", self.node.datasets)
-        self.assertEqual(self.node.datasets["label_1"]["database"], "mock_data.csv")
+        self.assertIn(LABEL_1, self.node.datasets)
+        self.assertEqual(self.node.datasets[LABEL_1]["database"], "mock_data.csv")
         self.assertEqual(len(self.node.dataframes), 0)
 
     def test_node_network_reference(self):
