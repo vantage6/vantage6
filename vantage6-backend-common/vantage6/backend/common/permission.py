@@ -201,7 +201,7 @@ class PermissionManagerBase(ABC):
 
         Returns
         -------
-        Callable
+        callable
             A callable ``register_rule`` function
         """
         # make sure collection exists

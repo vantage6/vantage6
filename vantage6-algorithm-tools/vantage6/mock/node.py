@@ -1,6 +1,6 @@
 from copy import deepcopy
 from importlib import import_module
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -193,13 +193,13 @@ class MockNode:
         )
         self.dataframes[dataframe_name] = result.to_pandas()
 
-    def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):
+    def run(self, method_fn: callable, arguments: dict, task_env_vars: dict = {}):
         """
         Run a method with the given arguments and task environment variables.
 
         Parameters
         ----------
-        method_fn : Callable
+        method_fn : callable
             The method to run.
         arguments : dict
             The arguments to pass to the method.
@@ -214,7 +214,7 @@ class MockNode:
         with env_vars(**task_env_vars):
             return method_fn(**arguments)
 
-    def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
+    def _get_step_type_from_method_fn(self, method_fn: callable) -> AlgorithmStepType:
         """
         Get the step type from the method function.
         """
@@ -227,7 +227,7 @@ class MockNode:
 
         return step_type
 
-    def _get_method_fn_from_method(self, method: str) -> Callable:
+    def _get_method_fn_from_method(self, method: str) -> callable:
         """
         Get the method function from the method name.
         """
