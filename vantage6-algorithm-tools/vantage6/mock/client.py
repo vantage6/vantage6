@@ -52,6 +52,29 @@ class MockBaseClient:
         """
         return self.result.from_task(task_id)
 
+    class Study(SubClient):
+        """
+        """
+
+        def __init__(self, parent) -> None:
+            super().__init__(parent)
+
+        def get(self, id_: int) -> dict:
+            """
+            Get the study data by ID.
+
+            Parameters
+            ----------
+            id_: int
+                ID of the study to retrieve
+
+            Returns
+            -------
+            dict
+                Dictionary containing study data.
+            """
+            return self.parent.network.server.study
+
     class Task(SubClient):
         """
         Task subclient for the MockAlgorithmClient

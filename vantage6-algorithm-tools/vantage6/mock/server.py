@@ -1,12 +1,15 @@
 import json
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from vantage6.common.globals import AuthStatus
 
+if TYPE_CHECKING:
+    from vantage6.mock.network import MockNetwork
+
 
 class MockServer:
-    def __init__(self, collaboration_id: int):
+    def __init__(self, network: "MockNetwork"):
         """
         Create a mock server.
 
@@ -27,9 +30,25 @@ class MockServer:
 
         # We only consider one collaboration and one session as we are typically mocking
         # the algorithms in a single session
-        self.collaboration_id = collaboration_id
         self.session_id = 1
         self.study_id = 1
+
+    @property
+    def study(self) -> dict:
+        """
+        Get the study.
+        """
+        return {
+            "collaboration": {
+                "id": self.network.collaboration_id,
+                "link": f"/server/collaboration/{self.network.collaboration_id}",
+                "methods": ["PATCH", "GET", "DELETE"]
+            },
+            "organizations": f"/server/organization?study_id={self.study_id}",
+            "tasks": f"/server/task?study_id={self.study_id}",
+            "name": "Mock Study",
+            "id": self.study_id
+        }
 
     def save_result(self, result: Any, task_id: int):
         """
@@ -170,8 +189,8 @@ class MockServer:
             },
             "parent": None,
             "collaboration": {
-                "id": self.collaboration_id,
-                "link": f"/api/collaboration/{self.collaboration_id}",
+                "id": self.network.collaboration_id,
+                "link": f"/api/collaboration/{self.network.collaboration_id}",
                 "methods": ["DELETE", "PATCH", "GET"],
             },
             "job_id": 1,

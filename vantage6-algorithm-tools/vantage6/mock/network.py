@@ -114,7 +114,7 @@ class MockNetwork:
                 MockNode(node_id, org_id, collaboration_id, dataset, self)
             )
 
-        self.server = MockServer(collaboration_id)
+        self.server = MockServer(self)
         self.user_client = MockUserClient(self)
         self.algorithm_client = MockAlgorithmClient(self)
 
