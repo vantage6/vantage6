@@ -24,6 +24,26 @@ def execute_remove(
     system_folders: bool,
     force: bool,
 ) -> None:
+    """
+    Function to remove a vantage6 service instance.
+
+    Parameters
+    ----------
+    ctx : AppContext
+        App context object
+    instance_type : InstanceType
+        Type of instance that is checked
+    infra_component : InfraComponentName
+        The infra component of the service
+    name : str
+        Name of the instance
+    system_folders : bool
+        Whether to use system folders or user folders
+    force : bool
+        Whether to ask for confirmation before removing or not
+    is_sandbox : bool
+        Whether the configuration is a sandbox configuration, by default False
+    """
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(
             f"The {infra_component.value} {name} is still running! Please stop the "

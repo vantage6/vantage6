@@ -4,19 +4,18 @@ from shutil import rmtree
 
 import click
 
-from vantage6.common import error, info
+from vantage6.common import error, warning
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.auth.remove import auth_remove
 from vantage6.cli.common.remove import execute_remove
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context import get_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.server.remove import cli_server_remove
-from vantage6.cli.utils import remove_file
 
 
 @click.command()
@@ -60,28 +59,6 @@ def cli_sandbox_remove(
 
     ctx = get_context(InstanceType.SERVER, name, system_folders=False, is_sandbox=True)
 
-    # remove the server
-    # Note that this also checks if the server is running. Therefore, it is prevented
-    # that a running sandbox is removed.
-    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
-        handler.close()
-    click_ctx.invoke(
-        cli_server_remove, ctx=ctx, name=name, system_folders=False, force=True
-    )
-
-    # removing the server import config
-    info("Deleting demo import config file")
-    server_configs = ServerContext.instance_folders(
-        InstanceType.SERVER, ctx.name, system_folders=False
-    )
-    import_config_to_del = Path(server_configs["dev"]) / f"{ctx.name}.yaml"
-    remove_file(import_config_to_del, "import_configuration")
-
-    # also remove the server folder
-    server_folder = server_configs["data"]
-    if server_folder.is_dir():
-        rmtree(server_folder)
-
     # remove the store folder
     store_configs = AlgorithmStoreContext.instance_folders(
         InstanceType.ALGORITHM_STORE,
@@ -117,20 +94,13 @@ def cli_sandbox_remove(
     if auth_folder.is_dir():
         rmtree(auth_folder)
 
-    # remove the auth config file
+    # remove the auth service
     auth_ctx = AuthContext(
         instance_name=f"{ctx.name}-auth",
         system_folders=False,
         is_sandbox=True,
     )
-    execute_remove(
-        auth_ctx,
-        InstanceType.AUTH,
-        InfraComponentName.AUTH,
-        f"{ctx.name}-auth",
-        system_folders=False,
-        force=True,
-    )
+    auth_remove(auth_ctx, f"{ctx.name}-auth", system_folders=False, force=True)
 
     # remove the nodes
     NodeContext.LOGGING_ENABLED = False
@@ -168,6 +138,18 @@ def cli_sandbox_remove(
 
     # remove data files attached to the network
     data_dirs_nodes = NodeContext.instance_folders("node", "", False)["dev"]
-    rmtree(Path(data_dirs_nodes / ctx.name))
+    try:
+        rmtree(Path(data_dirs_nodes / ctx.name))
+    except Exception as e:
+        warning(f"Failed to delete data directory {data_dirs_nodes / ctx.name}: {e}")
 
+    # remove the server last - if anything goes wrong, the server is still there so the
+    # user can still retry the removal.
+    # Note that this also checks if the server is running. Therefore, it is prevented
+    # that a running sandbox is removed.
+    for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
+        handler.close()
+    click_ctx.invoke(
+        cli_server_remove, ctx=ctx, name=name, system_folders=False, force=True
+    )
     # TODO remove the right data in the custom data directory if it is provided
