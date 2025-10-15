@@ -110,8 +110,8 @@ class MockNetwork:
         self.module_name = module_name
         self.nodes = []
 
-        organization_ids = list(range(len(datasets)))
-        node_ids = list(range(len(datasets)))
+        organization_ids = list(range(1, len(datasets) + 1))
+        node_ids = list(range(1, len(datasets) + 1))
         for org_id, node_id, dataset in zip(organization_ids, node_ids, datasets):
             try:
                 self.nodes.append(

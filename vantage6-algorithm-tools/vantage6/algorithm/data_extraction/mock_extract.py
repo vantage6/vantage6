@@ -1,3 +1,5 @@
+from typing import Callable
+
 import pandas as pd
 
 from vantage6.common import error, info
@@ -88,7 +90,7 @@ def load_mock_data(
         return loader(connection_details)
 
 
-def _select_loader(database_type: str) -> callable | None:
+def _select_loader(database_type: str) -> Callable | None:
     """
     Select the correct wrapper based on the database type.
     Parameters
