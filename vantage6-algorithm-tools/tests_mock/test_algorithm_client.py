@@ -4,12 +4,13 @@ from vantage6.algorithm.client import AlgorithmClient
 from vantage6.mock import MockNetwork
 from vantage6.mock.client import MockAlgorithmClient
 
+TEST_ALGORITHM_NAME = "test_algorithm"
 
 class TestMockAlgorithmClient(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
-            module_name="test_algorithm", datasets=[], collaboration_id=1
+            module_name=TEST_ALGORITHM_NAME, datasets=[], collaboration_id=1
         )
         self.client = MockAlgorithmClient(self.network)
 
@@ -17,7 +18,7 @@ class TestMockAlgorithmClient(TestCase):
         """Test if client is properly initialized"""
         self.assertIsInstance(self.client, MockAlgorithmClient)
         self.assertEqual(self.client.network.collaboration_id, 1)
-        self.assertEqual(self.client.network.module_name, "test_algorithm")
+        self.assertEqual(self.client.network.module_name, TEST_ALGORITHM_NAME)
 
     def test_same_attributes_as_algorithm_client(self):
         """Test if the MockAlgorithmClient has the same attributes as the AlgorithmClient"""

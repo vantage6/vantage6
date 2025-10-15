@@ -9,6 +9,7 @@ from vantage6.mock.client import MockAlgorithmClient, MockUserClient
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 
+TEST_ALGORITHM_NAME = "test_algorithm"
 
 class TestMockNetworkDataframe(TestCase):
     def setUp(self):
@@ -18,7 +19,7 @@ class TestMockNetworkDataframe(TestCase):
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
         self.network = MockNetwork(
-            module_name="test_algorithm",
+            module_name=TEST_ALGORITHM_NAME,
             datasets=[
                 {
                     "label_1": {
@@ -38,7 +39,7 @@ class TestMockNetworkDataframe(TestCase):
     def test_network_initialization(self):
         """Test if network is properly initialized"""
         self.assertEqual(len(self.network.nodes), 2)
-        self.assertEqual(self.network.module_name, "test_algorithm")
+        self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
 
         # Check if data is properly assigned to nodes
         node1_data = self.network.nodes[0].dataframes["label_1"]
@@ -58,7 +59,7 @@ class TestMockNetworkDataframe(TestCase):
         self.assertIsInstance(self.network.nodes[0], MockNode)
         self.assertIsInstance(self.network.nodes[1], MockNode)
 
-        self.assertEqual(self.network.module_name, "test_algorithm")
+        self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
         self.assertEqual(self.network.collaboration_id, 1)
 
     def test_properties(self):
@@ -92,7 +93,7 @@ class TestMockNetworkURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
-            module_name="test_algorithm",
+            module_name=TEST_ALGORITHM_NAME,
             datasets=[{"label_1": {"database": "mock_data.csv", "db_type": "csv"}}],
         )
 
