@@ -3,12 +3,17 @@ Kubernetes utility functions for Vantage6 CLI.
 
 This module provides utilities for handling Kubernetes client configuration,
 especially for MicroK8s environments that may have SSL certificate issues.
+
+The issue is that the python kubernetes client does not automatically use the
+certificate from microk8s, so it is manually configured in this module. Note that this
+is only an issue for the CLI and not for running nodes/servers/stores/etc., because
+those are started using the `kubectl` command, which includes the microk8scertificate
+automatically.
 """
 
 import base64
 import ssl
 from pathlib import Path
-from typing import Optional
 
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
@@ -43,8 +48,7 @@ def _configure_microk8s_ssl(cfg: client.Configuration) -> None:
     """
     try:
         # Try to get the MicroK8s certificate and use it properly
-        cert_path = _get_microk8s_certificate_path()
-        if cert_path and cert_path.exists():
+        if cert_path := _get_microk8s_certificate_path():
             _configure_with_certificate(cert_path, cfg)
         else:
             warning(
@@ -57,13 +61,13 @@ def _configure_microk8s_ssl(cfg: client.Configuration) -> None:
         warning("You may run into errors when using the CLI.")
 
 
-def _get_microk8s_certificate_path() -> Optional[Path]:
+def _get_microk8s_certificate_path() -> Path | None:
     """
     Get the path to the MicroK8s certificate.
 
     Returns
     -------
-    Optional[Path]
+    Path | None
         Path to the MicroK8s certificate if found, None otherwise
     """
     # Common MicroK8s certificate locations
@@ -137,23 +141,8 @@ def _validate_certificate(cert_path: Path) -> bool:
             return False
 
         # Try to parse the certificate with Python's ssl module
-        try:
-            # Extract the base64 part between BEGIN and END
-            start_text = b"-----BEGIN CERTIFICATE-----"
-            len_start_text = len(start_text)
-            start = cert_data.find(start_text)
-            end = cert_data.find(b"-----END CERTIFICATE-----")
-            if start != -1 and end != -1:
-                cert_b64 = (
-                    cert_data[start + len_start_text : end]
-                    .replace(b"\n", b"")
-                    .replace(b"\r", b"")
-                )
-                cert_der = base64.b64decode(cert_b64)
-                ssl.DER_cert_to_PEM_cert(cert_der)
-                return True
-        except Exception:
-            pass
+        if _validate_certificate_with_ssl(cert_data):
+            return True
 
         # If we can't parse it with ssl module, at least check it has the right
         # structure
@@ -165,6 +154,40 @@ def _validate_certificate(cert_path: Path) -> bool:
     except Exception as e:
         warning(f"Certificate validation failed: {e}")
         return False
+
+
+def _validate_certificate_with_ssl(cert_data: bytes) -> bool:
+    """
+    Validate a certificate with the ssl module.
+
+    Parameters
+    ----------
+    cert_data : bytes
+        The certificate data
+
+    Returns
+    -------
+    bool
+        True if the certificate appears valid, False otherwise
+    """
+    try:
+        # Extract the base64 part between BEGIN and END
+        start_text = b"-----BEGIN CERTIFICATE-----"
+        len_start_text = len(start_text)
+        start = cert_data.find(start_text)
+        end = cert_data.find(b"-----END CERTIFICATE-----")
+        if start != -1 and end != -1:
+            cert_b64 = (
+                cert_data[start + len_start_text : end]
+                .replace(b"\n", b"")
+                .replace(b"\r", b"")
+            )
+            cert_der = base64.b64decode(cert_b64)
+            ssl.DER_cert_to_PEM_cert(cert_der)
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def load_kubernetes_config_with_fallback() -> bool:
