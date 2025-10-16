@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -39,7 +40,7 @@ class OHDSIMetaData:
     dbms: str | None
 
 
-def database_connection(types: list[str], include_metadata: bool = True) -> callable:
+def database_connection(types: list[str], include_metadata: bool = True) -> Callable:
     """
     Decorator that adds a database connection to a function
 
@@ -78,9 +79,9 @@ def database_connection(types: list[str], include_metadata: bool = True) -> call
     >>>     pass
     """
 
-    def connection_decorator(func: callable, *args, **kwargs) -> callable:
+    def connection_decorator(func: Callable, *args, **kwargs) -> Callable:
         @wraps(func)
-        def decorator(*args, **kwargs) -> callable:
+        def decorator(*args, **kwargs) -> Callable:
             """
             Wrap the function with the database connection
             """
@@ -171,7 +172,7 @@ def get_ohdsi_metadata(label: str) -> OHDSIMetaData:
     return metadata
 
 
-def _create_omop_database_connection(label: str) -> callable:
+def _create_omop_database_connection(label: str) -> Callable:
     """
     Create a connection to an OMOP database.
 
@@ -203,7 +204,7 @@ def _create_omop_database_connection(label: str) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         OHDSI Database Connection object
     """
 

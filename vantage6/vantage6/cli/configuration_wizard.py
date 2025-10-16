@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 
 import questionary as q
@@ -127,7 +128,7 @@ def _add_production_server_config(config: dict) -> dict:
 
 
 def configuration_wizard(
-    questionnaire_function: callable,
+    questionnaire_function: Callable,
     type_: InstanceType,
     instance_name: str,
     system_folders: bool,
@@ -137,7 +138,7 @@ def configuration_wizard(
 
     Parameters
     ----------
-    questionnaire_function : callable
+    questionnaire_function : Callable
         Function to generate the configuration
     type_ : InstanceType
         Type of the instance to create a configuration for

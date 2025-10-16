@@ -3,6 +3,7 @@ import itertools
 import json as json_lib
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import requests
@@ -507,7 +508,7 @@ class ClientBase(object):
 
     def wait_for_task_completion(
         self,
-        request_func,
+        request_func: Callable,
         task_id: int,
         interval: float = 1,
         log_animation: bool = True,
@@ -517,7 +518,7 @@ class ClientBase(object):
 
         Parameters
         ----------
-        request_func : callable
+        request_func : Callable
             Function to make requests to the server.
         task_id : int
             ID of the task to wait for.

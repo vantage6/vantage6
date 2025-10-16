@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from enum import EnumMeta
 from typing import NamedTuple
 
@@ -190,7 +191,7 @@ class PermissionManagerBase(ABC):
 
         self.assign_rule_to_fixed_role(self.default_roles.ROOT.value, *args, **kwargs)
 
-    def appender(self, name: str) -> callable:
+    def appender(self, name: str) -> Callable:
         """
         Add a module's rules to the rule collection
 
@@ -201,8 +202,8 @@ class PermissionManagerBase(ABC):
 
         Returns
         -------
-        callable
-            A callable ``register_rule`` function
+        Callable
+            A Callable ``register_rule`` function
         """
         # make sure collection exists
         self.collection(name)

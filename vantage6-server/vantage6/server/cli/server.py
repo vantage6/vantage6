@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from functools import wraps
 
 import click
@@ -24,7 +25,7 @@ help_ = {
 }
 
 
-def click_insert_context(func: callable) -> callable:
+def click_insert_context(func: Callable) -> Callable:
     """
     Decorator to insert a ServerContext object into the function.
 
@@ -37,12 +38,12 @@ def click_insert_context(func: callable) -> callable:
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         The function to decorate.
 
     Returns
     -------
-    callable
+    Callable
         The decorated function.
     """
 
@@ -54,7 +55,7 @@ def click_insert_context(func: callable) -> callable:
     @wraps(func)
     def func_with_context(
         name: str, config: str, system_folders: bool, *args, **kwargs
-    ) -> callable:
+    ) -> Callable:
         # select configuration if none supplied
         if config:
             ctx = ServerContext.from_external_config_file(config, system_folders)

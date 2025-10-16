@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 
 from colorama import Fore, Style
 
@@ -18,7 +19,7 @@ from vantage6.cli.utils import validate_input_cmd_args
 
 
 def execute_stop(
-    stop_function: callable,
+    stop_function: Callable,
     instance_type: InstanceType,
     infra_component: InfraComponentName,
     stop_all: bool,
@@ -32,7 +33,7 @@ def execute_stop(
 
     Parameters
     ----------
-    stop_function : callable
+    stop_function : Callable
         The function to stop the service.
     instance_type : InstanceType
         The instance type of the service.

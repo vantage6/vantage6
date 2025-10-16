@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
 
@@ -14,7 +15,7 @@ def click_insert_context(
     type_: InstanceType,
     include_name: bool = False,
     include_system_folders: bool = False,
-) -> callable:
+) -> Callable:
     """
     Supply the Click function with an additional context parameter. The context
     is passed to the function as the first argument.
@@ -30,7 +31,7 @@ def click_insert_context(
 
     Returns
     -------
-    callable
+    Callable
         Click function with context
 
     Examples
@@ -40,7 +41,7 @@ def click_insert_context(
     >>>     pass
     """
 
-    def protection_decorator(func: callable) -> callable:
+    def protection_decorator(func: Callable) -> Callable:
         @click.option("-n", "--name", default=None, help="Name of the configuration.")
         @click.option(
             "-c",
@@ -64,13 +65,13 @@ def click_insert_context(
         @wraps(func)
         def decorator(
             name: str, config: str, system_folders: bool, *args, **kwargs
-        ) -> callable:
+        ) -> Callable:
             """
             Decorator function that adds the context to the function.
 
             Returns
             -------
-            callable
+            Callable
                 Decorated function
             """
             ctx_class = select_context_class(type_)

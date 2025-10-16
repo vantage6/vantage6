@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
@@ -93,7 +94,7 @@ def _convert_to_parquet(data: Any) -> pa.Table:
             )
 
 
-def data_extraction(func: callable) -> callable:
+def data_extraction(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(
         *args, mock_uri: str | None = None, mock_type: str | None = None, **kwargs
@@ -201,11 +202,11 @@ def data_extraction(func: callable) -> callable:
     return wrapper
 
 
-def preprocessing(func: callable) -> callable:
+def preprocessing(func: Callable) -> Callable:
     """Decorator for pre-processing functions."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> callable:
+    def wrapper(*args, **kwargs) -> Callable:
         # Validate that the correct action is invoked in combination with the function
         # that is wrapped by this decorator.
         _exit_if_action_mismatch(AlgorithmStepType.PREPROCESSING)
@@ -218,11 +219,11 @@ def preprocessing(func: callable) -> callable:
     return wrapper
 
 
-def federated(func: callable) -> callable:
+def federated(func: Callable) -> Callable:
     """Decorator for federated functions."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> callable:
+    def wrapper(*args, **kwargs) -> Callable:
         _exit_if_action_mismatch(AlgorithmStepType.FEDERATED_COMPUTE)
         result = func(*args, **kwargs)
         return result
@@ -231,11 +232,11 @@ def federated(func: callable) -> callable:
     return wrapper
 
 
-def central(func: callable) -> callable:
+def central(func: Callable) -> Callable:
     """Decorator for central functions."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> callable:
+    def wrapper(*args, **kwargs) -> Callable:
         _exit_if_action_mismatch(AlgorithmStepType.CENTRAL_COMPUTE)
         result = func(*args, **kwargs)
         return result

@@ -3,6 +3,7 @@ import inspect
 import json
 import os
 import sys
+from collections.abc import Callable
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
@@ -62,7 +63,7 @@ class FunctionArgumentType(StrEnumBase):
 class Function:
     """Class to handle a function and its JSON representation"""
 
-    def __init__(self, func: callable):
+    def __init__(self, func: Callable):
         self.func = func
         self.name = func.__name__
         self.signature = signature(func)

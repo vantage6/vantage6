@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from colorama import Fore, Style
 
 from vantage6.common import ensure_config_dir_writable, error, info
@@ -11,7 +13,7 @@ from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 def new(
-    questionnaire_function: callable,
+    questionnaire_function: Callable,
     name: str,
     system_folders: bool,
     namespace: str,
@@ -23,7 +25,7 @@ def new(
 
     Parameters
     ----------
-    questionnaire_function : callable
+    questionnaire_function : Callable
         Function to generate the configuration
     name : str
         Name of the configuration
