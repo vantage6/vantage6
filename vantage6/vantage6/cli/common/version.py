@@ -21,6 +21,29 @@ def get_and_select_ctx(
     namespace: str,
     is_sandbox: bool,
 ) -> ServerContext | NodeContext | AlgorithmStoreContext:
+    """
+    Get and select the context for the given instance type.
+
+    Parameters
+    ----------
+    instance_type : InstanceType
+        The type of instance to get the context for
+    name : str
+        The name of the instance
+    system_folders : bool
+        Whether to use system folders or not
+    context : str
+        The Kubernetes context to use
+    namespace : str
+        The Kubernetes namespace to use
+    is_sandbox : bool
+        Whether the configuration is a sandbox configuration
+
+    Returns
+    -------
+    ServerContext | NodeContext | AlgorithmStoreContext
+        The context for the given instance type
+    """
     context, namespace = select_context_and_namespace(
         context=context,
         namespace=namespace,

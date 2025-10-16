@@ -22,6 +22,11 @@ def configure_kubernetes_client_for_microk8s(cfg: client.Configuration) -> None:
 
     This function detects if we're using MicroK8s and configures the client
     to handle SSL certificates appropriately for both development and production.
+
+    Parameters
+    ----------
+    cfg : client.Configuration
+        The Kubernetes client configuration to configure
     """
     # Check if we're using MicroK8s by looking at the current context
     if is_microk8s_context():
