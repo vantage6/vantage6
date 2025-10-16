@@ -16,7 +16,7 @@ from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
     InfraComponentName,
 )
-from vantage6.cli.node.task_cleanup import delete_job_related_pods
+from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
 from vantage6.cli.utils_kubernetes import create_kubernetes_apis_with_ssl_handling
 
 

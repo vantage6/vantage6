@@ -32,7 +32,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.node.task_cleanup import delete_job_related_pods
+from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
