@@ -64,7 +64,8 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Loading and validating import file")
     with open(file, "r") as f:
         import_data = yaml.safe_load(f)
-    # TODO: validate import file
+
+    _check_import_file(import_data)
 
     client = UserClient(
         server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
@@ -77,7 +78,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Authenticate using admin credentials (opens browser for login)")
     client.authenticate()
 
-    # TODO: validate that the user has the correct permissions to import data
+    # Note: we do not validate that the user has the correct permissions to import data.
+    # As the user has access to the `v6 server import` command, they already have
+    # access to the server+database.
 
     if drop_all:
         info("Dropping all existing data")
@@ -165,3 +168,60 @@ def _drop_all(client: UserClient) -> None:
         for org in orgs:
             info(f"Deleting organization {org['name']}")
             client.organization.delete(org["id"], delete_dependents=True)
+
+
+def _check_import_file(import_data: dict) -> None:
+    """
+    Check if the import file is valid.
+    """
+    main_level = {
+        "organizations": list,
+        "collaborations": list,
+    }
+    _check_content_of_dict(import_data, main_level)
+
+    organization_level = {
+        "name": str,
+        "address1": str,
+        "address2": str,
+        "zipcode": str,
+        "country": str,
+        "domain": str,
+        "users": list,
+    }
+    user_level = {
+        "username": str,
+        "password": str,
+    }
+    for organization in import_data.get("organizations", []):
+        _check_content_of_dict(organization, organization_level)
+        for user in organization["users"]:
+            _check_content_of_dict(user, user_level)
+
+    collaboration_level = {
+        "name": str,
+        "participants": list,
+        "encrypted": bool,
+    }
+    participant_level = {
+        "name": str,
+    }
+    for collaboration in import_data.get("collaborations", []):
+        _check_content_of_dict(collaboration, collaboration_level)
+        for participant in collaboration["participants"]:
+            _check_content_of_dict(participant, participant_level)
+            if participant["name"] not in [
+                o["name"] for o in import_data["organizations"]
+            ]:
+                error(f"Participant {participant['name']} not found in organizations")
+                exit(1)
+
+
+def _check_content_of_dict(data: dict, options: dict) -> None:
+    for key, value in options.items():
+        if key not in data:
+            error(f"Import file must contain a '{key}' key")
+            exit(1)
+        if not isinstance(data[key], value):
+            error(f"Import file must contain a '{key}' key with a list of dictionaries")
+            exit(1)
