@@ -400,6 +400,10 @@ def extract_name_and_is_sandbox(name: str | None, is_sandbox: bool) -> tuple[str
     """
     Extract the name and is_sandbox from the name.
 
+    Note that the name may be None: this occurs before when this function is called
+    before the user has selected a name. This scenario is fine because when the user
+    selects a name interactively, the name never ends with the .sandbox suffix.
+
     Parameters
     ----------
     name : str | None

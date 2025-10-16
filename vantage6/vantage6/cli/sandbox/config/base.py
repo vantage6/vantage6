@@ -64,6 +64,8 @@ class BaseSandboxConfigManager:
         is_data_folder: bool
             Whether or not to create the data folder or a config folder. This is only
             used for node databases. Default is False.
+        node_name: str | None
+            Name of the node. Only used if is_data_folder is True.
 
         Returns
         -------

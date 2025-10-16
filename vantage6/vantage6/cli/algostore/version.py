@@ -23,7 +23,7 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
-    "--sandbox", "is_sandbox", flag_value=True, help="Stop a sandbox environment"
+    "--sandbox", "is_sandbox", flag_value=True, help="Is this a sandbox environment?"
 )
 def cli_algo_store_version(
     name: str, system_folders: bool, context: str, namespace: str, is_sandbox: bool
