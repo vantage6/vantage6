@@ -517,7 +517,7 @@ class ClientBase(object):
 
         Parameters
         ----------
-        request_func : Callable
+        request_func : callable
             Function to make requests to the server.
         task_id : int
             ID of the task to wait for.

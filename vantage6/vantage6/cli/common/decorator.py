@@ -39,7 +39,7 @@ def click_insert_context(
 
     Returns
     -------
-    Callable
+    callable
         Click function with context
 
     Examples
@@ -79,7 +79,7 @@ def click_insert_context(
 
             Returns
             -------
-            Callable
+            callable
                 Decorated function
             """
             ctx_class = select_context_class(type_)
