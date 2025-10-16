@@ -49,7 +49,5 @@ class TestMockAlgorithmClient(TestCase):
             )
             mock_client_attrs = set(dir(self.client))
 
-            print(algorithm_client_attrs - mock_client_attrs)
-
             # The algorithm client attributes need to be a subset of the mock client attributes
             self.assertTrue(algorithm_client_attrs.issubset(mock_client_attrs))
