@@ -7,6 +7,7 @@ from pathlib import Path
 
 import requests
 
+from vantage6.common.client.blob_storage import BlobStorageMixin
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskStatus
 from vantage6.common.globals import (
@@ -68,7 +69,7 @@ def _log_progress(
         logging.info(message)
 
 
-class ClientBase(object):
+class ClientBase(BlobStorageMixin):
     """Common interface to the central server.
 
     Contains the basis for all other clients, e.g. UserClient, NodeClient and
@@ -387,16 +388,61 @@ class ClientBase(object):
         """
         return
 
-    def _decrypt_data(self, encrypted_data: str) -> bytes:
-        """Helper to decrypt the input of an algorithm run
+    def _fetch_and_decrypt_run_data(
+        self,
+        run_data: str,
+        blob_storage_used: bool = False,
+    ) -> bytes:
+        """Fetch and decrypt the run data of an algorithm run
+
+        Decrypts the run's data (either input or result).
+        If the data is stored in a blob storage,
+        data will be fetched using the UUID reference.
+
+        Parameters
+        ----------
+        run_data : str
+            The run data to be fetched and decrypted. If it is a UUID, it will
+            be used to download the data from blob storage.
+        blob_storage_used : bool, optional
+            Whether blob storage is used for the run data,
+            by default False
+
+        Returns
+        -------
+        bytes
+            The decrypted run data
+
+        Raises
+        ------
+        ValueError
+            If the UUID is not valid or if decryption fails
+        """
+        if blob_storage_used:
+            # If blob storage is used, the data is a UUID reference to the blob
+            uuid = run_data
+            self.log.debug(f"Parsing uuid from input: {uuid}")
+            if isinstance(uuid, bytes):
+                uuid = uuid.decode(STRING_ENCODING)
+            uuid = uuid.strip("'\"")
+            try:
+                run_data = self._download_run_data_from_server(uuid)
+            except ValueError as e:
+                self.log.error(f"Not a valid UUID: {uuid}")
+                raise ValueError(f"Not a valid UUID: {uuid}", e)
+        # Naming of this function is misleading, as it is also used to decrypt results
+        return self._decrypt_run_data(run_data)
+
+    def _decrypt_run_data(self, run_data_: str | bytes) -> bytes:
+        """Helper to decrypt the run data of an algorithm run
 
         Keys are replaced, but object reference remains intact: changes are
         made *in-place*.
 
         Parameters
         ----------
-        encrypted_data: str
-            The encrypted algorithm data
+        run_data_: str | bytes
+            The encrypted algorithm run data (input or results)
 
         Returns
         -------
@@ -414,12 +460,12 @@ class ClientBase(object):
             # TODO this only works when the runs belong to the
             # same organization... We should make different implementation
             # of get_results
-            data = cryptor.decrypt_str_to_bytes(encrypted_data)
+            run_data_ = cryptor.decrypt(run_data_)
 
         except Exception as e:
             self.log.exception(e)
 
-        return data
+        return run_data_
 
     def _decrypt_field(self, data: dict, field: str, is_single_resource: bool) -> dict:
         """
@@ -444,8 +490,8 @@ class ClientBase(object):
             Decrypted data on the algorithm run(s)
         """
 
-        def _decrypt_and_decode(value: str, field: str):
-            decrypted = self._decrypt_data(value)
+        def _decrypt_and_decode(value: str, field: str, blob_storage_used: bool) -> str:
+            decrypted = self._fetch_and_decrypt_run_data(value, blob_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
                     "The field %s is not properly encoded. Expected bytes, got %s.",
@@ -469,13 +515,16 @@ class ClientBase(object):
 
         if is_single_resource:
             if data.get(field):
-                data[field] = _decrypt_and_decode(data[field], field)
+                data[field] = _decrypt_and_decode(
+                    data[field], field, data.get("blob_storage_used", False)
+                )
         else:
             # for multiple resources, data is in a 'data' field of a dict
             for resource in data["data"]:
                 if resource.get(field):
-                    resource[field] = _decrypt_and_decode(resource[field], field)
-
+                    resource[field] = _decrypt_and_decode(
+                        resource[field], field, resource.get("blob_storage_used", False)
+                    )
         return data
 
     def __check_algorithm_store_valid(self, is_for_algorithm_store: bool) -> bool:

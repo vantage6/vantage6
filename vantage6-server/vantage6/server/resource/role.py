@@ -156,8 +156,8 @@ role_input_schema = ServerRoleInputSchema(default_roles=DefaultRole.list())
 
 
 class RoleBase(ServicesResources):
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.rule_collection: RuleCollection = getattr(self.permissions, module_name)
 
     def _get_organization_id(self, data):

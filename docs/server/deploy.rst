@@ -138,6 +138,8 @@ may want to use a different image tag, or you may want to use a different port.
         - "8000:80"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
+        labels:
+        - vantage6-type: "server"
         command: ["/bin/bash", "-c", "/vantage6/vantage6-server/server.sh"]
 
 If you wanted to set up a strong initial super user password, you can make use
@@ -240,6 +242,8 @@ of a docker-compose file that can be used to deploy the algorithm store.
         - "8000:5000"
         volumes:
         - /path/to/my/server.yaml:/mnt/config.yaml
+        labels:
+        - vantage6-type: "algorithm-store"
         command: ["/bin/bash", "-c", "/vantage6/vantage6-algorithm-store/server.sh"]
 
 .. TODO How to deploy on Azure app service

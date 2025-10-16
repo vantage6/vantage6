@@ -270,6 +270,7 @@ class MockAlgorithmClient:
                         "ports": [],
                         "status": "completed",
                         "arguments": json.dumps(arguments),
+                        "blob_storage_used": False,
                         "results": {
                             "id": self.last_result_id,
                             "link": f"/api/result/{self.last_result_id}",

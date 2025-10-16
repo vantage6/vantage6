@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, select
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text, select
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
@@ -49,6 +49,9 @@ class Run(Base):
         Log of the task
     action : :class:`.~vantage6.common.AlgorithmStepType`
         Action type of the task
+    blob_storage_used : bool
+        Whether blob storage is used for the input and result data
+        Defaults to False
 
     Relationships
     -------------
@@ -70,6 +73,9 @@ class Run(Base):
     log = Column(Text)
     action = Column(Text)
     cleanup_at = Column(DateTime, nullable=True)
+    blob_storage_used = Column(
+        "blob_storage_used", Boolean, default=False, nullable=True
+    )
 
     # relationships
     task = relationship("Task", back_populates="runs")

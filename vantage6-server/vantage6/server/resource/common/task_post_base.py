@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 from http import HTTPStatus
 
 from flask import g, request, url_for
@@ -120,7 +121,11 @@ class TaskPostBase(ServicesResources):
             data, action, session, org_ids, collaboration
         )
 
-        self._check_arguments_encryption(organizations_json_list, collaboration)
+        self._check_arguments(
+            organizations_json_list,
+            collaboration,
+            bool(self.config.get("large_result_store", False)),
+        )
 
         # everything ok, create task record, task database records and run records
         task = self._create_task(
@@ -600,8 +605,79 @@ class TaskPostBase(ServicesResources):
         return has_limitations
 
     @staticmethod
+    def _check_arguments(
+        organizations_json_list: list[dict],
+        collaboration: db.Collaboration,
+        blob_storage_used: bool,
+    ) -> tuple[bool, str]:
+        """
+        Check if the input is valid for the collaboration. If the collaboration
+        is encrypted, the input should not be readable as a string. If the
+        collaboration is not encrypted, the input should be readable as a string.
+        Parameters
+        ----------
+        organizations_json_list : list[dict]
+            List of organizations which contains the input per organization.
+        collaboration : db.Collaboration
+            Collaboration object.
+        blob_storage_used : bool
+            Whether or not blob storage is used for storing data.
+        Returns
+        -------
+        bool
+            True if the input is valid.
+        str
+            Error message if the input is invalid.
+        """
+        if not organizations_json_list:
+            return False, "No organizations provided in the request."
+        if blob_storage_used:
+            return TaskPostBase._check_arguments_uuid(organizations_json_list)
+        else:
+            return TaskPostBase._check_input_encryption(
+                organizations_json_list, collaboration
+            )
+
+    @staticmethod
+    def _check_arguments_uuid(organizations_json_list: list[dict]) -> tuple[bool, str]:
+        """
+        Check if the arguments are a valid uuid for all collaborations.
+
+        Parameters
+        ----------
+        organizations_json_list : list[dict]
+            List of organizations containing the uuids of the arguments.
+
+        Returns
+        -------
+        bool
+            True if the arguments are valid.
+        str
+            Error message if the arguments are invalid.
+        """
+        for org in organizations_json_list:
+            arguments = org.get("arguments")
+            if not isinstance(arguments, str):
+                return False, (
+                    "Your task's arguments cannot be parsed. Your arguments should be "
+                    "a UUID as a large result store has been configured. Note that if "
+                    "you are using the user interface or Python client, this should be "
+                    "done for you."
+                )
+            try:
+                uuid.UUID(arguments)
+            except ValueError:
+                return False, (
+                    "Your task's arguments cannot be parsed. Note that if you are using"
+                    " the user interface or Python client, this should be done "
+                    "for you."
+                )
+        return True, ""
+
+    @staticmethod
     def _check_arguments_encryption(
-        organizations_json_list: list[dict], collaboration: db.Collaboration
+        organizations_json_list: list[dict],
+        collaboration: db.Collaboration,
     ) -> None:
         """
         Check if the function arguments encryption status matches the expected status
@@ -632,7 +708,7 @@ class TaskPostBase(ServicesResources):
             arguments = org.get("arguments")
             if arguments is None:
                 continue
-            decrypted_arguments = dummy_cryptor.decrypt_str_to_bytes(arguments)
+            decrypted_arguments = dummy_cryptor.decrypt(arguments)
             are_arguments_readable = False
             try:
                 decrypted_arguments.decode(STRING_ENCODING)

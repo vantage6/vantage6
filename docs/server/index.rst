@@ -49,6 +49,11 @@ use vantage6.
   If you want to send emails to your users, e.g. to help them reset their
   password, you need to set up an SMTP server.
 
+:ref:`azure-blob-storage <azure-blob-storage>`
+  In order to facilitate usage of large inputs and results for your algorithms,
+  it is possible to use Azure Blob Storage for storage rather than the relational
+  database.
+
 The table of contents below lists details on how to install, configure and deploy these
 components.
 

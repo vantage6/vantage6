@@ -10,11 +10,12 @@ from http import HTTPStatus
 from time import sleep
 
 import requests
-from flask import Flask, request
+from flask import Flask, Response as FlaskResponse, request, stream_with_context
 from requests import Response
 
 from vantage6.common import base64s_to_bytes, bytes_to_base64s, logger_name
 from vantage6.common.client.node_client import NodeClient
+from vantage6.common.client.utils import is_uuid
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -169,9 +170,7 @@ def decrypt_result(run: dict) -> dict:
     # if the result is a None, there is no need to decrypt that..
     try:
         if run["result"]:
-            run["result"] = bytes_to_base64s(
-                client.cryptor.decrypt_str_to_bytes(run["result"])
-            )
+            run["result"] = bytes_to_base64s(client.cryptor.decrypt(run["result"]))
     except Exception:
         log.exception(
             "Unable to decrypt and/or decode results, sending them to the algorithm..."
@@ -244,26 +243,22 @@ def proxy_task():
     # in parallel as the client (algorithm) is waiting for a timely response.
     # For every organization the public key is retrieved so that the input arguments are
     # encrypted specifically for them.
-    def encrypt_function_args(organization: dict) -> dict:
+    def encrypt_input(organization_id: int, arguments: dict) -> str:
         """
-        Encrypt the input arguments for a specific organization by using its private
-        key.
-
+        Encrypt the input for a specific organization by using its public key.
         Parameters
         ----------
-        organization : dict
+        organization_id : int
+            ID of the organization
+        arguments : dict
             Input arguments as specified by the client (algorithm in this case) per
             organization
 
         Returns
         -------
-        dict
-            Modified organization dictionary in which the `arguments` key
-            contains encrypted function arguments
+        str
+            Encrypted input as a string
         """
-        arguments = organization.get("arguments", {})
-        organization_id = organization.get("id")
-
         # retrieve public key of the organization
         log.debug("Retrieving public key of org: %s", organization_id)
         response = make_request(
@@ -272,20 +267,26 @@ def proxy_task():
         public_key = response.json().get("public_key")
 
         client: NodeClient = app.config.get("SERVER_IO")
-        organization["arguments"] = client.cryptor.encrypt_bytes_to_str(
+        # If blob store is enabled, we skip base64 encoding of the message.
+        encrypted_arguments = client.cryptor.encrypt_bytes_to_str(
             base64s_to_bytes(arguments), public_key
         )
 
-        log.debug(
-            "Function arguments succesfully encrypted for organization %s!",
-            organization_id,
-        )
-        return organization
+        log.debug("Input successfully encrypted for organization %s!", organization_id)
+        return encrypted_arguments
 
     if client.is_encrypted_collaboration():
         log.debug("Applying end-to-end encryption")
-        data["organizations"] = [encrypt_function_args(o) for o in organizations]
 
+        for org in organizations:
+            if not client.check_if_blob_store_enabled():
+                if is_uuid(org.get("arguments")):
+                    log.warning(
+                        "Arguments is a UUID, are you sending blob based arguments "
+                        "to a non-blob store enabled server?"
+                    )
+                org["arguments"] = encrypt_input(org["id"], org.get("arguments", {}))
+        data["organizations"] = organizations
     # Attempt to send the task to the central server
     try:
         response = make_request("post", "task", data, headers=headers)
@@ -341,8 +342,10 @@ def proxy_result() -> Response:
     # Attempt to decrypt the results. The endpoint should have returned
     # a list of results
     results = get_response_json_and_handle_exceptions(response)
+
     for result in results["data"]:
-        result = decrypt_result(result)
+        if not result["blob_storage_used"] or result["blob_storage_used"] == False:
+            result = decrypt_result(result)
 
     return results, response.status_code
 
@@ -381,9 +384,162 @@ def proxy_results(id_: int) -> Response:
 
     # Try to decrypt the results
     result = get_response_json_and_handle_exceptions(response)
-    result = decrypt_result(result)
+    if not result["blob_storage_used"] or result["blob_storage_used"] == False:
+        result = decrypt_result(result)
 
     return result, response.status_code
+
+
+@app.route("/blobstream/<string:id>", methods=["GET"])
+def stream_handler(id: str) -> FlaskResponse:
+    """
+    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server.
+    Proxied_request and standard response are not used here,
+    as this function is specifically designed to handle streaming of blobs
+    without loading the entire content into memory.
+
+
+    Parameters
+    ----------
+    id : str
+        The id of the blob to be streamed.
+
+    Returns
+    -------
+    FlaskResponse
+        A Flask response object containing the streamed blob data.
+        If the blob is successfully streamed, it returns a response
+        with the content type set to "application/octet-stream" and the
+        content disposition set to attachment.
+        If an error occurs, it returns an error message with the appropriate HTTP status code.
+    """
+
+    log.debug("Proxy stream handler called with id: %s", id)
+    headers = {}
+    for h in ["Authorization", "Content-Type", "Content-Length"]:
+        if h in request.headers:
+            headers[h] = request.headers[h]
+    method = get_method(request.method)
+    url = f"{server_url}/blobstream/{id}"
+    log.debug("Making proxied request to %s", url)
+
+    backend_response = method(url, stream=True, params=request.args, headers=headers)
+
+    log.debug("Received response with status code %s", backend_response.status_code)
+
+    if backend_response.status_code > 210:
+        log.warning(
+            "Proxy server received status code %s", backend_response.status_code
+        )
+        try:
+            log.warning("Error messages: %s", backend_response.json())
+        except Exception:
+            log.warning(
+                "Could not decode error response as JSON. Response text: %s",
+                backend_response.text,
+            )
+        log.debug(
+            "method: %s, url: %s, params: %s, headers: %s",
+            request.method,
+            url,
+            request.args,
+            headers,
+        )
+        return (
+            backend_response.content,
+            backend_response.status_code,
+            backend_response.headers.items(),
+        )
+    client: NodeClient = app.config.get("SERVER_IO")
+
+    # Only decrypt if the response is successful and content type is as expected
+    content_type = backend_response.headers.get("Content-Type", "")
+    if (
+        backend_response.status_code <= 210
+        and "application/octet-stream" in content_type
+    ):
+        return FlaskResponse(
+            stream_with_context(client.cryptor.decrypt_stream(backend_response.raw)),
+            status=backend_response.status_code,
+            headers=dict(backend_response.headers),
+            content_type=content_type,
+        )
+    else:
+        # Return the raw content if not a valid stream or an error occurred
+        return (
+            backend_response.content,
+            backend_response.status_code,
+            backend_response.headers.items(),
+        )
+
+
+@app.route("/blobstream", methods=["POST"])
+def stream_handler_post() -> FlaskResponse:
+    """
+    Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
+    Returns
+
+    Proxied_request and standard response are not used here,
+    as this function is specifically designed to handle streaming of blobs
+    without loading the entire content into memory.
+
+    -------
+    FlaskResponse
+        A Flask response object containing if the blob was successfully streamed to the server.
+    """
+    log.debug("Proxy stream POST handler called")
+
+    client: NodeClient = app.config.get("SERVER_IO")
+    pubkey_base64 = request.headers.get("X-Public-Key")
+    if not pubkey_base64:
+        log.error("Missing X-Public-Key header in request.")
+        return {"msg": "Missing X-Public-Key header"}, HTTPStatus.BAD_REQUEST
+
+    log.debug("Received public key: %s", pubkey_base64)
+
+    headers = {}
+    for h in ["Authorization", "Content-Type", "Content-Length"]:
+        if h in request.headers:
+            headers[h] = request.headers[h]
+
+    url = f"{server_url}/blobstream"
+    log.debug("Making proxied POST request to %s", url)
+
+    encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)
+    # Stream the data to the server while encrypting it.
+    # This is done to avoid loading the entire content into memory.
+    # The encrypted stream is a generator that yields chunks of encrypted data.
+    backend_response = requests.post(
+        url, params=request.args, headers=headers, data=encrypted_stream
+    )
+
+    log.debug("Received response with status code %s", backend_response.status_code)
+
+    if backend_response.status_code > 210:
+        log.warning(
+            "Proxy server received status code %s", backend_response.status_code
+        )
+        try:
+            log.warning("Error messages: %s", backend_response.json())
+        except Exception:
+            log.warning("Could not decode error response as JSON.")
+        log.debug(
+            "method: %s, url: %s, params: %s, headers: %s",
+            request.method,
+            url,
+            request.args,
+            headers,
+        )
+        return (
+            backend_response.content,
+            backend_response.status_code,
+            dict(backend_response.headers),
+        )
+    return FlaskResponse(
+        backend_response.content,
+        status=backend_response.status_code,
+        headers=dict(backend_response.headers),
+    )
 
 
 @app.route(

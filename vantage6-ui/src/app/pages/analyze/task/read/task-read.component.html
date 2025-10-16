@@ -108,7 +108,13 @@
               </app-alert>
               <p>{{ displayTextResult(result.decoded_result) }}</p>
             </div>
-            <app-alert *ngIf="!result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <app-alert *ngIf="result.blob_storage_used" label="{{ 'task.alert-blob-read-result' | translate }}"> </app-alert>
+            <app-alert
+              *ngIf="!result.blob_storage_used && !result.decoded_result"
+              label="{{ 'task.alert-failed-read-result' | translate }}"
+            >
+            </app-alert>
+            <br />
             <button mat-flat-button color="primary" (click)="downloadResult(result)">
               {{ "task-read.card-results.actions.download-result" | translate }}
             </button>
@@ -207,7 +213,12 @@
           </div>
         </div>
       </ng-container>
-      <app-alert *ngIf="!task.arguments" label="{{ 'task.alert-failed-read-arguments-function' | translate }}"> </app-alert>
+      <app-alert
+        *ngIf="!task.runs[0]?.blob_storage_used && !task.arguments"
+        label="{{ 'task.alert-failed-read-arguments-function' | translate }}"
+      >
+      </app-alert>
+      <app-alert *ngIf="task.runs[0]?.blob_storage_used" label="{{ 'task.alert-blob-read-arguments' | translate }}"> </app-alert>
       <br />
       <button *ngIf="!task.arguments && task.runs[0]?.arguments" mat-flat-button color="primary" (click)="downloadArguments(task.runs[0])">
         {{ "task-read.card-results.actions.download-arguments" | translate }}
@@ -247,6 +258,10 @@
             <div class="data-list__item">
               <b>{{ "task-run.node" | translate }}</b>
               <span>{{ run.node.name }}</span>
+            </div>
+            <div class="data-list__item">
+              <b>{{ "task-run.blob-storage-used" | translate }}</b>
+              <span>{{ (run.blob_storage_used ? "general.yes" : "general.no") | translate }}</span>
             </div>
           </div>
           <div class="run__actions">

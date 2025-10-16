@@ -57,9 +57,11 @@ from vantage6.server.globals import (
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.permission import PermissionManager
 from vantage6.server.resource.common.output_schema import HATEOASModelSchema
+from vantage6.server.service.azure_storage_service import AzureStorageService
 from vantage6.server.websockets import DefaultSocketNamespace
 
 __version__ = importlib.metadata.version(__package__)
+
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -84,6 +86,7 @@ class ServerApp(Vantage6App):
         # Setup websocket channel
         self.socketio = self.setup_socket_connection()
 
+        self.setup_large_result_store()
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
@@ -116,6 +119,23 @@ class ServerApp(Vantage6App):
             )
 
         log.info("Initialization done")
+
+    def setup_large_result_store(self):
+        """
+        Setup the large result store for storing large results.
+        If configured, inputs and results will be stored in blob Storage.
+        """
+
+        self.storage_adapter = None
+        large_result_config = self.ctx.config.get("large_result_store", {})
+        if not large_result_config:
+            log.info(
+                "No large result store configured, using relational database for input and result storage"
+            )
+            return
+
+        log.info("Using Azure Blob Storage as large result store")
+        self.storage_adapter = AzureStorageService(config=large_result_config)
 
     def setup_socket_connection(self) -> SocketIO:
         """
@@ -281,6 +301,7 @@ class ServerApp(Vantage6App):
         # make use of 'em.
         services = {
             "socketio": self.socketio,
+            "storage_adapter": self.storage_adapter,
             "mail": self.mail,
             "api": self.api,
             "permissions": self.permissions,
@@ -349,7 +370,7 @@ class ServerApp(Vantage6App):
 
     def __node_status_worker(self) -> None:
         """
-        Set node status to offline if they haven't send a ping message in a
+        Set node status to offline if they haven't sent a ping message in a
         while.
         """
         # start periodic check if nodes are responsive
@@ -371,8 +392,8 @@ class ServerApp(Vantage6App):
                     if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception:
-                log.exception("Node-status thread had an exception")
+            except Exception as e:
+                log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):
@@ -384,7 +405,7 @@ class ServerApp(Vantage6App):
         while True:
             try:
                 cleanup.cleanup_runs_data(
-                    self.ctx.config.get("runs_data_cleanup_days"),
+                    self.ctx.config,
                     include_args=include_args,
                 )
             except Exception as e:

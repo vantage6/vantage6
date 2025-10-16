@@ -53,8 +53,8 @@ reset_api_key_schema = ResetAPIKeyInputSchema()
 class ResetAPIKey(ServicesResources):
     """User can reset API key."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
 
         # obtain permissions to check if user is allowed to modify nodes
         self.r = getattr(self.permissions, "node")
