@@ -229,6 +229,9 @@ DataFrame instead of a string for the database value:
 
 .. code:: python
 
+        import pandas as pd
+        from vantage6.mock.mock_network import MockNetwork
+        
         network = MockNetwork(
             module_name="my_algorithm",
             datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
