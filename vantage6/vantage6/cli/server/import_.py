@@ -94,12 +94,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     for organization in import_data["organizations"]:
         org = client.organization.create(
             name=organization["name"],
-            address1=organization["address1"] or "",
-            address2=organization["address2"] or "",
-            zipcode=organization["zipcode"] or "",
-            country=organization["country"] or "",
-            domain=organization["domain"] or "",
-            public_key=organization["public_key"] or "",
+            address1=organization.get("address1", ""),
+            address2=organization.get("address2", ""),
+            zipcode=str(organization.get("zipcode", "")),
+            country=organization.get("country", ""),
+            domain=organization.get("domain", ""),
+            public_key=organization.get("public_key", ""),
         )
         organizations.append(org)
 
@@ -183,27 +183,46 @@ def _check_import_file(import_data: dict) -> None:
         "public_key": str,
         "users": list,
     }
+    organization_obligatory_keys = ["name"]
     user_level = {
         "username": str,
         "password": str,
     }
+    user_obligatory_keys = ["username", "password"]
     for organization in import_data.get("organizations", []):
-        _check_content_of_dict(organization, organization_level, "organization")
+        _check_content_of_dict(
+            organization,
+            organization_level,
+            "organization",
+            organization_obligatory_keys,
+        )
         for user in organization["users"]:
-            _check_content_of_dict(user, user_level, "user")
+            _check_content_of_dict(user, user_level, "user", user_obligatory_keys)
 
     collaboration_level = {
         "name": str,
         "participants": list,
         "encrypted": bool,
     }
+    collaboration_obligatory_keys = ["name", "participants"]
     participant_level = {
         "name": str,
     }
+    participant_obligatory_keys = ["name"]
     for collaboration in import_data.get("collaborations", []):
-        _check_content_of_dict(collaboration, collaboration_level, "collaboration")
+        _check_content_of_dict(
+            collaboration,
+            collaboration_level,
+            "collaboration",
+            collaboration_obligatory_keys,
+        )
         for participant in collaboration["participants"]:
-            _check_content_of_dict(participant, participant_level, "participant")
+            _check_content_of_dict(
+                participant,
+                participant_level,
+                "participant",
+                participant_obligatory_keys,
+            )
             if participant["name"] not in [
                 o["name"] for o in import_data["organizations"]
             ]:
@@ -211,7 +230,15 @@ def _check_import_file(import_data: dict) -> None:
                 exit(1)
 
 
-def _check_content_of_dict(data: dict, options: dict, level: str) -> None:
+def _check_content_of_dict(
+    data: dict, options: dict, level: str, obligatory_keys: list[str] = None
+) -> None:
+    if obligatory_keys is None:
+        obligatory_keys = []
+    for key in obligatory_keys:
+        if key not in data:
+            error(f"Import file is missing obligatory '{key}' at level {level}")
+            exit(1)
     for key, value in data.items():
         if key not in options:
             error(f"Import file contains an invalid key '{key}' at level {level}")
