@@ -21,6 +21,7 @@ spec:
       containers:
       - name: vantage6-server-frontend
         image: {{ .Values.ui.image }}
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
