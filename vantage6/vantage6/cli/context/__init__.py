@@ -13,6 +13,7 @@ from colorama import Fore, Style
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
@@ -74,6 +75,8 @@ def get_context(
     AppContext
         Specialized subclass context of AppContext for the given instance type
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+
     ctx_class = select_context_class(type_)
     if not ctx_class.config_exists(name, system_folders, is_sandbox=is_sandbox):
         scope = "system" if system_folders else "user"

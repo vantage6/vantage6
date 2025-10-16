@@ -93,6 +93,13 @@ from vantage6.cli.utils import prompt_config_name
     " appended to the algorithm store configuration file",
 )
 @click.option(
+    "--extra-auth-config",
+    type=click.Path("rb"),
+    default=None,
+    help="YAML File with additional auth configuration. This will be"
+    " appended to the auth configuration file",
+)
+@click.option(
     "--add-dataset",
     type=(str, click.Path()),
     default=None,
@@ -133,6 +140,7 @@ def cli_new_sandbox(
     extra_server_config: Path | None,
     extra_node_config: Path | None,
     extra_store_config: Path | None,
+    extra_auth_config: Path | None,
     add_dataset: tuple[str, Path] | None,
     context: str | None,
     namespace: str | None,
@@ -171,6 +179,7 @@ def cli_new_sandbox(
         store_image=store_image,
         extra_server_config=extra_server_config,
         extra_store_config=extra_store_config,
+        extra_auth_config=extra_auth_config,
         context=context,
         namespace=namespace,
         k8s_node_name=k8s_node_name,

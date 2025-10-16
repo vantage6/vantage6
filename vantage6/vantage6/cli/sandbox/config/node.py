@@ -87,13 +87,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.node_configs = []
         self.node_config_files = []
         self.node_config_names = []
+        self.extra_config = None
 
     def generate_node_configs(self) -> None:
         """
         Generates ``num_nodes`` node configuration files.
         """
         node_data_files = []
-        extra_config = self._read_extra_config_file(self.extra_node_config)
+        self.extra_config = self._read_extra_config_file(self.extra_node_config)
 
         data_directory = impresources.files(node_datafiles_dir)
 
@@ -133,7 +134,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "org_id": idx + 1,
                 "api_key": api_key,
                 "node_name": self.node_names[idx],
-                "user_defined_config": extra_config,
             }
             config_file = self._create_node_config_file(
                 config,
@@ -214,7 +214,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         config_name = f"{self.server_name}-{node_name}"
 
         path_to_data_dir = self._create_and_get_data_dir(
-            InstanceType.NODE, is_data_folder=True
+            InstanceType.NODE, is_data_folder=True, node_name=node_name
         )
 
         # delete old node config if it exists
@@ -225,7 +225,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         # create new node config
         node_config = new(
             config_producing_func=self.__node_config_return_func,
-            config_producing_func_args=(config, datasets, path_to_data_dir),
+            config_producing_func_args=(
+                config,
+                self.extra_config,
+                datasets,
+                path_to_data_dir,
+            ),
             name=config_name,
             system_folders=False,
             namespace=self.namespace,
@@ -241,6 +246,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
     def __node_config_return_func(
         self,
         node_specific_config: dict,
+        extra_config: dict,
         datasets: list[tuple[str, Path]],
         path_to_data_dir: Path,
     ) -> dict:
@@ -248,7 +254,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         Return a dict with node configuration values to be used in creating the
         config file.
         """
-        return {
+        config = {
             "node": {
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "apiKey": node_specific_config["api_key"],
@@ -256,21 +262,16 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.node_image
                     # TODO v5+ update
-                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a36"
+                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a37"
                 ),
                 "logging": {
                     "level": "DEBUG",
                     "file": f"{node_specific_config['node_name']}.log",
                 },
-                # TODO: the keycloak instance should be spun up together with the
-                # server
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak.{self.namespace}.svc.cluster.local"
+                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"{self.namespace}.svc.cluster.local"
                 ),
-                "additional_config": node_specific_config["user_defined_config"],
-                "dev": {
-                    "task_dir_extension": str(path_to_data_dir),
-                },
                 "persistence": {
                     "tasks": {
                         "hostPath": str(path_to_data_dir),
@@ -294,8 +295,17 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     ]
                 },
                 "server": {
-                    "url": f"http://vantage6-{self.server_name}-user-server-vantage6-server-service.{self.namespace}.svc.cluster.local",
+                    "url": (
+                        f"http://vantage6-{self.server_name}-user-server-"
+                        f"vantage6-server-service.{self.namespace}.svc.cluster.local"
+                    ),
                     "port": self.server_port,
                 },
             },
         }
+
+        # merge the extra config with the node config
+        if extra_config is not None:
+            config.update(extra_config)
+
+        return config

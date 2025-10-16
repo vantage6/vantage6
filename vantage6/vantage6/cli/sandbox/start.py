@@ -45,6 +45,12 @@ from vantage6.cli.server.start import cli_server_start
     "--re-initialize flag is provided.",
 )
 @click.option(
+    "--node-image",
+    type=str,
+    default=None,
+    help="Node image to use. Only used if --re-initialize flag is provided.",
+)
+@click.option(
     "--extra-node-config",
     type=click.Path("rb"),
     default=None,
@@ -80,6 +86,7 @@ def cli_sandbox_start(
     local_chart_dir: Path | None,
     re_initialize: bool,
     num_nodes: int,
+    node_image: str | None,
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
     custom_data_dir: Path | None,
@@ -101,6 +108,7 @@ def cli_sandbox_start(
         namespace=namespace,
         num_nodes=num_nodes,
         initialize=re_initialize,
+        node_image=node_image,
         extra_node_config=extra_node_config,
         add_dataset=add_dataset,
         custom_data_dir=custom_data_dir,
@@ -249,9 +257,13 @@ def _initialize_sandbox(
     api_keys = [node["api_key"] for node in node_details]
     node_names = [node["name"] for node in node_details]
 
-    extra_dataset = NodeDataset(
-        label=add_dataset[0],
-        path=add_dataset[1],
+    extra_dataset = (
+        NodeDataset(
+            label=add_dataset[0],
+            path=add_dataset[1],
+        )
+        if add_dataset is not None and add_dataset != ()
+        else None
     )
 
     # Create node config files from the nodes that were just registered in the server

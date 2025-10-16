@@ -102,6 +102,9 @@ store:
     port: 7602
   {% endif %}
 
+  # The port to expose the store on in the cluster
+  port: {{ store.port | default(7602) }}
+
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
@@ -192,7 +195,4 @@ database:
 
   # The name of the k8s node where the database is running
   k8sNodeName: {{ database.k8sNodeName }}
-  {% endif %}
-  {% if store.additional_config is defined %}
-  {{ store.additional_config }}
   {% endif %}

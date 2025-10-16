@@ -4,16 +4,18 @@ from pathlib import Path
 from subprocess import Popen
 from typing import Iterable
 
-import click
 import docker
 import questionary as q
-from colorama import Fore, Style
 
-from vantage6.common import error, warning
-from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
+from vantage6.common import error
+from vantage6.common.globals import (
+    APPNAME,
+    SANDBOX_SUFFIX,
+    STRING_ENCODING,
+    InstanceType,
+)
 
 from vantage6.cli.config import CliConfig
-from vantage6.cli.context import select_context_class
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.utils import validate_input_cmd_args
 
@@ -251,60 +253,6 @@ def get_running_servers(
     return [server.name for server in running_servers]
 
 
-def get_server_configuration_list(instance_type: InstanceType) -> None:
-    """
-    Print list of available server configurations.
-
-    Parameters
-    ----------
-    instance_type : InstanceType
-        The type of instance to get the configurations for
-    """
-    ctx_class = select_context_class(instance_type)
-
-    running_server_names = find_running_service_names(instance_type)
-    header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
-
-    click.echo(header)
-    click.echo("-" * len(header))
-
-    running = Fore.GREEN + "Running" + Style.RESET_ALL
-    stopped = Fore.RED + "Not running" + Style.RESET_ALL
-
-    # system folders
-    configs, failed_imports_system = ctx_class.available_configurations(
-        system_folders=True
-    )
-    for config in configs:
-        status = (
-            running
-            if f"{APPNAME}-{config.name}-system-{instance_type.value}"
-            in running_server_names
-            else stopped
-        )
-        click.echo(f"{config.name:25}{status:25} System ")
-
-    # user folders
-    configs, failed_imports_user = ctx_class.available_configurations(
-        system_folders=False
-    )
-    for config in configs:
-        status = (
-            running
-            if f"{APPNAME}-{config.name}-user-{instance_type.value}"
-            in running_server_names
-            else stopped
-        )
-        click.echo(f"{config.name:25}{status:25} User   ")
-
-    click.echo("-" * 85)
-    if len(failed_imports_system) + len(failed_imports_user):
-        warning(
-            f"{Fore.RED}Failed imports: "
-            f"{len(failed_imports_system) + len(failed_imports_user)}{Style.RESET_ALL}"
-        )
-
-
 def print_log_worker(logs_stream: Iterable[bytes]) -> None:
     """
     Print the logs from the logs stream.
@@ -417,3 +365,58 @@ def check_running(
         only_user_folders=not system_folders,
     )
     return helm_release_name in running_services
+
+
+def get_config_name_from_helm_release_name(
+    helm_release_name: str, is_store: bool = False
+) -> str:
+    """
+    Get the config name from a helm release name.
+
+    Parameters
+    ----------
+    helm_release_name : str
+        The name of the Helm release
+    is_store : bool, optional
+        Whether the instance is a store or not. By default False.
+
+    Returns
+    -------
+    str
+        The config name
+    """
+    # helm release name is structured as:
+    # f"{APPNAME}-{name}-{scope}-{instance_type}"
+    # we want to get the name from the service name
+    if is_store:
+        # for store, the instance type is `algorithm-store` which contains an additional
+        # hyphen
+        return "-".join(helm_release_name.split("-")[1:-3])
+    else:
+        return "-".join(helm_release_name.split("-")[1:-2])
+
+
+def extract_name_and_is_sandbox(name: str | None, is_sandbox: bool) -> tuple[str, bool]:
+    """
+    Extract the name and is_sandbox from the name.
+
+    Note that the name may be None: this occurs before when this function is called
+    before the user has selected a name. This scenario is fine because when the user
+    selects a name interactively, the name never ends with the .sandbox suffix.
+
+    Parameters
+    ----------
+    name : str | None
+        The name of the instance
+    is_sandbox : bool
+        Whether the instance is a sandbox instance
+
+    Returns
+    -------
+    tuple[str, bool]
+        The name and is_sandbox
+    """
+    if name and name.endswith(SANDBOX_SUFFIX):
+        return name[: -len(SANDBOX_SUFFIX)], True
+    else:
+        return name, is_sandbox

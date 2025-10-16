@@ -79,6 +79,8 @@ node:
       name: engineio.server
     - level: warning
       name: sqlalchemy.engine
+    - level: warning
+      name: kubernetes.client.rest
     {% endif %}
 
   {% if node.encryption is defined %}
@@ -333,7 +335,4 @@ node:
     # directory is mounted as a volume. If multiple nodes are then running on the same
     # machine, this extension is added to the task directory to avoid conflicts.
     task_dir_extension: {{ node.dev.task_dir_extension }}
-  {% endif %}
-  {% if node.additional_config is defined %}
-  {{ node.additional_config }}
   {% endif %}
