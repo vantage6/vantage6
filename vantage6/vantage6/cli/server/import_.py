@@ -99,6 +99,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
             zipcode=organization["zipcode"] or "",
             country=organization["country"] or "",
             domain=organization["domain"] or "",
+            public_key=organization["public_key"] or "",
         )
         organizations.append(org)
 
@@ -155,16 +156,8 @@ def _drop_all(client: UserClient) -> None:
             info(f"Deleting collaboration {collaboration['name']}")
             client.collaboration.delete(collaboration["id"], delete_dependents=True)
 
-    # TODO: For some reason, the `delete_dependents` parameter is not working for users,
-    # so we delete them here first.
-    while users := [u for u in client.user.list()["data"] if u["username"] != "admin"]:
-        for user in users:
-            info(f"Deleting user {user['username']}")
-            client.user.delete(user["id"])
-
-    while orgs := [
-        o for o in client.organization.list()["data"] if o["name"] != "root"
-    ]:
+    # remove all organizations but keep the root organization
+    while orgs := [o for o in client.organization.list()["data"] if o["id"] != 1]:
         for org in orgs:
             info(f"Deleting organization {org['name']}")
             client.organization.delete(org["id"], delete_dependents=True)
@@ -178,7 +171,7 @@ def _check_import_file(import_data: dict) -> None:
         "organizations": list,
         "collaborations": list,
     }
-    _check_content_of_dict(import_data, main_level)
+    _check_content_of_dict(import_data, main_level, "main")
 
     organization_level = {
         "name": str,
@@ -187,6 +180,7 @@ def _check_import_file(import_data: dict) -> None:
         "zipcode": str,
         "country": str,
         "domain": str,
+        "public_key": str,
         "users": list,
     }
     user_level = {
@@ -194,9 +188,9 @@ def _check_import_file(import_data: dict) -> None:
         "password": str,
     }
     for organization in import_data.get("organizations", []):
-        _check_content_of_dict(organization, organization_level)
+        _check_content_of_dict(organization, organization_level, "organization")
         for user in organization["users"]:
-            _check_content_of_dict(user, user_level)
+            _check_content_of_dict(user, user_level, "user")
 
     collaboration_level = {
         "name": str,
@@ -207,9 +201,9 @@ def _check_import_file(import_data: dict) -> None:
         "name": str,
     }
     for collaboration in import_data.get("collaborations", []):
-        _check_content_of_dict(collaboration, collaboration_level)
+        _check_content_of_dict(collaboration, collaboration_level, "collaboration")
         for participant in collaboration["participants"]:
-            _check_content_of_dict(participant, participant_level)
+            _check_content_of_dict(participant, participant_level, "participant")
             if participant["name"] not in [
                 o["name"] for o in import_data["organizations"]
             ]:
@@ -217,11 +211,19 @@ def _check_import_file(import_data: dict) -> None:
                 exit(1)
 
 
-def _check_content_of_dict(data: dict, options: dict) -> None:
-    for key, value in options.items():
-        if key not in data:
-            error(f"Import file must contain a '{key}' key")
+def _check_content_of_dict(data: dict, options: dict, level: str) -> None:
+    for key, value in data.items():
+        if key not in options:
+            error(f"Import file contains an invalid key '{key}' at level {level}")
+            error(f"Allowed keys: {options.keys()}")
             exit(1)
-        if not isinstance(data[key], value):
-            error(f"Import file must contain a '{key}' key with a list of dictionaries")
+        # cast numbers to strings
+        if isinstance(value, (int, float)):
+            value = str(value)
+        if options[key] is bool:
+            value = value.lower() in ["true", "1", "yes", "t"]
+        if not isinstance(value, options[key]):
+            error(f"Import file contains an invalid value for key {key}: {value}")
+            error(f"Expected type: {options[key]}")
+            error(f"Got type: {type(value)}")
             exit(1)
