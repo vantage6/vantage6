@@ -64,7 +64,8 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Loading and validating import file")
     with open(file, "r") as f:
         import_data = yaml.safe_load(f)
-    # TODO: validate import file
+
+    _check_import_file(import_data)
 
     client = UserClient(
         server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
@@ -77,7 +78,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Authenticate using admin credentials (opens browser for login)")
     client.authenticate()
 
-    # TODO: validate that the user has the correct permissions to import data
+    # Note: we do not validate that the user has the correct permissions to import data.
+    # As the user has access to the `v6 server import` command, they already have
+    # access to the server+database.
 
     if drop_all:
         info("Dropping all existing data")
@@ -91,11 +94,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     for organization in import_data["organizations"]:
         org = client.organization.create(
             name=organization["name"],
-            address1=organization["address1"] or "",
-            address2=organization["address2"] or "",
-            zipcode=organization["zipcode"] or "",
-            country=organization["country"] or "",
-            domain=organization["domain"] or "",
+            address1=organization.get("address1", ""),
+            address2=organization.get("address2", ""),
+            zipcode=str(organization.get("zipcode", "")),
+            country=organization.get("country", ""),
+            domain=organization.get("domain", ""),
+            public_key=organization.get("public_key", ""),
         )
         organizations.append(org)
 
@@ -152,16 +156,101 @@ def _drop_all(client: UserClient) -> None:
             info(f"Deleting collaboration {collaboration['name']}")
             client.collaboration.delete(collaboration["id"], delete_dependents=True)
 
-    # TODO: For some reason, the `delete_dependents` parameter is not working for users,
-    # so we delete them here first.
-    while users := [u for u in client.user.list()["data"] if u["username"] != "admin"]:
-        for user in users:
-            info(f"Deleting user {user['username']}")
-            client.user.delete(user["id"])
-
-    while orgs := [
-        o for o in client.organization.list()["data"] if o["name"] != "root"
-    ]:
+    # remove all organizations but keep the root organization
+    while orgs := [o for o in client.organization.list()["data"] if o["id"] != 1]:
         for org in orgs:
             info(f"Deleting organization {org['name']}")
             client.organization.delete(org["id"], delete_dependents=True)
+
+
+def _check_import_file(import_data: dict) -> None:
+    """
+    Check if the import file is valid.
+    """
+    main_level = {
+        "organizations": list,
+        "collaborations": list,
+    }
+    _check_content_of_dict(import_data, main_level, "main")
+
+    organization_level = {
+        "name": str,
+        "address1": str,
+        "address2": str,
+        "zipcode": str,
+        "country": str,
+        "domain": str,
+        "public_key": str,
+        "users": list,
+    }
+    organization_obligatory_keys = ["name"]
+    user_level = {
+        "username": str,
+        "password": str,
+    }
+    user_obligatory_keys = ["username", "password"]
+    for organization in import_data.get("organizations", []):
+        _check_content_of_dict(
+            organization,
+            organization_level,
+            "organization",
+            organization_obligatory_keys,
+        )
+        for user in organization["users"]:
+            _check_content_of_dict(user, user_level, "user", user_obligatory_keys)
+
+    collaboration_level = {
+        "name": str,
+        "participants": list,
+        "encrypted": bool,
+    }
+    collaboration_obligatory_keys = ["name", "participants"]
+    participant_level = {
+        "name": str,
+    }
+    participant_obligatory_keys = ["name"]
+    for collaboration in import_data.get("collaborations", []):
+        _check_content_of_dict(
+            collaboration,
+            collaboration_level,
+            "collaboration",
+            collaboration_obligatory_keys,
+        )
+        for participant in collaboration["participants"]:
+            _check_content_of_dict(
+                participant,
+                participant_level,
+                "participant",
+                participant_obligatory_keys,
+            )
+            if participant["name"] not in [
+                o["name"] for o in import_data["organizations"]
+            ]:
+                error(f"Participant {participant['name']} not found in organizations")
+                exit(1)
+
+
+def _check_content_of_dict(
+    data: dict, options: dict, level: str, obligatory_keys: list[str] = None
+) -> None:
+    if obligatory_keys is None:
+        obligatory_keys = []
+    for key in obligatory_keys:
+        if key not in data:
+            error(f"Import file is missing obligatory '{key}' at level {level}")
+            exit(1)
+    for key, value in data.items():
+        if key not in options:
+            error(f"Import file contains an invalid key '{key}' at level {level}")
+            error(f"Allowed keys: {options.keys()}")
+            exit(1)
+        # cast numbers to strings
+        if isinstance(value, (int, float)):
+            value = str(value)
+        if options[key] is bool:
+            value = value.lower() in ["true", "1", "yes", "t"]
+        if not isinstance(value, options[key]):
+            error(f"Import file contains an invalid value for key {key}: {value}")
+            error(f"Expected type: {options[key]}")
+            error(f"Got type: {type(value)}")
+            exit(1)
