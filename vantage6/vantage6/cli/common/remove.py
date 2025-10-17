@@ -41,8 +41,6 @@ def execute_remove(
         Whether to use system folders or user folders
     force : bool
         Whether to ask for confirmation before removing or not
-    is_sandbox : bool
-        Whether the configuration is a sandbox configuration, by default False
     """
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(

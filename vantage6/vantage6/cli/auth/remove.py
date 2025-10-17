@@ -40,7 +40,7 @@ def cli_auth_remove(
 def auth_remove(ctx: AuthContext, name: str, system_folders: bool, force: bool) -> None:
     # Best-effort cleanup of Keycloak PVCs and their bound PVs after uninstall
     try:
-        cleanup_auth_volumes(ctx)
+        _cleanup_auth_volumes(ctx)
     except Exception as e:
         # Cleanup is best-effort; do not fail the remove command if cleanup fails
         warning(f"Failed to cleanup auth volumes: {e}")
@@ -50,7 +50,7 @@ def auth_remove(ctx: AuthContext, name: str, system_folders: bool, force: bool) 
     )
 
 
-def cleanup_auth_volumes(ctx: AuthContext) -> None:
+def _cleanup_auth_volumes(ctx: AuthContext) -> None:
     core_api = get_core_api_with_ssl_handling()
 
     # Label used by the auth chart to tag its resources
