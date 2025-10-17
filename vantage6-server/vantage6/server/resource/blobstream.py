@@ -15,7 +15,7 @@ from flask import Response, g, request, stream_with_context
 from flask_restful import Api
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import has_task_finished
+from vantage6.common.enum import TaskStatus
 
 from vantage6.server.model import Run as db_Run, Task as db_Task
 from vantage6.server.permission import Operation as P, RuleCollection, Scope
@@ -240,7 +240,7 @@ class BlobStream(BlobStreamBase):
             }, HTTPStatus.UNAUTHORIZED
         if g.container:
             container = g.container
-            if has_task_finished(db_Task.get(container["task_id"]).status):
+            if TaskStatus.has_finished(db_Task.get(container["task_id"]).status):
                 log.warning(
                     f"Container from node={container['node_id']} "
                     f"attempts to upload blob for a sub-task of a completed "

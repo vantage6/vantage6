@@ -68,7 +68,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                             log.warning(
                                 f"Failed to delete arguments {run.arguments}: {e}"
                             )
-                    run.input = ""
+                    run.arguments = ""
                 run.cleanup_at = datetime.now(timezone.utc)
                 log.info("Cleared result for Run ID %s.", run.id)
 

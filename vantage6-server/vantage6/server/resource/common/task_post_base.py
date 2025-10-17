@@ -634,7 +634,7 @@ class TaskPostBase(ServicesResources):
         if blob_storage_used:
             return TaskPostBase._check_arguments_uuid(organizations_json_list)
         else:
-            return TaskPostBase._check_input_encryption(
+            return TaskPostBase._check_arguments_encryption(
                 organizations_json_list, collaboration
             )
 

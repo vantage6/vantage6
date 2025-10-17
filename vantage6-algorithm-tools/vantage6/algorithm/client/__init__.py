@@ -351,7 +351,7 @@ class AlgorithmClient(ClientBase):
             same job_id) at the central server. The docker image must
             be the same as the docker image of this container self.
 
-            If blob storage is configured at the server, the input data
+            If blob storage is configured at the server, the input arguments data
             will be uploaded to blob storage and a UUID reference will be
             passed as a result instead.
 
@@ -397,11 +397,12 @@ class AlgorithmClient(ClientBase):
                 self.parent.log.debug(
                     f"Using public key for organization {org_id}: {pub_key}"
                 )
-                # If blob store is enabled, upload the input data to blob storage
-                # and set a UUID reference for the input.
+                # If blob store is enabled, upload the arguments data to blob storage
+                # and set a UUID reference for the arguments.
                 if arguments and blob_store_enabled:
                     self.parent.log.debug(
-                        "Blob store is enabled, uploading input data to blob storage."
+                        "Blob store is enabled, uploading arguments data to blob "
+                        "storage."
                     )
                     arguments_uuid = self.parent._upload_run_data_to_server(
                         serialized_arguments, pub_key=pub_key

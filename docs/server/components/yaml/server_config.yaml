@@ -135,8 +135,8 @@ algorithm_stores:
   - name: local store
     url: http://localhost:7602/api
 
-# Settings for the large result store. By default, the server uses a database to store all inputs and results.
-# Adding this will set Vantage6 to use blob storage rather than the database for both inputs and results.
+# Settings for the large result store. By default, the server uses a database to store all arguments and results.
+# Adding this will set Vantage6 to use blob storage rather than the database for both argumentsand results.
 large_result_store:
   # Type of the large result store. Currently, only "azure" is supported.
   type: "azure"

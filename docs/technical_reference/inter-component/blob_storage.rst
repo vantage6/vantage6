@@ -48,36 +48,36 @@ point to a local Azurite instance.
 Developer documentation
 +++++++++++++++++++++++
 
-When configured to use blob storage, inputs and results are streamed:
+When configured to use blob storage, argument data and results are streamed:
 
 - From the user client, through the server, to blob storage and vice versa
 - From the node client, through the server, to blob storage and vice versa
 - From the algorithm container, through the proxy, server to blob storage and vice versa
 
 Whenever a blob is uploaded, it is stored using a UUID as identifier. This UUID is then used
-as reference in the `input` or `result` field in the database. To ensure backwards compatibility,
+as reference in the `arguments` or `result` field in the database. To ensure backwards compatibility,
 checks are made throughout the code to determine if the run was performed using the relational
-database, in which case the input or result should be interpreted as is, as opposed to first retrieving
+database, in which case the argument data or result should be interpreted as is, as opposed to first retrieving
 the data from blob storage.
 
-The `blobstream` endpoint on the server enables streaming of large input and result data
-directly to and from blob storage. This reduces memory usage by never storing the entire input
+The `blobstream` endpoint on the server enables streaming of large argument data and result data
+directly to and from blob storage. This reduces memory usage by never storing the entire argument data
 or result in memory at once, and avoids storing large payloads in the database.
 
 Encryption
 ~~~~~~~~~~
 
-Since inputs and results are now uploaded and downloaded separately and are no longer part of
+Since arguments and results are now uploaded and downloaded separately and are no longer part of
 a larger JSON object, Base64 encoding is skipped when data is encrypted. The encrypted raw bytes
 can be stored directly.
-Inputs are encrypted before uploading, and results are decrypted after downloading in the node and client.
+Argument data is encrypted before uploading, and results are decrypted after downloading in the node and client.
 Since encryption and decryption for the algorithm container takes place in the proxy, for the algorithm
 encryption and decryption is done on a chunk by chunk basis using **AES-CTR** to prevent loading the entire
-input or result into memory at once.
+argument data or result into memory at once.
 
 Database
 ~~~~~~~~
 
 A blob_storage column is added to the `runs` table to indicate whether blob storage and streaming was used for that run.
-This ensures for any run it is clear whether the input or result field should be interpreted directly, or first
+This ensures for any run it is clear whether the argument data or result field should be interpreted directly, or first
 retrieved. For existing installations, empty values for `blob_storage_used` are assumed to be False.

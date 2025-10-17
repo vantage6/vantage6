@@ -6,7 +6,6 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.algorithm.client.mock_client import MockAlgorithmClient
 
 
 def _algorithm_client() -> callable:
@@ -44,9 +43,7 @@ def _algorithm_client() -> callable:
 
     def protection_decorator(func: callable, *args, **kwargs) -> callable:
         @wraps(func)
-        def decorator(
-            *args, mock_client: MockAlgorithmClient | None = None, **kwargs
-        ) -> callable:
+        def decorator(*args, mock_client=None, **kwargs) -> callable:
             """
             Wrap the function with the client object
 
@@ -56,6 +53,7 @@ def _algorithm_client() -> callable:
                 Mock client. If not None, used instead of the regular client
             """
             if mock_client is not None:
+                # Lazy import to avoid circular dependency
                 return func(mock_client, *args, **kwargs)
 
             # read token from the environment

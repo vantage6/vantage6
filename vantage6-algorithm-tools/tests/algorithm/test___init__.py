@@ -29,8 +29,7 @@ class TestAlgorithmClient(unittest.TestCase):
         dummy_token = jwt.encode(payload, key="", algorithm=None)
         self.client = AlgorithmClient(
             token=dummy_token,
-            host="http://dummy_host",
-            port=1234,
+            server_url="http://dummy_host:1234",
         )
         self.client.parent = MagicMock()
         self.client.parent.request = MagicMock()
@@ -51,7 +50,7 @@ class TestAlgorithmClient(unittest.TestCase):
 
     @patch("requests.get")
     @patch("requests.post")
-    @patch("vantage6.algorithm.client.serialize", return_value=b"serialized_input")
+    @patch("vantage6.algorithm.client.serialize", return_value=b"serialized_arguments")
     def test_create_task(self, mock_serialize, mock_requests_post, mock_requests_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -64,15 +63,18 @@ class TestAlgorithmClient(unittest.TestCase):
 
         mock_requests_get.return_value = mock_response
 
-        input_data = {"method": "mock_method", "args": [1, 2, 3]}
+        arguments_data = {"myargument": "myvalue"}
         organizations = [1]
-        result = self.client.task.create(input_=input_data, organizations=organizations)
+        method = "mock_method"
+        result = self.client.task.create(
+            arguments=arguments_data, organizations=organizations, method=method
+        )
 
         self.assertEqual(
             result,
             {"uuid": "mock_uuid", "public_key": "mock_public_key", "task_id": 123},
         )
-        mock_serialize.assert_called_once_with(input_data)
+        mock_serialize.assert_called_once_with(arguments_data)
 
     @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
     def test_result_from_task(self, mock_multi_page_request):
@@ -93,11 +95,14 @@ class TestAlgorithmClient(unittest.TestCase):
     def test_result_from_task_azure(
         self, mock_download_run_data, mock_multi_page_request
     ):
-        with patch.object(
-            self.client.result.parent, "_multi_page_request"
-        ) as mock_multi_page_request, patch.object(
-            self.client.result.parent, "_download_run_data_from_server"
-        ) as mock_download_run_data:
+        with (
+            patch.object(
+                self.client.result.parent, "_multi_page_request"
+            ) as mock_multi_page_request,
+            patch.object(
+                self.client.result.parent, "_download_run_data_from_server"
+            ) as mock_download_run_data,
+        ):
             # Simulate a result where blob_storage_used is True
             mock_multi_page_request.return_value = [
                 {

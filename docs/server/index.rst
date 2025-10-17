@@ -50,9 +50,9 @@ use vantage6.
   password, you need to set up an SMTP server.
 
 :ref:`azure-blob-storage <azure-blob-storage>`
-  In order to facilitate usage of large inputs and results for your algorithms,
-  it is possible to use Azure Blob Storage for storage rather than the relational
-  database.
+  In order to facilitate usage of large input arguments and output results for your
+  algorithms, it is possible to use Azure Blob Storage for storage rather than the
+  relational database.
 
 The table of contents below lists details on how to install, configure and deploy these
 components.

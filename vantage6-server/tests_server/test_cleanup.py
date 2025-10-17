@@ -69,7 +69,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         run = Run(
             finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result=self.uuid,
-            input="input",
+            arguments="arguments",
             log="log should be preserved",
             status=RunStatus.COMPLETED,
             task=task,
@@ -88,10 +88,10 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(config, include_input=True)
+        cleanup.cleanup_runs_data(config, include_args=True)
         self.session.refresh(run)
 
-        expected_calls = [call(self.uuid), call("input")]
+        expected_calls = [call(self.uuid), call("arguments")]
         mock_delete_blob.assert_has_calls(expected_calls, any_order=False)
 
     def test_no_cleanup_recent_completed_run(self):
@@ -204,7 +204,7 @@ class TestCleanupRunsCount(unittest.TestCase):
         # Insert runs into db
         runs = self.create_runs()
 
-        # clean up result and input from runs older than 30 days
+        # clean up result and arguments from runs older than 30 days
         cleanup.cleanup_runs_data({"runs_data_cleanup_days": 30}, include_args=True)
 
         # db has been changed, refresh objects
