@@ -27,9 +27,16 @@ nodes included in the analysis. While this structure is common for vantage6
 algorithms, it is not required.
 
 You may also define algorithm functions to extract data from the node data sources,
-or to preprocess data that has been extracted. These functions are usually called
-when a session is created, before running the analyses. More information about sessions
-can be found in the :ref:`algo-sessions` section.
+or to preprocess data that has been extracted. The most common order of execution is to:
+
+1. Create a session
+2. Extract data from the node data sources into one (or more) dataframes
+3. Preprocess the dataframes
+4. Run the analyses
+
+By doing this, you ensure that your analyses are all run on the same data, and it saves
+time in extracting data from the node data sources once instead of once per analysis.
+More information about sessions can be found in the :ref:`algo-sessions` section.
 
 If you do follow this structure however, we recommend the following file
 structure:
@@ -69,12 +76,15 @@ Let's say you are implementing a function called ``my_function``:
        pass
 
 You have complete freedom as to what arguments you define in your function -
-``column_name`` is just an example. These arguments
-have to be provided by the user when the algorithm is called. This is explained
-:ref:`here <pyclient-create-task>` for the Python client.
+``column_name`` is just an example. These arguments have to be provided by the user when
+the algorithm is called. The only restriction to the arguments is that they must be
+JSON serializable. This is because vantage6 uses JSON to pass arguments to the
+algorithm. How a user can provide the arguments is explained
+:ref:`here <pyclient-create-task>` for the Python client. In the user interface, a user
+can provide the arguments by filling in a form.
 
-Often, you will want to use the data that is available at the node. This data
-can be provided to your algorithm function in the following way:
+In many functions you implement, you will want to use the data that is available at the
+node. This data can be provided to your algorithm function in the following way:
 
 .. code:: python
 
@@ -196,4 +206,3 @@ image. A Docker image is created from a Dockerfile, which acts as a blue-print.
 The Dockerfile is already present in the boilerplate code. Usually, the only
 line that you need to update is the ``PKG_NAME`` variable to the name of your
 algorithm package.
-
