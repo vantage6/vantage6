@@ -1,12 +1,14 @@
 import base64
-import unittest
 import json
+import unittest
 import uuid
+from unittest.mock import MagicMock, patch
+
 import jwt
 
-from unittest.mock import patch, MagicMock
-from vantage6.algorithm.client import AlgorithmClient
 from vantage6.common.globals import STRING_ENCODING
+
+from vantage6.algorithm.client import AlgorithmClient
 
 
 def encode_result(result_dict: dict) -> str:

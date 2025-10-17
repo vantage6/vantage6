@@ -9,20 +9,20 @@ try:
     import uwsgi  # type: ignore (built from source in Dockerfile)
 except ImportError:
     uwsgi = None
-from flask import g, request, Response, stream_with_context
-
-from flask_restful import Api
 from http import HTTPStatus
+
+from flask import Response, g, request, stream_with_context
+from flask_restful import Api
 
 from vantage6.common import logger_name
 from vantage6.common.task_status import has_task_finished
-from vantage6.server.permission import RuleCollection, Operation as P, Scope
-from vantage6.server.resource import (
-    only_for,
-    ServicesResources,
-)
-from vantage6.server.model import Run as db_Run, Task as db_Task
 
+from vantage6.server.model import Run as db_Run, Task as db_Task
+from vantage6.server.permission import Operation as P, RuleCollection, Scope
+from vantage6.server.resource import (
+    ServicesResources,
+    only_for,
+)
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

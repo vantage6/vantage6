@@ -48,11 +48,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                 )
             ).all()
             for run in runs:
-                if (
-                    run.result is not None
-                    and run.blob_storage_used == True
-                    and storage_adapter
-                ):
+                if run.result is not None and run.blob_storage_used and storage_adapter:
                     log.debug(f"Deleting blob: {run.result}")
                     try:
                         storage_adapter.delete_blob(run.result)
@@ -62,7 +58,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                 if include_args:
                     if (
                         run.arguments is not None
-                        and run.blob_storage_used == True
+                        and run.blob_storage_used
                         and storage_adapter
                     ):
                         log.debug(f"Deleting blob: {run.arguments}")

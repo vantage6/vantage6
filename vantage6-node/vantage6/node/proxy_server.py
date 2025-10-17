@@ -344,7 +344,7 @@ def proxy_result() -> Response:
     results = get_response_json_and_handle_exceptions(response)
 
     for result in results["data"]:
-        if not result["blob_storage_used"] or result["blob_storage_used"] == False:
+        if not result["blob_storage_used"]:
             result = decrypt_result(result)
 
     return results, response.status_code
@@ -384,7 +384,7 @@ def proxy_results(id_: int) -> Response:
 
     # Try to decrypt the results
     result = get_response_json_and_handle_exceptions(response)
-    if not result["blob_storage_used"] or result["blob_storage_used"] == False:
+    if not result["blob_storage_used"]:
         result = decrypt_result(result)
 
     return result, response.status_code

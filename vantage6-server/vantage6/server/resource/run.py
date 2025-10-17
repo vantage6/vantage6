@@ -2,7 +2,6 @@ import logging
 from http import HTTPStatus
 
 from flask import g, request
-
 from flask_restful import Api
 from marshmallow import ValidationError
 from sqlalchemy import desc, select

@@ -71,7 +71,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             result=self.uuid,
             input="input",
             log="log should be preserved",
-            status=TaskStatus.COMPLETED,
+            status=RunStatus.COMPLETED,
             task=task,
             blob_storage_used=True,
         )

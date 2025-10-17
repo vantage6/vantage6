@@ -293,7 +293,7 @@ class AlgorithmClient(ClientBase):
                 if not result_data:
                     return None
                 try:
-                    if run.get("blob_storage_used") == True:
+                    if run.get("blob_storage_used", False):
                         run_data = self.parent._download_run_data_from_server(
                             result_data
                         )

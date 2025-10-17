@@ -1,11 +1,12 @@
 import uuid
+
 import requests
 
-from vantage6.common.globals import (
-    REQUEST_TIMEOUT,
-    DEFAULT_CHUNK_SIZE,
-)
 from vantage6.common.client.utils import is_uuid
+from vantage6.common.globals import (
+    DEFAULT_CHUNK_SIZE,
+    REQUEST_TIMEOUT,
+)
 
 
 class BlobStorageMixin:

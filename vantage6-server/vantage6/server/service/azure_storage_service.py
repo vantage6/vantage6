@@ -6,6 +6,7 @@ from azure.storage.blob import BlobServiceClient
 from sqlalchemy import event
 
 from vantage6.common import logger_name
+
 from vantage6.server.model.run import Run
 
 module_name = logger_name(__name__)
