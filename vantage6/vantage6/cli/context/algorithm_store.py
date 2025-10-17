@@ -117,7 +117,7 @@ class AlgorithmStoreContext(BaseServerContext):
 
     @classmethod
     def available_configurations(
-        cls, system_folders: bool = S_FOL
+        cls, system_folders: bool = S_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
         Find all available server configurations in the default folders.
@@ -134,5 +134,5 @@ class AlgorithmStoreContext(BaseServerContext):
             list contains invalid configuration files.
         """
         return super().available_configurations(
-            InstanceType.ALGORITHM_STORE, system_folders
+            InstanceType.ALGORITHM_STORE, system_folders, is_sandbox
         )

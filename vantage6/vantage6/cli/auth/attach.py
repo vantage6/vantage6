@@ -3,8 +3,8 @@ import click
 from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.utils import (
-    attach_logs,
     find_running_service_names,
     select_context_and_namespace,
     select_running_service,
