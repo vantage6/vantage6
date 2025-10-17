@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 
 import questionary as q
@@ -127,7 +128,7 @@ def _add_production_server_config(config: dict) -> dict:
 
 
 def make_configuration(
-    config_producing_func: callable,
+    config_producing_func: Callable,
     config_producing_func_args: tuple,
     type_: InstanceType,
     instance_name: str,
@@ -139,7 +140,7 @@ def make_configuration(
 
     Parameters
     ----------
-    config_producing_func : callable
+    config_producing_func : Callable
         Function to generate the configuration
     config_producing_func_args : tuple
         Arguments to pass to the config producing function

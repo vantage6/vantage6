@@ -116,6 +116,7 @@ export interface TaskRun {
   finished_at?: string;
   log?: string;
   organization?: BaseLink;
+  blob_storage_used?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result?: any;
 }
@@ -136,6 +137,7 @@ export interface TaskResult {
   id: number;
   result?: string;
   decoded_result?: object;
+  blob_storage_used?: boolean;
 }
 
 interface CreateTaskDatabase {

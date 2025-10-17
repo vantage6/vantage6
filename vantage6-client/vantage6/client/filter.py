@@ -1,11 +1,12 @@
 import functools
+from collections.abc import Callable
 from typing import Any
 
 
 #
 # Decorators
 #
-def filter_dicts_from_results(func: callable) -> callable:
+def filter_dicts_from_results(func: Callable) -> Callable:
     """Filter a list of dicts.
 
     Based on a key-value pair within the dict. A single key-value pair can be
@@ -15,12 +16,12 @@ def filter_dicts_from_results(func: callable) -> callable:
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         The function that returns a list of dicts.
 
     Returns
     -------
-    callable
+    Callable
         The function that returns a list of dicts, filtered by the specified
         filters.
     """
@@ -57,7 +58,7 @@ def filter_dicts_from_results(func: callable) -> callable:
     return wrapper_filter
 
 
-def filter_keys_from_result(func: callable) -> callable:
+def filter_keys_from_result(func: Callable) -> Callable:
     """Wrapper to filter key-value pairs from a dict.
 
     Removes key-value pair based on the key from a dict. If the key is not
@@ -65,12 +66,12 @@ def filter_keys_from_result(func: callable) -> callable:
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         The function that returns a dict.
 
     Returns
     -------
-    callable
+    Callable
         The function that returns a dict, with only the specified keys kept.
     """
 
@@ -104,7 +105,7 @@ def filter_keys_from_result(func: callable) -> callable:
     return wrapper_filter
 
 
-def filter_keys_from_results(func: callable) -> callable:
+def filter_keys_from_results(func: Callable) -> Callable:
     """Remove key-value pairs from a list of dicts.
 
     Removes key-value pair of all dictornairies in the list. If the key is not
@@ -112,12 +113,12 @@ def filter_keys_from_results(func: callable) -> callable:
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         The function that returns a list of dicts.
 
     Returns
     -------
-    callable
+    Callable
         The function that returns a list of dicts, with only the specified keys
     """
 
@@ -151,7 +152,7 @@ def filter_keys_from_results(func: callable) -> callable:
     return wrapper_filter
 
 
-def post_filtering(iterable: bool = True) -> callable:
+def post_filtering(iterable: bool = True) -> Callable:
     """Decorator to add filtering of dictornaries from the result.
 
     Depending on whether this is a list of or a single dictionairy, the
@@ -170,12 +171,12 @@ def post_filtering(iterable: bool = True) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         The original function with the added decorators that filter the output
         of the function by specified fields and keys.
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         if iterable:
 
             @functools.wraps(func)

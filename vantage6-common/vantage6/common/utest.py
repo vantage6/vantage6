@@ -5,7 +5,9 @@ import logging
 import os
 import sys
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
+from io import StringIO
 
 # ANSI color codes
 GREEN = "\033[92m"
@@ -108,6 +110,13 @@ class TestRunner(unittest.TextTestRunner):
         return self.resultclass(
             self.stream, self.descriptions, self.verbosity, self.log
         )
+
+    def run(self, test):
+        """Run tests with print statement suppression."""
+        # Redirect stdout and stderr to suppress print statements during test execution
+        with redirect_stdout(StringIO()), redirect_stderr(StringIO()):
+            result = super().run(test)
+        return result
 
 
 def find_test_packages(suite, retval=set()):

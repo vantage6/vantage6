@@ -177,6 +177,40 @@ should also be provided.
     object can be passed directly on to the functions from
     `python-ohdsi <https://python-ohdsi.readthedocs.io/>`.
 
+Another useful decorator is the ``@algorithm_client`` decorator:
+
+.. code:: python
+
+    import pandas as pd
+    from vantage6.client.algorithm_client import AlgorithmClient
+    from vantage6.algorithm.decorator.algorithm_client import algorithm_client
+    from vantage6.algorithm.decorator.data import dataframe
+
+    @dataframe(1)
+    @algorithm_client
+    def my_function(client: AlgorithmClient, df1: pd.DataFrame, column_name: str):
+        pass
+
+This decorator provides the algorithm with a client that can be used to interact
+with the vantage6 central server. For instance, you can use this client in
+the central part of an algorithm to create a subtasks for each node with
+``client.task.create()``. A full list of all commands that are available
+can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
+
+.. warning::
+
+    The decorators ``@dataframe``, ``@database_connection`` and ``@algorithm_client``
+    each have reserved keywords:
+    - ``mock_data`` for the ``@dataframe`` decorator
+    - ``mock_client`` for the ``@algorithm_client`` decorator
+    - ``mock_uri`` and ``mock_type`` for the ``@database_connection`` decorator
+    These keywords should not be used as argument names in your algorithm functions.
+
+    The reserved keywords are used by the :ref:`MockNetwork <mock-test-algo-dev>` to
+    mock the data and the algorithm client. This is useful for testing your algorithm
+    locally.
+
+
 Algorithm wrappers
 ------------------
 

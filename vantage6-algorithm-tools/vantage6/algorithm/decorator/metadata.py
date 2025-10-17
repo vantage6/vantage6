@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -24,9 +25,9 @@ class RunMetaData:
     action: AlgorithmStepType | None
 
 
-def metadata(func: callable) -> callable:
+def metadata(func: Callable) -> Callable:
     @wraps(func)
-    def decorator(*args, **kwargs) -> callable:
+    def decorator(*args, **kwargs) -> Callable:
         """
         Decorator the function with metadata from the run.
 

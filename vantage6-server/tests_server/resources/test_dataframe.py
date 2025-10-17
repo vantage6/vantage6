@@ -2,7 +2,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 from uuid import uuid4
 
-from vantage6.common.enum import AlgorithmStepType, TaskStatus
+from vantage6.common.enum import AlgorithmStepType, RunStatus
 
 from vantage6.server.model.collaboration import Collaboration
 from vantage6.server.model.column import Column
@@ -838,7 +838,7 @@ class TestDataframe(TestResourceBase):
         df.last_session_task.runs = [
             Run(
                 organization=org,
-                status=TaskStatus.COMPLETED,
+                status=RunStatus.COMPLETED,
                 action=AlgorithmStepType.DATA_EXTRACTION,
             ),
         ]

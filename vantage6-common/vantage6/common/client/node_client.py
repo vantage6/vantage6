@@ -219,7 +219,9 @@ class NodeClient(ClientBase):
 
             # Multiple runs
             for run in run_data:
-                run["arguments"] = self.parent._decrypt_data(run["arguments"])
+                run["arguments"] = self.parent._fetch_and_decrypt_run_data(
+                    run["arguments"], run["blob_storage_used"]
+                )
 
             return run_data
 
@@ -266,11 +268,22 @@ class NodeClient(ClientBase):
                         "initiating organization belong to your organization?"
                     )
 
+                self.parent.log.debug("Sending algorithm run update to server")
+                blob_store_enabled = self.parent.check_if_blob_store_enabled()
+                # If the result is a blob, it is not base64 encoded.
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
-                    data["result"], public_key
+                    data["result"],
+                    public_key,
+                    skip_base64_encoding_of_msg=blob_store_enabled,
                 )
-
-            self.parent.log.debug("Sending algorithm run update to server")
+                # If blob store is enabled, stream the result to the server, which
+                # will stream it to the blob store and return the UUID reference to use.
+                if blob_store_enabled:
+                    result_uuid = self.parent._upload_run_data_to_server(data["result"])
+                    self.parent.log.debug(
+                        f"Result uploaded to server with UUID: {result_uuid}"
+                    )
+                    data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
     class AlgorithmStore(ClientBase.SubClient):

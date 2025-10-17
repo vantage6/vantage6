@@ -79,7 +79,7 @@ class StudySubClient(ClientBase.SubClient):
         Returns
         -------
         list[dict]
-            Containing collabotation information
+            Containing collaboration information
         """
         params = {
             "page": page,

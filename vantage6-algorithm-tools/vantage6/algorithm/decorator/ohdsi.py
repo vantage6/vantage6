@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -29,7 +30,7 @@ class OHDSIMetaData:
     dbms: str | None
 
 
-def omop_data_extraction(include_metadata: bool = True) -> callable:
+def omop_data_extraction(include_metadata: bool = True) -> Callable:
     """
     Decorator that adds an OMOP database connection to a function
 
@@ -87,10 +88,10 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
     >>>     pass
     """
 
-    def connection_decorator(func: callable, *args, **kwargs) -> callable:
+    def connection_decorator(func: Callable, *args, **kwargs) -> Callable:
         @wraps(func)
         @data_extraction
-        def decorator(*args, connection_details: dict, **kwargs) -> callable:
+        def decorator(*args, connection_details: dict, **kwargs) -> Callable:
             """
             Wrap the function with the database connection
             """
@@ -106,7 +107,7 @@ def omop_data_extraction(include_metadata: bool = True) -> callable:
     return connection_decorator
 
 
-def _create_omop_database_connection(connection_details: dict) -> callable:
+def _create_omop_database_connection(connection_details: dict) -> Callable:
     """
     Create a connection to an OMOP database.
 
@@ -117,7 +118,7 @@ def _create_omop_database_connection(connection_details: dict) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         OHDSI Database Connection object
     """
 

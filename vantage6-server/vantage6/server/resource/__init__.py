@@ -1,5 +1,6 @@
 import datetime as dt
 import logging
+from collections.abc import Callable
 from functools import wraps
 
 import jwt
@@ -28,6 +29,7 @@ from vantage6.server.permission import (
     obtain_auth_collaborations,
     obtain_auth_organization,
 )
+from vantage6.server.service.azure_storage_service import AzureStorageService
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -43,6 +45,8 @@ class ServicesResources(BaseServicesResources):
     ----------
     socketio : SocketIO
         SocketIO instance
+    storage_adapter : AzureStorageService | None
+        Storage adapter for handling large files
     mail : Mail
         Mail instance
     api : Api
@@ -56,6 +60,7 @@ class ServicesResources(BaseServicesResources):
     def __init__(
         self,
         socketio: SocketIO,
+        storage_adapter: AzureStorageService | None,
         mail: Mail,
         api: Api,
         permissions: PermissionManager,
@@ -63,6 +68,7 @@ class ServicesResources(BaseServicesResources):
     ):
         super().__init__(api, config, permissions, mail)
         self.socketio = socketio
+        self.storage_adapter = storage_adapter
 
     @staticmethod
     def is_user() -> bool:
@@ -151,7 +157,7 @@ class ServicesResources(BaseServicesResources):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
+def only_for(types: tuple[str] = ("user", "node", "container")) -> Callable:
     """
     JWT endpoint protection decorator
 
@@ -167,7 +173,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         Decorator function that can be used to protect endpoints
     """
 
-    def protection_decorator(fn):
+    def protection_decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def decorator(*args, **kwargs):
             try:

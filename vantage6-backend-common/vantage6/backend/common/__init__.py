@@ -18,6 +18,7 @@ from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_principal import Principal
 from flask_restful import Api
+from requests import Response as RequestsResponse
 from werkzeug.exceptions import HTTPException
 
 from vantage6.common import logger_name, validate_required_env_vars
@@ -274,6 +275,11 @@ class Vantage6App:
                 and isinstance(data[0], base_db_model)
             ):
                 data = jsonable(data)
+            # Don't attempt json conversion if it's already a response.
+            # Used for streaming endpoints where responses cannot be jsonified.
+            elif isinstance(data, RequestsResponse):
+                resp = make_response(data, code)
+                return resp
 
             resp = make_response(json.dumps(data), code)
             resp.headers.extend(headers or {})
