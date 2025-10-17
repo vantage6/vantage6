@@ -3,6 +3,7 @@ import click
 from vantage6.common import info
 from vantage6.common.globals import InstanceType, Ports
 
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
@@ -10,12 +11,11 @@ from vantage6.cli.common.start import (
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
-    attach_logs,
     create_directory_if_not_exists,
     select_context_and_namespace,
 )
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, InfraComponentName
 
 
 @click.command()
@@ -95,4 +95,12 @@ def cli_server_start(
     )
 
     if attach:
-        attach_logs("app=vantage6-server", "component=vantage6-server")
+        attach_logs(
+            name,
+            instance_type=InstanceType.SERVER,
+            infra_component=InfraComponentName.SERVER,
+            system_folders=system_folders,
+            context=context,
+            namespace=namespace,
+            is_sandbox=ctx.is_sandbox,
+        )

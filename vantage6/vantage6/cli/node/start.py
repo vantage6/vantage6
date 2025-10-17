@@ -3,6 +3,7 @@ import click
 from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
@@ -10,12 +11,11 @@ from vantage6.cli.common.start import (
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
-    attach_logs,
     create_directory_if_not_exists,
     select_context_and_namespace,
 )
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, InfraComponentName
 
 from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
 
@@ -123,4 +123,12 @@ def cli_node_start(
     )
 
     if attach:
-        attach_logs("app=node")
+        attach_logs(
+            name,
+            instance_type=InstanceType.NODE,
+            infra_component=InfraComponentName.NODE,
+            system_folders=system_folders,
+            context=context,
+            namespace=namespace,
+            is_sandbox=ctx.is_sandbox,
+        )

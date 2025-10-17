@@ -1,6 +1,6 @@
 import click
 
-from vantage6.common import info
+from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
@@ -9,10 +9,7 @@ from vantage6.cli.common.start import (
     prestart_checks,
     start_port_forward,
 )
-from vantage6.cli.common.utils import (
-    attach_logs,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.globals import ChartName
 
@@ -89,6 +86,13 @@ def cli_auth_start(
     )
 
     if attach:
-        attach_logs(
-            [f"app.kubernetes.io/instance={ctx.helm_release_name}"],
-        )
+        warning("Attaching to auth logs is not supported yet.")
+        # attach_logs(
+        #     name,
+        #     instance_type=InstanceType.AUTH,
+        #     infra_component=InfraComponentName.AUTH,
+        #     system_folders=system_folders,
+        #     context=context,
+        #     namespace=namespace,
+        #     is_sandbox=ctx.is_sandbox,
+        # )
