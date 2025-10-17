@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from pathlib import Path
 
 from colorama import Fore, Style
@@ -13,7 +14,7 @@ from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 def new(
-    config_producing_func: callable,
+    config_producing_func: Callable,
     config_producing_func_args: tuple,
     name: str,
     system_folders: bool,
@@ -27,7 +28,7 @@ def new(
 
     Parameters
     ----------
-    config_producing_func : callable
+    config_producing_func : Callable
         Function to generate the configuration
     config_producing_func_args : tuple
         Arguments to pass to the config producing function

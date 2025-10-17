@@ -149,14 +149,16 @@ can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
 
 .. warning::
 
-    The decorators ``@dataframe`` and ``@algorithm_client`` each have one reserved
-    keyword: ``mock_data`` for the ``@dataframe`` decorator and ``mock_client`` for
-    the ``@algorithm_client`` decorator. These keywords should not be used as
-    argument names in your algorithm functions.
+    The decorators ``@dataframe``, ``@database_connection`` and ``@algorithm_client``
+    each have reserved keywords:
+    - ``mock_data`` for the ``@dataframe`` decorator
+    - ``mock_client`` for the ``@algorithm_client`` decorator
+    - ``mock_uri`` and ``mock_type`` for the ``@database_connection`` decorator
+    These keywords should not be used as argument names in your algorithm functions.
 
-    The reserved keywords are used by the
-    :ref:`MockAlgorithmClient <mock-test-algo-dev>` to mock the data and the
-    algorithm client. This is useful for testing your algorithm locally.
+    The reserved keywords are used by the :ref:`MockNetwork <mock-test-algo-dev>` to
+    mock the data and the algorithm client. This is useful for testing your algorithm
+    locally.
 
 
 Algorithm wrappers

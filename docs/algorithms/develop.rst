@@ -190,18 +190,63 @@ Partial function
 Testing your algorithm
 ----------------------
 
-It can be helpful to test your algorithm outside of Docker using the
-``MockAlgorithmClient``. This may save
-time as it does not require you to set up a test infrastructure with a vantage6
-server and nodes, and allows you to test your algorithm without building a
-Docker image every time. The algorithm boilerplate code comes with a test file that
-you can use to test your algorithm using the ``MockAlgorithmClient`` - you can
+It can be helpful to test your algorithm outside of a containerized environment using
+the ``MockNetwork``. This may save time as it does not require you to set up a test
+infrastructure with a vantage6 server and nodes, and allows you to test your algorithm
+without building a Docker image every time. The algorithm boilerplate code comes with a
+test file that you can use to test your algorithm using the ``MockNetwork`` - you can
 of course extend that to add more or different tests.
 
-The :ref:`MockAlgorithmClient <mock-client-api-ref>` has the same interface as
-the ``AlgorithmClient``, so it should be easy to switch between the two. An
-example of how you can use the ``MockAlgorithmClient`` to test your algorithm
-is included in the boilerplate code.
+The ``MockNetwork`` comes with a ``MockAlgorithmClient`` and a ``MockUserClient`` that
+have the same interface as the ``AlgorithmClient`` and the ``UserClient``, so it should
+be easy to switch between the two. The following example shows how to use the
+``MockUserClient`` to test your algorithm:
+
+.. code:: python
+
+        from vantage6.mock.mock_network import MockNetwork
+        network = MockNetwork(
+            module_name="my_algorithm",
+            datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
+        )
+        client = network.user_client
+        client.dataframe.create(
+            label="dataset_1", method="my_method", arguments={}
+        )
+        client.task.create(
+            method="my_method",
+            organizations=[0],
+            arguments={
+                "example_argument": 10
+            },
+            databases=[{"label": "dataset_1"}]
+        )
+        results = client.result.from_task(task.get("id"))
+        print(results)
+
+Or in case you do not want to test data extraction you can provide a pandas
+DataFrame instead of a string for the database value:
+
+.. code:: python
+
+        import pandas as pd
+        from vantage6.mock.mock_network import MockNetwork
+        
+        network = MockNetwork(
+            module_name="my_algorithm",
+            datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
+        )
+        client = network.user_client
+        client.task.create(
+            method="my_method",
+            organizations=[0],
+            arguments={
+                "example_argument": 10
+            },
+            databases=[{"label": "dataset_1"}]
+        )
+        results = client.result.from_task(task.get("id"))
+        print(results)
 
 Writing documentation
 ---------------------

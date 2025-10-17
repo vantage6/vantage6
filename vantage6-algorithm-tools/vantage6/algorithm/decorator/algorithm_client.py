@@ -1,5 +1,7 @@
 import os
+from collections.abc import Callable
 from functools import wraps
+from typing import TYPE_CHECKING, Optional
 
 from vantage6.common.globals import ContainerEnvNames
 
@@ -7,8 +9,11 @@ from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.client import AlgorithmClient
 
+if TYPE_CHECKING:
+    from vantage6.mock.client import MockAlgorithmClient
 
-def _algorithm_client() -> callable:
+
+def _algorithm_client() -> Callable:
     """
     Decorator that adds an algorithm client object to a function
 
@@ -26,12 +31,12 @@ def _algorithm_client() -> callable:
 
     Parameters
     ----------
-    func : callable
+    func : Callable
         Function to decorate
 
     Returns
     -------
-    callable
+    Callable
         Decorated function
 
     Examples
@@ -41,9 +46,11 @@ def _algorithm_client() -> callable:
     >>>     pass
     """
 
-    def protection_decorator(func: callable, *args, **kwargs) -> callable:
+    def protection_decorator(func: Callable, *args, **kwargs) -> Callable:
         @wraps(func)
-        def decorator(*args, mock_client=None, **kwargs) -> callable:
+        def decorator(
+            *args, mock_client: Optional["MockAlgorithmClient"] = None, **kwargs
+        ) -> Callable:
             """
             Wrap the function with the client object
 

@@ -3,6 +3,7 @@ import itertools
 import json as json_lib
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import requests
@@ -556,7 +557,7 @@ class ClientBase(BlobStorageMixin):
 
     def wait_for_task_completion(
         self,
-        request_func,
+        request_func: Callable,
         task_id: int,
         interval: float = 1,
         log_animation: bool = True,

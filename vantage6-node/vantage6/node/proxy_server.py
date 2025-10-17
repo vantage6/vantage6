@@ -6,6 +6,7 @@ methods to handle tasks and results, including their encryption and decryption.
 
 import logging
 import traceback
+from collections.abc import Callable
 from http import HTTPStatus
 from time import sleep
 
@@ -29,7 +30,7 @@ server_url = None
 RETRY = 3
 
 
-def get_method(method: str) -> callable:
+def get_method(method: str) -> Callable:
     """
     Obtain http method based on string identifier
 
@@ -40,7 +41,7 @@ def get_method(method: str) -> callable:
 
     Returns
     -------
-    function
+    Callable
         HTTP method
     """
     method_name: str = method.lower()

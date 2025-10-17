@@ -37,7 +37,15 @@ def run():
 
     # If no specific tests are selected, run all by default
     if not any(
-        [args.common, args.cli, args.algorithm_store, args.server, args.node, args.all]
+        [
+            args.common,
+            args.cli,
+            args.algorithm_store,
+            args.algorithm_tools,
+            args.server,
+            args.node,
+            args.all,
+        ]
     ):
         args.all = True
 
@@ -69,6 +77,14 @@ def run():
             str(Path(__file__).parent / "vantage6-algorithm-tools")
         )
         success = success and run_tests(algorithm_tools_test_suites)
+
+    # run algorithm tools tests
+    if args.algorithm_tools or args.all:
+        algorithm_tools_test_suites = find_tests(
+            str(Path(__file__).parent / "vantage6-algorithm-tools")
+        )
+        success_algorithm_tools = run_tests(algorithm_tools_test_suites)
+        success = success and success_algorithm_tools
 
     # run server tests
     if args.server or args.all:
