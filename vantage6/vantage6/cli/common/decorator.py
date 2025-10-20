@@ -19,7 +19,6 @@ def click_insert_context(
     is_sandbox: bool = False,
     sandbox_param: str | None = None,
 ) -> Callable:
-
     """
     Supply the Click function with an additional context parameter. The context
     is passed to the function as the first argument.

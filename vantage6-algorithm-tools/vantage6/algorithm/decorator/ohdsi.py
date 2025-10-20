@@ -1,8 +1,8 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from collections.abc import Callable
 
 from vantage6.common.globals import ContainerEnvNames
 
