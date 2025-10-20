@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 
 from colorama import Fore, Style
 
@@ -7,26 +8,30 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import get_main_cli_command_name
 from vantage6.cli.config import CliConfig
-from vantage6.cli.configuration_wizard import configuration_wizard
+from vantage6.cli.configuration_create import make_configuration
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
 
 
 def new(
-    questionnaire_function: Callable,
+    config_producing_func: Callable,
+    config_producing_func_args: tuple,
     name: str,
     system_folders: bool,
     namespace: str,
     context: str,
     type_: InstanceType,
-) -> None:
+    is_sandbox: bool = False,
+) -> Path | None:
     """
     Create a new configuration.
 
     Parameters
     ----------
-    questionnaire_function : Callable
+    config_producing_func : Callable
         Function to generate the configuration
+    config_producing_func_args : tuple
+        Arguments to pass to the config producing function
     name : str
         Name of the configuration
     system_folders : bool
@@ -37,6 +42,13 @@ def new(
         Context to use
     type_ : InstanceType
         Type of the configuration (node, server, algorithm store, etc)
+    is_sandbox : bool
+        Whether to create a sandbox configuration or not
+
+    Returns
+    -------
+    Path | None
+        Path to the configuration file. None if the process is aborted for any reason.
     """
     cli_config = CliConfig()
     context, namespace = cli_config.compare_changes_config(
@@ -52,11 +64,12 @@ def new(
     # check that this config does not exist
     ctx_class = select_context_class(type_)
     try:
-        if ctx_class.config_exists(name, system_folders):
+        if ctx_class.config_exists(name, system_folders, is_sandbox):
             error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
             exit(1)
     except Exception as e:
         error(e)
+
         exit(1)
 
     command_name = get_main_cli_command_name(type_)
@@ -72,8 +85,13 @@ def new(
 
     # create config in ctx location
     try:
-        cfg_file = configuration_wizard(
-            questionnaire_function, type_, name, system_folders
+        cfg_file = make_configuration(
+            config_producing_func=config_producing_func,
+            config_producing_func_args=config_producing_func_args,
+            type_=type_,
+            instance_name=name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
@@ -85,3 +103,4 @@ def new(
         f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name} "
         f"start {flag}{Style.RESET_ALL}"
     )
+    return cfg_file

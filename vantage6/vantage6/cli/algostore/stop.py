@@ -25,6 +25,7 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentNa
     flag_value=False,
     help="Search for configuration in the user folders instead of system folders.",
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click.option("--all", "all_stores", flag_value=True, help="Stop all algorithm stores")
 def cli_algo_store_stop(
     name: str,
@@ -32,6 +33,7 @@ def cli_algo_store_stop(
     namespace: str,
     system_folders: bool,
     all_stores: bool,
+    sandbox: bool,
 ):
     """
     Stop one or all running algorithm store(s).
@@ -45,6 +47,7 @@ def cli_algo_store_stop(
         namespace=namespace,
         context=context,
         system_folders=system_folders,
+        is_sandbox=sandbox,
     )
 
 

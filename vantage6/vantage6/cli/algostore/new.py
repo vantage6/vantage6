@@ -8,7 +8,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.new import new
-from vantage6.cli.configuration_wizard import add_common_server_config
+from vantage6.cli.configuration_create import add_common_server_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
@@ -43,7 +43,8 @@ def cli_algo_store_new(
     """
 
     new(
-        questionnaire_function=algo_store_configuration_questionaire,
+        config_producing_func=algo_store_configuration_questionaire,
+        config_producing_func_args=(name,),
         name=name,
         system_folders=system_folders,
         namespace=namespace,

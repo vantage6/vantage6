@@ -3,6 +3,7 @@ import click
 from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
@@ -10,11 +11,11 @@ from vantage6.cli.common.start import (
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
-    attach_logs,
     create_directory_if_not_exists,
+    select_context_and_namespace,
 )
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, InfraComponentName
 
 from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
 
@@ -27,7 +28,14 @@ from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
     default=False,
     help="Show node logs on the current console after starting the node",
 )
-@click_insert_context(InstanceType.NODE, include_name=True, include_system_folders=True)
+@click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(
+    InstanceType.NODE,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
+)
 def cli_node_start(
     ctx: NodeContext,
     name: str,
@@ -35,13 +43,19 @@ def cli_node_start(
     context: str,
     namespace: str,
     attach: bool,
+    local_chart_dir: str,
 ) -> None:
     """
     Start the node.
     """
     info("Starting node...")
 
-    prestart_checks(ctx, InstanceType.NODE, name, system_folders, context, namespace)
+    prestart_checks(ctx, InstanceType.NODE, name, system_folders)
+
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)
@@ -96,16 +110,25 @@ def cli_node_start(
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
+        local_chart_dir=local_chart_dir,
     )
 
     # start port forward for the node proxy server
     start_port_forward(
         service_name=f"{ctx.helm_release_name}-node-service",
-        service_port=ctx.config["node"].get("port", DEFAULT_PROXY_SERVER_PORT),
-        port=ctx.config["node"].get("port", DEFAULT_PROXY_SERVER_PORT),
+        service_port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
+        port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
         context=context,
         namespace=namespace,
     )
 
     if attach:
-        attach_logs("app=node")
+        attach_logs(
+            name,
+            instance_type=InstanceType.NODE,
+            infra_component=InfraComponentName.NODE,
+            system_folders=system_folders,
+            context=context,
+            namespace=namespace,
+            is_sandbox=ctx.is_sandbox,
+        )

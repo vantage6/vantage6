@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-common"
-version = "5.0.0a36"
+version = "5.0.0a38"
 description = "Vantage6 common utilities"
 readme = "README.md"
 license = {text = "MIT"}

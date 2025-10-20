@@ -96,9 +96,9 @@ server:
   {% if server.dev is defined %}
   dev:
     host_uri: {{ server.dev.host_uri | default('host.docker.internal') }}
-    # This should be set to true if you are running the algorithm store in the same
-    # cluster and namespace as the server
-    store_in_local_cluster: {{ server.dev.store_in_local_cluster | default(false) }}
+    # store address of the algorithm store. This can be provided to the server for
+    # a custom address of the local algorithm store within the k8s cluster.
+    store_address: {{ server.dev.store_address | default('http://vantage6-store-store.service.default.svc.cluster.local') }}
   {% endif %}
 
   # If you want to couple algorithm stores to the server on startup, you can add them here.
@@ -109,11 +109,13 @@ server:
     {% for store in server.algorithm_stores %}
     - name: {{ store.name }}
       url: {{ store.url }}
+      api_path: {{ store.api_path }}
     {% endfor %}
   {% else %}
   # algorithm_stores:
-  # - name: local store
+  # - name: Local store
   #   url: http://localhost:7602/api
+  #   api_path: /api
   {% endif %}
 
   # Cleanup settings: This is used to cleanup the database from old results.
@@ -180,6 +182,7 @@ server:
   #   - http://localhost:7600
   {% endif %}
 
+
 rabbitmq:
   # The image of the RabbitMQ server
   image:
@@ -226,7 +229,7 @@ database:
   # The name of the database
   name: {{ database.name | default('vantage6') }}
 
-  #hostpath of the database mount
+  # hostpath of the database mount
   volumePath: {{ database.volumePath }}
 
   # The name of the k8s node where the database is running
@@ -238,7 +241,7 @@ ui:
   # The image of the UI
   image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
   # Service port for the UI
-  port: 7600
+  port: {{ ui.port | default(7600) }}
   # keycloak realm
   keycloakRealm: {{ ui.keycloakRealm | default('vantage6') }}
   # keycloak client

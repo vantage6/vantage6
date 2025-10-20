@@ -9,7 +9,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.new import new
 from vantage6.cli.config import CliConfig
-from vantage6.cli.configuration_wizard import add_common_server_config
+from vantage6.cli.configuration_create import add_common_server_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
@@ -57,7 +57,8 @@ def cli_server_new(
     #     print("awefawef")
 
     new(
-        questionnaire_function=server_configuration_questionaire,
+        config_producing_func=server_configuration_questionaire,
+        config_producing_func_args=(name,),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -92,7 +93,8 @@ def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
         }
         config["server"]["dev"] = {
             "host_uri": "host.docker.internal",
-            "store_in_local_cluster": True,
+            # TODO v5+ adapt to name space and service name etc, check from sandbox
+            "store_address": "http://vantage6-store-store.service.default.svc.cluster.local",
         }
 
     # TODO v5+ these should be removed, latest should usually be used so question is

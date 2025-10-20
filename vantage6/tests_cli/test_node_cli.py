@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from vantage6.common import STRING_ENCODING
-from vantage6.common.globals import Ports
+from vantage6.common.globals import LOCALHOST, Ports
 
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.globals import APPNAME
@@ -84,14 +84,14 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n",
         )
 
-    @patch("vantage6.cli.node.new.configuration_wizard")
+    @patch("vantage6.cli.node.new.make_configuration")
     @patch("vantage6.cli.node.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_config(self, context, permissions, wizard):
+    def test_new_config(self, context, permissions, make_configuration):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
         permissions.return_value = True
-        wizard.return_value = "/some/file/path"
+        make_configuration.return_value = "/some/file/path"
 
         runner = CliRunner()
         result = runner.invoke(
@@ -108,8 +108,8 @@ class NodeCLITest(unittest.TestCase):
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.new.configuration_wizard")
-    def test_new_config_replace_whitespace_in_name(self, _):
+    @patch("vantage6.cli.node.new.make_configuration")
+    def test_new_config_replace_whitespace_in_name(self, make_configuration):
         """Whitespaces are replaced in the name."""
 
         runner = CliRunner()
@@ -172,7 +172,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.node.common.NodeContext")
     @patch("vantage6.cli.node.files.NodeContext")
-    @patch("vantage6.cli.node.common.select_configuration_questionaire")
+    @patch("vantage6.cli.node.common.select_configuration_questionnaire")
     def test_files(self, select_config, context, common_context):
         """No errors produced when retrieving filepaths."""
 
@@ -382,7 +382,7 @@ class NodeCLITest(unittest.TestCase):
     def test_client(self, client, error, debug, info):
         ctx = MagicMock(
             config={
-                "server_url": "localhost",
+                "server_url": LOCALHOST,
                 "port": Ports.DEV_SERVER.value,
                 "api_path": "",
             }

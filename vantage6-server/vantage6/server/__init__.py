@@ -11,8 +11,6 @@ import os
 
 from gevent import monkey
 
-from vantage6.server.algo_store_communication import add_algorithm_store_to_database
-
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -46,6 +44,7 @@ from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
 from vantage6.server import db
+from vantage6.server.algo_store_communication import add_algorithm_store_to_database
 from vantage6.server.controller import cleanup
 from vantage6.server.default_roles import DefaultRole, get_default_roles
 from vantage6.server.globals import (

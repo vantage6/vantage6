@@ -21,7 +21,7 @@ from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
-from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.globals import APPNAME, LOCALHOST, AuthStatus
 from vantage6.common.serialization import serialize
 
 from vantage6.client.filter import post_filtering
@@ -207,7 +207,7 @@ class UserClient(ClientBase):
                 threading.Thread(target=self.server.shutdown).start()
 
         # Start server in a separate thread
-        server = HTTPServer(("localhost", 7681), CallbackHandler)
+        server = HTTPServer((LOCALHOST, 7681), CallbackHandler)
         server.kc_openid = self.kc_openid
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.daemon = True

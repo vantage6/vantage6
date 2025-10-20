@@ -4,6 +4,7 @@ from functools import wraps
 
 import pandas as pd
 
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import (
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_MULTIPLE_KEYWORD,
@@ -12,7 +13,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.algorithm.tools.exceptions import UserInputError
-from vantage6.algorithm.tools.util import error, info, warn
+from vantage6.algorithm.tools.util import error, get_action, info, warn
 
 
 def _get_user_dataframes() -> list[str]:
@@ -153,6 +154,20 @@ def dataframe(*sources: str | int) -> Callable:
                     f"first {number_of_expected_arguments} databases."
                 )
 
+            action = get_action()
+            if action == AlgorithmStepType.DATA_EXTRACTION:
+                error(
+                    "The @dataframe decorator cannot be used for data extraction "
+                    "functions. Exiting..."
+                )
+                exit(1)
+
+            if getattr(func, "vantage6_dataframe_decorated", False):
+                error(
+                    "The @dataframe decorator cannot be used multiple times. Exiting..."
+                )
+                exit(1)
+
             # read the data from the database(s)
             idx_dataframes = 0
             for source in sources:
@@ -165,6 +180,14 @@ def dataframe(*sources: str | int) -> Callable:
                         idx_dataframes += 1
                         args = (df, *args)
                 elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                    if action == AlgorithmStepType.PREPROCESSING:
+                        error(
+                            "The @dataframes or @dataframe("
+                            f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
+                            "for preprocessing functions. Use @preprocessing instead. "
+                            "Exiting..."
+                        )
+                        exit(1)
                     requested_dataframes = dataframes_grouped[idx_dataframes]
                     data_ = {
                         df_name: _read_df_from_disk(df_name)
