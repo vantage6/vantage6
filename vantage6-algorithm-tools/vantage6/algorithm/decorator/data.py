@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from functools import wraps
 
 import pandas as pd
@@ -55,7 +56,7 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     return pd.read_parquet(dataframe_file)
 
 
-def dataframe(*sources: str | int) -> callable:
+def dataframe(*sources: str | int) -> Callable:
     """
     Decorator that adds algorithm data to a function
 
@@ -80,7 +81,7 @@ def dataframe(*sources: str | int) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         Decorated function
 
     Examples
@@ -103,13 +104,13 @@ def dataframe(*sources: str | int) -> callable:
     if not sources:
         sources = (1,)
 
-    def protection_decorator(func: callable, *args, **kwargs) -> callable:
+    def protection_decorator(func: Callable, *args, **kwargs) -> Callable:
         @wraps(func)
         def decorator(
             *args,
             mock_data: list[dict[str, pd.DataFrame] | pd.DataFrame] | None = None,
             **kwargs,
-        ) -> callable:
+        ) -> Callable:
             """
             Wrap the function with the data
 
@@ -209,7 +210,7 @@ def dataframe(*sources: str | int) -> callable:
     return protection_decorator
 
 
-def dataframes(func: callable) -> callable:
+def dataframes(func: Callable) -> Callable:
     """
     Decorator that adds multiple pandas dataframes to a function
 

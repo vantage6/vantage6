@@ -1,5 +1,6 @@
 import datetime as dt
 import logging
+from collections.abc import Callable
 from functools import wraps
 
 import jwt
@@ -151,7 +152,7 @@ class ServicesResources(BaseServicesResources):
 # ------------------------------------------------------------------------------
 # Helper functions/decoraters ...
 # ------------------------------------------------------------------------------
-def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
+def only_for(types: tuple[str] = ("user", "node", "container")) -> Callable:
     """
     JWT endpoint protection decorator
 
@@ -167,7 +168,7 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> callable:
         Decorator function that can be used to protect endpoints
     """
 
-    def protection_decorator(fn):
+    def protection_decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def decorator(*args, **kwargs):
             try:

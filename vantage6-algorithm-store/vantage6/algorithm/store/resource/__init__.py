@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from functools import wraps
 from http import HTTPStatus
 
@@ -99,13 +100,13 @@ def _authorize_user(
     return None, None
 
 
-def with_authentication() -> callable:
+def with_authentication() -> Callable:
     """
     Decorator to verify that the user is authenticated from the linked Keycloak service.
 
     Returns
     -------
-    callable
+    Callable
         Decorated function that can be used to access endpoints that require
         authentication.
     """
@@ -126,7 +127,7 @@ def with_authentication() -> callable:
     return protection_decorator
 
 
-def with_permission(resource: str, operation: Operation) -> callable:
+def with_permission(resource: str, operation: Operation) -> Callable:
     """
     Decorator to verify that the user has as a permission on a resource.
     Parameters
@@ -138,7 +139,7 @@ def with_permission(resource: str, operation: Operation) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         Decorated function that can be used to access endpoints that require
         authentication.
     """
@@ -163,13 +164,13 @@ def with_permission(resource: str, operation: Operation) -> callable:
     return protection_decorator
 
 
-def with_permission_to_view_algorithms() -> callable:
+def with_permission_to_view_algorithms() -> Callable:
     """
     Decorator to verify that the user has as a permission on a resource.
 
     Returns
     -------
-    callable
+    Callable
         Decorated function that can be used to access endpoints that require
         authentication.
     """
