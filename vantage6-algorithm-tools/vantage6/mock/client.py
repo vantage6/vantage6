@@ -29,7 +29,7 @@ class MockBaseClient:
         # Which organization do I belong to?
         self.organization_id = 0
 
-        self.set_missing_subclients(
+        self.set_missing_attributes(
             [
                 "_access_token",
                 "_ClientBase__auth_url",
@@ -239,7 +239,7 @@ class MockBaseClient:
                     return
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
-                    continue
+                    return
 
                 result_response = self.parent.network.server.save_result(
                     result, task["id"]
