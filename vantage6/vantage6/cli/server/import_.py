@@ -1,6 +1,7 @@
 import click
 import requests
 import yaml
+from marshmallow import Schema, ValidationError, fields, post_load
 
 from vantage6.common import error, info
 from vantage6.common.globals import (
@@ -64,7 +65,8 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Loading and validating import file")
     with open(file, "r") as f:
         import_data = yaml.safe_load(f)
-    # TODO: validate import file
+
+    _check_import_file(import_data)
 
     client = UserClient(
         server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
@@ -77,7 +79,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     info("Authenticate using admin credentials (opens browser for login)")
     client.authenticate()
 
-    # TODO: validate that the user has the correct permissions to import data
+    # Note: we do not validate that the user has the correct permissions to import data.
+    # As the user has access to the `v6 server import` command, they already have
+    # access to the server+database.
 
     if drop_all:
         info("Dropping all existing data")
@@ -91,11 +95,12 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     for organization in import_data["organizations"]:
         org = client.organization.create(
             name=organization["name"],
-            address1=organization["address1"] or "",
-            address2=organization["address2"] or "",
-            zipcode=organization["zipcode"] or "",
-            country=organization["country"] or "",
-            domain=organization["domain"] or "",
+            address1=organization.get("address1", ""),
+            address2=organization.get("address2", ""),
+            zipcode=str(organization.get("zipcode", "")),
+            country=organization.get("country", ""),
+            domain=organization.get("domain", ""),
+            public_key=organization.get("public_key", ""),
         )
         organizations.append(org)
 
@@ -152,16 +157,79 @@ def _drop_all(client: UserClient) -> None:
             info(f"Deleting collaboration {collaboration['name']}")
             client.collaboration.delete(collaboration["id"], delete_dependents=True)
 
-    # TODO: For some reason, the `delete_dependents` parameter is not working for users,
-    # so we delete them here first.
-    while users := [u for u in client.user.list()["data"] if u["username"] != "admin"]:
-        for user in users:
-            info(f"Deleting user {user['username']}")
-            client.user.delete(user["id"])
-
-    while orgs := [
-        o for o in client.organization.list()["data"] if o["name"] != "root"
-    ]:
+    # remove all organizations but keep the root organization
+    while orgs := [o for o in client.organization.list()["data"] if o["id"] != 1]:
         for org in orgs:
             info(f"Deleting organization {org['name']}")
             client.organization.delete(org["id"], delete_dependents=True)
+
+
+class StrOrInt(fields.Field):
+    """Field that can be a string or an integer"""
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, int):
+            return str(value)
+        else:
+            raise ValidationError("Value must be a string or an integer")
+
+
+class UserSchema(Schema):
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+class OrganizationSchema(Schema):
+    name = fields.Str(required=True)
+    address1 = fields.Str(missing="")
+    address2 = fields.Str(missing="")
+    zipcode = StrOrInt(missing="")
+    country = fields.Str(missing="")
+    domain = fields.Str(missing="")
+    public_key = fields.Str(missing="")
+    users = fields.List(fields.Nested(UserSchema), missing=[])
+
+
+class ParticipantSchema(Schema):
+    name = fields.Str(required=True)
+
+
+class CollaborationSchema(Schema):
+    name = fields.Str(required=True)
+    participants = fields.List(fields.Nested(ParticipantSchema), required=True)
+    encrypted = fields.Bool(missing=False)
+
+
+class ImportDataSchema(Schema):
+    organizations = fields.List(fields.Nested(OrganizationSchema), missing=[])
+    collaborations = fields.List(fields.Nested(CollaborationSchema), missing=[])
+
+    @post_load
+    def validate_participants_exist(self, data, **kwargs):
+        """Validate that all participants exist in organizations"""
+        org_names = {org["name"] for org in data.get("organizations", [])}
+
+        for collaboration in data.get("collaborations", []):
+            for participant in collaboration.get("participants", []):
+                if participant["name"] not in org_names:
+                    raise ValidationError(
+                        f"Participant {participant['name']} not found in organizations",
+                        field_name="collaborations",
+                    )
+        return data
+
+
+def _check_import_file(import_data: dict) -> dict:
+    """
+    Validate import file using Marshmallow schemas.
+    Returns the validated and cleaned data.
+    """
+    schema = ImportDataSchema()
+    try:
+        return schema.load(import_data)
+    except ValidationError as err:
+        # Handle validation errors gracefully
+        error(f"Validation error: {err.messages}")
+        exit(1)
