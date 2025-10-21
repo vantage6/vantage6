@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 from functools import wraps
 
 import pandas as pd
@@ -30,7 +31,7 @@ def _collect_pandas_error_types() -> tuple[type, ...]:
 PANDAS_ERROR_TYPES = _collect_pandas_error_types()
 
 
-def handle_pandas_errors(func):
+def handle_pandas_errors(func: Callable) -> Callable:
     """
     Decorator to catch pandas-related errors from algorithm functions and
     prevent leaking privacy-sensitive data via tracebacks.
