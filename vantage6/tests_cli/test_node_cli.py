@@ -9,10 +9,10 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from vantage6.common import STRING_ENCODING
-from vantage6.common.globals import LOCALHOST, Ports
+from vantage6.common.globals import LOCALHOST, InstanceType, Ports
 
 from vantage6.cli.common.utils import print_log_worker
-from vantage6.cli.globals import APPNAME
+from vantage6.cli.globals import APPNAME, InfraComponentName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.common import create_client_and_authenticate
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -30,36 +30,20 @@ class NodeCLITest(unittest.TestCase):
         logging.getLogger("docker.utils.config").setLevel(logging.WARNING)
         return super().setUpClass()
 
-    @patch("docker.DockerClient.ping")
-    def test_list_docker_not_running(self, docker_ping):
-        """An error is printed when docker is not running"""
-        docker_ping.side_effect = Exception("Boom!")
-
-        runner = CliRunner()
-        result = runner.invoke(cli_node_list, [])
-
-        # check exit code
-        self.assertEqual(result.exit_code, 1)
-
     @patch("vantage6.cli.context.node.NodeContext.available_configurations")
-    @patch("docker.DockerClient.ping")
-    @patch("docker.DockerClient.containers")
-    def test_list(self, containers, docker_ping, available_configurations):
+    @patch("vantage6.cli.common.list.find_running_service_names")
+    def test_list(self, find_running_service_names, available_configurations):
         """A container list and their current status."""
         # https://docs.python.org/3/library/unittest.mock.html#mock-names-and-the-name-attribute
 
         # mock that docker-deamon is running
-        docker_ping.return_value = True
-
-        # docker deamon returns a list of running node-containers
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-user"
-        containers.list.return_value = [container1]
+        node_name = "iknl"
+        find_running_service_names.return_value = [f"{APPNAME}-{node_name}-user-node"]
 
         # returns a list of configurations and failed inports
         def side_effect(system_folders):
             config = MagicMock()
-            config.name = "iknl"
+            config.name = node_name
             if not system_folders:
                 return [[config], []]
             else:
@@ -84,8 +68,8 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n",
         )
 
-    @patch("vantage6.cli.node.new.make_configuration")
-    @patch("vantage6.cli.node.new.ensure_config_dir_writable")
+    @patch("vantage6.cli.common.new.make_configuration")
+    @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
     def test_new_config(self, context, permissions, make_configuration):
         """No error produced when creating new configuration."""
@@ -108,7 +92,7 @@ class NodeCLITest(unittest.TestCase):
         # check OK exit code
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.new.make_configuration")
+    @patch("vantage6.cli.common.new.make_configuration")
     def test_new_config_replace_whitespace_in_name(self, make_configuration):
         """Whitespaces are replaced in the name."""
 
@@ -121,12 +105,11 @@ class NodeCLITest(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(
-            result.output[:60],
-            "[info ] - Replaced spaces from configuration name: some-name",
-        )
+        self.assertTrue("[error] - Invalid name: 'some name'." in result.output)
+        self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.new.NodeContext")
+    # the context is mocked for select_context_class where it is instantiated
+    @patch("vantage6.cli.context.NodeContext")
     def test_new_config_already_exists(self, context):
         """No duplicate configurations are allowed."""
 
@@ -142,12 +125,14 @@ class NodeCLITest(unittest.TestCase):
         )
 
         # check that error is produced
-        self.assertEqual(result.output[:7], "[error]")
+        self.assertIn(
+            "[error] - Configuration some-name already exists!", result.output
+        )
 
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.new.ensure_config_dir_writable")
+    @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
     def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
@@ -165,18 +150,16 @@ class NodeCLITest(unittest.TestCase):
         )
 
         # check that error is produced
-        self.assertEqual(result.output[:7], "[error]")
+        self.assertTrue("[error] - Your user does not have write" in result.output)
 
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.node.common.NodeContext")
-    @patch("vantage6.cli.node.files.NodeContext")
-    @patch("vantage6.cli.node.common.select_configuration_questionnaire")
-    def test_files(self, select_config, context, common_context):
+    @patch("vantage6.cli.common.decorator.get_context")
+    @patch("vantage6.cli.common.decorator.select_configuration_questionnaire")
+    def test_files(self, select_config, context):
         """No errors produced when retrieving filepaths."""
 
-        common_context.config_exists.return_value = True
         context.return_value = MagicMock(
             config_file="/file.yaml", log_file="/log.log", data_dir="/dir"
         )
@@ -207,91 +190,76 @@ class NodeCLITest(unittest.TestCase):
         # check for non zero exit-code
         self.assertNotEqual(result.exit_code, 0)
 
-    @patch("docker.DockerClient.volumes")
-    @patch("vantage6.cli.node.start.pull_infra_image")
+    @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.start.check_docker_running", return_value=True)
-    def test_start(self, check_docker, client, context, pull, volumes):
-        # client.containers = MagicMock(name="docker.DockerClient.containers")
-        client.list.return_value = []
-        volume = MagicMock()
-        volume.name = "data-vol-name"
-        volumes.create.return_value = volume
-        context.config_exists.return_value = True
+    @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.node.start.start_port_forward")
+    def test_start(
+        self,
+        start_port_forward,
+        helm_install,
+        context,
+        os_makedirs,
+    ):
+        """Start node without errors"""
 
         ctx = MagicMock(
-            data_dir=Path("data"),
-            log_dir=Path("logs"),
-            config_dir=Path("configs"),
-            databases=[{"label": "some_label", "uri": "data.csv", "type": "csv"}],
+            config={"node": {"proxyPort": 8080}},
+            config_file="/config.yaml",
+            data_dir=Path("."),
+            log_dir=Path("."),
+            helm_release_name="vantage6-test-node",
+            is_sandbox=False,
         )
-
-        # cli_node_start() tests for truth value of a set-like object derived
-        # from ctx.config.get('node_extra_env', {}). Default MagicMock() will
-        # evaluate to True, empty dict to False. False signifies no overwritten
-        # env vars, hence no error.
-        def config_get_side_effect(key, default=None):
-            if key == "node_extra_env":
-                return {}
-            return MagicMock()
-
-        ctx.config.get.side_effect = config_get_side_effect
-        ctx.get_data_file.return_value = "data.csv"
-        ctx.name = "some-name"
+        ctx.config_exists.return_value = True
+        ctx.name = "test-node"
         context.return_value = ctx
 
         runner = CliRunner()
+        result = runner.invoke(cli_node_start, ["--name", "test-node"])
 
-        # Should fail when starting node with non-existing database CSV file
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli_node_start, ["--name", "some-name"])
-        self.assertEqual(result.exit_code, 1)
-
-        # now do it with a SQL database which doesn't have to be an existing file
-        ctx.databases = [{"label": "some_label", "uri": "data.db", "type": "sql"}]
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli_node_start, ["--name", "some-name"])
         self.assertEqual(result.exit_code, 0)
 
-    def _setup_stop_test(self, containers):
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-user"
-        containers.list.return_value = [container1]
-
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
-    @patch("vantage6.cli.node.stop.NodeContext")
-    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
-    def test_stop(self, delete_volume, node_context, check_docker, containers):
-        self._setup_stop_test(containers)
+    @patch("vantage6.cli.common.stop.get_context")
+    @patch("vantage6.cli.common.utils.find_running_service_names")
+    @patch("vantage6.cli.node.stop._stop_node")
+    def test_stop(self, _stop_node, find_running_service_names, get_context):
+        node_name = "iknl"
+        node_helm_name = f"{APPNAME}-{node_name}-user-node"
+        find_running_service_names.return_value = [node_helm_name]
+        get_context.return_value = MagicMock(helm_release_name=node_helm_name)
 
         runner = CliRunner()
 
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
-        self.assertEqual(
-            result.output, "[info ] - Stopped the vantage6-iknl-user Node.\n"
-        )
-
         self.assertEqual(result.exit_code, 0)
+        self.assertIsNone(result.exception)
 
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.node.stop.check_docker_running", return_value=True)
-    @patch("vantage6.cli.node.stop.NodeContext")
-    @patch("vantage6.cli.node.stop.delete_volume_if_exists")
     @patch("vantage6.cli.node.restart.subprocess.run")
-    def test_restart(
-        self, subprocess_run, delete_volume, node_context, check_docker, containers
-    ):
+    @patch("vantage6.cli.common.stop.get_context")
+    @patch("vantage6.cli.node.stop._stop_node")
+    def test_restart(self, _stop_node, get_context, subprocess_run):
         """Restart a node without errors."""
-        self._setup_stop_test(containers)
-        # The subprocess.run() function is called with the command to start the node.
-        # Unfortunately it is hard to test this, so we just return a successful run
-        subprocess_run.return_value = MagicMock(returncode=0)
+        node_name = "iknl"
+        node_helm_name = f"{APPNAME}-{node_name}-user-node"
+        get_context.return_value = MagicMock(helm_release_name=node_helm_name)
+
+        # Mock subprocess.run to handle both helm calls and node start calls
+        def mock_subprocess_run(*args, **kwargs):
+            # Check if this is a helm command (contains 'helm list')
+            if "helm" in args[0] and "list" in args[0]:
+                return MagicMock(
+                    stdout='[{"name": "' + node_helm_name + '", "status": "deployed"}]',
+                    returncode=0,
+                )
+            else:
+                # For other subprocess calls (like starting the node)
+                return MagicMock(returncode=0)
+
+        subprocess_run.side_effect = mock_subprocess_run
         runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli_node_restart, ["--name", "iknl"])
+        result = runner.invoke(cli_node_restart, ["--name", "iknl"])
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.attach.attach_logs")
@@ -299,7 +267,15 @@ class NodeCLITest(unittest.TestCase):
         """Attach docker logs without errors."""
         runner = CliRunner()
         runner.invoke(cli_node_attach)
-        attach_logs.assert_called_once_with("app=node")
+        attach_logs.assert_called_once_with(
+            name=None,
+            instance_type=InstanceType.NODE,
+            infra_component=InfraComponentName.NODE,
+            system_folders=False,
+            context=None,
+            namespace=None,
+            is_sandbox=False,
+        )
 
     @patch("vantage6.cli.node.create_private_key.create_client_and_authenticate")
     @patch("vantage6.cli.node.common.NodeContext")
@@ -354,8 +330,6 @@ class NodeCLITest(unittest.TestCase):
                 ["--name", "application", "--organization-name", "iknl"],
             )
 
-            # print(result.output)
-
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.common.NodeContext")
@@ -382,9 +356,13 @@ class NodeCLITest(unittest.TestCase):
     def test_client(self, client, error, debug, info):
         ctx = MagicMock(
             config={
-                "server_url": LOCALHOST,
-                "port": Ports.DEV_SERVER.value,
-                "api_path": "",
+                "node": {
+                    "server": {
+                        "url": LOCALHOST,
+                        "port": Ports.DEV_SERVER.value,
+                        "path": "",
+                    }
+                }
             }
         )
 
