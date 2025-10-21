@@ -95,9 +95,12 @@ class MockNode:
             The name of the method that should be called.
         arguments : dict
             The arguments that should be passed to the method.
-        databases : list[dict[str, str]]
-            The databases that should be used by the method. Each dict should contain
-            at least a 'label' key that refers to a dataframe.
+        databases :  list[dict[str, str]] | list[list[dict[str, str]]]
+            The databases that should be used by the method. If a single list is provided,
+            it is assumed that the same database is used for each argument. If a list of
+            lists is provided, it is assumed that a different database is used for each
+            argument. Each dict should contain at least a 'label' key that refers to a
+            dataframe.
         action : AlgorithmStepType
             The action that should be performed.
 
@@ -136,13 +139,28 @@ class MockNode:
 
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
             mock_data = []
-            for db in databases:
-                if db["label"] not in self.dataframes:
-                    error(f"Dataframe with label {db['label']} not found.")
-                    raise DataFrameNotFound(
-                        f"Dataframe with label {db['label']} not found."
-                    )
-                mock_data.append(self.dataframes[db["label"]])
+            # Handle both single list and list of lists input formats
+            if isinstance(databases[0], list):
+                # List of lists format
+                for db_group in databases:
+                    group_data = {}
+                    for db in db_group:
+                        if db["label"] not in self.dataframes:
+                            error(f"Dataframe with label {db['label']} not found.")
+                            raise DataFrameNotFound(
+                                f"Dataframe with label {db['label']} not found."
+                            )
+                        group_data[db["label"]] = self.dataframes[db["label"]]
+                    mock_data.append(group_data)
+            else:
+                # Single list format
+                for db in databases:
+                    if db["label"] not in self.dataframes:
+                        error(f"Dataframe with label {db['label']} not found.")
+                        raise DataFrameNotFound(
+                            f"Dataframe with label {db['label']} not found."
+                        )
+                    mock_data.append(self.dataframes[db["label"]])
 
             # make a copy of the data to avoid modifying the original data of
             # subsequent tasks
