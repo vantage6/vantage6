@@ -155,7 +155,7 @@ def data_extraction(func: Callable) -> Callable:
 
         ```python
         >>> @data_extraction
-        >>> def my_function(connection_details: str):
+        >>> def my_function(connection_details: dict):
         >>>     print(connection_details)
         {
             "uri": "postgresql://host:port/database",

@@ -184,10 +184,10 @@ Data extraction function
    import os
    import pandas as pd
 
-   from vantage6.algorithm.decorator.data import dataframe
+   from vantage6.algorithm.decorator.action import data_extraction
    from vantage6.algorithm.tools.util import info
 
-   @dataframe(1)
+   @data_extraction
    def my_data_extraction_function(db_connection_details: dict):
        info("Extracting data")
 
@@ -237,6 +237,25 @@ vantage6 algorithm tools:
    from vantage6.algorithm.data_extraction import *
    from vantage6.algorithm.preprocessing import *
 
+.. note::
+
+   As algorithm developer, you should keep in mind that error messages may contain
+   sensitive information. In Python, we often see Pandas errors when manipulating data,
+   for instance that a certain data value is not a valid date.
+
+   To help you keep such sensitive information private, vantage6
+   provides a decorator that can be used to handle pandas errors. This decorator will
+   catch all pandas errors and return a generic error message. You can use this
+   decorator by adding it to your algorithm function:
+
+   .. code:: python
+
+      from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+
+      @handle_pandas_errors
+      def my_function(data: pd.DataFrame):
+         return data
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
@@ -283,7 +302,7 @@ DataFrame instead of a string for the database value:
 
         import pandas as pd
         from vantage6.mock.mock_network import MockNetwork
-        
+
         network = MockNetwork(
             module_name="my_algorithm",
             datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
