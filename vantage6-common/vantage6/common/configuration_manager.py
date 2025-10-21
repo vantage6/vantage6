@@ -9,6 +9,8 @@ import yaml
 from jinja2 import Environment, FileSystemLoader, Template
 from schema import Schema, SchemaError
 
+from vantage6.common.globals import SANDBOX_SUFFIX
+
 from vantage6.cli.globals import TEMPLATE_FOLDER
 
 
@@ -94,18 +96,22 @@ class ConfigurationManager(object):
 
     Parameters
     ----------
-    conf_class: Configuration
-        The class to use for the configuration.
     name: str
         The name of the configuration.
+    conf_class: Configuration
+        The class to use for the configuration.
     """
 
     def __init__(
-        self, conf_class: Configuration = Configuration, name: str = None
+        self,
+        name: str,
+        conf_class: Configuration = Configuration,
+        is_sandbox: bool = False,
     ) -> None:
         self.config = {}
 
         self.name = name
+        self.is_sandbox = is_sandbox
         self.conf_class = conf_class
 
     def put(self, config: dict) -> None:
@@ -165,7 +171,10 @@ class ConfigurationManager(object):
 
     @classmethod
     def from_file(
-        cls, path: Path | str, conf_class: Type[Configuration] = Configuration
+        cls,
+        path: Path | str,
+        conf_class: Type[Configuration] = Configuration,
+        is_sandbox: bool = False,
     ) -> ConfigurationManager:
         """
         Load a configuration from a file.
@@ -176,7 +185,8 @@ class ConfigurationManager(object):
             The path to the file to load the configuration from.
         conf_class: Type[Configuration]
             The class to use for the configuration.
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         ConfigurationManager
@@ -189,12 +199,16 @@ class ConfigurationManager(object):
             file path.
         """
         name = Path(path).stem
+        # We do not want the suffix .sandbox in the name, we capture this property in
+        # the is_sandbox property of the Context class.
+        if is_sandbox:
+            name = name.replace(SANDBOX_SUFFIX, "")
         assert name, f"Configuration name could not be extracted from filepath={path}"
-        conf = cls(name=name, conf_class=conf_class)
+        conf = cls(name=name, conf_class=conf_class, is_sandbox=is_sandbox)
         conf.load(path)
         return conf
 
-    def save(self, path: Path | str) -> None:
+    def save(self, path: Path | str) -> Path:
         """
         Save the configuration to a file.
 
@@ -202,12 +216,24 @@ class ConfigurationManager(object):
         ----------
         path: Path | str
             The path to the file to save the configuration to.
+
+        Returns
+        -------
+        Path
+            The path to the saved configuration file.
         """
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         template = self.get_config_template()
         rendered_config = template.render(self.config)
+        # add .sandbox to the path if it is a sandbox configuration
+        if self.is_sandbox:
+            name = Path(path).stem + SANDBOX_SUFFIX
+            path = Path(path).parent / (name + str(Path(path).suffix))
+
         with open(path, "x", encoding="utf-8") as f:
             f.write(rendered_config)
+
+        return Path(path)
 
     @abstractmethod
     def get_config_template(self) -> Template:

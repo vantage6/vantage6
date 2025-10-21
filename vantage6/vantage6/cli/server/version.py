@@ -1,12 +1,11 @@
 import click
-import docker
+import requests
 
-from vantage6.common import error
-from vantage6.common.docker.addons import check_docker_running
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
-from vantage6.cli.common.utils import get_running_servers, get_server_name
+from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
@@ -16,22 +15,36 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 @click.option(
     "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
 )
-def cli_server_version(name: str, system_folders: bool) -> None:
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--sandbox", "is_sandbox", flag_value=True, help="Is this a sandbox environment?"
+)
+def cli_server_version(
+    name: str, system_folders: bool, context: str, namespace: str, is_sandbox: bool
+) -> None:
     """
     Print the version of the vantage6 server.
     """
-    check_docker_running()
-    client = docker.from_env()
-
-    running_server_names = get_running_servers(client, InstanceType.SERVER)
-
-    name = get_server_name(
-        name, system_folders, running_server_names, InstanceType.SERVER
+    ctx = get_and_select_ctx(
+        InstanceType.SERVER, name, system_folders, context, namespace, is_sandbox
     )
+    server_config = ctx.config.get("server", {})
+    base_url = server_config.get("baseUrl", "")
+    api_path = server_config.get("apiPath", "")
+    if not base_url:
+        error("No base URL found in server configuration.")
+        return
+    if not api_path:
+        error("No API path found in server configuration.")
+        return
 
-    if name in running_server_names:
-        container = client.containers.get(name)
-        version = container.exec_run(cmd="vserver-local version", stdout=True)
-        click.echo({"server": version.output.decode("utf-8"), "cli": __version__})
-    else:
-        error(f"Server {name} is not running! Cannot provide version...")
+    response = requests.get(f"{base_url}{api_path}/version")
+    if response.status_code != 200:
+        error("Failed to get server version.")
+        return
+    server_version = response.json().get("version", "")
+
+    info("")
+    info(f"Server version: {server_version}")
+    info(f"CLI version: {__version__}")

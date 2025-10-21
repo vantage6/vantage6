@@ -1,13 +1,13 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 
-import jwt
-
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
-from vantage6.algorithm.tools.util import info
+from vantage6.algorithm.tools.util import get_action
 
 
 @dataclass
@@ -21,32 +21,13 @@ class RunMetaData:
     temporary_directory: Path | None
     output_file: Path | None
     input_file: Path | None
-    token_file: Path | None
+    token: str | None
+    action: AlgorithmStepType | None
 
 
-def _extract_token_payload(token: str) -> dict:
-    """
-    Extract the payload from the token.
-
-    Parameters
-    ----------
-    token: str
-        The token as a string.
-
-    Returns
-    -------
-    dict
-        The payload as a dictionary. It contains the keys: `vantage6_client_type`,
-        `node_id`, `organization_id`, `collaboration_id`, `task_id`, `image`,
-        and `databases`.
-    """
-    jwt_payload = jwt.decode(token, options={"verify_signature": False})
-    return jwt_payload["sub"]
-
-
-def metadata(func: callable) -> callable:
+def metadata(func: Callable) -> Callable:
     @wraps(func)
-    def decorator(*args, **kwargs) -> callable:
+    def decorator(*args, **kwargs) -> Callable:
         """
         Decorator the function with metadata from the run.
 
@@ -60,22 +41,24 @@ def metadata(func: callable) -> callable:
         >>> def my_algorithm(metadata: RunMetaData, <other arguments>):
         >>>     pass
         """
-        token = os.environ[ContainerEnvNames.CONTAINER_TOKEN.value]
+        action = get_action()
 
-        info("Extracting payload from token")
-        payload = _extract_token_payload(token)
+        token = None
+        if action == AlgorithmStepType.CENTRAL_COMPUTE:
+            token = os.environ[ContainerEnvNames.CONTAINER_TOKEN.value]
 
         metadata = RunMetaData(
-            task_id=payload["task_id"],
-            node_id=payload["node_id"],
-            collaboration_id=payload["collaboration_id"],
-            organization_id=payload["organization_id"],
+            task_id=os.environ[ContainerEnvNames.TASK_ID.value],
+            node_id=os.environ[ContainerEnvNames.NODE_ID.value],
+            collaboration_id=os.environ[ContainerEnvNames.COLLABORATION_ID.value],
+            organization_id=os.environ[ContainerEnvNames.ORGANIZATION_ID.value],
             temporary_directory=Path(
                 os.environ[ContainerEnvNames.SESSION_FOLDER.value]
             ),
             output_file=Path(os.environ[ContainerEnvNames.OUTPUT_FILE.value]),
             input_file=Path(os.environ[ContainerEnvNames.INPUT_FILE.value]),
             token=token,
+            action=action.value,
         )
         return func(metadata, *args, **kwargs)
 

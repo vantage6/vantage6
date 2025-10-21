@@ -1,8 +1,10 @@
 import os
+from collections.abc import Callable
 from functools import wraps
 
 import pandas as pd
 
+from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import (
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_MULTIPLE_KEYWORD,
@@ -11,7 +13,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.algorithm.tools.exceptions import UserInputError
-from vantage6.algorithm.tools.util import error, info, warn
+from vantage6.algorithm.tools.util import error, get_action, info, warn
 
 
 def _get_user_dataframes() -> list[str]:
@@ -54,7 +56,7 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     return pd.read_parquet(dataframe_file)
 
 
-def dataframe(*sources: str | int) -> callable:
+def dataframe(*sources: str | int) -> Callable:
     """
     Decorator that adds algorithm data to a function
 
@@ -79,7 +81,7 @@ def dataframe(*sources: str | int) -> callable:
 
     Returns
     -------
-    callable
+    Callable
         Decorated function
 
     Examples
@@ -102,13 +104,13 @@ def dataframe(*sources: str | int) -> callable:
     if not sources:
         sources = (1,)
 
-    def protection_decorator(func: callable, *args, **kwargs) -> callable:
+    def protection_decorator(func: Callable, *args, **kwargs) -> Callable:
         @wraps(func)
         def decorator(
             *args,
             mock_data: list[dict[str, pd.DataFrame] | pd.DataFrame] | None = None,
             **kwargs,
-        ) -> callable:
+        ) -> Callable:
             """
             Wrap the function with the data
 
@@ -152,6 +154,20 @@ def dataframe(*sources: str | int) -> callable:
                     f"first {number_of_expected_arguments} databases."
                 )
 
+            action = get_action()
+            if action == AlgorithmStepType.DATA_EXTRACTION:
+                error(
+                    "The @dataframe decorator cannot be used for data extraction "
+                    "functions. Exiting..."
+                )
+                exit(1)
+
+            if getattr(func, "vantage6_dataframe_decorated", False):
+                error(
+                    "The @dataframe decorator cannot be used multiple times. Exiting..."
+                )
+                exit(1)
+
             # read the data from the database(s)
             idx_dataframes = 0
             for source in sources:
@@ -164,6 +180,14 @@ def dataframe(*sources: str | int) -> callable:
                         idx_dataframes += 1
                         args = (df, *args)
                 elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                    if action == AlgorithmStepType.PREPROCESSING:
+                        error(
+                            "The @dataframes or @dataframe("
+                            f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
+                            "for preprocessing functions. Use @preprocessing instead. "
+                            "Exiting..."
+                        )
+                        exit(1)
                     requested_dataframes = dataframes_grouped[idx_dataframes]
                     data_ = {
                         df_name: _read_df_from_disk(df_name)
@@ -186,7 +210,7 @@ def dataframe(*sources: str | int) -> callable:
     return protection_decorator
 
 
-def dataframes(func: callable) -> callable:
+def dataframes(func: Callable) -> Callable:
     """
     Decorator that adds multiple pandas dataframes to a function
 

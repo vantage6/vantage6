@@ -7,17 +7,15 @@ Some commands, such as ``vnode-local start``, are used within the Docker
 container when ``v6 node start`` is used.
 """
 
-import sys
 from pathlib import Path
 
 import click
-import questionary as q
 
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_wizard import (
-    configuration_wizard,
-    select_configuration_questionaire,
+from vantage6.cli.configuration_create import (
+    select_configuration_questionnaire,
 )
 from vantage6.cli.context import NodeContext
 
@@ -72,21 +70,21 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
     else:
         # in case no name is supplied, ask user to select one
         if not name:
-            name = select_configuration_questionaire(InstanceType.NODE, system_folders)
+            try:
+                name = select_configuration_questionnaire(
+                    InstanceType.NODE, system_folders
+                )
+            except Exception:
+                error("No configurations could be found!")
+                info("Run `v6 node new` to create a new node configuration.")
+                exit(1)
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
         if not NodeContext.config_exists(name, system_folders):
-            question = (
-                f"Configuration '{name}' does not exist.\n  Do you want to "
-                "create this config now?"
-            )
-
-            if q.confirm(question).ask():
-                configuration_wizard(InstanceType.NODE, name, system_folders)
-
-            else:
-                sys.exit(0)
+            error(f"Configuration '{name}' does not exist!")
+            info("Run `v6 node new` to create a new node configuration.")
+            exit(1)
 
         # create dummy node context
         ctx = NodeContext(name, system_folders, in_container=True)

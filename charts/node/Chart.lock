@@ -3,4 +3,4 @@ dependencies:
   repository: file://../common
   version: 5.0.0-a36
 digest: sha256:01169485f56629472c9e91606dc08e454584830785e175db11fddfc4cbea5063
-generated: "2025-09-24T14:48:29.806214457+02:00"
+generated: "2025-10-02T09:23:25.047306846+02:00"

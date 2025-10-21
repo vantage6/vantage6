@@ -21,7 +21,7 @@ from flask_restful import Api
 from werkzeug.exceptions import HTTPException
 
 from vantage6.common import logger_name, validate_required_env_vars
-from vantage6.common.globals import DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH, LOCALHOST
 
 from vantage6.cli.context.base_server import BaseServerContext
 
@@ -149,7 +149,7 @@ class Vantage6App:
         # Mail settings
         mail_config = self.ctx.config.get("smtp", {})
         self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
-        self.app.config["MAIL_SERVER"] = mail_config.get("server", "localhost")
+        self.app.config["MAIL_SERVER"] = mail_config.get("server", LOCALHOST)
         self.app.config["MAIL_USERNAME"] = mail_config.get(
             "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
         )

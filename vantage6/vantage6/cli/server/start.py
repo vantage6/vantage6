@@ -3,6 +3,7 @@ import click
 from vantage6.common import info
 from vantage6.common.globals import InstanceType, Ports
 
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
@@ -10,11 +11,11 @@ from vantage6.cli.common.start import (
     start_port_forward,
 )
 from vantage6.cli.common.utils import (
-    attach_logs,
     create_directory_if_not_exists,
+    select_context_and_namespace,
 )
 from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, InfraComponentName
 
 
 @click.command()
@@ -32,6 +33,7 @@ from vantage6.cli.globals import ChartName
     default=False,
     help="Print server logs to the console after start",
 )
+@click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click_insert_context(
     type_=InstanceType.SERVER, include_name=True, include_system_folders=True
 )
@@ -45,13 +47,18 @@ def cli_server_start(
     port: int,
     ui_port: int,
     attach: bool,
+    local_chart_dir: str | None,
 ) -> None:
     """
     Start the server.
     """
     info("Starting server...")
+    prestart_checks(ctx, InstanceType.SERVER, name, system_folders)
 
-    prestart_checks(ctx, InstanceType.SERVER, name, system_folders, context, namespace)
+    context, namespace = select_context_and_namespace(
+        context=context,
+        namespace=namespace,
+    )
 
     create_directory_if_not_exists(ctx.log_dir)
 
@@ -61,11 +68,13 @@ def cli_server_start(
         values_file=ctx.config_file,
         context=context,
         namespace=namespace,
+        local_chart_dir=local_chart_dir,
     )
 
     # port forward for server
     info("Port forwarding for server")
     start_port_forward(
+        # TODO: make this dynamic
         service_name=f"{ctx.helm_release_name}-vantage6-server-service",
         service_port=ctx.config["server"].get("port", Ports.DEV_SERVER.value),
         port=port or ctx.config["server"].get("port", Ports.DEV_SERVER.value),
@@ -86,4 +95,12 @@ def cli_server_start(
     )
 
     if attach:
-        attach_logs("app=vantage6-server", "component=vantage6-server")
+        attach_logs(
+            name,
+            instance_type=InstanceType.SERVER,
+            infra_component=InfraComponentName.SERVER,
+            system_folders=system_folders,
+            context=context,
+            namespace=namespace,
+            is_sandbox=ctx.is_sandbox,
+        )

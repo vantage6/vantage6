@@ -11,12 +11,10 @@ from vantage6.algorithm.tools.error_handling import handle_pandas_errors
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
-from vantage6.algorithm.decorator.data import dataframe
 
 
 @handle_pandas_errors
 @preprocessing
-@dataframe(1)
 def collapse(
     df: pd.DataFrame,
     group_columns: list[str],
@@ -164,7 +162,6 @@ def collapse(
 
 @handle_pandas_errors
 @preprocessing
-@dataframe(1)
 def group_statistics(
     df: pd.DataFrame,
     group_columns: list[str],

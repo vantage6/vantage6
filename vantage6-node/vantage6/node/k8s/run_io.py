@@ -15,6 +15,7 @@ import pyarrow.parquet as pq
 from vantage6.common import logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus
+from vantage6.common.globals import APPNAME
 
 from vantage6.node.globals import TASK_FILES_ROOT
 from vantage6.node.k8s.session_manager import SessionFileManager
@@ -89,19 +90,19 @@ class RunIO:
 
     @property
     def input_volume_name(self) -> str:
-        return f"run-{self.run_id}-input"
+        return f"{APPNAME}-run-{self.run_id}-input"
 
     @property
     def token_volume_name(self) -> str:
-        return f"run-{self.run_id}-token"
+        return f"{APPNAME}-run-{self.run_id}-token"
 
     @property
     def output_volume_name(self) -> str:
-        return f"run-{self.run_id}-output"
+        return f"{APPNAME}-run-{self.run_id}-output"
 
     @property
     def container_name(self) -> str:
-        return f"run-{self.run_id}"
+        return f"{APPNAME}-run-{self.run_id}"
 
     @property
     def output_file(self) -> str:

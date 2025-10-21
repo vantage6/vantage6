@@ -125,12 +125,12 @@ pipelines:
       purge_deployments --all
       run_dependencies --all --pipeline purge
       dev/purge_keycloak_storage.sh
+      python dev/cleanup_task_jobs.py --namespace ${TASK_NAMESPACE}
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH}
-
   stop-dev:
     run: |-
       echo "Purging all deployments..."
@@ -259,8 +259,12 @@ deployments:
             secret: development-constant-secret!
           dev:
             host_uri: ${HOST_URI}
-            store_in_local_cluster: true
             allow_drop_all: true
+            store_address: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+          algorithm_stores:
+            - name: Local store
+              url: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+              api_path: /store
         ui:
           image: ${UI_IMAGE}
           keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}

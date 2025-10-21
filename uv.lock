@@ -2013,7 +2013,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.0a36"
+version = "5.0.0a38"
 source = { editable = "." }
 dependencies = [
     { name = "vantage6-algorithm-store" },
@@ -2057,20 +2057,20 @@ requires-dist = [
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'" },
     { name = "sphinx-click", marker = "extra == 'docs'" },
     { name = "sphinxcontrib-plantuml", marker = "extra == 'docs'" },
-    { name = "vantage6", specifier = "==5.0.0a34" },
-    { name = "vantage6-algorithm-store", specifier = "==5.0.0a34" },
-    { name = "vantage6-algorithm-tools", specifier = "==5.0.0a34" },
-    { name = "vantage6-backend-common", specifier = "==5.0.0a34" },
-    { name = "vantage6-client", specifier = "==5.0.0a34" },
-    { name = "vantage6-common", specifier = "==5.0.0a34" },
-    { name = "vantage6-node", specifier = "==5.0.0a34" },
-    { name = "vantage6-server", specifier = "==5.0.0a34" },
+    { name = "vantage6", specifier = "==5.0.0a36" },
+    { name = "vantage6-algorithm-store", specifier = "==5.0.0a36" },
+    { name = "vantage6-algorithm-tools", specifier = "==5.0.0a36" },
+    { name = "vantage6-backend-common", specifier = "==5.0.0a36" },
+    { name = "vantage6-client", specifier = "==5.0.0a36" },
+    { name = "vantage6-common", specifier = "==5.0.0a36" },
+    { name = "vantage6-node", specifier = "==5.0.0a36" },
+    { name = "vantage6-server", specifier = "==5.0.0a36" },
 ]
 provides-extras = ["dev", "docs"]
 
 [[package]]
 name = "vantage6-algorithm-store"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flask" },
@@ -2087,14 +2087,14 @@ dependencies = [
     { name = "vantage6" },
     { name = "vantage6-common" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/68/332ae811f2df0bed0e6a9099a72c0472016cb6c0f7ff86678df5c730f11c/vantage6_algorithm_store-5.0.0a34.tar.gz", hash = "sha256:1873a533b0ece8f4bcb5e62d7f94c7eac4c8c1a6110628685b5156a6affdb9d5", size = 56554, upload-time = "2025-08-28T13:19:06.414Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/34/99efc0be4b4a2132c98812abb67e4bfbfe48e2e1ca96bb5bf2b88a6a6702/vantage6_algorithm_store-5.0.0a36.tar.gz", hash = "sha256:c8e4f3da8b729588e88a1913395de21556ee6b12287917e8e2b6929743c82574", size = 56473, upload-time = "2025-09-23T11:53:09.877Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/ec/df7292ae3a5d8439a14caad07011fd937e42eb90423ee9230cd07a4b26d4/vantage6_algorithm_store-5.0.0a34-py3-none-any.whl", hash = "sha256:53dea008d2356bc392d76f6e8f2b7bc3e1dda43d14ff01ba219de8f3b1d17138", size = 71530, upload-time = "2025-08-28T13:19:02.122Z" },
+    { url = "https://files.pythonhosted.org/packages/62/35/ddc869bcf7feb075bff26a2f3b5a5a92efd3a2428fd621f7c573dedb0f99/vantage6_algorithm_store-5.0.0a36-py3-none-any.whl", hash = "sha256:6a6693b46eb2a5f1df3476fcb7b0935c57760b3d65bafb8decce2bc2b7e58367", size = 71517, upload-time = "2025-09-23T11:53:08.652Z" },
 ]
 
 [[package]]
 name = "vantage6-algorithm-tools"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openpyxl" },
@@ -2105,15 +2105,16 @@ dependencies = [
     { name = "pyjwt" },
     { name = "sparqlwrapper" },
     { name = "sqlalchemy" },
+    { name = "vantage6-common" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/6c/e5163cde2f8d03d3e40b07dbcbfda206024a37e345f6f8f42276c6d1d81a/vantage6_algorithm_tools-5.0.0a34.tar.gz", hash = "sha256:8679d2b2b6afa5039e4af2cbd6f6ba29608accef7518c7eb68267ed26f397962", size = 40280, upload-time = "2025-08-28T13:18:49.994Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/95/4cecf5c6497747cd7f91fa18a75782400d4051b2187b83797ec9a58ebb79/vantage6_algorithm_tools-5.0.0a36.tar.gz", hash = "sha256:cf6d467889059be54c33ccbda77a64cad51bc799749e83c7acfdf2df005a8887", size = 40234, upload-time = "2025-09-23T11:52:58.025Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/59/b6da37b9d669d682e4469b8b74d4c6998e3dd4c31b9551509ee70f5eff55/vantage6_algorithm_tools-5.0.0a34-py3-none-any.whl", hash = "sha256:42c40b91e785f8c5168175f99168ab02212fceb0b195fc01ff9ed6972a33984a", size = 44271, upload-time = "2025-08-28T13:18:48.51Z" },
+    { url = "https://files.pythonhosted.org/packages/13/7e/942d9925f80445bf2e30f66a4d20b2708084a4ec0afa49b0c7989e34bdf7/vantage6_algorithm_tools-5.0.0a36-py3-none-any.whl", hash = "sha256:47768497847a12e11abeb367b005b87234b46dd82d54b2cc6bd2444cf3a4d680", size = 44242, upload-time = "2025-09-23T11:52:57.12Z" },
 ]
 
 [[package]]
 name = "vantage6-backend-common"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flask" },
@@ -2132,14 +2133,14 @@ dependencies = [
     { name = "vantage6-common" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/66/eb3d718e0e7e09d287025b6496bfc3e9a3ecc39e0a7723c3cd5e48c2d6f1/vantage6_backend_common-5.0.0a34.tar.gz", hash = "sha256:35fde6800666498fcf990039cf37cc0cfb47d42fa3bb94d4e289257d8e975ee9", size = 21082, upload-time = "2025-08-28T13:18:57.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/79/ee4addcb45922162b89a0d6c3acdc8ef911bc6c83236618d270ca60fc8f2/vantage6_backend_common-5.0.0a36.tar.gz", hash = "sha256:3254d4963f25d68a7bd3d2e530663c67f828111549e0666a5a09dd5252edac20", size = 20897, upload-time = "2025-09-23T11:53:05.398Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/51/22ec6c011ce86ed662741771ac212611d49b27648cc1eacfe5ec62d12fec/vantage6_backend_common-5.0.0a34-py3-none-any.whl", hash = "sha256:fbb1c403f545d7ff7ab96c171c9f9c236fa50f7d59baa2e114bc0f6d63cd277a", size = 27970, upload-time = "2025-08-28T13:18:56.661Z" },
+    { url = "https://files.pythonhosted.org/packages/1a/5e/58e36e06eac99b1f1f403eee2eb55ae394f9e4f598292480f9ec82b9f992/vantage6_backend_common-5.0.0a36-py3-none-any.whl", hash = "sha256:bea22d94116ae7e351c84f086ee09cfbbfe2da5d318868417e2d7daebeb2e009", size = 27790, upload-time = "2025-09-23T11:53:04.544Z" },
 ]
 
 [[package]]
 name = "vantage6-client"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyfiglet" },
@@ -2147,14 +2148,14 @@ dependencies = [
     { name = "rich" },
     { name = "vantage6-common" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0c/df/eada9b2c225487860f06d2b21dd51e148df57ba1f8f716c4a41658adcb0c/vantage6_client-5.0.0a34.tar.gz", hash = "sha256:77daa98c7416b5044994a88873a62aa8c8c1011cd047144f63c350e113c56a46", size = 29643, upload-time = "2025-08-28T13:18:47.022Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/08/f0d0f7141d825fa4eaf92bc684e157747ef6ebbef14001308db834acc4a4/vantage6_client-5.0.0a36.tar.gz", hash = "sha256:bf24b06e14850c2f51533ed5dfe9c71a37518a47d153793663c5ee595a555c29", size = 29649, upload-time = "2025-09-23T11:52:55.91Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/e4/f46f366b8328f24cd8e29cbbc4a89e4f642294f90fed3a2920f7c6ffe4b2/vantage6_client-5.0.0a34-py3-none-any.whl", hash = "sha256:62906ead60b1ac75cd3595630419f76b8193cb19be5bf419884a73ed51819353", size = 37809, upload-time = "2025-08-28T13:18:45.918Z" },
+    { url = "https://files.pythonhosted.org/packages/41/4f/7a4c524c7f2163cb9ca69d675f486779507676c5d189c718641208c7c94e/vantage6_client-5.0.0a36-py3-none-any.whl", hash = "sha256:f5799cb4117dcec314bb191b1c3edfcde89ee9c337c4c59a756f97d64e50ce51", size = 37826, upload-time = "2025-09-23T11:52:54.538Z" },
 ]
 
 [[package]]
 name = "vantage6-common"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -2169,14 +2170,14 @@ dependencies = [
     { name = "rich" },
     { name = "schema" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/3e/2597abe63cbf3d6e1f6a9b0050747ad1ee60c429518fe12b046ace1234a5/vantage6_common-5.0.0a34.tar.gz", hash = "sha256:8fe362c0cda973e59583b1dfe6703a08d540a335a40434bcaa2bdebec4e785eb", size = 31306, upload-time = "2025-08-28T13:18:44.413Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/4d/ed06b07940116394291c792b28d34bad84809b3bcecde7c3500e1a6f64cb/vantage6_common-5.0.0a36.tar.gz", hash = "sha256:3d5dbe4398c4151fcd8fda3868e33de17e7b883fbb60aaf276092396a4739b68", size = 31339, upload-time = "2025-09-23T11:52:53.514Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/15/1a7f667cb6265acf254d0e160db534be81b90b7dad0946bf29793eb06d76/vantage6_common-5.0.0a34-py3-none-any.whl", hash = "sha256:7c7e891b3e4414080b6224463f12c8e89d62c4b0e2b0077fe6d5495f0d580d00", size = 37018, upload-time = "2025-08-28T13:18:42.838Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/77/d178a6cdc4c5dd7c3cd2bed11818a59ee3b161d5a92564f56d78c2f737c8/vantage6_common-5.0.0a36-py3-none-any.whl", hash = "sha256:262c38a8e8ee182a61ff4578cf9718f4a663d6323fe679d133ea0561a0cca7fe", size = 37047, upload-time = "2025-09-23T11:52:52.042Z" },
 ]
 
 [[package]]
 name = "vantage6-node"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2192,14 +2193,14 @@ dependencies = [
     { name = "vantage6-client" },
     { name = "vantage6-common" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/57/bb/30aef91a011f2c0d2f86f203d4a556cbc9e93d8e6a9cdbfa5cb6b4d319d3/vantage6_node-5.0.0a34.tar.gz", hash = "sha256:919bcb8af16736a1fad2bfa6fd6c98cc9e85c50bef5f0fa36f48aca84fda4c2d", size = 40926, upload-time = "2025-08-28T13:18:55.511Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/04/db6fb59e5248230728b70005b31aa7d576a47540ba91a84a98dfbe102492/vantage6_node-5.0.0a36.tar.gz", hash = "sha256:abde3bfc6c44a32513a33376c03a1e81645cff10236afcfc48546518e4109a25", size = 40745, upload-time = "2025-09-23T11:53:03.154Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/32/482e7445762ced5301c6083fea44747f7e93074ae987c26f5f0a14c4abea/vantage6_node-5.0.0a34-py3-none-any.whl", hash = "sha256:b6db5f8b59b0c9dbd611a58388e7351a33930637de73d587fa2d4e3ada37b23a", size = 46052, upload-time = "2025-08-28T13:18:54.316Z" },
+    { url = "https://files.pythonhosted.org/packages/30/ed/fe1f069b98a1e52a4ca7d09e3442d085376fa2a131254ebcee808fb3e359/vantage6_node-5.0.0a36-py3-none-any.whl", hash = "sha256:af5aea4f9a207f5ce2cbe66e3da960a1a03435b22e70b5284c4cced965133520", size = 45926, upload-time = "2025-09-23T11:53:01.775Z" },
 ]
 
 [[package]]
 name = "vantage6-server"
-version = "5.0.0a34"
+version = "5.0.0a36"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bcrypt" },
@@ -2225,9 +2226,9 @@ dependencies = [
     { name = "vantage6-common" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/1a/8a8a200d7b3532eaef8586de04f1ba14e869409df8b89be0edddee44feea/vantage6_server-5.0.0a34.tar.gz", hash = "sha256:518ed05028e209790d3e9c66a8c951150012a75b717d4260a8ea41d8590d27c4", size = 133277, upload-time = "2025-08-28T13:19:00.596Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f1/f9/751c231c76f665f1c0bf83333c11a098be43fe08c1d2194cb0b5ccfa0296/vantage6_server-5.0.0a36.tar.gz", hash = "sha256:75c47fa9caa18f5c3bffb3936619d6da5ed96e772c16092b7bf5ef54e76b22b8", size = 132626, upload-time = "2025-09-23T11:53:07.598Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/05/51/77789f64b2892074cc9c2f9cd932c20773c18c77cac527d934daf4ac078e/vantage6_server-5.0.0a34-py3-none-any.whl", hash = "sha256:6af1143bc4ff29ae28acbeb19d1c3f851254ecc1c76fc500f7d06b8b9b08788c", size = 152412, upload-time = "2025-08-28T13:18:58.879Z" },
+    { url = "https://files.pythonhosted.org/packages/69/2a/fe36bf4d50e8b49d915f64d858bf9626c4760b6b41e397ecb04180b72225/vantage6_server-5.0.0a36-py3-none-any.whl", hash = "sha256:9622cdbad0a5b45b46cb28fb2ef51a7b90550215b44b33dcda9cb7321ca778f3", size = 152025, upload-time = "2025-09-23T11:53:06.441Z" },
 ]
 
 [[package]]

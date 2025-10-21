@@ -65,6 +65,14 @@ SESSION_STATE_FILENAME = "session_state"
 # session state file name
 SESSION_STATE_FILENAME = "session_state"
 
+# sandbox configuration suffix
+SANDBOX_SUFFIX = ".sandbox"
+
+# Localhost addresses
+LOCALHOST = "localhost"
+HTTP_LOCALHOST = "http://localhost"
+LINUX_LOCALHOST = "http://127.0.0.1"
+
 
 class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
@@ -126,6 +134,10 @@ class ContainerEnvNames(StrEnumBase):
     DB_PARAM_PREFIX = "DB_PARAM_"
     USER_REQUESTED_DATAFRAMES = "USER_REQUESTED_DATAFRAMES"
     USER_REQUESTED_DATABASES = "USER_REQUESTED_DATABASES"
+    TASK_ID = "TASK_ID"
+    NODE_ID = "NODE_ID"
+    ORGANIZATION_ID = "ORGANIZATION_ID"
+    COLLABORATION_ID = "COLLABORATION_ID"
 
 
 class RequiredNodeEnvVars(StrEnumBase):

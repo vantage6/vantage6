@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import requests
 from flask import Response
 
-from vantage6.common.globals import DEFAULT_API_PATH
+from vantage6.common.globals import DEFAULT_API_PATH, HTTP_LOCALHOST, LINUX_LOCALHOST
 
 from vantage6.server import db
 
@@ -192,7 +192,7 @@ def request_algo_store(
 
 def _contains_localhost(url: str) -> bool:
     """Check if the url refers to localhost address"""
-    return url.startswith("http://localhost") or url.startswith("http://127.0.0.1")
+    return url.startswith(HTTP_LOCALHOST) or url.startswith(LINUX_LOCALHOST)
 
 
 def _execute_algo_store_request(
