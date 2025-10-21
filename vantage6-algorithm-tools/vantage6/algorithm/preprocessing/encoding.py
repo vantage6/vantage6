@@ -10,11 +10,13 @@ standard deviations for scaling operations.
 import numpy as np
 import pandas as pd
 
+from vantage6.algorithm.tools.error_handling import handle_pandas_errors
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
 
 
+@handle_pandas_errors
 @preprocessing
 def min_max_scale(
     df: pd.DataFrame,
@@ -88,6 +90,7 @@ def min_max_scale(
     return df_scaled
 
 
+@handle_pandas_errors
 @preprocessing
 def standard_scale(
     df: pd.DataFrame,
@@ -161,6 +164,7 @@ def standard_scale(
     return df_scaled
 
 
+@handle_pandas_errors
 @preprocessing
 def one_hot_encode(
     df: pd.DataFrame,
@@ -248,6 +252,7 @@ def one_hot_encode(
     return df_out
 
 
+@handle_pandas_errors
 @preprocessing
 def encode(
     df: pd.DataFrame,
@@ -331,6 +336,7 @@ def encode(
     return encoded_df
 
 
+@handle_pandas_errors
 @preprocessing
 def discretize_column(
     df: pd.DataFrame,
@@ -396,6 +402,7 @@ def discretize_column(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 def extract_from_string(
     df: pd.DataFrame,
@@ -451,6 +458,7 @@ def extract_from_string(
     return df
 
 
+@handle_pandas_errors
 @preprocessing
 def impute(
     df: pd.DataFrame,
