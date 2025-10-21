@@ -179,7 +179,7 @@ def dataframe(*sources: str | int) -> Callable:
                         df = _read_df_from_disk(requested_dataframes[0])
                         idx_dataframes += 1
                         args = (df, *args)
-                elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+                elif str(source).lower() == DATAFRAME_MULTIPLE_KEYWORD:
                     if action == AlgorithmStepType.PREPROCESSING:
                         error(
                             "The @dataframes or @dataframe("
