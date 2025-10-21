@@ -579,9 +579,6 @@ class MockUserClient(MockBaseClient):
                         "Error simulating dataframe preprocessing for organization "
                         f"{org_id}: {e}"
                     )
-                    #print tr
-                    import traceback
-                    print(traceback.format_exc())
                     return
                 dataframes.append(df)
 
