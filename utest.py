@@ -52,10 +52,10 @@ def run():
         success = success and success_common
 
     # run CLI tests
-    # if args.cli or args.all:
-    #     cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
-    #     success_cli = run_tests(cli_test_suites)
-    #     success = success and success_cli
+    if args.cli or args.all:
+        cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
+        success_cli = run_tests(cli_test_suites)
+        success = success and success_cli
 
     # run algorithm store tests
     if args.algorithm_store or args.all:
