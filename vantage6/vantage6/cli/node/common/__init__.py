@@ -12,6 +12,7 @@ from vantage6.common.globals import (
     APPNAME,
     HTTP_LOCALHOST,
     InstanceType,
+    Ports,
     RequiredNodeEnvVars,
 )
 
@@ -19,6 +20,16 @@ from vantage6.client import UserClient
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
+
+
+def convert_k8s_url_to_localhost(url: str) -> str:
+    """
+    Convert a Kubernetes URL to a localhost URL.
+    """
+    if "svc.cluster.local" in url:
+        port_and_api_path = url.split(":")[-1]
+        return f"{HTTP_LOCALHOST}:{port_and_api_path}"
+    return url
 
 
 def create_client(ctx: NodeContext) -> UserClient:
@@ -34,17 +45,31 @@ def create_client(ctx: NodeContext) -> UserClient:
     UserClient
         vantage6 client
     """
-    host = ctx.config["server_url"]
+    host = ctx.config["node"]["server"]["url"]
+    port = ctx.config["node"]["server"]["port"]
+    api_path = ctx.config["node"]["server"]["path"]
     # if the server is run locally, we need to use localhost here instead of
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
         host = HTTP_LOCALHOST
-    port = ctx.config["port"]
-    api_path = ctx.config["api_path"]
-    info(f"Connecting to server at '{host}:{port}{api_path}'")
+
+    url = f"{host}:{port}{api_path}"
+
+    auth_url = ctx.config.get("node", {}).get("keycloakUrl", None) or os.environ.get(
+        RequiredNodeEnvVars.KEYCLOAK_URL.value
+    )
+    # append the port to the auth URL as it is not included in the config
+    auth_url = f"{auth_url}:{Ports.DEV_AUTH.value}"
+
+    # if the server is a Kubernetes address, we need to use localhost because here
+    # we are connecting from the CLI outside the cluster
+    url = convert_k8s_url_to_localhost(url)
+    auth_url = convert_k8s_url_to_localhost(auth_url)
+
+    info(f"Connecting to server at '{url}' using auth URL '{auth_url}'")
     return UserClient(
-        server_url=f"{host}:{port}{api_path}",
-        auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
+        server_url=url,
+        auth_url=auth_url,
         log_level="warn",
     )
 

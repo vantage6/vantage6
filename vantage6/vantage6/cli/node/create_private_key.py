@@ -11,10 +11,12 @@ from vantage6.common import (
     warning,
 )
 from vantage6.common.encryption import RSACryptor
+from vantage6.common.globals import InstanceType
 
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import create_client_and_authenticate, select_node
+from vantage6.cli.node.common import create_client_and_authenticate
 
 
 @click.command()
@@ -80,12 +82,13 @@ def cli_node_create_private_key(
     if config:
         name = Path(config).stem
         ctx = NodeContext(name, system_folders, config)
-    else:
-        # retrieve context
-        name = select_node(name, system_folders)
-
-        # Create node context
-        ctx = NodeContext(name, system_folders)
+    elif not name:
+        try:
+            name = select_configuration_questionnaire(InstanceType.NODE, system_folders)
+        except Exception:
+            error("No configurations could be found!")
+            exit(1)
+    ctx = NodeContext(name, system_folders)
 
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
@@ -138,9 +141,7 @@ def cli_node_create_private_key(
 
     # update config file
     info("Updating configuration")
-    # TODO v5+ this probably messes up the current config as the template is used...
-    # Fix when reimplementing this in v5
-    ctx.config["encryption"]["private_key"] = str(file_)
+    ctx.config["node"]["encryption"]["private_key"] = str(file_)
     ctx.config_manager.put(ctx.config)
     ctx.config_manager.save(ctx.config_file)
 
