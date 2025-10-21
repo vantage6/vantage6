@@ -646,7 +646,8 @@ class Collaboration(CollaborationBase):
                 return {
                     "msg": f"Collaboration id={id} has "
                     f"{len(collaboration.tasks)} tasks, {len(collaboration.nodes)} "
-                    f"nodes and {len(collaboration.studies)} studies. Please delete "
+                    f"nodes, {len(collaboration.sessions)} sessions, and "
+                    f"{len(collaboration.studies)} studies. Please delete "
                     "them separately or set delete_dependents=True"
                 }, HTTPStatus.BAD_REQUEST
             else:
@@ -664,6 +665,8 @@ class Collaboration(CollaborationBase):
                     node.delete()
                 for study in collaboration.studies:
                     study.delete()
+                for session in collaboration.sessions:
+                    session.delete()
 
         collaboration.delete()
         return {"msg": f"Collaboration id={id} successfully deleted"}, HTTPStatus.OK

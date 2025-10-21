@@ -27,6 +27,7 @@ spec:
       containers:
       - name: vantage6-node
         image: {{ .Values.node.image }}
+        imagePullPolicy: Always
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"
