@@ -2,6 +2,8 @@ import json
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
+import pandas as pd
+
 from vantage6.common.globals import AuthStatus
 
 if TYPE_CHECKING:
@@ -23,11 +25,12 @@ class MockServer:
         """
         self.network = network
 
-        # These contain the task, runs and results as dictionaries that are the same
-        # format as you would get from the server responses.
+        # These contain the task, runs, results and dataframes as dictionaries that are
+        # the same format as you would get from the server responses.
         self.tasks = []
         self.runs = []
         self.results = []
+        self.dataframes = []
 
         # We only consider one collaboration and one session as we are typically mocking
         # the algorithms in a single session
@@ -199,3 +202,60 @@ class MockServer:
         }
         self.tasks.append(task)
         return task
+
+    def get_dataframe(self, id_: int) -> dict:
+        """
+        Get a dataframe by ID
+        """
+        for dataframe in self.dataframes:
+            if dataframe.get("id") == id_:
+                return dataframe
+        return {"msg": f"Could not find dataframe with id {id_}"}
+
+    def update_dataframe(self, id_: int, dataframes: list[pd.DataFrame]) -> dict:
+        """
+        Update a dataframe by ID
+        """
+        for dataframe in self.dataframes:
+            if dataframe.get("id") == id_:
+                dataframe["columns"] = [
+                    {
+                        "name": column,
+                        "dtype": df.dtypes[column],
+                        "node_id": self.network.organization_ids[idx],
+                        "dataframe_id": dataframe["id"],
+                    } for idx, df in enumerate(dataframes) for column in df.columns
+                ]
+                return dataframe
+        return {"msg": f"Could not find dataframe with id {id_}"}
+
+    def save_dataframe(
+        self, name: str, dataframes: list[pd.DataFrame],
+        source_db_label: str
+    ) -> dict:
+        dataframe_id = len(self.dataframes) + 1
+        dataframe = {
+            "id": dataframe_id,
+            "name": name,
+            "db_label": source_db_label,
+            "session_id": self.session_id,
+            "session": {
+                "id": self.session_id,
+                "link": f"/api/session/{self.session_id}",
+                "methods": ["GET", "PATCH", "DELETE"],
+            },
+            "tasks": {"msg": "not implemented in the MockNetwork"},
+            "last_session_task": {"msg": "not implemented in the MockNetwork"},
+            "columns": [
+                {
+                    "name": column,
+                    "dtype": df.dtypes[column],
+                    "node_id": self.network.organization_ids[idx],
+                    "dataframe_id": dataframe_id,
+                } for idx, df in enumerate(dataframes) for column in df.columns
+            ],
+            "ready": True,
+            "organizations_ready": [True for _ in dataframes],
+        }
+        self.dataframes.append(dataframe)
+        return dataframe

@@ -67,7 +67,7 @@ class MockNetwork:
 
         An example of how to create a dataframe and then use this dataframe in a task:
 
-        >>> from vantage6.mock.mock_network import MockNetwork
+        >>> from vantage6.mock.network import MockNetwork
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
         >>>     datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
@@ -112,6 +112,9 @@ class MockNetwork:
 
         organization_ids = list(range(1, len(datasets) + 1))
         node_ids = list(range(1, len(datasets) + 1))
+
+        self.server = MockServer(self)
+
         for org_id, node_id, dataset in zip(organization_ids, node_ids, datasets):
             try:
                 self.nodes.append(
@@ -125,7 +128,23 @@ class MockNetwork:
                 )
                 return
 
-        self.server = MockServer(self)
+        # In the case the user provides a pandas DataFrame we need to create a dataframe
+        # record in the server.
+        labels = {}
+        for dataset in datasets:
+            for label, data in dataset.items():
+                if label not in labels:
+                    labels[label] = []
+                labels[label].append(data["database"])
+
+        for label, dfs in labels.items():
+            if all(isinstance(df, pd.DataFrame) for df in dfs):
+                self.server.save_dataframe(
+                    name=label,
+                    dataframes=dfs,
+                    source_db_label=label
+                )
+
         self.user_client = MockUserClient(self)
         self.algorithm_client = MockAlgorithmClient(self)
 

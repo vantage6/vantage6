@@ -188,11 +188,46 @@ class MockNode:
         if step_type == AlgorithmStepType.DATA_EXTRACTION.value:
             mocked_kwargs["mock_uri"] = self.datasets[source_label]["database"]
             mocked_kwargs["mock_type"] = self.datasets[source_label]["db_type"]
+        else:
+            raise SessionActionMismatchError(
+                "The method is not a data extraction method."
+            )
 
         result = self.run(
             method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars
         )
-        self.dataframes[dataframe_name] = result.to_pandas()
+        df = result.to_pandas()
+        self.dataframes[dataframe_name] = df
+        return df
+
+    def simulate_dataframe_preprocessing(self, dataframe_name: str, image: str, method: str, arguments: dict):
+        """
+        Simulate a dataframe preprocessing which has been initiated by the `client.dataframe.preprocess` method.
+        """
+        method_fn = self._get_method_fn_from_method(method)
+        task_env_vars = self._task_env_vars(
+            AlgorithmStepType.PREPROCESSING.value, method
+        )
+        step_type = self._get_step_type_from_method_fn(method_fn)
+        if step_type != AlgorithmStepType.PREPROCESSING.value:
+            raise SessionActionMismatchError(
+                "The method is not a preprocessing method."
+            )
+
+        mocked_kwargs = {}
+        if getattr(method_fn, "vantage6_dataframe_decorated", False):
+            mock_data = []
+            if dataframe_name not in self.dataframes:
+                error(f"Dataframe with name {dataframe_name} not found.")
+                raise DataFrameNotFound(
+                    f"Dataframe with name {dataframe_name} not found."
+                )
+            mock_data = self.dataframes[dataframe_name].copy()
+
+            mocked_kwargs["mock_data"] = [mock_data]
+
+        result = self.run(method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars)
+        return result.to_pandas()
 
     def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):
         """
