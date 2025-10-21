@@ -521,7 +521,7 @@ class MockUserClient(MockBaseClient):
                     df_response = node.simulate_dataframe_creation(
                         method, arguments, label, name
                     )
-                except SessionActionMismatchError as e:
+                except SessionActionMismatchError:
                     error(f"The function {method} is not a data extraction method.")
                     return
                 except Exception as e:
@@ -571,7 +571,7 @@ class MockUserClient(MockBaseClient):
                     df = node.simulate_dataframe_preprocessing(
                         data_frame_name, image, method, arguments
                     )
-                except SessionActionMismatchError as e:
+                except SessionActionMismatchError:
                     error(f"The function {method} is not a preprocessing method.")
                     return
                 except Exception as e:
