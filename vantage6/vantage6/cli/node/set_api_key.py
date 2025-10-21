@@ -2,11 +2,14 @@ import click
 import questionary as q
 
 from vantage6.common import ensure_config_dir_writable, error, info
+from vantage6.common.globals import InstanceType
 
-from vantage6.cli.configuration_create import NodeConfigurationManager
+from vantage6.cli.configuration_create import (
+    NodeConfigurationManager,
+    select_configuration_questionnaire,
+)
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import select_node
 
 
 @click.command()
@@ -31,7 +34,12 @@ def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
     Put a new API key into the node configuration file
     """
     # select node name
-    name = select_node(name, system_folders)
+    if not name:
+        try:
+            name = select_configuration_questionnaire(InstanceType.NODE, system_folders)
+        except Exception:
+            error("No configurations could be found!")
+            exit(1)
 
     # Check that we can write in the config folder
     if not ensure_config_dir_writable(system_folders):
@@ -50,9 +58,7 @@ def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
     conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
 
     # set new api key, and save the file
-    ctx.config["api_key"] = api_key
-    # TODO v5+ this probably messes up the current config as the template is used...
-    # Fix when reimplementing this in v5
+    ctx.config["node"]["apiKey"] = api_key
     conf_mgr.put(ctx.config)
     conf_mgr.save(ctx.config_file)
     info(f"Your new API key has been uploaded to the config file {ctx.config_file}.")
