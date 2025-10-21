@@ -86,6 +86,7 @@ def handle_exceptions(func):
             ForbiddenError,
             InternalServerError,
         ) as e:
+            log.exception(e)
             return {"msg": e.message}, e.status_code
         except Exception as e:
             log.exception(e)
