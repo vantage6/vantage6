@@ -1,6 +1,7 @@
 import click
 import requests
 import yaml
+from marshmallow import Schema, ValidationError, fields, post_load
 
 from vantage6.common import error, info
 from vantage6.common.globals import (
@@ -163,94 +164,72 @@ def _drop_all(client: UserClient) -> None:
             client.organization.delete(org["id"], delete_dependents=True)
 
 
-def _check_import_file(import_data: dict) -> None:
+class StrOrInt(fields.Field):
+    """Field that can be a string or an integer"""
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, int):
+            return str(value)
+        else:
+            raise ValidationError("Value must be a string or an integer")
+
+
+class UserSchema(Schema):
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+class OrganizationSchema(Schema):
+    name = fields.Str(required=True)
+    address1 = fields.Str(missing="")
+    address2 = fields.Str(missing="")
+    zipcode = StrOrInt(missing="")
+    country = fields.Str(missing="")
+    domain = fields.Str(missing="")
+    public_key = fields.Str(missing="")
+    users = fields.List(fields.Nested(UserSchema), missing=[])
+
+
+class ParticipantSchema(Schema):
+    name = fields.Str(required=True)
+
+
+class CollaborationSchema(Schema):
+    name = fields.Str(required=True)
+    participants = fields.List(fields.Nested(ParticipantSchema), required=True)
+    encrypted = fields.Bool(missing=False)
+
+
+class ImportDataSchema(Schema):
+    organizations = fields.List(fields.Nested(OrganizationSchema), missing=[])
+    collaborations = fields.List(fields.Nested(CollaborationSchema), missing=[])
+
+    @post_load
+    def validate_participants_exist(self, data, **kwargs):
+        """Validate that all participants exist in organizations"""
+        org_names = {org["name"] for org in data.get("organizations", [])}
+
+        for collaboration in data.get("collaborations", []):
+            for participant in collaboration.get("participants", []):
+                if participant["name"] not in org_names:
+                    raise ValidationError(
+                        f"Participant {participant['name']} not found in organizations",
+                        field_name="collaborations",
+                    )
+        return data
+
+
+def _check_import_file(import_data: dict) -> dict:
     """
-    Check if the import file is valid.
+    Validate import file using Marshmallow schemas.
+    Returns the validated and cleaned data.
     """
-    main_level = {
-        "organizations": list,
-        "collaborations": list,
-    }
-    _check_content_of_dict(import_data, main_level, "main")
-
-    organization_level = {
-        "name": str,
-        "address1": str,
-        "address2": str,
-        "zipcode": str,
-        "country": str,
-        "domain": str,
-        "public_key": str,
-        "users": list,
-    }
-    organization_obligatory_keys = ["name"]
-    user_level = {
-        "username": str,
-        "password": str,
-    }
-    user_obligatory_keys = ["username", "password"]
-    for organization in import_data.get("organizations", []):
-        _check_content_of_dict(
-            organization,
-            organization_level,
-            "organization",
-            organization_obligatory_keys,
-        )
-        for user in organization["users"]:
-            _check_content_of_dict(user, user_level, "user", user_obligatory_keys)
-
-    collaboration_level = {
-        "name": str,
-        "participants": list,
-        "encrypted": bool,
-    }
-    collaboration_obligatory_keys = ["name", "participants"]
-    participant_level = {
-        "name": str,
-    }
-    participant_obligatory_keys = ["name"]
-    for collaboration in import_data.get("collaborations", []):
-        _check_content_of_dict(
-            collaboration,
-            collaboration_level,
-            "collaboration",
-            collaboration_obligatory_keys,
-        )
-        for participant in collaboration["participants"]:
-            _check_content_of_dict(
-                participant,
-                participant_level,
-                "participant",
-                participant_obligatory_keys,
-            )
-            if participant["name"] not in [
-                o["name"] for o in import_data["organizations"]
-            ]:
-                error(f"Participant {participant['name']} not found in organizations")
-                exit(1)
-
-
-def _check_content_of_dict(
-    data: dict, options: dict, level: str, obligatory_keys: list[str] = None
-) -> None:
-    if obligatory_keys is None:
-        obligatory_keys = []
-    for key in obligatory_keys:
-        if key not in data:
-            error(f"Import file is missing obligatory '{key}' at level {level}")
-            exit(1)
-    for key, value in data.items():
-        if key not in options:
-            error(f"Import file contains an invalid key '{key}' at level {level}")
-            error(f"Allowed keys: {options.keys()}")
-            exit(1)
-        # cast numbers to strings
-        if isinstance(value, (int, float)):
-            value = str(value)
-        if options[key] is bool:
-            value = value.lower() in ["true", "1", "yes", "t"]
-        if not isinstance(value, options[key]):
-            error(f"Import file contains an invalid value for key {key}: {value}")
-            error(f"Expected type: {options[key]}")
-            error(f"Got type: {type(value)}")
-            exit(1)
+    schema = ImportDataSchema()
+    try:
+        return schema.load(import_data)
+    except ValidationError as err:
+        # Handle validation errors gracefully
+        error(f"Validation error: {err.messages}")
+        exit(1)
