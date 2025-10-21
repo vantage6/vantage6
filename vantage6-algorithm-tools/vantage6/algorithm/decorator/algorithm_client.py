@@ -60,7 +60,6 @@ def _algorithm_client() -> Callable:
                 Mock client. If not None, used instead of the regular client
             """
             if mock_client is not None:
-                # Lazy import to avoid circular dependency
                 return func(mock_client, *args, **kwargs)
 
             # read token from the environment
