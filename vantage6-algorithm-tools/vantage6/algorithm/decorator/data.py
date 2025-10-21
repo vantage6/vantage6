@@ -56,6 +56,108 @@ def _read_df_from_disk(df_name: str) -> pd.DataFrame:
     return pd.read_parquet(dataframe_file)
 
 
+def _validate_user_provided_dataframes(
+    dataframes_grouped: list[list[str]],
+    sources: tuple[str | int],
+) -> None:
+    """
+    Validate that the user provided enough dataframes
+
+    Parameters
+    ----------
+    dataframes_grouped : list[list[str]]
+        List of dataframe names, each list contains the names of the databases
+        that are required for the argument.
+    sources : tuple[str | int]
+        Number of the dataframe to load. It can either be a number to indicate the
+        number of dataframes to load or a string "multiple" to indicate that multiple
+        dataframes need to be supplied as a single argument.
+    func : Callable
+        Function to validate the input for
+    action : AlgorithmStepType
+        Action to validate the input for
+    """
+    number_of_expected_arguments = 0
+    for source in sources:
+        if isinstance(source, int):
+            number_of_expected_arguments += source
+        else:  # "multiple" requires one argument (of type list)
+            number_of_expected_arguments += 1
+
+    if len(dataframes_grouped) < number_of_expected_arguments:
+        error(
+            f"Algorithm requires {number_of_expected_arguments} databases "
+            f"but only {len(dataframes_grouped)} were provided. "
+            "Exiting..."
+        )
+        exit(1)
+    elif len(dataframes_grouped) > number_of_expected_arguments:
+        warn(
+            f"Algorithm requires only {number_of_expected_arguments} databases"
+            f", but {len(dataframes_grouped)} were provided. Using the "
+            f"first {number_of_expected_arguments} databases."
+        )
+
+
+def _read_dataframes_from_disk(
+    dataframes_grouped: list[list[str]],
+    sources: tuple[str | int],
+    action: AlgorithmStepType,
+) -> list[pd.DataFrame]:
+    """
+    Read the dataframes from the disk
+
+    Parameters
+    ----------
+    dataframes_grouped : list[list[str]]
+        List of dataframe names, each list contains the names of the databases
+        that are required for the argument.
+    sources : tuple[str | int]
+        Number of the dataframe to load. It can either be a number to indicate the
+        number of dataframes to load or a string "multiple" to indicate that multiple
+        dataframes need to be supplied as a single argument.
+    action : AlgorithmStepType
+        Action to read the dataframes for
+
+    Returns
+    -------
+    list[pd.DataFrame | dict[str, pd.DataFrame]]
+        List of dataframes, or list with dictionaries containing dataframes
+    """
+    idx_dataframes = 0
+    dataframes = []
+    for source in sources:
+        # if the source is not "multiple", we can just add the first (and only)
+        # dataframe to the arguments
+        if isinstance(source, int):
+            for _ in range(source):
+                requested_dataframes = dataframes_grouped[idx_dataframes]
+                df = _read_df_from_disk(requested_dataframes[0])
+                idx_dataframes += 1
+                dataframes.append(df)
+        elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+            if action == AlgorithmStepType.PREPROCESSING:
+                error(
+                    "The @dataframes or @dataframe("
+                    f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
+                    "for preprocessing functions. Use @preprocessing instead. "
+                    "Exiting..."
+                )
+                exit(1)
+            requested_dataframes = dataframes_grouped[idx_dataframes]
+            data_ = {
+                df_name: _read_df_from_disk(df_name) for df_name in requested_dataframes
+            }
+            idx_dataframes += 1
+            dataframes.append(data_)
+        else:
+            raise UserInputError(
+                f"Unrecognized argument '{source}' in dataframe decorator. "
+                "Please use 'multiple' or a number of dataframes to load."
+            )
+    return dataframes
+
+
 def dataframe(*sources: str | int) -> Callable:
     """
     Decorator that adds algorithm data to a function
@@ -133,26 +235,7 @@ def dataframe(*sources: str | int) -> Callable:
             dataframes_grouped = _get_user_dataframes()
 
             # check if user provided enough databases
-            number_of_expected_arguments = 0
-            for source in sources:
-                if isinstance(source, int):
-                    number_of_expected_arguments += source
-                else:  # "multiple" requires one argument (of type list)
-                    number_of_expected_arguments += 1
-
-            if len(dataframes_grouped) < number_of_expected_arguments:
-                error(
-                    f"Algorithm requires {number_of_expected_arguments} databases "
-                    f"but only {len(dataframes_grouped)} were provided. "
-                    "Exiting..."
-                )
-                exit(1)
-            elif len(dataframes_grouped) > number_of_expected_arguments:
-                warn(
-                    f"Algorithm requires only {number_of_expected_arguments} databases"
-                    f", but {len(dataframes_grouped)} were provided. Using the "
-                    f"first {number_of_expected_arguments} databases."
-                )
+            _validate_user_provided_dataframes(dataframes_grouped, sources)
 
             action = get_action()
             if action == AlgorithmStepType.DATA_EXTRACTION:
@@ -169,39 +252,9 @@ def dataframe(*sources: str | int) -> Callable:
                 exit(1)
 
             # read the data from the database(s)
-            idx_dataframes = 0
-            for source in sources:
-                # if the source is not "multiple", we can just add the first (and only)
-                # dataframe to the arguments
-                if isinstance(source, int):
-                    for _ in range(source):
-                        requested_dataframes = dataframes_grouped[idx_dataframes]
-                        df = _read_df_from_disk(requested_dataframes[0])
-                        idx_dataframes += 1
-                        args = (df, *args)
-                elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
-                    if action == AlgorithmStepType.PREPROCESSING:
-                        error(
-                            "The @dataframes or @dataframe("
-                            f"{DATAFRAME_MULTIPLE_KEYWORD}) decorators cannot be used "
-                            "for preprocessing functions. Use @preprocessing instead. "
-                            "Exiting..."
-                        )
-                        exit(1)
-                    requested_dataframes = dataframes_grouped[idx_dataframes]
-                    data_ = {
-                        df_name: _read_df_from_disk(df_name)
-                        for df_name in requested_dataframes
-                    }
-                    idx_dataframes += 1
-                    args = (data_, *args)
-                else:
-                    raise UserInputError(
-                        f"Unrecognized argument '{source}' in dataframe decorator. "
-                        "Please use 'multiple' or a number of dataframes to load."
-                    )
+            dataframes = _read_dataframes_from_disk(dataframes_grouped, sources, action)
 
-            return func(*args, **kwargs)
+            return func(*dataframes, *args, **kwargs)
 
         # set attribute that this function is wrapped in a data decorator
         decorator.vantage6_dataframe_decorated = True

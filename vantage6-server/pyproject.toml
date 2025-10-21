@@ -17,6 +17,8 @@ maintainers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "azure-identity==1.22.0",
+    "azure-storage-blob==12.25.1",
     "bcrypt==4.0.1",
     "flask==3.1.1",
     "Flask-JWT-Extended==4.7.1",

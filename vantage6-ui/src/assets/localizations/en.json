@@ -228,6 +228,8 @@
     },
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
+    "alert-blob-read-arguments": "Input is stored in blob storage. Please use the UUID in the python client to retrieve the input.",
+    "alert-blob-read-result": "Result is stored in blob storage. Please use the UUID in the python client to retrieve the result.",
     "alert-failed-read-arguments": "Failed to parse function arguments.",
     "alert-failed-read-arguments-function": "Failed to parse function arguments, therefore, information about the function cannot be displayed.",
     "alert-failed-read-arguments-visualization": "Failed to parse function arguments, therefore, no visualization can be displayed.",
@@ -240,7 +242,8 @@
     "finished-at": "Finished",
     "node": "Assigned node",
     "show-log": "Show logs",
-    "alert-node-offline": "Algorithm run can't start, node is offline."
+    "alert-node-offline": "Algorithm run can't start, node is offline.",
+    "blob-storage-used": "Blob storage used"
   },
   "task-list": {
     "title": "History"
