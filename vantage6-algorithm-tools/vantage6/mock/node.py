@@ -200,7 +200,9 @@ class MockNode:
         self.dataframes[dataframe_name] = df
         return df
 
-    def simulate_dataframe_preprocessing(self, dataframe_name: str, image: str, method: str, arguments: dict):
+    def simulate_dataframe_preprocessing(
+        self, dataframe_name: str, image: str, method: str, arguments: dict
+    ):
         """
         Simulate a dataframe preprocessing which has been initiated by the `client.dataframe.preprocess` method.
         """
@@ -226,7 +228,9 @@ class MockNode:
 
             mocked_kwargs["mock_data"] = [mock_data]
 
-        result = self.run(method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars)
+        result = self.run(
+            method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars
+        )
         return result.to_pandas()
 
     def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):

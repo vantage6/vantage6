@@ -224,14 +224,15 @@ class MockServer:
                         "dtype": df.dtypes[column],
                         "node_id": self.network.organization_ids[idx],
                         "dataframe_id": dataframe["id"],
-                    } for idx, df in enumerate(dataframes) for column in df.columns
+                    }
+                    for idx, df in enumerate(dataframes)
+                    for column in df.columns
                 ]
                 return dataframe
         return {"msg": f"Could not find dataframe with id {id_}"}
 
     def save_dataframe(
-        self, name: str, dataframes: list[pd.DataFrame],
-        source_db_label: str
+        self, name: str, dataframes: list[pd.DataFrame], source_db_label: str
     ) -> dict:
         dataframe_id = len(self.dataframes) + 1
         dataframe = {
@@ -252,7 +253,9 @@ class MockServer:
                     "dtype": df.dtypes[column],
                     "node_id": self.network.organization_ids[idx],
                     "dataframe_id": dataframe_id,
-                } for idx, df in enumerate(dataframes) for column in df.columns
+                }
+                for idx, df in enumerate(dataframes)
+                for column in df.columns
             ],
             "ready": True,
             "organizations_ready": [True for _ in dataframes],

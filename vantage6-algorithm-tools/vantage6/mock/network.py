@@ -140,9 +140,7 @@ class MockNetwork:
         for label, dfs in labels.items():
             if all(isinstance(df, pd.DataFrame) for df in dfs):
                 self.server.save_dataframe(
-                    name=label,
-                    dataframes=dfs,
-                    source_db_label=label
+                    name=label, dataframes=dfs, source_db_label=label
                 )
 
         self.user_client = MockUserClient(self)
