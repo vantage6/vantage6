@@ -51,12 +51,6 @@ def run():
         success_common = run_tests(common_test_suites)
         success = success and success_common
 
-    # run CLI tests
-    if args.cli or args.all:
-        cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
-        success_cli = run_tests(cli_test_suites)
-        success = success and success_cli
-
     # run algorithm store tests
     if args.algorithm_store or args.all:
         algorithm_store_test_suites = find_tests(
@@ -84,6 +78,12 @@ def run():
         node_test_suites = find_tests(str(Path(__file__).parent / "vantage6-node"))
         success_node = run_tests(node_test_suites)
         success = success and success_node
+
+    # run CLI tests
+    if args.cli or args.all:
+        cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
+        success_cli = run_tests(cli_test_suites)
+        success = success and success_cli
 
     sys.exit(not success)
 
