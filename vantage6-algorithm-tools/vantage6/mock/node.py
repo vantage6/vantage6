@@ -145,21 +145,13 @@ class MockNode:
                 for db_group in databases:
                     group_data = {}
                     for db in db_group:
-                        if db["label"] not in self.dataframes:
-                            error(f"Dataframe with label {db['label']} not found.")
-                            raise DataFrameNotFound(
-                                f"Dataframe with label {db['label']} not found."
-                            )
+                        self._validate_dataframe_exists(db["label"])
                         group_data[db["label"]] = self.dataframes[db["label"]]
                     mock_data.append(group_data)
             else:
                 # Single list format
                 for db in databases:
-                    if db["label"] not in self.dataframes:
-                        error(f"Dataframe with label {db['label']} not found.")
-                        raise DataFrameNotFound(
-                            f"Dataframe with label {db['label']} not found."
-                        )
+                    self._validate_dataframe_exists(db["label"])
                     mock_data.append(self.dataframes[db["label"]])
 
             # make a copy of the data to avoid modifying the original data of
@@ -271,6 +263,24 @@ class MockNode:
         """
         with env_vars(**task_env_vars):
             return method_fn(**arguments)
+
+    def _validate_dataframe_exists(self, label: str) -> None:
+        """
+        Validate that a dataframe with the given label exists.
+
+        Parameters
+        ----------
+        label : str
+            The label of the dataframe to validate.
+
+        Raises
+        ------
+        DataFrameNotFound
+            If the dataframe with the given label is not found.
+        """
+        if label not in self.dataframes:
+            error(f"Dataframe with label {label} not found.")
+            raise DataFrameNotFound(f"Dataframe with label {label} not found.")
 
     def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
         """
