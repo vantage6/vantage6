@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import AlgorithmStoreConfigurationManager
@@ -47,18 +47,6 @@ class AlgorithmStoreContext(BaseServerContext):
             string representation of the database uri
         """
         return super().get_database_uri()
-
-    @property
-    def docker_container_name(self) -> str:
-        """
-        Name of the docker container that the server is running in.
-
-        Returns
-        -------
-        str
-            Server's docker container name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.ALGORITHM_STORE}"
 
     @classmethod
     def from_external_config_file(

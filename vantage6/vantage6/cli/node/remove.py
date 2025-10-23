@@ -24,7 +24,7 @@ def cli_node_remove(
     """
     Delete a node permanently.
 
-    Remove the configuration file, log file, and docker volumes attached to
+    Remove the configuration file, log file, and kubernetes resources attached to
     the node.
     """
 

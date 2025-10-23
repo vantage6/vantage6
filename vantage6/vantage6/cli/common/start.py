@@ -6,19 +6,10 @@ import time
 from os import PathLike
 from pathlib import Path
 
-import docker
-from docker.client import DockerClient
-
-from vantage6.common import error, info, warning
+from vantage6.common import error, info
 from vantage6.common.context import AppContext
-from vantage6.common.docker.addons import pull_image
 from vantage6.common.globals import (
-    DEFAULT_ALGO_STORE_IMAGE,
     DEFAULT_CHART_REPO,
-    DEFAULT_DOCKER_REGISTRY,
-    DEFAULT_NODE_IMAGE,
-    DEFAULT_SERVER_IMAGE,
-    DEFAULT_UI_IMAGE,
     LOCALHOST,
     InstanceType,
 )
@@ -43,88 +34,6 @@ def prestart_checks(
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")
         exit(1)
-
-
-def pull_infra_image(
-    client: DockerClient, image: str, instance_type: InstanceType
-) -> None:
-    """
-    Try to pull an infrastructure image. If the image is a default infrastructure image,
-    exit if in cannot be pulled. If it is not a default image, exit if it cannot be
-    pulled and it is also not available locally. If a local image is available, a
-    warning is printed.
-
-    Parameters
-    ----------
-    client : DockerClient
-        The Docker client
-    image : str
-        The image name to pull
-    instance_type : InstanceType
-        The type of instance to pull the image for
-    """
-    try:
-        pull_image(client, image, suppress_error=True)
-    except docker.errors.APIError:
-        if not _is_default_infra_image(image, instance_type):
-            if _image_exists_locally(client, image):
-                warning("Failed to pull infrastructure image! Will use local image...")
-            else:
-                error("Failed to pull infrastructure image!")
-                error("Image also not found locally. Exiting...")
-                exit(1)
-        else:
-            error("Failed to pull infrastructure image! Exiting...")
-            exit(1)
-
-
-def _is_default_infra_image(image: str, instance_type: InstanceType) -> bool:
-    """
-    Check if an infrastructure image is the default image.
-
-    Parameters
-    ----------
-    image : str
-        The image name to check
-    instance_type : InstanceType
-        The type of instance to check the image for
-
-    Returns
-    -------
-    bool
-        True if the image is the default image, False otherwise
-    """
-    if instance_type == InstanceType.SERVER:
-        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_SERVER_IMAGE}"
-    elif instance_type == InstanceType.ALGORITHM_STORE:
-        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALGO_STORE_IMAGE}"
-    elif instance_type == InstanceType.UI:
-        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_UI_IMAGE}"
-    elif instance_type == InstanceType.NODE:
-        return image == f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
-
-
-def _image_exists_locally(client: DockerClient, image: str) -> bool:
-    """
-    Check if the image exists locally.
-
-    Parameters
-    ----------
-    client : DockerClient
-        The Docker client
-    image : str
-        The image name to check
-
-    Returns
-    -------
-    bool
-        True if the image exists locally, False otherwise
-    """
-    try:
-        client.images.get(image)
-    except docker.errors.ImageNotFound:
-        return False
-    return True
 
 
 def helm_install(
