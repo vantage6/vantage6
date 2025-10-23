@@ -90,7 +90,7 @@ node:
     enabled: {{ node.encryption.enabled | default(false) }}
 
     # Location to the private key file. Required if encryption is enabled.
-    {% if node.encryption.enabled | default(false) %}
+    {% if node.encryption.private_key is defined and node.encryption.private_key != '' %}
     private_key: {{ node.encryption.private_key | default('/path/to/private_key.pem') }}
     {% else %}
     # private_key: /path/to/private_key.pem

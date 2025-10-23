@@ -61,8 +61,8 @@ algorithm_store_input_schema = AlgorithmStoreInputSchema()
 class AlgorithmStoreBase(ServicesResources):
     """Base class for algorithm store resources."""
 
-    def __init__(self, socketio, mail, api, permissions, config):
-        super().__init__(socketio, mail, api, permissions, config)
+    def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
+        super().__init__(socketio, storage_adapter, mail, api, permissions, config)
         self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
 
     @staticmethod

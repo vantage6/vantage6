@@ -399,9 +399,7 @@ class UserClient(ClientBase):
         self.log.setLevel(logging.WARN)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
-        result = self.request("result", params={"task_id": task_id})
-        result = self.result._decrypt_result(result, is_single_result=False)
-        return result
+        return self.result.from_task(task_id)
 
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
@@ -1789,6 +1787,10 @@ class UserClient(ClientBase):
         ) -> dict:
             """Create a new task
 
+            If blob storage is configured at the server, the input data will be
+            encrypted and uploaded to the blob storage, and a UUID reference is
+            stored as an input instead.
+
             Parameters
             ----------
             organizations : list
@@ -1879,18 +1881,32 @@ class UserClient(ClientBase):
 
             # Encrypt the input arguments per organization using that organization's
             # public key.
+
             organization_json_list = []
+
+            self.parent.log.debug("Encrypting input for each organization")
             for org_id in organizations:
                 pub_key = self.parent.request(f"organization/{org_id}").get(
                     "public_key"
                 )
+                self.parent.log.debug(
+                    "Public key for organization %s: %s", org_id, pub_key
+                )
+                # If a blob store is configured, store the data there and use a UUID reference in the input.
+                # In this case, base64 encoding of the message can be skipped since the data will never be part of a larger JSON object.
+                if self.parent.check_if_blob_store_enabled():
+                    encrypted_arguments = self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_arguments, pub_key, skip_base64_encoding_of_msg=True
+                    )
+                    organization_arguments = self.parent._upload_run_data_to_server(
+                        encrypted_arguments
+                    )
+                else:
+                    organization_arguments = self.parent.cryptor.encrypt_bytes_to_str(
+                        serialized_arguments, pub_key
+                    )
                 organization_json_list.append(
-                    {
-                        "id": org_id,
-                        "arguments": self.parent.cryptor.encrypt_bytes_to_str(
-                            serialized_arguments, pub_key
-                        ),
-                    }
+                    {"id": org_id, "arguments": organization_arguments}
                 )
 
             params = {
@@ -1999,6 +2015,7 @@ class UserClient(ClientBase):
                 Id of the task to be removed
             """
             msg = self.parent.request(f"task/{id_}", method="delete")
+
             self.parent.log.info(f"--> {msg}")
 
         def kill(self, id_: int) -> dict:
@@ -2015,6 +2032,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
+
                 Message from the server
             """
             msg = self.parent.request("/kill/task", method="post", json={"id": id_})
@@ -2240,6 +2258,10 @@ class UserClient(ClientBase):
             """
             Get all results from a specific task
 
+            In case blob storage was used to store the run data,
+            the results will be retrieved from blob storage during
+            the decryption process.
+
             Parameters
             ----------
             task_id : int
@@ -2253,12 +2275,15 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             results = self.parent.request("result", params={"task_id": task_id})
-            results = self._decrypt_result(results, False)
-            return results
+            self.parent.log.info("Received results from server: %s", results)
+            decrypted_results = self._decrypt_result(results, is_single_result=False)
+            self.parent.log.info("Successfully decrypted results")
+            return decrypted_results
 
         def _decrypt_result(self, result_data: dict, is_single_result: bool) -> dict:
             """
-            Wrapper function to decrypt and deserialize the results of one or more runs
+            Wrapper function to decrypt and deserialize the result of one or
+            more runs
 
             Parameters
             ----------

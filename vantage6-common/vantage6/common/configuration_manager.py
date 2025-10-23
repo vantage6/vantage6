@@ -230,7 +230,7 @@ class ConfigurationManager(object):
             name = Path(path).stem + SANDBOX_SUFFIX
             path = Path(path).parent / (name + str(Path(path).suffix))
 
-        with open(path, "x", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(rendered_config)
 
         return Path(path)

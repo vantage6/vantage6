@@ -7,11 +7,13 @@ DataFrame with statistical information based on a given grouping.
 
 import pandas as pd
 
+from vantage6.algorithm.tools.error_handling import handle_pandas_errors
 from vantage6.algorithm.tools.exceptions import UserInputError
 
 from vantage6.algorithm.decorator.action import preprocessing
 
 
+@handle_pandas_errors
 @preprocessing
 def collapse(
     df: pd.DataFrame,
@@ -158,6 +160,7 @@ def collapse(
     return agg_df.reset_index()
 
 
+@handle_pandas_errors
 @preprocessing
 def group_statistics(
     df: pd.DataFrame,
