@@ -247,19 +247,19 @@ class NodeCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
 
     @patch("vantage6.cli.common.stop.select_context_and_namespace")
-    @patch("vantage6.cli.node.start.select_context_and_namespace")
+    @patch("vantage6.cli.node.restart.select_context_and_namespace")
     @patch("vantage6.cli.node.restart.subprocess.run")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.node.stop._stop_node")
     def test_restart(
-        self, _stop_node, get_context, subprocess_run, ctx_ns_stop, ctx_ns_start
+        self, _stop_node, get_context, subprocess_run, ctx_ns_stop, ctx_ns_restart
     ):
         """Restart a node without errors."""
         node_name = "iknl"
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
         ctx_ns_stop.return_value = ("test-context", "test-namespace")
-        ctx_ns_start.return_value = ("test-context", "test-namespace")
+        ctx_ns_restart.return_value = ("test-context", "test-namespace")
 
         # Mock subprocess.run to handle both helm calls and node start calls
         def mock_subprocess_run(*args, **kwargs):
