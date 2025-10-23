@@ -22,7 +22,7 @@ from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 
 
-def convert_k8s_url_to_localhost(url: str) -> str:
+def _convert_k8s_url_to_localhost(url: str) -> str:
     """
     Convert a Kubernetes URL to a localhost URL.
     """
@@ -63,8 +63,8 @@ def create_client(ctx: NodeContext) -> UserClient:
 
     # if the server is a Kubernetes address, we need to use localhost because here
     # we are connecting from the CLI outside the cluster
-    url = convert_k8s_url_to_localhost(url)
-    auth_url = convert_k8s_url_to_localhost(auth_url)
+    url = _convert_k8s_url_to_localhost(url)
+    auth_url = _convert_k8s_url_to_localhost(auth_url)
 
     info(f"Connecting to server at '{url}' using auth URL '{auth_url}'")
     return UserClient(
