@@ -10,7 +10,8 @@ STRING_ENCODING = "utf-8"
 
 APPNAME = "vantage6"
 
-MAIN_VERSION_NAME = "cotopaxi"
+# TODO v5+ change to final v5 name
+MAIN_VERSION_NAME = "5"
 
 DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
