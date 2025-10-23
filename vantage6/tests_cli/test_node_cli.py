@@ -68,14 +68,16 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n",
         )
 
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.make_configuration")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_config(self, context, permissions, make_configuration):
+    def test_new_config(self, context, permissions, make_configuration, ctx_ns):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
         permissions.return_value = True
         make_configuration.return_value = "/some/file/path"
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -109,11 +111,13 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
 
     # the context is mocked for select_context_class where it is instantiated
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.context.NodeContext")
-    def test_new_config_already_exists(self, context):
+    def test_new_config_already_exists(self, context, ctx_ns):
         """No duplicate configurations are allowed."""
 
         context.config_exists.return_value = True
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -132,13 +136,15 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_write_permissions(self, context, permissions):
+    def test_new_write_permissions(self, context, permissions, ctx_ns):
         """User needs write permissions."""
 
         context.config_exists.return_value = False
         permissions.return_value = False
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -190,6 +196,7 @@ class NodeCLITest(unittest.TestCase):
         # check for non zero exit-code
         self.assertNotEqual(result.exit_code, 0)
 
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.node.start.helm_install")
@@ -200,6 +207,7 @@ class NodeCLITest(unittest.TestCase):
         helm_install,
         context,
         os_makedirs,
+        ctx_ns,
     ):
         """Start node without errors"""
 
@@ -214,36 +222,40 @@ class NodeCLITest(unittest.TestCase):
         ctx.config_exists.return_value = True
         ctx.name = "test-node"
         context.return_value = ctx
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_node_start, ["--name", "test-node"])
 
         self.assertEqual(result.exit_code, 0)
 
+    @patch("vantage6.cli.common.stop.select_context_and_namespace")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.common.utils.find_running_service_names")
     @patch("vantage6.cli.node.stop._stop_node")
-    def test_stop(self, _stop_node, find_running_service_names, get_context):
+    def test_stop(self, _stop_node, find_running_service_names, get_context, ctx_ns):
         node_name = "iknl"
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         find_running_service_names.return_value = [node_helm_name]
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
-
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
 
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
 
+    @patch("vantage6.cli.common.stop.select_context_and_namespace")
     @patch("vantage6.cli.node.restart.subprocess.run")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.node.stop._stop_node")
-    def test_restart(self, _stop_node, get_context, subprocess_run):
+    def test_restart(self, _stop_node, get_context, subprocess_run, ctx_ns):
         """Restart a node without errors."""
         node_name = "iknl"
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         # Mock subprocess.run to handle both helm calls and node start calls
         def mock_subprocess_run(*args, **kwargs):

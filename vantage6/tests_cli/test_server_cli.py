@@ -18,6 +18,7 @@ from vantage6.cli.server.stop import cli_server_stop
 
 
 class ServerCLITest(unittest.TestCase):
+    @patch("vantage6.cli.common.start.select_context_and_namespace")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.helm_install")
@@ -28,6 +29,7 @@ class ServerCLITest(unittest.TestCase):
         helm_install,
         start_port_forward,
         os_makedirs,
+        ctx_ns,
     ):
         """Start server without errors"""
 
@@ -39,6 +41,7 @@ class ServerCLITest(unittest.TestCase):
         ctx.config_exists.return_value = True
         ctx.name = "not-running"
         context.return_value = ctx
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_start, ["--name", "not-running"])
@@ -140,15 +143,17 @@ collaborations: []
                 self.assertEqual(result.exit_code, 1)
                 self.assertIsNotNone(result.exception)
 
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.make_configuration")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.context.server.ServerContext")
-    def test_new(self, context, permissions, make_configuration):
+    def test_new(self, context, permissions, make_configuration, ctx_ns):
         """New configuration without errors."""
 
         context.config_exists.return_value = False
         permissions.return_value = True
         make_configuration.return_value = "/some/file.yaml"
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_new, ["--name", "iknl"])
@@ -156,10 +161,17 @@ collaborations: []
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
+    @patch("vantage6.cli.common.stop.select_context_and_namespace")
     @patch("vantage6.cli.common.stop.find_running_service_names")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.server.stop._stop_server")
-    def test_stop(self, _stop_server, get_context, find_running_service_names):
+    def test_stop(
+        self,
+        _stop_server,
+        get_context,
+        find_running_service_names,
+        context_and_namespace,
+    ):
         """Stop server without errors."""
 
         instance_name = "iknl"
@@ -167,6 +179,7 @@ collaborations: []
 
         find_running_service_names.return_value = [server_name]
         get_context.return_value = MagicMock(helm_release_name=server_name)
+        context_and_namespace.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_stop, ["--name", instance_name])
