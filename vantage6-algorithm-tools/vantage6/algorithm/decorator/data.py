@@ -135,7 +135,7 @@ def _read_dataframes_from_disk(
                 df = _read_df_from_disk(requested_dataframes[0])
                 idx_dataframes += 1
                 dataframes.append(df)
-        elif str(source).lower() != DATAFRAME_MULTIPLE_KEYWORD:
+        elif str(source).lower() == DATAFRAME_MULTIPLE_KEYWORD:
             if action == AlgorithmStepType.PREPROCESSING:
                 error(
                     "The @dataframes or @dataframe("
