@@ -18,7 +18,7 @@ from vantage6.cli.server.stop import cli_server_stop
 
 
 class ServerCLITest(unittest.TestCase):
-    @patch("vantage6.cli.common.start.select_context_and_namespace")
+    @patch("vantage6.cli.server.start.select_context_and_namespace")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.helm_install")
