@@ -45,6 +45,10 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
 
 RUN chmod +x /vantage6/vantage6-server/server.sh
 
+# Create directories to mount on the host
+RUN mkdir -p /mnt/log
+RUN mkdir -p /mnt/data
+
 # expose the proxy server port
 ARG port=80
 EXPOSE ${port}

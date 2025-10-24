@@ -1,0 +1,27 @@
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-server-logs-pv" .Release.Name)) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-vantage6-server-logs-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    type: local-logs
+spec:
+  capacity:
+    storage: {{ .Values.server.logging.storageSize | default "1Gi" }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.server.logging.storageClass | default "local-storage" }}
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ .Values.server.logging.volumeHostPath  }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName }}
+{{- end }}

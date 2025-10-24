@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Any
 
 import click
 import questionary as q
 
+from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     InstanceType,
 )
@@ -55,10 +57,12 @@ def cli_server_new(
     # ).unsafe_ask()
     # if configure_keycloak:
     #     print("awefawef")
+    dirs = AppContext.instance_folders(InstanceType.SERVER, name, system_folders)
+    log_dir = dirs.get("log")
 
     new(
         config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(name,),
+        config_producing_func_args=(name, log_dir),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -67,7 +71,9 @@ def cli_server_new(
     )
 
 
-def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
+def server_configuration_questionaire(
+    instance_name: str, log_dir: Path
+) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
 
@@ -75,6 +81,8 @@ def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
     ----------
     instance_name : str
         Name of the server instance.
+    log_dir : Path
+        Path to the log directory.
 
     Returns
     -------
@@ -120,5 +128,7 @@ def server_configuration_questionaire(instance_name: str) -> dict[str, Any]:
     kube_namespace = cli_config.get_last_namespace()
     keycloak_url = f"http://vantage6-auth-keycloak.{kube_namespace}.svc.cluster.local"
     config["server"]["keycloakUrl"] = keycloak_url
+
+    config["server"]["logging"]["volumeHostPath"] = str(log_dir)
 
     return config

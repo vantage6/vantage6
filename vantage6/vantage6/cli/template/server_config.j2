@@ -51,6 +51,15 @@ server:
     # Location to the log file
     file: {{ server.logging.file | default('server.log') }}
 
+    # Size of the kubernetes persistent volume claim for logs
+    storageSize: {{ server.logging.storageSize | default('1Gi') }}
+
+    # Storage class to use for the kubernetes persistent volume claim for logs
+    storageClass: {{ server.logging.storageClass | default('local-storage') }}
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: {{ server.logging.volumeHostPath | default('/var/log/vantage6-server') }}
+
     # Size in kb of a single log file
     max_size: {{ server.logging.max_size | default(1024) }}
     use_console: {{ server.logging.use_console | default(true) }}

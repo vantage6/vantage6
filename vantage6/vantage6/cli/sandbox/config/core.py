@@ -86,7 +86,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
         self._create_algo_store_config()
 
-    def __server_config_return_func(self, extra_config: dict, data_dir: Path) -> dict:
+    def __server_config_return_func(
+        self, extra_config: dict, data_dir: Path, log_dir: Path
+    ) -> dict:
         """
         Return a dict with server configuration values to be used in creating the
         config file.
@@ -98,6 +100,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             configuration.
         data_dir : Path
             Path to the data directory.
+        log_dir : Path
+            Path to the log directory.
 
         Returns
         -------
@@ -129,6 +133,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ],
                 "logging": {
                     "level": "DEBUG",
+                    "volumeHostPath": str(log_dir),
                 },
                 "jwt": {
                     "secret": "development-constant-secret!",
@@ -172,6 +177,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
         data_dir = self._create_and_get_data_dir(instance_type=InstanceType.SERVER)
 
+        log_dir = self._create_and_get_data_dir(InstanceType.SERVER, is_log_dir=True)
+
         extra_config = self._read_extra_config_file(self.extra_server_config)
         if self.ui_image is not None:
             ui_config = extra_config.get("ui", {}) if extra_config is not None else {}
@@ -181,7 +188,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         # Create the server config file
         self.server_config_file = new(
             config_producing_func=self.__server_config_return_func,
-            config_producing_func_args=(extra_config, data_dir),
+            config_producing_func_args=(extra_config, data_dir, log_dir),
             name=self.server_name,
             system_folders=False,
             namespace=self.namespace,

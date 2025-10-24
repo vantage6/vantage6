@@ -51,8 +51,13 @@ spec:
         - name: config-file
           mountPath: /mnt/config.yaml
           subPath: config.yaml
+        - name: server-logs
+          mountPath: /mnt/log
 
       volumes:
       - name: config-file
         configMap:
           name: {{ .Release.Name }}-vantage6-server-config
+      - name: server-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-server-logs-pvc
