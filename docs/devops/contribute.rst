@@ -302,11 +302,11 @@ combination with the options ``--mount-src`` and optionally ``--image``.
   re-install dependencies.
 
 Often, it is helpful to run the server and nodes locally with the ``v6 dev``
-:ref:`commands <local-test>` to test your changes. With those commands, you can run quickly setup
-and manage a local network to test your changes. If you are working on a change in the
-server, note that you should still restart the server with ``--mount-src`` and/or
-``--image`` to apply your changes, but the ``v6 dev`` commands can be used to quickly
-generate nodes and start a UI so that testing your changes is easier.
+:ref:`commands <develop-env>` to test your changes. With those commands, a local vantage6
+network can be run that immediately syncs code changes that you make. Note that this
+only works for changes that you make to code running *within* containers of the server,
+node, store and UI - however, changes to e.g. the CLI or the Kubernetes resources
+may require other means to test your changes.
 
 .. note::
 

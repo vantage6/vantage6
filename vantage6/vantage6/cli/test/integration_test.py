@@ -115,8 +115,8 @@
 #         click_ctx.invoke(remove_demo_network, name=name)
 #     else:
 #         info(
-#             f"Keeping the demo network {name}. You can start it with `v6 dev "
-#             "start-demo-network`"
+#             f"Keeping the demo network {name}. You can start it with `v6 sandbox "
+#             "start`"
 #         )
 
 #     return diagnose_results
