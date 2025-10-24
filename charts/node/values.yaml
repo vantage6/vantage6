@@ -199,3 +199,15 @@ node:
   #   # directory is mounted as a volume. If multiple nodes are then running on the same
   #   # machine, this extension is added to the task directory to avoid conflicts.
   #   task_dir_extension: my_node_1
+
+  # Add additional environment variables to the algorithm containers. In case
+  # you want to supply database specific environment (e.g. usernames and
+  # passwords) you should use `env` key in the `database` section of this
+  # configuration file.
+  # OPTIONAL
+  algorithm_env:
+    # This is an example of an additional environment variable that is passed to the
+    # algorithm containers. It is used to set the minimum number of cases for the
+    # algorithm. Inside the algorithm, it can be accessed with, e.g. in case of Python,
+    # `os.environ["THRESHOLD_MIN_CASES"]`.
+    threshold_min_cases: 10

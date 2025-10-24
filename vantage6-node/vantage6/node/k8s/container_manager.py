@@ -446,6 +446,9 @@ class ContainerManager:
             self.client.collaboration_id
         )
 
+        for key, value in self.ctx.config.get("algorithm_env", {}).items():
+            env_vars[key] = value
+
         # Encode the environment variables to avoid issues with special characters and
         # for security reasons. The environment variables are encoded in base64.
         io_env_vars = []
