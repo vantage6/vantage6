@@ -1,7 +1,8 @@
+{{- if not .Values.database.external }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-postgres-pv
+  name: {{ .Release.Name }}-vantage6-store-postgres-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     type: local
@@ -23,3 +24,4 @@ spec:
               operator: In
               values:
                 - {{ .Values.database.k8sNodeName }}
+{{- end }}

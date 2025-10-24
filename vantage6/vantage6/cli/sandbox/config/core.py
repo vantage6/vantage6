@@ -203,10 +203,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         extra_config = self._read_extra_config_file(self.extra_store_config)
 
         data_dir = self._create_and_get_data_dir(InstanceType.ALGORITHM_STORE)
+        log_dir = self._create_and_get_data_dir(
+            InstanceType.ALGORITHM_STORE, is_log_dir=True
+        )
 
         self.store_config_file = new(
             config_producing_func=self.__algo_store_config_return_func,
-            config_producing_func_args=(extra_config, data_dir),
+            config_producing_func_args=(extra_config, data_dir, log_dir),
             name=f"{self.server_name}-store",
             system_folders=False,
             namespace=self.namespace,
@@ -216,7 +219,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         )
 
     def __algo_store_config_return_func(
-        self, extra_config: dict, data_dir: Path
+        self, extra_config: dict, data_dir: Path, log_dir: Path
     ) -> dict:
         """
         Return a dict with algorithm store configuration values to be used in creating
@@ -234,6 +237,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "logging": {
                     "level": "DEBUG",
+                    "volumeHostPath": str(log_dir),
                 },
                 "vantage6ServerUri": f"{HTTP_LOCALHOST}:{self.server_port}",
                 "image": (

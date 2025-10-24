@@ -216,6 +216,9 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         path_to_data_dir = self._create_and_get_data_dir(
             InstanceType.NODE, is_data_folder=True, node_name=node_name
         )
+        log_dir = self._create_and_get_data_dir(
+            InstanceType.NODE, is_log_dir=True, node_name=node_name
+        )
 
         # delete old node config if it exists
         NodeContext.remove_config_file_if_exists(
@@ -230,6 +233,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 self.extra_config,
                 datasets,
                 path_to_data_dir,
+                log_dir,
             ),
             name=config_name,
             system_folders=False,
@@ -249,6 +253,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_config: dict,
         datasets: list[tuple[str, Path]],
         path_to_data_dir: Path,
+        log_dir: Path,
     ) -> dict:
         """
         Return a dict with node configuration values to be used in creating the
@@ -267,6 +272,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "logging": {
                     "level": "DEBUG",
                     "file": f"{node_specific_config['node_name']}.log",
+                    "volumeHostPath": str(log_dir),
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."

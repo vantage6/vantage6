@@ -83,6 +83,13 @@ store:
     # Format for the log file
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
 
+    # Storage configuration for logs
+    storageSize: "1Gi"
+    storageClass: "local-storage"
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: "/var/log/vantage6-store"
+
     # Maximum number of log files to keep. Log files are rotated when the size of the
     # current log file exceeds `max_size`.
     backup_count: 5

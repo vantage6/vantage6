@@ -46,6 +46,8 @@ spec:
           mountPath: /app/tasks
         - name: config-volume
           mountPath: /app/config
+        - name: node-logs
+          mountPath: /mnt/log
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
@@ -58,6 +60,9 @@ spec:
       - name: config-volume
         configMap:
           name: {{ .Release.Name }}-node-configmap
+      - name: node-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-node-logs-pvc
       {{- range default (list) .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:

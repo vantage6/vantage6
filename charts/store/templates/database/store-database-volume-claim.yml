@@ -1,7 +1,8 @@
+{{- if not .Values.database.external }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-postgres-pvc
+  name: {{ .Release.Name }}-vantage6-store-postgres-pvc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   accessModes:
@@ -14,3 +15,4 @@ spec:
     matchLabels:
       type: local
       app: vantage6-store
+{{- end }}

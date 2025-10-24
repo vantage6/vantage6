@@ -1,0 +1,21 @@
+{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-vantage6-store-logs-pvc" .Release.Name)) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-vantage6-store-logs-pvc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "store.labels" . | indent 4 }}
+    component: vantage6-store-logs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.store.logging.storageSize | default "1Gi" }}
+  storageClassName: {{ .Values.store.logging.storageClass }}
+  selector:
+    matchLabels:
+      type: local-logs
+      app: vantage6-store
+{{- end }}
