@@ -152,4 +152,11 @@ def cli_sandbox_remove(
     click_ctx.invoke(
         cli_server_remove, ctx=ctx, name=name, system_folders=False, force=True
     )
-    # TODO remove the right data in the custom data directory if it is provided
+
+    # remove the right data in the custom data directory if it is provided. If a custom
+    # data directory is provided, all files related to the sandbox have been stored in
+    # a subfolder with the name of the sandbox.
+    if custom_data_dir:
+        sandbox_data_dir = custom_data_dir / ctx.name
+        if sandbox_data_dir.is_dir():
+            rmtree(sandbox_data_dir)
