@@ -393,8 +393,6 @@ dev:
         bindAddress: localhost
       - port: 7601:7601
         bindAddress: ${PORTS_BIND_ADDRESS}
-    logs:
-      enabled: true
 
   vantage6-server-db:
     labelSelector:
@@ -414,8 +412,6 @@ dev:
         bindAddress: localhost
       - port: 7602:7602
         bindAddress: ${PORTS_BIND_ADDRESS}
-    logs:
-      enabled: true
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
@@ -491,8 +487,6 @@ dev:
         startContainer: true
         onUpload:
           restartContainer: true
-    logs:
-      enabled: true
 
     restartHelper:
       inject: true
