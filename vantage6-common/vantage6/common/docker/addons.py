@@ -1,7 +1,6 @@
 import hashlib
 import json
 import logging
-import pathlib
 import re
 from http import HTTPStatus
 
@@ -13,64 +12,6 @@ from requests.auth import HTTPBasicAuth
 from vantage6.common import logger_name
 
 log = logging.getLogger(logger_name(__name__))
-
-
-# TODO v5+ remove these dummy functions - just to prevent import issues from v4 CLI for
-# the time being
-def check_docker_running() -> bool:
-    return True
-
-
-def pull_image(image: str) -> None:
-    pass
-
-
-def get_container() -> str:
-    return ""
-
-
-def remove_container() -> None:
-    pass
-
-
-def remove_container_if_exists() -> None:
-    pass
-
-
-def get_server_config_name() -> str:
-    return ""
-
-
-def get_num_nonempty_networks() -> int:
-    return 0
-
-
-def get_network() -> str:
-    return None
-
-
-def delete_network() -> None:
-    pass
-
-
-def delete_volume_if_exists() -> None:
-    pass
-
-
-def stop_container() -> None:
-    pass
-
-
-def running_in_docker() -> bool:
-    """
-    Check if this code is executed within a Docker container.
-
-    Returns
-    -------
-    bool
-        True if the code is executed within a Docker container, False otherwise
-    """
-    return pathlib.Path("/.dockerenv").exists()
 
 
 def parse_image_name(image: str) -> tuple[str, str, str]:
