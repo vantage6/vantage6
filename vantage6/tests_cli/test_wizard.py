@@ -55,7 +55,9 @@ class WizardTest(unittest.TestCase):
             "privkey_Test.pem",  # path to private key file
         ]
         authenticate.side_effect = None
-        config = node_configuration_questionaire(data_dir="/", instance_name="iknl")
+        config = node_configuration_questionaire(
+            data_dir="/data", instance_name="iknl", log_dir="/log"
+        )
 
         keys = [
             "api_key",
@@ -104,7 +106,7 @@ class WizardTest(unittest.TestCase):
             "ui-image",  # UI image
         ]
 
-        config = server_configuration_questionaire(instance_name="vtg6")
+        config = server_configuration_questionaire(instance_name="vtg6", log_dir="/log")
 
         keys = ["database", "rabbitmq", "server", "ui"]
         for key in keys:
