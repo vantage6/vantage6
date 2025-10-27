@@ -1,10 +1,9 @@
 import subprocess
-import time
 
 import click
 import questionary as q
 
-from vantage6.common import error, info, warning
+from vantage6.common import error, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import (
@@ -104,13 +103,6 @@ def cli_node_restart(
             all_nodes=False,
             is_sandbox=is_sandbox,
         )
-
-        # TODO #2334 This is poor. We give this time for k8s to delete the volumes etc. If we
-        # start the node again too early, it will fail because it cannot create new
-        # volumes while the old ones are still being delete. We should detect when the
-        # volumes are deleted and then start the node immediately.
-        info("Waiting 30 seconds for the node to stop entirely...")
-        time.sleep(30)
 
         cmd = [
             "v6",
