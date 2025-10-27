@@ -7,9 +7,14 @@ from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
 from vantage6.common.enum import (
+    AlgorithmStepType,
     TaskStatus,
 )
 
+from vantage6.backend.common.resource.error_handling import (
+    ForbiddenError,
+    handle_exceptions,
+)
 from vantage6.backend.common.resource.pagination import Pagination
 
 from vantage6.server import db
@@ -658,6 +663,7 @@ class Task(TaskBase):
 
         return schema.dump(task, many=False), HTTPStatus.OK
 
+    @handle_exceptions
     @with_user
     def delete(self, id):
         """Remove task
@@ -712,6 +718,11 @@ class Task(TaskBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
+        # If task is the last session task for a dataframe, set the last session task to
+        # the task before this one
+        if task.dataframe.last_session_task_id == task.id:
+            self._handle_last_session_task(task)
+
         # kill the task if it is still running
         if not TaskStatus.has_finished(task.status):
             kill_task(task, self.socketio)
@@ -746,6 +757,32 @@ class Task(TaskBase):
             Task._delete_subtasks(child_task)
             log.info(f" Removing child task id={child_task.id}")
             child_task.delete()
+
+    def _handle_last_session_task(self, task: db.Task) -> None:
+        """
+        Handle the last session task for a dataframe.
+        """
+        if task.action == AlgorithmStepType.DATA_EXTRACTION:
+            raise ForbiddenError(
+                "You cannot delete the data extraction task for a dataframe. Delete "
+                "the dataframe instead."
+            )
+        elif task.dataframe.ready():
+            raise ForbiddenError(
+                "You cannot delete the last session task for a dataframe "
+                "that is ready: by doing so, it would no longer be possible to "
+                "see how the dataframe was constructed."
+            )
+        log.info(
+            f"Task id={task.id} is the last session task for dataframe "
+            f"id={task.dataframe_id}"
+        )
+        log.info("Setting the last session task id to the task before this one")
+
+        task.dataframe.last_session_task_id = (
+            task.dataframe.second_last_session_task_id()
+        )
+        task.dataframe.save()
 
 
 class TaskStatusEndpoint(TaskBase):
