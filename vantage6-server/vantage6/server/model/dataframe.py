@@ -79,11 +79,7 @@ class Dataframe(Base):
         return all(
             [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
         ) and any(
-            [
-                run.status == RunStatus.COMPLETED
-                for run in self.last_session_task.runs
-                if run.action == AlgorithmStepType.DATA_EXTRACTION
-            ]
+            [run.status == RunStatus.COMPLETED for run in self.last_session_task.runs]
         )
 
     def organizations_ready(self) -> list[int]:
