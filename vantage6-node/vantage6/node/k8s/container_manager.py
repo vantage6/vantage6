@@ -849,7 +849,7 @@ class ContainerManager:
             # `@source_database` decorator in the (data extraction) algorithm.
             if db.env:
                 for key in db.env:
-                    env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX}{key.upper()}"
+                    env_key = f"{ContainerEnvNames.DB_PARAM_PREFIX.value}{key.upper()}"
                     secrets[env_key] = db.env[key]
 
         else:
