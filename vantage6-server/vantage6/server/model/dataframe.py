@@ -74,8 +74,14 @@ class Dataframe(Base):
 
         # Since all session tasks are ran sequentially, we can check if the last task
         # is successfully finished to determine if the dataframe is ready.
-        return all(
-            [run.status == RunStatus.COMPLETED for run in self.last_session_task.runs]
+        return (
+            all(
+                [
+                    run.status == RunStatus.COMPLETED
+                    for run in self.last_session_task.runs
+                ]
+            )
+            and len(self.last_session_task.runs) > 0
         )
 
     def organizations_ready(self) -> list[int]:

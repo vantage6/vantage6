@@ -720,7 +720,7 @@ class Task(TaskBase):
 
         # If task is the last session task for a dataframe, set the last session task to
         # the task before this one
-        if task.dataframe.last_session_task_id == task.id:
+        if task.dataframe and task.dataframe.last_session_task_id == task.id:
             self._handle_last_session_task(task)
 
         # kill the task if it is still running
