@@ -139,6 +139,7 @@ class Node:
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
+        self.k8s_container_manager.set_socket(self.socketIO)
 
         self.start_processing_threads()
 

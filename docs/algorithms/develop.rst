@@ -378,15 +378,10 @@ Calling your algorithm from vantage6
 ------------------------------------
 
 If you want to test your algorithm in the context of vantage6, you should
-set up a vantage6 infrastructure. You should create a server and at least one
-node (depending on your algorithm you may need more). Follow the instructions
-in the :ref:`server-admin-guide` and :ref:`node-admin-guide` to set up your
-infrastructure. If you are running them on the same machine, take care to
-provide the node with the proper address of the server as detailed
-:ref:`here <use-server-local>`.
-
-Once your infrastructure is set up, you can create a task for your algorithm.
-You can do this either via the :ref:`UI <ui>` or via the
+set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
+command, which will create a sandbox environment with a server, several nodes and an
+algorithm store. Once you have a vantage6 sandbox running, you can create a task for
+your algorithm. You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
 It is also possible to test your algorithm by running a test script on a local

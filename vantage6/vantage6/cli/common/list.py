@@ -44,7 +44,7 @@ def get_configuration_list(instance_type: InstanceType) -> None:
             in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}{status:25} System ")
+        click.echo(f"{config.name:25}{status:25}System ")
 
     # user folders
     configs, failed_imports_user = ctx_class.available_configurations(
@@ -58,9 +58,9 @@ def get_configuration_list(instance_type: InstanceType) -> None:
             in running_server_names
             else stopped
         )
-        click.echo(f"{config.name:25}{status:25} User   ")
+        click.echo(f"{config.name:25}{status:25}User   ")
 
-    click.echo("-" * 85)
+    click.echo("-" * len(header))
     if len(failed_imports_system) + len(failed_imports_user):
         warning(
             f"{Fore.RED}Failed imports: "

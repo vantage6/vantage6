@@ -207,6 +207,7 @@ def select_configuration_questionnaire(
         Whether to use the system folders or not
     is_sandbox : bool
         Whether to show only the sandbox configurations or not
+
     Returns
     -------
     str

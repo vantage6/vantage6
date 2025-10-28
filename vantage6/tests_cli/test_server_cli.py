@@ -6,7 +6,8 @@ from click.testing import CliRunner
 
 from vantage6.common.globals import APPNAME, InstanceType
 
-from vantage6.cli.common.utils import attach_logs
+from vantage6.cli.common.attach import attach_logs
+from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.server.attach import cli_server_attach
 from vantage6.cli.server.files import cli_server_files
 from vantage6.cli.server.import_ import cli_server_import
@@ -17,30 +18,20 @@ from vantage6.cli.server.stop import cli_server_stop
 
 
 class ServerCLITest(unittest.TestCase):
-    @patch("vantage6.cli.server.start.NetworkManager")
-    @patch("vantage6.cli.server.start.docker.types.Mount")
+    @patch("vantage6.cli.server.start.select_context_and_namespace")
     @patch("os.makedirs")
-    @patch("vantage6.cli.server.start.pull_infra_image")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.server.start.docker.from_env")
-    @patch("vantage6.cli.common.start.check_docker_running", return_value=True)
+    @patch("vantage6.cli.server.start.helm_install")
+    @patch("vantage6.cli.server.start.start_port_forward")
     def test_start(
         self,
-        docker_check,
-        containers,
         context,
-        pull,
+        helm_install,
+        start_port_forward,
         os_makedirs,
-        mount,
-        network_manager,
+        ctx_ns,
     ):
         """Start server without errors"""
-        container1 = MagicMock()
-        container1.containers.name = f"{APPNAME}-iknl-system"
-        containers.containers.list.return_value = [container1]
-        containers.containers.run.return_value = True
-
-        # mount.types.Mount.return_value = MagicMock()
 
         ctx = MagicMock(
             config={"uri": "sqlite:///file.db", "port": 9999},
@@ -50,24 +41,34 @@ class ServerCLITest(unittest.TestCase):
         ctx.config_exists.return_value = True
         ctx.name = "not-running"
         context.return_value = ctx
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_start, ["--name", "not-running"])
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.common.ServerContext")
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.list.check_docker_running", return_value=True)
-    def test_configuration_list(self, docker_check, containers, context):
+    @patch("vantage6.cli.context.server.ServerContext.available_configurations")
+    @patch("vantage6.cli.common.list.find_running_service_names")
+    def test_configuration_list(
+        self, find_running_service_names, available_configurations
+    ):
         """Configuration list without errors."""
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system"
-        containers.list.return_value = [container1]
+        server_name = "iknl"
+        find_running_service_names.return_value = [
+            f"{APPNAME}-{server_name}-system-{InstanceType.SERVER.value}"
+        ]
 
-        config = MagicMock()
-        config.name = "iknl"
-        context.available_configurations.return_value = ([config], [])
+        # returns a list of configurations and failed inports
+        def side_effect(system_folders):
+            config = MagicMock()
+            config.name = server_name
+            if not system_folders:
+                return [[config], []]
+            else:
+                return [[config], []]
+
+        available_configurations.side_effect = side_effect
 
         runner = CliRunner()
         result = runner.invoke(cli_server_configuration_list)
@@ -90,38 +91,69 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("docker.DockerClient.containers")
-    @patch("vantage6.cli.server.import_.print_log_worker")
+    @patch("vantage6.cli.server.import_.UserClient")
+    @patch("vantage6.cli.server.import_.requests.get")
     @patch("vantage6.cli.server.import_.click.Path")
-    @patch("vantage6.cli.server.import_.pull_image")
-    @patch("vantage6.cli.server.import_.check_docker_running", return_value=True)
     @patch("vantage6.cli.common.decorator.get_context")
-    def test_import(self, context, docker_check, pull, click_path, log, containers):
+    def test_import(self, context, click_path, requests_get, user_client):
         """Import entities without errors."""
         click_path.return_value = MagicMock()
+        requests_get.return_value = MagicMock(
+            status_code=200, json=lambda: {"version": "1.0.0"}
+        )
+        user_client.return_value = MagicMock()
+        user_client.authenticate.return_value = True
 
         ctx = MagicMock()
         ctx.name = "some-name"
         context.return_value = ctx
 
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("some.yaml", "w") as fp:
-                fp.write("does-not-matter")
-            result = runner.invoke(cli_server_import, ["--name", "iknl", "some.yaml"])
+        # Mock the version to match the server version
+        with patch("vantage6.cli.server.import_.__version__", "1.0.0"):
+            runner = CliRunner()
+            with runner.isolated_filesystem():
+                with open("some.yaml", "w") as fp:
+                    fp.write("""
+organizations:
+  - name: Test Org
+    address1: Test Address
+    zipcode: 12345
+    country: Test Country
+    domain: test.com
+    public_key: test-key
+    users: []
+collaborations: []
+""")
+                result = runner.invoke(
+                    cli_server_import, ["--name", "iknl", "some.yaml"]
+                )
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.new.make_configuration")
-    @patch("vantage6.cli.server.new.ensure_config_dir_writable")
-    @patch("vantage6.cli.server.new.ServerContext")
-    def test_new(self, context, permissions, make_configuration):
+        # check that the import fails when the yaml is invalid
+        with patch("vantage6.cli.server.import_.__version__", "1.0.0"):
+            runner = CliRunner()
+            with runner.isolated_filesystem():
+                with open("some.yaml", "w") as fp:
+                    fp.write("invalid")
+                result = runner.invoke(
+                    cli_server_import, ["--name", "iknl", "some.yaml"]
+                )
+                self.assertEqual(result.exit_code, 1)
+                self.assertIsNotNone(result.exception)
+
+    @patch("vantage6.cli.common.new.select_context_and_namespace")
+    @patch("vantage6.cli.common.new.make_configuration")
+    @patch("vantage6.cli.common.new.ensure_config_dir_writable")
+    @patch("vantage6.cli.context.server.ServerContext")
+    def test_new(self, context, permissions, make_configuration, ctx_ns):
         """New configuration without errors."""
 
         context.config_exists.return_value = False
         permissions.return_value = True
         make_configuration.return_value = "/some/file.yaml"
+        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_new, ["--name", "iknl"])
@@ -129,16 +161,28 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.stop.docker.from_env")
-    def test_stop(self, containers):
+    @patch("vantage6.cli.common.stop.select_context_and_namespace")
+    @patch("vantage6.cli.common.stop.find_running_service_names")
+    @patch("vantage6.cli.common.stop.get_context")
+    @patch("vantage6.cli.server.stop._stop_server")
+    def test_stop(
+        self,
+        _stop_server,
+        get_context,
+        find_running_service_names,
+        context_and_namespace,
+    ):
         """Stop server without errors."""
 
-        container1 = MagicMock()
-        container1.name = f"{APPNAME}-iknl-system-{InstanceType.SERVER.value}"
-        containers.containers.list.return_value = [container1]
+        instance_name = "iknl"
+        server_name = f"{APPNAME}-{instance_name}-system-{InstanceType.SERVER.value}"
+
+        find_running_service_names.return_value = [server_name]
+        get_context.return_value = MagicMock(helm_release_name=server_name)
+        context_and_namespace.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
-        result = runner.invoke(cli_server_stop, ["--name", "iknl"])
+        result = runner.invoke(cli_server_stop, ["--name", instance_name])
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
@@ -152,25 +196,64 @@ class ServerCLITest(unittest.TestCase):
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         attach_logs.assert_called_once_with(
-            "app=vantage6-server", "component=vantage6-server"
+            name=None,
+            instance_type=InstanceType.SERVER,
+            infra_component=InfraComponentName.SERVER,
+            system_folders=False,
+            context=None,
+            namespace=None,
+            is_sandbox=False,
+            additional_labels="component=vantage6-server",
         )
 
-    @patch("vantage6.cli.common.utils.Popen")
-    def test_attach_logs(self, mock_popen):
+    @patch("vantage6.cli.common.utils.subprocess.run")
+    @patch("vantage6.cli.common.attach.select_running_service")
+    @patch("vantage6.cli.common.attach.select_context_and_namespace")
+    @patch("vantage6.cli.common.attach.Popen")
+    def test_attach_logs(
+        self,
+        mock_popen,
+        select_context_and_namespace,
+        select_running_service,
+        subprocess_run,
+    ):
+        select_context_and_namespace.return_value = ("test-context", "test-namespace")
+        select_running_service.return_value = "vantage6-iknl-system-server"
+
+        # Mock subprocess.run to return success for helm list command
+        subprocess_run.return_value = MagicMock(
+            returncode=0,
+            stdout='[{"name": "vantage6-iknl-system-server", "status": "deployed"}]',
+        )
+
         # Mock the Popen instance and its methods
         mock_process = mock_popen.return_value
         mock_process.wait.return_value = None
 
         # Call the function with a sample label
-        attach_logs("app=node", "env=dev")
+        attach_logs(
+            name=None,
+            instance_type=InstanceType.SERVER,
+            infra_component=InfraComponentName.SERVER,
+            system_folders=True,
+            context=None,
+            namespace=None,
+            is_sandbox=False,
+            additional_labels="test=label",
+        )
 
         # Construct the expected command
         expected_command = [
-            "devspace",
+            "kubectl",
+            "--context",
+            "test-context",
+            "-n",
+            "test-namespace",
             "logs",
             "--follow",
-            "--label-selector",
-            "app=node,env=dev",
+            "--selector",
+            "release=vantage6-iknl-system-server,test=label",
+            "--all-containers=true",
         ]
 
         # Verify that Popen was called with the expected command
