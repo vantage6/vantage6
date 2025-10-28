@@ -491,6 +491,7 @@ class DefaultSocketNamespace(Namespace):
         self._append_log(log_message, run)
         run.save()
 
+        # emit the log to the collaboration room so that the UI can display it
         emit(
             "algorithm_log",
             {"run_id": run_id, "task_id": task_id, "log": log_message},
