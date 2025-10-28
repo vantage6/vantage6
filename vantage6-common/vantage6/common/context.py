@@ -333,12 +333,6 @@ class AppContext(metaclass=Singleton):
         if isinstance(instance_type, enum.Enum):
             instance_type = instance_type.value
 
-        # if running_in_docker():
-        #     return {
-        #         "log": Path("/mnt/log"),
-        #         "data": Path("/mnt/data"),
-        #         "config": Path("/mnt/config"),
-        #     }
         if system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type / instance_name,
