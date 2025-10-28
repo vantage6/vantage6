@@ -18,12 +18,12 @@ def cli_node_files(ctx: NodeContext) -> None:
     """
     info(f"Configuration file = {ctx.config_file}")
     info(f"Log file           = {ctx.log_file}")
-    info(f"data folders       = {ctx.data_dir}")
+    info(f"Data folders       = {ctx.data_dir}")
     info("Database labels and files")
-    for db in ctx.databases["fileBased"] or []:
+    for db in ctx.databases.get("fileBased", []):
         info(
             f" - {db['name']:15} = {db['volumePath']}/{db['originalName']} "
             f"(type: {db['type']})"
         )
-    for db in ctx.databases["serviceBased"] or []:
+    for db in ctx.databases.get("serviceBased", []):
         info(f" - {db['name']:15} = {db['uri']} (type: {db['type']})")

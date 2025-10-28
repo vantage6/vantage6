@@ -6,8 +6,10 @@ from colorama import Fore, Style
 from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.utils import get_main_cli_command_name
-from vantage6.cli.config import CliConfig
+from vantage6.cli.common.utils import (
+    get_main_cli_command_name,
+    select_context_and_namespace,
+)
 from vantage6.cli.configuration_create import make_configuration
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
@@ -50,11 +52,7 @@ def new(
     Path | None
         Path to the configuration file. None if the process is aborted for any reason.
     """
-    cli_config = CliConfig()
-    context, namespace = cli_config.compare_changes_config(
-        context=context,
-        namespace=namespace,
-    )
+    context, namespace = select_context_and_namespace(context, namespace)
 
     name = prompt_config_name(name)
 

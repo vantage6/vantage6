@@ -28,7 +28,7 @@ def cli_node_attach(
     """
     info("Attaching to node logs...")
     attach_logs(
-        name,
+        name=name,
         instance_type=InstanceType.NODE,
         infra_component=InfraComponentName.NODE,
         system_folders=system_folders,

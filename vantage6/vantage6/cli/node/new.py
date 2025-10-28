@@ -128,7 +128,6 @@ def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
             },
         ]
     )
-
     config["databases"] = {"fileBased": [], "serviceBased": []}
     while q.confirm("Do you want to add a database?").unsafe_ask():
         db_label = q.select(

@@ -38,7 +38,7 @@ def prestart_checks(
     Run pre-start checks for an instance.
     """
 
-    check_config_name_allowed(ctx.name)
+    check_config_name_allowed(name)
 
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")

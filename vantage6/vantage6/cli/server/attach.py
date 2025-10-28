@@ -28,7 +28,7 @@ def cli_server_attach(
     """
     info("Attaching to server logs...")
     attach_logs(
-        name,
+        name=name,
         instance_type=InstanceType.SERVER,
         infra_component=InfraComponentName.SERVER,
         system_folders=system_folders,
