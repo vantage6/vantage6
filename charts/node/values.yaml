@@ -19,6 +19,7 @@ node:
     port: 7601
     path: /server
 
+  # TODO v5+ set to v5 image name
   image: harbor2.vantage6.ai/infrastructure/node:latest
 
   # Namespace in which the task kubernetes resources are created. This must be a

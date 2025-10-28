@@ -29,7 +29,15 @@ node:
   {% endif %}
 
 
-  image: {{ node.image | default('harbor2.vantage6.ai/infrastructure/node:latest') }}
+  {% if node.image is defined %}
+  # Fixed image to use to run the node. Note that if specified, the node will not
+  # automatically run the version matching the server version.
+  image: {{ node.image }}
+  {% else %}
+  # You may specify a fixed image to use to run the node. Note that if specified, the
+  # node will not automatically run the version matching the server version.
+  # image: harbor2.vantage6.ai/infrastructure/node:latest
+  {% endif %}
 
   # Namespace in which the task kubernetes resources are created. This must be a
   # namespace where the node has access to create pods.
