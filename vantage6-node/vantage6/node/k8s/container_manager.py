@@ -447,6 +447,20 @@ class ContainerManager:
         )
 
         for key, value in self.ctx.config.get("algorithm_env", {}).items():
+            if key in env_vars or key.upper() in env_vars:
+                self.log.warning(
+                    "[Algorithm job run %s requested by org %s] Environment variable %s"
+                    " is requested to be set as algorithm environment variable, but it "
+                    "vantage6 infrastructure is already setting it.",
+                    run_id,
+                    init_org_id,
+                    key,
+                )
+                self.log.warning(
+                    "This will result in the algorithm not receiving the correct value,"
+                    " which may result in unexpected behavior.",
+                )
+                continue
             env_vars[key] = value
 
         # Encode the environment variables to avoid issues with special characters and
