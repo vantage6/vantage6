@@ -576,8 +576,8 @@ class Tasks(TaskBase):
         """
         data = request.get_json(silent=True)
         return self.post_task(
-            data,
-            self.r,
+            data=data,
+            rule_collection_to_check=self.r,
             should_be_compute=True,
         )
 

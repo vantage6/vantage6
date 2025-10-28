@@ -355,10 +355,14 @@ class SessionBase(TaskPostBase):
         }
         # remove empty values
         input_ = {k: v for k, v in input_.items() if v is not None}
+        # note that we do NOT provide a rule collection to check create task
+        # permissions. If this function is called, it is already checked that the user
+        # has permissions to modify the session (i.e. create session tasks) for the
+        # current collaboration.
         return self.post_task(
-            input_,
-            getattr(self.permissions, "task"),
-            action,
+            data=input_,
+            rule_collection_to_check=None,
+            action=action,
         )
 
 
