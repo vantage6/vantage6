@@ -164,7 +164,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
 
         # If getting digest failed, try to use authentication
         if not digest:
-            docker_registries = self.config.get("docker_registries", [])
+            docker_registries = self.config.get("private_docker_registries", [])
             registry_user = None
             registry_password = None
             for reg in docker_registries:
@@ -173,6 +173,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                     registry_password = reg.get("password")
                     break
             if registry_user and registry_password:
+                log.info("Retrying to get digest with authentication...")
                 digest = get_digest(
                     full_image=image_name,
                     registry_username=registry_user,
