@@ -140,39 +140,32 @@ You can download this file :download:`here <components/yaml/batch_import.yaml>`.
 Testing
 ^^^^^^^
 
-You can test the infrastructure via the ``v6 dev`` and ``v6 test`` commands. The purpose of
-``v6 dev`` is to easily setup and run a test server accompanied by `N` nodes locally
+You can test the infrastructure via the ``v6 sandbox`` and ``v6 test`` commands. The purpose of
+``v6 sandbox`` is to easily setup and run a test server accompanied by `N` nodes locally
 (default is 3 nodes). For example, if you have `N = 10` datasets to test a particular
 algorithm on, then you can spawn a server and 10 nodes with a single command. By default,
 the nodes are given access to a test dataset of olympic medal winners, containing data
 on e.g. their age, height, length, weight, medal type and sport.
 
 The ``v6 test`` command is used to run the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_.
-You can run it on an existing network or create a ``v6 dev`` network and run the test on that in one
-go.
+You can run it on an existing network or create a ``v6 sandbox`` network and run the
+test on that in one go.
 
 You can view all available commands in the table below, or alternatively, use
-``v6 dev --help``. By using ``--help`` with the individual commands (e.g.
-``v6 dev start-demo-network --help``), you can view more details on how to
+``v6 sandbox --help``. By using ``--help`` with the individual commands (e.g.
+``v6 sandbox start --help``), you can view more details on how to
 execute them.
-
-.. warning::
-
-  If you are using Linux without Docker desktop, you will need to run
-  ``v6 dev create-demo-network --server-url http://172.17.0.1``. This address points
-  towards the localhost from within Docker and thereby ensures that the nodes will be
-  able to connect to the local server.
 
 +--------------------------------+-----------------------------------------------------+
 | **Command**                    | **Description**                                     |
 +================================+=====================================================+
-| ``v6 dev create-demo-network`` | Create a new network with server and nodes          |
+| ``v6 sandbox new``             | Create a new network, and start it                  |
 +--------------------------------+-----------------------------------------------------+
-| ``v6 dev start-demo-network``  | Start the network                                   |
+| ``v6 sandbox start``           | Start the network                                   |
 +--------------------------------+-----------------------------------------------------+
-| ``v6 dev stop-demo-network``   | Stop the network                                    |
+| ``v6 sandbox stop``            | Stop the network                                    |
 +--------------------------------+-----------------------------------------------------+
-| ``v6 dev remove-demo-network`` | Remove the network completely                       |
+| ``v6 sandbox remove``          | Remove the network completely                       |
 +--------------------------------+-----------------------------------------------------+
 | ``v6 test feature-test``       | Run the feature-tester algorithm on an existing     |
 |                                | network                                             |
@@ -207,10 +200,6 @@ runs is given below.
   reach the internet. It tests this by trying to reach google.nl, so make sure
   this is not a whitelisted domain when testing.
 - **Database readable**: Check if the file-based database is readable.
-- **VPN connection**: Check if an algorithm container on the node can reach other
-  algorithm containers on other nodes *and* on the same node over the VPN network.
-  This test will not succeed if the VPN connection is not set up - it can also be disabled
-  with ``v6 test feature-test --no-vpn``.
 
 .. _use-algorithm-store:
 

@@ -75,13 +75,19 @@ v6 --help
 For example you can create a local test setup by using:
 
 ```bash
-v6 dev create-demo-network
+v6 sandbox new
 ```
 
-This creates a local network with a server and two nodes. You can start the network by running:
+This creates a local network with a server and three nodes, and also starts it. You can
+then manage this network with the following commands:
 
 ```bash
-v6 dev start-demo-network
+# stop the sandbox
+v6 sandbox stop
+# start again once you stopped the sandbox
+v6 sandbox start
+# remove sandbox files from your system
+v6 sandbox remove
 ```
 
 This will start the server and nodes in the background. You can view the logs by running:
