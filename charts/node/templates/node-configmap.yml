@@ -65,6 +65,14 @@ data:
       {{- if .Values.node.prometheus.enabled }}
       report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds }}
       {{- end }}
+    {{- if .Values.node.private_docker_registries }}
+    private_docker_registries:
+      {{- range .Values.node.private_docker_registries }}
+      - registry: {{ .registry }}
+        username: {{ .username }}
+        password: {{ .password }}
+      {{- end }}
+    {{- end }}
     debug:
       socketio: {{ .Values.node.debug.socketio }}
       proxy_server: {{ .Values.node.debug.proxy_server }}

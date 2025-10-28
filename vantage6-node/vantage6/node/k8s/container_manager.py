@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import os
 import re
@@ -483,9 +484,23 @@ class ContainerManager:
                 namespace=self.task_namespace, body=secret
             )
 
+        # Create a Docker login secret for private Docker registries if any are defined.
+        docker_login_secret = None
+        if priv_regs := self.ctx.config.get("node", {}).get(
+            "private_docker_registries", []
+        ):
+            docker_login_secret = self._create_docker_login_secret(
+                priv_regs, image, run_io.run_id
+            )
+
+        require_algorithm_pull = self.ctx.config.get("node", {}).get(
+            "require_algorithm_pull", True
+        )
+
         container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
+            image_pull_policy="Always" if require_algorithm_pull else "IfNotPresent",
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
@@ -517,6 +532,10 @@ class ContainerManager:
             labels=self.task_job_labels,
         )
 
+        image_pull_secrets = (
+            [docker_login_secret.metadata.name] if docker_login_secret else None
+        )
+
         # Define the job
         job = k8s_client.V1Job(
             api_version="batch/v1",
@@ -531,6 +550,7 @@ class ContainerManager:
                         containers=[container],
                         volumes=_volumes,
                         restart_policy="Never",
+                        image_pull_secrets=image_pull_secrets,
                     ),
                 ),
                 backoff_limit=TASK_START_RETRIES,
@@ -571,6 +591,47 @@ class ContainerManager:
         self._stream_logs(run_io=run_io, task_id=task_id)
 
         return status
+
+    def _create_docker_login_secret(
+        self, priv_regs: list[dict], image: str, run_id: int
+    ) -> k8s_client.V1Secret:
+        """
+        Create a Docker login secret.
+        """
+
+        dockerconfig = {
+            "auths": {
+                reg["registry"]: {
+                    "username": reg["username"],
+                    "password": reg["password"],
+                    "email": reg["email"],
+                    "auth": base64.b64encode(
+                        f"{reg['username']}:{reg['password']}".encode()
+                    ).decode(),
+                }
+                for reg in priv_regs
+            }
+        }
+
+        secret = k8s_client.V1Secret(
+            metadata=k8s_client.V1ObjectMeta(
+                name=f"docker-login-secret-run-id-{run_id}",
+                namespace=self.task_namespace,
+            ),
+            type="kubernetes.io/dockerconfigjson",
+            string_data={".dockerconfigjson": json.dumps(dockerconfig)},
+        )
+
+        try:
+            self.core_api.create_namespaced_secret(
+                namespace=self.task_namespace, body=secret
+            )
+        except ApiException as exc:
+            self.log.error(
+                f"Error creating Docker login secret for image {image}: {exc}"
+            )
+            return None
+        return secret
 
     def _stream_logs(self, run_io: RunIO, task_id: int) -> None:
         """
