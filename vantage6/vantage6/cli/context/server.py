@@ -59,21 +59,9 @@ class ServerContext(BaseServerContext):
         return super().get_database_uri()
 
     @property
-    def docker_container_name(self) -> str:
-        """
-        Name of the docker container that the server is running in.
-
-        Returns
-        -------
-        str
-            Server's docker container name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{ServerType.V6SERVER.value}"
-
-    @property
     def prometheus_container_name(self) -> str:
         """
-        Get the name of the Prometheus Docker container for this server.
+        Get the name of the Prometheus pod for this server.
 
         Returns
         -------

@@ -4,12 +4,10 @@ Common functions that are used in node CLI commands
 
 import os
 
-import docker
 from colorama import Fore, Style
 
 from vantage6.common import debug, error, info
 from vantage6.common.globals import (
-    APPNAME,
     HTTP_LOCALHOST,
     InstanceType,
     Ports,
@@ -48,7 +46,7 @@ def create_client(ctx: NodeContext) -> UserClient:
     host = ctx.config["node"]["server"]["url"]
     port = ctx.config["node"]["server"]["port"]
     api_path = ctx.config["node"]["server"]["path"]
-    # if the server is run locally, we need to use localhost here instead of
+    # if the server is run locally in Docker, we need to use localhost here instead of
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
         host = HTTP_LOCALHOST
@@ -133,23 +131,3 @@ def select_node(name: str, system_folders: bool) -> str:
         )
         exit(1)
     return name
-
-
-def find_running_node_names(client: docker.DockerClient) -> list[str]:
-    """
-    Returns a list of names of running nodes.
-
-    Parameters
-    ----------
-    client : docker.DockerClient
-        Docker client instance
-
-    Returns
-    -------
-    list[str]
-        List of names of running nodes
-    """
-    running_nodes = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.NODE.value}"}
-    )
-    return [node.name for node in running_nodes]

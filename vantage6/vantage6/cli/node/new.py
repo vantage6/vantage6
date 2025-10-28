@@ -194,8 +194,6 @@ def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
             {"name": "urllib3", "level": "warning"},
             {"name": "requests", "level": "warning"},
             {"name": "engineio.client", "level": "warning"},
-            {"name": "docker.utils.config", "level": "warning"},
-            {"name": "docker.auth", "level": "warning"},
         ],
     }
 

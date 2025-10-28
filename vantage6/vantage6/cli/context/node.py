@@ -5,7 +5,7 @@ import os.path
 from pathlib import Path
 
 from vantage6.common.context import AppContext
-from vantage6.common.globals import APPNAME, STRING_ENCODING, InstanceType
+from vantage6.common.globals import STRING_ENCODING, InstanceType
 
 from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import NodeConfigurationManager
@@ -171,43 +171,6 @@ class NodeContext(AppContext):
             return self.config["databases"]
         else:
             return self.config["node"]["databases"]
-
-    @property
-    def docker_container_name(self) -> str:
-        """
-        Docker container name of the node.
-
-        Returns
-        -------
-        str
-            Node's Docker container name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}"
-
-    @property
-    def docker_network_name(self) -> str:
-        """
-        Private Docker network name which is unique for this node.
-
-        Returns
-        -------
-        str
-            Docker network name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-net"
-
-    @property
-    def docker_volume_name(self) -> str:
-        """
-        Docker volume in which task data is stored. In case a file based
-        database is used, this volume contains the database file as well.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
 
     @property
     def proxy_log_file(self):

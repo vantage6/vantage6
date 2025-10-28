@@ -1,17 +1,12 @@
-import contextlib
-import logging
 import os
 import unittest
-from io import BytesIO, StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from vantage6.common import STRING_ENCODING
 from vantage6.common.globals import LOCALHOST, InstanceType, Ports
 
-from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.globals import APPNAME, InfraComponentName
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.common import create_client_and_authenticate
@@ -27,7 +22,6 @@ from vantage6.cli.node.stop import cli_node_stop
 class NodeCLITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        logging.getLogger("docker.utils.config").setLevel(logging.WARNING)
         return super().setUpClass()
 
     @patch("vantage6.cli.context.node.NodeContext.available_configurations")
@@ -36,7 +30,6 @@ class NodeCLITest(unittest.TestCase):
         """A container list and their current status."""
         # https://docs.python.org/3/library/unittest.mock.html#mock-names-and-the-name-attribute
 
-        # mock that docker-deamon is running
         node_name = "iknl"
         find_running_service_names.return_value = [f"{APPNAME}-{node_name}-user-node"]
 
@@ -280,7 +273,7 @@ class NodeCLITest(unittest.TestCase):
 
     @patch("vantage6.cli.node.attach.attach_logs")
     def test_attach(self, attach_logs):
-        """Attach docker logs without errors."""
+        """Attach pod logs without errors."""
         runner = CliRunner()
         runner.invoke(cli_node_attach)
         attach_logs.assert_called_once_with(
@@ -357,14 +350,6 @@ class NodeCLITest(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 1)
 
-    def test_print_log_worker(self):
-        stream = BytesIO("Hello!".encode(STRING_ENCODING))
-        temp_stdout = StringIO()
-        with contextlib.redirect_stdout(temp_stdout):
-            print_log_worker(stream)
-        output = temp_stdout.getvalue().strip()
-        self.assertEqual(output, "Hello!")
-
     @patch("vantage6.cli.node.common.info")
     @patch("vantage6.cli.node.common.debug")
     @patch("vantage6.cli.node.common.error")
@@ -392,17 +377,3 @@ class NodeCLITest(unittest.TestCase):
         client.side_effect = Exception("Boom!")
         with self.assertRaises(Exception):
             create_client_and_authenticate(ctx)
-
-    # TODO this function has been moved to the common package. A test should
-    # be added there instead of here
-    # @patch("vantage6.cli.node.error")
-    # def test_check_docker(self, error):
-    #     docker = MagicMock()
-    #     try:
-    #         check_docker_running()
-    #     except Exception:
-    #         self.fail("Exception raised!")
-
-    #     docker.ping.side_effect = Exception("Boom!")
-    #     with self.assertRaises(SystemExit):
-    #         check_docker_running()
