@@ -6,10 +6,7 @@ from flask_restful import Api
 from sqlalchemy import desc, select
 from sqlalchemy.sql import visitors
 
-from vantage6.common.enum import (
-    AlgorithmStepType,
-    TaskStatus,
-)
+from vantage6.common.enum import TaskStatus
 
 from vantage6.backend.common.resource.error_handling import (
     ForbiddenError,
@@ -762,12 +759,7 @@ class Task(TaskBase):
         """
         Handle the last session task for a dataframe.
         """
-        if task.action == AlgorithmStepType.DATA_EXTRACTION:
-            raise ForbiddenError(
-                "You cannot delete the data extraction task for a dataframe. Delete "
-                "the dataframe instead."
-            )
-        elif task.dataframe.ready():
+        if task.dataframe.ready():
             raise ForbiddenError(
                 "You cannot delete the last session task for a dataframe "
                 "that is ready: by doing so, it would no longer be possible to "
