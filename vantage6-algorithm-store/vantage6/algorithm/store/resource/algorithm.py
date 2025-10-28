@@ -179,6 +179,10 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
                     registry_username=registry_user,
                     registry_password=registry_password,
                 )
+                if digest:
+                    log.info("Digest obtained succesfully!")
+                else:
+                    log.error("Failed to get digest with authentication!")
 
         return image_and_tag, digest
 

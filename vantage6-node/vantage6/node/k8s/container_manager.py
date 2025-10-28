@@ -486,9 +486,7 @@ class ContainerManager:
 
         # Create a Docker login secret for private Docker registries if any are defined.
         docker_login_secret = None
-        if priv_regs := self.ctx.config.get("node", {}).get(
-            "private_docker_registries", []
-        ):
+        if priv_regs := self.ctx.config.get("private_docker_registries"):
             docker_login_secret = self._create_docker_login_secret(
                 priv_regs, image, run_io.run_id
             )
@@ -532,9 +530,13 @@ class ContainerManager:
             labels=self.task_job_labels,
         )
 
-        image_pull_secrets = (
-            [docker_login_secret.metadata.name] if docker_login_secret else None
-        )
+        image_pull_secrets = None
+        if docker_login_secret:
+            image_pull_secrets = [
+                k8s_client.V1LocalObjectReference(
+                    name=docker_login_secret.metadata.name
+                )
+            ]
 
         # Define the job
         job = k8s_client.V1Job(
@@ -604,7 +606,6 @@ class ContainerManager:
                 reg["registry"]: {
                     "username": reg["username"],
                     "password": reg["password"],
-                    "email": reg["email"],
                     "auth": base64.b64encode(
                         f"{reg['username']}:{reg['password']}".encode()
                     ).decode(),
