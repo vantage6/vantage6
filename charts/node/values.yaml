@@ -39,10 +39,15 @@ node:
 
   proxyPort: 7654
 
+  policies:
+    require_algorithm_pull: true
+    allow_either_whitelist_or_store: false
+
   persistence:
     tasks:
       storageClass: local-storage
       size: 10Gi
+      hostPath: /path/to/where/task/files/are/stored
     database:
       storageClass: local-storage
       size: 5Gi
