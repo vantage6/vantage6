@@ -284,7 +284,11 @@ class TaskInputSchema(_NameValidationSchema):
         if databases is None:
             return  # some algorithms don't use any database
 
-        if isinstance(databases, list) and not isinstance(databases[0], list):
+        if (
+            isinstance(databases, list)
+            and len(databases) > 0
+            and not isinstance(databases[0], list)
+        ):
             raise ValidationError(
                 "Databases must be a list of lists of dictionaries or None"
             )
