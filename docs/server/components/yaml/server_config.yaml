@@ -1,162 +1,237 @@
-# Human readable description of the server instance. This is to help
-# your peers to identify the server
-description: Test
+# Override the kubernetes chart name
+nameOverride: vantage6-server
 
-# Port to which the server binds
-port: 7601
+# Specify the kubernetes namespace in which the server will be deployed. Optional,
+# by default the Release.Namespace is used
+namespace: vantage6-server
 
-# API path prefix. Server may be reached at https://domain.org/<api_path>/<endpoint>.
-# In case you use a reverse proxy and use a subpath, make sure to set this option.
-api_path: /api
+server:
+  # The description of the server
+  description: Vantage6 server version 5
 
-# Let the server know where it is hosted. This is used as a setting to
-# communicate back and forth with other vantage6 components such as the
-# algorithm store.
-# Example for the cotopaxi server
-server_url: https://cotopaxi.vantage6.ai
-# Example for running the server locally with default settings:
-# server_url: http://localhost:7601
+  # Let the server know where it is hosted. This is used for communication with other
+  # vantage6 components. E.g. for the community server:
+  baseUrl: https://cotopaxi.vantage6.ai
+  # For a localhost server with default settings:
+  # baseUrl: http://localhost:7601
+  apiPath: /server
 
-# The secret key used to generate JWT authorization tokens. This should
-# be kept secret as others are able to generate access tokens if they
-# know this secret. This parameter is optional. In case it is not
-# provided in the configuration it is generated each time the server
-# starts, thereby invalidating all previous distributed keys. Recommended only in
-# non-production environments
-jwt_secret_key: super-secret-key!
+  # The image used to start the server
+  image: harbor2.vantage6.ai/infrastructure/server:latest
 
-# Settings for the logger
-logging:
-  # Controls the logging output level. Could be one of the following
-  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-  level: DEBUG
+  # The number of replicas of the server
+  replications: 1
 
-  # Filename of the log-file, used by RotatingFileHandler
-  file: test.log
+  # Port that the server exposes on the internal network from the containers
+  internal:
+    port: 7601
 
-  # Whether the output is shown in the console or not
-  use_console: true
+  # Port that the server exposes on the kubernetes service to the outside world
+  port: 7601
 
-  # The number of log files that are kept, used by RotatingFileHandler
-  backup_count: 5
+  # If you want to couple algorithm stores to the server on startup, you can add them
+  # here. The name is used to identify the algorithm store in the server's database.
+  # The url is the URL of the algorithm store's API.
+  algorithm_stores:
+    - name: Local store
+      url: http://localhost:7602/api
+      api_path: /api
 
-  # Size in kB of a single log file, used by RotatingFileHandler
-  max_size: 1024
+  # Keycloak configuration
+  keycloakUrl: https://auth.vantage6.ai
+  keycloakRealm: vantage6
+  keycloakAdminUsername: admin
+  keycloakAdminPassword: admin
+  keycloakAdminClient: backend-admin-client
+  keycloakAdminClientSecret: myadminclientsecret
+  keycloak:
+    manage_users_and_nodes: true
 
-  # format: input for logging.Formatter,
-  format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-  datefmt: "%Y-%m-%d %H:%M:%S"
+  # The secret key used to generate JWT authorization tokens. This should
+  # be kept secret as others are able to generate access tokens if they
+  # know this secret. This parameter is optional. In case it is not
+  # provided in the configuration it is generated each time the server
+  # starts, thereby invalidating all previous distributed keys.
+  # Recommended for development, but DO NOT use in production!
+  jwt:
+    secret: "super-secret-key-that-you-shouldnt-use-in-production"
 
-  # (optional) set the individual log levels per logger name, for example
-  # mute some loggers that are too verbose.
-  loggers:
-    - name: urllib3
-      level: warning
-    - name: socketIO-client
-      level: warning
-    - name: engineio.server
-      level: warning
-    - name: socketio.server
-      level: warning
-    - name: sqlalchemy.engine
-      level: warning
+  # Cleanup settings: This is used to cleanup the database from old results.
+  # Every hour, results older than the threshold for completed runs are deleted.
+  # Disabled by default.
+  # Careful! Make sure you have regular backups of your database before enabling this
+  # feature, as a wrong configuration could lead to data loss.
+  runs_data_cleanup_days: 30
+  # Whether to also delete the algorithm arguments of the runs. False by default.
+  runs_data_cleanup_include_args: false
 
-# Additional debug flags
-debug:
-  # Set to `true` to enable debug mode for the socketio server
-  socketio: false
+  # Set up with which origins the server should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # port 7600 on localhost. Usually, only the UI needs to access the server.
+  cors_allowed_origins:
+    - https://portal.cotopaxi.vantage6.ai
+    - http://localhost:7600
 
-  # Set to `true` to enable debug mode in the Flask app
-  flask: false
+  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU,
+  # memory). This is done using Prometheus. There are two components to this:
+  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+  #    the metrics from the nodes.
+  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
+  #     metrics exposed by the Prometheus exporter and stores them.
+  # The exporter is started by default when the server starts (if prometheus is
+  # enabled). The Prometheus server may be started separately.
+  prometheus:
+    # Set to true to enable Prometheus reporting. Default is false.
+    enabled: false
+    # Set to true to start the Prometheus server when starting the server
+    start_with_server: false
+    # The port on which the Prometheus exporter will be available.
+    exporter_port: 7603
 
-# a worker will run every hour and delete results from completed runs that are
-# older than the number of days specified here. Disabled by default.
-# Careful! Make sure you have regular backups of your database before enabling
-# this feature, as a wrong configuration could lead to data loss.
-runs_data_cleanup_days: 30
-# the cleanup worker will also delete the algorithm arguments of the runs if this is set
-# to true. False by default.
-runs_data_cleanup_include_args: false
+  # Settings for the large result store. By default, the server uses a database to store all arguments and results.
+  # Adding this will set Vantage6 to use blob storage rather than the database for both argumentsand results.
+  large_result_store:
+    # Type of the large result store. Currently, only "azure" is supported.
+    type: "azure"
+    # The name of the Blob Storage container to use for storing large results.
+    container_name: test-container
 
-# If you have a server with a high workload, it is recommended to use
-# multiple server instances (horizontal scaling). If you do so, you also
-# need to set up a RabbitMQ message service to ensure that the communication
-# between the server and the nodes is handled properly. Then, fill out the
-# RabbitMQ connection URI below to connect the server to it. Also, set the
-# start_with_server flag to true to start RabbitMQ when you start the server.
+    # Use this block for connection string authentication:
+    # -------------------------------------------------------
+    # Connection string to the Storage account. Useful for testing purposes, such as connecting to Azurite.
+    # The example connection string uses the default account name and key for Azurite.
+    connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
+    # -------------------------------------------------------
+
+    # Or use this block for service principal authentication:
+    # -------------------------------------------------------
+    # Credentials for accessing the Blob Storage. If provided, these will be used instead of the connection string.
+    # tenant_id, client_id, and client_secret are required for authentication.
+    tenant_id: "your-tenant-id"
+    client_id: "your-client-id"
+    client_secret: "your-client-secret"
+    # Name of the storage account.
+    storage_account_name: "your-storage-account-name"
+    # -------------------------------------------------------
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
+
+    # Location to the log file
+    file: server.log
+
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
+
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
+
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+  # Development mode settings. Only use when running a vantage6 infrastructure locally.
+  # Commands such as `v6 sandbox` and `v6 dev` will use these settings automatically.
+  dev:
+    # Specify the URI to the host from within a server container. When using
+    # Docker Desktop, you can use the special hostname `host.docker.internal` to refer
+    #to the host machine. On Linux, you should normally use http://172.17.0.1.
+    host_uri: host.docker.internal
+    # store address of the algorithm store. This can be provided to the server for
+    # a custom address of the local algorithm store within the k8s cluster.
+    store_address: http://vantage6-store-store.service.default.svc.cluster.local
+
+  # Additional debug flags
+  debug:
+    # Set to `true` to enable debug mode for the socketio server
+    socketio: false
+
+    # Set to `true` to enable debug mode in the Flask app
+    flask: false
+
+
+
+ui:
+
+  # The image used to start the UI
+  image: harbor2.vantage6.ai/infrastructure/ui:latest
+  # Service port for the UI
+  port: 7600
+  # keycloak settings
+  keycloakRealm: vantage6
+  keycloakClient: public_client
+  keycloakPublicUrl: http://localhost:8080
+
+  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
+  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # allowedAlgorithmStores: "http://localhost:7602 https://store.cotopaxi.vantage6.ai".
+  # If you don't want to run tasks via the UI, you can also set this to an empty string
+  # for the strictest CSP policy.
+  allowedAlgorithmStores: "*"
+  # Community algorithm store URL.
+  communityStoreUrl: https://store.cotopaxi.vantage6.ai
+  # Community algorithm store API path
+  communityStoreApiPath: /api
+
 rabbitmq:
-  uri: amqp://myuser:mypassword@myhostname:5672/myvhost
+  # The image of the RabbitMQ server
+  image:
+    repository: rabbitmq
+    tag: 3-management
 
-# keycloak settings
-keycloak:
-  # whether users and nodes should be created in keycloak when the are created in the
-  # server, and also deleted. Default is true.
-  manage_users_and_nodes: true
+  # The username of the RabbitMQ server
+  username: rabbitmquser
 
-# set up with which origins the server should allow CORS requests. The default
-# is to allow all origins. If you want to restrict this, you can specify a list
-# of origins here. Below are examples to allow requests from the Cotopaxi UI, and
-# port 7600 on localhost. Usually, only the UI needs to access the server.
-cors_allowed_origins:
-  - https://portal.cotopaxi.vantage6.ai
-  - http://localhost:7600
+  # The password of the RabbitMQ server
+  password: rabbitmquserpassword
 
-# development mode settings. Only use when running both the server and the algorithm
-# store that it communicates with locally
-dev:
-  # Specify the URI to the host. This is used to generate the correct URIs to
-  # communicate with the algorithm store. On Windows and Mac, you can use the special
-  # hostname `host.docker.internal` to refer to the host machine. On Linux, you
-  # should normally use http://172.17.0.1.
-  host_uri: http://host.docker.internal
+  # The vhost of the RabbitMQ server
+  vhost: /vantage6
 
-# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
-# This is done using Prometheus. There are two components to this:
-# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
-#    the metrics from the nodes.
-# 2. The Prometheus server (running as a separate Docker container), which scrapes the
-#     metrics exposed by the Prometheus exporter and stores them.
-# The exporter is started by default when the server starts (if prometheus is enabled).
-# The Prometheus server can be started separately.
-prometheus:
-  # Set to true to enable Prometheus reporting. Default is false.
-  enabled: false
-  # Set to true to start the Prometheus server when starting the server
-  start_with_server: false
-  # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
-  # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
-  # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
-  exporter_port: 7603
+database:
 
-# algorithm stores to be coupled to the server on startup
-algorithm_stores:
-  - name: cotopaxi
-    url: https://store.cotopaxi.vantage6.ai/api
-  - name: local store
-    url: http://localhost:7602/api
+  # whether or not to use an external database
+  external: false
 
-# Settings for the large result store. By default, the server uses a database to store all arguments and results.
-# Adding this will set Vantage6 to use blob storage rather than the database for both argumentsand results.
-large_result_store:
-  # Type of the large result store. Currently, only "azure" is supported.
-  type: "azure"
-  # The name of the Blob Storage container to use for storing large results.
-  container_name: test-container
+  # The URI of the external database. Only used if `external` is set to true.
+  uri: postgresql://vantage6:vantage6@localhost:5432/vantage6
 
-  # Use this block for connection string authentication:
-  # -------------------------------------------------------
-  # Connection string to the Storage account. Useful for testing purposes, such as connecting to Azurite.
-  # The example connection string uses the default account name and key for Azurite.
-  connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
-  # -------------------------------------------------------
+  # The image of the database
+  image:
+    repository: postgres
+    tag: 13
 
-  # Or use this block for service principal authentication:
-  # -------------------------------------------------------
-  # Credentials for accessing the Blob Storage. If provided, these will be used instead of the connection string.
-  # tenant_id, client_id, and client_secret are required for authentication.
-  tenant_id: "your-tenant-id"
-  client_id: "your-client-id"
-  client_secret: "your-client-secret"
-  # Name of the storage account.
-  storage_account_name: "your-storage-account-name"
-  # -------------------------------------------------------
+  # The username of the database
+  username: vantage6
+
+  # The password of the database
+  password: vantage6
+
+  # The name of the database
+  name: vantage6
+
+  # Path on the host machine where the database is stored
+  volumePath: /mnt/data_server
+
+  # The name of the k8s node where the server is running
+  k8sNodeName: docker-desktop
