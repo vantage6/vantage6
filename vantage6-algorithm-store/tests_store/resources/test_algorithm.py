@@ -661,7 +661,7 @@ class TestAlgorithmResources(TestResources):
         docker_registry = [
             {"registry": registry, "username": username, "password": password}
         ]
-        resource.config = {"docker_registries": docker_registry}
+        resource.config = {"private_docker_registries": docker_registry}
 
         get_digest_mock.reset_mock()
         get_digest_mock.side_effect = [None, expected_digest]

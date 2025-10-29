@@ -187,6 +187,13 @@ node:
     # This should align with the Prometheus scrape_interval to avoid stale data.
     report_interval_seconds: 45
 
+  # You can specify private registries so that the node can login and pull private
+  # algorithms from these registries.
+  # private_docker_registries:
+  #   - registry: my-private-registry.com
+  #     username: my-username
+  #     password: my-password
+
   # Debug settings
   debug:
     # Set to `true` to enable print debug messages from Flask/socketio.

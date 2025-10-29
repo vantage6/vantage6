@@ -51,6 +51,13 @@ store:
     # allowedReviewAssigners:
     #   - some_username
 
+  # Specify private Docker registries so that the store can login and pull private
+  # algorithms.
+  # private_docker_registries:
+  #   - registry: my-private-registry.com
+  #     username: my-username
+  #     password: my-password
+
   dev:
     host_uri: host.docker.internal
     disable_review: false
