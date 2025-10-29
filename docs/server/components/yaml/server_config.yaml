@@ -14,6 +14,8 @@ server:
   baseUrl: https://cotopaxi.vantage6.ai
   # For a localhost server with default settings:
   # baseUrl: http://localhost:7601
+
+  # API path prefix. Server may be reached at https://my_server.org/<apiPath>/<resource>.
   apiPath: /server
 
   # The image used to start the server
