@@ -1,6 +1,9 @@
 node:
   createSecrets: true
 
+  name: put-your-node-name-here
+  apiKey: put-your-api-key-here
+
   keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
 
@@ -13,6 +16,11 @@ node:
   image: harbor2.vantage6.ai/infrastructure/node:latest
 
   taskNamespace: vantage6-tasks
+  k8sNodeName: docker-desktop
+
+  databases:
+    fileBased: []
+    serviceBased: []
 
   logging:
     level: DEBUG

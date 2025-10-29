@@ -1,3 +1,6 @@
+# TODO v5+ this nameOverride is required to be present, otherwise the server will
+# not work (tested with v6 dev start). It should not be required
+nameOverride: vantage6-server
 server:
   description: Vantage6 server version 5
 
