@@ -1,295 +1,219 @@
-# URL of the vantage6 server
-server_url: https://cotopaxi.vantage6.ai
+# Set the namespace in which the node will be deployed. Optional, by default the
+# Release.Namespace is used
+namespace: vantage6-node
 
-# port the server listens to
-port: 443
+node:
 
-# API path prefix that the server uses. Usually '/api' or an empty string
-api_path: ''
+  # The name of the node.
+  name: node-1
 
-# subnet of the VPN server
-vpn_subnet: 10.76.0.0/16
+  # The API key of the node.
+  apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
-# set the devices the algorithm container is allowed to request.
-algorithm_device_requests:
-  gpu: false
+  # The image to use for the node.
+  image: harbor2.vantage6.ai/infrastructure/node:latest
 
-# Add additional environment variables to the algorithm containers. In case
-# you want to supply database specific environment (e.g. usernames and
-# passwords) you should use `env` key in the `database` section of this
-# configuration file.
-# OPTIONAL
-algorithm_env:
+  # The URL, port and API path to the vantage6 server
+  server:
+    url: http://my-vantage6-server.org
+    port: 7601
+    path: /server
 
-  # in this example the environment variable 'player' has
-  # the value 'Alice' inside the algorithm container
-  player: Alice
+  # Namespace in which the task kubernetes resources are created. This must be a
+  # namespace where the node has access to create pods.
+  taskNamespace: vantage6-tasks
 
-# Add additional environment variables to the node container. This can be useful
-# if you need to modify the configuration of certain python libraries that the
-# node uses. For example, if you want to use a custom CA bundle for the requests
-# library you can specify it here.
-node_extra_env:
-  REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+  # Kubernetes node name, used for local persistent volumes
+  k8sNodeName: docker-desktop
 
-# Add additional volumes to the node container. This can be useful if you need
-# to mount a custom CA bundle for the requests library for example.
-node_extra_mounts:
-  - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+  # Keycloak configuration to authenticate the node with the server.
+  keycloakUrl: http://my-vantage6-auth-keycloak.org
+  keycloakRealm: vantage6
 
-node_extra_hosts:
-  # In Linux (no Docker Desktop) you can use this (special) mapping to access
-  # the host from the node.
-  # See: https://docs.docker.com/reference/cli/docker/container/run/#add-host
-  host.docker.internal: host-gateway
-  # For testing purposes, it can also be used to map a public domain to a
-  # private IP address, allowing you to avoid breaking TLS hostname verification
-  v6server.example.com: 192.168.1.10
+  encryption:
+    # Whether encryption is enabled or not. This should be the same as the `encrypted`
+    # setting of the collaboration to which this node belongs.
+    enabled: false
 
-# specify custom Docker images to use for starting the different
-# components.
-# OPTIONAL
-images:
-  node: harbor2.vantage6.ai/infrastructure/node:cotopaxi
-  alpine: harbor2.vantage6.ai/infrastructure/alpine
-  vpn_client: harbor2.vantage6.ai/infrastructure/vpn-client
-  network_config: harbor2.vantage6.ai/infrastructure/vpn-configurator
-  ssh_tunnel: harbor2.vantage6.ai/infrastructure/ssh-tunnel
-  squid: harbor2.vantage6.ai/infrastructure/squid
+    # Location to the private key file. Required if encryption is enabled.
+    private_key: /path/to/private_key.pem
 
-# path or endpoint to the local data source. The client can request a
-# certain database by using its label. The type is used by the
-# auto_wrapper method used by algorithms. This way the algorithm wrapper
-# knows how to read the data from the source. The auto_wrapper currently
-# supports: 'csv', 'parquet', 'sql', 'sparql', 'excel', 'omop'. You can
-# also user 'folder' to mount an entire data folder as a single database.
-# If your algorithm does not use the wrapper and you have a different type of
-# data source you can specify 'other'.
-databases:
-  - label: default
-    uri: C:\data\datafile.csv
-    type: csv
+  # Whether kubernetes secrets should be created for the node. If set to False, it will
+  # be expected that the secrets are already created. By default true.
+  createSecrets: true
 
-  - label: omop
-    uri: jdbc:postgresql://host.docker.internal:5454/postgres
-    type: omop
-    # additional environment variables that are passed to the algorithm
-    # containers (or their wrapper). This can be used to for usernames
-    # and passwords for example. Note that these environment variables are
-    # only passed to the algorithm container when the user requests that
-    # database. In case you want to pass some environment variable to all
-    # algorithms regard less of the data source the user specifies you can
-    # use the `algorithm_env` setting.
-    env:
-      user: admin@admin.com
-      password: admin
-      dbms: postgresql
-      cdm_database: postgres
-      cdm_schema: public
-      results_schema: results
+  # Port for the node proxy to run on
+  proxyPort: 7654
 
-  # For folder mounts, directory on the host will be mounted under /mnt/<label>.
-  # In the example below, the folder `/path/to/share/with/container` will be
-  # made available as `/mnt/persistent`. The folder will be mounted read/write.
-  # **WARNING**: do *NOT* use 'data' as label.
-  - label: persistent
-    type: folder
-    uri: /path/to/share/with/container
+  # Storage settings on host of the node machine. This defines where the database is
+  # stored as well as the task directory (which will contain the input/output of the
+  # tasks).
+  persistence:
+    tasks:
+      storageClass: local-storage
+      size: 10Gi
+      hostPath: /path/to/where/task/files/are/stored
+    database:
+      storageClass: local-storage
+      size: 5Gi
 
+  # Database settings
+  databases:
+    # File-based databases - these must be existing local files on the node machine.
+    # They will be mounted in the node container.
+    fileBased:
+    - name: olympic_athletes_db
+      uri: /my/local/path/to/data/olympic_athletes_2016.csv
+      type: csv
+      volumePath: /my/local/path/to/data
+      originalName: olympic_athletes_2016.csv
+    # Service-based databases - these are databases that are running on the node
+    # machine. They will be accessed using the URI.
+    serviceBased:
+    - name: myPostgres
+      uri: postgres://vantage6-postgres:5432/vantage6
+      type: other
 
-# end-to-end encryption settings
-encryption:
+      # The environment variables set here will be passed to the algorithm containers as
+      # DATABASE_<NAME>_<ENV_VAR_NAME>. In this example, the node will set the
+      # DATABASE_MYPOSTGRES_USER and DATABASE_MYPOSTGRES_PASSWORD environment variables.
+      env:
+        USER: vantage6
+        PASSWORD: vantage6
+      # TODO v5+ move this elsewhere?
+      # It is also possible not to specify the details of the service-based databases
+      # in this configuration file, but elsewhere in kubernetes (e.g. a parent chart's
+      # values.yaml file).
+      #
+      # In this case, the node expects the following environment variables to be set:
+      #
+      # DATABASE_LABELS: comma-separated list of database names
+      # DATABASE_<NAME>_URI: URI of the database
+      # DATABASE_<NAME>_TYPE: type of the database
+      #
+      # Optionally, you can also specify additional environment variables for each
+      # database by setting DATABASE_<NAME>_<ENV_VAR_NAME> variables, for example:
+      #
+      # DATABASE_<NAME>_MY_ENV_VAR: my_value
+      #
+      # It is recommended to do this through Kubernetes secrets.
 
-  # whenever encryption is enabled or not. This should be the same
-  # as the `encrypted` setting of the collaboration to which this
-  # node belongs.
-  enabled: false
+  # Whether or not your node shares some configuration (e.g. which images are
+  # allowed to run on your node) with the central server. This can be useful
+  # for other organizations in your collaboration to understand why a task
+  # is not completed. Obviously, no sensitive data is shared. Default true
+  share_config: true
 
-  # location to the private key file
-  private_key: /path/to/private_key.pem
+  # Whether or not to share algorithm logs with the server. Otherwise they will
+  # only be displayed as part of the node logs. Default is true.
+  # NOTE: It's recommented to set this to false when using sensitive data
+  share_algorithm_logs: true
 
-# Define who is allowed to run which algorithms on this node.
-policies:
-  # Control which algorithm images are allowed to run on this node. This is
-  # expected to be a valid regular expression. If you don't specify this, all algorithm
-  # images are allowed to run on this node (unless other policies restrict this).
-  allowed_algorithms:
-    - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
-    - ^myalgorithm\.ai/some-algorithm
+  # Define who is allowed to run which algorithms on this node.
+  policies:
+    # Control which algorithm images are allowed to run on this node. This is
+    # expected to be a valid regular expression. It's important to set this policy when
+    # using sensitive data to control which algorithms are allowed to run on the node.
+    allowed_algorithms:
+      - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+      - ^myalgorithm\.ai/some-algorithm
 
-  # It is also possible to allow all algorithms from particular algorithm stores. Set
-  # these stores here. They may be strings or regular expressions. If you don't specify
-  # this, algorithms from any store are allowed (unless other policies prevent this).
-  allowed_algorithm_stores:
-    # allow all algorithms from the vantage6 community store
-    - https://store.cotopaxi.vantage6.ai
-    # allow any store that is a subdomain of vantage6.ai
-    - ^https://[a-z]+\.vantage6\.ai$
+    # It is also possible to allow all algorithms from a particular algorithm store. Set
+    # these stores here. They may be strings or regular expressions. If you don't
+    # specify this, algorithms from any store are allowed (unless other policies prevent
+    # this).
+    allowed_algorithm_stores:
+      # allow all algorithms from the vantage6 community store
+      - https://store.cotopaxi.vantage6.ai
+      # allow any store that is a subdomain of vantage6.ai
+      - ^https://[a-z]+\.vantage6\.ai$
 
-  # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
-  # choose to only allow algorithms that both policies allow, or you can allow
-  # algorithms that either of them allows. By default, only algorithms that are given
-  # in *both* the `allowed_algorithms` and `allowed_algorithm_stores` are allowed by
-  # setting this to the default value `false`.
-  allow_either_whitelist_or_store: false
+    # If you define both `allowed_algorithm_stores` and `allowed_algorithms`, you can
+    # choose to only allow algorithms that both policies allow, or you can allow
+    # algorithms that either of them allows. By default, this is False: only algorithms
+    # that are given in *both* the `allowed_algorithms` and `allowed_algorithm_stores`
+    # are allowed.
+    allow_either_whitelist_or_store: false
 
-  # Define which users are allowed to run algorithms on your node by their ID
-  allowed_users:
-    - 2
-  # Define which organizations are allowed to run images on your node by
-  # their ID or name
-  allowed_organizations:
-    - 6
-    - root
+    # Define which users are allowed to run algorithms on your node by their ID
+    allowed_users:
+      - 2
+    # Define which organizations are allowed to run images on your node by
+    # their ID or name
+    allowed_organizations:
+      - 6
+      - root
 
-  # Set to true to always require that the algorithm image is successfully pulled. This
-  # ensures that no potentially outdated local images are used if internet connection
-  # is not available. This option should be set to false if you are testing with local
-  # algorithm images. Default value is true.
-  require_algorithm_pull: true
+    # Whether or not to always require that the algorithm image is successfully pulled
+    # before running it. This ensures that no potentially outdated local images are used
+    # if internet connection is not available. Default value is true.
+    require_algorithm_pull: true
 
-# credentials used to login to private Docker registries
-docker_registries:
-  - registry: docker-registry.org
-    username: docker-registry-user
-    password: docker-registry-password
+  # Prometheus settings, for sending system metadata to the server.
+  prometheus:
+    # Whether or not to enable Prometheus reporting. Default is false.
+    enabled: false
 
-# Create SSH Tunnel to connect algorithms to external data sources. The
-# `hostname` and `tunnel:bind:port` can be used by the algorithm
-# container to connect to the external data source. This is the address
-# you need to use in the `databases` section of the configuration file!
-ssh-tunnels:
+    # Interval (in seconds) at which the node sends system metadata to the server.
+    # This should align with the Prometheus scrape_interval to avoid stale data.
+    report_interval_seconds: 45
 
-  # Hostname to be used within the internal network. I.e. this is the
-  # hostname that the algorithm uses to connect to the data source. Make
-  # sure this is unique and the same as what you specified in the
-  # `databases` section of the configuration file.
-  - hostname: my-data-source
+  # If your project uses a private Docker registry for algorithm images, you can specify
+  # them here so that the node can login and pull private images.
+  private_docker_registries:
+    - registry: my-private-registry.com
+      username: my-username
+      password: my-password
 
-    # SSH configuration of the remote machine
-    ssh:
+  # Logging settings for the node.
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
 
-      # Hostname or ip of the remote machine, in case it is the docker
-      # host you can use `host.docker.internal` for Windows and MacOS.
-      # In the case of Linux you can use `172.17.0.1` (the ip of the
-      # docker bridge on the host)
-      host: host.docker.internal
-      port: 22
+    # Location to the log file
+    file: node.log
 
-      # fingerprint of the remote machine. This is used to verify the
-      # authenticity of the remote machine.
-      fingerprint: "ssh-rsa ..."
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
 
-      # Username and private key to use for authentication on the remote
-      # machine
-      identity:
-        username: username
-        key: /path/to/private_key.pem
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
 
-    # Once the SSH connection is established, a tunnel is created to
-    # forward traffic from the local machine to the remote machine.
-    tunnel:
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
 
-      # The port and ip on the tunnel container. The ip is always
-      # 0.0.0.0 as we want the algorithm container to be able to
-      # connect.
-      bind:
-        ip: 0.0.0.0
-        port: 8000
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
 
-      # The port and ip on the remote machine. If the data source runs
-      # on this machine, the ip most likely is 127.0.0.1.
-      dest:
-        ip: 127.0.0.1
-        port: 8000
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
 
-# Whitelist URLs and/or IP addresses that the algorithm containers are allowed to reach
-# using the http protocol. Note that the addresses given below are examples and should
-# be replaced with the actual addresses that you want to whitelist.
-whitelist:
-  domains:
-    - google.com
-    - github.com
-    - host.docker.internal # docker host ip (windows/mac)
-  ips:
-    - 172.17.0.1 # docker bridge ip (linux)
-    - 8.8.8.8
-  ports:
-    - 443
+  # Additional debug flags
+  debug:
+    # Set to `true` to enable the Flask/socketio into debug mode.
+    socketio: false
+    # Set to `true` to set the Flask app used for the LOCAL proxy service
+    # into debug mode
+    proxy_server: false
 
-# Containers that are defined here are linked to the algorithm containers and
-# can therefore be accessed when by the algorithm when it is running. Note that
-# for using this option, the container with 'container_name' should already be
-# started before the node is started. Also, if you are using this option together with
-# the `whitelist` option, make sure to whitelist the `container_label` under `ips`,
-# as well as the port(s) that you want to reach on the container.
-docker_services:
-    container_label: container_name
-
-# Settings for the logger
-logging:
-  # Controls the logging output level. Could be one of the following
-  # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-  level:        DEBUG
-
-  # whenever the output needs to be shown in the console
-  use_console:  true
-
-  # The number of log files that are kept, used by RotatingFileHandler
-  backup_count: 5
-
-  # Size kb of a single log file, used by RotatingFileHandler
-  max_size:     1024
-
-  # Format: input for logging.Formatter,
-  format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-  datefmt:      "%Y-%m-%d %H:%M:%S"
-
-  # (optional) set the individual log levels per logger name, for example
-  # mute some loggers that are too verbose.
-  loggers:
-    - name: urllib3
-      level: warning
-    - name: requests
-      level: warning
-    - name: engineio.client
-      level: warning
-    - name: docker.utils.config
-      level: warning
-    - name: docker.auth
-      level: warning
-
-# Additional debug flags
-debug:
-
-  # Set to `true` to enable the Flask/socketio into debug mode.
-  socketio: false
-
-  # Set to `true` to set the Flask app used for the LOCAL proxy service
-  # into debug mode
-  proxy_server: false
-
-
-# directory where local task files (input/output) are stored
-task_dir: C:\Users\<your-user>\AppData\Local\vantage6\node\mydir
-
-# Whether or not your node shares some configuration (e.g. which images are
-# allowed to run on your node) with the central server. This can be useful
-# for other organizations in your collaboration to understand why a task
-# is not completed. Obviously, no sensitive data is shared. Default true
-share_config: true
-
-
-# Whether or not to share algorithm logs with the server. Otherwise they will
-# only be displayed as part of the node logs. Default is true.
-# NOTE: It's recommented to set this to false when using real data
-share_algorithm_logs: false
-
-# Prometheus settings, for sending system metadata to the server.
-prometheus:
-  # Whether or not to enable Prometheus reporting. Default is false.
-  enabled: false
-
-  # Interval (in seconds) at which the node sends system metadata to the server.
-  # This should align with the Prometheus scrape_interval to avoid stale data.
-  report_interval_seconds: 45
+  # Development settings - these should ONLY be used when running `v6 dev` environment,
+  # which will use these settings automatically.
+  dev:
+    # Set extension for the task directory. In the development environment, the task
+    # directory is mounted as a volume and shared by multiple nodes. This extension is
+    # added to the task directory to avoid conflicts in storing the task results for
+    # this node.
+    task_dir_extension: my_node_1
