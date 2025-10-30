@@ -9,7 +9,7 @@ metadata:
     type: local-logs
 spec:
   capacity:
-    storage: {{ .Values.server.logging.storageSize | default "1Gi" }}
+    storage: {{ .Values.server.logging.storageSize | default "128M" }}
   accessModes:
     - ReadWriteOnce
   storageClassName: {{ .Values.server.logging.storageClass | default "local-storage" }}

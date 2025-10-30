@@ -12,7 +12,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.store.logging.storageSize | default "1Gi" }}
+      storage: {{ .Values.store.logging.storageSize | default "128M" }}
   storageClassName: {{ .Values.store.logging.storageClass }}
   selector:
     matchLabels:

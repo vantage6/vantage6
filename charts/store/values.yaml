@@ -84,7 +84,7 @@ store:
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
 
     # Storage configuration for logs
-    storageSize: "1Gi"
+    storageSize: "128M"
     storageClass: "local-storage"
 
     # Host path for storing the logs (required for local-storage PV)
