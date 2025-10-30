@@ -327,6 +327,21 @@ node:
     # report_interval_seconds: 45
   {% endif %}
 
+  # Provide additional environment variables to the algorithm containers. This can be
+  # useful for instance to provide threshold values, database credentials, etc.
+  # Note that variable names should consist of only letters, numbers and underscores,
+  # and start with a letter.
+  {% if node.algorithm_env is defined %}
+  algorithm_env:
+    {% for key, value in node.algorithm_env.items() %}
+    {{ key }}: {{ value }}
+    {% endfor %}
+  {% endif %}
+  {% else %}
+  # algorithm_env:
+  #     threshold_example: 10
+  {% endif %}
+
   {% if node.debug is defined %}
   # Debug settings
   debug:
