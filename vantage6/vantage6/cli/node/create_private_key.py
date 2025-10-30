@@ -89,7 +89,10 @@ def cli_node_create_private_key(
     if config:
         name = Path(config).stem
         ctx = NodeContext(
-            name, system_folders=system_folders, is_sandbox=is_sandbox, config=config
+            name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
+            config_file=config,
         )
     elif not name:
         try:
