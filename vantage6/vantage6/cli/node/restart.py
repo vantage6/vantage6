@@ -39,6 +39,7 @@ from vantage6.cli.node.stop import cli_node_stop
     help="Show node logs on the current console after starting the node",
 )
 @click.option("--all", "all_nodes", flag_value=True, help="Stop all running nodes")
+@click.option("--sandbox", "is_sandbox", flag_value=True, help="Restart a sandbox node")
 @click.pass_context
 def cli_node_restart(
     click_ctx: click.Context,
@@ -48,6 +49,7 @@ def cli_node_restart(
     system_folders: bool,
     attach: bool,
     all_nodes: bool,
+    is_sandbox: bool,
 ) -> None:
     """Restart the node"""
     context, namespace = select_context_and_namespace(
@@ -96,12 +98,27 @@ def cli_node_restart(
             cli_node_stop,
             name=node_name,
             system_folders=system_folders,
+            context=context,
+            namespace=namespace,
             all_nodes=False,
+            is_sandbox=is_sandbox,
         )
 
-        cmd = ["v6", "node", "start", "--name", node_name]
+        cmd = [
+            "v6",
+            "node",
+            "start",
+            "--name",
+            node_name,
+            "--context",
+            context,
+            "--namespace",
+            namespace,
+        ]
         if system_folders:
             cmd.append("--system")
         if attach:
             cmd.append("--attach")
+        if is_sandbox:
+            cmd.append("--sandbox")
         subprocess.run(cmd, check=True)

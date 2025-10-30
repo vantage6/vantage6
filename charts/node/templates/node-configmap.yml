@@ -76,3 +76,9 @@ data:
       task_dir_extension: {{ .Values.node.dev.task_dir_extension }}
     {{- end }}
     {{- end }}
+    {{- if .Values.node.algorithm_env }}
+    algorithm_env:
+      {{- range .Values.node.algorithm_env }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}

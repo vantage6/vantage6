@@ -18,6 +18,7 @@ import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/a
 import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { OrganizationService } from 'src/app/services/organization.service';
 
 @Component({
   selector: 'app-session-step',
@@ -59,7 +60,8 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   constructor(
     private sessionService: SessionService,
     private chosenCollaborationService: ChosenCollaborationService,
-    private changesInCreateTaskService: ChangesInCreateTaskService
+    private changesInCreateTaskService: ChangesInCreateTaskService,
+    private organizationService: OrganizationService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -98,6 +100,11 @@ export class SessionStepComponent implements OnInit, OnDestroy {
     if (!session) return;
     this.session = session;
     this.changesInCreateTaskService.emitSessionChange(session);
+    if (this.session.study) {
+      this.changesInCreateTaskService.emitStudyChange(this.session.study.id);
+      const organizations = await this.organizationService.getOrganizations({ study_id: this.session.study.id });
+      this.changesInCreateTaskService.emitOrganizationChange(organizations);
+    }
   }
 
   get hasNoSessions(): boolean {
