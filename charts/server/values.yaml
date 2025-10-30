@@ -1,16 +1,13 @@
-# Override the chart name
+# TODO v5+ this nameOverride is required to be present, otherwise the server will
+# not work (tested with v6 dev start). It should not be required
 nameOverride: vantage6-server
-# Optional, by default the Release.Namespace is used
-# namespace: vantage6-server
 server:
-  # The description of the server
   description: Vantage6 server version 5
 
-  # The external URL of the server
   baseUrl: http://localhost:7601
   apiPath: /server
+  image: harbor2.vantage6.ai/infrastructure/server:latest
 
-  # Keycloak configuration
   keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
   keycloakRealm: vantage6
   keycloakAdminUsername: admin
@@ -20,40 +17,20 @@ server:
   keycloak:
     manage_users_and_nodes: true
 
+  port: 7601
   internal:
     port: 7601
 
-  port: 7601
-
-  # The number of replicas of the server
   replications: 1
 
-  # The image of the server
-  image: harbor2.vantage6.ai/infrastructure/server:latest
-
   logging:
-    # Controls the logging output level. Could be one of the following
-    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     level: DEBUG
-
-    # Location to the log file
     file: server.log
-
-    # Size in kb of a single log file
     max_size: 1024
     use_console: true
-
-    # Date format for the log file
     datefmt: "%Y-%m-%d %H:%M:%S"
-
-    # Format for the log file
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
-
-    # Maximum number of log files to keep. Log files are rotated when the size of the
-    # current log file exceeds `max_size`.
     backup_count: 5
-
-    # Loggers to include in the log file
     loggers:
     - level: warning
       name: urllib3
@@ -66,121 +43,37 @@ server:
     - level: warning
       name: sqlalchemy.engine
 
-  # In case you want to use a static secret key for the JWT token. Setting this is not
-  # recommended for production environments.
-  # jwt:
-  #   secret: "super-secret-key-that-you-shouldnt-use-in-production"
-
-  dev:
-    host_uri: host.docker.internal
-    # store address of the algorithm store. This can be provided to the server for
-    # a custom address of the local algorithm store within the k8s cluster.
-    store_address: http://vantage6-store-store.service.default.svc.cluster.local
-
-  # # If you want to couple algorithm stores to the server on startup, you can add them here.
-  # # The name is used to identify the algorithm store in the server's database.
-  # # The url is the URL of the algorithm store's API.
-  # algorithm_stores:
-  #   - name: Local store
-  #     url: http://localhost:7602/api
-  #     api_path: /api
-
-  # # Cleanup settings: This is used to cleanup the database from old results.
-  # # Every hour, results older than the threshold for completed runs are deleted.
-  # # Disabled unless you specify this option. Careful! Make sure you have regular
-  # # backups of your database before enabling this feature, as a wrong configuration
-  # # could lead to data loss.
-  # runs_data_cleanup_days: 30
-  # # Whether to also delete the algorithm arguments of the runs. False by default.
-  # runs_data_cleanup_include_args: false
-
-  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
-  # This is done using Prometheus. There are two components to this:
-  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
-  #    the metrics from the nodes.
-  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
-  #     metrics exposed by the Prometheus exporter and stores them.
-  # The exporter is started by default when the server starts (if prometheus is enabled).
-  # The Prometheus server can be started separately.
   prometheus:
-    # Set to true to enable Prometheus reporting. Default is false.
     enabled: false
-    # # Set to true to start the Prometheus server when starting the server
-    # start_with_server: false
-    # # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
-    # # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
-    # # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
-    # exporter_port: 7603
-
-  # # set up with which origins the server should allow CORS requests. The default
-  # # is to allow all origins. If you want to restrict this, you can specify a list
-  # # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
-  # # port 7600 on localhost. Usually, only the UI needs to access the server.
-  # cors_allowed_origins:
-  #   - https://portal.cotopaxi.vantage6.ai
-  #   - http://localhost:7600
 
 rabbitmq:
-  # The image of the RabbitMQ server
   image:
     repository: rabbitmq
     tag: 3-management
 
-  # The username of the RabbitMQ server
   username: rabbitmquser
-
-  # The password of the RabbitMQ server
   password: rabbitmquserpassword
-
-  # The vhost of the RabbitMQ server
   vhost: /vantage6
 
 database:
-
-  # whether or not to use an external database
   external: false
-
-  # The URI of the external database
-  # uri: postgresql://vantage6:vantage6@localhost:5432/vantage6
-
-  # The image of the database
   image:
     repository: postgres
     tag: 13
-
-  # The username of the database
   username: vantage6
-
-  # The password of the database
   password: vantage6
-
-  # The name of the database
   name: vantage6
-
-  #hostpath of the database mount
   volumePath: /mnt/data_server
-
-  # The name of the k8s node where the database is running
   k8sNodeName: docker-desktop
 
 ui:
-
-  # The image of the UI
   image: harbor2.vantage6.ai/infrastructure/ui:latest
-  # Service port for the UI
   port: 7600
-  # keycloak realm
+
   keycloakRealm: vantage6
-  # keycloak client
   keycloakClient: public_client
-  # keycloak public URL
   keycloakPublicUrl: http://localhost:8080
 
-  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs
-  # allowedAlgorithmStores: "http://localhost:7602 https://store.cotopaxi.vantage6.ai"
   allowedAlgorithmStores: "*"
-  # Community algorithm store URL.
   communityStoreUrl: https://store.cotopaxi.vantage6.ai
-  # Community algorithm store API path
   communityStoreApiPath: /api

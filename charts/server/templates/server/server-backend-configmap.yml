@@ -80,3 +80,27 @@ data:
       {{- end }}
     {{- end }}
     {{- end }}
+    {{- if .Values.server.large_result_store }}
+    large_result_store:
+      type: {{ .Values.server.large_result_store.type }}
+      container_name: {{ .Values.server.large_result_store.container_name }}
+      {{- if .Values.server.large_result_store.connection_string }}
+      connection_string: {{ .Values.server.large_result_store.connection_string }}
+      {{- end }}
+      {{- if .Values.server.large_result_store.tenant_id }}
+      tenant_id: {{ .Values.server.large_result_store.tenant_id }}
+      {{- end }}
+      {{- if .Values.server.large_result_store.client_id }}
+      client_id: {{ .Values.server.large_result_store.client_id }}
+      {{- end }}
+      {{- if .Values.server.large_result_store.client_secret }}
+      client_secret: {{ .Values.server.large_result_store.client_secret }}
+      {{- end }}
+      {{- if .Values.server.large_result_store.storage_account_name }}
+      storage_account_name: {{ .Values.server.large_result_store.storage_account_name }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.server.debug }}
+    debug:
+      flask: {{ .Values.server.debug.flask }}
+    {{- end }}
