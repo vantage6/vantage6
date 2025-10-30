@@ -325,6 +325,36 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     );
   }
 
+  getFormInvalidReasons(): string[] {
+    const reasons: string[] = [];
+    if (this.availableSteps.session && this.sessionForm.invalid) {
+      reasons.push(this.translateService.instant('task-create.step-session'));
+    }
+    if (this.availableSteps.study && this.studyForm.invalid && this.shouldShowStudyStep) {
+      reasons.push(this.translateService.instant('task-create.step-study.title'));
+    }
+    if (this.availableSteps.function && this.functionForm.invalid) {
+      reasons.push(this.translateService.instant('task-create.step-function.title'));
+    }
+    if (this.availableSteps.database && this.databaseForm.invalid && this.shouldShowDatabaseStep) {
+      reasons.push(this.translateService.instant('task-create.step-database.title'));
+    }
+    if (this.availableSteps.dataframe && this.dataframeForm.invalid && this.shouldShowDataframeStep) {
+      reasons.push(this.translateService.instant('task-create.step-dataframe.title'));
+    }
+    if (this.availableSteps.parameter && this.parameterForm.invalid && this.shouldShowParameterStep) {
+      reasons.push(this.translateService.instant('task-create.step-parameters.title'));
+    }
+    return reasons;
+  }
+
+  getInvalidAlertLabel(): string {
+    const reasons = this.getFormInvalidReasons();
+    if (reasons.length === 0) return '';
+    const prefix = this.translateService.instant('task-create.form-invalid');
+    return `${prefix} ${reasons.join(', ')}`;
+  }
+
   async handleSubmit(): Promise<void> {
     if (this.isSubmitting) return;
     if (this.isFormInvalid()) {
