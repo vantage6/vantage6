@@ -157,7 +157,11 @@ def helm_uninstall(
     validate_input_cmd_args(namespace, "namespace name", allow_none=True)
 
     # Create the command
-    command = ["helm", "uninstall", release_name]
+    max_time_stop = "60s"
+    info(
+        f"Stopping helm chart '{release_name}'. This may take up to {max_time_stop}..."
+    )
+    command = ["helm", "uninstall", release_name, "--wait", "--timeout", max_time_stop]
 
     if context:
         command.extend(["--kube-context", context])

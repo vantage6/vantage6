@@ -65,12 +65,20 @@ data:
       {{- if .Values.node.prometheus.enabled }}
       report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds }}
       {{- end }}
+    {{- if .Values.node.debug }}
     debug:
       socketio: {{ .Values.node.debug.socketio }}
       proxy_server: {{ .Values.node.debug.proxy_server }}
+    {{- end }}
     {{- if .Values.node.dev }}
     {{- if .Values.node.dev.task_dir_extension }}
     dev:
       task_dir_extension: {{ .Values.node.dev.task_dir_extension }}
     {{- end }}
+    {{- end }}
+    {{- if .Values.node.algorithm_env }}
+    algorithm_env:
+      {{- range .Values.node.algorithm_env }}
+      - {{ . }}
+      {{- end }}
     {{- end }}
