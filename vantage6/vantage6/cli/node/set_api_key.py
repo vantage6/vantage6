@@ -4,6 +4,7 @@ import questionary as q
 from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.configuration_create import (
     NodeConfigurationManager,
     select_configuration_questionnaire,
@@ -29,14 +30,22 @@ from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
     help="Search for configuration in user folders rather than "
     "system folders. This is the default",
 )
-def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
+@click.option("--sandbox/--no-sandbox", "is_sandbox", default=False)
+def cli_node_set_api_key(
+    name: str, api_key: str, system_folders: bool, is_sandbox: bool
+) -> None:
     """
     Put a new API key into the node configuration file
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
     # select node name
     if not name:
         try:
-            name = select_configuration_questionnaire(InstanceType.NODE, system_folders)
+            name = select_configuration_questionnaire(
+                InstanceType.NODE, system_folders, is_sandbox
+            )
         except Exception:
             error("No configurations could be found!")
             exit(1)
@@ -54,8 +63,10 @@ def cli_node_set_api_key(name: str, api_key: str, system_folders: bool) -> None:
             exit(1)
 
     # get configuration manager
-    ctx = NodeContext(name, system_folders=system_folders)
-    conf_mgr = NodeConfigurationManager.from_file(ctx.config_file)
+    ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
+    conf_mgr = NodeConfigurationManager.from_file(
+        ctx.config_file, is_sandbox=is_sandbox
+    )
 
     # set new api key, and save the file
     ctx.config["node"]["apiKey"] = api_key

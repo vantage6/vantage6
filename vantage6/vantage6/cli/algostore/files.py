@@ -8,7 +8,8 @@ from vantage6.cli.context.server import ServerContext
 
 
 @click.command()
-@click_insert_context(type_=InstanceType.ALGORITHM_STORE)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(type_=InstanceType.ALGORITHM_STORE, sandbox_param="sandbox")
 def cli_algo_store_files(ctx: ServerContext) -> None:
     """
     List files that belong to a particular server instance.

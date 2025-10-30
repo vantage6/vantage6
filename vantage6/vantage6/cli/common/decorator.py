@@ -83,8 +83,6 @@ def click_insert_context(
             Callable
                 Decorated function
             """
-            ctx_class = select_context_class(type_)
-
             # Determine sandbox mode, preferring runtime option when provided
             runtime_is_sandbox = is_sandbox
             if sandbox_param is not None:
@@ -93,6 +91,10 @@ def click_insert_context(
             name, runtime_is_sandbox = extract_name_and_is_sandbox(
                 name, runtime_is_sandbox
             )
+            if runtime_is_sandbox:
+                system_folders = False
+
+            ctx_class = select_context_class(type_)
 
             # path to configuration file always overrides name
             if config:

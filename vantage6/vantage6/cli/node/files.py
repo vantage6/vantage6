@@ -8,7 +8,8 @@ from vantage6.cli.context.node import NodeContext
 
 
 @click.command()
-@click_insert_context(type_=InstanceType.NODE)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(type_=InstanceType.NODE, sandbox_param="sandbox")
 def cli_node_files(ctx: NodeContext) -> None:
     """
     Prints the location of important node files.

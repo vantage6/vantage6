@@ -11,8 +11,12 @@ from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 @click.command()
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.AUTH, include_name=True, include_system_folders=True
+    type_=InstanceType.AUTH,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 @click.option("-f", "--force", "force", flag_value=True)
 def cli_auth_remove(

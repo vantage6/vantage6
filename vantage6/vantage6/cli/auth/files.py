@@ -8,7 +8,8 @@ from vantage6.cli.context.auth import AuthContext
 
 
 @click.command()
-@click_insert_context(type_=InstanceType.AUTH)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(type_=InstanceType.AUTH, sandbox_param="sandbox")
 def cli_auth_files(ctx: AuthContext) -> None:
     """
     List files that belong to a particular auth instance.

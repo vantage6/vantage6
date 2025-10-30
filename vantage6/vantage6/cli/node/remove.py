@@ -15,8 +15,12 @@ from vantage6.cli.globals import InfraComponentName
 @click.option(
     "-f", "--force", type=bool, flag_value=True, help="Don't ask for confirmation"
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.NODE, include_name=True, include_system_folders=True
+    type_=InstanceType.NODE,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 def cli_node_remove(
     ctx: NodeContext, name: str, system_folders: bool, force: bool
