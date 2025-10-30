@@ -122,7 +122,6 @@ def make_request(
                 log.warning(
                     "Proxy server received status code %s", response.status_code
                 )
-                log.warning("Error messages: %s", response.json())
                 log.debug(
                     "method: %s, url: %s, json: %s, params: %s, headers: %s",
                     request.method,
@@ -132,8 +131,8 @@ def make_request(
                     headers,
                 )
                 if "application/json" in response.headers.get("Content-Type"):
+                    log.warning("Error messages: %s", response.json())
                     log.debug(response.json().get("msg", "no description..."))
-
             else:
                 # Exit the retry loop because we have collected a valid
                 # response

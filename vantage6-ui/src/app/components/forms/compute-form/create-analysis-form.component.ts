@@ -218,7 +218,9 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowStudyStep(): boolean {
-    return (this.collaboration && this.collaboration.studies.length > 0) || false;
+    // only show study step if there are studies, and if it is not the case that a session is
+    // selected which already determines the study
+    return (this.collaboration && this.collaboration.studies.length > 0 && !this.selectedSession?.study) || false;
   }
 
   get shouldShowDataframeStep(): boolean {
@@ -333,7 +335,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
 
     try {
       await this.submitTask();
-    } catch (error) {
+    } finally {
       this.isSubmitting = false;
     }
   }

@@ -42,7 +42,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
   }
 
   async onSubmitHandler(formOutput: FormCreateOutput): Promise<void> {
-    const newDataframe: CreateTask = {
+    const createTask: CreateTask = {
       name: formOutput.name,
       description: formOutput.description || '-',
       image: formOutput.image,
@@ -54,7 +54,10 @@ export class TaskCreateComponent implements OnInit, OnDestroy {
       store_id: formOutput.store_id,
       databases: formOutput?.dataframes || [[]]
     };
-    const newTask = await this.taskService.createTask(newDataframe);
+    if (formOutput.study_id) {
+      createTask.study_id = formOutput.study_id;
+    }
+    const newTask = await this.taskService.createTask(createTask);
     if (newTask) {
       this.router.navigate([routePaths.task, newTask.id]);
     }
