@@ -42,6 +42,7 @@ jobs:
           echo "stage=${STAGE}" >> $GITHUB_OUTPUT
           echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
+          if [[ $MAJOR == '5' ]]; then MAJOR_NAME="5"; fi
           if [[ $MAJOR == '4' ]]; then MAJOR_NAME="cotopaxi"; fi
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
@@ -306,10 +307,9 @@ jobs:
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-base-image TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
-      # TODO v5+ re-enable this - requires update of the python-ohdsi packages
-      # - name: Build and push Algorithm OMOP base image
-      #   if: ${{ env.stage == '' || env.patch == 0 }}
-      #   run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
+      - name: Build and push Algorithm OMOP base image
+        if: ${{ env.stage == '' || env.patch == 0 }}
+        run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
   # Update the server and node images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
@@ -374,7 +374,6 @@ jobs:
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/alpine:${version} harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
           docker push harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
-
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

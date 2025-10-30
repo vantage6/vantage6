@@ -8,9 +8,13 @@ machine.
 Requirements
 ------------
 
-Make sure you have installed Docker and Python. These are required for all vantage6
-components. Installation instructions are present, for instance, in the
+Make sure you have installed Python and a form of Kubernetes. These are required for
+all vantage6 components. Installation instructions are present, for instance, in the
 :ref:`server requirements <server-requirements>` section.
+
+If you are using Docker Desktop, you can simply
+:ref:`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
+Otherwise, we recommend installing `microk8s <https://microk8s.io/>`_.
 
 Installation
 ------------
@@ -35,40 +39,26 @@ Then, install the vantage6 command line interface (CLI) by running:
 Start a local vantage6 network
 ------------------------------
 
-Before starting a local vantage6 network, make sure Docker is running. Then, in the
-Python environment where you installed the vantage6 CLI, you can easily set up a local
-vantage6 network by running the following command:
+In the Python environment where you installed the vantage6 CLI, you can easily set up a
+local vantage6 network by running the following command:
 
 .. code-block:: bash
 
-    v6 dev create-demo-network
+    v6 sandbox new
 
 This will start an interactive dialog that will ask you to provide a name for the
 network. Note that default settings are used - you can view custom options with
-``v6 dev create-demo-network --help``.
+``v6 sandbox new --help``.
 
-.. note::
-
-    If you are using Linux without Docker Desktop, you should set the default Docker
-    host URL. You can do this by running
-    ``v6 dev create-demo-network --server-url http://172.17.0.1``. By default, the
-    host URL is assumed to be ``http://host.docker.internal`` (Docker desktop's default).
-
-Next, you can start the network by running:
-
-.. code-block:: bash
-
-    v6 dev start-demo-network
-
-Using the default settings, this will start up a server, three nodes, an algorithm store
-and a user interface. The nodes contain some
+The network is automatically started. Using the default settings, this will start up a
+server, three nodes, an algorithm store and a user interface. The nodes contain some
 `test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/sandbox/data/olympic_athletes_2016.csv>`_
 about olympic medal winners. Note also that the server is coupled automatically to the
 community algorithm store, thereby making the community algorithms directly available to
 you.
 
 You can now access the user interface by navigating to http://localhost:7600 in your
-browser and log in with the username ``dev_admin`` and password ``password``. Enjoy!
+browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
 Stopping the network
 --------------------
@@ -78,7 +68,9 @@ Once you are done, you can stop and remove the network by running:
 .. code-block:: bash
 
     # Stop the network
-    v6 dev stop-demo-network
+    v6 sandbox stop
 
     # Remove the network permanently (clean up logs, configuration files, etc)
-    v6 dev remove-demo-network
+    v6 sandbox remove
+
+Note that you can always run ``v6 sandbox start`` to start the network again.

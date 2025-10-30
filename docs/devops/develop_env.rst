@@ -1,3 +1,5 @@
+.. _develop-env:
+
 Development environment
 =======================
 
@@ -137,10 +139,3 @@ the password ``Password123!``.
     You can find the logs of the development environment in the `.devspace/logs`
     directory. We also recommend using `k9s <https://k9scli.io/>`_ to interact with
     the Kubernetes cluster.
-
-
-
-
-
-
-

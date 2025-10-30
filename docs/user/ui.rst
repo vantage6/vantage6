@@ -22,6 +22,6 @@ anything is unclear, please contact us via
     :ref:`this section <install-ui>` on deploying a UI.
 
 .. note::
-    If you are :ref:`running your own server <use-server>` locally with ``v6 dev``
-    commands, the UI is started together with the network. How to use these commands
-    is explained :ref:`here <local-test>`.
+    If you are :ref:`running your own server <use-server>` locally with ``v6 sandbox``
+    or ``v6 dev`` commands, the UI is started together with the network. How to use
+    these commands is explained :ref:`here <local-test>`.

@@ -184,10 +184,10 @@ Data extraction function
    import os
    import pandas as pd
 
-   from vantage6.algorithm.decorator.data import dataframe
+   from vantage6.algorithm.decorator.action import data_extraction
    from vantage6.algorithm.tools.util import info
 
-   @dataframe(1)
+   @data_extraction
    def my_data_extraction_function(db_connection_details: dict):
        info("Extracting data")
 
@@ -237,6 +237,25 @@ vantage6 algorithm tools:
    from vantage6.algorithm.data_extraction import *
    from vantage6.algorithm.preprocessing import *
 
+.. note::
+
+   As algorithm developer, you should keep in mind that error messages may contain
+   sensitive information. In Python, we often see Pandas errors when manipulating data,
+   for instance that a certain data value is not a valid date.
+
+   To help you keep such sensitive information private, vantage6
+   provides a decorator that can be used to handle pandas errors. This decorator will
+   catch all pandas errors and return a generic error message. You can use this
+   decorator by adding it to your algorithm function:
+
+   .. code:: python
+
+      from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+
+      @handle_pandas_errors
+      def my_function(data: pd.DataFrame):
+         return data
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
@@ -283,7 +302,7 @@ DataFrame instead of a string for the database value:
 
         import pandas as pd
         from vantage6.mock.mock_network import MockNetwork
-        
+
         network = MockNetwork(
             module_name="my_algorithm",
             datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
@@ -359,15 +378,10 @@ Calling your algorithm from vantage6
 ------------------------------------
 
 If you want to test your algorithm in the context of vantage6, you should
-set up a vantage6 infrastructure. You should create a server and at least one
-node (depending on your algorithm you may need more). Follow the instructions
-in the :ref:`server-admin-guide` and :ref:`node-admin-guide` to set up your
-infrastructure. If you are running them on the same machine, take care to
-provide the node with the proper address of the server as detailed
-:ref:`here <use-server-local>`.
-
-Once your infrastructure is set up, you can create a task for your algorithm.
-You can do this either via the :ref:`UI <ui>` or via the
+set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
+command, which will create a sandbox environment with a server, several nodes and an
+algorithm store. Once you have a vantage6 sandbox running, you can create a task for
+your algorithm. You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
 It is also possible to test your algorithm by running a test script on a local

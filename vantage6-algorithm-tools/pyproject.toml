@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-algorithm-tools"
-version = "5.0.0a38"
+version = "5.0.0a42"
 description = "Vantage6 algorithm tools"
 readme = "README.md"
 license = {text = "MIT"}
@@ -24,10 +24,10 @@ dependencies = [
     "psycopg2-binary==2.9.10",
     "pyarrow>=16.1.0",
     "pyjwt==2.9.0",
-    "pyfiglet==1.0.3",
+    "pyfiglet==1.0.4",
     "SPARQLWrapper>=2.0.0",
     "sqlalchemy>=1.4.46",
-    "vantage6-common==5.0.0a38",
+    "vantage6-common==5.0.0a42",
 ]
 
 [project.optional-dependencies]

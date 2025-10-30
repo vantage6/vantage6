@@ -35,13 +35,17 @@ class MockBaseClient:
                 "_ClientBase__auth_url",
                 "_ClientBase__check_algorithm_store_valid",
                 "_ClientBase__server_url",
-                "_decrypt_data",
+                "_decrypt_run_data",
                 "_decrypt_field",
+                "_download_run_data_from_server",
+                "_fetch_and_decrypt_run_data",
                 "_multi_page_request",
                 "_refresh_token",
                 "_refresh_url",
+                "_upload_run_data_to_server",
                 "auth_url",
                 "authenticate",
+                "check_if_blob_store_enabled",
                 "collaboration_id",
                 "cryptor",
                 "databases",
@@ -483,8 +487,16 @@ class MockUserClient(MockBaseClient):
     class Dataframe(MockBaseClient.SubClient):
         def __init__(self, parent) -> None:
             super().__init__(parent)
-            for method in ["preprocess", "list", "get", "delete"]:
-                self.__setattr__(method, self.missing_method(method))
+            self.__setattr__("delete", self.missing_method("delete"))
+
+        def get(self, id_: int) -> dict:
+            """
+            Get dataframe by ID
+            """
+            for dataframe in self.parent.network.server.dataframes:
+                if dataframe.get("id") == id_:
+                    return dataframe
+            return {"msg": f"Could not find dataframe with id {id_}"}
 
         def create(
             self,
@@ -505,10 +517,26 @@ class MockUserClient(MockBaseClient):
             )
 
             # get data for organization
+            dataframes = []
             for org_id in self.parent.network.organization_ids:
                 node = self.parent.network.get_node(org_id)
 
-                node.simulate_dataframe_creation(method, arguments, label, name)
+                try:
+                    df_response = node.simulate_dataframe_creation(
+                        method, arguments, label, name
+                    )
+                except SessionActionMismatchError:
+                    error(f"The function {method} is not a data extraction method.")
+                    return
+                except Exception as e:
+                    error(
+                        "Error simulating dataframe creation for organization "
+                        f"{org_id}: {e}"
+                    )
+                    return
+
+                dataframes.append(df_response)
+
                 # In case of a dataframe we do not store a result, as the dataframe
                 # creation on the node is the result of this action.
                 result_response = self.parent.network.server.save_result({}, task["id"])
@@ -516,7 +544,60 @@ class MockUserClient(MockBaseClient):
                     arguments, task["id"], result_response["id"], org_id
                 )
 
-            return task
+            dataframe = self.parent.network.server.save_dataframe(
+                name=name,
+                dataframes=dataframes,
+                source_db_label=label,
+            )
+
+            return dataframe
+
+        def preprocess(
+            self, id_: int, image: str, method: str, arguments: dict
+        ) -> dict:
+            """ """
+            dataframe = self.parent.network.server.get_dataframe(id_)
+            data_frame_name = dataframe.get("name")
+            if not dataframe or not data_frame_name:
+                return {"msg": f"An error occurred while fetching dataframe {id_}"}
+
+            task = self.parent.network.server.save_task(
+                init_organization_id=self.parent.organization_id,
+                name=f"Preprocess {data_frame_name}",
+                description=f"Preprocess {data_frame_name}",
+                databases=[{"label": data_frame_name}],
+            )
+
+            dataframes = []
+            for org_id in self.parent.network.organization_ids:
+                node = self.parent.network.get_node(org_id)
+                try:
+                    df = node.simulate_dataframe_preprocessing(
+                        data_frame_name, image, method, arguments
+                    )
+                except SessionActionMismatchError:
+                    error(f"The function {method} is not a preprocessing method.")
+                    return
+                except Exception as e:
+                    error(
+                        "Error simulating dataframe preprocessing for organization "
+                        f"{org_id}: {e}"
+                    )
+                    return
+                dataframes.append(df)
+
+                result_response = self.parent.network.server.save_result({}, task["id"])
+                self.parent.network.server.save_run(
+                    arguments, task["id"], result_response["id"], org_id
+                )
+
+            return self.parent.network.server.update_dataframe(id_, dataframes)
+
+        def list(self) -> list[dict]:
+            """
+            List all dataframes
+            """
+            return self.parent.network.server.dataframes
 
 
 class MockAlgorithmClient(MockBaseClient):

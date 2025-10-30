@@ -43,6 +43,7 @@ def helm_install(
     context: str | None = None,
     namespace: str | None = None,
     local_chart_dir: str | None = None,
+    custom_values: list[str] | None = None,
 ) -> None:
     """
     Manage the `helm install` command.
@@ -61,6 +62,9 @@ def helm_install(
         The Kubernetes namespace to use.
     local_chart_dir : str, optional
         The local directory containing the Helm charts.
+    custom_values : list[str], optional
+        Custom values to pass to the Helm chart, that override the values in the values
+        file. Each item in the list is a string in the format "key=value".
     """
     # Input validation
     validate_input_cmd_args(release_name, "release name")
@@ -105,6 +109,10 @@ def helm_install(
 
     if namespace:
         command.extend(["--namespace", namespace])
+
+    if custom_values:
+        for custom_value in custom_values:
+            command.extend(["--set", custom_value])
 
     try:
         subprocess.run(

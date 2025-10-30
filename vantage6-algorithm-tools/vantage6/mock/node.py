@@ -95,9 +95,12 @@ class MockNode:
             The name of the method that should be called.
         arguments : dict
             The arguments that should be passed to the method.
-        databases : list[dict[str, str]]
-            The databases that should be used by the method. Each dict should contain
-            at least a 'label' key that refers to a dataframe.
+        databases :  list[dict[str, str]] | list[list[dict[str, str]]]
+            The databases that should be used by the method. If a single list is provided,
+            it is assumed that the same database is used for each argument. If a list of
+            lists is provided, it is assumed that a different database is used for each
+            argument. Each dict should contain at least a 'label' key that refers to a
+            dataframe.
         action : AlgorithmStepType
             The action that should be performed.
 
@@ -136,13 +139,20 @@ class MockNode:
 
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
             mock_data = []
-            for db in databases:
-                if db["label"] not in self.dataframes:
-                    error(f"Dataframe with label {db['label']} not found.")
-                    raise DataFrameNotFound(
-                        f"Dataframe with label {db['label']} not found."
-                    )
-                mock_data.append(self.dataframes[db["label"]])
+            # Handle both single list and list of lists input formats
+            if isinstance(databases[0], list):
+                # List of lists format
+                for db_group in databases:
+                    group_data = {}
+                    for db in db_group:
+                        self._validate_dataframe_exists(db["label"])
+                        group_data[db["label"]] = self.dataframes[db["label"]]
+                    mock_data.append(group_data)
+            else:
+                # Single list format
+                for db in databases:
+                    self._validate_dataframe_exists(db["label"])
+                    mock_data.append(self.dataframes[db["label"]])
 
             # make a copy of the data to avoid modifying the original data of
             # subsequent tasks
@@ -188,11 +198,50 @@ class MockNode:
         if step_type == AlgorithmStepType.DATA_EXTRACTION.value:
             mocked_kwargs["mock_uri"] = self.datasets[source_label]["database"]
             mocked_kwargs["mock_type"] = self.datasets[source_label]["db_type"]
+        else:
+            raise SessionActionMismatchError(
+                "The method is not a data extraction method."
+            )
 
         result = self.run(
             method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars
         )
-        self.dataframes[dataframe_name] = result.to_pandas()
+        df = result.to_pandas()
+        self.dataframes[dataframe_name] = df
+        return df
+
+    def simulate_dataframe_preprocessing(
+        self, dataframe_name: str, image: str, method: str, arguments: dict
+    ):
+        """
+        Simulate a dataframe preprocessing which has been initiated by the `client.dataframe.preprocess` method.
+        """
+        method_fn = self._get_method_fn_from_method(method)
+        task_env_vars = self._task_env_vars(
+            AlgorithmStepType.PREPROCESSING.value, method
+        )
+        step_type = self._get_step_type_from_method_fn(method_fn)
+        if step_type != AlgorithmStepType.PREPROCESSING.value:
+            raise SessionActionMismatchError(
+                "The method is not a preprocessing method."
+            )
+
+        mocked_kwargs = {}
+        if getattr(method_fn, "vantage6_dataframe_decorated", False):
+            mock_data = []
+            if dataframe_name not in self.dataframes:
+                error(f"Dataframe with name {dataframe_name} not found.")
+                raise DataFrameNotFound(
+                    f"Dataframe with name {dataframe_name} not found."
+                )
+            mock_data = self.dataframes[dataframe_name].copy()
+
+            mocked_kwargs["mock_data"] = [mock_data]
+
+        result = self.run(
+            method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars
+        )
+        return result.to_pandas()
 
     def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):
         """
@@ -214,6 +263,24 @@ class MockNode:
         """
         with env_vars(**task_env_vars):
             return method_fn(**arguments)
+
+    def _validate_dataframe_exists(self, label: str) -> None:
+        """
+        Validate that a dataframe with the given label exists.
+
+        Parameters
+        ----------
+        label : str
+            The label of the dataframe to validate.
+
+        Raises
+        ------
+        DataFrameNotFound
+            If the dataframe with the given label is not found.
+        """
+        if label not in self.dataframes:
+            error(f"Dataframe with label {label} not found.")
+            raise DataFrameNotFound(f"Dataframe with label {label} not found.")
 
     def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
         """

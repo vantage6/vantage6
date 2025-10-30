@@ -264,11 +264,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "apiKey": node_specific_config["api_key"],
                 "name": node_specific_config["node_name"],
-                "image": (
-                    self.node_image
-                    # TODO v5+ update
-                    or "harbor2.vantage6.ai/infrastructure/node:5.0.0a37"
-                ),
                 "logging": {
                     "level": "DEBUG",
                     "file": f"{node_specific_config['node_name']}.log",
@@ -309,6 +304,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
             },
         }
+        if self.node_image:
+            config["node"]["image"] = self.node_image
 
         # merge the extra config with the node config
         if extra_config is not None:

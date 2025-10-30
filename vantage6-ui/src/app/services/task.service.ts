@@ -55,6 +55,10 @@ export class TaskService {
     if (Array.isArray(task.results) && task.results.length > 0) {
       for (const result of task.results) {
         if (result.result) {
+          if (result.blob_storage_used) {
+            this.snackBarService.showMessage(this.translateService.instant('task.alert-blob-read-result'));
+            break;
+          }
           const decodedResult = this.getDecodedResult(result);
           if (decodedResult) result.decoded_result = decodedResult;
         }

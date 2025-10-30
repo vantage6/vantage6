@@ -61,16 +61,13 @@ the following steps to test a release:
     uv add vantage6==<version>
 
 3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
-   release candidate using ``v6 dev`` network:
+   release candidate using a ``v6 sandbox`` network:
 
   .. code:: bash
 
-    v6 dev create-demo-network \
-        -i harbor2.vantage6.ai/infrastructure/server:<version> \
-        --ui-image harbor2.vantage6.ai/infrastructure/ui:<version>
-
-    v6 dev start-demo-network \
+    v6 sandbox new \
         --server-image harbor2.vantage6.ai/infrastructure/server:<version> \
+        --ui-image harbor2.vantage6.ai/infrastructure/ui:<version> \
         --node-image harbor2.vantage6.ai/infrastructure/node:<version> \
         --store-image harbor2.vantage6.ai/infrastructure/algorithm-store:<version>
 
@@ -92,9 +89,8 @@ the following steps to test a release:
 
   .. code:: bash
 
-    v6 dev stop-demo-network
-
-    v6 dev remove-demo-network
+    v6 sandbox stop
+    v6 sandbox remove
 
 After these steps, the release is ready. It is executed for both the main
 infrastructure and the UI. The release process is described below.

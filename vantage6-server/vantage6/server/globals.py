@@ -26,6 +26,7 @@ RESOURCES = [
     "organization",
     "task",
     "run",
+    "blobstream",
     "token",
     "user",
     "version",

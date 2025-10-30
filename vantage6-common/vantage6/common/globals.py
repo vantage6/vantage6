@@ -10,7 +10,8 @@ STRING_ENCODING = "utf-8"
 
 APPNAME = "vantage6"
 
-MAIN_VERSION_NAME = "cotopaxi"
+# TODO v5+ change to final v5 name
+MAIN_VERSION_NAME = "5"
 
 DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
@@ -58,6 +59,12 @@ INTERVAL_MULTIPLIER = 1.5
 DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 DATAFRAME_WITHIN_GROUP_SEPARATOR = ","
 DATAFRAME_BETWEEN_GROUPS_SEPARATOR = ";"
+
+# Default timeout for requests to the server
+REQUEST_TIMEOUT = 300
+
+# Default chunk size for streaming inputs and results
+DEFAULT_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 # session state file name
 SESSION_STATE_FILENAME = "session_state"

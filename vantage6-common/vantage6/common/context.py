@@ -340,7 +340,7 @@ class AppContext(metaclass=Singleton):
                 "data": Path("/mnt/data"),
                 "config": Path("/mnt/config"),
             }
-        if system_folders:
+        elif system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type / instance_name,
                 "data": Path(d.site_data_dir) / instance_type / instance_name,
