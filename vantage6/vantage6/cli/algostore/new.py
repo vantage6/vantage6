@@ -1,6 +1,7 @@
 import click
 import questionary as q
 
+from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     DEFAULT_API_PATH,
     InstanceType,
@@ -41,10 +42,13 @@ def cli_algo_store_new(
     """
     Create a new server configuration.
     """
-
+    dirs = AppContext.instance_folders(
+        InstanceType.ALGORITHM_STORE, name, system_folders
+    )
+    default_log_dir = str(dirs["log"])
     new(
         config_producing_func=algo_store_configuration_questionaire,
-        config_producing_func_args=(name,),
+        config_producing_func_args=(name, default_log_dir),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -53,7 +57,7 @@ def cli_algo_store_new(
     )
 
 
-def algo_store_configuration_questionaire(instance_name: str) -> dict:
+def algo_store_configuration_questionaire(instance_name: str, log_dir: str) -> dict:
     """
     Questionary to generate a config file for the algorithm store server
     instance.
@@ -62,6 +66,8 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
     ----------
     instance_name : str
         Name of the server instance.
+    log_dir : str
+        Path to the log directory of the algorithm store instance.
 
     Returns
     -------
@@ -94,13 +100,13 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
         default=default_root_username,
     ).unsafe_ask()
 
-    config["root_user"] = {
+    config["store"]["root_user"] = {
         "v6_server_uri": v6_server_uri,
         "username": root_username,
     }
 
     # ask about openness of the algorithm store
-    config["policies"] = {}
+    config["store"]["policies"] = {}
     is_open = q.confirm(
         "Do you want to open the algorithm store to the public? This will allow anyone "
         "to view the algorithms, but they cannot modify them.",
@@ -116,6 +122,8 @@ def algo_store_configuration_questionaire(instance_name: str) -> dict:
             default=True,
         ).unsafe_ask()
         open_algos_policy = "authenticated" if is_open_to_whitelist else "private"
-    config["policies"]["algorithm_view"] = open_algos_policy
+    config["store"]["policies"]["algorithm_view"] = open_algos_policy
+
+    config["store"]["logging"]["volumeHostPath"] = log_dir
 
     return config

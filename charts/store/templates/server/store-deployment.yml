@@ -42,8 +42,13 @@ spec:
         - name: config-file
           mountPath: /mnt/config.yaml
           subPath: config.yaml
+        - name: store-logs
+          mountPath: /mnt/log
 
       volumes:
       - name: config-file
         configMap:
           name: {{ .Release.Name }}-store-configmap
+      - name: store-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-vantage6-store-logs-pvc

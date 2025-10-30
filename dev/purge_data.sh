@@ -12,7 +12,7 @@
 
 # Functions
 usage() {
-  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <SERVER_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH>"
+  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <SERVER_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH> <LOG_MOUNT_PATH>"
   echo "Options:"
   echo "  --help      Display this help message"
   exit 1
@@ -38,15 +38,16 @@ POPULATE_MARKER=$(replace_wsl_path "$1")
 TASK_DIRECTORY=$(replace_wsl_path "$2")
 SERVER_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
 STORE_DATABASE_MOUNT_PATH=$(replace_wsl_path "$4")
+LOG_MOUNT_PATH=$(replace_wsl_path "$5")
 
 # Validate that all required arguments are provided
-if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ]; then
+if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ] || [ -z "${LOG_MOUNT_PATH}" ]; then
   echo "Error: Missing arguments."
   usage
 fi
 
 # Validate the paths
-for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH"; do
+for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH" "$LOG_MOUNT_PATH"; do
   # validate that the path is not empty or root
   if [[ "$path" == "/" || -z "$path" ]]; then
     echo "Error: Invalid path provided: $path"
@@ -101,5 +102,6 @@ delete_all_in_dir() {
 delete_all_in_dir "$TASK_DIRECTORY"
 delete_all_in_dir "$SERVER_DATABASE_MOUNT_PATH"
 delete_all_in_dir "$STORE_DATABASE_MOUNT_PATH"
+delete_all_in_dir "$LOG_MOUNT_PATH"
 
 echo "Purge completed successfully."

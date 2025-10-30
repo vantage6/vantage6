@@ -54,6 +54,15 @@ node:
     # Location to the log file
     file: {{ node.logging.file | default('node.log') }}
 
+    # Size of the kubernetes persistent volume claim for logs
+    storageSize: {{ node.logging.storageSize | default('1Gi') }}
+
+    # Storage class to use for the kubernetes persistent volume claim for logs
+    storageClass: {{ node.logging.storageClass | default('local-storage') }}
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: {{ node.logging.volumeHostPath | default('/var/log/vantage6-node') }}
+
     # Size in kb of a single log file
     max_size: {{ node.logging.max_size | default(1024) }}
     use_console: {{ node.logging.use_console | default(true) }}

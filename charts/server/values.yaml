@@ -30,6 +30,9 @@ server:
     use_console: true
     datefmt: "%Y-%m-%d %H:%M:%S"
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    storageSize: "128M"
+    storageClass: "local-storage"
+    volumeHostPath: "/var/log/vantage6-server"
     backup_count: 5
     loggers:
     - level: warning

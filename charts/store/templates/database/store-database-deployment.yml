@@ -36,4 +36,4 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-postgres-pvc
+          claimName: {{ .Release.Name }}-vantage6-store-postgres-pvc

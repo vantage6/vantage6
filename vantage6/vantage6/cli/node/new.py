@@ -58,9 +58,10 @@ def cli_node_new_configuration(
     name = prompt_config_name(name)
     dirs = AppContext.instance_folders(InstanceType.NODE, name, system_folders)
     default_data_dir = str(dirs["data"])
+    default_log_dir = str(dirs["log"])
     new(
         config_producing_func=node_configuration_questionaire,
-        config_producing_func_args=(default_data_dir, name),
+        config_producing_func_args=(default_data_dir, default_log_dir, name),
         name=name,
         system_folders=system_folders,
         namespace=namespace,
@@ -69,7 +70,9 @@ def cli_node_new_configuration(
     )
 
 
-def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
+def node_configuration_questionaire(
+    data_dir: str, log_dir: str, instance_name: str
+) -> dict:
     """
     Questionary to generate a config file for the node instance.
 
@@ -77,6 +80,8 @@ def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
     ----------
     data_dir : str
         Path to the data directory of the node instance.
+    log_dir : str
+        Path to the log directory of the node instance.
     instance_name : str
         Name of the node instance.
 
@@ -195,6 +200,7 @@ def node_configuration_questionaire(data_dir: str, instance_name: str) -> dict:
             {"name": "requests", "level": "warning"},
             {"name": "engineio.client", "level": "warning"},
         ],
+        "volumeHostPath": log_dir,
     }
 
     # Check if we can login to the server to retrieve collaboration settings

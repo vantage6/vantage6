@@ -53,6 +53,7 @@ class BaseSandboxConfigManager:
         instance_type: InstanceType,
         is_data_folder: bool = False,
         node_name: str | None = None,
+        is_log_dir: bool = False,
     ) -> Path:
         """
         Create and get the data directory.
@@ -66,6 +67,9 @@ class BaseSandboxConfigManager:
             used for node databases. Default is False.
         node_name: str | None
             Name of the node. Only used if is_data_folder is True.
+        is_log_dir: bool
+            Whether or not to create a log directory instead of a data directory.
+            Default is False.
 
         Returns
         -------
@@ -78,9 +82,12 @@ class BaseSandboxConfigManager:
             instance_name=self.server_name,
             system_folders=False,
         )
-        main_data_dir = (
-            Path(folders["dev"]) if not self.custom_data_dir else self.custom_data_dir
-        )
+        if self.custom_data_dir:
+            main_data_dir = self.custom_data_dir
+        elif is_log_dir:
+            main_data_dir = Path(folders["log"])
+        else:
+            main_data_dir = Path(folders["dev"])
 
         if instance_type == InstanceType.SERVER:
             data_dir = main_data_dir / self.server_name / "server"
