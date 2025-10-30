@@ -1973,7 +1973,11 @@ class UserClient(ClientBase):
             # It is common to only specify a single level of databases, we assume
             # that its not a multiple databases argument and convert it so that every
             # requested dataframe is handled as a single argument in the algorithm.
-            if isinstance(databases, list) and not isinstance(databases[0], list):
+            if (
+                isinstance(databases, list)
+                and len(databases) > 0
+                and not isinstance(databases[0], list)
+            ):
                 databases = [[db] for db in databases]
 
             for db in [db for sublist in databases for db in sublist]:
