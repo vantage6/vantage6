@@ -13,6 +13,7 @@ from vantage6.common import (
 from vantage6.common.encryption import RSACryptor
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
@@ -62,6 +63,7 @@ from vantage6.cli.node.common import create_client_and_authenticate
     default=False,
     help="Overwrite existing private key if present",
 )
+@click.option("--sandbox/--no-sandbox", "is_sandbox", default=False)
 def cli_node_create_private_key(
     name: str,
     config: str,
@@ -69,6 +71,7 @@ def cli_node_create_private_key(
     upload: bool,
     organization_name: str | None,
     overwrite: bool,
+    is_sandbox: bool,
 ) -> None:
     """
     Create and upload a new private key
@@ -78,17 +81,25 @@ def cli_node_create_private_key(
     will no longer be able to read the results of tasks encrypted with current
     key.
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
+
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
-        ctx = NodeContext(name, system_folders, config)
+        ctx = NodeContext(
+            name, system_folders=system_folders, is_sandbox=is_sandbox, config=config
+        )
     elif not name:
         try:
-            name = select_configuration_questionnaire(InstanceType.NODE, system_folders)
+            name = select_configuration_questionnaire(
+                InstanceType.NODE, system_folders, is_sandbox
+            )
         except Exception:
             error("No configurations could be found!")
             exit(1)
-    ctx = NodeContext(name, system_folders)
+    ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
