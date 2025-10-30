@@ -10,5 +10,5 @@ def running_in_pod() -> bool:
     bool
         True if running inside a Kubernetes pod, False otherwise
     """
-    # Check for Kubernetes service account
-    return os.path.exists("/var/run/secrets/kubernetes.io/serviceaccount/token")
+    # This environment variable is always set by kubelet
+    return os.environ.get("KUBERNETES_SERVICE_HOST") is not None
