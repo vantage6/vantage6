@@ -4,6 +4,8 @@ from sqlalchemy.orm import relationship
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 
+from vantage6.backend.common.resource.error_handling import BadRequestError
+
 from vantage6.server.model.base import Base, DatabaseSessionManager
 from vantage6.server.model.task import Task
 from vantage6.server.model.task_database import TaskDatabase
@@ -71,19 +73,15 @@ class Dataframe(Base):
             return False
 
         # Since all session tasks are ran sequentially, we can check if the last task
-        # is finished to determine if the dataframe is ready. Note that we only care
-        # for data extraction tasks wether the task completed successfully or not. There
-        # must be at least one data extraction run that completed successfully for the
-        # dataframe to be ready. For preprocessing tasks, we only care if the task is
-        # finished, because then there is already a dataframe available.
-        return all(
-            [RunStatus.has_finished(run.status) for run in self.last_session_task.runs]
-        ) and any(
-            [
-                run.status == RunStatus.COMPLETED
-                for run in self.last_session_task.runs
-                if run.action == AlgorithmStepType.DATA_EXTRACTION
-            ]
+        # is successfully finished to determine if the dataframe is ready.
+        return (
+            all(
+                [
+                    run.status == RunStatus.COMPLETED
+                    for run in self.last_session_task.runs
+                ]
+            )
+            and len(self.last_session_task.runs) > 0
         )
 
     def organizations_ready(self) -> list[int]:
@@ -99,7 +97,6 @@ class Dataframe(Base):
             run.organization_id
             for run in self.last_session_task.runs
             if run.status == RunStatus.COMPLETED
-            and run.action == AlgorithmStepType.DATA_EXTRACTION
         ]
 
     @staticmethod
@@ -144,6 +141,32 @@ class Dataframe(Base):
         ).all()
         db_session.commit()
         return active_compute_tasks
+
+    def second_last_session_task_id(self) -> int:
+        """
+        Get the ID of the second last session task for this dataframe.
+
+        Returns
+        -------
+        int
+            ID of the second last session task for this dataframe
+        """
+        db_session = DatabaseSessionManager.get_session()
+        # get all non-compute tasks for this dataframe, and then get the one before
+        # the last task
+        session_init_tasks = db_session.scalars(
+            select(Task)
+            .filter(Task.dataframe_id == self.id)
+            .filter(not AlgorithmStepType.is_compute(Task.action))
+            .order_by(Task.created_at.desc())
+        ).all()
+        if len(session_init_tasks) < 2:
+            raise BadRequestError(
+                "Cannot delete the last session task for a dataframe that has less "
+                "than 2 session initialization tasks. Please delete the dataframe "
+                "instead."
+            )
+        return session_init_tasks[1].id
 
     def __repr__(self):
         return (
