@@ -290,7 +290,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                             "uri": dataset[1],
                             "type": "csv",
                             "volumePath": Path(dataset[1]).parent,
-                            "originalName": dataset[0],
+                            "originalName": Path(dataset[1]).name,
                         }
                         for dataset in [datasets[0]]
                     ]
