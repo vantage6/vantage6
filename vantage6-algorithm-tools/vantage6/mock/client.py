@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 class MockBaseClient:
     def __init__(self, network: "MockNetwork"):
         self.network = network
-        print("0")
         self.task = self.Task(self)
         self.result = self.Result(self)
         self.run = self.Run(self)
