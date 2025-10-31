@@ -4,10 +4,6 @@ nameOverride: {{ nameOverride | default('vantage6-node') }}
 # namespace: vantage6-node
 node:
 
-  # Set to false to prevent creation of node secrets (useful when secrets are managed
-  # externally)
-  createSecrets: {{ node.createSecrets | default(true) }}
-
   name: {{ node.name | default('put-your-node-name-here') }}
   apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
 
@@ -351,6 +347,10 @@ node:
   #     threshold_example: 10
   {% endif %}
 
+  # Set to false to prevent creation of node secrets (useful when secrets are managed
+  # externally)
+  createSecrets: {{ node.createSecrets | default(true) }}
+
   {% if node.debug is defined %}
   # Debug settings
   debug:
@@ -367,4 +367,8 @@ node:
     # directory is mounted as a volume. If multiple nodes are then running on the same
     # machine, this extension is added to the task directory to avoid conflicts.
     task_dir_extension: {{ node.dev.task_dir_extension }}
+    # Whether to forward ports using kubernetes or not. If set to false, the ports will
+    # not be forwarded. This is only useful when running `v6 dev` because in that case,
+    # the ports are forwarded by devspace.
+    forward_ports: {{ node.dev.forward_ports | default(true) }}
   {% endif %}

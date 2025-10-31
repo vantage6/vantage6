@@ -107,6 +107,11 @@ store:
     # this is disabled.
     review_own_algorithm: false
 
+    # Whether to forward ports using kubernetes or not. If set to false, the ports will
+    # not be forwarded. This is only useful when running `v6 dev` because in that case,
+    # the ports are forwarded by devspace.
+    forward_ports: true
+
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET

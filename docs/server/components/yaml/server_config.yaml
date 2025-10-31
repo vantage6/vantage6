@@ -167,9 +167,15 @@ server:
     # Docker Desktop, you can use the special hostname `host.docker.internal` to refer
     #to the host machine. On Linux, you should normally use http://172.17.0.1.
     host_uri: host.docker.internal
-    # store address of the algorithm store. This can be provided to the server for
+
+    # Address of the algorithm store. This can be provided to the server for
     # a custom address of the local algorithm store within the k8s cluster.
     store_address: http://vantage6-store-store.service.default.svc.cluster.local
+
+    # Whether to forward ports using kubernetes or not. If set to false, the ports will
+    # not be forwarded. This is only useful when running `v6 dev` because in that case,
+    # the ports are forwarded by devspace.
+    forward_ports: true
 
   # Additional debug flags
   debug:

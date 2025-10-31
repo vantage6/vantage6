@@ -108,6 +108,10 @@ server:
     # store address of the algorithm store. This can be provided to the server for
     # a custom address of the local algorithm store within the k8s cluster.
     store_address: {{ server.dev.store_address | default('http://vantage6-store-store.service.default.svc.cluster.local') }}
+    # Whether to forward ports using kubernetes or not. If set to false, the ports will
+    # not be forwarded. This is only useful when running `v6 dev` because in that case,
+    # the ports are forwarded by devspace.
+    forward_ports: {{ server.dev.forward_ports | default(true) }}
   {% endif %}
 
   # If you want to couple algorithm stores to the server on startup, you can add them here.

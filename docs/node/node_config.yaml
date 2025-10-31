@@ -225,3 +225,8 @@ node:
     # added to the task directory to avoid conflicts in storing the task results for
     # this node.
     task_dir_extension: my_node_1
+
+    # Whether to forward ports using kubernetes or not. If set to false, the ports will
+    # not be forwarded. This is only useful when running `v6 dev` because in that case,
+    # the ports are forwarded by devspace.
+    forward_ports: true
