@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class MockBaseClient:
     def __init__(self, network: "MockNetwork"):
         self.network = network
-
+        print("0")
         self.task = self.Task(self)
         self.result = self.Result(self)
         self.run = self.Run(self)
@@ -30,8 +30,8 @@ class MockBaseClient:
 
         # Which organization do I belong to?
         self.organization_id = 0
-
-        self.set_missing_attributes(
+        # Store missing attributes in a set for __getattr__ to check
+        self._missing_attributes = set(
             [
                 "_access_token",
                 "_ClientBase__auth_url",
@@ -70,21 +70,36 @@ class MockBaseClient:
             ]
         )
 
+    def __getattr__(self, name: str):
+        """Handle access to missing attributes."""
+        if hasattr(self, "_missing_attributes") and name in self._missing_attributes:
+            warn(f"The attribute {name} is not available in the mock client.")
+            return None
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'"
+        )
+
     def set_missing_subclients(self, names: list[str]) -> None:
-        def missing_subclient(name: str):
-            warn(f"The subclient {name} is not available in the mock client.")
-            return
+        class MissingSubClient(self.SubClient):
+            def __init__(self, parent, name: str):
+                super().__init__(parent)
+                self._name = name
+
+            def __getattr__(self, item):
+                warn(
+                    f"The subclient {self._name} and its method {item} are not "
+                    "available in the mock client."
+                )
+                return lambda *args, **kwargs: None
 
         for name in names:
-            self.__setattr__(name, missing_subclient(name))
+            self.__setattr__(name, MissingSubClient(self, name))
 
     def set_missing_attributes(self, names: list[str]) -> None:
-        def missing_attribute(name: str):
-            warn(f"The attribute {name} is not available in the mock client.")
-            return
-
-        for name in names:
-            self.__setattr__(name, missing_attribute(name))
+        """Add names to the set of missing attributes."""
+        if not hasattr(self, "_missing_attributes"):
+            self._missing_attributes = set()
+        self._missing_attributes.update(names)
 
     class SubClient:
         """
@@ -134,7 +149,12 @@ class MockBaseClient:
                 "add_organization",
                 "remove_organization",
             ]:
-                self.__setattr__(method, self.missing_method(method))
+                self.__setattr__(
+                    method,
+                    lambda *args, _method=method, **kwargs: self.missing_method(
+                        _method
+                    ),
+                )
 
         def get(self, id_: int) -> dict:
             """
@@ -160,7 +180,12 @@ class MockBaseClient:
         def __init__(self, parent) -> None:
             super().__init__(parent)
             for method in ["get", "list", "delete", "kill"]:
-                self.__setattr__(method, self.missing_method(method))
+                self.__setattr__(
+                    method,
+                    lambda *args, _method=method, **kwargs: self.missing_method(
+                        _method
+                    ),
+                )
 
         def create(
             self,
@@ -209,6 +234,7 @@ class MockBaseClient:
                     "No organization ids provided. Cannot create a task for "
                     "zero organizations."
                 )
+
             if not arguments:
                 arguments = {}
 
@@ -264,7 +290,9 @@ class MockBaseClient:
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
-            self.__setattr__("list", self.missing_method("list"))
+            self.__setattr__(
+                "list", lambda *args, **kwargs: self.missing_method("list")
+            )
 
         def get(self, id_: int) -> dict:
             """
@@ -357,7 +385,12 @@ class MockBaseClient:
         def __init__(self, parent) -> None:
             super().__init__(parent)
             for method in ["update", "create", "delete"]:
-                self.__setattr__(method, self.missing_method(method))
+                self.__setattr__(
+                    method,
+                    lambda *args, _method=method, **kwargs: self.missing_method(
+                        _method
+                    ),
+                )
 
         def get(self, id_: int) -> dict:
             """
@@ -420,7 +453,12 @@ class MockBaseClient:
                 "add_organization",
                 "remove_organization",
             ]:
-                self.__setattr__(method, self.missing_method(method))
+                self.__setattr__(
+                    method,
+                    lambda *args, _method=method, **kwargs: self.missing_method(
+                        _method
+                    ),
+                )
 
         def get(self, is_encrypted: bool = True) -> dict:
             """
@@ -490,7 +528,10 @@ class MockUserClient(MockBaseClient):
     class Dataframe(MockBaseClient.SubClient):
         def __init__(self, parent) -> None:
             super().__init__(parent)
-            self.__setattr__("delete", self.missing_method("delete"))
+            self.__setattr__(
+                "delete",
+                lambda *args, _method="delete", **kwargs: self.missing_method(_method),
+            )
 
         def get(self, id_: int) -> dict:
             """
@@ -635,9 +676,7 @@ class MockAlgorithmClient(MockBaseClient):
             creating a task.
             """
             if self.parent.databases is None:
-                error(
-                    "Databases need to be set before creating a task"
-                )
+                error("Databases need to be set before creating a task")
                 return
 
             # inject the mock data into the arguments
