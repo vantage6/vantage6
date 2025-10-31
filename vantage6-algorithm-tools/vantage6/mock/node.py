@@ -15,6 +15,7 @@ from vantage6.algorithm.tools.exceptions import (
     SessionActionMismatchError,
 )
 
+from vantage6.mock.client import MockAlgorithmClient
 from vantage6.mock.util import env_vars
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
@@ -129,13 +130,9 @@ class MockNode:
         # data that is required to the method
         mocked_kwargs = {}
         if getattr(method_fn, "vantage6_algorithm_client_decorated", False):
-            # When creating a child task, pass the parent's datasets and
-            # client to the child. By passing also the client, the child
-            # has access to the same IDs specified
-            client_copy = deepcopy(self.network.algorithm_client)
-            client_copy.node_id = self.id_
-            client_copy.organization_id = self.organization_id
-            mocked_kwargs["mock_client"] = client_copy
+            algorithm_client = MockAlgorithmClient(self)
+            algorithm_client.set_databases(databases)
+            mocked_kwargs["mock_client"] = algorithm_client
 
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
             mock_data = []

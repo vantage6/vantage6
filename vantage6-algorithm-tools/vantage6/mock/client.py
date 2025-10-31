@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import TYPE_CHECKING, Any
 
 from vantage6.common.enum import AlgorithmStepType
@@ -13,6 +14,7 @@ from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
+    from vantage6.mock.node import MockNode
 
 
 class MockBaseClient:
@@ -243,6 +245,7 @@ class MockBaseClient:
                     return
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
+                    traceback.print_exc()
                     return
 
                 result_response = self.parent.network.server.save_result(
@@ -601,6 +604,42 @@ class MockUserClient(MockBaseClient):
 
 
 class MockAlgorithmClient(MockBaseClient):
-    def __init__(self, network: "MockNetwork", *args, **kwargs):
-        super().__init__(network)
-        self.network = network
+    def __init__(self, node: "MockNode", *args, **kwargs):
+        super().__init__(node.network)
+
+        self.image = "mock-image"
+        self.node_id = node.id_
+        self.collaboration_id = node.collaboration_id
+        self.study_id = node.network.server.study_id
+        self.organization_id = node.organization_id
+
+        # these need to be set from the call
+        self.databases = None
+
+    def set_databases(self, databases: list[list[dict]]):
+        """
+        Set the databases for the algorithm client.
+
+        Parameters
+        ----------
+        databases : list[list[dict]]
+            The databases to set for the algorithm client.
+        """
+        self.databases = databases
+
+    class Task(MockBaseClient.Task):
+        def create(self, *args, **kwargs):
+            """
+            Create a new task with the mock algorithm client. This is the algorithm
+            client, so the databases need to be set using `set_databases` before
+            creating a task.
+            """
+            if self.parent.databases is not None:
+                error(
+                    "Databases need to be set before creating a task"
+                )
+                return
+
+            # inject the mock data into the arguments
+            kwargs["databases"] = self.parent.databases
+            return super().create(*args, **kwargs)
