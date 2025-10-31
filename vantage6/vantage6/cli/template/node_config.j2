@@ -341,7 +341,6 @@ node:
     {% for key, value in node.algorithm_env.items() %}
     {{ key }}: {{ value }}
     {% endfor %}
-  {% endif %}
   {% else %}
   # algorithm_env:
   #     threshold_example: 10
@@ -350,6 +349,11 @@ node:
   # Set to false to prevent creation of node secrets (useful when secrets are managed
   # externally)
   createSecrets: {{ node.createSecrets | default(true) }}
+
+  # Whether to forward ports using kubernetes or not. If set to false, the ports will
+  # not be forwarded. This is only useful when running `v6 dev` because in that case,
+  # the ports are forwarded by devspace.
+  forward_ports: {{ node.forward_ports | default(true) }}
 
   {% if node.debug is defined %}
   # Debug settings
@@ -367,8 +371,4 @@ node:
     # directory is mounted as a volume. If multiple nodes are then running on the same
     # machine, this extension is added to the task directory to avoid conflicts.
     task_dir_extension: {{ node.dev.task_dir_extension }}
-    # Whether to forward ports using kubernetes or not. If set to false, the ports will
-    # not be forwarded. This is only useful when running `v6 dev` because in that case,
-    # the ports are forwarded by devspace.
-    forward_ports: {{ node.dev.forward_ports | default(true) }}
   {% endif %}

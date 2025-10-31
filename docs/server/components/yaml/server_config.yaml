@@ -117,6 +117,11 @@ server:
     storage_account_name: "your-storage-account-name"
     # -------------------------------------------------------
 
+  # Whether to forward ports using kubernetes or not. If set to false, the ports will
+  # not be forwarded. This is only useful when running `v6 dev` because in that case,
+  # the ports are forwarded by devspace.
+  forward_ports: true
+
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
@@ -171,11 +176,6 @@ server:
     # Address of the algorithm store. This can be provided to the server for
     # a custom address of the local algorithm store within the k8s cluster.
     store_address: http://vantage6-store-store.service.default.svc.cluster.local
-
-    # Whether to forward ports using kubernetes or not. If set to false, the ports will
-    # not be forwarded. This is only useful when running `v6 dev` because in that case,
-    # the ports are forwarded by devspace.
-    forward_ports: true
 
   # Additional debug flags
   debug:

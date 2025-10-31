@@ -88,6 +88,11 @@ store:
       username: docker-registry-user
       password: docker-registry-password
 
+  # Whether to forward ports using kubernetes or not. If set to false, the ports will
+  # not be forwarded. This is only useful when running `v6 dev` because in that case,
+  # the ports are forwarded by devspace.
+  forward_ports: true
+
   # development mode settings. Only use when running both the algorithm store and
   # the server that it communicates with locally
   dev:
@@ -106,11 +111,6 @@ store:
     # production, this is not recommended, but it can facilitate development. By default,
     # this is disabled.
     review_own_algorithm: false
-
-    # Whether to forward ports using kubernetes or not. If set to false, the ports will
-    # not be forwarded. This is only useful when running `v6 dev` because in that case,
-    # the ports are forwarded by devspace.
-    forward_ports: true
 
   logging:
     # Controls the logging output level. Could be one of the following

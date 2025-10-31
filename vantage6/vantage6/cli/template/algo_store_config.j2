@@ -86,6 +86,11 @@ store:
     #   - some_username
     {% endif %}
 
+  # Whether to forward ports using kubernetes or not. If set to false, the ports will
+  # not be forwarded. This is only useful when running `v6 dev` because in that case,
+  # the ports are forwarded by devspace.
+  forward_ports: {{ store.forward_ports | default(true) }}
+
   {% if store.dev is defined %}
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
@@ -99,10 +104,6 @@ store:
     # Define whether or not developers are able to review their own algorithms. For
     # production, this is not recommended, but it can facilitate development.
     review_own_algorithm: {{ store.dev.review_own_algorithm | default(false) }}
-    # Whether to forward ports using kubernetes or not. If set to false, the ports will
-    # not be forwarded. This is only useful when running `v6 dev` because in that case,
-    # the ports are forwarded by devspace.
-    forward_ports: {{ store.dev.forward_ports | default(true) }}
   {% endif %}
 
   {% if store.internal is defined %}

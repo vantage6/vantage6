@@ -14,7 +14,6 @@ from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
-    start_port_forward,
 )
 from vantage6.cli.common.utils import (
     create_directory_if_not_exists,
@@ -23,8 +22,6 @@ from vantage6.cli.common.utils import (
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.node.common import create_client
-
-from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
 
 
 @click.command()
@@ -107,15 +104,6 @@ def cli_node_start(
         namespace=namespace,
         local_chart_dir=local_chart_dir,
         custom_values=[f"node.image={image}"],
-    )
-
-    # start port forward for the node proxy server
-    start_port_forward(
-        service_name=f"{ctx.helm_release_name}-node-service",
-        service_port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
-        port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
-        context=context,
-        namespace=namespace,
     )
 
     if attach:
