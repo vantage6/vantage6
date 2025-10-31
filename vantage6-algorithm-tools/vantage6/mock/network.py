@@ -5,7 +5,7 @@ from vantage6.common import info
 from vantage6.algorithm.tools.exceptions import AlgorithmModuleNotFoundError
 from vantage6.algorithm.tools.util import error
 
-from vantage6.mock.client import MockAlgorithmClient, MockUserClient
+from vantage6.mock.client import MockUserClient
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 
@@ -144,7 +144,6 @@ class MockNetwork:
                 )
 
         self.user_client = MockUserClient(self)
-        self.algorithm_client = MockAlgorithmClient(self)
 
         info(f"Mock network created with {len(self.nodes)} nodes")
 
