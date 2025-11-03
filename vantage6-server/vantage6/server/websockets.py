@@ -93,12 +93,6 @@ class DefaultSocketNamespace(Namespace):
         auth.status = AuthStatus.ONLINE.value
         auth.save()
 
-        # It appears to be necessary to use the root socketio instance
-        # otherwise events cannot be sent outside the current namespace.
-        # In this case, only events to '/tasks' can be emitted otherwise.
-        if auth.type == "node":
-            self.socketio.emit("node-status-changed", namespace="/admin")
-
         # define socket-session variables.
         session.type = auth.type
         session.name = auth.username if session.type == "user" else auth.name
@@ -107,13 +101,7 @@ class DefaultSocketNamespace(Namespace):
         # join appropiate rooms
         session.rooms = []
         if session.type == "node":
-            # Ensure that node syncs on initial connection
-            emit("sync", room=request.sid)
-            # Add node to rooms and alert other clients of that
-            self._add_node_to_rooms(auth)
-            self.__alert_node_status(online=True, node=auth)
-            # send dataframe deletion instructions to node
-            self._send_dataframe_deletion_instructions(auth)
+            self._handle_node_connection(auth)
         elif session.type == "user":
             self._add_user_to_rooms(auth)
 
@@ -122,6 +110,31 @@ class DefaultSocketNamespace(Namespace):
 
         # cleanup (e.g. database session)
         self.__cleanup()
+
+    def _handle_node_connection(self, node: Authenticatable) -> None:
+        """
+        Handle a node connection when it is first connected or when the connection
+        is recovered through a ping.
+
+        Parameters
+        ----------
+        node: Authenticatable
+            Node that is to be connected
+        """
+        # It appears to be necessary to use the root socketio instance
+        # otherwise events cannot be sent outside the current namespace.
+        # In this case, only events to '/tasks' can be emitted otherwise.
+        self.socketio.emit("node-status-changed", namespace="/admin")
+
+        # Ensure that node syncs on initial connection
+        emit("sync", room=request.sid)
+
+        # Add node to rooms and alert other clients of that
+        self._add_node_to_rooms(node)
+        self.__alert_node_status(online=True, node=node)
+
+        # send dataframe deletion instructions to node
+        self._send_dataframe_deletion_instructions(node)
 
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
@@ -381,6 +394,15 @@ class DefaultSocketNamespace(Namespace):
         ping and sets them as online.
         """
         auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
+
+        if auth.status != AuthStatus.ONLINE.value:
+            self._handle_node_connection(auth)
+            for room in session.rooms:
+                self.__join_room_and_notify(room)
+            self.log.info(
+                f"Node {session.name} websocket session recovered through ping"
+            )
+
         auth.status = AuthStatus.ONLINE.value
         auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
