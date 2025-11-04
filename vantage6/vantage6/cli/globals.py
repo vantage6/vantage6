@@ -11,8 +11,7 @@ from vantage6.common.globals import APPNAME
 #  CLI SETTINGS
 #
 
-DEFAULT_CLI_CONFIG_FOLDER = Path.home() / ".vantage6"
-DEFAULT_CLI_CONFIG_FILE = DEFAULT_CLI_CONFIG_FOLDER / "config.yaml"
+DEFAULT_CLI_CONFIG_FILE = "kubernetes_config.yaml"
 
 #
 #   SERVER SETTINGS

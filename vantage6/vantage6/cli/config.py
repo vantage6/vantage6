@@ -1,19 +1,58 @@
 import os
-from os import PathLike
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
+import appdirs
 import questionary
 import yaml
 from colorama import Fore, Style
-from kubernetes import config
+from kubernetes import config as k8s_config
 
 from vantage6.common import info, warning
+from vantage6.common.enum import StrEnumBase
+from vantage6.common.globals import APPNAME
 
-from vantage6.cli.globals import (
-    DEFAULT_CLI_CONFIG_FILE,
-)
+from vantage6.cli.globals import DEFAULT_CLI_CONFIG_FILE
 
 _CONTEXT_INFO_PRINTED = False
+
+
+class K8SConfigVariable(StrEnumBase):
+    """
+    Enum containing the variables of the Kubernetes configuration.
+    """
+
+    CONTEXT = "context"
+    NAMESPACE = "namespace"
+
+
+@dataclass
+class KubernetesConfig:
+    """
+    Class to store Kubernetes configuration.
+
+    Attributes
+    ----------
+    last_context : str or None
+        The last used Kubernetes context.
+    last_namespace : str or None
+        The last used Kubernetes namespace.
+    """
+
+    last_context: str | None = None
+    last_namespace: str | None = None
+
+    def to_dict(self) -> dict:
+        """
+        Convert the Kubernetes configuration to a dictionary.
+        """
+        output = {}
+        if self.last_context:
+            output["last_context"] = self.last_context
+        if self.last_namespace:
+            output["last_namespace"] = self.last_namespace
+        return output
 
 
 class CliConfig:
@@ -41,7 +80,7 @@ class CliConfig:
         Last modification time of the configuration file.
     """
 
-    def __init__(self, config_path: str | PathLike = DEFAULT_CLI_CONFIG_FILE) -> None:
+    def __init__(self) -> None:
         """
         Initialize the CliConfig object.
 
@@ -50,36 +89,34 @@ class CliConfig:
         config_path : str or PathLike, optional
             Path to the configuration file.
         """
-        self.config_path: PathLike = Path(config_path)
-        self._cached_config: dict | None = None
+        dirs = appdirs.AppDirs(APPNAME)
+        self.config_path = Path(dirs.user_config_dir) / DEFAULT_CLI_CONFIG_FILE
         self._cached_mtime: float | None = None
+        self.kubernetes_config = KubernetesConfig()
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> None:
         """
         Load the configuration from the file.
-
-        Returns
-        -------
-        dict
-            The loaded configuration data.
         """
+        loaded_config = {}
         if self.config_path.exists():
             with open(self.config_path, "r") as config_file:
-                return yaml.safe_load(config_file) or {}
-        return {}
+                loaded_config = yaml.safe_load(config_file)
 
-    def _save_config(self, config: dict) -> None:
+        context = loaded_config.get("last_context")
+        namespace = loaded_config.get("last_namespace")
+        self.kubernetes_config = KubernetesConfig(
+            last_context=context,
+            last_namespace=namespace,
+        )
+
+    def _save_config(self) -> None:
         """
-        Save the configuration to the file.
-
-        Parameters
-        ----------
-        config : dict
-            The configuration data to save.
+        Save the configuration to the kubernetes configuration file.
         """
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.config_path, "w") as config_file:
-            yaml.dump(config, config_file)
+            yaml.dump(self.kubernetes_config.to_dict(), config_file)
 
     def _reload_cache_lazy(self) -> None:
         """
@@ -88,25 +125,13 @@ class CliConfig:
         if self.config_path.exists():
             mtime = os.path.getmtime(self.config_path)
             if self._cached_mtime != mtime:
-                self._cached_config = self._load_config()
+                self._load_config()
                 self._cached_mtime = mtime
         else:
-            self._cached_config = {}
+            self.kubernetes_config = KubernetesConfig()
             self._cached_mtime = None
 
-    def get_last_context(self) -> str | None:
-        """
-        Get the last used Kubernetes context.
-
-        Returns
-        -------
-        str or None
-            The last used Kubernetes context, or None if not set.
-        """
-        self._reload_cache_lazy()
-        return self._cached_config.get("kube", {}).get("last_context")
-
-    def set_last_context(self, context: str) -> None:
+    def _set_last_context(self, context: str) -> None:
         """
         Set the Kubernetes context.
 
@@ -115,28 +140,12 @@ class CliConfig:
         context : str
             The Kubernetes context to set.
         """
-        config = self._load_config()
-        if "kube" not in config:
-            config["kube"] = {}
-
-        if config["kube"].get("last_context") != context:
-            config["kube"]["last_context"] = context
-            self._save_config(config)
+        if self.kubernetes_config.last_context != context:
+            self.kubernetes_config.last_context = context
+            self._save_config()
             self._reload_cache_lazy()
 
-    def get_last_namespace(self) -> str | None:
-        """
-        Get the last used Kubernetes namespace.
-
-        Returns
-        -------
-        str or None
-            The last used Kubernetes namespace, or None if not set.
-        """
-        self._reload_cache_lazy()
-        return self._cached_config.get("kube", {}).get("last_namespace")
-
-    def set_last_namespace(self, namespace: str) -> None:
+    def _set_last_namespace(self, namespace: str) -> None:
         """
         Set the Kubernetes namespace.
 
@@ -145,25 +154,10 @@ class CliConfig:
         namespace : str
             The Kubernetes namespace to set.
         """
-        config = self._load_config()
-        if "kube" not in config:
-            config["kube"] = {}
-
-        if config["kube"].get("last_namespace") != namespace:
-            config["kube"]["last_namespace"] = namespace
-            self._save_config(config)
+        if self.kubernetes_config.last_namespace != namespace:
+            self.kubernetes_config.last_namespace = namespace
+            self._save_config()
             self._reload_cache_lazy()
-
-    def remove_kube(self) -> None:
-        """
-        Remove the last used context and namespace.
-        """
-        if self.config_path.exists():
-            config = self._load_config()
-            if "kube" in config:
-                del config["kube"]
-                self._save_config(config)
-                self._reload_cache_lazy()
 
     def get_active_settings(
         self,
@@ -185,14 +179,52 @@ class CliConfig:
         tuple[str, str]
             A tuple containing the active context and namespace.
         """
+        _all_contexts, active_context = k8s_config.list_kube_config_contexts()
         if not context:
-            _, active_context = config.list_kube_config_contexts()
             context = active_context["name"]
 
         if not namespace:
             namespace = active_context["context"].get("namespace", "default")
 
         return context, namespace
+
+    def _compare_config_variable(
+        self,
+        variable: K8SConfigVariable,
+        current_value: str,
+        last_value: str,
+        set_func: Callable,
+    ) -> None:
+        """
+        Compare a configuration variable with the last used value.
+
+        Parameters
+        ----------
+        variable : K8SConfigVariables
+            The variable to compare.
+        current_value : str
+            The current value of the variable.
+        last_value : str
+            The last used value of the variable.
+        """
+        if not last_value:
+            set_func(current_value)
+        elif last_value != current_value:
+            warning(f"Are you using the correct {variable.value}?")
+            warning(
+                f"Current {variable.value}: {Fore.YELLOW}{current_value}"
+                f"{Style.RESET_ALL}"
+            )
+            warning(
+                f"Last    {variable.value}: {Fore.YELLOW}{last_value}{Style.RESET_ALL}"
+            )
+
+            new_value = questionary.select(
+                f"Which {variable.value} do you want to use?",
+                choices=[current_value, last_value],
+                default=current_value,
+            ).ask()
+            set_func(new_value)
 
     def compare_changes_config(
         self,
@@ -216,53 +248,39 @@ class CliConfig:
         """
 
         active_context, active_namespace = self.get_active_settings(context, namespace)
-        last_context = self.get_last_context()
-        last_namespace = self.get_last_namespace()
+        self._load_config()
 
         # compare context
-        if not last_context:
-            self.set_last_context(context=active_context)
-        elif last_context != active_context:
-            warning("Are you using the correct context?")
-            warning(f"Current context: {Fore.YELLOW}{active_context}{Style.RESET_ALL}")
-            warning(f"Last    context: {Fore.YELLOW}{last_context}{Style.RESET_ALL}")
-
-            active_context = questionary.select(
-                "Which context do you want to use?",
-                choices=[active_context, last_context],
-                default=active_context,
-            ).ask()
-
-            if last_context != active_context:
-                self.set_last_context(context=active_context)
+        self._compare_config_variable(
+            variable=K8SConfigVariable.CONTEXT,
+            current_value=active_context,
+            last_value=self.kubernetes_config.last_context,
+            set_func=self._set_last_context,
+        )
 
         # compare namespace
-        if not last_namespace:
-            self.set_last_namespace(namespace=active_namespace)
-        elif last_namespace != active_namespace:
-            warning("Are you using the correct namespace?")
-            warning(
-                f"Current namespace: {Fore.YELLOW}{active_namespace}{Style.RESET_ALL}"
-            )
-            warning(
-                f"Last    namespace: {Fore.YELLOW}{last_namespace}{Style.RESET_ALL}"
-            )
-
-            active_namespace = questionary.select(
-                "Which namespace do you want to use?",
-                choices=[active_namespace, last_namespace],
-                default=active_namespace,
-            ).ask()
-
-            if last_namespace != active_namespace:
-                self.set_last_namespace(namespace=active_namespace)
+        self._compare_config_variable(
+            variable=K8SConfigVariable.NAMESPACE,
+            current_value=active_namespace,
+            last_value=self.kubernetes_config.last_namespace,
+            set_func=self._set_last_namespace,
+        )
 
         # only print the context and namespace once. This is to avoid printing it many
         # times, e.g. in sandbox commands
         global _CONTEXT_INFO_PRINTED
         if not _CONTEXT_INFO_PRINTED:
-            info(f"Using    context: {Fore.YELLOW}{active_context}{Style.RESET_ALL}")
-            info(f"Using  namespace: {Fore.YELLOW}{active_namespace}{Style.RESET_ALL}")
+            info(
+                f"Using    context: {Fore.YELLOW}{self.kubernetes_config.last_context}"
+                f"{Style.RESET_ALL}"
+            )
+            info(
+                f"Using  namespace: {Fore.YELLOW}"
+                f"{self.kubernetes_config.last_namespace}{Style.RESET_ALL}"
+            )
             _CONTEXT_INFO_PRINTED = True
 
-        return active_context, active_namespace
+        return (
+            self.kubernetes_config.last_context,
+            self.kubernetes_config.last_namespace,
+        )
