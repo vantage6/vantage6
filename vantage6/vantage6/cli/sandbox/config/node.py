@@ -47,8 +47,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         List of tuples with the label and path to the dataset file.
     k8s_config : KubernetesConfig
         Kubernetes configuration.
-    k8s_node_name : str
-        Kubernetes node name.
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
@@ -64,7 +62,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_node_config: Path | None,
         extra_dataset: NodeDataset | None,
         k8s_config: KubernetesConfig,
-        k8s_node_name: str,
         custom_data_dir: Path | None,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
@@ -79,7 +76,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         else:
             self.node_datasets = []
         self.k8s_config = k8s_config
-        self.k8s_node_name = k8s_node_name
 
         self.node_configs = []
         self.node_config_files = []
@@ -277,7 +273,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                         "size": "1Gi",
                     },
                 },
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
                 "databases": {
                     "fileBased": [
                         {

@@ -9,11 +9,12 @@ import yaml
 from colorama import Fore, Style
 from kubernetes import config as k8s_config
 
-from vantage6.common import info, warning
+from vantage6.common import error, info, warning
 from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME
 
 from vantage6.cli.globals import DEFAULT_CLI_CONFIG_FILE
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 _CONTEXT_INFO_PRINTED = False
 
@@ -25,6 +26,7 @@ class K8SConfigVariable(StrEnumBase):
 
     CONTEXT = "context"
     NAMESPACE = "namespace"
+    K8S_NODE = "k8s node"
 
 
 @dataclass
@@ -38,10 +40,13 @@ class KubernetesConfig:
         The last used Kubernetes context.
     namespace : str or None
         The last used Kubernetes namespace.
+    k8s_node : str or None
+        The last used Kubernetes node.
     """
 
     context: str | None = None
     namespace: str | None = None
+    k8s_node: str | None = None
 
     def to_dict(self) -> dict:
         """
@@ -52,6 +57,8 @@ class KubernetesConfig:
             output["context"] = self.context
         if self.namespace:
             output["namespace"] = self.namespace
+        if self.k8s_node:
+            output["k8s_node"] = self.k8s_node
         return output
 
 
@@ -97,9 +104,11 @@ class K8SConfigManager:
 
         context = loaded_config.get("context")
         namespace = loaded_config.get("namespace")
+        k8s_node = loaded_config.get("k8s_node")
         self.kubernetes_config = KubernetesConfig(
             context=context,
             namespace=namespace,
+            k8s_node=k8s_node,
         )
 
     def _save_config(self) -> None:
@@ -151,34 +160,61 @@ class K8SConfigManager:
             self._save_config()
             self._reload_cache_lazy()
 
-    def get_active_settings(
-        self,
-        context: str | None,
-        namespace: str | None,
-    ) -> tuple[str, str]:
+    def _set_k8s_node(self, k8s_node: str) -> None:
         """
-        Get the active Kubernetes context and namespace.
+        Set the Kubernetes node.
+        """
+        if self.kubernetes_config.k8s_node != k8s_node:
+            self.kubernetes_config.k8s_node = k8s_node
+            self._save_config()
+            self._reload_cache_lazy()
+
+    def get_active_settings(
+        self, input_k8s_config: KubernetesConfig
+    ) -> KubernetesConfig:
+        """
+        Get the active Kubernetes configuration.
 
         Parameters
         ----------
-        context : str or None
-            The Kubernetes context to use.
-        namespace : str or None
-            The Kubernetes namespace to use.
+        input_k8s_config : KubernetesConfig
+            The Kubernetes configuration to use.
 
         Returns
         -------
-        tuple[str, str]
-            A tuple containing the active context and namespace.
+        KubernetesConfig
+            An object containing the active context, namespace and k8s node.
         """
+        # start by creating copy of the input_k8s_config
+        active_k8s_config = KubernetesConfig(
+            context=input_k8s_config.context,
+            namespace=input_k8s_config.namespace,
+            k8s_node=input_k8s_config.k8s_node,
+        )
+
         _all_contexts, active_context = k8s_config.list_kube_config_contexts()
-        if not context:
-            context = active_context["name"]
+        if not active_k8s_config.context:
+            active_k8s_config.context = active_context["name"]
 
-        if not namespace:
-            namespace = active_context["context"].get("namespace", "default")
+        if not active_k8s_config.namespace:
+            active_k8s_config.namespace = active_context["context"].get(
+                "namespace", "default"
+            )
 
-        return context, namespace
+        if not active_k8s_config.k8s_node:
+            # Get node names from Kubernetes API
+            try:
+                core_api = get_core_api_with_ssl_handling()
+                nodes = core_api.list_node()
+                if nodes.items:
+                    active_k8s_config.k8s_node = nodes.items[0].metadata.name
+                else:
+                    active_k8s_config.k8s_node = None
+            except Exception:
+                error("Failed to get Kubernetes nodes")
+                active_k8s_config.k8s_node = None
+
+        return active_k8s_config
 
     def _compare_config_variable(
         self,
@@ -220,32 +256,29 @@ class K8SConfigManager:
 
     def select_k8s_config(
         self,
-        context: str | None = None,
-        namespace: str | None = None,
+        input_k8s_config: KubernetesConfig,
     ) -> KubernetesConfig:
         """
         Compare active settings with last used settings.
 
         Parameters
         ----------
-        context : str or None, optional
-            The Kubernetes context to use.
-        namespace : str or None, optional
-            The Kubernetes namespace to use.
+        input_k8s_config : KubernetesConfig
+            The Kubernetes configuration to use.
 
         Returns
         -------
-        tuple[str, str]
-            A tuple containing the active context and namespace.
+        KubernetesConfig
+            An object containing the active context, namespace and k8s node.
         """
 
-        active_context, active_namespace = self.get_active_settings(context, namespace)
+        active_k8s_config = self.get_active_settings(input_k8s_config)
         self._load_config()
 
         # compare context
         self._compare_config_variable(
             variable=K8SConfigVariable.CONTEXT,
-            current_value=active_context,
+            current_value=active_k8s_config.context,
             last_value=self.kubernetes_config.context,
             set_func=self._set_context,
         )
@@ -253,9 +286,17 @@ class K8SConfigManager:
         # compare namespace
         self._compare_config_variable(
             variable=K8SConfigVariable.NAMESPACE,
-            current_value=active_namespace,
+            current_value=active_k8s_config.namespace,
             last_value=self.kubernetes_config.namespace,
             set_func=self._set_namespace,
+        )
+
+        # compare k8s node
+        self._compare_config_variable(
+            variable=K8SConfigVariable.K8S_NODE,
+            current_value=active_k8s_config.k8s_node,
+            last_value=self.kubernetes_config.k8s_node,
+            set_func=self._set_k8s_node,
         )
 
         # only print the context and namespace once. This is to avoid printing it many
@@ -269,6 +310,10 @@ class K8SConfigManager:
             info(
                 f"Using  namespace: {Fore.YELLOW}"
                 f"{self.kubernetes_config.namespace}{Style.RESET_ALL}"
+            )
+            info(
+                f"Using   k8s node: {Fore.YELLOW}"
+                f"{self.kubernetes_config.k8s_node}{Style.RESET_ALL}"
             )
             _CONTEXT_INFO_PRINTED = True
 
@@ -295,4 +340,6 @@ def select_k8s_config(
         Object with the selected Kubernetes configuration.
     """
     k8s_config_manager = K8SConfigManager()
-    return k8s_config_manager.select_k8s_config(context=context, namespace=namespace)
+    return k8s_config_manager.select_k8s_config(
+        KubernetesConfig(context=context, namespace=namespace)
+    )

@@ -110,9 +110,6 @@ from vantage6.cli.utils import prompt_config_name
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
-    "--k8s-node-name", default="docker-desktop", help="Kubernetes node name to use"
-)
-@click.option(
     "--data-dir",
     type=click.Path(exists=True),
     default=None,
@@ -144,7 +141,6 @@ def cli_new_sandbox(
     add_dataset: tuple[str, Path] | None,
     context: str | None,
     namespace: str | None,
-    k8s_node_name: str,
     data_dir: str | None,
     local_chart_dir: Path | None,
 ) -> None:
@@ -178,7 +174,6 @@ def cli_new_sandbox(
         extra_store_config=extra_store_config,
         extra_auth_config=extra_auth_config,
         k8s_config=k8s_config,
-        k8s_node_name=k8s_node_name,
         custom_data_dir=data_dir,
     )
 
@@ -194,7 +189,6 @@ def cli_new_sandbox(
         num_nodes=num_nodes,
         initialize=True,
         node_image=node_image,
-        k8s_node_name=k8s_node_name,
         extra_node_config=extra_node_config,
         add_dataset=add_dataset,
         custom_data_dir=data_dir,

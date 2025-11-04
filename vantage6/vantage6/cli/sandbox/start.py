@@ -120,15 +120,11 @@ def execute_sandbox_start(
     num_nodes: int,
     initialize: bool,
     node_image: str | None = None,
-    k8s_node_name: str | None = None,
     extra_node_config: Path | None = None,
     add_dataset: tuple[str, Path] | None = None,
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
 ) -> None:
-    if k8s_node_name is None:
-        k8s_node_name = ctx.config["database"]["k8sNodeName"]
-
     # First we need to start the keycloak service
     cmd = [
         "v6",
@@ -196,7 +192,6 @@ def execute_sandbox_start(
             extra_node_config=extra_node_config,
             add_dataset=add_dataset,
             k8s_config=k8s_config,
-            k8s_node_name=k8s_node_name,
             custom_data_dir=custom_data_dir,
         )
     else:
@@ -237,7 +232,6 @@ def _initialize_sandbox(
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
     k8s_config: KubernetesConfig,
-    k8s_node_name: str,
     custom_data_dir: Path | None,
 ) -> list[str]:
     info("Populating server")
@@ -269,7 +263,6 @@ def _initialize_sandbox(
         extra_node_config=extra_node_config,
         extra_dataset=extra_dataset,
         k8s_config=k8s_config,
-        k8s_node_name=k8s_node_name,
         custom_data_dir=custom_data_dir,
     )
     node_config_manager.generate_node_configs()

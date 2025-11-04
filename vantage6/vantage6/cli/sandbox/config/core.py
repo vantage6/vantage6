@@ -33,8 +33,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         Path to the extra algorithm store configuration file.
     k8s_config : KubernetesConfig
         Kubernetes configuration.
-    k8s_node_name : str
-        Kubernetes node name.
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
@@ -53,7 +51,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         extra_store_config: Path | None,
         extra_auth_config: Path | None,
         k8s_config: KubernetesConfig,
-        k8s_node_name: str,
         custom_data_dir: Path | None = None,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
@@ -72,7 +69,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.server_config_file = None
         self.store_config_file = None
         self.auth_config_file = None
-        self.k8s_node_name = k8s_node_name
 
     def generate_server_configs(self) -> None:
         """Generates the demo network."""
@@ -138,7 +134,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "dev": {
                     "host_uri": (
                         "host.docker.internal"
-                        if self.k8s_node_name == "docker-desktop"
+                        if self.k8s_config.k8s_node == "docker-desktop"
                         else "172.17.0.1"
                     ),
                     "store_address": store_address,
@@ -151,7 +147,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             "rabbitmq": {},
             "database": {
                 "volumePath": str(data_dir),
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
             },
             "ui": {
                 "port": self.ui_port,
@@ -248,7 +244,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "dev": {
                     "host_uri": (
                         "host.docker.internal"
-                        if self.k8s_node_name == "docker-desktop"
+                        if self.k8s_config.k8s_node == "docker-desktop"
                         else "172.17.0.1"
                     ),
                     "disable_review": True,
@@ -257,7 +253,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             },
             "database": {
                 "volumePath": str(data_dir),
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
             },
         }
 
