@@ -7,11 +7,11 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import (
     find_running_service_names,
-    select_context_and_namespace,
     select_running_service,
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.server.stop import cli_server_stop
 
 
@@ -29,17 +29,13 @@ def cli_sandbox_stop(
     """
     Stop a sandbox environment.
     """
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     running_services = find_running_service_names(
         instance_type=InstanceType.SERVER,
         only_system_folders=False,
         only_user_folders=False,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         sandbox=True,
     )
 
@@ -66,9 +62,9 @@ def cli_sandbox_stop(
                 node.name,
                 "--sandbox",
                 "--context",
-                context,
+                k8s_config.last_context,
                 "--namespace",
-                namespace,
+                k8s_config.last_namespace,
             ]
             subprocess.run(cmd, check=True)
 
@@ -76,8 +72,8 @@ def cli_sandbox_stop(
     click_ctx.invoke(
         cli_server_stop,
         name=name,
-        context=context,
-        namespace=namespace,
+        context=k8s_config.last_context,
+        namespace=k8s_config.last_namespace,
         system_folders=False,
         all_servers=False,
         is_sandbox=True,

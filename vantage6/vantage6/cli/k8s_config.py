@@ -55,34 +55,26 @@ class KubernetesConfig:
         return output
 
 
-class CliConfig:
+class K8SConfigManager:
     """
-    A class to manage CLI configuration for Kubernetes context and namespace.
+    A class to manage CLI configuration for Kubernetes.
 
-    The CLI configuration is stored in a `config.yaml` file located at the path
-    specified by `DEFAULT_CLI_CONFIG_FILE`.
-
-    The `config.yaml` file has the following structure:
-
-    ```yaml
-    kube:
-      last_context: <last_used_k8s_context>
-      last_namespace: <last_used_k8s_namespace>
-    ```
+    The Kubernetes CLI configuration is stored in a YAML file, and contains, for
+    example, the last used context and namespace.
 
     Attributes
     ----------
     config_path : PathLike
         Path to the configuration file.
-    _cached_config : dict or None
-        Cached configuration data.
+    kubernetes_config : KubernetesConfig
+        The Kubernetes configuration.
     _cached_mtime : float or None
         Last modification time of the configuration file.
     """
 
     def __init__(self) -> None:
         """
-        Initialize the CliConfig object.
+        Initialize the K8SConfigManager object.
 
         Parameters
         ----------
@@ -223,14 +215,14 @@ class CliConfig:
                 f"Which {variable.value} do you want to use?",
                 choices=[current_value, last_value],
                 default=current_value,
-            ).ask()
+            ).unsafe_ask()
             set_func(new_value)
 
-    def compare_changes_config(
+    def select_k8s_config(
         self,
         context: str | None = None,
         namespace: str | None = None,
-    ) -> tuple[str, str]:
+    ) -> KubernetesConfig:
         """
         Compare active settings with last used settings.
 
@@ -280,7 +272,27 @@ class CliConfig:
             )
             _CONTEXT_INFO_PRINTED = True
 
-        return (
-            self.kubernetes_config.last_context,
-            self.kubernetes_config.last_namespace,
-        )
+        return self.kubernetes_config
+
+
+def select_k8s_config(
+    context: str | None = None,
+    namespace: str | None = None,
+) -> KubernetesConfig:
+    """
+    Select the Kubernetes context and namespace.
+
+    Parameters
+    ----------
+    context : str or None, optional
+        The Kubernetes context to use.
+    namespace : str or None, optional
+        The Kubernetes namespace to use.
+
+    Returns
+    -------
+    KubernetesConfig
+        Object with the selected Kubernetes configuration.
+    """
+    k8s_config_manager = K8SConfigManager()
+    return k8s_config_manager.select_k8s_config(context=context, namespace=namespace)

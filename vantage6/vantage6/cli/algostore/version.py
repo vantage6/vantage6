@@ -31,7 +31,6 @@ def cli_algo_store_version(
     """
     Print the version of the vantage6 algorithm store.
     """
-
     ctx = get_and_select_ctx(
         InstanceType.ALGORITHM_STORE,
         name,

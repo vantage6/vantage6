@@ -16,6 +16,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
 
 
@@ -28,7 +29,6 @@ def prestart_checks(
     """
     Run pre-start checks for an instance.
     """
-
     check_config_name_allowed(name)
 
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
@@ -40,8 +40,7 @@ def helm_install(
     release_name: str,
     chart_name: ChartName,
     values_file: str | PathLike | None = None,
-    context: str | None = None,
-    namespace: str | None = None,
+    k8s_config: KubernetesConfig | None = None,
     local_chart_dir: str | None = None,
     custom_values: list[str] | None = None,
 ) -> None:
@@ -56,10 +55,8 @@ def helm_install(
         The name of the Helm chart.
     values_file : str, optional
         A single values file to use with the `-f` flag.
-    context : str, optional
-        The Kubernetes context to use.
-    namespace : str, optional
-        The Kubernetes namespace to use.
+    k8s_config : KubernetesConfig, optional
+        The Kubernetes configuration to use.
     local_chart_dir : str, optional
         The local directory containing the Helm charts.
     custom_values : list[str], optional
@@ -75,8 +72,13 @@ def helm_install(
         error(f"Helm chart values file does not exist: {values_file}")
         return
 
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config:
+        validate_input_cmd_args(
+            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+        )
+        validate_input_cmd_args(
+            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+        )
 
     if local_chart_dir and local_chart_dir.rstrip("/").endswith(chart_name.value):
         local_chart_dir = str(Path(local_chart_dir).parent)
@@ -104,11 +106,11 @@ def helm_install(
     if values_file:
         command.extend(["-f", str(values_file)])
 
-    if context:
-        command.extend(["--kube-context", context])
+    if k8s_config.last_context:
+        command.extend(["--kube-context", k8s_config.last_context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config.last_namespace:
+        command.extend(["--namespace", k8s_config.last_namespace])
 
     if custom_values:
         for custom_value in custom_values:
@@ -140,8 +142,7 @@ def start_port_forward(
     service_port: int,
     port: int,
     ip: str = LOCALHOST,
-    context: str | None = None,
-    namespace: str | None = None,
+    k8s_config: KubernetesConfig | None = None,
 ) -> None:
     """
     Port forward a kubernetes service.
@@ -156,10 +157,8 @@ def start_port_forward(
         The port to listen on.
     ip : str
         The IP address to listen on. Defaults to localhost.
-    context : str | None
-        The Kubernetes context to use.
-    namespace : str | None
-        The Kubernetes namespace to use.
+    k8s_config : KubernetesConfig, optional
+        The Kubernetes configuration to use.
     """
     # Input validation
     validate_input_cmd_args(service_name, "service name")
@@ -177,8 +176,13 @@ def start_port_forward(
         error(f"Invalid IP address: {ip}. Must be a valid IPv4 address or 'localhost'.")
         return
 
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config:
+        validate_input_cmd_args(
+            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+        )
+        validate_input_cmd_args(
+            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+        )
 
     # Check if the service is ready before starting port forwarding
     info(f"Waiting for service '{service_name}' to become ready...")
@@ -195,11 +199,11 @@ def start_port_forward(
                 "jsonpath={.subsets[*].addresses[*].ip}",
             ]
 
-            if context:
-                command.extend(["--context", context])
+            if k8s_config.last_context:
+                command.extend(["--context", k8s_config.last_context])
 
-            if namespace:
-                command.extend(["--namespace", namespace])
+            if k8s_config.last_namespace:
+                command.extend(["--namespace", k8s_config.last_namespace])
 
             result = subprocess.check_output(command).decode().strip()
 
@@ -230,11 +234,11 @@ def start_port_forward(
         f"{port}:{service_port}",
     ]
 
-    if context:
-        command.extend(["--context", context])
+    if k8s_config.last_context:
+        command.extend(["--context", k8s_config.last_context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config.last_namespace:
+        command.extend(["--namespace", k8s_config.last_namespace])
 
     # Start the port forwarding process
     try:

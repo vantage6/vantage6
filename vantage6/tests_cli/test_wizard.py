@@ -8,6 +8,7 @@ from vantage6.cli.configuration_create import (
     make_configuration,
     select_configuration_questionnaire,
 )
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.node.new import node_configuration_questionaire
 from vantage6.cli.server.new import server_configuration_questionaire
 
@@ -88,9 +89,14 @@ class WizardTest(unittest.TestCase):
         assert len(config["node"]["databases"]["fileBased"]) == 0
         assert len(config["node"]["databases"]["serviceBased"]) == 1
 
+    @patch("vantage6.cli.server.new.select_k8s_config")
     @patch("vantage6.cli.configuration_create.q")
     @patch("vantage6.cli.server.new.q")
-    def test_server_wizard(self, q, q_server_common):
+    def test_server_wizard(self, q, q_server_common, select_k8s_config):
+        select_k8s_config.return_value = KubernetesConfig(
+            last_context="test-context",
+            last_namespace="test-namespace",
+        )
         q.unsafe_prompt.side_effect = self.prompts
         q_server_common.unsafe_prompt.side_effect = self.prompts
         q_server_common.confirm.return_value.unsafe_ask.side_effect = [
@@ -106,7 +112,12 @@ class WizardTest(unittest.TestCase):
             "ui-image",  # UI image
         ]
 
-        config = server_configuration_questionaire(instance_name="vtg6", log_dir="/log")
+        config = server_configuration_questionaire(
+            instance_name="vtg6",
+            log_dir="/log",
+            namespace="test-namespace",
+            context="test-context",
+        )
 
         keys = ["database", "rabbitmq", "server", "ui"]
         for key in keys:

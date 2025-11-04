@@ -6,8 +6,8 @@ from colorama import Fore, Style
 from vantage6.common import error
 from vantage6.common.globals import Ports
 
-from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.core import CoreSandboxConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.server.common import get_server_context
@@ -153,10 +153,7 @@ def cli_new_sandbox(
     """
 
     # Prompt for the k8s namespace and context
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     if data_dir is not None:
         data_dir = Path(data_dir)
@@ -180,8 +177,7 @@ def cli_new_sandbox(
         extra_server_config=extra_server_config,
         extra_store_config=extra_store_config,
         extra_auth_config=extra_auth_config,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         k8s_node_name=k8s_node_name,
         custom_data_dir=data_dir,
     )
@@ -194,8 +190,7 @@ def cli_new_sandbox(
         click_ctx=click_ctx,
         ctx=ctx,
         server_name=server_name,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=True,
         node_image=node_image,

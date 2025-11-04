@@ -16,6 +16,7 @@ from vantage6.cli.globals import (
     DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL,
     InfraComponentName,
 )
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
 from vantage6.cli.utils_kubernetes import create_kubernetes_apis_with_ssl_handling
 
@@ -70,8 +71,7 @@ def cli_node_stop(
 
 def _stop_node(
     node_helm_name: str,
-    namespace: str,
-    context: str,
+    k8s_config: KubernetesConfig,
     system_folders: bool,
     is_sandbox: bool,
 ) -> None:
@@ -91,7 +91,7 @@ def _stop_node(
     is_sandbox: bool
         Whether node is a sandbox node or not
     """
-    helm_uninstall(release_name=node_helm_name, context=context, namespace=namespace)
+    helm_uninstall(release_name=node_helm_name, k8s_config=k8s_config)
 
     stop_port_forward(service_name=f"{node_helm_name}-node-service")
 

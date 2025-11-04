@@ -10,9 +10,9 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.new import new
-from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.configuration_create import add_common_server_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -52,17 +52,15 @@ def cli_server_new(
 
     new(
         config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(name, log_dir),
+        config_producing_func_args=(name, log_dir, namespace, context),
         name=name,
         system_folders=system_folders,
-        namespace=namespace,
-        context=context,
         type_=InstanceType.SERVER,
     )
 
 
 def server_configuration_questionaire(
-    instance_name: str, log_dir: Path
+    instance_name: str, log_dir: Path, namespace: str, context: str
 ) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
@@ -114,8 +112,10 @@ def server_configuration_questionaire(
     # store and keycloak service can also be setup in the `v6 server new` command.
 
     # === Keycloak settings ===
-    _context, namespace = select_context_and_namespace()
-    keycloak_url = f"http://vantage6-auth-keycloak.{namespace}.svc.cluster.local"
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
+    keycloak_url = (
+        f"http://vantage6-auth-keycloak.{k8s_config.last_namespace}.svc.cluster.local"
+    )
     config["server"]["keycloakUrl"] = keycloak_url
 
     # set directory to store log files on host machine

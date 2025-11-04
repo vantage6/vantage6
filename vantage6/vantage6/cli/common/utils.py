@@ -11,40 +11,9 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.cli.config import CliConfig
 from vantage6.cli.globals import CLICommandName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
-
-
-def select_context_and_namespace(
-    context: str | None = None,
-    namespace: str | None = None,
-) -> tuple[str, str]:
-    """
-    Select the context and namespace to use.
-
-    This uses the CLI config to compare the provided context and namespace with the
-    last used context and namespace. If the provided context and namespace are not
-    the same as the last used context and namespace, the CLI config is updated.
-
-    Parameters
-    ----------
-    context : str, optional
-        The Kubernetes context to use.
-    namespace : str, optional
-        The Kubernetes namespace to use.
-
-    Returns
-    -------
-    tuple[str, str]
-        The context and namespace to use
-    """
-    cli_config = CliConfig()
-
-    return cli_config.compare_changes_config(
-        context=context,
-        namespace=namespace,
-    )
 
 
 def create_directory_if_not_exists(directory: Path) -> None:
@@ -62,9 +31,7 @@ def find_running_service_names(
     instance_type: InstanceType,
     only_system_folders: bool = False,
     only_user_folders: bool = False,
-    context: str | None = None,
-    namespace: str | None = None,
-    sandbox: bool = False,
+    k8s_config: KubernetesConfig | None = None,
 ) -> list[str]:
     """
     List running Vantage6 servers.
@@ -77,12 +44,9 @@ def find_running_service_names(
         Whether to look for system-based services or not. By default False.
     only_user_folders : bool, optional
         Whether to look for user-based services or not. By default False.
-    context : str, optional
-        The Kubernetes context to use.
-    namespace : str, optional
-        The Kubernetes namespace to use.
-    sandbox : bool, optional
-        Whether to look for sandbox services or not. By default False.
+    k8s_config : KubernetesConfig, optional
+        The Kubernetes configuration to use. If None, the default Kubernetes
+        configuration will be used.
 
     Returns
     -------
@@ -90,8 +54,13 @@ def find_running_service_names(
         List of release names that are running
     """
     # Input validation
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config:
+        validate_input_cmd_args(
+            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+        )
+        validate_input_cmd_args(
+            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+        )
     validate_input_cmd_args(instance_type, "instance type", allow_none=False)
     if only_system_folders and only_user_folders:
         error("Cannot use both only_system_folders and only_user_folders")
@@ -105,11 +74,11 @@ def find_running_service_names(
         "json",  # Get structured output
     ]
 
-    if context:
-        command.extend(["--kube-context", context])
+    if k8s_config and k8s_config.last_context:
+        command.extend(["--kube-context", k8s_config.last_context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config and k8s_config.last_namespace:
+        command.extend(["--namespace", k8s_config.last_namespace])
     else:
         command.extend(["--all-namespaces"])
 

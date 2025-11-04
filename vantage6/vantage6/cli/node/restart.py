@@ -9,9 +9,9 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import (
     find_running_service_names,
     get_config_name_from_service_name,
-    select_context_and_namespace,
 )
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.stop import cli_node_stop
 
 
@@ -52,17 +52,13 @@ def cli_node_restart(
     is_sandbox: bool,
 ) -> None:
     """Restart the node"""
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     running_node_names = find_running_service_names(
         instance_type=InstanceType.NODE,
         only_system_folders=system_folders,
         only_user_folders=not system_folders,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
     if not running_node_names:
         warning("No nodes are currently running. No action taken.")
@@ -98,8 +94,8 @@ def cli_node_restart(
             cli_node_stop,
             name=node_name,
             system_folders=system_folders,
-            context=context,
-            namespace=namespace,
+            context=k8s_config.last_context,
+            namespace=k8s_config.last_namespace,
             all_nodes=False,
             is_sandbox=is_sandbox,
         )
@@ -111,9 +107,9 @@ def cli_node_restart(
             "--name",
             node_name,
             "--context",
-            context,
+            k8s_config.last_context,
             "--namespace",
-            namespace,
+            k8s_config.last_namespace,
         ]
         if system_folders:
             cmd.append("--system")

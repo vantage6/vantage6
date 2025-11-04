@@ -30,15 +30,7 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
     default=DEFAULT_SERVER_SYSTEM_FOLDERS,
     help="Use user folders instead of system folders",
 )
-@click.option("--context", default=None, help="Kubernetes context to use")
-@click.option(
-    "--namespace",
-    default=None,
-    help="Kubernetes namespace to use",
-)
-def cli_algo_store_new(
-    name: str, system_folders: bool, namespace: str, context: str
-) -> None:
+def cli_algo_store_new(name: str, system_folders: bool) -> None:
     """
     Create a new server configuration.
     """
@@ -51,8 +43,6 @@ def cli_algo_store_new(
         config_producing_func_args=(name, default_log_dir),
         name=name,
         system_folders=system_folders,
-        namespace=namespace,
-        context=context,
         type_=InstanceType.ALGORITHM_STORE,
     )
 
