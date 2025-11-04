@@ -94,8 +94,8 @@ def cli_node_restart(
             cli_node_stop,
             name=node_name,
             system_folders=system_folders,
-            context=k8s_config.last_context,
-            namespace=k8s_config.last_namespace,
+            context=k8s_config.context,
+            namespace=k8s_config.namespace,
             all_nodes=False,
             is_sandbox=is_sandbox,
         )
@@ -107,9 +107,9 @@ def cli_node_restart(
             "--name",
             node_name,
             "--context",
-            k8s_config.last_context,
+            k8s_config.context,
             "--namespace",
-            k8s_config.last_namespace,
+            k8s_config.namespace,
         ]
         if system_folders:
             cmd.append("--system")

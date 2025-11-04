@@ -74,10 +74,10 @@ def helm_install(
 
     if k8s_config:
         validate_input_cmd_args(
-            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+            k8s_config.context, "k8s_config.context", allow_none=True
         )
         validate_input_cmd_args(
-            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+            k8s_config.namespace, "k8s_config.namespace", allow_none=True
         )
 
     if local_chart_dir and local_chart_dir.rstrip("/").endswith(chart_name.value):
@@ -106,11 +106,11 @@ def helm_install(
     if values_file:
         command.extend(["-f", str(values_file)])
 
-    if k8s_config.last_context:
-        command.extend(["--kube-context", k8s_config.last_context])
+    if k8s_config.context:
+        command.extend(["--kube-context", k8s_config.context])
 
-    if k8s_config.last_namespace:
-        command.extend(["--namespace", k8s_config.last_namespace])
+    if k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     if custom_values:
         for custom_value in custom_values:
@@ -178,10 +178,10 @@ def start_port_forward(
 
     if k8s_config:
         validate_input_cmd_args(
-            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+            k8s_config.context, "k8s_config.context", allow_none=True
         )
         validate_input_cmd_args(
-            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+            k8s_config.namespace, "k8s_config.namespace", allow_none=True
         )
 
     # Check if the service is ready before starting port forwarding
@@ -199,11 +199,11 @@ def start_port_forward(
                 "jsonpath={.subsets[*].addresses[*].ip}",
             ]
 
-            if k8s_config.last_context:
-                command.extend(["--context", k8s_config.last_context])
+            if k8s_config.context:
+                command.extend(["--context", k8s_config.context])
 
-            if k8s_config.last_namespace:
-                command.extend(["--namespace", k8s_config.last_namespace])
+            if k8s_config.namespace:
+                command.extend(["--namespace", k8s_config.namespace])
 
             result = subprocess.check_output(command).decode().strip()
 
@@ -234,11 +234,11 @@ def start_port_forward(
         f"{port}:{service_port}",
     ]
 
-    if k8s_config.last_context:
-        command.extend(["--context", k8s_config.last_context])
+    if k8s_config.context:
+        command.extend(["--context", k8s_config.context])
 
-    if k8s_config.last_namespace:
-        command.extend(["--namespace", k8s_config.last_namespace])
+    if k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     # Start the port forwarding process
     try:

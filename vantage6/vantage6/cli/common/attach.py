@@ -91,9 +91,9 @@ def _attach_logs(
     command = [
         "kubectl",
         "--context",
-        k8s_config.last_context,
+        k8s_config.context,
         "-n",
-        k8s_config.last_namespace,
+        k8s_config.namespace,
         "logs",
         "--follow",
         "--selector",

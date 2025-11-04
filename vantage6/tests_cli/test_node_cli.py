@@ -211,8 +211,8 @@ class NodeCLITest(unittest.TestCase):
         ctx.name = "test-node"
         context.return_value = ctx
         ctx_ns.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
 
         runner = CliRunner()
@@ -230,8 +230,8 @@ class NodeCLITest(unittest.TestCase):
         find_running_service_names.return_value = [node_helm_name]
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
         ctx_ns.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
 
         runner = CliRunner()
@@ -253,12 +253,12 @@ class NodeCLITest(unittest.TestCase):
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
         ctx_ns_stop.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
         ctx_ns_restart.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
 
         # Mock subprocess.run to handle both helm calls and node start calls
@@ -283,8 +283,8 @@ class NodeCLITest(unittest.TestCase):
     def test_attach(self, select_k8s_config, attach_logs):
         """Attach pod logs without errors."""
         select_k8s_config.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
         runner = CliRunner()
         runner.invoke(cli_node_attach)
@@ -294,8 +294,8 @@ class NodeCLITest(unittest.TestCase):
             infra_component=InfraComponentName.NODE,
             system_folders=False,
             k8s_config=KubernetesConfig(
-                last_context="test-context",
-                last_namespace="test-namespace",
+                context="test-context",
+                namespace="test-namespace",
             ),
             is_sandbox=False,
         )

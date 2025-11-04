@@ -77,7 +77,7 @@ def execute_stop(
 
     if stop_all:
         for service in running_services:
-            stop_function(service, k8s_config.last_namespace, k8s_config.last_context)
+            stop_function(service, k8s_config.namespace, k8s_config.context)
     else:
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
@@ -154,12 +154,8 @@ def helm_uninstall(
     # Input validation
     validate_input_cmd_args(release_name, "release name")
     if k8s_config:
-        validate_input_cmd_args(
-            k8s_config.last_context, "context name", allow_none=True
-        )
-        validate_input_cmd_args(
-            k8s_config.last_namespace, "namespace name", allow_none=True
-        )
+        validate_input_cmd_args(k8s_config.context, "context name", allow_none=True)
+        validate_input_cmd_args(k8s_config.namespace, "namespace name", allow_none=True)
 
     # Create the command
     max_time_stop = "60s"
@@ -168,11 +164,11 @@ def helm_uninstall(
     )
     command = ["helm", "uninstall", release_name, "--wait", "--timeout", max_time_stop]
 
-    if k8s_config and k8s_config.last_context:
-        command.extend(["--kube-context", k8s_config.last_context])
+    if k8s_config and k8s_config.context:
+        command.extend(["--kube-context", k8s_config.context])
 
-    if k8s_config and k8s_config.last_namespace:
-        command.extend(["--namespace", k8s_config.last_namespace])
+    if k8s_config and k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     try:
         subprocess.run(

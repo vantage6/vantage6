@@ -59,7 +59,7 @@ def _get_node_version_from_k8s(
     pod = _get_pod_name_for_helm_release(helm_release, k8s_config)
     output = _exec_pod_command(
         pod_name=pod,
-        namespace=k8s_config.last_namespace,
+        namespace=k8s_config.namespace,
         command=["vnode-local", "version"],
     )
     return output.strip()
@@ -76,7 +76,7 @@ def _get_pod_name_for_helm_release(
     try:
         # Load kubeconfig (context optional). Falls back to in-cluster if not available.
         try:
-            k8s_config.load_kube_config(context=k8s_config.last_context)  # desktop/dev
+            k8s_config.load_kube_config(context=k8s_config.context)  # desktop/dev
         except ConfigException:
             k8s_config.load_incluster_config()  # in-cluster
     except ConfigException as exc:
@@ -85,12 +85,12 @@ def _get_pod_name_for_helm_release(
     core = get_core_api_with_ssl_handling()
     selector = f"app={APPNAME}-node,release={helm_release}"
     pods = core.list_namespaced_pod(
-        namespace=k8s_config.last_namespace, label_selector=selector
+        namespace=k8s_config.namespace, label_selector=selector
     ).items
     if not pods:
         error(
             f"No pods found for Helm release '{helm_release}' in ns "
-            f"'{k8s_config.last_namespace}'"
+            f"'{k8s_config.namespace}'"
         )
         exit(1)
     # Prefer a Ready pod

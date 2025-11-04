@@ -36,7 +36,6 @@ def cli_sandbox_stop(
         only_system_folders=False,
         only_user_folders=False,
         k8s_config=k8s_config,
-        sandbox=True,
     )
 
     if not running_services:
@@ -62,9 +61,9 @@ def cli_sandbox_stop(
                 node.name,
                 "--sandbox",
                 "--context",
-                k8s_config.last_context,
+                k8s_config.context,
                 "--namespace",
-                k8s_config.last_namespace,
+                k8s_config.namespace,
             ]
             subprocess.run(cmd, check=True)
 
@@ -72,8 +71,8 @@ def cli_sandbox_stop(
     click_ctx.invoke(
         cli_server_stop,
         name=name,
-        context=k8s_config.last_context,
-        namespace=k8s_config.last_namespace,
+        context=k8s_config.context,
+        namespace=k8s_config.namespace,
         system_folders=False,
         all_servers=False,
         is_sandbox=True,

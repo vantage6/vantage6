@@ -34,24 +34,24 @@ class KubernetesConfig:
 
     Attributes
     ----------
-    last_context : str or None
+    context : str or None
         The last used Kubernetes context.
-    last_namespace : str or None
+    namespace : str or None
         The last used Kubernetes namespace.
     """
 
-    last_context: str | None = None
-    last_namespace: str | None = None
+    context: str | None = None
+    namespace: str | None = None
 
     def to_dict(self) -> dict:
         """
         Convert the Kubernetes configuration to a dictionary.
         """
         output = {}
-        if self.last_context:
-            output["last_context"] = self.last_context
-        if self.last_namespace:
-            output["last_namespace"] = self.last_namespace
+        if self.context:
+            output["context"] = self.context
+        if self.namespace:
+            output["namespace"] = self.namespace
         return output
 
 
@@ -95,11 +95,11 @@ class K8SConfigManager:
             with open(self.config_path, "r") as config_file:
                 loaded_config = yaml.safe_load(config_file)
 
-        context = loaded_config.get("last_context")
-        namespace = loaded_config.get("last_namespace")
+        context = loaded_config.get("context")
+        namespace = loaded_config.get("namespace")
         self.kubernetes_config = KubernetesConfig(
-            last_context=context,
-            last_namespace=namespace,
+            context=context,
+            namespace=namespace,
         )
 
     def _save_config(self) -> None:
@@ -123,7 +123,7 @@ class K8SConfigManager:
             self.kubernetes_config = KubernetesConfig()
             self._cached_mtime = None
 
-    def _set_last_context(self, context: str) -> None:
+    def _set_context(self, context: str) -> None:
         """
         Set the Kubernetes context.
 
@@ -132,12 +132,12 @@ class K8SConfigManager:
         context : str
             The Kubernetes context to set.
         """
-        if self.kubernetes_config.last_context != context:
-            self.kubernetes_config.last_context = context
+        if self.kubernetes_config.context != context:
+            self.kubernetes_config.context = context
             self._save_config()
             self._reload_cache_lazy()
 
-    def _set_last_namespace(self, namespace: str) -> None:
+    def _set_namespace(self, namespace: str) -> None:
         """
         Set the Kubernetes namespace.
 
@@ -146,8 +146,8 @@ class K8SConfigManager:
         namespace : str
             The Kubernetes namespace to set.
         """
-        if self.kubernetes_config.last_namespace != namespace:
-            self.kubernetes_config.last_namespace = namespace
+        if self.kubernetes_config.namespace != namespace:
+            self.kubernetes_config.namespace = namespace
             self._save_config()
             self._reload_cache_lazy()
 
@@ -246,16 +246,16 @@ class K8SConfigManager:
         self._compare_config_variable(
             variable=K8SConfigVariable.CONTEXT,
             current_value=active_context,
-            last_value=self.kubernetes_config.last_context,
-            set_func=self._set_last_context,
+            last_value=self.kubernetes_config.context,
+            set_func=self._set_context,
         )
 
         # compare namespace
         self._compare_config_variable(
             variable=K8SConfigVariable.NAMESPACE,
             current_value=active_namespace,
-            last_value=self.kubernetes_config.last_namespace,
-            set_func=self._set_last_namespace,
+            last_value=self.kubernetes_config.namespace,
+            set_func=self._set_namespace,
         )
 
         # only print the context and namespace once. This is to avoid printing it many
@@ -263,12 +263,12 @@ class K8SConfigManager:
         global _CONTEXT_INFO_PRINTED
         if not _CONTEXT_INFO_PRINTED:
             info(
-                f"Using    context: {Fore.YELLOW}{self.kubernetes_config.last_context}"
+                f"Using    context: {Fore.YELLOW}{self.kubernetes_config.context}"
                 f"{Style.RESET_ALL}"
             )
             info(
                 f"Using  namespace: {Fore.YELLOW}"
-                f"{self.kubernetes_config.last_namespace}{Style.RESET_ALL}"
+                f"{self.kubernetes_config.namespace}{Style.RESET_ALL}"
             )
             _CONTEXT_INFO_PRINTED = True
 

@@ -138,9 +138,9 @@ def execute_sandbox_start(
         f"{server_name}-auth.sandbox",
         "--user",
         "--context",
-        k8s_config.last_context,
+        k8s_config.context,
         "--namespace",
-        k8s_config.last_namespace,
+        k8s_config.namespace,
         "--sandbox",
     ]
     if local_chart_dir:
@@ -160,9 +160,9 @@ def execute_sandbox_start(
         f"{ctx.name}-store.sandbox",
         "--user",
         "--context",
-        k8s_config.last_context,
+        k8s_config.context,
         "--namespace",
-        k8s_config.last_namespace,
+        k8s_config.namespace,
         "--sandbox",
     ]
     if local_chart_dir:
@@ -176,8 +176,8 @@ def execute_sandbox_start(
         ctx=ctx,
         name=ctx.name,
         system_folders=False,
-        namespace=k8s_config.last_namespace,
-        context=k8s_config.last_context,
+        namespace=k8s_config.namespace,
+        context=k8s_config.context,
         attach=False,
         local_chart_dir=local_chart_dir,
     )

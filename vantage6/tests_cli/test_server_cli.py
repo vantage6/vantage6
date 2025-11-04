@@ -43,8 +43,8 @@ class ServerCLITest(unittest.TestCase):
         ctx.name = "not-running"
         context.return_value = ctx
         ctx_ns.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
 
         runner = CliRunner()
@@ -182,8 +182,8 @@ collaborations: []
         find_running_service_names.return_value = [server_name]
         get_context.return_value = MagicMock(helm_release_name=server_name)
         context_and_namespace.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
 
         runner = CliRunner()
@@ -197,8 +197,8 @@ collaborations: []
     def test_attach(self, select_k8s_config, attach_logs):
         """Attach logs to the console without errors."""
         select_k8s_config.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
         runner = CliRunner()
         result = runner.invoke(cli_server_attach)
@@ -211,8 +211,8 @@ collaborations: []
             infra_component=InfraComponentName.SERVER,
             system_folders=False,
             k8s_config=KubernetesConfig(
-                last_context="test-context",
-                last_namespace="test-namespace",
+                context="test-context",
+                namespace="test-namespace",
             ),
             is_sandbox=False,
             additional_labels="component=vantage6-server",
@@ -230,8 +230,8 @@ collaborations: []
         subprocess_run,
     ):
         select_k8s_config.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
         select_running_service.return_value = "vantage6-iknl-system-server"
 

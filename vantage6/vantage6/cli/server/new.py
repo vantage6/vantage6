@@ -114,7 +114,7 @@ def server_configuration_questionaire(
     # === Keycloak settings ===
     k8s_config = select_k8s_config(context=context, namespace=namespace)
     keycloak_url = (
-        f"http://vantage6-auth-keycloak.{k8s_config.last_namespace}.svc.cluster.local"
+        f"http://vantage6-auth-keycloak.{k8s_config.namespace}.svc.cluster.local"
     )
     config["server"]["keycloakUrl"] = keycloak_url
 

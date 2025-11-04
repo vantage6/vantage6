@@ -94,8 +94,8 @@ class WizardTest(unittest.TestCase):
     @patch("vantage6.cli.server.new.q")
     def test_server_wizard(self, q, q_server_common, select_k8s_config):
         select_k8s_config.return_value = KubernetesConfig(
-            last_context="test-context",
-            last_namespace="test-namespace",
+            context="test-context",
+            namespace="test-namespace",
         )
         q.unsafe_prompt.side_effect = self.prompts
         q_server_common.unsafe_prompt.side_effect = self.prompts

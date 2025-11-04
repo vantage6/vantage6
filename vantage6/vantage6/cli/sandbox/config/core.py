@@ -109,7 +109,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             f"vantage6-{self.server_name}-store-user-algorithm-store-store-service"
         )
         store_address = (
-            f"http://{store_service}.{self.k8s_config.last_namespace}.svc.cluster.local"
+            f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
             f":{Ports.DEV_ALGO_STORE}"
         )
         config = {
@@ -145,7 +145,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.k8s_config.last_namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
             },
             "rabbitmq": {},
@@ -239,7 +239,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ),
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "policies": {
                     "allowLocalhost": True,

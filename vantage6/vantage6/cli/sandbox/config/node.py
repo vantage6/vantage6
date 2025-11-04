@@ -266,7 +266,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.k8s_config.last_namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "persistence": {
                     "tasks": {
@@ -293,7 +293,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "server": {
                     "url": (
                         f"http://vantage6-{self.server_name}-user-server-vantage6-"
-                        f"server-service.{self.k8s_config.last_namespace}.svc.cluster"
+                        f"server-service.{self.k8s_config.namespace}.svc.cluster"
                         ".local"
                     ),
                     "port": self.server_port,

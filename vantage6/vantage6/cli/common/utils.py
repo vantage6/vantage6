@@ -56,10 +56,10 @@ def find_running_service_names(
     # Input validation
     if k8s_config:
         validate_input_cmd_args(
-            k8s_config.last_context, "k8s_config.last_context", allow_none=True
+            k8s_config.context, "k8s_config.context", allow_none=True
         )
         validate_input_cmd_args(
-            k8s_config.last_namespace, "k8s_config.last_namespace", allow_none=True
+            k8s_config.namespace, "k8s_config.namespace", allow_none=True
         )
     validate_input_cmd_args(instance_type, "instance type", allow_none=False)
     if only_system_folders and only_user_folders:
@@ -74,11 +74,11 @@ def find_running_service_names(
         "json",  # Get structured output
     ]
 
-    if k8s_config and k8s_config.last_context:
-        command.extend(["--kube-context", k8s_config.last_context])
+    if k8s_config and k8s_config.context:
+        command.extend(["--kube-context", k8s_config.context])
 
-    if k8s_config and k8s_config.last_namespace:
-        command.extend(["--namespace", k8s_config.last_namespace])
+    if k8s_config and k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
     else:
         command.extend(["--all-namespaces"])
 
