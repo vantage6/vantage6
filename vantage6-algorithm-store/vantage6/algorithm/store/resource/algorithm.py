@@ -163,26 +163,33 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         digest = get_digest(image_name)
 
         # If getting digest failed, try to use authentication
-        if not digest:
-            docker_registries = self.config.get("private_docker_registries", [])
-            registry_user = None
-            registry_password = None
-            for reg in docker_registries:
-                if reg["registry"] == registry:
-                    registry_user = reg.get("username")
-                    registry_password = reg.get("password")
-                    break
-            if registry_user and registry_password:
-                log.info("Retrying to get digest with authentication...")
-                digest = get_digest(
-                    full_image=image_name,
-                    registry_username=registry_user,
-                    registry_password=registry_password,
-                )
-                if digest:
-                    log.info("Digest obtained succesfully!")
-                else:
-                    log.error("Failed to get digest with authentication!")
+        if digest:
+            log.info("Digest obtained succesfully!")
+            return image_and_tag, digest
+        else:
+            log.debug("Failed to get digest without authentication...")
+
+        docker_registries = self.config.get("private_docker_registries", [])
+        registry_user = None
+        registry_password = None
+        for reg in docker_registries:
+            if reg["registry"] == registry:
+                registry_user = reg.get("username")
+                registry_password = reg.get("password")
+                break
+        if registry_user and registry_password:
+            log.info("Retrying to get digest with authentication...")
+            digest = get_digest(
+                full_image=image_name,
+                registry_username=registry_user,
+                registry_password=registry_password,
+            )
+            if digest:
+                log.info("Digest obtained succesfully!")
+            else:
+                log.error("Failed to get digest with authentication!")
+        else:
+            log.error("Failed to get digest!")
 
         return image_and_tag, digest
 
