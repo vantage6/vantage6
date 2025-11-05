@@ -596,7 +596,7 @@ class ContainerManager:
 
     def _create_docker_login_secret(
         self, priv_regs: list[dict], image: str, run_id: int
-    ) -> k8s_client.V1Secret:
+    ) -> k8s_client.V1Secret | None:
         """
         Create a Docker login secret.
         """
@@ -627,7 +627,7 @@ class ContainerManager:
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
             )
-        except ApiException as exc:
+        except Exception as exc:
             self.log.error(
                 f"Error creating Docker login secret for image {image}: {exc}"
             )
