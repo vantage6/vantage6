@@ -581,6 +581,7 @@ class ContainerManager:
         # policy
 
         status = self.__wait_until_pod_running(
+            run_io=run_io,
             label=f"app={run_io.container_name}",
         )
 
@@ -646,7 +647,7 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __wait_until_pod_running(self, label: str) -> RunStatus:
+    def __wait_until_pod_running(self, run_io: RunIO, label: str) -> RunStatus:
         """"
         This method monitors the status of a Kubernetes POD created by a job and
         waits until it transitions to a 'Running' state or another terminal state
@@ -663,6 +664,8 @@ class ContainerManager:
 
         Parameters
         ----------
+        run_io: RunIO
+            RunIO object that contains information about the run
         label : str
             Label selector to identify the POD associated with the job.
 
@@ -722,11 +725,13 @@ class ContainerManager:
                 )
 
                 # Getting the POD again to check its post-timeout status
-                # Note on using container_statuses[0]: The job pods always use a single
-                # container, container_statuses will always have a single element
-                pod = self.core_api.list_namespaced_pod(
+                pod_list = self.core_api.list_namespaced_pod(
                     namespace=self.task_namespace, label_selector=label
-                ).items[0]
+                ).items
+                if not pod_list or len(pod_list) == 0:
+                    self.log.error(f"No POD found for run {run_io.run_id}")
+                    return RunStatus.UNKNOWN_ERROR
+                pod = pod_list[0]
 
                 pod_phase: RunStatus = compute_job_pod_run_status(
                     pod=pod,
@@ -735,15 +740,15 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outher loop is performed if the pod is
+                # Another iteration on the outer loop is performed if the pod is
                 # pending for reasons other than missing/invalid Docker image (which is
                 # reported as INITIALIZING).
                 if pod_phase != RunStatus.INITIALIZING:
                     return pod_phase
 
                 self.log.debug(
-                    "Job (label %s, namespace %s) still pulling the (probably large) "
-                    "docker image. Waiting again for a new status update...",
+                    "Job (label %s, namespace %s) still pulling the algorithm image. "
+                    "Waiting again for a new status update...",
                     label,
                     self.task_namespace,
                 )
