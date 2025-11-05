@@ -54,7 +54,7 @@ class TaskPostBase(ServicesResources):
     def post_task(
         self,
         data: dict,
-        rules: RuleCollection,
+        rule_collection_to_check: RuleCollection | None = None,
         action: AlgorithmStepType | None = None,
         should_be_compute: bool = False,
     ) -> tuple[dict, HTTPStatus]:
@@ -65,10 +65,10 @@ class TaskPostBase(ServicesResources):
         ----------
         data : dict
             Task data
-        rules : RuleCollection
-            Rule collection instance
-        config : dict
-            Configuration dictionary
+        rule_collection_to_check : RuleCollection | None
+            Rule collection instance. If provided, it will be checked it the user has
+            create permissions for the collaboration. If not provided, the permissions
+            are assumed to be checked beforehand.
         action : AlgorithmStepType | None
             Action to performed by the task. If not provided, the action will be
             inferred from the algorithm.
@@ -100,7 +100,11 @@ class TaskPostBase(ServicesResources):
 
         # verify permissions
         image = data.get("image", "")
-        if g.user and not rules.can_for_col(P.CREATE, collaboration.id):
+        if (
+            g.user
+            and rule_collection_to_check is not None
+            and not rule_collection_to_check.can_for_col(P.CREATE, collaboration.id)
+        ):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
