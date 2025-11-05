@@ -54,6 +54,15 @@ node:
     # Location to the log file
     file: {{ node.logging.file | default('node.log') }}
 
+    # Size of the kubernetes persistent volume claim for logs
+    storageSize: {{ node.logging.storageSize | default('1Gi') }}
+
+    # Storage class to use for the kubernetes persistent volume claim for logs
+    storageClass: {{ node.logging.storageClass | default('local-storage') }}
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: {{ node.logging.volumeHostPath | default('/var/log/vantage6-node') }}
+
     # Size in kb of a single log file
     max_size: {{ node.logging.max_size | default(1024) }}
     use_console: {{ node.logging.use_console | default(true) }}
@@ -341,6 +350,20 @@ node:
   #   - registry: my-private-registry.com
   #     username: my-username
   #     password: my-password
+  {% endif %}
+
+  # Provide additional environment variables to the algorithm containers. This can be
+  # useful for instance to provide threshold values, database credentials, etc.
+  # Note that variable names should consist of only letters, numbers and underscores,
+  # and start with a letter.
+  {% if node.algorithm_env is defined %}
+  algorithm_env:
+    {% for key, value in node.algorithm_env.items() %}
+    {{ key }}: {{ value }}
+    {% endfor %}
+  {% else %}
+  # algorithm_env:
+  #     threshold_example: 10
   {% endif %}
 
   {% if node.debug is defined %}

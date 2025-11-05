@@ -14,6 +14,7 @@ from vantage6.common import Fore, Singleton, Style, __version__, error, get_conf
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
+from vantage6.common.kubernetes.utils import running_in_pod
 
 
 class AppContext(metaclass=Singleton):
@@ -333,7 +334,13 @@ class AppContext(metaclass=Singleton):
         if isinstance(instance_type, enum.Enum):
             instance_type = instance_type.value
 
-        if system_folders:
+        if running_in_pod():
+            return {
+                "log": Path("/mnt/log"),
+                "data": Path("/mnt/data"),
+                "config": Path("/mnt/config"),
+            }
+        elif system_folders:
             return {
                 "log": Path(d.site_data_dir) / instance_type / instance_name,
                 "data": Path(d.site_data_dir) / instance_type / instance_name,

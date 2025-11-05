@@ -42,3 +42,7 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   uv pip install --system --no-binary=uwsgi uwsgi
 
 RUN chmod +x /vantage6/vantage6-algorithm-store/server.sh
+
+# Create directories to mount on the host
+RUN mkdir -p /mnt/log
+RUN mkdir -p /mnt/data

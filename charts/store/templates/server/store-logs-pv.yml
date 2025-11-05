@@ -1,0 +1,28 @@
+{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-store-logs-pv" .Release.Name))) (eq .Values.store.logging.storageClass "local-storage") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-vantage6-store-logs-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "store.labels" . | indent 4 }}
+    type: local-logs
+    app: vantage6-store
+spec:
+  capacity:
+    storage: {{ .Values.store.logging.storageSize | default "128M" }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.store.logging.storageClass | default "local-storage" }}
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ .Values.store.logging.volumeHostPath }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName }}
+{{- end }}

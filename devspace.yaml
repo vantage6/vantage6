@@ -41,6 +41,9 @@ vars:
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
     default: ${PWD}/dev/.db/db_pv_store
+  LOG_MOUNT_PATH:
+    question: "Where should your logs be saved on the host machine?"
+    default: ${PWD}/dev/.log
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running?"
     default: docker-desktop
@@ -130,7 +133,8 @@ pipelines:
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
-        ${STORE_DATABASE_MOUNT_PATH}
+        ${STORE_DATABASE_MOUNT_PATH} \
+        ${LOG_MOUNT_PATH}
   stop-dev:
     run: |-
       echo "Purging all deployments..."
@@ -150,6 +154,13 @@ hooks:
       echo "Creating server database folder"
       python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
     events: ["before:deploy:vantage6-server"]
+  - name: "create-log-folder"
+    command: |
+      echo "Creating log folder"
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/server
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
+    events: ["before:deploy:vantage6-server", "before:deploy:vantage6-store", "before:deploy:vantage6-node"]
   - name: "create-store-database-folder"
     command: |
       echo "Creating algorithm store database folder"
@@ -255,6 +266,7 @@ deployments:
           keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
+            volumeHostPath: ${LOG_MOUNT_PATH}/server
           jwt:
             secret: development-constant-secret!
           dev:
@@ -292,6 +304,7 @@ deployments:
           keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
+            volumeHostPath: ${LOG_MOUNT_PATH}/store
           vantage6ServerUri: http://localhost:7601/server
           policies:
             allowLocalhost: true
@@ -347,6 +360,7 @@ deployments:
               hostPath: ${TASK_DIRECTORY}
           logging:
             level: DEBUG
+            volumeHostPath: ${LOG_MOUNT_PATH}/node
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
@@ -379,8 +393,6 @@ dev:
         bindAddress: localhost
       - port: 7601:7601
         bindAddress: ${PORTS_BIND_ADDRESS}
-    logs:
-      enabled: true
 
   vantage6-server-db:
     labelSelector:
@@ -400,8 +412,6 @@ dev:
         bindAddress: localhost
       - port: 7602:7602
         bindAddress: ${PORTS_BIND_ADDRESS}
-    logs:
-      enabled: true
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
@@ -477,8 +487,6 @@ dev:
         startContainer: true
         onUpload:
           restartContainer: true
-    logs:
-      enabled: true
 
     restartHelper:
       inject: true

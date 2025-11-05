@@ -9,8 +9,12 @@ from vantage6.cli.globals import InfraComponentName
 
 
 @click.command()
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.ALGORITHM_STORE, include_name=True, include_system_folders=True
+    type_=InstanceType.ALGORITHM_STORE,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 @click.option("-f", "--force", "force", flag_value=True)
 def cli_algo_store_remove(

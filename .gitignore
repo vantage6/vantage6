@@ -28,6 +28,7 @@ docs/api-docs/_autosummary
 dev/.data/
 dev/.tasks/
 dev/.db/
+dev/.log/
 
 # Helm
 charts/**/*.tgz
