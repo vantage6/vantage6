@@ -367,7 +367,7 @@ class Function:
     type=str,
     help="Path to the output file",
 )
-def cli_algorithm_generate_algorithm_json(
+def cli_algorithm_generate_json(
     algo_function_file: str, current_json: str, output_file: str
 ) -> dict:
     """

@@ -193,10 +193,8 @@ class NodeCLITest(unittest.TestCase):
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.node.start.helm_install")
-    @patch("vantage6.cli.node.start.start_port_forward")
     def test_start(
         self,
-        start_port_forward,
         helm_install,
         context,
         os_makedirs,

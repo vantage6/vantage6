@@ -71,7 +71,7 @@ def cli_node_start(
     else:
         # if no custom image is specified, find the server version and use
         # the latest images from that minor version
-        client = create_client(ctx)
+        client = create_client(ctx, use_sandbox_port=ctx.is_sandbox)
         major_minor = None
         try:
             # try to get server version, skip if can't get a connection

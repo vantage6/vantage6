@@ -15,6 +15,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.client import UserClient
+from vantage6.client.utils import LogLevel
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
@@ -30,7 +31,7 @@ def _convert_k8s_url_to_localhost(url: str) -> str:
     return url
 
 
-def create_client(ctx: NodeContext) -> UserClient:
+def create_client(ctx: NodeContext, use_sandbox_port: bool = False) -> UserClient:
     """
     Create a client instance.
 
@@ -38,6 +39,9 @@ def create_client(ctx: NodeContext) -> UserClient:
     ----------
     ctx : NodeContext
         Context of the node loaded from the configuration file
+    use_sandbox_port : bool
+        Whether to use the sandbox port or not
+
     Returns
     -------
     UserClient
@@ -68,11 +72,13 @@ def create_client(ctx: NodeContext) -> UserClient:
     return UserClient(
         server_url=url,
         auth_url=auth_url,
-        log_level="warn",
+        log_level=LogLevel.WARN,
     )
 
 
-def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
+def create_client_and_authenticate(
+    ctx: NodeContext, use_sandbox_port: bool = False
+) -> UserClient:
     """
     Generate a client and authenticate with the server.
 
@@ -80,13 +86,15 @@ def create_client_and_authenticate(ctx: NodeContext) -> UserClient:
     ----------
     ctx : NodeContext
         Context of the node loaded from the configuration file
+    use_sandbox_port : bool
+        Whether to use the sandbox port or not
 
     Returns
     -------
     UserClient
         vantage6 client
     """
-    client = create_client(ctx)
+    client = create_client(ctx, use_sandbox_port)
 
     try:
         client.authenticate()

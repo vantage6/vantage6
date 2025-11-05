@@ -42,6 +42,7 @@ spec:
         - secretRef:
             name: {{ .Release.Name }}-node-secrets
         command: ["vnode-local", "start", "-c", "/app/config/config.yml"]
+        # TODO v5+ check if this is neeeded for the nodes, may be superfluous
         {{- if .Values.node.forward_ports }}
         ports:
           - containerPort: {{ .Values.node.proxyPort }}

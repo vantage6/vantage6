@@ -93,7 +93,7 @@ def cli_node_create_private_key(
     # Authenticate with the server to obtain organization name if it wasn't
     # provided
     if organization_name is None:
-        client = create_client_and_authenticate(ctx)
+        client = create_client_and_authenticate(ctx, use_sandbox_port=ctx.is_sandbox)
         organization_name = client.whoami.organization_name
 
     # create directory where private key goes if it doesn't exist yet
@@ -153,7 +153,9 @@ def cli_node_create_private_key(
         )
 
         if "client" not in locals():
-            client = create_client_and_authenticate(ctx)
+            client = create_client_and_authenticate(
+                ctx, use_sandbox_port=ctx.is_sandbox
+            )
 
         # TODO what happens if the user doesn't have permission to upload key?
         # Does that lead to an exception or not?

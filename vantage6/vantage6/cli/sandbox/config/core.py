@@ -14,12 +14,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
     ----------
     server_name : str
         Name of the server.
-    server_port : int
-        Port of the server.
-    ui_port : int
-        Port of the UI.
-    algorithm_store_port : int
-        Port of the algorithm store.
     server_image : str | None
         Image of the server.
     store_image : str | None
@@ -44,9 +38,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
     def __init__(
         self,
         server_name: str,
-        server_port: int,
-        ui_port: int,
-        algorithm_store_port: int,
         server_image: str | None,
         store_image: str | None,
         ui_image: str | None,
@@ -60,9 +51,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
     ) -> None:
         super().__init__(server_name, custom_data_dir)
 
-        self.server_port = server_port
-        self.ui_port = ui_port
-        self.algorithm_store_port = algorithm_store_port
         self.server_image = server_image
         self.store_image = store_image
         self.ui_image = ui_image
@@ -113,11 +101,15 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         )
         store_address = (
             f"http://{store_service}.{self.namespace}.svc.cluster.local:"
-            f"{Ports.DEV_ALGO_STORE}"
+            f"{Ports.SANDBOX_ALGO_STORE.value}"
         )
         config = {
             "server": {
-                "baseUrl": f"{HTTP_LOCALHOST}:{self.server_port}",
+                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER.value}",
+                "port": Ports.SANDBOX_SERVER.value,
+                "internal": {
+                    "port": Ports.SANDBOX_SERVER.value,
+                },
                 # TODO: v5+ set to latest v5 image
                 # TODO make this configurable
                 "image": (
@@ -145,6 +137,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                         else "172.17.0.1"
                     ),
                     "store_address": store_address,
+                    "forward_ports": True,
+                    "local_port_to_expose": Ports.SANDBOX_SERVER.value,
+                    "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
@@ -157,7 +152,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "k8sNodeName": self.k8s_node_name,
             },
             "ui": {
-                "port": self.ui_port,
+                "port": Ports.SANDBOX_UI.value,
                 # TODO: v5+ set to latest v5 image
                 # TODO: make this configurable
                 "image": (
@@ -233,13 +228,14 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         config = {
             "store": {
                 "internal": {
-                    "port": self.algorithm_store_port,
+                    "port": Ports.SANDBOX_ALGO_STORE.value,
                 },
+                "port": Ports.SANDBOX_ALGO_STORE.value,
                 "logging": {
                     "level": "DEBUG",
                     "volumeHostPath": str(log_dir),
                 },
-                "vantage6ServerUri": f"{HTTP_LOCALHOST}:{self.server_port}",
+                "vantage6ServerUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER.value}",
                 "image": (
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
@@ -260,6 +256,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     ),
                     "disable_review": True,
                     "review_own_algorithm": True,
+                    "forward_ports": True,
+                    "local_port_to_expose": Ports.SANDBOX_ALGO_STORE.value,
                 },
             },
             "database": {
@@ -298,7 +296,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "production": False,
                 "no_password_update_required": True,
                 "redirectUris": [
-                    f"{HTTP_LOCALHOST}:7600",
+                    f"{HTTP_LOCALHOST}:30760",
                     f"{HTTP_LOCALHOST}:7681",
                 ],
             },

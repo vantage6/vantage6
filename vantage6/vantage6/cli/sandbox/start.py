@@ -156,7 +156,6 @@ def execute_sandbox_start(
 
     # run the store. The store is started before the server so that the server can
     # couple to the store on startup.
-    info("Starting algorithm store...")
     cmd = [
         "v6",
         "algorithm-store",
@@ -175,7 +174,6 @@ def execute_sandbox_start(
     subprocess.run(cmd, check=True)
 
     # Then we need to start the server
-    info("Starting vantage6 server")
     click_ctx.invoke(
         cli_server_start,
         ctx=ctx,
@@ -307,9 +305,15 @@ def _print_auth_credentials(server_name: str) -> None:
         ]["users"][0]
         username = admin_user["username"]
         password = admin_user["credentials"][0]["value"]
-        info("You can login with the following credentials:")
+        info("--------------------------------")
+        info("Login with the following credentials:")
+        info(
+            f"Open the browser at: {Fore.GREEN}{HTTP_LOCALHOST}:"
+            f"{Ports.SANDBOX_UI.value}{Style.RESET_ALL}"
+        )
         info(f"Username: {Fore.GREEN}{username}{Style.RESET_ALL}")
         info(f"Password: {Fore.GREEN}{password}{Style.RESET_ALL}")
+        info("--------------------------------")
     except KeyError:
         # No user found, skip printing credentials
         pass
@@ -327,7 +331,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     client = Client(
         # TODO replace default API path global
         server_url=server_url,
-        auth_url=f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER}",
         log_level=LogLevel.ERROR,
     )
     max_retries = 100

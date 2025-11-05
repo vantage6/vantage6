@@ -269,11 +269,11 @@ deployments:
             volumeHostPath: ${LOG_MOUNT_PATH}/server
           jwt:
             secret: development-constant-secret!
-          forward_ports: false
           dev:
             host_uri: ${HOST_URI}
             allow_drop_all: true
             store_address: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+            forward_ports: false
           algorithm_stores:
             - name: Local store
               url: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
@@ -310,11 +310,11 @@ deployments:
           policies:
             allowLocalhost: true
             assignReviewOwnAlgorithm: true
-          forward_ports: false
           dev:
             host_uri: ${HOST_URI}
             disable_review: true
             review_own_algorithm: true
+            forward_ports: false
 
         # This is the location of the database on the host system. In case you are using
         # Windows in combination with WSL, you should put a path here that is accessible

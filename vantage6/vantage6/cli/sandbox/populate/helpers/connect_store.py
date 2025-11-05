@@ -9,6 +9,7 @@ import requests
 
 from vantage6.common import error, info
 from vantage6.common.enum import AlgorithmStepType
+from vantage6.common.globals import Ports
 
 from vantage6.client import Client
 
@@ -51,7 +52,7 @@ def _wait_for_store_to_be_online(
         info("Store is online!")
 
 
-def connect_store(client: Client) -> str:
+def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) -> str:
     """
     Connect the server to the local store.
 
@@ -59,8 +60,13 @@ def connect_store(client: Client) -> str:
     ---------
     client: Client
         The client to use to connect to the server.
-    dev_dir: Path
-        The directory to use to store the development data.
+    store_port: int
+        The port of the store to connect to.
+
+    Returns
+    -------
+    str
+        A summary of the store connection process.
     """
 
     existing_stores = client.store.list().get("data", [])
@@ -68,15 +74,14 @@ def connect_store(client: Client) -> str:
 
     # URL should be retrieved from the store, see issue:
     # https://github.com/vantage6/vantage6/issues/1824
-    local_store_url = "http://localhost:7602"
+    local_store_url = f"http://localhost:{store_port}"
     local_store_api_path = "/store"
     client.store.store_id = 1
 
     _wait_for_store_to_be_online(local_store_url, local_store_api_path)
 
     # note that the store is already coupled to the server in the sandbox/devspace
-    # config. To find the store, either check that it is a localhost URL or that it
-    # contains "svc.cluster.local" (which is for local k8s services)
+    # config.
     try:
         store = next(s for s in existing_stores if s["url"] == local_store_url)
         client.store.set(store["id"])

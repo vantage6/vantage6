@@ -12,4 +12,11 @@ spec:
       port: {{ .Values.store.port }}
       targetPort: {{ .Values.store.internal.port }}
       name: store-backend
+{{- if and .Values.store.dev.forward_ports .Values.store.dev.local_port_to_expose }}
+      nodePort: {{ .Values.store.dev.local_port_to_expose }}
+{{- end }}
+{{- if and .Values.store.dev.forward_ports .Values.store.dev.local_port_to_expose }}
+  type: NodePort
+{{- else }}
   type: ClusterIP
+{{- end }}

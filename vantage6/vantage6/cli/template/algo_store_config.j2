@@ -86,11 +86,6 @@ store:
     #   - some_username
     {% endif %}
 
-  # Whether to forward ports using kubernetes or not. If set to false, the ports will
-  # not be forwarded. This is only useful when running `v6 dev` because in that case,
-  # the ports are forwarded by devspace.
-  forward_ports: {{ store.forward_ports | default(true) }}
-
   {% if store.dev is defined %}
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
@@ -104,6 +99,15 @@ store:
     # Define whether or not developers are able to review their own algorithms. For
     # production, this is not recommended, but it can facilitate development.
     review_own_algorithm: {{ store.dev.review_own_algorithm | default(false) }}
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: {{ store.dev.forward_ports | default(false) }}
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_port_to_expose: {{ store.dev.local_port_to_expose | default(30762) }}
   {% endif %}
 
   {% if store.internal is defined %}

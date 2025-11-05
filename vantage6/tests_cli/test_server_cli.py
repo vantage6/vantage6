@@ -22,12 +22,10 @@ class ServerCLITest(unittest.TestCase):
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.helm_install")
-    @patch("vantage6.cli.server.start.start_port_forward")
     def test_start(
         self,
         context,
         helm_install,
-        start_port_forward,
         os_makedirs,
         ctx_ns,
     ):
