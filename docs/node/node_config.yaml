@@ -217,13 +217,6 @@ node:
     # into debug mode
     proxy_server: false
 
-  # Whether to forward ports to host locally using kubernetes or not, using the
-  # NodePort feature of kubernetes. If set to false, the ports will
-  # not be forwarded. In production, this should be false and you are responsible
-  # for forwarding the ports with your own ingress or load balancer.
-  # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
-  forward_ports: true
-
   # Development settings - these should ONLY be used when running `v6 dev` environment,
   # which will use these settings automatically.
   dev:

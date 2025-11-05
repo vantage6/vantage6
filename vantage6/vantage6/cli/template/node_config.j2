@@ -350,11 +350,6 @@ node:
   # externally)
   createSecrets: {{ node.createSecrets | default(true) }}
 
-  # Whether to forward ports using kubernetes or not. If set to false, the ports will
-  # not be forwarded. This is only useful when running `v6 dev` because in that case,
-  # the ports are forwarded by devspace.
-  forward_ports: {{ node.forward_ports | default(true) }}
-
   {% if node.debug is defined %}
   # Debug settings
   debug:

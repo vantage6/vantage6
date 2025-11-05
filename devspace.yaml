@@ -360,7 +360,6 @@ deployments:
           persistence:
             tasks:
               hostPath: ${TASK_DIRECTORY}
-          forward_ports: false
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/node

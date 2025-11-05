@@ -207,7 +207,6 @@ def create_node_config(
             "server_url": "http://vantage6-server-vantage6-server-service",
             "task_dir": f"{task_directory}/node_{node_number}",
             "task_dir_extension": f"node_{node_number}",
-            "forward_ports": False,
             "api_path": "/server",
             "task_namespace": task_namespace,
             "node_proxy_port": node_starting_port_number + (node_number - 1),
