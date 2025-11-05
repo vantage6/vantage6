@@ -197,6 +197,7 @@ class TestDataframe(TestResourceBase):
         response = self.app.get(f"/api/session/dataframe/{df.id}", headers=headers)
         assert response.status_code == HTTPStatus.OK
         data = response.json
+
         assert data["id"] == df.id
         assert data["name"] == df.name
         assert "columns" in data
