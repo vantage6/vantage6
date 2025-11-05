@@ -34,8 +34,12 @@ from vantage6.cli.globals import ChartName, InfraComponentName
     help="Print server logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.SERVER, include_name=True, include_system_folders=True
+    type_=InstanceType.SERVER,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 def cli_server_start(
     ctx: ServerContext,
