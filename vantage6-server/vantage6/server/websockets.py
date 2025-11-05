@@ -395,6 +395,10 @@ class DefaultSocketNamespace(Namespace):
         """
         auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
 
+        # There is a bug https://github.com/vantage6/vantage6/issues/2386 where the node
+        # disconnects on the server side but the node is still connected to the server.
+        # This is a last resort to recover the connection. It should be considered to
+        # remove the setting of the `status` field in this method when the bug is fixed.
         if auth.status != AuthStatus.ONLINE.value:
             self._handle_node_connection(auth)
             for room in session.rooms:
