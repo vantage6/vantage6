@@ -12,4 +12,11 @@ spec:
       port: {{ .Values.ui.port }}   # External port for the UI
       targetPort: 80    # Container port for the UI
       name: vantage6-server-frontend
+{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_ui_port_to_expose }}
+      nodePort: {{ .Values.server.dev.local_ui_port_to_expose }}
+{{- end }}
+{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_ui_port_to_expose }}
+  type: NodePort
+{{- else }}
   type: ClusterIP
+{{- end }}

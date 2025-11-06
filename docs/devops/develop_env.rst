@@ -92,23 +92,23 @@ following commands:
 
    * - Command
      - Description
-   * - ``devspace run start-dev``
+   * - ``v6 dev start``
      - Start the development environment
-   * - ``devspace run stop-dev``
+   * - ``v6 dev stop``
      - Stop the development environment. This removes the running Kubernetes resources
        but keeps the local data (e.g. tasks data, database data)
-   * - ``devspace run purge``
+   * - ``v6 dev clean``
      - Delete all running k8s resources and local data (e.g. tasks data, database data)
-   * - ``devspace run rebuild``
+   * - ``v6 dev rebuild``
      - Rebuild all infrastructure Docker images for this project
 
-By default, ``devspace run rebuild`` will build all images. You can rebuild specific
+By default, ``v6 dev rebuild`` will build all images. You can rebuild specific
 images by passing the ``--server``, ``--node``, ``--store`` or ``--ui`` flag. For
 example, if you want to rebuild only the server image, you can run:
 
 .. code-block:: bash
 
-    devspace run rebuild --server
+    v6 dev rebuild --server
 
 Using the development environment
 --------------------------------

@@ -45,7 +45,7 @@ class UserClient(ClientBase):
         auth_url: str,
         auth_realm: str = "vantage6",
         auth_client: str = "public_client",
-        log_level="info",
+        log_level=LogLevel.INFO,
     ) -> None:
         """Create user client
 

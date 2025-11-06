@@ -1,9 +1,7 @@
 import click
 
 from vantage6.cli.algorithm.create import cli_algorithm_create
-from vantage6.cli.algorithm.generate_algorithm_json import (
-    cli_algorithm_generate_algorithm_json,
-)
+from vantage6.cli.algorithm.generate_algorithm_json import cli_algorithm_generate_json
 from vantage6.cli.algorithm.update import cli_algorithm_update
 from vantage6.cli.algostore.attach import cli_algo_store_attach
 from vantage6.cli.algostore.files import cli_algo_store_files
@@ -141,9 +139,7 @@ def cli_algorithm() -> None:
 # Define the commands for the algorithm group
 cli_algorithm.add_command(cli_algorithm_create, name="create")
 cli_algorithm.add_command(cli_algorithm_update, name="update")
-cli_algorithm.add_command(
-    cli_algorithm_generate_algorithm_json, name="generate-algorithm-json"
-)
+cli_algorithm.add_command(cli_algorithm_generate_json, name="generate-store-json")
 
 
 # Define the test group

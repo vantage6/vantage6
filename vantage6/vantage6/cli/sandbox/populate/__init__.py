@@ -7,6 +7,7 @@ import traceback
 from logging import info
 
 from vantage6.common import error
+from vantage6.common.globals import Ports
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
@@ -113,7 +114,7 @@ def populate_server_sandbox(
             clear_dev_folders=False,
             return_as_dict=True,
         )
-        connect_store(client)
+        connect_store(client, store_port=Ports.SANDBOX_ALGO_STORE.value)
     except Exception:
         error("=" * 80)
         error("Failed to populate server")

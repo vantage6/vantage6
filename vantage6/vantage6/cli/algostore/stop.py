@@ -3,7 +3,7 @@ import click
 from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
+from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
 
 
@@ -55,7 +55,5 @@ def _stop_store(store_name: str, namespace: str, context: str) -> None:
     info(f"Stopping store {store_name}...")
 
     helm_uninstall(release_name=store_name, context=context, namespace=namespace)
-
-    stop_port_forward(service_name=f"{store_name}-store-service")
 
     info(f"Store {store_name} stopped successfully.")

@@ -90,7 +90,9 @@ v6 sandbox start
 v6 sandbox remove
 ```
 
-This will start the server and nodes in the background. You can view the logs by running:
+This will start the server and nodes in the background. You can go to your browser and
+access the UI at ``http://localhost:30760``.
+You can view the logs by running:
 
 ```bash
 # View node logs
@@ -104,8 +106,8 @@ From here you can use the [vantage6-client](https://pypi.org/project/vantage6-cl
 to interact with the server. The demo network has a pre-configured organization with
 the following credentials:
 
-- Username: `dev_admin`
-- Password: `password`
+- Username: `admin`
+- Password: `admin`
 
 For example, you can create a new organization by running:
 
@@ -113,8 +115,8 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client(
-  server_url='http://127.0.0.1:7601/api',
-  auth_url='http://127.0.0.1:8080',
+  server_url='http://localhost:30761/api',
+  auth_url='http://localhost:8080',
   log_level='debug'
 )
 client.authenticate()
