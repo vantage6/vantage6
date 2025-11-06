@@ -5,7 +5,7 @@ import pandas as pd
 
 from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
 from vantage6.mock import MockNetwork
-from vantage6.mock.client import MockAlgorithmClient, MockUserClient
+from vantage6.mock.client import MockUserClient
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 

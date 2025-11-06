@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from copy import deepcopy
 from importlib import import_module
 from typing import TYPE_CHECKING
 
