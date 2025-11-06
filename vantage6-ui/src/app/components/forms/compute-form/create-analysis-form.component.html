@@ -84,6 +84,12 @@
         </div>
       </mat-step>
     </mat-stepper>
+    <!-- show alert if the form is invalid and the issue is NOT in the last step (parameter step) -->
+    <app-alert
+      *ngIf="isFormInvalid() && stepper.selectedIndex === stepper.steps.length - 1 && parameterForm.valid"
+      class="node-alert"
+      [label]="getInvalidAlertLabel()"
+    ></app-alert>
     <button mat-flat-button color="primary" [disabled]="isFormInvalid() || isSubmitting" (click)="handleSubmit()">
       <mat-spinner *ngIf="isSubmitting" diameter="20" class="button-spinner"></mat-spinner>
       <span *ngIf="!isSubmitting">{{ "general.submit" | translate }}</span>
