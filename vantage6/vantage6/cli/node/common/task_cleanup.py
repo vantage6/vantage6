@@ -45,10 +45,21 @@ def delete_job_related_pods(
         __delete_pod(job_pod.metadata.name, namespace, core_api)
 
     __delete_secret(container_name, namespace, core_api)
+    # delete secret with Docker login credentials for private Docker registries
+    # if it exists
+    __delete_secret(
+        f"docker-login-secret-run-id-{run_id}",
+        namespace,
+        core_api,
+        log_if_not_found=False,
+    )
 
 
 def __delete_secret(
-    secret_name: str, namespace: str, core_api: k8s_client.CoreV1Api
+    secret_name: str,
+    namespace: str,
+    core_api: k8s_client.CoreV1Api,
+    log_if_not_found: bool = True,
 ) -> None:
     """
     Deletes a secret in a given namespace
@@ -61,6 +72,8 @@ def __delete_secret(
         Namespace where the secret is located
     core_api: k8s_client.CoreV1Api
         Kubernetes Core API instance
+    log_if_not_found: bool
+        If True, it will be logged if the secret does not exist. By default, True.
     """
     try:
         core_api.delete_namespaced_secret(name=secret_name, namespace=namespace)
@@ -71,7 +84,10 @@ def __delete_secret(
         )
     except ApiException as exc:
         if exc.status == 404:
-            log.debug("No secret %s to remove in namespace %s", secret_name, namespace)
+            if log_if_not_found:
+                log.debug(
+                    "No secret %s to remove in namespace %s", secret_name, namespace
+                )
         else:
             log.error("Exception when deleting namespaced secret: %s", exc)
 

@@ -157,6 +157,22 @@ store:
       name: sqlalchemy.engine
     {% endif %}
 
+  # Specify private Docker registries so that the store can login and interact with
+  # private algorithms to retrieve the digests.
+  {% if node.private_docker_registries is defined %}
+  private_docker_registries:
+    {% for registry in node.private_docker_registries %}
+    - registry: {{ registry.registry }}
+      username: {{ registry.username }}
+      password: {{ registry.password }}
+    {% endfor %}
+  {% else %}
+  # private_docker_registries:
+  #   - registry: my-private-registry.com
+  #     username: my-username
+  #     password: my-password
+  {% endif %}
+
   # set up with which origins the store should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here. Below are examples to allow requests from the Cotopaxi UI, and

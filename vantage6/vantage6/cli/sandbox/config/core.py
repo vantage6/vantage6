@@ -115,7 +115,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 # TODO make this configurable
                 "image": (
                     self.server_image
-                    or "harbor2.vantage6.ai/infrastructure/server:5.0.0a37"
+                    or "harbor2.vantage6.ai/infrastructure/server:5.0.0a43"
                 ),
                 "algorithm_stores": [
                     {
@@ -154,7 +154,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 # TODO: v5+ set to latest v5 image
                 # TODO: make this configurable
                 "image": (
-                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a37"
+                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
             },
         }
@@ -231,7 +231,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "vantage6ServerUri": f"{HTTP_LOCALHOST}:{self.server_port}",
                 "image": (
                     self.store_image
-                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a37"
+                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."

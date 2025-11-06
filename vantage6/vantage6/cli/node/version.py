@@ -6,6 +6,9 @@ from vantage6.common import error, info
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli import __version__
+from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
+)
 from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
@@ -39,7 +42,12 @@ def cli_node_version(
     """
     Returns current version of a vantage6 node.
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
+
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+
     ctx = get_and_select_ctx(
         InstanceType.NODE, name, system_folders, k8s_config, is_sandbox
     )
