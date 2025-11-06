@@ -1,22 +1,23 @@
-{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-server-logs-pv" .Release.Name)) }}
+{{- if .Values.prometheus.enabled }}
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-prometheus-data-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-vantage6-server-logs-pv
+  name: {{ .Release.Name }}-prometheus-data-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
-    type: local-logs
+    type: prometheus-data
     app: {{ include "vantage6.name" . }}
 spec:
   capacity:
-    storage: {{ .Values.server.logging.storageSize | default "128M" }}
+    storage: {{ .Values.prometheus.storageSize | default "2Gi" }}
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.server.logging.storageClass | default "local-storage" }}
+  storageClassName: {{ .Values.prometheus.storageClass | default "local-storage" }}
   persistentVolumeReclaimPolicy: Retain
   local:
-    path: {{ .Values.server.logging.volumeHostPath  }}
+    path: {{ .Values.prometheus.volumeHostPath }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -25,4 +26,5 @@ spec:
               operator: In
               values:
                 - {{ .Values.database.k8sNodeName }}
+{{- end }}
 {{- end }}

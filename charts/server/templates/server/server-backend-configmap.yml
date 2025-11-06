@@ -68,17 +68,12 @@ data:
     {{- if .Values.server.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.server.runs_data_cleanup_include_args }}
     {{- end }}
-    {{- if .Values.server.prometheus }}
-    {{- if .Values.server.prometheus.enabled }}
+    {{- if and .Values.prometheus .Values.prometheus.enabled }}
     prometheus:
-      enabled: {{ .Values.server.prometheus.enabled }}
-      {{- if .Values.server.prometheus.start_with_server }}
-      start_with_server: {{ .Values.server.prometheus.start_with_server }}
+      enabled: {{ .Values.prometheus.enabled }}
+      {{- if .Values.prometheus.exporter_port }}
+      exporter_port: {{ .Values.prometheus.exporter_port }}
       {{- end }}
-      {{- if .Values.server.prometheus.exporter_port }}
-      exporter_port: {{ .Values.server.prometheus.exporter_port }}
-      {{- end }}
-    {{- end }}
     {{- end }}
     {{- if .Values.server.large_result_store }}
     large_result_store:

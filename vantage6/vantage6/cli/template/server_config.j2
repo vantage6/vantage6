@@ -159,36 +159,6 @@ server:
   # runs_data_cleanup_include_args: false
   {% endif %}
 
-  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
-  # This is done using Prometheus. There are two components to this:
-  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
-  #    the metrics from the nodes.
-  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
-  #     metrics exposed by the Prometheus exporter and stores them.
-  # The exporter is started by default when the server starts (if prometheus is enabled).
-  # The Prometheus server can be started separately.
-  prometheus:
-    # Set to true to enable Prometheus reporting. Default is false.
-    {% if server.prometheus is defined %}
-    enabled: {{ server.prometheus.enabled | default(false) }}
-    {% else %}
-    enabled: false
-    {% endif %}
-    # Set to true to start the Prometheus server when starting the server
-    {% if server.prometheus is defined and server.prometheus.start_with_server is defined %}
-    start_with_server: {{ server.prometheus.start_with_server }}
-    {% else %}
-    # start_with_server: false
-    {% endif %}
-    # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
-    # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
-    # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
-    {% if server.prometheus is defined and server.prometheus.exporter_port is defined %}
-    exporter_port: {{ server.prometheus.exporter_port }}
-    {% else %}
-    # exporter_port: 7603
-    {% endif %}
-
   # set up with which origins the server should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
@@ -279,3 +249,45 @@ ui:
   communityStoreUrl: {{ ui.communityStoreUrl | default('https://store.cotopaxi.vantage6.ai') }}
   # Community algorithm store API path
   communityStoreApiPath: {{ ui.communityStoreApiPath | default('/api') }}
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+#    the metrics from the nodes.
+# 2. The Prometheus server (running as a separate service), which scrapes the
+#     metrics exposed by the Prometheus exporter and stores them.
+prometheus:
+  # Set to true to enable Prometheus reporting. Default is false.
+  {% if prometheus.enabled is defined %}
+  enabled: {{ prometheus.enabled | default(false) }}
+  {% else %}
+  enabled: false
+  {% endif %}
+
+  # **The settings below are only used if enabled is true**
+
+  # The port on which the Prometheus exporter will be available.
+  {% if prometheus is defined and prometheus.exporter_port is defined %}
+  exporter_port: {{ prometheus.exporter_port }}
+  {% else %}
+  # exporter_port: 7603
+  {% endif %}
+
+  # The image to use for the Prometheus server.
+  {% if prometheus.image is defined %}
+  image: {{ prometheus.image }}
+  {% else %}
+  # image: prom/prometheus:latest
+  {% endif %}
+  # The size of the storage for the Prometheus server.
+  {% if prometheus.storageSize is defined %}
+  storageSize: {{ prometheus.storageSize }}
+  {% else %}
+  # storageSize: 2Gi
+  {% endif %}
+  # The kubernetes storage class to use for the Prometheus server.
+  {% if prometheus.storageClass is defined %}
+  storageClass: {{ prometheus.storageClass }}
+  {% else %}
+  # storageClass: local-storage
+  {% endif %}

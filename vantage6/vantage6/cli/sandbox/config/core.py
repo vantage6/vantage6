@@ -159,6 +159,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
             },
+            "prometheus": {
+                "enabled": False,
+            },
         }
 
         # merge the extra config with the server config
