@@ -675,7 +675,10 @@ class MockAlgorithmClient(MockBaseClient):
             creating a task.
             """
             if self.parent.databases is None:
-                error("Databases need to be set before creating a task")
+                error(
+                    "No databases have been set for the mock algorithm client. Please"
+                    "set the databases using `set_databases` before creating a task."
+                )
                 return
 
             # inject the mock data into the arguments
