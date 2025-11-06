@@ -26,8 +26,9 @@ a user account.
 
 ### Running the UI locally
 
-The easiest way to run the UI locally is as part of a sandbox environment that can be started with ``v6 sandbox start``. This will automatically start a user interface
-on `http://localhost:30760`.
+The easiest way to run the UI locally is as part of a sandbox environment that
+can be started with ``v6 sandbox start``. This will automatically start a user
+interface on `http://localhost:30760`.
 
 For developers, it is recommended to use ``v6 dev`` commands. Local code changes are
 then synced to the UI deployment. This UI deployment is then available on
