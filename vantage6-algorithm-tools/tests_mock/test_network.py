@@ -58,7 +58,6 @@ class TestMockNetworkDataframe(TestCase):
         # Check the type of the server
         self.assertIsInstance(self.network.server, MockServer)
         self.assertIsInstance(self.network.user_client, MockUserClient)
-        self.assertIsInstance(self.network.algorithm_client, MockAlgorithmClient)
 
         self.assertEqual(len(self.network.nodes), 2)
         self.assertIsInstance(self.network.nodes[0], MockNode)

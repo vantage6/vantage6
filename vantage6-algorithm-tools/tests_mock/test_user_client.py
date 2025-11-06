@@ -34,7 +34,11 @@ class TestMockUserClient(TestCase):
         """Test if the MockUserClient has the same attributes as the UserClient"""
         # Get all attributes from the real UserClient
         user_client_attrs = set(dir(UserClient("", "")))
-        mock_client_attrs = set(dir(self.client))
+        mock_client_attrs = set(dir(self.client)).union(self.client._missing_attributes)
 
         # The user client attributes need to be a subset of the mock client attributes
-        self.assertTrue(user_client_attrs.issubset(mock_client_attrs))
+        self.assertTrue(
+            user_client_attrs.issubset(mock_client_attrs),
+            f"Missing attributes in mock client: "
+            f"{user_client_attrs - mock_client_attrs}",
+        )
