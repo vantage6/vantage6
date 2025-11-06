@@ -3,6 +3,7 @@ from pathlib import Path
 from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
 from vantage6.cli.common.new import new
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
 
 
@@ -24,12 +25,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         Path to the extra server configuration file.
     extra_store_config : Path | None
         Path to the extra algorithm store configuration file.
-    context : str | None
-        Kubernetes context.
-    namespace : str | None
-        Kubernetes namespace.
-    k8s_node_name : str
-        Kubernetes node name.
+    k8s_config : KubernetesConfig
+        Kubernetes configuration.
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
@@ -44,9 +41,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         extra_server_config: Path | None,
         extra_store_config: Path | None,
         extra_auth_config: Path | None,
-        context: str,
-        namespace: str,
-        k8s_node_name: str,
+        k8s_config: KubernetesConfig,
         custom_data_dir: Path | None = None,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
@@ -57,13 +52,11 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.extra_server_config = extra_server_config
         self.extra_store_config = extra_store_config
         self.extra_auth_config = extra_auth_config
-        self.context = context
-        self.namespace = namespace
+        self.k8s_config = k8s_config
 
         self.server_config_file = None
         self.store_config_file = None
         self.auth_config_file = None
-        self.k8s_node_name = k8s_node_name
 
     def generate_server_configs(self) -> None:
         """Generates the demo network."""
@@ -100,7 +93,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             f"vantage6-{self.server_name}-store-user-algorithm-store-store-service"
         )
         store_address = (
-            f"http://{store_service}.{self.namespace}.svc.cluster.local:"
+            f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
             f"{Ports.SANDBOX_ALGO_STORE.value}"
         )
         config = {
@@ -133,7 +126,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "dev": {
                     "host_uri": (
                         "host.docker.internal"
-                        if self.k8s_node_name == "docker-desktop"
+                        if self.k8s_config.k8s_node == "docker-desktop"
                         else "172.17.0.1"
                     ),
                     "store_address": store_address,
@@ -143,13 +136,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
             },
             "rabbitmq": {},
             "database": {
                 "volumePath": str(data_dir),
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
             },
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
@@ -186,8 +179,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             config_producing_func_args=(extra_config, data_dir, log_dir),
             name=self.server_name,
             system_folders=False,
-            namespace=self.namespace,
-            context=self.context,
             type_=InstanceType.SERVER,
             is_sandbox=True,
         )
@@ -207,8 +198,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             config_producing_func_args=(extra_config, data_dir, log_dir),
             name=f"{self.server_name}-store",
             system_folders=False,
-            namespace=self.namespace,
-            context=self.context,
             type_=InstanceType.ALGORITHM_STORE,
             is_sandbox=True,
         )
@@ -242,7 +231,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ),
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "policies": {
                     "allowLocalhost": True,
@@ -251,7 +240,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "dev": {
                     "host_uri": (
                         "host.docker.internal"
-                        if self.k8s_node_name == "docker-desktop"
+                        if self.k8s_config.k8s_node == "docker-desktop"
                         else "172.17.0.1"
                     ),
                     "disable_review": True,
@@ -262,7 +251,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             },
             "database": {
                 "volumePath": str(data_dir),
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
             },
         }
 
@@ -279,8 +268,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             config_producing_func_args=(self.extra_auth_config,),
             name=f"{self.server_name}-auth",
             system_folders=False,
-            namespace=self.namespace,
-            context=self.context,
             type_=InstanceType.AUTH,
             is_sandbox=True,
         )

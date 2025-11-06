@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from vantage6.common.globals import LOCALHOST, InstanceType, Ports
 
 from vantage6.cli.globals import APPNAME, InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.common import create_client_and_authenticate
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
@@ -61,16 +62,14 @@ class NodeCLITest(unittest.TestCase):
             "-----------------------------------------------------\n",
         )
 
-    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.make_configuration")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_config(self, context, permissions, make_configuration, ctx_ns):
+    def test_new_config(self, context, permissions, make_configuration):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
         permissions.return_value = True
         make_configuration.return_value = "/some/file/path"
-        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -104,13 +103,11 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
 
     # the context is mocked for select_context_class where it is instantiated
-    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.context.NodeContext")
-    def test_new_config_already_exists(self, context, ctx_ns):
+    def test_new_config_already_exists(self, context):
         """No duplicate configurations are allowed."""
 
         context.config_exists.return_value = True
-        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -129,15 +126,13 @@ class NodeCLITest(unittest.TestCase):
         # check non-zero exit code
         self.assertEqual(result.exit_code, 1)
 
-    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.node.common.NodeContext")
-    def test_new_write_permissions(self, context, permissions, ctx_ns):
+    def test_new_write_permissions(self, context, permissions):
         """User needs write permissions."""
 
         context.config_exists.return_value = False
         permissions.return_value = False
-        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(
@@ -189,7 +184,7 @@ class NodeCLITest(unittest.TestCase):
         # check for non zero exit-code
         self.assertNotEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.node.start.select_context_and_namespace")
+    @patch("vantage6.cli.node.start.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.node.start.helm_install")
@@ -213,14 +208,17 @@ class NodeCLITest(unittest.TestCase):
         ctx.config_exists.return_value = True
         ctx.name = "test-node"
         context.return_value = ctx
-        ctx_ns.return_value = ("test-context", "test-namespace")
+        ctx_ns.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
 
         runner = CliRunner()
         result = runner.invoke(cli_node_start, ["--name", "test-node"])
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.common.stop.select_context_and_namespace")
+    @patch("vantage6.cli.common.stop.select_k8s_config")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.common.utils.find_running_service_names")
     @patch("vantage6.cli.node.stop._stop_node")
@@ -229,7 +227,10 @@ class NodeCLITest(unittest.TestCase):
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         find_running_service_names.return_value = [node_helm_name]
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
-        ctx_ns.return_value = ("test-context", "test-namespace")
+        ctx_ns.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
 
         runner = CliRunner()
         result = runner.invoke(cli_node_stop, ["--name", "iknl"])
@@ -237,8 +238,8 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
 
-    @patch("vantage6.cli.common.stop.select_context_and_namespace")
-    @patch("vantage6.cli.node.restart.select_context_and_namespace")
+    @patch("vantage6.cli.common.stop.select_k8s_config")
+    @patch("vantage6.cli.node.restart.select_k8s_config")
     @patch("vantage6.cli.node.restart.subprocess.run")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.node.stop._stop_node")
@@ -249,8 +250,14 @@ class NodeCLITest(unittest.TestCase):
         node_name = "iknl"
         node_helm_name = f"{APPNAME}-{node_name}-user-node"
         get_context.return_value = MagicMock(helm_release_name=node_helm_name)
-        ctx_ns_stop.return_value = ("test-context", "test-namespace")
-        ctx_ns_restart.return_value = ("test-context", "test-namespace")
+        ctx_ns_stop.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
+        ctx_ns_restart.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
 
         # Mock subprocess.run to handle both helm calls and node start calls
         def mock_subprocess_run(*args, **kwargs):
@@ -270,8 +277,13 @@ class NodeCLITest(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.node.attach.attach_logs")
-    def test_attach(self, attach_logs):
+    @patch("vantage6.cli.node.attach.select_k8s_config")
+    def test_attach(self, select_k8s_config, attach_logs):
         """Attach pod logs without errors."""
+        select_k8s_config.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
         runner = CliRunner()
         runner.invoke(cli_node_attach)
         attach_logs.assert_called_once_with(
@@ -279,8 +291,10 @@ class NodeCLITest(unittest.TestCase):
             instance_type=InstanceType.NODE,
             infra_component=InfraComponentName.NODE,
             system_folders=False,
-            context=None,
-            namespace=None,
+            k8s_config=KubernetesConfig(
+                context="test-context",
+                namespace="test-namespace",
+            ),
             is_sandbox=False,
         )
 

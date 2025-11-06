@@ -5,8 +5,8 @@ from colorama import Fore, Style
 
 from vantage6.common import error
 
-from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.core import CoreSandboxConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.server.common import get_server_context
@@ -90,9 +90,6 @@ from vantage6.cli.utils import prompt_config_name
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
-    "--k8s-node-name", default="docker-desktop", help="Kubernetes node name to use"
-)
-@click.option(
     "--data-dir",
     type=click.Path(exists=True),
     default=None,
@@ -121,7 +118,6 @@ def cli_new_sandbox(
     add_dataset: tuple[str, Path] | None,
     context: str | None,
     namespace: str | None,
-    k8s_node_name: str,
     data_dir: str | None,
     local_chart_dir: Path | None,
 ) -> None:
@@ -130,10 +126,7 @@ def cli_new_sandbox(
     """
 
     # Prompt for the k8s namespace and context
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     if data_dir is not None:
         data_dir = Path(data_dir)
@@ -154,9 +147,7 @@ def cli_new_sandbox(
         extra_server_config=extra_server_config,
         extra_store_config=extra_store_config,
         extra_auth_config=extra_auth_config,
-        context=context,
-        namespace=namespace,
-        k8s_node_name=k8s_node_name,
+        k8s_config=k8s_config,
         custom_data_dir=data_dir,
     )
 
@@ -168,12 +159,10 @@ def cli_new_sandbox(
         click_ctx=click_ctx,
         ctx=ctx,
         server_name=server_name,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=True,
         node_image=node_image,
-        k8s_node_name=k8s_node_name,
         extra_node_config=extra_node_config,
         add_dataset=add_dataset,
         custom_data_dir=data_dir,

@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import os
 import re
@@ -500,9 +501,21 @@ class ContainerManager:
                 namespace=self.task_namespace, body=secret
             )
 
+        # Create a Docker login secret for private Docker registries if any are defined.
+        docker_login_secret = None
+        if priv_regs := self.ctx.config.get("private_docker_registries"):
+            docker_login_secret = self._create_docker_login_secret(
+                priv_regs, image, run_io.run_id
+            )
+
+        require_algorithm_pull = self.ctx.config.get("node", {}).get(
+            "require_algorithm_pull", True
+        )
+
         container = k8s_client.V1Container(
             name=run_io.container_name,
             image=image,
+            image_pull_policy="Always" if require_algorithm_pull else "IfNotPresent",
             tty=True,
             volume_mounts=_volume_mounts,
             env=io_env_vars,
@@ -534,6 +547,14 @@ class ContainerManager:
             labels=self.task_job_labels,
         )
 
+        image_pull_secrets = None
+        if docker_login_secret:
+            image_pull_secrets = [
+                k8s_client.V1LocalObjectReference(
+                    name=docker_login_secret.metadata.name
+                )
+            ]
+
         # Define the job
         job = k8s_client.V1Job(
             api_version="batch/v1",
@@ -548,6 +569,7 @@ class ContainerManager:
                         containers=[container],
                         volumes=_volumes,
                         restart_policy="Never",
+                        image_pull_secrets=image_pull_secrets,
                     ),
                 ),
                 backoff_limit=TASK_START_RETRIES,
@@ -581,6 +603,7 @@ class ContainerManager:
         # policy
 
         status = self.__wait_until_pod_running(
+            run_io=run_io,
             label=f"app={run_io.container_name}",
         )
 
@@ -588,6 +611,46 @@ class ContainerManager:
         self._stream_logs(run_io=run_io, task_id=task_id)
 
         return status
+
+    def _create_docker_login_secret(
+        self, priv_regs: list[dict], image: str, run_id: int
+    ) -> k8s_client.V1Secret | None:
+        """
+        Create a Docker login secret.
+        """
+
+        dockerconfig = {
+            "auths": {
+                reg["registry"]: {
+                    "username": reg["username"],
+                    "password": reg["password"],
+                    "auth": base64.b64encode(
+                        f"{reg['username']}:{reg['password']}".encode()
+                    ).decode(),
+                }
+                for reg in priv_regs
+            }
+        }
+
+        secret = k8s_client.V1Secret(
+            metadata=k8s_client.V1ObjectMeta(
+                name=f"docker-login-secret-run-id-{run_id}",
+                namespace=self.task_namespace,
+            ),
+            type="kubernetes.io/dockerconfigjson",
+            string_data={".dockerconfigjson": json.dumps(dockerconfig)},
+        )
+
+        try:
+            self.core_api.create_namespaced_secret(
+                namespace=self.task_namespace, body=secret
+            )
+        except Exception as exc:
+            self.log.error(
+                f"Error creating Docker login secret for image {image}: {exc}"
+            )
+            return None
+        return secret
 
     def _stream_logs(self, run_io: RunIO, task_id: int) -> None:
         """
@@ -646,7 +709,7 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __wait_until_pod_running(self, label: str) -> RunStatus:
+    def __wait_until_pod_running(self, run_io: RunIO, label: str) -> RunStatus:
         """"
         This method monitors the status of a Kubernetes POD created by a job and
         waits until it transitions to a 'Running' state or another terminal state
@@ -663,6 +726,8 @@ class ContainerManager:
 
         Parameters
         ----------
+        run_io: RunIO
+            RunIO object that contains information about the run
         label : str
             Label selector to identify the POD associated with the job.
 
@@ -722,11 +787,13 @@ class ContainerManager:
                 )
 
                 # Getting the POD again to check its post-timeout status
-                # Note on using container_statuses[0]: The job pods always use a single
-                # container, container_statuses will always have a single element
-                pod = self.core_api.list_namespaced_pod(
+                pod_list = self.core_api.list_namespaced_pod(
                     namespace=self.task_namespace, label_selector=label
-                ).items[0]
+                ).items
+                if not pod_list or len(pod_list) == 0:
+                    self.log.error(f"No POD found for run {run_io.run_id}")
+                    return RunStatus.UNKNOWN_ERROR
+                pod = pod_list[0]
 
                 pod_phase: RunStatus = compute_job_pod_run_status(
                     pod=pod,
@@ -735,15 +802,15 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outher loop is performed if the pod is
+                # Another iteration on the outer loop is performed if the pod is
                 # pending for reasons other than missing/invalid Docker image (which is
                 # reported as INITIALIZING).
                 if pod_phase != RunStatus.INITIALIZING:
                     return pod_phase
 
                 self.log.debug(
-                    "Job (label %s, namespace %s) still pulling the (probably large) "
-                    "docker image. Waiting again for a new status update...",
+                    "Job (label %s, namespace %s) still pulling the algorithm image. "
+                    "Waiting again for a new status update...",
                     label,
                     self.task_namespace,
                 )

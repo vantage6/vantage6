@@ -9,12 +9,10 @@ from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
 )
-from vantage6.cli.common.utils import (
-    create_directory_if_not_exists,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import ChartName, InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -33,8 +31,12 @@ from vantage6.cli.globals import ChartName, InfraComponentName
     help="Print server logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.SERVER, include_name=True, include_system_folders=True
+    type_=InstanceType.SERVER,
+    include_name=True,
+    include_system_folders=True,
+    sandbox_param="sandbox",
 )
 def cli_server_start(
     ctx: ServerContext,
@@ -54,10 +56,7 @@ def cli_server_start(
     info("Starting server...")
     prestart_checks(ctx, InstanceType.SERVER, name, system_folders)
 
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
 
@@ -65,8 +64,7 @@ def cli_server_start(
         release_name=ctx.helm_release_name,
         chart_name=ChartName.SERVER,
         values_file=ctx.config_file,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
     )
 
@@ -76,7 +74,6 @@ def cli_server_start(
             instance_type=InstanceType.SERVER,
             infra_component=InfraComponentName.SERVER,
             system_folders=system_folders,
-            context=context,
-            namespace=namespace,
+            k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,
         )

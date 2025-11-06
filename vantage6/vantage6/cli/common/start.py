@@ -13,6 +13,7 @@ from vantage6.common.globals import (
 
 from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
 
 
@@ -25,7 +26,6 @@ def prestart_checks(
     """
     Run pre-start checks for an instance.
     """
-
     check_config_name_allowed(name)
 
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
@@ -37,8 +37,7 @@ def helm_install(
     release_name: str,
     chart_name: ChartName,
     values_file: str | PathLike | None = None,
-    context: str | None = None,
-    namespace: str | None = None,
+    k8s_config: KubernetesConfig | None = None,
     local_chart_dir: str | None = None,
     custom_values: list[str] | None = None,
 ) -> None:
@@ -53,10 +52,8 @@ def helm_install(
         The name of the Helm chart.
     values_file : str, optional
         A single values file to use with the `-f` flag.
-    context : str, optional
-        The Kubernetes context to use.
-    namespace : str, optional
-        The Kubernetes namespace to use.
+    k8s_config : KubernetesConfig, optional
+        The Kubernetes configuration to use.
     local_chart_dir : str, optional
         The local directory containing the Helm charts.
     custom_values : list[str], optional
@@ -72,8 +69,13 @@ def helm_install(
         error(f"Helm chart values file does not exist: {values_file}")
         return
 
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config:
+        validate_input_cmd_args(
+            k8s_config.context, "k8s_config.context", allow_none=True
+        )
+        validate_input_cmd_args(
+            k8s_config.namespace, "k8s_config.namespace", allow_none=True
+        )
 
     if local_chart_dir and local_chart_dir.rstrip("/").endswith(chart_name.value):
         local_chart_dir = str(Path(local_chart_dir).parent)
@@ -101,11 +103,11 @@ def helm_install(
     if values_file:
         command.extend(["-f", str(values_file)])
 
-    if context:
-        command.extend(["--kube-context", context])
+    if k8s_config.context:
+        command.extend(["--kube-context", k8s_config.context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     if custom_values:
         for custom_value in custom_values:

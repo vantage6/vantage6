@@ -6,10 +6,7 @@ from colorama import Fore, Style
 from vantage6.common import ensure_config_dir_writable, error, info
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.utils import (
-    get_main_cli_command_name,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import get_main_cli_command_name
 from vantage6.cli.configuration_create import make_configuration
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
@@ -20,8 +17,6 @@ def new(
     config_producing_func_args: tuple,
     name: str,
     system_folders: bool,
-    namespace: str,
-    context: str,
     type_: InstanceType,
     is_sandbox: bool = False,
 ) -> Path | None:
@@ -38,10 +33,6 @@ def new(
         Name of the configuration
     system_folders : bool
         Whether to store the configuration in the system folders
-    namespace : str
-        Namespace to use
-    context : str
-        Context to use
     type_ : InstanceType
         Type of the configuration (node, server, algorithm store, etc)
     is_sandbox : bool
@@ -52,8 +43,6 @@ def new(
     Path | None
         Path to the configuration file. None if the process is aborted for any reason.
     """
-    context, namespace = select_context_and_namespace(context, namespace)
-
     name = prompt_config_name(name)
 
     # check if name is valid

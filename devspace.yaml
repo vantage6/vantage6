@@ -45,7 +45,7 @@ vars:
     question: "Where should your logs be saved on the host machine?"
     default: ${PWD}/dev/.log
   K8S_NODE_NAME:
-    question: "What is the name of the k8s node where the databases are running?"
+    question: "What is the name of the k8s node where the databases are running? You can find this by running 'kubectl get nodes' and looking at the name column."
     default: docker-desktop
   KEYCLOAK_URL:
     source: env

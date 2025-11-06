@@ -10,6 +10,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli import __version__
+from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
@@ -31,6 +32,9 @@ def cli_algo_store_version(
     """
     Print the version of the vantage6 algorithm store.
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
 
     ctx = get_and_select_ctx(
         InstanceType.ALGORITHM_STORE,

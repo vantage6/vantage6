@@ -24,7 +24,8 @@ from vantage6.cli.context.server import ServerContext
     default=False,
     help="Drop all existing data before importing",
 )
-@click_insert_context(type_=InstanceType.SERVER)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
+@click_insert_context(type_=InstanceType.SERVER, sandbox_param="sandbox")
 def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     """
     Import vantage6 resources into a server instance from a yaml FILE.

@@ -9,12 +9,10 @@ from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
 )
-from vantage6.cli.common.utils import (
-    create_directory_if_not_exists,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.globals import ChartName, InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -49,10 +47,7 @@ def cli_algo_store_start(
 
     prestart_checks(ctx, InstanceType.ALGORITHM_STORE, name, system_folders)
 
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
 
@@ -60,8 +55,7 @@ def cli_algo_store_start(
         release_name=ctx.helm_release_name,
         chart_name=ChartName.ALGORITHM_STORE,
         values_file=ctx.config_file,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
     )
 
@@ -71,7 +65,6 @@ def cli_algo_store_start(
             instance_type=InstanceType.ALGORITHM_STORE,
             infra_component=InfraComponentName.ALGORITHM_STORE,
             system_folders=system_folders,
-            context=context,
-            namespace=namespace,
+            k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,
         )
