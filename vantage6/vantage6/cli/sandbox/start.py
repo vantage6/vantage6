@@ -12,10 +12,10 @@ from vantage6.client import Client
 from vantage6.client.utils import LogLevel
 
 from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
 from vantage6.cli.server.start import cli_server_start
@@ -94,18 +94,14 @@ def cli_sandbox_start(
     """
     Start a sandbox environment.
     """
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     # TODO if re-initalize is specified, we must remove the existing node configs
     execute_sandbox_start(
         click_ctx=click_ctx,
         ctx=ctx,
         server_name=ctx.name,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=re_initialize,
         node_image=node_image,
@@ -120,20 +116,15 @@ def execute_sandbox_start(
     click_ctx: click.Context,
     ctx: ServerContext,
     server_name: str,
-    context: str,
-    namespace: str,
+    k8s_config: KubernetesConfig,
     num_nodes: int,
     initialize: bool,
     node_image: str | None = None,
-    k8s_node_name: str | None = None,
     extra_node_config: Path | None = None,
     add_dataset: tuple[str, Path] | None = None,
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
 ) -> None:
-    if k8s_node_name is None:
-        k8s_node_name = ctx.config["database"]["k8sNodeName"]
-
     # First we need to start the keycloak service
     cmd = [
         "v6",
@@ -143,9 +134,9 @@ def execute_sandbox_start(
         f"{server_name}-auth.sandbox",
         "--user",
         "--context",
-        context,
+        k8s_config.context,
         "--namespace",
-        namespace,
+        k8s_config.namespace,
         "--sandbox",
     ]
     if local_chart_dir:
@@ -165,9 +156,9 @@ def execute_sandbox_start(
         f"{ctx.name}-store.sandbox",
         "--user",
         "--context",
-        context,
+        k8s_config.context,
         "--namespace",
-        namespace,
+        k8s_config.namespace,
         "--sandbox",
     ]
     if local_chart_dir:
@@ -181,8 +172,8 @@ def execute_sandbox_start(
         ctx=ctx,
         name=ctx.name,
         system_folders=False,
-        namespace=namespace,
-        context=context,
+        namespace=k8s_config.namespace,
+        context=k8s_config.context,
         attach=False,
         local_chart_dir=local_chart_dir,
     )
@@ -200,9 +191,7 @@ def execute_sandbox_start(
             node_image=node_image,
             extra_node_config=extra_node_config,
             add_dataset=add_dataset,
-            context=context,
-            namespace=namespace,
-            k8s_node_name=k8s_node_name,
+            k8s_config=k8s_config,
             custom_data_dir=custom_data_dir,
         )
     else:
@@ -242,9 +231,7 @@ def _initialize_sandbox(
     node_image: str | None,
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
-    context: str,
-    namespace: str,
-    k8s_node_name: str,
+    k8s_config: KubernetesConfig,
     custom_data_dir: Path | None,
 ) -> list[str]:
     info("Populating server")
@@ -275,9 +262,7 @@ def _initialize_sandbox(
         node_image=node_image,
         extra_node_config=extra_node_config,
         extra_dataset=extra_dataset,
-        context=context,
-        namespace=namespace,
-        k8s_node_name=k8s_node_name,
+        k8s_config=k8s_config,
         custom_data_dir=custom_data_dir,
     )
     node_config_manager.generate_node_configs()

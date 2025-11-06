@@ -11,11 +11,11 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import (
     extract_name_and_is_sandbox,
     find_running_service_names,
-    select_context_and_namespace,
     select_running_service,
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils import validate_input_cmd_args
 
 
@@ -60,7 +60,7 @@ def execute_stop(
     """
     if stop_function_args is None:
         stop_function_args = {}
-    context, namespace = select_context_and_namespace(
+    k8s_config = select_k8s_config(
         context=context,
         namespace=namespace,
     )
@@ -68,8 +68,7 @@ def execute_stop(
         instance_type=instance_type,
         only_system_folders=system_folders,
         only_user_folders=not system_folders,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
 
     if not running_services:
@@ -78,7 +77,7 @@ def execute_stop(
 
     if stop_all:
         for service in running_services:
-            stop_function(service, namespace, context)
+            stop_function(service, k8s_config.namespace, k8s_config.context)
     else:
         if not to_stop:
             helm_name = select_running_service(running_services, instance_type)
@@ -90,9 +89,14 @@ def execute_stop(
             helm_name = ctx.helm_release_name
 
         if helm_name in running_services:
-            stop_function(helm_name, namespace, context, **stop_function_args)
+            stop_function(
+                helm_name,
+                k8s_config,
+                **stop_function_args,
+            )
             info(
-                f"Stopped the {Fore.GREEN}{helm_name}{Style.RESET_ALL} {infra_component.value}."
+                f"Stopped the {Fore.GREEN}{helm_name}{Style.RESET_ALL} "
+                f"{infra_component.value}."
             )
         else:
             error(f"{Fore.RED}{to_stop}{Style.RESET_ALL} is not running?!")
@@ -135,9 +139,7 @@ def stop_port_forward(service_name: str) -> None:
 
 
 def helm_uninstall(
-    release_name: str,
-    context: str | None = None,
-    namespace: str | None = None,
+    release_name: str, k8s_config: KubernetesConfig | None = None
 ) -> None:
     """
     Manage the `helm uninstall` command.
@@ -146,15 +148,14 @@ def helm_uninstall(
     ----------
     release_name : str
         The name of the Helm release to uninstall.
-    context : str, optional
-        The Kubernetes context to use.
-    namespace : str, optional
-        The Kubernetes namespace to use.
+    k8s_config : KubernetesConfig, optional
+        The Kubernetes configuration to use.
     """
     # Input validation
     validate_input_cmd_args(release_name, "release name")
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config:
+        validate_input_cmd_args(k8s_config.context, "context name", allow_none=True)
+        validate_input_cmd_args(k8s_config.namespace, "namespace name", allow_none=True)
 
     # Create the command
     max_time_stop = "60s"
@@ -163,11 +164,11 @@ def helm_uninstall(
     )
     command = ["helm", "uninstall", release_name, "--wait", "--timeout", max_time_stop]
 
-    if context:
-        command.extend(["--kube-context", context])
+    if k8s_config and k8s_config.context:
+        command.extend(["--kube-context", k8s_config.context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config and k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     try:
         subprocess.run(

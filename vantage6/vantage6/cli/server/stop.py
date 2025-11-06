@@ -5,6 +5,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 
 
 @click.command()
@@ -50,14 +51,13 @@ def cli_server_stop(
     )
 
 
-def _stop_server(server_name: str, namespace: str, context: str) -> None:
+def _stop_server(server_name: str, k8s_config: KubernetesConfig) -> None:
     info(f"Stopping server {server_name}...")
 
     # uninstall the helm release
     helm_uninstall(
         release_name=server_name,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
 
     # stop the port forwarding for server and UI

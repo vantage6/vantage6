@@ -9,9 +9,9 @@ from vantage6.cli.common.start import (
     prestart_checks,
     start_port_forward,
 )
-from vantage6.cli.common.utils import select_context_and_namespace
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.globals import ChartName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -56,10 +56,7 @@ def cli_auth_start(
 
     prestart_checks(ctx, InstanceType.AUTH, name, system_folders)
 
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     # TODO: re-enable when we save the auth logs
     # create_directory_if_not_exists(ctx.log_dir)
@@ -69,8 +66,7 @@ def cli_auth_start(
         release_name=ctx.helm_release_name,
         chart_name=ChartName.AUTH,
         values_file=ctx.config_file,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
     )
 
@@ -81,8 +77,7 @@ def cli_auth_start(
         service_port=Ports.HTTP.value,
         port=port or Ports.DEV_AUTH.value,
         ip=ip,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
 
     if attach:

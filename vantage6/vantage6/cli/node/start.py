@@ -16,12 +16,10 @@ from vantage6.cli.common.start import (
     prestart_checks,
     start_port_forward,
 )
-from vantage6.cli.common.utils import (
-    create_directory_if_not_exists,
-    select_context_and_namespace,
-)
+from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
 
 from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
@@ -59,10 +57,7 @@ def cli_node_start(
 
     prestart_checks(ctx, InstanceType.NODE, name, system_folders)
 
-    context, namespace = select_context_and_namespace(
-        context=context,
-        namespace=namespace,
-    )
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)
@@ -103,8 +98,7 @@ def cli_node_start(
         release_name=ctx.helm_release_name,
         chart_name=ChartName.NODE,
         values_file=ctx.config_file,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         custom_values=[f"node.image={image}"],
     )
@@ -114,8 +108,7 @@ def cli_node_start(
         service_name=f"{ctx.helm_release_name}-node-service",
         service_port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
         port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
 
     if attach:
@@ -124,7 +117,6 @@ def cli_node_start(
             instance_type=InstanceType.NODE,
             infra_component=InfraComponentName.NODE,
             system_folders=system_folders,
-            context=context,
-            namespace=namespace,
+            k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,
         )

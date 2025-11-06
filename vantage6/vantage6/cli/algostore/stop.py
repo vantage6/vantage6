@@ -5,6 +5,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 
 
 @click.command()
@@ -51,10 +52,10 @@ def cli_algo_store_stop(
     )
 
 
-def _stop_store(store_name: str, namespace: str, context: str) -> None:
+def _stop_store(store_name: str, k8s_config: KubernetesConfig) -> None:
     info(f"Stopping store {store_name}...")
 
-    helm_uninstall(release_name=store_name, context=context, namespace=namespace)
+    helm_uninstall(release_name=store_name, k8s_config=k8s_config)
 
     stop_port_forward(service_name=f"{store_name}-store-service")
 

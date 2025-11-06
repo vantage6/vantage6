@@ -8,6 +8,7 @@ from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.server.attach import cli_server_attach
 from vantage6.cli.server.files import cli_server_files
 from vantage6.cli.server.import_ import cli_server_import
@@ -18,7 +19,7 @@ from vantage6.cli.server.stop import cli_server_stop
 
 
 class ServerCLITest(unittest.TestCase):
-    @patch("vantage6.cli.server.start.select_context_and_namespace")
+    @patch("vantage6.cli.server.start.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.server.start.helm_install")
@@ -41,7 +42,10 @@ class ServerCLITest(unittest.TestCase):
         ctx.config_exists.return_value = True
         ctx.name = "not-running"
         context.return_value = ctx
-        ctx_ns.return_value = ("test-context", "test-namespace")
+        ctx_ns.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
 
         runner = CliRunner()
         result = runner.invoke(cli_server_start, ["--name", "not-running"])
@@ -143,17 +147,15 @@ collaborations: []
                 self.assertEqual(result.exit_code, 1)
                 self.assertIsNotNone(result.exception)
 
-    @patch("vantage6.cli.common.new.select_context_and_namespace")
     @patch("vantage6.cli.common.new.make_configuration")
     @patch("vantage6.cli.common.new.ensure_config_dir_writable")
     @patch("vantage6.cli.context.server.ServerContext")
-    def test_new(self, context, permissions, make_configuration, ctx_ns):
+    def test_new(self, context, permissions, make_configuration):
         """New configuration without errors."""
 
         context.config_exists.return_value = False
         permissions.return_value = True
         make_configuration.return_value = "/some/file.yaml"
-        ctx_ns.return_value = ("test-context", "test-namespace")
 
         runner = CliRunner()
         result = runner.invoke(cli_server_new, ["--name", "iknl"])
@@ -161,7 +163,7 @@ collaborations: []
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.common.stop.select_context_and_namespace")
+    @patch("vantage6.cli.common.stop.select_k8s_config")
     @patch("vantage6.cli.common.stop.find_running_service_names")
     @patch("vantage6.cli.common.stop.get_context")
     @patch("vantage6.cli.server.stop._stop_server")
@@ -179,7 +181,10 @@ collaborations: []
 
         find_running_service_names.return_value = [server_name]
         get_context.return_value = MagicMock(helm_release_name=server_name)
-        context_and_namespace.return_value = ("test-context", "test-namespace")
+        context_and_namespace.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
 
         runner = CliRunner()
         result = runner.invoke(cli_server_stop, ["--name", instance_name])
@@ -188,8 +193,13 @@ collaborations: []
         self.assertEqual(result.exit_code, 0)
 
     @patch("vantage6.cli.server.attach.attach_logs")
-    def test_attach(self, attach_logs):
+    @patch("vantage6.cli.server.attach.select_k8s_config")
+    def test_attach(self, select_k8s_config, attach_logs):
         """Attach logs to the console without errors."""
+        select_k8s_config.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
         runner = CliRunner()
         result = runner.invoke(cli_server_attach)
 
@@ -200,24 +210,29 @@ collaborations: []
             instance_type=InstanceType.SERVER,
             infra_component=InfraComponentName.SERVER,
             system_folders=False,
-            context=None,
-            namespace=None,
+            k8s_config=KubernetesConfig(
+                context="test-context",
+                namespace="test-namespace",
+            ),
             is_sandbox=False,
             additional_labels="component=vantage6-server",
         )
 
     @patch("vantage6.cli.common.utils.subprocess.run")
     @patch("vantage6.cli.common.attach.select_running_service")
-    @patch("vantage6.cli.common.attach.select_context_and_namespace")
+    @patch("vantage6.cli.server.attach.select_k8s_config")
     @patch("vantage6.cli.common.attach.Popen")
     def test_attach_logs(
         self,
         mock_popen,
-        select_context_and_namespace,
+        select_k8s_config,
         select_running_service,
         subprocess_run,
     ):
-        select_context_and_namespace.return_value = ("test-context", "test-namespace")
+        select_k8s_config.return_value = KubernetesConfig(
+            context="test-context",
+            namespace="test-namespace",
+        )
         select_running_service.return_value = "vantage6-iknl-system-server"
 
         # Mock subprocess.run to return success for helm list command
@@ -236,8 +251,7 @@ collaborations: []
             instance_type=InstanceType.SERVER,
             infra_component=InfraComponentName.SERVER,
             system_folders=True,
-            context=None,
-            namespace=None,
+            k8s_config=select_k8s_config.return_value,
             is_sandbox=False,
             additional_labels="test=label",
         )

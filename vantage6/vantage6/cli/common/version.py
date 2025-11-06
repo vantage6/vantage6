@@ -4,13 +4,13 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import (
     find_running_service_names,
     get_config_name_from_helm_release_name,
-    select_context_and_namespace,
     select_running_service,
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 def get_and_select_ctx(
@@ -44,7 +44,7 @@ def get_and_select_ctx(
     ServerContext | NodeContext | AlgorithmStoreContext
         The context for the given instance type
     """
-    context, namespace = select_context_and_namespace(
+    k8s_config = select_k8s_config(
         context=context,
         namespace=namespace,
     )
@@ -52,9 +52,7 @@ def get_and_select_ctx(
         instance_type=instance_type,
         only_system_folders=False,
         only_user_folders=False,
-        context=context,
-        namespace=namespace,
-        sandbox=is_sandbox,
+        k8s_config=k8s_config,
     )
 
     if not running_services:

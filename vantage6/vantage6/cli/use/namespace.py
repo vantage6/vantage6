@@ -4,7 +4,6 @@ from kubernetes import client
 
 from vantage6.common import error
 
-from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
 from vantage6.cli.utils_kubernetes import (
     get_core_api_with_ssl_handling,
@@ -53,7 +52,3 @@ def cli_use_namespace(namespace: str):
 
     # Switch to the selected namespace for current context
     switch_context_and_namespace(namespace=namespace)
-
-    # Remove the last_context in CLI config
-    cli_config = CliConfig()
-    cli_config.remove_kube()
