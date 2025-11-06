@@ -296,7 +296,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "production": False,
                 "no_password_update_required": True,
                 "redirectUris": [
-                    f"{HTTP_LOCALHOST}:30760",
+                    f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
                     f"{HTTP_LOCALHOST}:7681",
                 ],
             },
