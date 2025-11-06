@@ -18,6 +18,7 @@ store:
     host_uri: host.docker.internal
     disable_review: false
     review_own_algorithm: false
+    forward_ports: true
 
   image: harbor2.vantage6.ai/infrastructure/store:latest
 

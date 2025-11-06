@@ -46,7 +46,10 @@ def cli_algo_store_version(
     )
     store_config = ctx.config.get("store", {})
 
-    port = store_config.get("port", Ports.DEV_ALGO_STORE.value)
+    if is_sandbox:
+        port = Ports.SANDBOX_ALGO_STORE.value
+    else:
+        port = store_config.get("port", Ports.DEV_ALGO_STORE.value)
     api_path = store_config.get("api_path", DEFAULT_API_PATH)
     if not port:
         error("No port found in algorithm store configuration.")

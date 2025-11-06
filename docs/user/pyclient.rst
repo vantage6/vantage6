@@ -30,7 +30,7 @@ Install
 It is important to install the Python client with the same version as the
 vantage6 server you are talking to. Check your server version by going to
 ``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
-or `http://localhost:7601/api/version`) to find its version.
+or `http://localhost:30761/server/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 
@@ -521,4 +521,3 @@ while for the partial algorithms, dispatched to two nodes, the results would be:
 
    >>> result_info
    [{'sum': 253, 'count': 4}, {'sum': 173, 'count': 4}]
-

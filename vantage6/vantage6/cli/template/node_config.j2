@@ -4,10 +4,6 @@ nameOverride: {{ nameOverride | default('vantage6-node') }}
 # namespace: vantage6-node
 node:
 
-  # Set to false to prevent creation of node secrets (useful when secrets are managed
-  # externally)
-  createSecrets: {{ node.createSecrets | default(true) }}
-
   name: {{ node.name | default('put-your-node-name-here') }}
   apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
 
@@ -365,6 +361,10 @@ node:
   # algorithm_env:
   #     threshold_example: 10
   {% endif %}
+
+  # Set to false to prevent creation of node secrets (useful when secrets are managed
+  # externally)
+  createSecrets: {{ node.createSecrets | default(true) }}
 
   {% if node.debug is defined %}
   # Debug settings

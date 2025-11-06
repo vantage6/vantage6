@@ -9,6 +9,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.client import UserClient
+from vantage6.client.utils import LogLevel
 
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
@@ -74,7 +75,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
         auth_url=ctx.config["ui"]["keycloakPublicUrl"],
         auth_realm=ctx.config["ui"]["keycloakRealm"],
         auth_client=ctx.config["ui"]["keycloakClient"],
-        log_level="info",
+        log_level=LogLevel.INFO,
     )
 
     info("Authenticate using admin credentials (opens browser for login)")

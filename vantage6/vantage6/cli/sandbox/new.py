@@ -4,7 +4,6 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import error
-from vantage6.common.globals import Ports
 
 from vantage6.cli.context.server import ServerContext
 from vantage6.cli.k8s_config import select_k8s_config
@@ -23,25 +22,6 @@ from vantage6.cli.utils import prompt_config_name
     type=int,
     default=3,
     help="Generate this number of nodes in the development network",
-)
-@click.option(
-    "-p",
-    "--server-port",
-    type=int,
-    default=Ports.DEV_SERVER.value,
-    help=f"Port to run the server on. Default is {Ports.DEV_SERVER}.",
-)
-@click.option(
-    "--ui-port",
-    type=int,
-    default=Ports.DEV_UI.value,
-    help=f"Port to run the UI on. Default is {Ports.DEV_UI}.",
-)
-@click.option(
-    "--algorithm-store-port",
-    type=int,
-    default=Ports.DEV_ALGO_STORE.value,
-    help=f"Port to run the algorithm store on. Default is {Ports.DEV_ALGO_STORE}.",
 )
 @click.option(
     "--server-image",
@@ -127,9 +107,6 @@ def cli_new_sandbox(
     click_ctx: click.Context,
     name: str,
     num_nodes: int,
-    server_port: int,
-    ui_port: int,
-    algorithm_store_port: int,
     server_image: str | None,
     ui_image: str | None,
     store_image: str | None,
@@ -164,9 +141,6 @@ def cli_new_sandbox(
 
     sb_config_manager = CoreSandboxConfigManager(
         server_name=server_name,
-        server_port=server_port,
-        ui_port=ui_port,
-        algorithm_store_port=algorithm_store_port,
         server_image=server_image,
         ui_image=ui_image,
         store_image=store_image,

@@ -88,9 +88,26 @@ store:
 
   {% if store.dev is defined %}
   dev:
+    # Specify the URI to the host. This is used to generate the correct URIs to
+    # communicate with the server. On Windows and Mac, when using Docker Desktop, you
+    # can use the special hostname `host.docker.internal` to refer to the host machine.
+    # On Linux, you should normally use http://172.17.0.1.
     host_uri: {{ store.dev.host_uri | default('host.docker.internal') }}
+    # disable review process - all submitted algorithms are automatically accepted,
+    # which can be useful while developing algorithms locally.
     disable_review: {{ store.dev.disable_review | default(false) }}
+    # Define whether or not developers are able to review their own algorithms. For
+    # production, this is not recommended, but it can facilitate development.
     review_own_algorithm: {{ store.dev.review_own_algorithm | default(false) }}
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: {{ store.dev.forward_ports | default(false) }}
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_port_to_expose: {{ store.dev.local_port_to_expose | default(30762) }}
   {% endif %}
 
   {% if store.internal is defined %}

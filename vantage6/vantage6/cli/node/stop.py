@@ -5,7 +5,7 @@ from kubernetes.client import ApiException
 from vantage6.common import error, info, warning
 from vantage6.common.globals import APPNAME, InstanceType
 
-from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
+from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.common.utils import (
     extract_name_and_is_sandbox,
     get_config_name_from_helm_release_name,
@@ -92,8 +92,6 @@ def _stop_node(
         Whether node is a sandbox node or not
     """
     helm_uninstall(release_name=node_helm_name, k8s_config=k8s_config)
-
-    stop_port_forward(service_name=f"{node_helm_name}-node-service")
 
     _stop_node_tasks(node_helm_name, system_folders, is_sandbox)
 

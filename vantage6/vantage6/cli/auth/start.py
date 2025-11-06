@@ -1,17 +1,21 @@
+import re
+import subprocess
+import time
+
 import click
 
-from vantage6.common import info, warning
-from vantage6.common.globals import InstanceType, Ports
+from vantage6.common import error, info, warning
+from vantage6.common.globals import LOCALHOST, InstanceType, Ports
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
-    start_port_forward,
 )
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.globals import ChartName
 from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.utils import validate_input_cmd_args
 
 
 @click.command()
@@ -91,3 +95,131 @@ def cli_auth_start(
         #     namespace=namespace,
         #     is_sandbox=ctx.is_sandbox,
         # )
+
+
+def start_port_forward(
+    service_name: str,
+    service_port: int,
+    port: int,
+    ip: str = LOCALHOST,
+    context: str | None = None,
+    namespace: str | None = None,
+) -> None:
+    """
+    Port forward a kubernetes service.
+
+    Parameters
+    ----------
+    service_name : str
+        The name of the Kubernetes service to port forward.
+    service_port : int
+        The port on the service to forward.
+    port : int
+        The port to listen on.
+    ip : str
+        The IP address to listen on. Defaults to localhost.
+    context : str | None
+        The Kubernetes context to use.
+    namespace : str | None
+        The Kubernetes namespace to use.
+    """
+    # Input validation
+    validate_input_cmd_args(service_name, "service name")
+    if not isinstance(service_port, int) or service_port <= 0:
+        error(f"Invalid service port: {service_port}. Must be a positive integer.")
+        return
+
+    if not isinstance(port, int) or port <= 0:
+        error(f"Invalid local port: {port}. Must be a positive integer.")
+        return
+
+    if ip and not re.match(
+        r"^(localhost|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$", ip
+    ):
+        error(f"Invalid IP address: {ip}. Must be a valid IPv4 address or 'localhost'.")
+        return
+
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+
+    # Check if the service is ready before starting port forwarding
+    info(f"Waiting for service '{service_name}' to become ready...")
+    start_time = time.time()
+    timeout = 300  # seconds
+    while time.time() - start_time < timeout:
+        try:
+            command = [
+                "kubectl",
+                "get",
+                "endpoints",
+                service_name,
+                "-o",
+                "jsonpath={.subsets[*].addresses[*].ip}",
+            ]
+
+            if context:
+                command.extend(["--context", context])
+
+            if namespace:
+                command.extend(["--namespace", namespace])
+
+            result = subprocess.check_output(command).decode().strip()
+
+            if result:
+                info(f"Service '{service_name}' is ready.")
+                break
+        except subprocess.CalledProcessError:
+            pass  # ignore and retry
+
+        time.sleep(2)
+    else:
+        error(
+            f"Timeout: Service '{service_name}' has no ready endpoints after {timeout} "
+            "seconds."
+        )
+        return
+
+    # Create the port forwarding command
+    if not ip:
+        ip = LOCALHOST
+
+    command = [
+        "kubectl",
+        "port-forward",
+        "--address",
+        ip,
+        f"service/{service_name}",
+        f"{port}:{service_port}",
+    ]
+
+    if context:
+        command.extend(["--context", context])
+
+    if namespace:
+        command.extend(["--namespace", namespace])
+
+    # Start the port forwarding process
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            start_new_session=True,  # Start in new session to detach from parent
+        )
+
+        # Give the process a moment to start and check if it's still running
+        time.sleep(1)
+        if process.poll() is not None:
+            # Process has already terminated
+            e = process.stderr.read().decode() if process.stderr else "Unknown error"
+            error(f"Failed to start port forwarding: {e}")
+            return
+
+        info(
+            f"Port forwarding started: {ip}:{port} -> {service_name}:{service_port} "
+            f"(PID: {str(process.pid)})"
+        )
+        return
+    except Exception as e:
+        error(f"Failed to start port forwarding: {e}")
+        return

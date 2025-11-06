@@ -26,14 +26,12 @@ a user account.
 
 ### Running the UI locally
 
-The UI is started locally with the ``v6 server start`` command. It will also be
-included in a sandbox environment that can be started with
-``v6 sandbox start``. Both commands will automatically start a user interface
-on `http://localhost:7600`. Port 7600 is the default: it is possible to configure
-running it on another port by changing the configuration file.
+The easiest way to run the UI locally is as part of a sandbox environment that
+can be started with ``v6 sandbox start``. This will automatically start a user
+interface on `http://localhost:30760`.
 
 For developers, it is recommended to use ``v6 dev`` commands. Local code changes are
-then synced to the UI deployment. This UI deployment is also available on
+then synced to the UI deployment. This UI deployment is then available on
 `http://localhost:7600`.
 
 ### Deployment

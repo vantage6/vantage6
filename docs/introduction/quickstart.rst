@@ -57,7 +57,7 @@ about olympic medal winners. Note also that the server is coupled automatically 
 community algorithm store, thereby making the community algorithms directly available to
 you.
 
-You can now access the user interface by navigating to http://localhost:7600 in your
+You can now access the user interface by navigating to http://localhost:30760 in your
 browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
 Stopping the network

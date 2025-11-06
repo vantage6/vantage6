@@ -1,11 +1,14 @@
+import subprocess
+
 import click
 
-from vantage6.common import info
+from vantage6.common import error, info, warning
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.common.stop import execute_stop, helm_uninstall, stop_port_forward
+from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
 from vantage6.cli.k8s_config import KubernetesConfig
+from vantage6.cli.utils import validate_input_cmd_args
 
 
 @click.command()
@@ -65,3 +68,39 @@ def _stop_auth(auth_name: str, k8s_config: KubernetesConfig) -> None:
     )
 
     info(f"Auth {auth_name} stopped successfully.")
+
+
+def stop_port_forward(service_name: str) -> None:
+    """
+    Stop the port forwarding process for a given service name.
+
+    Parameters
+    ----------
+    service_name : str
+        The name of the service whose port forwarding process should be terminated.
+    """
+    # Input validation
+    validate_input_cmd_args(service_name, "service name")
+
+    try:
+        # Find the process ID (PID) of the port forwarding command
+        result = subprocess.run(
+            ["pgrep", "-f", f"kubectl port-forward.*{service_name}"],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        pids = result.stdout.strip().splitlines()
+
+        if not pids:
+            warning(f"No port forwarding process found for service '{service_name}'.")
+            return
+
+        for pid in pids:
+            subprocess.run(["kill", "-9", pid], check=True)
+            info(
+                f"Terminated port forwarding process for service '{service_name}' "
+                f"(PID: {pid})"
+            )
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to terminate port forwarding: {e}")

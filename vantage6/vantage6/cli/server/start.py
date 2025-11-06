@@ -1,14 +1,13 @@
 import click
 
 from vantage6.common import info
-from vantage6.common.globals import InstanceType, Ports
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
-    start_port_forward,
 )
 from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.server import ServerContext
@@ -67,27 +66,6 @@ def cli_server_start(
         values_file=ctx.config_file,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
-    )
-
-    # port forward for server
-    info("Port forwarding for server")
-    start_port_forward(
-        # TODO: make this dynamic
-        service_name=f"{ctx.helm_release_name}-vantage6-server-service",
-        service_port=ctx.config["server"].get("port", Ports.DEV_SERVER.value),
-        port=port or ctx.config["server"].get("port", Ports.DEV_SERVER.value),
-        ip=ip,
-        k8s_config=k8s_config,
-    )
-
-    # port forward for UI
-    info("Port forwarding for UI")
-    start_port_forward(
-        service_name=f"{ctx.helm_release_name}-vantage6-frontend-service",
-        service_port=ctx.config["ui"].get("port", Ports.DEV_UI.value),
-        port=ui_port or ctx.config["ui"].get("port", Ports.DEV_UI.value),
-        ip=ip,
-        k8s_config=k8s_config,
     )
 
     if attach:

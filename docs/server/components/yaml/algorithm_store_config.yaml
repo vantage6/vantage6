@@ -92,9 +92,9 @@ store:
   # the server that it communicates with locally
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
-    # communicate with the server. On Windows and Mac, you can use the special
-    # hostname `host.docker.internal` to refer to the host machine. On Linux, you
-    # should normally use http://172.17.0.1.
+    # communicate with the server. On Windows and Mac, when using Docker Desktop, you
+    # can use the special hostname `host.docker.internal` to refer to the host machine.
+    # On Linux, you should normally use http://172.17.0.1.
     host_uri: http://host.docker.internal
 
     # disable review process - all submitted algorithms are automatically accepted, which
@@ -106,6 +106,15 @@ store:
     # production, this is not recommended, but it can facilitate development. By default,
     # this is disabled.
     review_own_algorithm: false
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: true
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_port_to_expose: 30762
 
   logging:
     # Controls the logging output level. Could be one of the following

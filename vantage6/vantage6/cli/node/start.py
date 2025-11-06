@@ -14,15 +14,12 @@ from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
-    start_port_forward,
 )
 from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
-
-from vantage6.node.globals import DEFAULT_PROXY_SERVER_PORT
 
 
 @click.command()
@@ -69,7 +66,7 @@ def cli_node_start(
     else:
         # if no custom image is specified, find the server version and use
         # the latest images from that minor version
-        client = create_client(ctx)
+        client = create_client(ctx, use_sandbox_port=ctx.is_sandbox)
         major_minor = None
         try:
             # try to get server version, skip if can't get a connection
@@ -101,14 +98,6 @@ def cli_node_start(
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         custom_values=[f"node.image={image}"],
-    )
-
-    # start port forward for the node proxy server
-    start_port_forward(
-        service_name=f"{ctx.helm_release_name}-node-service",
-        service_port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
-        port=ctx.config["node"].get("proxyPort", DEFAULT_PROXY_SERVER_PORT),
-        k8s_config=k8s_config,
     )
 
     if attach:

@@ -5,6 +5,7 @@ import click
 from vantage6.common.globals import Ports
 
 from vantage6.client import UserClient
+from vantage6.client.utils import LogLevel
 
 from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
 from vantage6.cli.utils import error
@@ -96,7 +97,7 @@ def cli_test_features(
         auth_url=auth_url,
         auth_realm=auth_realm,
         auth_client=auth_client,
-        log_level="critical",
+        log_level=LogLevel.CRITICAL,
     )
     client.authenticate()
     client.setup_encryption(private_key)
