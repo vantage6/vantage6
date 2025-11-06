@@ -47,8 +47,6 @@ class MockNetwork:
             The server of the mock network.
         user_client : MockUserClient
             The user client of the mock network.
-        algorithm_client : MockAlgorithmClient
-            The algorithm client of the mock network.
 
         Methods
         -------
