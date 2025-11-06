@@ -58,6 +58,14 @@ data:
       - {{ . }}
       {{- end }}
     {{- end }}
+    {{- if .Values.store.private_docker_registries }}
+    private_docker_registries:
+      {{- range .Values.store.private_docker_registries }}
+      - registry: {{ .registry }}
+        username: {{ .username }}
+        password: {{ .password }}
+      {{- end }}
+    {{- end }}
     {{- if .Values.store.dev }}
     dev:
       host_uri: {{ .Values.store.dev.host_uri }}
