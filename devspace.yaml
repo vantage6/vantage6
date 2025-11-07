@@ -287,6 +287,8 @@ deployments:
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
+        prometheus:
+          enabled: false
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -390,6 +392,8 @@ dev:
         disableDownload: true
         startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
+    logs:
+      enabled: true
     ports:
       - port: 7601:7601
         bindAddress: localhost
@@ -424,6 +428,8 @@ dev:
       - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
         disableDownload: true
         startContainer: true
+    logs:
+      enabled: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
   vantage6-store-db:
@@ -489,9 +495,10 @@ dev:
         startContainer: true
         onUpload:
           restartContainer: true
-
     restartHelper:
       inject: true
+    logs:
+      enabled: true
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 

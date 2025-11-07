@@ -8,6 +8,7 @@ class NodeConfigCreationDetails:
     dev_dir: Path
     task_directory: str
     task_namespace: str
+    prometheus_enabled: bool = False
 
 
 def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:

@@ -38,6 +38,12 @@ parser.add_argument(
     default=".devspace/vantage6_populate_done",
     help="Path to the populate marker file",
 )
+parser.add_argument(
+    "--prometheus-enabled",
+    type=bool,
+    default=False,
+    help="Whether to enable Prometheus",
+)
 args = parser.parse_args()
 
 number_of_nodes = args.number_of_nodes
@@ -45,6 +51,7 @@ task_directory = args.task_directory
 task_namespace = args.task_namespace
 node_starting_port_number = args.starting_port_number
 populate_marker = args.populate_marker
+prometheus_enabled = args.prometheus_enabled
 
 #
 # Required directories
@@ -60,6 +67,7 @@ node_config_creation_details = NodeConfigCreationDetails(
     dev_dir=dev_data_dir,
     task_directory=task_directory,
     task_namespace=task_namespace,
+    prometheus_enabled=prometheus_enabled,
 )
 
 #

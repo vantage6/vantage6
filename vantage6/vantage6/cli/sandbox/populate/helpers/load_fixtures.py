@@ -178,6 +178,7 @@ def create_node_config(
     node_starting_port_number: int,
     organization: dict,
     node: dict,
+    prometheus_enabled: bool,
 ) -> dict:
     """
     Create a node configuration file.
@@ -210,6 +211,7 @@ def create_node_config(
             "api_path": "/server",
             "task_namespace": task_namespace,
             "node_proxy_port": node_starting_port_number + (node_number - 1),
+            "prometheus_enabled": str(prometheus_enabled).lower(),
         }
     )
     config_file = node_dev_dir / f"node_org_{node_number}.yaml"
@@ -453,6 +455,7 @@ def create_fixtures(
                             ),
                             node=node,
                             organization=organizations[i - 1],
+                            prometheus_enabled=node_config_creation_details.prometheus_enabled,
                         )
                     )
                 else:
