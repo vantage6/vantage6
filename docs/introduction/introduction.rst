@@ -55,11 +55,11 @@ The roles of these vantage6 components are as follows:
 * **Clients** (i.e. users or applications) request computations from the nodes via the
   client
 * **Algorithms** are scripts that are run on the sensitive data. Each algorithm is
-  packaged in a Docker image; the node pulls the image from a Docker registry and runs
+  packaged in a container image; the node pulls the image from a container registry and runs
   it on the local data. Note that the node owner can control which algorithms are
   allowed to run on their data.
 
-On a technical level, vantage6 may be seen as a (Docker) container
+On a technical level, vantage6 may be seen as a container
 orchestration tool for privacy preserving analyses. It deploys a network of
 containerized applications that together ensure insights can be exchanged
 without sharing record-level data.
@@ -243,7 +243,7 @@ directly. There are a number of public algorithms available from the
 to your server will allow you to quickly get a set of algorithms that you can run on your nodes.
 
 You can also develop your own vantage6 algorithms.
-The only requirement is that you package the algorithm in a Docker image that vantage6
+The only requirement is that you package the algorithm in a container image that vantage6
 can run. The focus of vantage6 is on setting up an
 infrastructure to run algorithms on sensitive data and ensuring that the data is kept
 private - the algorithm implementation is kept highly flexible.
@@ -265,4 +265,3 @@ Vantage6 is designed to be as flexible as possible,
 so you can use any programming language and any libraries you like. Python is the most
 common language to use within the vantage6 community, and also has the most
 :ref:`tools <algo-dev-guide>` available to help you with your work.
-

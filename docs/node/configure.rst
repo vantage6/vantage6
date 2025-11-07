@@ -149,7 +149,7 @@ Configuring algorithm access to the data
 
 As explained above, you can :ref:`specify a list <node-configure-security>` of
 allowed algorithms in the configuration file of the data station. Only algorithms
-specified on that list, by providing the names of the Docker images of these algorithms,
+specified on that list, by providing the names of the images of these algorithms,
 are allowed to run on the data station. Also, you can specify the exact (non-forgeable)
 hash (i.e. version) of the trusted algorithm. Note that this process requires manual
 updates to the data station configuration, as well as a data station restart,

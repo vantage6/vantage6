@@ -83,7 +83,7 @@ new user:
    #    name : str
    #        Human readable name
    #    image : str
-   #        Docker image name which contains the algorithm
+   #        Container image name which contains the algorithm
    #    description : str
    #        Human readable description
    #    arguments : dict
@@ -339,7 +339,7 @@ Here we assume that
 -  you have a Python session with an authenticated Client object, as
    created in :ref:`authentication`.
 -  you already have the algorithm you want to run available as a
-   container in a docker registry (see
+   container in a container registry (see
    `here <https://vantage6.discourse.group/t/developing-a-new-algorithm/31>`__
    for more details on developing your own algorithm)
 -  the nodes are configured to look at the right database

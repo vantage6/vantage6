@@ -275,47 +275,18 @@ inside the ``tests_folder``, then you should remove that part.
 Verifying local code changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-While working on a new feature, it can be useful to run a server and/or nodes
-locally with your code changes to verify that it does what you expect it to do.
+While working on a new feature, it can be useful to run vantage6 locally with your code
+changes to verify that it does what you expect it to do. The ``v6 dev``
+:ref:`commands <develop-env>` can be used for this purpose. With these commands, a local
+vantage6 network can be run that immediately syncs code changes that you make. Note
+that this only works for changes that you make to code running *within* containers of
+the server, node, store and UI. However, changes to e.g. the CLI or the Kubernetes
+resources may require other means to test your changes.
 
 .. note::
 
-    Since version 5 the local development requires Devspace, this replaces the old
-    way where you had to specify `--mount-src` and `--image` options.
-
-
-
-
-This can be done by using the commands ``v6 server`` and ``v6 node`` in
-combination with the options ``--mount-src`` and optionally ``--image``.
-
-* The ``--mount-src /path/to/vantage6`` option will overwrite the code that
-  the server/node runs with your local code when running the docker image.
-  The provided path should point towards the root folder of the `vantage6
-  repository <https://github.com/vantage6/vantage6>`_ - where you have your
-  local changes.
-* The ``--image <url_to_docker_image>`` can be used to point towards a custom
-  Docker image for the node or server. This is mostly useful when your code
-  update includes dependency upgrades. Then, you need to build a custom
-  infrastructure image as the 'old' image does not contain the new depencey and
-  the ``--mount-src`` option will only overwrite the source code and not
-  re-install dependencies.
-
-Often, it is helpful to run the server and nodes locally with the ``v6 dev``
-:ref:`commands <develop-env>` to test your changes. With those commands, a local vantage6
-network can be run that immediately syncs code changes that you make. Note that this
-only works for changes that you make to code running *within* containers of the server,
-node, store and UI - however, changes to e.g. the CLI or the Kubernetes resources
-may require other means to test your changes.
-
-.. note::
-
-  If you are using Docker Desktop (which is usually the case if you are on
-  Windows or MacOS) and want to setup a test environment, you should use
-  ``http://host.docker.interal`` for the server address in the node
-  configuration file. You should not use ``http://localhost`` in that case as
-  that points to the localhost within the docker container instead of the
-  system-wide localhost.
+    To run the ``v6 dev`` commands, you need to have Devspace installed. See the
+    :ref:`develop-env` section for more information.
 
 Pull Request
 ^^^^^^^^^^^^

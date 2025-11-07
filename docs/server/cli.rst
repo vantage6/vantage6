@@ -77,33 +77,6 @@ e.g. ``v6 server start --help``.
 | version``      | running server                                      |
 +----------------+-----------------------------------------------------+
 
-.. _use-server-local:
-
-Local test setup
-^^^^^^^^^^^^^^^^
-
-If the nodes and the server run at the same machine, you have to make
-sure that the node can reach the server.
-
-**Windows and MacOS**
-
-Setting the server IP to ``0.0.0.0`` makes the server reachable
-at your localhost (this is also the case when the dockerized version
-is used). In order for the node to reach this server, set the
-``server_url`` setting to ``host.docker.internal``.
-
-.. warning::
-    On the **M1** mac the local server might not be reachable from
-    your nodes as ``host.docker.internal`` does not seem to refer to the
-    host machine. Reach out to us on Discourse for a solution if you need
-    this!
-
-**Linux**
-
-You should bind the server to ``0.0.0.0``. In the node
-configuration files, you can then use ``http://172.17.0.1``, assuming you use
-the default docker network settings.
-
 .. _server-import:
 
 Batch import
