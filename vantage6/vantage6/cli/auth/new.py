@@ -28,17 +28,9 @@ from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
     default=DEFAULT_SERVER_SYSTEM_FOLDERS,
     help="Use user folders instead of system folders",
 )
-@click.option("--context", default=None, help="Kubernetes context to use")
-@click.option(
-    "--namespace",
-    default=None,
-    help="Kubernetes namespace to use",
-)
 def cli_auth_new(
     name: str,
     system_folders: bool,
-    namespace: str,
-    context: str,
 ) -> None:
     """
     Create a new server configuration.
@@ -48,8 +40,6 @@ def cli_auth_new(
         config_producing_func_args=tuple(),
         name=name,
         system_folders=system_folders,
-        namespace=namespace,
-        context=context,
         type_=InstanceType.AUTH,
     )
 

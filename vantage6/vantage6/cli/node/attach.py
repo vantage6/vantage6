@@ -5,6 +5,7 @@ from vantage6.common import info
 from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.context import InstanceType
 from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -27,12 +28,12 @@ def cli_node_attach(
     Show the node logs in the current console.
     """
     info("Attaching to node logs...")
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
     attach_logs(
         name=name,
         instance_type=InstanceType.NODE,
         infra_component=InfraComponentName.NODE,
         system_folders=system_folders,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
         is_sandbox=is_sandbox,
     )

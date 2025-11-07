@@ -37,17 +37,9 @@ from vantage6.cli.utils import prompt_config_name
     default=N_FOL,
     help="Store this configuration in the user folders. This is the default.",
 )
-@click.option("--context", default=None, help="Kubernetes context to use")
-@click.option(
-    "--namespace",
-    default=None,
-    help="Kubernetes namespace to use",
-)
 def cli_node_new_configuration(
     name: str,
     system_folders: bool,
-    namespace: str,
-    context: str,
 ) -> None:
     """
     Create a new node configuration.
@@ -64,8 +56,6 @@ def cli_node_new_configuration(
         config_producing_func_args=(default_data_dir, default_log_dir, name),
         name=name,
         system_folders=system_folders,
-        namespace=namespace,
-        context=context,
         type_=InstanceType.NODE,
     )
 

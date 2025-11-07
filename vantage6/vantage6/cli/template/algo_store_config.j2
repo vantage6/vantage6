@@ -89,9 +89,9 @@ store:
   {% if store.dev is defined %}
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
-    # communicate with the server. On Windows and Mac, you can use the special
-    # hostname `host.docker.internal` to refer to the host machine. On Linux, you
-    # should normally use http://172.17.0.1.
+    # communicate with the server. On Windows and Mac, when using Docker Desktop, you
+    # can use the special hostname `host.docker.internal` to refer to the host machine.
+    # On Linux, you should normally use http://172.17.0.1.
     host_uri: {{ store.dev.host_uri | default('host.docker.internal') }}
     # disable review process - all submitted algorithms are automatically accepted,
     # which can be useful while developing algorithms locally.

@@ -1,6 +1,8 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+
 from vantage6.algorithm.client import AlgorithmClient
 from vantage6.mock import MockNetwork
 from vantage6.mock.client import MockAlgorithmClient
@@ -13,9 +15,20 @@ class TestMockAlgorithmClient(TestCase):
         """Set up test fixtures"""
         with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
             self.network = MockNetwork(
-                module_name=TEST_ALGORITHM_NAME, datasets=[], collaboration_id=1
+                module_name=TEST_ALGORITHM_NAME,
+                datasets=[
+                    {
+                        "label_1": {
+                            "database": pd.DataFrame(
+                                {"id": [1, 2, 3], "value": [10, 20, 30]}
+                            ),
+                            "db_type": "csv",
+                        }
+                    }
+                ],
+                collaboration_id=1,
             )
-        self.client = MockAlgorithmClient(self.network)
+        self.client = MockAlgorithmClient(self.network.nodes[0])
 
     def test_client_initialization(self):
         """Test if client is properly initialized"""
@@ -47,14 +60,14 @@ class TestMockAlgorithmClient(TestCase):
             algorithm_client_attrs = set(
                 dir(AlgorithmClient("dummy_token", "http://test.com"))
             )
-            mock_client_attrs = set(dir(self.client))
+            mock_client_attrs = set(dir(self.client)).union(
+                self.client._missing_attributes
+            )
 
-            # print the attributes that are not in the mock client
-            if algorithm_client_attrs - mock_client_attrs:
-                print(
-                    "Missing attributes in mock client:",
-                    algorithm_client_attrs - mock_client_attrs,
-                )
-
-            # The algorithm client attributes need to be a subset of the mock client attributes
-            self.assertTrue(algorithm_client_attrs.issubset(mock_client_attrs))
+            # The algorithm client attributes need to be a subset of the mock client
+            # attributes
+            self.assertTrue(
+                algorithm_client_attrs.issubset(mock_client_attrs),
+                f"Missing attributes in mock client: "
+                f"{algorithm_client_attrs - mock_client_attrs}",
+            )

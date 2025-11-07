@@ -4,7 +4,6 @@ from kubernetes import client, config
 
 from vantage6.common import error
 
-from vantage6.cli.config import CliConfig
 from vantage6.cli.utils import switch_context_and_namespace
 from vantage6.cli.utils_kubernetes import configure_kubernetes_client_for_microk8s
 
@@ -47,7 +46,3 @@ def cli_use_context(context: str):
 
     # Update kubeconfig current-context
     switch_context_and_namespace(context=context)
-
-    # Clear the last_context in CLI config
-    cli_config = CliConfig()
-    cli_config.remove_kube()

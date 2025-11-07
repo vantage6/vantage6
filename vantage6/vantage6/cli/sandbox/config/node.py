@@ -14,6 +14,7 @@ from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import (
     DefaultDatasets,
 )
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
 from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
 
@@ -44,12 +45,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         Path to the extra node configuration file.
     extra_dataset : NodeDataset | None
         List of tuples with the label and path to the dataset file.
-    context : str
-        Kubernetes context.
-    namespace : str
-        Kubernetes namespace.
-    k8s_node_name : str
-        Kubernetes node name.
+    k8s_config : KubernetesConfig
+        Kubernetes configuration.
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
@@ -64,9 +61,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         node_image: str | None,
         extra_node_config: Path | None,
         extra_dataset: NodeDataset | None,
-        context: str,
-        namespace: str,
-        k8s_node_name: str,
+        k8s_config: KubernetesConfig,
         custom_data_dir: Path | None,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
@@ -80,9 +75,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_datasets = [extra_dataset]
         else:
             self.node_datasets = []
-        self.context = context
-        self.namespace = namespace
-        self.k8s_node_name = k8s_node_name
+        self.k8s_config = k8s_config
 
         self.node_configs = []
         self.node_config_files = []
@@ -237,8 +230,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             ),
             name=config_name,
             system_folders=False,
-            namespace=self.namespace,
-            context=self.context,
             type_=InstanceType.NODE,
             is_sandbox=True,
         )
@@ -271,7 +262,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloakUrl": (
                     f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
-                    f"{self.namespace}.svc.cluster.local"
+                    f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "persistence": {
                     "tasks": {
@@ -282,7 +273,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                         "size": "1Gi",
                     },
                 },
-                "k8sNodeName": self.k8s_node_name,
+                "k8sNodeName": self.k8s_config.k8s_node,
                 "databases": {
                     "fileBased": [
                         {
@@ -297,8 +288,9 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "server": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-user-server-"
-                        f"vantage6-server-service.{self.namespace}.svc.cluster.local"
+                        f"http://vantage6-{self.server_name}-user-server-vantage6-"
+                        f"server-service.{self.k8s_config.namespace}.svc.cluster"
+                        ".local"
                     ),
                     "port": self.server_port,
                 },

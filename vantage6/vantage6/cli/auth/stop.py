@@ -7,6 +7,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
 
 
@@ -52,14 +53,13 @@ def cli_auth_stop(
     )
 
 
-def _stop_auth(auth_name: str, namespace: str, context: str) -> None:
+def _stop_auth(auth_name: str, k8s_config: KubernetesConfig) -> None:
     info(f"Stopping auth {auth_name}...")
 
     # uninstall the helm release
     helm_uninstall(
         release_name=auth_name,
-        context=context,
-        namespace=namespace,
+        k8s_config=k8s_config,
     )
 
     # stop the port forwarding for auth service
