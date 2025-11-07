@@ -96,6 +96,8 @@ install-dev:
 	uv pip install -e vantage6-backend-common[dev]
 	uv pip install -e vantage6-server[dev]
 	uv pip install -e vantage6-algorithm-store[dev]
+	# install dev and docs dependencies
+	uv pip install -e .[dev,docs]
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
