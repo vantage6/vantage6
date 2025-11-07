@@ -50,6 +50,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
+    with_prometheus : bool
+        Whether Prometheus is enabled for the node.
     """
 
     def __init__(
@@ -63,6 +65,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_dataset: NodeDataset | None,
         k8s_config: KubernetesConfig,
         custom_data_dir: Path | None,
+        with_prometheus: bool = False,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
         self.api_keys = api_keys
@@ -76,6 +79,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         else:
             self.node_datasets = []
         self.k8s_config = k8s_config
+        self.with_prometheus = with_prometheus
 
         self.node_configs = []
         self.node_config_files = []
@@ -298,6 +302,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         }
         if self.node_image:
             config["node"]["image"] = self.node_image
+
+        if self.with_prometheus:
+            config["node"]["prometheus"] = {
+                "enabled": True,
+                "report_interval_seconds": 45,
+            }
 
         # merge the extra config with the node config
         if extra_config is not None:

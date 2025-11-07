@@ -121,6 +121,12 @@ server:
     # If forward_ports is true, these are the ports that will be exposed on the host.
     local_port_to_expose: {{ server.dev.local_port_to_expose | default(30761) }}
     local_ui_port_to_expose: {{ server.dev.local_ui_port_to_expose | default(30760) }}
+    {% if server.dev.local_prometheus_port_to_expose is defined %}
+    local_prometheus_port_to_expose: {{ server.dev.local_prometheus_port_to_expose }}
+    {% endif %}
+    {% if server.dev.local_prometheus_port_to_expose is not defined %}
+    # local_prometheus_port_to_expose: 30763
+    {% endif %}
   {% endif %}
 
   # If you want to couple algorithm stores to the server on startup, you can add them here.

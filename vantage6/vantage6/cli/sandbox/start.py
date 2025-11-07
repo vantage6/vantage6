@@ -125,6 +125,8 @@ def execute_sandbox_start(
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
 ) -> None:
+    with_prometheus = ctx.config.get("prometheus", {}).get("enabled", False)
+
     # First we need to start the keycloak service
     cmd = [
         "v6",
@@ -191,6 +193,7 @@ def execute_sandbox_start(
             add_dataset=add_dataset,
             k8s_config=k8s_config,
             custom_data_dir=custom_data_dir,
+            with_prometheus=with_prometheus,
         )
     else:
         node_configs, _ = NodeContext.available_configurations(
@@ -231,6 +234,7 @@ def _initialize_sandbox(
     add_dataset: tuple[str, Path] | None,
     k8s_config: KubernetesConfig,
     custom_data_dir: Path | None,
+    with_prometheus: bool,
 ) -> list[str]:
     info("Populating server")
     node_details = populate_server_sandbox(
@@ -262,6 +266,7 @@ def _initialize_sandbox(
         extra_dataset=extra_dataset,
         k8s_config=k8s_config,
         custom_data_dir=custom_data_dir,
+        with_prometheus=with_prometheus,
     )
     node_config_manager.generate_node_configs()
 

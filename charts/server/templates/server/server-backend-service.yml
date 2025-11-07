@@ -12,20 +12,23 @@ spec:
       port: {{ .Values.server.port }}
       targetPort: {{ .Values.server.internal.port }}
       name: vantage6-server-backend
+{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_port_to_expose }}
+      nodePort: {{ .Values.server.dev.local_port_to_expose }}
+{{- end }}
 {{- if and .Values.prometheus .Values.prometheus.enabled }}
     - protocol: TCP
       port: {{ .Values.prometheus.exporter_port | default 7603 }}
       targetPort: {{ .Values.prometheus.exporter_port | default 7603 }}
       name: prometheus-exporter
-{{- end }}
-{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_port_to_expose }}
-      nodePort: {{ .Values.server.dev.local_port_to_expose }}
+  {{- if and .Values.server.dev.forward_ports .Values.server.dev.local_prometheus_port_to_expose }}
+      nodePort: {{ .Values.server.dev.local_prometheus_port_to_expose }}
+  {{- end }}
 {{- end }}
 {{- if and .Values.server.dev.forward_ports .Values.server.dev.local_port_to_expose }}
   type: NodePort
 {{- else }}
   type: ClusterIP
 {{- end }}
-  {{- if gt (int .Values.server.replications) 1 }}
+{{- if gt (int .Values.server.replications) 1 }}
   sessionAffinity: ClientIP # does not work in wsl
-  {{- end }}
+{{- end }}

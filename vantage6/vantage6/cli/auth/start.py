@@ -14,7 +14,7 @@ from vantage6.cli.common.start import (
 )
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.globals import ChartName
-from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils import validate_input_cmd_args
 
 
@@ -101,9 +101,8 @@ def start_port_forward(
     service_name: str,
     service_port: int,
     port: int,
+    k8s_config: KubernetesConfig,
     ip: str = LOCALHOST,
-    context: str | None = None,
-    namespace: str | None = None,
 ) -> None:
     """
     Port forward a kubernetes service.
@@ -139,8 +138,10 @@ def start_port_forward(
         error(f"Invalid IP address: {ip}. Must be a valid IPv4 address or 'localhost'.")
         return
 
-    validate_input_cmd_args(context, "context name", allow_none=True)
-    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+    if k8s_config.context:
+        validate_input_cmd_args(k8s_config.context, "context name", allow_none=True)
+    if k8s_config.namespace:
+        validate_input_cmd_args(k8s_config.namespace, "namespace name", allow_none=True)
 
     # Check if the service is ready before starting port forwarding
     info(f"Waiting for service '{service_name}' to become ready...")
@@ -157,11 +158,11 @@ def start_port_forward(
                 "jsonpath={.subsets[*].addresses[*].ip}",
             ]
 
-            if context:
-                command.extend(["--context", context])
+            if k8s_config.context:
+                command.extend(["--context", k8s_config.context])
 
-            if namespace:
-                command.extend(["--namespace", namespace])
+            if k8s_config.namespace:
+                command.extend(["--namespace", k8s_config.namespace])
 
             result = subprocess.check_output(command).decode().strip()
 
@@ -192,11 +193,11 @@ def start_port_forward(
         f"{port}:{service_port}",
     ]
 
-    if context:
-        command.extend(["--context", context])
+    if k8s_config.context:
+        command.extend(["--context", k8s_config.context])
 
-    if namespace:
-        command.extend(["--namespace", namespace])
+    if k8s_config.namespace:
+        command.extend(["--namespace", k8s_config.namespace])
 
     # Start the port forwarding process
     try:

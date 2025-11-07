@@ -97,6 +97,9 @@ from vantage6.cli.utils import prompt_config_name
     "on WSL because of mount issues for default directories",
 )
 @click.option(
+    "--with-prometheus", is_flag=True, default=False, help="Enable Prometheus"
+)
+@click.option(
     "--local-chart-dir",
     type=click.Path(exists=True),
     default=None,
@@ -120,6 +123,7 @@ def cli_new_sandbox(
     namespace: str | None,
     data_dir: str | None,
     local_chart_dir: Path | None,
+    with_prometheus: bool,
 ) -> None:
     """
     Create a sandbox environment.
@@ -148,6 +152,7 @@ def cli_new_sandbox(
         extra_store_config=extra_store_config,
         extra_auth_config=extra_auth_config,
         k8s_config=k8s_config,
+        with_prometheus=with_prometheus,
         custom_data_dir=data_dir,
     )
 

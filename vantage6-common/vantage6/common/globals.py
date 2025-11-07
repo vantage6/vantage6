@@ -120,10 +120,12 @@ class Ports(IntEnum):
     DEV_SERVER = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
+    DEV_PROMETHEUS = 7603
     DEV_AUTH = 8080
     SANDBOX_UI = 30760
     SANDBOX_SERVER = 30761
     SANDBOX_ALGO_STORE = 30762
+    SANDBOX_PROMETHEUS = 30763
 
 
 class ContainerEnvNames(StrEnumBase):
