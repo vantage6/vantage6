@@ -23,7 +23,7 @@ Frank Martin or Bart van Beusekom to acquire an account and upload your algorith
 will go through a review process before it is added to the community store.
 
 
-Linking algorithm store to core
+Linking algorithm store to server
 -------------------------------
 Algorithm stores can be linked to a vantage6 server or to a specific collaboration on a
 server. If an algorithm store is linked to a server, the algorithms in the store are

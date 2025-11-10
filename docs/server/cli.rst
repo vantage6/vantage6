@@ -3,7 +3,7 @@ Command line interface
 
 .. _use-server:
 
-Core
+Server
 ----
 
 This section explains which commands are available to manage your server. It
