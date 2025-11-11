@@ -42,7 +42,7 @@ jobs:
           echo "stage=${STAGE}" >> $GITHUB_OUTPUT
           echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
-          if [[ $MAJOR == '5' ]]; then MAJOR_NAME="5"; fi
+          if [[ $MAJOR == '5' ]]; then MAJOR_NAME="uluru"; fi
           if [[ $MAJOR == '4' ]]; then MAJOR_NAME="cotopaxi"; fi
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi

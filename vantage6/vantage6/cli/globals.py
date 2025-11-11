@@ -49,7 +49,7 @@ ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
 
 # Address of community algorithm store
-COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
+COMMUNITY_STORE = "https://store.uluru.vantage6.ai/api"
 
 DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
 PROMETHEUS_CONFIG = "prometheus.yml"

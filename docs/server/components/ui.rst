@@ -28,7 +28,7 @@ to your own environment.
     name: run-ui
     services:
       ui:
-        image: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+        image: harbor2.vantage6.ai/infrastructure/ui:uluru
         ports:
           - "8000:80"
         environment:

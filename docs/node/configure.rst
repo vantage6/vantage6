@@ -115,7 +115,7 @@ There are two important steps to be taken to accomplish this:
             - ^harbor2\.vantage6\.ai/algorithms/glm$
             - ^harbor2\.vantage6\.ai/algorithms/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8a1e597d83a47fac21d6af3$
          allowed_algorithm_stores:
-            - https://store.cotopaxi.vantage6.ai
+            - https://store.uluru.vantage6.ai
 
    These four examples lead to the following restrictions:
    1. ``^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+``: allow all images
@@ -125,8 +125,8 @@ There are two important steps to be taken to accomplish this:
    3. ``^harbor2\.vantage6\.ai/algorithms/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8``
       ``a1e597d83a47fac21d6af3$``: allows only this specific build from the GLM
       image to run on your data
-   4. ``https://store.cotopaxi.vantage6.ai``: allow all algorithms from the
-      cotopaxi algorithm store
+   4. ``https://store.uluru.vantage6.ai``: allow all algorithms from the
+      Uluru community algorithm store
 
    Note that you can also define regular expressions for the algorithm stores, and that
    you can combine the two policies. The section :ref:`node-configure-algorithm-access`
