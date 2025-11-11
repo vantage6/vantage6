@@ -177,9 +177,10 @@ class NodeClient(ClientBase):
             page = 1
             while links and links.get("next"):
                 page += 1
-                run_data["data"] += self.parent.request(
+                new_runs_page = self.parent.request(
                     endpoint="run", params={**params, "page": page}
-                )["data"]
+                )
+                run_data["data"] += new_runs_page["data"]
                 links = run_data.get("links")
 
             # strip pagination links
