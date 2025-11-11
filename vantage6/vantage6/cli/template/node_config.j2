@@ -362,6 +362,31 @@ node:
   #     threshold_example: 10
   {% endif %}
 
+  # Whitelisting settings.
+  # The whitelisted domains and IP addresses are allowed for algorithms to connect to.
+  # Treat with caution! Giving internet access to algorithms can be a security risk.
+  # Only whitelist domains and IP addresses that are absolutely necessary for the
+  # algorithm to function, such as a database server the algorithm needs to connect to.
+  # Include a port number if possible to only whitelist a specific port.
+  # The flag 'only_for_data_extraction' is used to indicate if the whitelist is only
+  # for data extraction purposes. If set to true, the whitelist is only applied to
+  # data extraction tasks. Otherwise, the whitelist is applied to all tasks. It is set
+  # to true by default.
+  {% if node.whitelist is defined %}
+  whitelist:
+    {% for whitelist in node.whitelist %}
+    - address: {{ whitelist.address }}
+      only_for_data_extraction: {{ whitelist.only_for_data_extraction | default(true) }}
+    {% endfor %}
+  {% else %}
+  #  - address: github.com
+  #    only_for_data_extraction: false
+  #  - address: localhost:7777
+  #    only_for_data_extraction: true
+  #  - address: 192.168.1.100
+  #    only_for_data_extraction: false
+  {% endif %}
+
   # Set to false to prevent creation of node secrets (useful when secrets are managed
   # externally)
   createSecrets: {{ node.createSecrets | default(true) }}

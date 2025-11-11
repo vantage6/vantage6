@@ -148,6 +148,24 @@ node:
     # if internet connection is not available. Default value is true.
     require_algorithm_pull: true
 
+  # Whitelisting settings.
+  # The whitelisted domains and IP addresses are allowed for algorithms to connect to.
+  # Treat with caution! Giving internet access to algorithms can be a security risk.
+  # Only whitelist domains and IP addresses that are absolutely necessary for the
+  # algorithm to function, such as a database server the algorithm needs to connect to.
+  # Include a port number if possible to only whitelist a specific port.
+  # The flag 'only_for_data_extraction' is used to indicate if the whitelist is only
+  # for data extraction purposes. If set to true, the whitelist is only applied to
+  # data extraction tasks. Otherwise, the whitelist is applied to all tasks. It is set
+  # to true by default.
+  whitelist:
+    - address: localhost:7777
+      only_for_data_extraction: true
+    - address: github.com
+      only_for_data_extraction: false
+    - address: 192.168.1.100
+      only_for_data_extraction: false
+
   # Prometheus settings, for sending system metadata to the server.
   prometheus:
     # Whether or not to enable Prometheus reporting. Default is false.

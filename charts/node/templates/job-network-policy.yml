@@ -1,5 +1,5 @@
 # Policy for the POD where the Node and its server-proxy are running.
-# It ensures that only the POD running the server-proxy is able to 
+# It ensures that only the POD running the server-proxy is able to
 # reach the outside world (in this case, to get access to the v6-server).
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -19,7 +19,7 @@ spec:
 ---
 
 # DEFAULT policy for the 'tasks' namespace (inboud/outbound traffic blocked)
-# It defines the policies of the algorith steps with no custom rules defined, 
+# It defines the policies of the algorith steps with no custom rules defined,
 # and to any other POD running in this namespace.
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
@@ -53,7 +53,7 @@ spec:
   egress:
   - to:
     # Allows outbound traffic only to PODs on the node namespace
-    - namespaceSelector: 
+    - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}
     ports:
@@ -71,6 +71,7 @@ spec:
       - protocol: TCP
         port:  {{ .Values.node.proxyPort }}
   {{- end }}
+  # Allow outbound traffic to the kube-system namespace for DNS resolution
   - to:
     - namespaceSelector:
         matchLabels:
