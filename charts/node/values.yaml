@@ -69,3 +69,5 @@ node:
 
   prometheus:
     enabled: false
+
+  whitelist: []
