@@ -11,7 +11,7 @@ node:
   keycloakUrl: {{ node.keycloakUrl | default('http://vantage6-auth-keycloak.vantage6.svc.cluster.local') }}
   keycloakRealm: {{ node.keycloakRealm | default('vantage6') }}
 
-  # TODO v5+ set the url/port directly on node-configmap.yaml using \{\{ .Release.Name \}\}-vantage6-server-service
+  # Settings for the server to connect to.
   {% if node.server is defined %}
   server:
     url: {{ node.server.url | default('http://vantage6-server-vantage6-server-service') }}

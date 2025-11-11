@@ -151,10 +151,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             raise ValueError(f"Invalid image name: {image_name}") from e
 
         # if tag is not a digest, set it in the image name
-        # TODO v5+ consider including "latest" also in the image name in the database
-        # for consistency. This is not possible in v4 due to backwards compatibility
-        # with <4.5 where tags were not included unless explicitly provided.
-        if not tag.startswith("sha256:") and not tag == "latest":
+        if not tag.startswith("sha256:"):
             image_and_tag = f"{image_wo_tag}:{tag}"
         else:
             image_and_tag = image_wo_tag
@@ -702,8 +699,6 @@ class Algorithms(AlgorithmBaseResource):
             "assigned."
         )
         algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
-        # TODO v5+ email is always present for all users, so remove this check
-        algorithm_managers = [am for am in algorithm_managers if am.email]
         if not algorithm_managers:
             log.warning(
                 "No users with known email addresses found that can assign "
