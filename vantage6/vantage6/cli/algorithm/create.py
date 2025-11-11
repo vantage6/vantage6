@@ -1,10 +1,15 @@
 import os
+import re
+import subprocess
 from pathlib import Path
 
 import click
 import questionary as q
 from copier import run_copy
 
+from vantage6.common import error, warning
+
+from vantage6.cli import __version__
 from vantage6.cli.globals import ALGORITHM_TEMPLATE_REPO
 from vantage6.cli.utils import info
 
@@ -21,7 +26,13 @@ from vantage6.cli.utils import info
     type=str,
     help="Directory to put the algorithm into",
 )
-def cli_algorithm_create(name: str, directory: str) -> dict:
+@click.option(
+    "--major-version",
+    default=None,
+    type=int,
+    help="Major version of the algorithm. By default, the current version is used.",
+)
+def cli_algorithm_create(name: str, directory: str, major_version: int | None) -> dict:
     """Creates a personalized template for a new algorithm
 
     By answering a number of questions, a template will be created that will
@@ -33,6 +44,11 @@ def cli_algorithm_create(name: str, directory: str) -> dict:
     can be used to build an appropriate Docker image that can be used as a
     vantage6 algorithm.
     """
+    latest_tag_of_desired_major_version = None
+    if major_version is None:
+        major_version = int(__version__.split(".")[0])
+    latest_tag_of_desired_major_version = _get_latest_major_tag(major_version)
+
     try:
         name, directory = _get_user_input(name, directory)
     except KeyboardInterrupt:
@@ -42,7 +58,11 @@ def cli_algorithm_create(name: str, directory: str) -> dict:
     # Create the template. The `unsafe` flag is used to allow running a Python script
     # after creating the template that cleans up some things.
     run_copy(
-        ALGORITHM_TEMPLATE_REPO, directory, data={"algorithm_name": name}, unsafe=True
+        ALGORITHM_TEMPLATE_REPO,
+        directory,
+        data={"algorithm_name": name},
+        unsafe=True,
+        vcs_ref=latest_tag_of_desired_major_version,
     )
     info("Template created!")
     info(f"You can find your new algorithm in: {directory}")
@@ -67,3 +87,83 @@ def _get_user_input(name: str, directory: str) -> None:
             "Directory to put the algorithm in:", default=default_dir
         ).unsafe_ask()
     return name, directory
+
+
+def _get_latest_major_tag(major_version: int) -> str | None:
+    """Get the latest tag for the given major version"""
+    # get the tags from the algorithm template repository
+    try:
+        tags = _get_algo_template_tags(ALGORITHM_TEMPLATE_REPO)
+    except Exception as e:
+        error(f"Failed to fetch tags from {ALGORITHM_TEMPLATE_REPO}: {e}")
+        warning("Will use latest version instead.")
+        return None
+
+    # Filter tags for the given major version (e.g. 5.x.x)
+    tags_in_desired_major_version = [
+        tag
+        for tag in tags
+        if tag.startswith(f"{major_version}.")
+        and re.match(rf"^{major_version}\.\d+\.\d+", tag)
+    ]
+
+    # sort the tags in descending order
+    tags_in_desired_major_version.sort(
+        key=lambda s: list(map(int, s.split("."))), reverse=True
+    )
+    return tags_in_desired_major_version[0] if tags_in_desired_major_version else None
+
+
+def _get_algo_template_tags(repo_url: str) -> list[str]:
+    """Get all tags from a git repository
+
+    Parameters
+    ----------
+    repo_url : str
+        Repository URL in format like "gh:owner/repo.git" or full git URL
+
+    Returns
+    -------
+    list[str]
+        List of tag names (without refs/tags/ prefix)
+    """
+    # Convert copier format (gh:owner/repo.git) to git URL
+    if repo_url.startswith("gh:"):
+        # Format: gh:owner/repo.git -> https://github.com/owner/repo.git
+        repo_path = repo_url[3:].rstrip(".git")
+        git_url = f"https://github.com/{repo_path}.git"
+    else:
+        git_url = repo_url
+
+    try:
+        # Use git ls-remote to fetch tags without cloning
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", git_url],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        )
+
+        # Parse output: lines look like "hash\trefs/tags/v1.0.0"
+        tags = []
+        for line in result.stdout.strip().split("\n"):
+            if line:
+                # Extract tag name from "refs/tags/tagname"
+                match = re.search(r"refs/tags/(.+)", line)
+                if match:
+                    tag = match.group(1)
+                    # Filter out ^{} suffix that git adds for annotated tags
+                    if not tag.endswith("^{}"):
+                        tags.append(tag)
+
+        return sorted(tags)
+    except subprocess.CalledProcessError as e:
+        info(f"Failed to fetch tags from {git_url}: {e}")
+        return []
+    except subprocess.TimeoutExpired:
+        info(f"Timeout while fetching tags from {git_url}")
+        return []
+    except FileNotFoundError:
+        info("git command not found. Please install git to fetch repository tags.")
+        return []
