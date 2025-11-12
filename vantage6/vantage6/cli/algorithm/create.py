@@ -98,7 +98,6 @@ def _get_latest_major_tag(major_version: int) -> str | None:
         error(f"Failed to fetch tags from {ALGORITHM_TEMPLATE_REPO}: {e}")
         warning("Will use latest version instead.")
         return None
-
     # Filter tags for the given major version (e.g. 5.x.x)
     tags_in_desired_major_version = [
         tag
@@ -109,10 +108,35 @@ def _get_latest_major_tag(major_version: int) -> str | None:
 
     # sort the tags in descending order
     tags_in_desired_major_version.sort(
-        key=lambda s: list(map(int, s.split("."))), reverse=True
+        key=lambda s: _gen_sort_key(s), reverse=True
     )
-    return tags_in_desired_major_version[0] if tags_in_desired_major_version else None
+    return _first_non_prerelease_tag(tags_in_desired_major_version)
 
+
+def _first_non_prerelease_tag(tags: list[str]) -> str:
+    """Return the first non-prerelease tag from a list of tags"""
+    for tag in tags:
+        patch = tag.split(".")[2]
+        try:
+            int(patch)
+            return tag
+        except ValueError:
+            continue
+    # no non-prerelease tag found - return first in the list (sorted in descending 
+    # order)
+    return tags[0] if tags else None
+
+def _gen_sort_key(tag: str) -> list[int]:
+    """Generate a sort key for a tag"""
+    major = int(tag.split(".")[0])
+    minor = int(tag.split(".")[1])
+    # Note: patch is not cast to int for sorting, because it may contain
+    # alpha/beta/rc suffixes
+    # TODO this will go wrong in sorting 1.2.13a1 vs 1.2.3a1, but we don't care
+    # about that for now, as it is unlikely that we have 10+ patch releases
+    # for the algorithm template repository
+    patch = tag.split(".")[2]
+    return [major, minor, patch]
 
 def _get_algo_template_tags(repo_url: str) -> list[str]:
     """Get all tags from a git repository
