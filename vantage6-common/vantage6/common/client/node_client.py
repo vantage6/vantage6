@@ -181,7 +181,7 @@ class NodeClient(ClientBase):
                     endpoint="run", params={**params, "page": page}
                 )
                 run_data["data"] += new_runs_page["data"]
-                links = run_data.get("links")
+                links = new_runs_page.get("links")
 
             # strip pagination links
             run_data = run_data["data"]
