@@ -107,9 +107,7 @@ def _get_latest_major_tag(major_version: int) -> str | None:
     ]
 
     # sort the tags in descending order
-    tags_in_desired_major_version.sort(
-        key=lambda s: _gen_sort_key(s), reverse=True
-    )
+    tags_in_desired_major_version.sort(key=lambda s: _gen_sort_key(s), reverse=True)
     return _first_non_prerelease_tag(tags_in_desired_major_version)
 
 
@@ -122,9 +120,10 @@ def _first_non_prerelease_tag(tags: list[str]) -> str:
             return tag
         except ValueError:
             continue
-    # no non-prerelease tag found - return first in the list (sorted in descending 
+    # no non-prerelease tag found - return first in the list (sorted in descending
     # order)
     return tags[0] if tags else None
+
 
 def _gen_sort_key(tag: str) -> list[int]:
     """Generate a sort key for a tag"""
@@ -137,6 +136,7 @@ def _gen_sort_key(tag: str) -> list[int]:
     # for the algorithm template repository
     patch = tag.split(".")[2]
     return [major, minor, patch]
+
 
 def _get_algo_template_tags(repo_url: str) -> list[str]:
     """Get all tags from a git repository
