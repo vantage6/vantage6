@@ -7,7 +7,7 @@ from collections.abc import Callable
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
-from typing import Any, OrderedDict
+from typing import Any, OrderedDict, get_args, get_origin
 
 import click
 import pandas as pd
@@ -227,6 +227,7 @@ class Function:
             }
             if param.default != inspect.Parameter.empty:
                 arg_json["default"] = param.default
+
             return arg_json, FunctionArgumentType.PARAMETER
 
     def _add_frontend_argument(
@@ -296,12 +297,19 @@ class Function:
             return AlgorithmArgumentType.BOOLEAN
         elif type_ is list:
             return AlgorithmArgumentType.STRINGS
-        elif type_ is list[str]:
+        elif get_origin(type_) is list:
+            # Handle generic list types like list[str], list[int], list[float]
+            args = get_args(type_)
+            if len(args) == 1:
+                inner_type = args[0]
+                if inner_type is str:
+                    return AlgorithmArgumentType.STRINGS
+                elif inner_type is int:
+                    return AlgorithmArgumentType.INTEGERS
+                elif inner_type is float:
+                    return AlgorithmArgumentType.FLOATS
+            # Fallback: if list has no args or multiple args, default to STRINGS
             return AlgorithmArgumentType.STRINGS
-        elif type_ is list[int]:
-            return AlgorithmArgumentType.INTEGERS
-        elif type_ is list[float]:
-            return AlgorithmArgumentType.FLOATS
         else:
             if warn_if_unsupported:
                 warning(
