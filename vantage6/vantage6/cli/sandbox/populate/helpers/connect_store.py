@@ -85,11 +85,12 @@ def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) 
     try:
         store = next(s for s in existing_stores if s["url"] == local_store_url)
         client.store.set(store["id"])
+        info(f"Using store with id '{store['id']}'")
     except StopIteration:
         error(
             "Local algorithm store not found. Please register its resources manually."
         )
-        return
+        return ""
 
     # register also the other users in the local store
     users_in_store = client.store.user.list()["data"]

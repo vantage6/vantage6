@@ -10,20 +10,21 @@ from vantage6.cli.dev.common import check_devspace_installed
 
 @click.command()
 @click.option(
-    "--populate",
-    "populate",
-    is_flag=True,
-    default=True,
-    help="Populate the development environment with example data. Only applied the "
-    "first time the development environment is started, or after it is cleaned.",
-)
-@click.option(
     "--no-populate",
     "populate",
     is_flag=True,
-    default=True,
+    flag_value=False,
     help="Do not populate the development environment with example data. Only applied "
     "this time the development environment is started, or after it is cleaned.",
+)
+@click.option(
+    "--populate",
+    "populate",
+    is_flag=True,
+    flag_value=True,
+    default=True,
+    help="Populate the development environment with example data. Only applied the "
+    "first time the development environment is started, or after it is cleaned.",
 )
 @click.option(
     "--repopulate",
