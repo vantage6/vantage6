@@ -1,4 +1,15 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnDestroy,
+  Output,
+  QueryList,
+  ViewChildren
+} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -46,6 +57,7 @@ import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { AlgorithmStepType } from 'src/app/models/api/session.models';
 import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -84,7 +96,7 @@ import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
     MatChipFormComponent
   ]
 })
-export class AlgorithmFormComponent implements OnInit, AfterViewInit {
+export class AlgorithmFormComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() algorithm?: AlgorithmForm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   // Note: we are using any because the form is dynamic and the structure is not known
@@ -108,6 +120,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schemaDetails: { [id: string]: any } = {};
+  formErrorMessages: string[] = [];
+  private formValueChangesSubscription?: Subscription;
 
   // FIXME these forms are also defined in a separate function at the end but we need
   // to define them here to prevent type errors in the form... find a solution to define
@@ -179,7 +193,13 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     } else {
       this.initializeFormForCreate();
     }
+    this.subscribeToFormChanges();
+    this.updateFormErrorMessages();
     this.isLoading = false;
+  }
+
+  ngOnDestroy(): void {
+    this.formValueChangesSubscription?.unsubscribe();
   }
 
   ngAfterViewInit(): void {
@@ -429,6 +449,79 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       }
       (this.form.controls.functions as FormArray).push(functionFormGroup);
     });
+    this.updateFormErrorMessages();
+  }
+
+  // Recursively get all form errors including nested FormGroups and FormArrays
+  private getFormErrorMessages(form: AbstractControl, pathSegments: string[] = []): string[] {
+    let messages: string[] = [];
+
+    if (form instanceof FormGroup) {
+      Object.keys(form.controls).forEach((key) => {
+        const control = form.get(key);
+        if (control) {
+          const segment = this.getFormGroupSegment(key, control);
+          messages = messages.concat(this.getFormErrorMessages(control, [...pathSegments, segment]));
+        }
+      });
+    } else if (form instanceof FormArray) {
+      form.controls.forEach((control, index) => {
+        const segment = this.getFormArraySegment(control, index);
+        messages = messages.concat(this.getFormErrorMessages(control, [...pathSegments, segment]));
+      });
+    } else if (form instanceof FormControl) {
+      if (form.errors) {
+        const path = pathSegments.join(' > ') || 'Form';
+        Object.entries(form.errors).forEach(([errorKey, errorValue]) => {
+          messages.push(this.formatErrorMessage(path, errorKey, errorValue));
+        });
+      }
+    }
+
+    return messages;
+  }
+
+  private subscribeToFormChanges(): void {
+    this.formValueChangesSubscription?.unsubscribe();
+    this.formValueChangesSubscription = this.form.valueChanges.subscribe(() => {
+      this.updateFormErrorMessages();
+    });
+  }
+
+  private updateFormErrorMessages(): void {
+    this.formErrorMessages = this.getFormErrorMessages(this.form);
+  }
+
+  private getControlLabel(control: AbstractControl): string | null {
+    if (control instanceof FormGroup) {
+      const nameControl = control.get('name');
+      if (nameControl && typeof nameControl.value === 'string' && nameControl.value.trim().length > 0) {
+        return nameControl.value.trim();
+      }
+    }
+    return null;
+  }
+
+  private getFormGroupSegment(key: string, control: AbstractControl): string {
+    const label = this.getControlLabel(control);
+    return label ? `${key}: ${label}` : key;
+  }
+
+  private getFormArraySegment(control: AbstractControl, index: number): string {
+    const label = this.getControlLabel(control);
+    return label ? label : `Item ${index + 1}`;
+  }
+
+  private formatErrorMessage(path: string, errorKey: string, errorValue: unknown): string {
+    switch (errorKey) {
+      case 'required':
+        return `${path} is required.`;
+      default:
+        if (typeof errorValue === 'string') {
+          return `${path}: ${errorValue}`;
+        }
+        return `${path} has error: ${errorKey}.`;
+    }
   }
 
   private setSchemaControls(visSchemaForm: FormGroup, visType: VisualizationType, funcIdx: number, visIdx: number) {
