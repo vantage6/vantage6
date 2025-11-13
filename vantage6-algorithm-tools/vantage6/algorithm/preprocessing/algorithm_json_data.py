@@ -109,10 +109,7 @@ PREPROCESSING_FUNCTIONS_JSON_DATA = {
                     "set",
                     "any",
                     "all",
-                ],
-                "conditional_on": "single_aggregation_strategy",
-                "conditional_value": True,
-                "conditional_operator": "==",
+                ]
             },
         },
     },
