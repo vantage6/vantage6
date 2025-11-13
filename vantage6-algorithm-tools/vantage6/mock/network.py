@@ -106,7 +106,7 @@ class MockNetwork:
         """
         self.collaboration_id = collaboration_id
         self.module_name = module_name
-        self.nodes = []
+        self.nodes: list[MockNode] = []
 
         organization_ids = list(range(1, len(datasets) + 1))
         node_ids = list(range(1, len(datasets) + 1))

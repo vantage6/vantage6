@@ -63,7 +63,7 @@ keep track of your changes. An initial commit of the boilerplate code could be:
    git commit -m "Initial commit"
 
 Note that having your code in a git repository is necessary if you want to
-:ref:`update your algorithm <algo-dev-update-algo>`.
+:ref:`update your algorithm <algo-dev-update-algo>` at a later stage.
 
 Implementing your algorithm
 ---------------------------
