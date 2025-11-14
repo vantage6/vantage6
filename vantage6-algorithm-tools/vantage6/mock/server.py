@@ -163,9 +163,8 @@ class MockServer:
             The name of the task.
         description : str
             The description of the task.
-        databases : list[MockDatabase]
-            The required databases for the task. This can either be a source database
-            or a dataframe.
+        databases : list[dict]
+            The databases used by the task.
         init_organization_id : int
             The id of the organization that created the task.
 
@@ -181,7 +180,7 @@ class MockServer:
             "results": f"/api/results?task_id={new_task_id}",
             "status": "completed",
             "name": name,
-            "databases": [db.label for db in databases],
+            "databases": databases,
             "description": description,
             "image": "mock_image",
             "init_user": {

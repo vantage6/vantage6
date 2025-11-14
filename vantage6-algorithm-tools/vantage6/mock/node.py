@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from vantage6.common import error
 from vantage6.common.enum import AlgorithmStepType
 from vantage6.common.globals import ContainerEnvNames
 
@@ -116,7 +115,6 @@ class MockNode:
         step_type = self._get_step_type_from_method_fn(method_fn)
 
         if not AlgorithmStepType.is_compute(step_type):
-            error("Trying to run a task that is not a compute step.")
             raise SessionActionMismatchError(
                 "Trying to run a task that is not a compute step."
             )
@@ -180,17 +178,16 @@ class MockNode:
         """
         method_fn = self._get_method_fn_from_method(method)
 
-        task_env_vars = self._task_env_vars(
-            AlgorithmStepType.DATA_EXTRACTION.value, method
-        )
+        task_env_vars = self._task_env_vars(AlgorithmStepType.DATA_EXTRACTION, method)
 
         step_type = self._get_step_type_from_method_fn(method_fn)
 
         mocked_kwargs = {}
         # The `@data_extraction` decorator expects a `mock_uri` and `mock_type`
         if step_type == AlgorithmStepType.DATA_EXTRACTION.value:
-            mocked_kwargs["mock_uri"] = self.datasets[source_label].database
-            mocked_kwargs["mock_type"] = self.datasets[source_label].db_type
+            db_to_use = next(db for db in self.datasets if db.label == source_label)
+            mocked_kwargs["mock_uri"] = db_to_use.database
+            mocked_kwargs["mock_type"] = db_to_use.db_type
         else:
             raise SessionActionMismatchError(
                 "The method is not a data extraction method."
@@ -210,9 +207,7 @@ class MockNode:
         Simulate a dataframe preprocessing which has been initiated by the `client.dataframe.preprocess` method.
         """
         method_fn = self._get_method_fn_from_method(method)
-        task_env_vars = self._task_env_vars(
-            AlgorithmStepType.PREPROCESSING.value, method
-        )
+        task_env_vars = self._task_env_vars(AlgorithmStepType.PREPROCESSING, method)
         step_type = self._get_step_type_from_method_fn(method_fn)
         if step_type != AlgorithmStepType.PREPROCESSING.value:
             raise SessionActionMismatchError(
@@ -233,7 +228,11 @@ class MockNode:
         result = self.run(
             method_fn, {**arguments, **mocked_kwargs}, task_env_vars=task_env_vars
         )
-        return result.to_pandas()
+        df = result.to_pandas()
+
+        # save the updated dataframe in the node
+        self.dataframes[dataframe_name] = df
+        return df
 
     def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict = {}):
         """

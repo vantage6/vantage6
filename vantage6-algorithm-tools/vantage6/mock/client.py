@@ -234,7 +234,7 @@ class MockBaseClient:
                 init_organization_id=self.parent.organization_id,
                 name=name,
                 description=description,
-                databases=self.parent.databases,
+                databases=[{"label": db.label} for db in self.parent.databases],
             )
 
             # get data for organization
@@ -577,6 +577,7 @@ class MockUserClient(MockBaseClient):
                         f"{org_id}: {e}"
                     )
                     error("Exiting...")
+                    traceback.print_exc()
                     exit(1)
 
                 dataframes.append(df_response)
@@ -629,6 +630,7 @@ class MockUserClient(MockBaseClient):
                         f"{org_id}: {e}"
                     )
                     error("Exiting...")
+                    traceback.print_exc()
                     exit(1)
                 dataframes.append(df)
 

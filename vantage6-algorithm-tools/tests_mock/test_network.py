@@ -102,7 +102,7 @@ class TestMockNetworkURI(TestCase):
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
                     {
-                        DB_LABEL_1: {
+                        DATASET_LABEL: {
                             "database": MOCK_DATA_CSV,
                             "db_type": MockDatabaseType.CSV.value,
                         }
@@ -115,7 +115,7 @@ class TestMockNetworkURI(TestCase):
         self.assertEqual(len(self.network.nodes), 1)
         self.assertEqual(len(self.network.nodes[0].dataframes), 0)
         self.assertEqual(
-            self.network.nodes[0].datasets[DB_LABEL_1]["database"], MOCK_DATA_CSV
+            self.network.nodes[0].datasets[DATASET_LABEL]["database"], MOCK_DATA_CSV
         )
 
     def test_node_initialization(self):
