@@ -19,8 +19,10 @@ class TestMockUserClient(TestCase):
             self.network = MockNetwork(
                 module_name="test_algorithm",
                 datasets=[
+                    # datasets for node 1
                     {"label_1": {"database": self.data1, "db_type": "csv"}},
-                    {"label_2": {"database": self.data2, "db_type": "csv"}},
+                    # datasets for node 2
+                    {"label_1": {"database": self.data2, "db_type": "csv"}},
                 ],
             )
         self.client = self.network.user_client

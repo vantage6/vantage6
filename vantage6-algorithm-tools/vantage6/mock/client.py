@@ -2,14 +2,13 @@ import json
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from vantage6.common.enum import AlgorithmStepType
-
 from vantage6.algorithm.tools.exceptions import (
     MethodNotFoundError,
     SessionActionMismatchError,
 )
 from vantage6.algorithm.tools.util import error, warn
 
+from vantage6.mock.globals import MockDatabase
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class MockBaseClient:
-    def __init__(self, network: "MockNetwork"):
+    def __init__(self, network: "MockNetwork", databases: list[MockDatabase]):
         self.network = network
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -26,6 +25,8 @@ class MockBaseClient:
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.study = self.Study(self)
+
+        self.databases = databases
 
         # Which organization do I belong to?
         self.organization_id = 0
@@ -192,9 +193,7 @@ class MockBaseClient:
             method: str,
             name: str = "mock",
             description: str = "mock",
-            databases: list[list[dict]] | list[dict] | None = None,
             arguments: dict | None = None,
-            action: str = AlgorithmStepType.FEDERATED_COMPUTE.value,
             *_args,
             **_kwargs,
         ) -> dict:
@@ -207,12 +206,6 @@ class MockBaseClient:
                 The name of the method that should be called.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
-            databases : list[list[dict]] | list[dict] | None, optional
-                Databases to be used at the node. Each dict should contain
-                at least a 'label' key. If a list of lists is provided, the first
-                list is the databases that are required for the first argument, the
-                second list is the databases that are required for the second
-                argument, etc.
             arguments : dict | None
                 Arguments for the algorithm method. The dictionary should contain
                 the same keys as the arguments of the algorithm method.
@@ -241,7 +234,7 @@ class MockBaseClient:
                 init_organization_id=self.parent.organization_id,
                 name=name,
                 description=description,
-                databases=databases,
+                databases=self.parent.databases,
             )
 
             # get data for organization
@@ -249,7 +242,7 @@ class MockBaseClient:
                 node = self.parent.network.get_node(org_id)
                 try:
                     result = node.simulate_task_run(
-                        method, arguments, databases, action
+                        method, arguments, self.parent.databases
                     )
                 except MethodNotFoundError:
                     error(
@@ -258,20 +251,20 @@ class MockBaseClient:
                         "sure that the method is available in the top level of your "
                         "algorithm module?"
                     )
-                    return
+                    exit(1)
                 except SessionActionMismatchError:
                     error(
                         f"The {method} method is not a computation task, are you sure "
                         "you specified the correct method?"
                     )
-                    return
+                    exit(1)
                 except DataFrameNotFound as e:
                     error(f"A dataframe you specified does not exist: {e}")
-                    return
+                    exit(1)
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     traceback.print_exc()
-                    return
+                    exit(1)
 
                 result_response = self.parent.network.server.save_result(
                     result, task["id"]
@@ -485,8 +478,14 @@ class MockBaseClient:
 
 
 class MockUserClient(MockBaseClient):
-    def __init__(self, network: "MockNetwork", *args, **kwargs):
-        super().__init__(network)
+    def __init__(
+        self,
+        network: "MockNetwork",
+        databases: list[MockDatabase],
+        *args,
+        **kwargs,
+    ):
+        super().__init__(network, databases)
         self.network = network
         self.dataframe = self.Dataframe(self)
 
@@ -570,13 +569,15 @@ class MockUserClient(MockBaseClient):
                     )
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a data extraction method.")
-                    return
+                    error("Exiting...")
+                    exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe creation for organization "
                         f"{org_id}: {e}"
                     )
-                    return
+                    error("Exiting...")
+                    exit(1)
 
                 dataframes.append(df_response)
 
@@ -620,13 +621,15 @@ class MockUserClient(MockBaseClient):
                     )
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a preprocessing method.")
-                    return
+                    error("Exiting...")
+                    exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe preprocessing for organization "
                         f"{org_id}: {e}"
                     )
-                    return
+                    error("Exiting...")
+                    exit(1)
                 dataframes.append(df)
 
                 result_response = self.parent.network.server.save_result({}, task["id"])
@@ -644,28 +647,16 @@ class MockUserClient(MockBaseClient):
 
 
 class MockAlgorithmClient(MockBaseClient):
-    def __init__(self, node: "MockNode", *args, **kwargs):
-        super().__init__(node.network)
+    def __init__(
+        self, node: "MockNode", databases: list[MockDatabase], *args, **kwargs
+    ):
+        super().__init__(node.network, databases)
 
         self.image = "mock-image"
         self.node_id = node.id_
         self.collaboration_id = node.collaboration_id
         self.study_id = node.network.server.study_id
         self.organization_id = node.organization_id
-
-        # these need to be set from the call
-        self.databases = None
-
-    def set_databases(self, databases: list[list[dict]]):
-        """
-        Set the databases for the algorithm client.
-
-        Parameters
-        ----------
-        databases : list[list[dict]]
-            The databases to set for the algorithm client.
-        """
-        self.databases = databases
 
     class Task(MockBaseClient.Task):
         def create(self, *args, **kwargs):
@@ -679,7 +670,8 @@ class MockAlgorithmClient(MockBaseClient):
                     "No databases have been set for the mock algorithm client. Please"
                     "set the databases using `set_databases` before creating a task."
                 )
-                return
+                error("Exiting...")
+                exit(1)
 
             # inject the mock data into the arguments
             kwargs["databases"] = self.parent.databases

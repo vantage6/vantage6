@@ -15,6 +15,7 @@ from vantage6.algorithm.tools.exceptions import (
 )
 
 from vantage6.mock.client import MockAlgorithmClient
+from vantage6.mock.globals import MockDatabase
 from vantage6.mock.util import env_vars
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
@@ -28,7 +29,7 @@ class MockNode:
         id_: int,
         organization_id: int,
         collaboration_id: int,
-        datasets: list[dict[str, dict[str, str] | pd.DataFrame]],
+        databases: list[MockDatabase],
         network: "MockNetwork",
     ):
         """
@@ -45,15 +46,15 @@ class MockNode:
             The id of the organization.
         collaboration_id : int
             The id of the collaboration.
-        datasets : list[dict[str, dict[str, str] | pd.DataFrame]]
-            The datasets of the node.
+        databases : list[MockDatabase]
+            The databases of the node.
         network : MockNetwork
             The network that the node belongs to.
         """
         self.id_ = id_
         self.organization_id = organization_id
         self.collaboration_id = collaboration_id
-        self.datasets = datasets
+        self.datasets = databases
         self.network = network
 
         # For whenever a user creates a dataframe
@@ -61,9 +62,9 @@ class MockNode:
 
         # In case a pandas dataframe is provided we assume the user directly wants to
         # use it rather than running an extraction job first.
-        for label, dataset in datasets.items():
-            if isinstance(dataset["database"], pd.DataFrame):
-                self.dataframes[label] = dataset["database"]
+        for dataset in self.datasets:
+            if isinstance(dataset.database, pd.DataFrame):
+                self.dataframes[dataset.label] = dataset.database
 
         # Environment variables that are passed on the execution of the algorithm
         self.env = {
@@ -83,8 +84,7 @@ class MockNode:
         self,
         method: str,
         arguments: dict,
-        databases: list[dict[str, str]],
-        action: AlgorithmStepType,
+        databases: list[MockDatabase] | list[list[MockDatabase]],
     ):
         """
         Simulate a task run which has been initiated by the `client.task.create` method.
@@ -95,14 +95,12 @@ class MockNode:
             The name of the method that should be called.
         arguments : dict
             The arguments that should be passed to the method.
-        databases :  list[dict[str, str]] | list[list[dict[str, str]]]
-            The databases that should be used by the method. If a single list is provided,
-            it is assumed that the same database is used for each argument. If a list of
-            lists is provided, it is assumed that a different database is used for each
-            argument. Each dict should contain at least a 'label' key that refers to a
-            dataframe.
-        action : AlgorithmStepType
-            The action that should be performed.
+        databases :  list[MockDatabase] | list[list[MockDatabase]]
+            The databases that should be used by the method. If a single list is
+            provided, it is assumed that the same database is used for each argument. If
+            a list of lists is provided, it is assumed that a different database is used
+            for each argument. Each dict should contain at least a 'label' key that
+            refers to a dataframe.
 
         Returns
         -------
@@ -123,14 +121,13 @@ class MockNode:
                 "Trying to run a task that is not a compute step."
             )
 
-        task_env_vars = self._task_env_vars(action, method)
+        task_env_vars = self._task_env_vars(action=step_type, method=method)
 
         # Detect which decorators are used and provide the mock client and/or mocked
         # data that is required to the method
         mocked_kwargs = {}
         if getattr(method_fn, "vantage6_algorithm_client_decorated", False):
-            algorithm_client = MockAlgorithmClient(self)
-            algorithm_client.set_databases(databases)
+            algorithm_client = MockAlgorithmClient(self, databases=databases)
             mocked_kwargs["mock_client"] = algorithm_client
 
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
@@ -141,14 +138,14 @@ class MockNode:
                 for db_group in databases:
                     group_data = {}
                     for db in db_group:
-                        self._validate_dataframe_exists(db["label"])
-                        group_data[db["label"]] = self.dataframes[db["label"]]
+                        self._validate_dataframe_exists(db.label)
+                        group_data[db.label] = self.dataframes[db.label]
                     mock_data.append(group_data)
             else:
                 # Single list format
                 for db in databases:
-                    self._validate_dataframe_exists(db["label"])
-                    mock_data.append(self.dataframes[db["label"]])
+                    self._validate_dataframe_exists(db.label)
+                    mock_data.append(self.dataframes[db.label])
 
             # make a copy of the data to avoid modifying the original data of
             # subsequent tasks
@@ -192,8 +189,8 @@ class MockNode:
         mocked_kwargs = {}
         # The `@data_extraction` decorator expects a `mock_uri` and `mock_type`
         if step_type == AlgorithmStepType.DATA_EXTRACTION.value:
-            mocked_kwargs["mock_uri"] = self.datasets[source_label]["database"]
-            mocked_kwargs["mock_type"] = self.datasets[source_label]["db_type"]
+            mocked_kwargs["mock_uri"] = self.datasets[source_label].database
+            mocked_kwargs["mock_type"] = self.datasets[source_label].db_type
         else:
             raise SessionActionMismatchError(
                 "The method is not a data extraction method."
@@ -226,7 +223,6 @@ class MockNode:
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
             mock_data = []
             if dataframe_name not in self.dataframes:
-                error(f"Dataframe with name {dataframe_name} not found.")
                 raise DataFrameNotFound(
                     f"Dataframe with name {dataframe_name} not found."
                 )
@@ -275,7 +271,6 @@ class MockNode:
             If the dataframe with the given label is not found.
         """
         if label not in self.dataframes:
-            error(f"Dataframe with label {label} not found.")
             raise DataFrameNotFound(f"Dataframe with label {label} not found.")
 
     def _get_step_type_from_method_fn(self, method_fn: Callable) -> AlgorithmStepType:
@@ -284,7 +279,6 @@ class MockNode:
         """
         step_type = getattr(method_fn, "vantage6_decorator_step_type", None)
         if not step_type:
-            error("The method is not decorated with a vantage6 step type decorator.")
             raise SessionActionMismatchError(
                 "The method is not decorated with a vantage6 step type decorator."
             )
@@ -300,14 +294,14 @@ class MockNode:
         except AttributeError as e:
             raise MethodNotFoundError(f"Method {method} not found. {e}")
 
-    def _task_env_vars(self, action: str, method: str) -> dict:
+    def _task_env_vars(self, action: AlgorithmStepType, method: str) -> dict:
         """
         Get the task environment variables.
         """
         task_id = len(self.network.server.tasks)
         return {
             **self.env,
-            ContainerEnvNames.FUNCTION_ACTION.value: action,
+            ContainerEnvNames.FUNCTION_ACTION.value: action.value,
             ContainerEnvNames.ALGORITHM_METHOD.value: method,
             ContainerEnvNames.TASK_ID.value: task_id,
             ContainerEnvNames.SESSION_FOLDER.value: (f"./tmp/session/{task_id}"),

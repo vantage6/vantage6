@@ -205,6 +205,10 @@ Data extraction function
 
        return df
 
+Note that the ``USERNAME`` and ``PASSWORD`` environment variables are not provided by the
+vantage6 infrastructure, but by the node configuration file as explained in the
+:ref:`algo-env-vars` section.
+
 Preprocessing function
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -256,6 +260,11 @@ vantage6 algorithm tools:
       def my_function(data: pd.DataFrame):
          return data
 
+   All infrastructure data extraction and preprocessing functions are decorated with the
+   ``handle_pandas_errors`` decorator, so that any error occurring during the execution
+   of the function will be caught and a generic error message will be returned instead
+   of the traceback.
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
@@ -278,7 +287,14 @@ be easy to switch between the two. The following example shows how to use the
         from vantage6.mock.mock_network import MockNetwork
         network = MockNetwork(
             module_name="my_algorithm",
-            datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 2
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 3
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+            ],
         )
         client = network.user_client
         client.dataframe.create(
@@ -305,7 +321,14 @@ DataFrame instead of a string for the database value:
 
         network = MockNetwork(
             module_name="my_algorithm",
-            datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+                # datasets for node 2
+                {"dataset_1": pd.DataFrame({"column_1": [4, 5, 6]})},
+                # datasets for node 3
+                {"dataset_1": pd.DataFrame({"column_1": [7, 8, 9]})},
+            ],
         )
         client = network.user_client
         client.task.create(

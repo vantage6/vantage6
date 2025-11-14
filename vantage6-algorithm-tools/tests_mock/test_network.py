@@ -10,8 +10,7 @@ from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 
 TEST_ALGORITHM_NAME = "test_algorithm"
-DB_LABEL_1 = "label_1"
-DB_LABEL_2 = "label_2"
+DATASET_LABEL = "dataset_1"
 MOCK_DATA_CSV = "mock_data.csv"
 
 
@@ -26,14 +25,16 @@ class TestMockNetworkDataframe(TestCase):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
+                    # datasets for node 1
                     {
-                        DB_LABEL_1: {
+                        DATASET_LABEL: {
                             "database": self.data1,
                             "db_type": MockDatabaseType.CSV.value,
                         }
                     },
+                    # datasets for node 2
                     {
-                        DB_LABEL_2: {
+                        DATASET_LABEL: {
                             "database": self.data2,
                             "db_type": MockDatabaseType.CSV.value,
                         }
@@ -47,8 +48,8 @@ class TestMockNetworkDataframe(TestCase):
         self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
 
         # Check if data is properly assigned to nodes
-        node1_data = self.network.nodes[0].dataframes[DB_LABEL_1]
-        node2_data = self.network.nodes[1].dataframes[DB_LABEL_2]
+        node1_data = self.network.nodes[0].dataframes[DATASET_LABEL]
+        node2_data = self.network.nodes[1].dataframes[DATASET_LABEL]
 
         pd.testing.assert_frame_equal(node1_data, self.data1)
         pd.testing.assert_frame_equal(node2_data, self.data2)

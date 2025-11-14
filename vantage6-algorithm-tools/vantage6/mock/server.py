@@ -6,6 +6,8 @@ import pandas as pd
 
 from vantage6.common.globals import AuthStatus
 
+from vantage6.mock.globals import MockDatabase
+
 if TYPE_CHECKING:
     from vantage6.mock.network import MockNetwork
 
@@ -149,7 +151,7 @@ class MockServer:
         self,
         name: str,
         description: str,
-        databases: list[dict[str, str]],
+        databases: list[MockDatabase],
         init_organization_id: int,
     ) -> dict:
         """
@@ -161,7 +163,7 @@ class MockServer:
             The name of the task.
         description : str
             The description of the task.
-        databases : list[dict[str, str]]
+        databases : list[MockDatabase]
             The required databases for the task. This can either be a source database
             or a dataframe.
         init_organization_id : int
@@ -179,7 +181,7 @@ class MockServer:
             "results": f"/api/results?task_id={new_task_id}",
             "status": "completed",
             "name": name,
-            "databases": databases,
+            "databases": [db.label for db in databases],
             "description": description,
             "image": "mock_image",
             "init_user": {
