@@ -397,8 +397,32 @@ Here are a few examples of how to build and upload your image:
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
 
+Uploading your algorithm to the algorithm store
+-----------------------------------------------
+
+To upload your algorithm to the algorithm store, you should generate an
+``algorithm.json`` file, that contains the metadata of your algorithm, such as,
+which functions are available, which arguments are needed, etc.
+
+The easiest way to generate this file is to run the following command:
+
+.. code:: bash
+
+   v6 algorithm generate-store-json
+
+That command will help you to generate the appropriate JSON file. Note that type hints
+and docstrings are important to generate a fully correct JSON file.
+
+Once you have the ``algorithm.json`` file, you can upload it to the algorithm store
+by going to the relevant page in the UI and uploading the file.
+
 Calling your algorithm from vantage6
 ------------------------------------
+
+.. TODO v5+ remove this when implemented
+.. warning::
+
+    This does not work yet in v5 - the ``v6 test`` commannds are not implemented yet.
 
 If you want to test your algorithm in the context of vantage6, you should
 set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
