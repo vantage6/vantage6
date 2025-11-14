@@ -22,13 +22,14 @@ class TestMockAlgorithmClient(TestCase):
                             "database": pd.DataFrame(
                                 {"id": [1, 2, 3], "value": [10, 20, 30]}
                             ),
-                            "db_type": "csv",
                         }
                     }
                 ],
                 collaboration_id=1,
             )
-        self.client = MockAlgorithmClient(self.network.nodes[0])
+        self.client = MockAlgorithmClient(
+            self.network.nodes[0], self.network.nodes[0].datasets
+        )
 
     def test_client_initialization(self):
         """Test if client is properly initialized"""

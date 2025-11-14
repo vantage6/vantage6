@@ -114,9 +114,10 @@ class TestMockNetworkURI(TestCase):
         """Test if network is properly initialized"""
         self.assertEqual(len(self.network.nodes), 1)
         self.assertEqual(len(self.network.nodes[0].dataframes), 0)
-        self.assertEqual(
-            self.network.nodes[0].datasets[DATASET_LABEL]["database"], MOCK_DATA_CSV
+        db_matched = next(
+            db for db in self.network.nodes[0].datasets if db.label == DATASET_LABEL
         )
+        self.assertEqual(db_matched.database, MOCK_DATA_CSV)
 
     def test_node_initialization(self):
         """Test if node is properly initialized"""

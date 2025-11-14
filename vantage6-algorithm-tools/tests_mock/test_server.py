@@ -9,7 +9,17 @@ class TestMockServer(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
-            module_name="test_algorithm", datasets=[], collaboration_id=1
+            module_name="test_algorithm",
+            datasets=[
+                # {
+                #     "dataset_1": {
+                #         "database": pd.DataFrame(
+                #             {"id": [1, 2, 3], "value": [10, 20, 30]}
+                #         ),
+                #     }
+                # }
+            ],
+            collaboration_id=1,
         )
         self.server = MockServer(self.network)
 
