@@ -475,6 +475,7 @@
       "invalidated": "This algorithm is {{ status }}. It is not available for use in analyses."
     },
     "invalidate": "Invalidate",
+    "update-algorithm-image": "Update algorithm image",
     "card-reviews": {
       "title": "Reviews",
       "button": "View reviews"
@@ -521,6 +522,14 @@
     "error-dialog": {
       "title": "Error updating algorithm",
       "message": "An error occurred while updating the algorithm: {{error}}"
+    }
+  },
+  "algorithm-update-image": {
+    "title": "Update algorithm image",
+    "image": "Image",
+    "confirm-dialog": {
+      "title": "Update algorithm image",
+      "content": "Are you sure you want to update the algorithm image? This will create a new version of the algorithm with the updated image. You will need to go through the review process again."
     }
   },
   "review": {

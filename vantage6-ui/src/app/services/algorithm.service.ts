@@ -156,7 +156,7 @@ export class AlgorithmService {
         // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
         arg.has_default_value = arg.has_default_value === 'true' || arg.has_default_value === true;
         arg.is_frontend_only = arg.is_frontend_only === 'true' || arg.is_frontend_only === true;
-        if (arg.is_default_value_null === true) {
+        if (arg.is_default_value_null === true || !arg.has_default_value) {
           delete arg.default_value;
         } else if (isListTypeArgument(arg.type) && arg.default_value) {
           // if the argument is a list type, parse the comma-separated string to an
@@ -198,6 +198,12 @@ export class AlgorithmService {
         delete arg.conditionalValueNull;
       });
     });
+    if (algorithmForm.submission_comments == null) {
+      delete algorithmForm.submission_comments;
+    }
+    if (algorithmForm.documentation_url == null) {
+      delete algorithmForm.documentation_url;
+    }
     return algorithmForm;
   }
 
@@ -211,4 +217,6 @@ export class AlgorithmService {
     });
     return algorithm;
   }
+
+  // Request body is incorrect: submission_comments: Field may not be null., functions: {"0":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"1":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"2":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"3":{"arguments":{"0":{"default_value":["Field may not be null."]},"1":{"default_value":["Field may not be null."]}}},"6":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"7":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"8":{"arguments":{"0":{"default_value":["Field may not be null."]}}}}, documentation_url: Field may not be null. ?
 }
