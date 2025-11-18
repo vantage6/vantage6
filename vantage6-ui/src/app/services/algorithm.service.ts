@@ -217,6 +217,4 @@ export class AlgorithmService {
     });
     return algorithm;
   }
-
-  // Request body is incorrect: submission_comments: Field may not be null., functions: {"0":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"1":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"2":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"3":{"arguments":{"0":{"default_value":["Field may not be null."]},"1":{"default_value":["Field may not be null."]}}},"6":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"7":{"arguments":{"0":{"default_value":["Field may not be null."]}}},"8":{"arguments":{"0":{"default_value":["Field may not be null."]}}}}, documentation_url: Field may not be null. ?
 }
