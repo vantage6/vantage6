@@ -176,7 +176,7 @@ store:
 
   # Specify private Docker registries so that the store can login and interact with
   # private algorithms to retrieve the digests.
-  {% if node.private_docker_registries is defined %}
+  {% if store.private_docker_registries is defined %}
   private_docker_registries:
     {% for registry in node.private_docker_registries %}
     - registry: {{ registry.registry }}

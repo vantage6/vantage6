@@ -1,6 +1,30 @@
 Release notes
 =============
 
+4.13.2
+------
+
+*12 November 2025*
+
+- **Security**
+
+  - Update python-socketio dependency to version 5.14.3 to fix security vulnerabilities,
+    and update dependencies in the UI
+    (`PR#2405 <https://github.com/vantage6/vantage6/pull/2405>`_).
+
+- **Feature**
+
+  - For ``v6 algorithm create``, the algorithm template is now created from the latest
+    non-prerelease tag of the algorithm template repository that matches the current
+    major version. A custom major version can be specified with the ``--major-version``
+    option (`PR#2403 <https://github.com/vantage6/vantage6/pull/2403>`_).
+
+- **Bugfix**
+  - Fix infinite loop in requesting list of runs by node client if running a task on
+    more than one page of runs
+    (`Issue#2357 <https://github.com/vantage6/vantage6/issues/2357>`_,
+    `PR#2404 <https://github.com/vantage6/vantage6/pull/2404>`_).
+
 4.13.1
 ------
 

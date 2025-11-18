@@ -80,7 +80,7 @@ export class SessionStepComponent implements OnInit, OnDestroy {
   private async loadSessions(): Promise<void> {
     const collaboration = this.chosenCollaborationService.collaboration$.value;
     if (collaboration) {
-      this.sessions = await this.sessionService.getSessions();
+      this.sessions = await this.sessionService.getSessions({ collaboration_id: collaboration.id.toString() });
     }
   }
 
