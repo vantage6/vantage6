@@ -35,6 +35,7 @@ from vantage6.cli.utils import validate_input_cmd_args
     help="Print server logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     type_=InstanceType.AUTH,
@@ -52,6 +53,7 @@ def cli_auth_start(
     port: int,
     attach: bool,
     local_chart_dir: str,
+    chart_version: str | None,
 ) -> None:
     """
     Start the auth service.
@@ -72,6 +74,7 @@ def cli_auth_start(
         values_file=ctx.config_file,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )
 
     # port forward for auth service

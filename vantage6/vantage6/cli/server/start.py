@@ -18,19 +18,13 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.command()
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
-@click.option("--ip", default=None, help="IP address to listen on")
-@click.option(
-    "-p", "--port", default=None, type=int, help="Port to listen on for the server"
-)
-@click.option(
-    "--ui-port", default=None, type=int, help="Port to listen on for the User Interface"
-)
 @click.option(
     "--attach/--detach",
     default=False,
     help="Print server logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     type_=InstanceType.SERVER,
@@ -44,11 +38,9 @@ def cli_server_start(
     system_folders: bool,
     context: str,
     namespace: str,
-    ip: str,
-    port: int,
-    ui_port: int,
     attach: bool,
     local_chart_dir: str | None,
+    chart_version: str | None,
 ) -> None:
     """
     Start the server.
@@ -66,6 +58,7 @@ def cli_server_start(
         values_file=ctx.config_file,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )
 
     if attach:

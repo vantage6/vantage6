@@ -31,6 +31,7 @@ from vantage6.cli.node.common import create_client
     help="Show node logs on the current console after starting the node",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     InstanceType.NODE,
@@ -46,6 +47,7 @@ def cli_node_start(
     namespace: str,
     attach: bool,
     local_chart_dir: str,
+    chart_version: str | None,
 ) -> None:
     """
     Start the node.
@@ -98,6 +100,7 @@ def cli_node_start(
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         custom_values=[f"node.image={image}"],
+        chart_version=chart_version,
     )
 
     if attach:
