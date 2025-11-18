@@ -133,7 +133,7 @@ may want to use a different image tag, or you may want to use a different port.
 
     services:
       vantage6-server:
-        image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+        image: harbor2.vantage6.ai/infrastructure/server:uluru
         ports:
         - "8000:80"
         volumes:
@@ -151,7 +151,7 @@ look something like this if you want to use `secrets in docker compose
 
     services:
       vantage6-server:
-        image: harbor2.vantage6.ai/infrastructure/server:cotopaxi
+        image: harbor2.vantage6.ai/infrastructure/server:uluru
         ports:
         - "8000:80"
         environment:
@@ -237,7 +237,7 @@ of a docker-compose file that can be used to deploy the algorithm store.
 
     services:
       vantage6-algorithm-store:
-        image: harbor2.vantage6.ai/infrastructure/algorithm-store:cotopaxi
+        image: harbor2.vantage6.ai/infrastructure/algorithm-store:uluru
         ports:
         - "8000:5000"
         volumes:

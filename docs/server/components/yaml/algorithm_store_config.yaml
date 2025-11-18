@@ -75,10 +75,10 @@ store:
 
   # set up with which origins the server should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
-  # of origins here. Below are examples to allow requests from the Cotopaxi UI, and
+  # of origins here. Below are examples to allow requests from the Uluru UI, and
   # port 7600 on localhost. Usually, only the UI needs to access the server.
   cors_allowed_origins:
-    - https://portal.cotopaxi.vantage6.ai
+    - https://portal.uluru.vantage6.ai
     - http://localhost:7600
 
   # Credentials used to login to private Docker registries. These credentials are used
