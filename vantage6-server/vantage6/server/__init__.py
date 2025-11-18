@@ -215,7 +215,9 @@ class ServerApp(Vantage6App):
         self._configure_flask_base(DatabaseSessionManager)
 
         # set JWT secret key to generate container tokens
-        self.app.config["jwt_secret_key"] = self.ctx.config.get(
+        # ensure that jwt_secret_key is set in the config if it didn't exist yet - that
+        # allows it to be used in the container token generation
+        self.app.config["jwt_secret_key"] = self.ctx.config.setdefault(
             "jwt_secret_key", str(uuid.uuid4())
         )
 
