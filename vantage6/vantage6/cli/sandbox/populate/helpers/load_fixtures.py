@@ -455,7 +455,9 @@ def create_fixtures(
                             ),
                             node=node,
                             organization=organizations[i - 1],
-                            prometheus_enabled=node_config_creation_details.prometheus_enabled,
+                            prometheus_enabled=(
+                                node_config_creation_details.prometheus_enabled
+                            ),
                         )
                     )
                 else:

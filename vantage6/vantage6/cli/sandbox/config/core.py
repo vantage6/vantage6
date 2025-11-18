@@ -92,7 +92,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
         log_dir = self._create_and_get_data_dir(InstanceType.SERVER, is_log_dir=True)
 
-        prometheus_config: dict[str, object] = {
+        prometheus_config = {
             "enabled": self.with_prometheus,
         }
         if self.with_prometheus:
