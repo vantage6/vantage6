@@ -24,6 +24,7 @@ from vantage6.cli.k8s_config import select_k8s_config
     help="Print server logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
+@click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
     InstanceType.ALGORITHM_STORE,
@@ -39,6 +40,7 @@ def cli_algo_store_start(
     namespace: str,
     attach: bool,
     local_chart_dir: str,
+    chart_version: str | None,
 ) -> None:
     """
     Start the algorithm store.
@@ -57,6 +59,7 @@ def cli_algo_store_start(
         values_file=ctx.config_file,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
+        chart_version=chart_version,
     )
 
     if attach:

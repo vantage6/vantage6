@@ -40,6 +40,7 @@ def helm_install(
     k8s_config: KubernetesConfig | None = None,
     local_chart_dir: str | None = None,
     custom_values: list[str] | None = None,
+    chart_version: str | None = None,
 ) -> None:
     """
     Manage the `helm install` command.
@@ -59,6 +60,8 @@ def helm_install(
     custom_values : list[str], optional
         Custom values to pass to the Helm chart, that override the values in the values
         file. Each item in the list is a string in the format "key=value".
+    chart_version : str, optional
+        The version of the Helm chart to use.
     """
     # Input validation
     validate_input_cmd_args(release_name, "release name")
@@ -99,6 +102,8 @@ def helm_install(
             # TODO v5+ remove this flag when we have a stable release
             "--devel",
         ]
+        if chart_version:
+            command.extend(["--version", chart_version])
 
     if values_file:
         command.extend(["-f", str(values_file)])

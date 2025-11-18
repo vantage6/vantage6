@@ -123,7 +123,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "port": Ports.SANDBOX_SERVER.value,
                 },
                 # TODO: v5+ set to latest v5 image
-                # TODO make this configurable
                 "image": (
                     self.server_image
                     or "harbor2.vantage6.ai/infrastructure/server:5.0.0a43"

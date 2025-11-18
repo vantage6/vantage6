@@ -18,7 +18,35 @@ from vantage6.cli.dev.common import check_devspace_installed
     default=False,
     help="Don't create local Keycloak service",
 )
-def cli_start_dev_env(with_prometheus: bool, no_local_auth: bool):
+@click.option(
+    "--no-populate",
+    "populate",
+    is_flag=True,
+    flag_value=False,
+    help="Do not populate the development environment with example data. Only applied "
+    "this time the development environment is started, or after it is cleaned.",
+)
+@click.option(
+    "--populate",
+    "populate",
+    is_flag=True,
+    flag_value=True,
+    default=True,
+    help="Populate the development environment with example data. Only applied the "
+    "first time the development environment is started, or after it is cleaned.",
+)
+@click.option(
+    "--repopulate",
+    is_flag=True,
+    default=False,
+    help="Repopulate the development environment with example data. This will delete "
+    "all existing data and repopulate the development environment with example data. "
+    "This has a similar effect to running `v6 dev clean` and then "
+    "`v6 dev start --populate`.",
+)
+def cli_start_dev_env(
+    with_prometheus: bool, no_local_auth: bool, populate: bool, repopulate: bool
+):
     """Start the development environment using devspace."""
     check_devspace_installed()
 
@@ -34,9 +62,15 @@ def cli_start_dev_env(with_prometheus: bool, no_local_auth: bool):
 
         if with_prometheus:
             cmd.extend(["--profile", "with-prometheus"])
-
         if no_local_auth:
             cmd.extend(["--profile", "no-local-auth"])
+
+        if repopulate:
+            cmd.append("--repopulate")
+        elif populate:
+            cmd.append("--populate")
+        else:
+            cmd.append("--no-populate")
 
         # Run the devspace command
         result = subprocess.run(cmd, check=True, capture_output=False)

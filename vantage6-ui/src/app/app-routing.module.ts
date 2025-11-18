@@ -62,6 +62,7 @@ import { CommunityStoreComponent } from './layouts/community-store/community-sto
 import { AlgorithmReadPublicComponent } from './pages/store/algorithm/read-public/algorithm-read-public.component';
 import { AlgorithmListPublicComponent } from './pages/store/algorithm/list-public/algorithm-list-public.component';
 import { PrivacyComponent } from './pages/privacy/privacy.component';
+import { AlgorithmUpdateImageComponent } from './pages/store/algorithm/update-image/algorithm-update-image.component';
 
 export const routes: Routes = [
   {
@@ -513,6 +514,14 @@ export const routes: Routes = [
       {
         path: routerConfig.algorithmEdit,
         component: AlgorithmEditComponent,
+        canActivate: [authenticationGuard, chosenStoreGuard()],
+        data: {
+          crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
+        }
+      },
+      {
+        path: routerConfig.algorithmUpdateImage,
+        component: AlgorithmUpdateImageComponent,
         canActivate: [authenticationGuard, chosenStoreGuard()],
         data: {
           crumbs: [['algorithm-list.title', routePaths.algorithmsManage], ['resources.algorithm']]
