@@ -8,10 +8,8 @@ data:
     algorithm_stores: []
     api_path: {{ .Values.server.apiPath }}
     description: {{ .Values.server.description }}
-    {{- if .Values.server.jwt }}
-    {{- if .Values.server.jwt.secret }}
+    {{- if and .Values.server.jwt .Values.server.jwt.secret }}
     jwt_secret_key: {{ .Values.server.jwt.secret }}
-    {{- end }}
     {{- end }}
     logging:
       backup_count: {{ .Values.server.logging.backup_count }}
