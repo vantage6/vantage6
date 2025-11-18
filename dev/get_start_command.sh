@@ -17,7 +17,7 @@ ARGS=${ARGS[@]:2}
 # remove the --repopulate flag from the args as that should not be passed to devspace
 filtered_args=()
 for arg in $ARGS; do
-  if [ "$arg" != "--repopulate" ]; then
+  if [ "$arg" != "--repopulate" ] && [ "$arg" != "--populate" ] && [ "$arg" != "--no-populate" ]; then
     filtered_args+=" $arg"
   fi
 done
