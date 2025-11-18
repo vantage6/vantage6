@@ -163,7 +163,7 @@ server:
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: true
     # If forward_ports is true, this is the port that will be exposed on the host.
-    local_port_to_expose: 30761
+    local_hub_port_to_expose: 30761
     # And these ports will be exposed for the UI and prometheus (if enabled).
     local_ui_port_to_expose: 30760
     local_prometheus_port_to_expose: 30763

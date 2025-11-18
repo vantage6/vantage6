@@ -150,7 +150,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     ),
                     "store_address": store_address,
                     "forward_ports": True,
-                    "local_port_to_expose": Ports.SANDBOX_SERVER.value,
+                    "local_hub_port_to_expose": Ports.SANDBOX_SERVER.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloakUrl": (

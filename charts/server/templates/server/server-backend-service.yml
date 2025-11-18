@@ -12,8 +12,8 @@ spec:
       port: {{ .Values.server.port }}
       targetPort: {{ .Values.server.internal.port }}
       name: vantage6-server-backend
-{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_port_to_expose }}
-      nodePort: {{ .Values.server.dev.local_port_to_expose }}
+{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_hub_port_to_expose }}
+      nodePort: {{ .Values.server.dev.local_hub_port_to_expose }}
 {{- end }}
 {{- if and .Values.prometheus .Values.prometheus.enabled }}
     - protocol: TCP
@@ -24,7 +24,7 @@ spec:
       nodePort: {{ .Values.server.dev.local_prometheus_port_to_expose }}
   {{- end }}
 {{- end }}
-{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_port_to_expose }}
+{{- if and .Values.server.dev.forward_ports .Values.server.dev.local_hub_port_to_expose }}
   type: NodePort
 {{- else }}
   type: ClusterIP

@@ -119,12 +119,11 @@ server:
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: {{ server.dev.forward_ports | default(false) }}
     # If forward_ports is true, these are the ports that will be exposed on the host.
-    local_port_to_expose: {{ server.dev.local_port_to_expose | default(30761) }}
+    local_hub_port_to_expose: {{ server.dev.local_hub_port_to_expose | default(30761) }}
     local_ui_port_to_expose: {{ server.dev.local_ui_port_to_expose | default(30760) }}
     {% if server.dev.local_prometheus_port_to_expose is defined %}
     local_prometheus_port_to_expose: {{ server.dev.local_prometheus_port_to_expose }}
-    {% endif %}
-    {% if server.dev.local_prometheus_port_to_expose is not defined %}
+    {% else %}
     # local_prometheus_port_to_expose: 30763
     {% endif %}
   {% endif %}
