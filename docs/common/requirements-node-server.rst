@@ -15,8 +15,8 @@ as much).
 
 -  Operating system: Ubuntu 20.04+ |requirement-OS|
 -  Python
--  Kubectl
 -  Helm
+- A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernets Cluster)
 
 .. note::
     For the server, Ubuntu is highly recommended. It is possible to run a
@@ -50,25 +50,35 @@ package manager native to your OS and/or distribution.
 
 .. _kubectl:
 
-Kubectl
+Kubernetes environment
 """"""
 
-Kubectl is a command line tool for managing Kubernetes clusters. It is used to deploy
-and manage the Kubernetes resources for the vantage6 infrastructure. For vantage6,
-you need ``kubectl`` to run kubernetes resources. You can install ``kubectl`` in several
-ways. For production environments, there are numerous cloud providers that offer
-Kubernetes as a service. It is also possible (though not recommended) to run your
-vantage6 kubernetes environment on VMs. For development environments, we recommend using
-Microk8s or Docker Desktop:
-
+A Kubernetes environment is required to run the vantage6 infrastructure. For development
+environments, we recommend using Microk8s or Docker Desktop. For production environments,
+we recommend using a Kubernetes cluster, or microk8s on a VM. Here are some details on
+the different options:
 - **Microk8s**: For Ubuntu, we recommend installing
   `Microk8s <https://microk8s.io/docs/getting-started>`_, which is a lightweight
   Kubernetes distribution that is easy to install and use. We recommend using this for
-  development environments as well as for deploying nodes. For production environments,
-  it can also be used but a Kubernetes cluster is recommended.
+  development environments as well as for deploying nodes. Deploying central
+  components (hub, auth, algorithm store) is also possible with Microk8s, but usually
+  it would be preferable to use a Kubernetes cluster, e.g for easier scaling.
 - **Docker Desktop**: If you are using Docker Desktop, you can simply
   `switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
-  This is useful for development  environments.
+  This is useful for development  environments. This is only recommended for development
+  environments.
+- **Kubernetes Cluster**: For production environments, we recommend using a Kubernetes
+  cluster. There are numerous cloud providers that offer Kubernetes as a service. An
+  example is the `Azure Kubernetes Service <https://azure.microsoft.com/en-us/products/kubernetes-service>`_
+  but there are many others.
+
+
+.. note::
+
+  To use vantage6, you also need to install Kubectl. Usually, though, this comes
+  with your Kubernetes distribution. Kubectl is a command line tool for
+  managing Kubernetes clusters, which is used to manage the vantage6 Kubernetes
+  resources.
 
 Helm
 """"
