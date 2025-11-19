@@ -6,7 +6,7 @@ as much).
 **Hardware**
 
 -  x86 CPU architecture + virtualization enabled
--  1 GB memory
+-  4 GB memory (minimum)
 -  50GB+ storage
 -  Stable and fast (1 Mbps+ internet connection)
 |requirement-public-ip|
