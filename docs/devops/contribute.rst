@@ -278,7 +278,8 @@ Verifying local code changes
 While working on a new feature, it can be useful to run vantage6 locally with your code
 changes to verify that it does what you expect it to do. The ``v6 dev``
 :ref:`commands <develop-env>` can be used for this purpose. With these commands, a local
-vantage6 network can be run that immediately syncs code changes that you make. Note
+vantage6 network can be run that immediately syncs code changes that you make. It also
+restarts those infrastructure components affected by your changes. Note
 that this only works for changes that you make to code running *within* containers of
 the server, node, store and UI. However, changes to e.g. the CLI or the Kubernetes
 resources may require other means to test your changes.

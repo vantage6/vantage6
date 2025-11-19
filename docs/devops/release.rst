@@ -189,10 +189,14 @@ in the table below.
 
 Distribute release
 ------------------
-Nodes and servers that are already running will automatically be upgraded to
-the latest version of their major release when they are restarted, unless otherwise
-specified in the respective configuration files. The update to the new version
-happens by pulling the newly released Helm charts and Docker images. Note that the major
+Central components (hub, auth, store, UI) that are already running will automatically
+be upgraded to the latest version of their major release when they are restarted, unless otherwise
+specified in the respective configuration files. Nodes behave similarly, but instead of
+picking the latest version, they check which version the server is running and update to
+that (minor) version. The update to the new version happens by pulling the newly
+released Helm charts and Docker images.
+
+Note that the major
 release is never automatically updated: for example, a node running version
 4.1.0 will update to 4.1.1 or 4.2.0, but never to 5.0.0. Depending on the
 version of vantage6 that is being used, there is a reserved Docker image tag
