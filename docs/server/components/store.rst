@@ -10,7 +10,7 @@ nodes. This allows the user to easily find the algorithm they need, and know how
 use it.
 
 There is a community algorithm store hosted at
-`https://store.cotopaxi.vantage6.ai <https://store.cotopaxi.vantage6.ai>`_.
+`https://store.uluru.vantage6.ai <https://store.uluru.vantage6.ai>`_.
 This store is maintained by the vantage6 community and allows you to easily reuse
 algorithms developed by others. You can also create your own algorithm store. This
 allows you to create a private algorithm store, which is only available to your own

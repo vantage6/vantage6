@@ -205,6 +205,8 @@ for distributing the upgrades. These are the following:
 +---------------+------------------------+
 | Tag           | Description            |
 +===============+========================+
+| uluru         | ``5.x.x`` release      |
++---------------+------------------------+
 | cotopaxi      | ``4.x.x`` release      |
 +---------------+------------------------+
 | petronas      | ``3.x.x`` release      |
@@ -220,14 +222,14 @@ Post-release checks
 
 After a release, there are a few checks that are performed. Most of these are
 only relevant if you are hosting a server yourself that is being automatically
-updated upon new releases, as is for instance the case for the Cotopaxi server.
+updated upon new releases, as is for instance the case for the Uluru server.
 
-For Cotopaxi, the following checks are done:
+For Uluru, the following checks are done:
 
-- Check that harbor2.vantage6.ai has updated images ``server:cotopaxi``,
-  ``server:cotopaxi-live`` and ``node:cotopaxi``.
+- Check that harbor2.vantage6.ai has updated images ``server:uluru``,
+  ``server:uluru-live`` and ``node:uluru``.
 - Check if the (live) server version is updated. Go to:
-  https://cotopaxi.vantage6.ai/version. Check logs if it is not updated.
+  https://uluru.vantage6.ai/version. Check logs if it is not updated.
 - Release any documentation that may not yet have been released.
 - Upgrade issue status to 'Done' in any relevant issue tracker.
 - Check if nodes are online, and restart them to update to the latest version

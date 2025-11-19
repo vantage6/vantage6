@@ -3,13 +3,13 @@
     window["env"] = window["env"] || {};
 
     // Environment variables
-    window["env"]["server_url"] = "https://cotopaxi.vantage6.ai";
+    window["env"]["server_url"] = "https://uluru.vantage6.ai";
     window["env"]["api_path"] = "";
     window["env"]["allowed_algorithm_stores"] = "*";
-    window["env"]["auth_url"] = "https://auth.cotopaxi.vantage6.ai";
+    window["env"]["auth_url"] = "https://auth.uluru.vantage6.ai";
     window["env"]["keycloak_realm"] = "vantage6";
     window["env"]["keycloak_client"] = "public_client";
     window["env"]["refresh_token_validity_seconds"] = "1800";
-    window["env"]["community_store_url"] = "https://store.cotopaxi.vantage6.ai";
+    window["env"]["community_store_url"] = "https://store.uluru.vantage6.ai";
     window["env"]["community_store_api_path"] = "/api";
 })(this);

@@ -44,6 +44,6 @@ spec:
           value: {{ .Values.ui.allowedAlgorithmStores | default "*" | quote }}
         # Community store URL
         - name: COMMUNITY_STORE_URL
-          value: {{ .Values.ui.communityStoreUrl | default "https://store.cotopaxi.vantage6.ai" | quote }}
+          value: {{ .Values.ui.communityStoreUrl | default "https://store.uluru.vantage6.ai" | quote }}
         - name: COMMUNITY_STORE_API_PATH
           value: {{ .Values.ui.communityStoreApiPath | default "/api" | quote }}

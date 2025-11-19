@@ -362,7 +362,7 @@ def _get_allowed_algorithm_stores() -> list[str]:
     )
     info("Examples:")
     info(
-        "https://store.cotopaxi.vantage6.ai    Allow all algorithms from the "
+        "https://store.uluru.vantage6.ai    Allow all algorithms from the "
         "community store"
     )
     info(

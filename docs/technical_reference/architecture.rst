@@ -30,7 +30,7 @@ properly. The following components are required for proper functioning of the se
     The algorithm store is intended to be used as a repository for trusted algorithms
     within a certain project. Algorithm stores can be coupled to specific collaborations
     or to all collaborations on a given server. Note that you can also couple the
-    community algorithm store (https://store.cotopaxi.vantage6.ai) to your server.
+    community algorithm store (https://store.uluru.vantage6.ai) to your server.
     This store contains a number of community algorithms that you may find useful.
 
     .. note::
