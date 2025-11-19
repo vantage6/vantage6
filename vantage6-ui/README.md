@@ -20,8 +20,8 @@ your vantage6 server.
 ## How to use
 
 For instructions on how to run your own user interface, see the instructions below.
-If you are using our Cotopaxi server you can use this user interface by logging
-on to https://portal.cotopaxi.vantage6.ai/. Contact us if you would like to have
+If you are using our Uluru server you can use this user interface by logging
+on to https://portal.uluru.vantage6.ai/. Contact us if you would like to have
 a user account.
 
 ### Running the UI locally

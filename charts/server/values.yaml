@@ -75,7 +75,7 @@ ui:
   keycloakPublicUrl: http://localhost:8080
 
   allowedAlgorithmStores: "*"
-  communityStoreUrl: https://store.cotopaxi.vantage6.ai
+  communityStoreUrl: https://store.uluru.vantage6.ai
   communityStoreApiPath: /api
 
 prometheus:

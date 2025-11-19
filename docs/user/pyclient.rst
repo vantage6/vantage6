@@ -29,7 +29,7 @@ Install
 
 It is important to install the Python client with the same version as the
 vantage6 server you are talking to. Check your server version by going to
-``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
+``https://<server_url>/version`` (e.g. `https://uluru.vantage6.ai/version`
 or `http://localhost:30761/server/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
@@ -138,10 +138,10 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   # Server address, e.g. https://cotopaxi.vantage6.ai/api, or http://localhost:7601/api
+   # Server address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/api
    # for a local dev server
    server_url = "https://<my_server_url>:<my_port>/<my_api_path>"
-   # Auth server address (keycloak), e.g. https://auth.cotopaxi.vantage6.ai/, or
+   # Auth server address (keycloak), e.g. https://auth.uluru.vantage6.ai/, or
    # http://localhost:8080 for a local dev server
    auth_url = "https://<my_auth_url>:<my_port>"
 
