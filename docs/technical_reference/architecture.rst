@@ -72,9 +72,9 @@ Data Station
 
 **Algorithm**
     When the node receives a task from the central server, it will download the
-    algorithm from the Docker registry and execute it on the local data. The algorithm
-    is therefore a temporary component that is automatically created by the node and
-    only present during the execution of a task.
+    algorithm from the container registry and execute it on the local data. The
+    algorithm is therefore a temporary component that is automatically created by the
+    node and only present during the execution of a task.
 
 User or Application
 +++++++++++++++++++

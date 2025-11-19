@@ -88,6 +88,7 @@ install:
 	uv add vantage6-algorithm-store
 
 install-dev:
+	uv pip install -e .[dev,docs]
 	uv pip install -e vantage6-common
 	uv pip install -e vantage6-client
 	uv pip install -e vantage6-algorithm-tools

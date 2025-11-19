@@ -100,7 +100,7 @@ following commands:
    * - ``v6 dev clean``
      - Delete all running k8s resources and local data (e.g. tasks data, database data)
    * - ``v6 dev rebuild``
-     - Rebuild all infrastructure Docker images for this project
+     - Rebuild all infrastructure (server, node, etc.) Docker images for this project
 
 By default, ``v6 dev rebuild`` will build all images. You can rebuild specific
 images by passing the ``--server``, ``--node``, ``--store`` or ``--ui`` flag. For

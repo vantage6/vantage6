@@ -36,11 +36,11 @@ The |instance-type| software itself will be downloaded when you start the
 Hosting your |instance-type|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To host your |instance-type|, we recommend to use the Docker image we
-provide: |image|. Running this docker image will start the server. Check the
-|deployment-link| section for deployment examples.
+To host your |instance-type|, we recommend to use the Helm chart we provide:
+|chart-link|. Check the |deployment-link| section for deployment examples.
 
 .. note::
 
     We recommend to use the latest version. Should you have reasons to
-    deploy an older ``VERSION``, use the image |image-old|.
+    deploy an older version use the helm chart. For instance, for version 5.0.0, use
+    the chart |chart-5.0.0-link|.

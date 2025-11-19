@@ -30,7 +30,6 @@ This section contains technical reference information about the vantage6 project
 .. - task encryption
 .. - task serialization/deserialization (maybe just for developers?)
 .. - policies node
-.. - use private docker registry (node)
 .. - logging settings
 .. - sharing node configuration with server
 .. - settings on validity of JWT tokens (server admin)
@@ -39,10 +38,8 @@ This section contains technical reference information about the vantage6 project
 .. - socket stuff - users/nodes can connect to server via socket - now only nodes described I think
 .. - Permission system
 ..    - default roles
-.. - user interface (?) - how to use it
 .. - mail service
 .. - Full documentation of the CLI - may need to extend 'use' section of the guides
-.. - RabbitMQ
 .. - The different types of clients - userClient, nodeClient, AlgorithmClient
 ..     - their general structure
 .. - MockClient

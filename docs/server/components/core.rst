@@ -1,16 +1,16 @@
 .. include:: <isonum.txt>
 
-.. _server-admin-guide-core:
+.. _server-admin-guide-server:
 
-Core
+Server
 ====
 
-The vantage6 core is the central hub of the vantage6 platform. It is responsible
+The vantage6 server is the central hub of the vantage6 platform. It is responsible
 for managing the different organizations and their nodes, authorizing the users and
 nodes, and managing the communication of task requests and results between the nodes
 and the users.
 
-Communication with the vantage6 core is managed through a RESTful API and
+Communication with the vantage6 server is managed through a RESTful API and
 socketIO server.
 
 .. _server-configure:
@@ -211,8 +211,3 @@ set up a server. These roles are, in descending order of permissions:
 
 We do recommend that you review the permissions of these roles before using them
 in your own project.
-
-
-
-
-

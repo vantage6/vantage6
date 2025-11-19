@@ -49,7 +49,7 @@ registry.
 
   .. code:: yaml
 
-      docker_registries:
+      private_docker_registries:
         - registry: docker-registry.org
           username: docker-registry-user
           password: docker-registry-password

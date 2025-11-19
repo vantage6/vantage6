@@ -6,7 +6,7 @@ as much).
 **Hardware**
 
 -  x86 CPU architecture + virtualization enabled
--  1 GB memory
+-  4 GB memory (minimum)
 -  50GB+ storage
 -  Stable and fast (1 Mbps+ internet connection)
 |requirement-public-ip|
@@ -15,16 +15,17 @@ as much).
 
 -  Operating system: Ubuntu 20.04+ |requirement-OS|
 -  Python
--  Docker
+-  Helm
+- A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernets Cluster)
 
 .. note::
     For the server, Ubuntu is highly recommended. It is possible to run a
-    development server (using `v6 server start`) on Windows or MacOS, but for
-    production purposes we recommend using Ubuntu.
+    development server on Windows or MacOS, but for production purposes we recommend
+    using Ubuntu.
 
 .. warning::
     The hardware requirements of the node also depend on the algorithms that
-    the node will run. For example, you need much less compute power for a
+    the node will run. For example, you probably need less compute power for a
     descriptive statistical algorithm than for a machine learning model.
 
 .. _python:
@@ -47,39 +48,42 @@ package manager native to your OS and/or distribution.
     Note that Python 3.13 is only used in vantage6 v5.0.0 and higher. In lower versions,
     Python 3.10 is required. Before vantage6 v3.8.0, Python 3.7 was used.
 
-.. _docker:
+.. _kubectl:
 
-Docker
+Kubernetes environment
 """"""
 
-Docker facilitates encapsulation of applications and their dependencies
-in packages that can be easily distributed to diverse systems.
-Algorithms are stored in Docker images which nodes can download and
-execute. Besides the algorithms, both the node and server are also
-running from a docker container themselves.
+A Kubernetes environment is required to run the vantage6 infrastructure. For development
+environments, we recommend using Microk8s or Docker Desktop. For production environments,
+we recommend using a Kubernetes cluster, or microk8s on a VM. Here are some details on
+the different options:
+- **Microk8s**: For Ubuntu, we recommend installing
+  `Microk8s <https://microk8s.io/docs/getting-started>`_, which is a lightweight
+  Kubernetes distribution that is easy to install and use. We recommend using this for
+  development environments as well as for deploying nodes. Deploying central
+  components (hub, auth, algorithm store) is also possible with Microk8s, but usually
+  it would be preferable to use a Kubernetes cluster, e.g for easier scaling.
+- **Docker Desktop**: If you are using Docker Desktop, you can simply
+  `switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
+  This is useful for development  environments. This is only recommended for development
+  environments.
+- **Kubernetes Cluster**: For production environments, we recommend using a Kubernetes
+  cluster. There are numerous cloud providers that offer Kubernetes as a service. An
+  example is the `Azure Kubernetes Service <https://azure.microsoft.com/en-us/products/kubernetes-service>`_
+  but there are many others.
 
-Please refer to `this page <https://docs.docker.com/engine/install/>`__
-on how to install Docker. To verify that Docker is installed and running
-you can run the ``hello-world`` example from Docker.
-
-.. code:: bash
-
-   docker run hello-world
-
-.. warning::
-
-    Note that for **Linux**, some `post-installation
-    steps <https://docs.docker.com/engine/install/linux-postinstall/>`__ may
-    be required. Vantage6 needs to be able to run docker without ``sudo``,
-    and these steps ensure just that.
-
-    When installing vantage6 on your personal **Windows** machine, we recommend using
-    Docker Desktop. Make sure to enable Windows Subsystem for Linux in your windows
-    feature. It may be preferable to limit the amount of memory Docker can use - in some
-    cases it may otherwise consume much memory and slow down your system. This may be achieved as
-    described `here <https://stackoverflow.com/questions/62405765/memory-allocation-to-docker-containers-after-moving-to-wsl-2-in-windows>`__.
 
 .. note::
 
-    * Always make sure that Docker is running while using vantage6!
-    * We recommend to always use the latest version of Docker.
+  To use vantage6, you also need to install Kubectl. Usually, though, this comes
+  with your Kubernetes distribution. Kubectl is a command line tool for
+  managing Kubernetes clusters, which is used to manage the vantage6 Kubernetes
+  resources.
+
+Helm
+""""
+
+`Helm <https://helm.sh/docs/intro/install/>`_ is a package manager for Kubernetes. It
+is used to deploy and manage the Kubernetes resources for the vantage6 infrastructure.
+The vantage6 infrastructure is available in several Helm charts. Therefore, you need
+``helm`` to deploy and manage the Kubernetes resources for the vantage6 infrastructure.
