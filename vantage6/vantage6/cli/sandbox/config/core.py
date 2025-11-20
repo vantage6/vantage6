@@ -42,6 +42,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         extra_store_config: Path | None,
         extra_auth_config: Path | None,
         k8s_config: KubernetesConfig,
+        with_prometheus: bool = False,
         custom_data_dir: Path | None = None,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
@@ -53,6 +54,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.extra_store_config = extra_store_config
         self.extra_auth_config = extra_auth_config
         self.k8s_config = k8s_config
+        self.with_prometheus = with_prometheus
 
         self.server_config_file = None
         self.store_config_file = None
@@ -68,7 +70,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self._create_algo_store_config()
 
     def __server_config_return_func(
-        self, extra_config: dict, data_dir: Path, log_dir: Path
+        self,
+        extra_config: dict,
     ) -> dict:
         """
         Return a dict with server configuration values to be used in creating the
@@ -79,22 +82,38 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         extra_config : dict
             Extra configuration (parsed from YAML) to be added to the server
             configuration.
-        data_dir : Path
-            Path to the data directory.
-        log_dir : Path
-            Path to the log directory.
 
         Returns
         -------
         dict
             Dictionary with server configuration values.
         """
+        data_dir = self._create_and_get_data_dir(instance_type=InstanceType.SERVER)
+
+        log_dir = self._create_and_get_data_dir(InstanceType.SERVER, is_log_dir=True)
+
+        prometheus_config = {
+            "enabled": self.with_prometheus,
+        }
+        if self.with_prometheus:
+            prometheus_dir = self._create_and_get_data_dir(
+                InstanceType.SERVER, custom_folder="prometheus"
+            )
+            prometheus_config.update(
+                {
+                    "exporter_port": Ports.SANDBOX_PROMETHEUS.value,
+                    "storageSize": "2Gi",
+                    "storageClass": "local-storage",
+                    "volumeHostPath": str(prometheus_dir),
+                }
+            )
+
         store_service = (
             f"vantage6-{self.server_name}-store-user-algorithm-store-store-service"
         )
         store_address = (
             f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
-            f"{Ports.SANDBOX_ALGO_STORE.value}"
+            f":{Ports.SANDBOX_ALGO_STORE.value}"
         )
         config = {
             "server": {
@@ -130,7 +149,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     ),
                     "store_address": store_address,
                     "forward_ports": True,
-                    "local_port_to_expose": Ports.SANDBOX_SERVER.value,
+                    "local_hub_port_to_expose": Ports.SANDBOX_SERVER.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloakUrl": (
@@ -151,7 +170,13 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
             },
+            "prometheus": prometheus_config,
         }
+
+        if self.with_prometheus:
+            config["server"]["dev"]["local_prometheus_port_to_expose"] = (
+                Ports.SANDBOX_PROMETHEUS.value
+            )
 
         # merge the extra config with the server config
         if extra_config is not None:
@@ -162,10 +187,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
     def _create_vserver_config(self) -> None:
         """Creates server configuration file (YAML)."""
 
-        data_dir = self._create_and_get_data_dir(instance_type=InstanceType.SERVER)
-
-        log_dir = self._create_and_get_data_dir(InstanceType.SERVER, is_log_dir=True)
-
         extra_config = self._read_extra_config_file(self.extra_server_config)
         if self.ui_image is not None:
             ui_config = extra_config.get("ui", {}) if extra_config is not None else {}
@@ -175,7 +196,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         # Create the server config file
         self.server_config_file = new(
             config_producing_func=self.__server_config_return_func,
-            config_producing_func_args=(extra_config, data_dir, log_dir),
+            config_producing_func_args=(extra_config,),
             name=self.server_name,
             system_folders=False,
             type_=InstanceType.SERVER,

@@ -147,7 +147,7 @@ def _initalize_client(server_url, auth_url) -> Client:
     client = Client(
         server_url=server_url,
         auth_url=auth_url,
-        log_level=LogLevel.ERROR,
+        log_level=LogLevel.WARN,
     )
 
     info("Waiting for authentication...")

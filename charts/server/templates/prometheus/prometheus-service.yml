@@ -1,0 +1,19 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-prometheus-service
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: prometheus
+spec:
+  selector:
+{{ include "vantage6.matchLabels" . | indent 4 }}
+    component: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      name: prometheus
+  type: ClusterIP
+{{- end }}

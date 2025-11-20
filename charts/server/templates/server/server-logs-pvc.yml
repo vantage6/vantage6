@@ -16,4 +16,8 @@ spec:
   {{- if .Values.server.logging.storageClass }}
   storageClassName: {{ .Values.server.logging.storageClass }}
   {{- end }}
+  selector:
+    matchLabels:
+      type: local-logs
+      app: {{ include "vantage6.name" . }}
 {{- end }}

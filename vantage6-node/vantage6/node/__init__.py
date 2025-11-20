@@ -66,6 +66,8 @@ from vantage6.node.util import get_parent_id
 
 __version__ = importlib.metadata.version(__package__)
 
+PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS = 45
+
 
 # ------------------------------------------------------------------------------
 class Node:
@@ -143,11 +145,10 @@ class Node:
 
         self.start_processing_threads()
 
-        # TODO reactivate this after redoing docker-specific implementation (issue
-        # https://github.com/vantage6/vantage6/issues/2080)
-        # self.log.debug("Start thread for sending system metadata")
-        # t = Thread(target=self.__metadata_worker, daemon=True)
-        # t.start()
+        if self.config.get("prometheus", {}).get("enabled", False):
+            self.log.debug("Start thread for sending system metadata")
+            t = Thread(target=self.__metadata_worker, daemon=True)
+            t.start()
 
         self.log.info("Init complete")
 
@@ -166,13 +167,18 @@ class Node:
         """
         Periodically send system metadata to the server.
         """
-        if not self.config.get("prometheus", {}).get("enabled", False):
-            self.log.info("Prometheus is not enabled, skipping metadata worker")
-            return
-
         report_interval = self.config.get("prometheus", {}).get(
-            "report_interval_seconds", 45
+            "report_interval_seconds", PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS
         )
+        try:
+            report_interval = int(report_interval)
+        except ValueError:
+            self.log.error("Invalid report interval: %s", report_interval)
+            self.log.warning(
+                "Using default report interval: %s",
+                PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS,
+            )
+            report_interval = PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS
 
         while True:
             try:
@@ -194,7 +200,7 @@ class Node:
         metadata = {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
-            "num_algorithm_containers": len(self.__docker.active_tasks),
+            "num_algorithm_containers": self.k8s_container_manager.num_active_tasks,
             "os": os.name,
             "platform": sys.platform,
             "cpu_count": psutil.cpu_count(),

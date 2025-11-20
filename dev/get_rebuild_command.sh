@@ -5,33 +5,40 @@
 
 set -e
 
-# if no args are provided, build all images
-if [ $# -eq 0 ]; then
-    echo "devspace build"
-    exit 0
-elif [ $# -gt 1 ]; then
-    echo "Please provide only one argument." >&2
-    echo "Usage: $0 [--server|--node|--store|--ui]" >&2
-    exit 1
-fi
+DEFAULT_CMD="devspace build"
+SELECTED_FLAG=""
 
-# Use case statement to handle different image types
-case "$1" in
-    --server)
-        echo "devspace build --profile build-server-only"
-        ;;
-    --node)
-        echo "devspace build --profile build-node-only"
-        ;;
-    --store)
-        echo "devspace build --profile build-store-only"
-        ;;
-    --ui)
-        echo "devspace build --profile build-ui-only"
-        ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --server|--node|--store|--ui)
+      SELECTED_FLAG="$1"
+      break
+      ;;
+    --)
+      shift
+      break
+      ;;
     *)
-        echo "Invalid argument: $1" >&2
-        echo "Valid arguments are: --server, --node, --store, --ui" >&2
-        exit 1
-        ;;
+      shift
+      ;;
+  esac
+
+done
+
+case "$SELECTED_FLAG" in
+  --server)
+    echo "devspace build --profile build-server-only"
+    ;;
+  --node)
+    echo "devspace build --profile build-node-only"
+    ;;
+  --store)
+    echo "devspace build --profile build-store-only"
+    ;;
+  --ui)
+    echo "devspace build --profile build-ui-only"
+    ;;
+  *)
+    echo "$DEFAULT_CMD"
+    ;;
 esac

@@ -46,9 +46,6 @@ server:
     - level: warning
       name: sqlalchemy.engine
 
-  prometheus:
-    enabled: false
-
 rabbitmq:
   image:
     repository: rabbitmq
@@ -80,3 +77,12 @@ ui:
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai
   communityStoreApiPath: /api
+
+prometheus:
+  enabled: false
+  exporter_port: 7603
+
+  image: prom/prometheus:latest
+  storageSize: "2Gi"
+  storageClass: "local-storage"
+  volumeHostPath: "/var/lib/prometheus"

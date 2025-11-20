@@ -76,6 +76,7 @@ class ContainerManager:
         self.ctx = ctx
         self.client = client
         self.socket_io = None
+        self.num_active_tasks = 0
 
         # When a pod runs in Kubernetes with a ServiceAccount, Kubernetes automatically
         # mounts the service account credentials at
@@ -609,6 +610,8 @@ class ContainerManager:
 
         # start streaming logs to the server
         self._stream_logs(run_io=run_io, task_id=task_id)
+
+        self.num_active_tasks += 1
 
         return status
 
@@ -1445,6 +1448,8 @@ class ContainerManager:
                     parent_id=job.metadata.annotations["task_parent_id"],
                 )
 
+                self.num_active_tasks -= 1
+
                 delete_job_related_pods(
                     run_id=run_io.run_id,
                     container_name=run_io.container_name,
@@ -1729,6 +1734,7 @@ class ContainerManager:
             logs += "\n\nAlgorithm was killed by user request."
         elif initiator == KillInitiator.NODE_SHUTDOWN:
             logs += "\n\nAlgorithm was killed because the node was shut down."
+        self.num_active_tasks -= 1
         delete_job_related_pods(
             run_id=run_io.run_id,
             container_name=run_io.container_name,

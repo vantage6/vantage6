@@ -1,0 +1,25 @@
+{{- if .Values.prometheus.enabled }}
+{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-prometheus-data-pvc" .Release.Name)) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-prometheus-data-pvc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: prometheus-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.storageSize | default "2Gi" }}
+  {{- if .Values.prometheus.storageClass }}
+  storageClassName: {{ .Values.prometheus.storageClass }}
+  {{- end }}
+  selector:
+    matchLabels:
+      type: prometheus-data
+      app: {{ include "vantage6.name" . }}
+{{- end }}
+{{- end }}

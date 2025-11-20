@@ -36,6 +36,10 @@ spec:
             name: {{ .Release.Name }}-server-secrets
         ports:
         - containerPort: {{ .Values.server.internal.port }}
+        {{- if and .Values.prometheus .Values.prometheus.enabled }}
+        - containerPort: {{ .Values.prometheus.exporter_port | default 7603 }}
+          name: prmths-export
+        {{- end }}
         command: [
           "uwsgi", "--http", ":{{ .Values.server.internal.port }}", "--gevent", "1000", "--http-websockets",
           "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
