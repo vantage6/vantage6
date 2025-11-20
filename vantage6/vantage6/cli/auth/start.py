@@ -84,7 +84,8 @@ def cli_auth_start(
         service_port=Ports.HTTP.value,
         port=port or Ports.DEV_AUTH.value,
         ip=ip,
-        k8s_config=k8s_config,
+        context=k8s_config.context,
+        namespace=k8s_config.namespace,
     )
 
     if attach:

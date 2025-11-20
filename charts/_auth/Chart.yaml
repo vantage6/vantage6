@@ -5,6 +5,6 @@ type: application
 version: "5.0.0-a43"
 appVersion: "5.0.0-a43"
 dependencies:
-  - name: common
-    version: "5.0.0-a43"
-    repository: file://../common
+  - name: keycloak
+    version: "24.6.1"
+    repository: oci://registry-1.docker.io/bitnamicharts
