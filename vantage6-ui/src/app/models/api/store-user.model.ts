@@ -6,7 +6,6 @@ export enum StoreUserLazyProperties {
 
 export interface GetStoreUserParameters {
   username?: string;
-  can_review?: boolean;
   reviewers_for_algorithm_id?: number;
 }
 

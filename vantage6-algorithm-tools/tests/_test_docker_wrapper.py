@@ -18,10 +18,10 @@
 # MOCK_SPARQL_ENDPOINT = "sparql://some_triplestore"
 
 
-# # def test_json_input_without_format_raises_deserializationexception(tmp_path):
+# # def test_json_input_without_format_raises_deserializationerror(tmp_path):
 # #     """
 # #     It should only be possible to provide json input if it is preceded by the
-# #     string "json." in unicode. Otherwise a `DeserializationException` should
+# #     string "json." in unicode. Otherwise a `DeserializationError` should
 # #     be thrown.
 # #     """
 # #     input_file = tmp_path / 'input.json'
@@ -29,7 +29,7 @@
 # #     with input_file.open('wb') as f:
 # #         f.write(json.dumps(INPUT_PARAMETERS).encode())
 
-# #     with raises(DeserializationException):
+# #     with raises(DeserializationError):
 # #         run_docker_wrapper_with_echo_db(input_file, tmp_path)
 
 

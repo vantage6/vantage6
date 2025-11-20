@@ -80,7 +80,6 @@ node:
       env:
         USER: vantage6
         PASSWORD: vantage6
-      # TODO v5+ move this elsewhere?
       # It is also possible not to specify the details of the service-based databases
       # in this configuration file, but elsewhere in kubernetes (e.g. a parent chart's
       # values.yaml file).
