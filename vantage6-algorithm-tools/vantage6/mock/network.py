@@ -145,7 +145,7 @@ class MockNetwork:
                 error(f"Module '{module_name}' not found.")
                 error(
                     "Are you working in the correct Python environment and did you "
-                    "install the vantage6 algorithm tools package in this environment?"
+                    "install your algorithm package in this environment?"
                 )
                 error("Exiting...")
                 exit(1)

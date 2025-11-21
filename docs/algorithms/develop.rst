@@ -260,7 +260,8 @@ vantage6 algorithm tools:
       def my_function(data: pd.DataFrame):
          return data
 
-   All infrastructure data extraction and preprocessing functions are decorated with the
+   All data extraction and preprocessing functions provided by the vantage6 algorithm
+   tools package are decorated with the
    ``handle_pandas_errors`` decorator, so that any error occurring during the execution
    of the function will be caught and a generic error message will be returned instead
    of the traceback.
