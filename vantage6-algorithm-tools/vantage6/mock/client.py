@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class MockBaseClient:
-    def __init__(self, network: "MockNetwork", databases: list[MockDatabase]):
+    def __init__(self, network: "MockNetwork"):
         self.network = network
         self.task = self.Task(self)
         self.result = self.Result(self)
@@ -25,8 +25,6 @@ class MockBaseClient:
         self.organization = self.Organization(self)
         self.collaboration = self.Collaboration(self)
         self.study = self.Study(self)
-
-        self.databases = databases
 
         # Which organization do I belong to?
         self.organization_id = 0
@@ -194,6 +192,8 @@ class MockBaseClient:
             name: str = "mock",
             description: str = "mock",
             arguments: dict | None = None,
+            databases: list[list[dict]] | list[dict] | None = None,
+            action: str | None = None,
             *_args,
             **_kwargs,
         ) -> dict:
@@ -211,10 +211,16 @@ class MockBaseClient:
                 the same keys as the arguments of the algorithm method.
             name : str, optional
                 The name of the task, by default "mock"
-            description : str, optional
-                The description of the task, by default "mock"
+            databases: list[list[dict]] | list[dict], optional
+                Databases to be used at the node. Each dict should look like this:
+                {"type": "dataframe", "dataframe_id": <my_dataframe_id>}
             action : str, optional
-                The action of the task, by default "federated_compute"
+                The action of the task, by default None. If not provided, the
+                action would normally be inferred from the algorithm store, but for the
+                mock client we do not have an algorithm store, so we infer it from the
+                method directly. Suitable actions may be one of 'data_extraction',
+                'preprocessing', 'federated_compute', 'central_compute' or
+                'postprocessing'.
 
             Returns
             -------
@@ -229,12 +235,14 @@ class MockBaseClient:
 
             if not arguments:
                 arguments = {}
+            if not databases:
+                databases = []
 
             task = self.parent.network.server.save_task(
                 init_organization_id=self.parent.organization_id,
                 name=name,
                 description=description,
-                databases=[{"label": db.label} for db in self.parent.databases],
+                databases=databases,
             )
 
             # get data for organization
@@ -242,7 +250,10 @@ class MockBaseClient:
                 node = self.parent.network.get_node(org_id)
                 try:
                     result = node.simulate_task_run(
-                        method, arguments, self.parent.databases
+                        method=method,
+                        arguments=arguments,
+                        databases=databases,
+                        action=action,
                     )
                 except MethodNotFoundError:
                     error(
@@ -481,11 +492,10 @@ class MockUserClient(MockBaseClient):
     def __init__(
         self,
         network: "MockNetwork",
-        databases: list[MockDatabase],
         *args,
         **kwargs,
     ):
-        super().__init__(network, databases)
+        super().__init__(network)
         self.network = network
         self.dataframe = self.Dataframe(self)
 
@@ -652,25 +662,27 @@ class MockAlgorithmClient(MockBaseClient):
     def __init__(
         self, node: "MockNode", databases: list[MockDatabase], *args, **kwargs
     ):
-        super().__init__(node.network, databases)
+        super().__init__(node.network)
 
         self.image = "mock-image"
         self.node_id = node.id_
         self.collaboration_id = node.collaboration_id
         self.study_id = node.network.server.study_id
         self.organization_id = node.organization_id
+        self.databases = databases
 
     class Task(MockBaseClient.Task):
         def create(self, *args, **kwargs):
             """
             Create a new task with the mock algorithm client. This is the algorithm
-            client, so the databases need to be set using `set_databases` before
-            creating a task.
+            client, so the databases need to be initialized with the databases from the
+            parent task before creating a task.
             """
             if self.parent.databases is None:
                 error(
                     "No databases have been set for the mock algorithm client. Please"
-                    "set the databases using `set_databases` before creating a task."
+                    "initialize the MockAlgorithmClient with the databases from the "
+                    "parent task."
                 )
                 error("Exiting...")
                 exit(1)

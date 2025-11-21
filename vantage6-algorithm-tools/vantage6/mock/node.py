@@ -83,7 +83,8 @@ class MockNode:
         self,
         method: str,
         arguments: dict,
-        databases: list[MockDatabase] | list[list[MockDatabase]],
+        databases: list[dict] | list[list[dict]],
+        action: str | None = None,
     ):
         """
         Simulate a task run which has been initiated by the `client.task.create` method.
@@ -94,12 +95,17 @@ class MockNode:
             The name of the method that should be called.
         arguments : dict
             The arguments that should be passed to the method.
-        databases :  list[MockDatabase] | list[list[MockDatabase]]
-            The databases that should be used by the method. If a single list is
-            provided, it is assumed that the same database is used for each argument. If
-            a list of lists is provided, it is assumed that a different database is used
-            for each argument. Each dict should contain at least a 'label' key that
-            refers to a dataframe.
+        databases :  list[dict] | list[list[dict]]
+            The databases that should be used by the method. It should be a list of
+            dictionaries, where each dictionary contains a 'type' and a 'dataframe_id'
+            key. The 'type' key should be set to 'dataframe' and the 'dataframe_id' key
+            should be set to the id of the dataframe that should be used.
+        action : str | None
+            The action of the task. If not provided, the action would normally be
+            inferred from the algorithm store`, but for the mock node we do not have an
+            algorithm store, so we infer it from the method directly. Suitable actions
+            may be one of 'data_extraction', 'preprocessing', 'federated_compute',
+            'central_compute' or 'postprocessing'.
 
         Returns
         -------
@@ -108,15 +114,11 @@ class MockNode:
         """
         method_fn = self._get_method_fn_from_method(method)
 
-        # Every function should have at least a step type decorator, for example:
-        # @data_extraction
-        # def my_function(connection_details: str):
-        #     pass
         step_type = self._get_step_type_from_method_fn(method_fn)
-
-        if not AlgorithmStepType.is_compute(step_type):
+        if action and step_type != action:
             raise SessionActionMismatchError(
-                "Trying to run a task that is not a compute step."
+                f"Requested action {action.value}, but the method is a "
+                f"{step_type.value} step."
             )
 
         task_env_vars = self._task_env_vars(action=step_type, method=method)
@@ -131,19 +133,23 @@ class MockNode:
         if getattr(method_fn, "vantage6_dataframe_decorated", False):
             mock_data = []
             # Handle both single list and list of lists input formats
-            if isinstance(databases[0], list):
+            if len(databases) and isinstance(databases[0], list):
                 # List of lists format
                 for db_group in databases:
                     group_data = {}
                     for db in db_group:
-                        self._validate_dataframe_exists(db.label)
-                        group_data[db.label] = self.dataframes[db.label]
+                        label = self.network.server.get_label_for_df_id(
+                            db["dataframe_id"]
+                        )
+                        self._validate_dataframe_exists(label)
+                        group_data[label] = self.dataframes[label]
                     mock_data.append(group_data)
             else:
                 # Single list format
                 for db in databases:
-                    self._validate_dataframe_exists(db.label)
-                    mock_data.append(self.dataframes[db.label])
+                    label = self.network.server.get_label_for_df_id(db["dataframe_id"])
+                    self._validate_dataframe_exists(label)
+                    mock_data.append(self.dataframes[label])
 
             # make a copy of the data to avoid modifying the original data of
             # subsequent tasks

@@ -165,9 +165,7 @@ class MockNetwork:
                     name=label, dataframes=dfs, source_db_label=label
                 )
 
-        self.user_client = MockUserClient(
-            self, databases=databases[0] if databases else []
-        )
+        self.user_client = MockUserClient(self)
 
         info(f"Mock network created with {len(self.nodes)} nodes")
 
