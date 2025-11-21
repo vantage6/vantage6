@@ -422,7 +422,7 @@ Calling your algorithm from vantage6
 .. TODO v5+ remove this when implemented
 .. warning::
 
-    This does not work yet in v5 - the ``v6 test`` commannds are not implemented yet.
+    This does not work yet in v5 - the ``v6 test`` commands are not implemented yet.
 
 If you want to test your algorithm in the context of vantage6, you should
 set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
