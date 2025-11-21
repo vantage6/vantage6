@@ -49,6 +49,10 @@ class TestMockNodeDataframe(TestCase):
     def test_simulate_task_run(self):
         """Test if task run simulation works properly"""
 
+        # Mock the server's get_label_for_df_id to return the correct label
+        self.network.server = MagicMock()
+        self.network.server.get_label_for_df_id = MagicMock(return_value=LABEL_1)
+
         # Create a mock method function
         mock_method = MagicMock()
         mock_method.vantage6_decorator_step_type = AlgorithmStepType.FEDERATED_COMPUTE
@@ -63,9 +67,7 @@ class TestMockNodeDataframe(TestCase):
             result = self.node.simulate_task_run(
                 method="test_method",
                 arguments={"arg1": "value1"},
-                databases=[
-                    MockDatabase(label=LABEL_1, database=self.data, db_type="csv")
-                ],
+                databases=[{"type": "dataframe", "dataframe_id": 1}],
             )
 
             # Verify the result
