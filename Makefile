@@ -230,6 +230,13 @@ install-docs:
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.
 # Note that the value of the envvar does not matter, just that it is set.
+# Also, note that --ignore option is used to ignore directories that are not
+# relevant for the documentation build.
 devdocs: export READTHEDOCS = Yes
 devdocs:
-	sphinx-autobuild docs docs/_build/html --watch . ${_autosummary_flags}
+	sphinx-autobuild docs docs/_build/html \
+		--ignore dev/ \
+		--ignore .github/ \
+		--ignore .devspace/ \
+		--ignore .venv/ \
+		${_autosummary_flags}

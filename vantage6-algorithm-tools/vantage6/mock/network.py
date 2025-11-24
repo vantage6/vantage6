@@ -6,6 +6,7 @@ from vantage6.algorithm.tools.exceptions import AlgorithmModuleNotFoundError
 from vantage6.algorithm.tools.util import error
 
 from vantage6.mock.client import MockUserClient
+from vantage6.mock.globals import MockDatabase
 from vantage6.mock.node import MockNode
 from vantage6.mock.server import MockServer
 
@@ -30,12 +31,12 @@ class MockNetwork:
         ----------
         module_name : str
             The name of the Python module that contains the algorithm.
-        datasets : list[dict[str, dict[str, str | pd.DataFrame]]]
-            A dictionary that contains the datasets for each organization. The keys
-            are the labels of the datasets used instead of the label specified in the
-            node configuration. The values are either a string (path to file or SQL
-            connection string) or a pandas DataFrame. In case a DataFrame is provided,
-            automatically a data extraction step is performed.
+        datasets : list[dict[str, dict[str, str] | pd.DataFrame]]
+            A list of dictionaries that contains the datasets for each node.
+            Each dictionary contains the datasets for a single node. Each key refers to
+            the label of another dataset. The values for each key are either a string
+            (path to file or SQL connection string) or a pandas DataFrame. In case a
+            DataFrame is provided, automatically a data extraction step is performed.
         collaboration_id : int | None
             The id of the collaboration.
 
@@ -68,7 +69,11 @@ class MockNetwork:
         >>> from vantage6.mock.network import MockNetwork
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
-        >>>     datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
+        >>>     datasets=[
+        >>>         {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+        >>>         {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+        >>>         {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+        >>>     ],
         >>> )
         >>> client = network.user_client
         >>> client.dataframe.create(
@@ -90,7 +95,11 @@ class MockNetwork:
 
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
-        >>>     datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
+        >>>     datasets=[
+        >>>         {"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+        >>>         {"dataset_1": pd.DataFrame({"column_1": [4, 5, 6]})},
+        >>>         {"dataset_1": pd.DataFrame({"column_1": [7, 8, 9]})},
+        >>>     ],
         >>> )
         >>> client = network.user_client
         >>> client.task.create(
@@ -106,36 +115,51 @@ class MockNetwork:
         """
         self.collaboration_id = collaboration_id
         self.module_name = module_name
-        self.nodes = []
+        self.nodes: list[MockNode] = []
 
         organization_ids = list(range(1, len(datasets) + 1))
         node_ids = list(range(1, len(datasets) + 1))
 
         self.server = MockServer(self)
 
-        for org_id, node_id, dataset in zip(organization_ids, node_ids, datasets):
+        databases = [
+            [
+                MockDatabase(
+                    label=label, database=db["database"], db_type=db.get("db_type")
+                )
+                for label, db in dataset.items()
+            ]
+            for dataset in datasets
+        ]
+
+        for org_id, node_id, databases_for_node in zip(
+            organization_ids, node_ids, databases
+        ):
             try:
                 self.nodes.append(
-                    MockNode(node_id, org_id, collaboration_id, dataset, self)
+                    MockNode(
+                        node_id, org_id, collaboration_id, databases_for_node, self
+                    )
                 )
             except AlgorithmModuleNotFoundError:
+                error(f"Module '{module_name}' not found.")
                 error(
-                    f"Module {module_name} not found. Are you working in the correct "
-                    "Python environment and did you install the algorithm package you"
-                    "want to test in this environment?"
+                    "Are you working in the correct Python environment and did you "
+                    "install your algorithm package in this environment?"
                 )
-                return
+                error("Exiting...")
+                exit(1)
 
         # In the case the user provides a pandas DataFrame we need to create a dataframe
         # record in the server.
-        labels = {}
-        for dataset in datasets:
-            for label, data in dataset.items():
-                if label not in labels:
-                    labels[label] = []
-                labels[label].append(data["database"])
+        dfs_by_label = {}
+        for node_databases in databases:
+            for database in node_databases:
+                if database.label not in dfs_by_label:
+                    dfs_by_label[database.label] = []
+                dfs_by_label[database.label].append(database.database)
 
-        for label, dfs in labels.items():
+        for label, dfs in dfs_by_label.items():
             if all(isinstance(df, pd.DataFrame) for df in dfs):
                 self.server.save_dataframe(
                     name=label, dataframes=dfs, source_db_label=label
