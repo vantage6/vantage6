@@ -19,7 +19,7 @@ def cli_use_namespace(namespace: str):
     The namespace will be created if it does not exist.
     """
     # Configure for MicroK8s if needed
-    core_api, _ = get_core_api_with_ssl_handling()
+    core_api = get_core_api_with_ssl_handling()
 
     try:
         namespace_list = core_api.list_namespace()
