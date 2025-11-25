@@ -13,8 +13,9 @@ from vantage6.cli.dev.common import check_devspace_installed
 @click.option("--only-node", is_flag=True, help="Rebuild the node image.")
 @click.option("--only-store", is_flag=True, help="Rebuild the store image.")
 @click.option("--only-ui", is_flag=True, help="Rebuild the ui image.")
+@click.option("--push/--no-push", default=False, help="Push images to registry.")
 def cli_rebuild_dev_env(
-    only_server: bool, only_node: bool, only_store: bool, only_ui: bool
+    only_server: bool, only_node: bool, only_store: bool, only_ui: bool, push: bool
 ):
     """Rebuild Docker images for your development environment."""
     check_devspace_installed()
@@ -31,6 +32,8 @@ def cli_rebuild_dev_env(
             cmd.append("--store")
         if only_ui:
             cmd.append("--ui")
+        if not push:
+            cmd.append("--skip-push")
 
         subprocess.run(cmd, check=True, capture_output=False)
         info("✅ Development environment rebuilt successfully!")
