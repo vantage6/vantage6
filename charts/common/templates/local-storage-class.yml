@@ -1,0 +1,24 @@
+{{- if not (lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage") }}
+{{- $needsLocalStorage := false }}
+{{- /* Check server chart values */}}
+{{- if or (eq (.Values.server.logging.storageClass | default "local-storage") "local-storage") (eq (.Values.prometheus.storageClass | default "local-storage") "local-storage") (not (.Values.database.external | default false)) }}
+  {{- $needsLocalStorage = true }}
+{{- end }}
+{{- /* Check store chart values */}}
+{{- if or (eq (.Values.store.logging.storageClass | default "local-storage") "local-storage") (not (.Values.database.external | default false)) }}
+  {{- $needsLocalStorage = true }}
+{{- end }}
+{{- /* Check node chart values */}}
+{{- if or (eq (.Values.node.logging.storageClass | default "local-storage") "local-storage") (eq (.Values.node.persistence.tasks.storageClass | default "local-storage") "local-storage") (and .Values.node.databases.fileBased (eq (.Values.node.persistence.database.storageClass | default "local-storage") "local-storage")) }}
+  {{- $needsLocalStorage = true }}
+{{- end }}
+{{- if $needsLocalStorage }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+{{- end }}
+{{- end }}
