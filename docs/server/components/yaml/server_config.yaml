@@ -20,6 +20,8 @@ server:
 
   # The image used to start the server
   image: harbor2.vantage6.ai/infrastructure/server:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
 
   # The number of replicas of the server
   replications: 1
@@ -180,6 +182,8 @@ ui:
 
   # The image used to start the UI
   image: harbor2.vantage6.ai/infrastructure/ui:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
   # Service port for the UI
   port: 7600
   # keycloak settings

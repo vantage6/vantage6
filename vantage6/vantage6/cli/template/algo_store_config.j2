@@ -19,7 +19,14 @@ store:
 
   vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
 
+  # Which image to use to run the store.
   image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:latest') }}
+  # Algorithm store image pull policy.
+  # Possible values are:
+  # - Always: always pull the image from the registry
+  # - IfNotPresent: pull the image from the registry if it is not present on the node
+  # - Never: never pull the image from the registry
+  imagePullPolicy: {{ store.imagePullPolicy | default('Always') }}
 
   replications: {{ store.replications | default(1) }}
 

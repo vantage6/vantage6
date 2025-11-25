@@ -43,6 +43,13 @@ server:
   # The image used to start the server
   image: {{ server.image | default('harbor2.vantage6.ai/infrastructure/server:latest') }}
 
+  # Server image pull policy.
+  # Possible values are:
+  # - Always: always pull the image from the registry
+  # - IfNotPresent: pull the image from the registry if it is not present on the server
+  # - Never: never pull the image from the registry
+  imagePullPolicy: {{ server.imagePullPolicy | default('Always') }}
+
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
@@ -238,6 +245,8 @@ ui:
 
   # The image of the UI
   image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
+  # UI image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI
   port: {{ ui.port | default(7600) }}
   # keycloak realm

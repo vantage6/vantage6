@@ -17,6 +17,8 @@ store:
 
   # The image used to start the algorithm store.
   image: harbor2.vantage6.ai/infrastructure/algorithm-store:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
 
   # The internal port on the container pod that the store runs on
   internal:

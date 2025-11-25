@@ -21,7 +21,7 @@ spec:
       containers:
       - name: vantage6-server
         image: {{ .Values.server.image }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.server.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
           value: {{ .Values.server.keycloakUrl }}
