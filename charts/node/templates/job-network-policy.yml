@@ -56,6 +56,14 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}
+    {{- if
+            and
+            .Values.node.whitelist
+            (hasKey .Values.node.whitelist "central_compute")
+            (hasKey .Values.node.whitelist.central_compute "egress")
+    }}
+    {{ toYaml .Values.node.whitelist.central_compute.egress }}
+  {{- end }}
     ports:
     # If numberOfNodes and and nodeProxyStartingPortNumber exist, this chart template is being
     # used within a dev environment (devspace), where multiple ports must be enabled
@@ -85,6 +93,13 @@ spec:
 
 ---
 
+
+{{- if
+    and
+        .Values.node.whitelist
+        (hasKey .Values.node.whitelist "data_extraction")
+        (hasKey .Values.node.whitelist.data_extraction "egress")
+}}
 # Network policies for data_extraction jobs
 # This kind of jobs may require access to external databases
 apiVersion: networking.k8s.io/v1
@@ -101,4 +116,99 @@ spec:
   - Ingress
   - Egress
   ingress: []
-  egress: []
+
+  egress:
+    to:
+      {{ toYaml .Values.node.whitelist.data_extraction.egress }}
+{{- end }}
+
+---
+
+{{- if
+    and
+        .Values.node.whitelist
+        (hasKey .Values.node.whitelist "preprocessing")
+        (hasKey .Values.node.whitelist.preprocessing "egress")
+}}
+# Network policies for preprocessing jobs
+# This kind of jobs may require access to external databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-preprocessing-step-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
+      role: preprocessing
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+
+  egress:
+    to:
+      {{ toYaml .Values.node.whitelist.preprocessing.egress }}
+{{- end }}
+
+---
+
+
+{{- if
+    and
+        .Values.node.whitelist
+        (hasKey .Values.node.whitelist "federated_compute")
+        (hasKey .Values.node.whitelist.federated_compute "egress")
+}}
+# Network policies for federated_compute jobs
+# This kind of jobs may require access to external databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-federated-compute-step-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
+      role: federated_compute
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+
+  egress:
+    to:
+      {{ toYaml .Values.node.whitelist.federated_compute.egress }}
+{{- end }}
+
+---
+
+{{- if
+    and
+        .Values.node.whitelist
+        (hasKey .Values.node.whitelist "postprocessing")
+        (hasKey .Values.node.whitelist.postprocessing "egress")
+}}
+# Network policies for postprocessing jobs
+# This kind of jobs may require access to external databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-postprocessing-step-policy
+  namespace: {{ .Values.node.taskNamespace }}
+spec:
+  podSelector:
+    matchLabels:
+      # Must match the corresponding AlgorithmStepType enum value
+      role: postprocessing
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: []
+
+  egress:
+    to:
+      {{ toYaml .Values.node.whitelist.postprocessing.egress }}
+{{- end }}
