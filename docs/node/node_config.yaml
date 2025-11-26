@@ -148,23 +148,44 @@ node:
     # if internet connection is not available. Default value is true.
     require_algorithm_pull: true
 
-  # Whitelisting settings.
-  # The whitelisted domains and IP addresses are allowed for algorithms to connect to.
-  # Treat with caution! Giving internet access to algorithms can be a security risk.
-  # Only whitelist domains and IP addresses that are absolutely necessary for the
-  # algorithm to function, such as a database server the algorithm needs to connect to.
-  # Include a port number if possible to only whitelist a specific port.
-  # The flag 'only_for_data_extraction' is used to indicate if the whitelist is only
-  # for data extraction purposes. If set to true, the whitelist is only applied to
-  # data extraction tasks. Otherwise, the whitelist is applied to all tasks. It is set
-  # to true by default.
+  # Whitelisting settings to specify external addresses algorithms are allowed to
+  # connect to. Only Kubernetes network policies are supported. See:
+  #   https://kubernetes.io/docs/concepts/services-networking/network-policies
+  # Only add egress destinations that are absolutely necessary for your algorithm
+  # to function (for example, a required database server). Whitelists are defined
+  # per task type. The allowed task types are: data_extraction, preprocessing,
+  # federated_compute, central_compute, postprocessing.
+  #
+  # Each entry in the whitelist defines one allowed connection path. Multiple entries
+  # are OR'd together (traffic is allowed if it matches any entry). You can specify:
+  # - namespaceSelector: to allow connections to all pods in a namespace or a subset of
+  #   pods in a namespace when used in combination with podSelector
+  # - podSelector: to allow connections to pods matching labels (make sure that the
+  #   namespace of this pod is whitelisted)
+  # - ipBlock: to allow connections to IP addresses or CIDR ranges (e.g. a database
+  #   server that is not part of the cluster)
   whitelist:
-    - address: localhost:7777
-      only_for_data_extraction: true
-    - address: github.com
-      only_for_data_extraction: false
-    - address: 192.168.1.100
-      only_for_data_extraction: false
+    data_extraction:
+      egress:
+      # Whitelist the namespace 'frontend' and 'backend'
+      - namespaceSelector:
+        matchExpressions:
+        - key: namespace
+          operator: In
+          values: ["frontend", "backend"]
+      # Whitelist the namespace 'ops' and the pod (within this namespace) with the
+      # label 'app: ledger'
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: ops
+        podSelector:
+          matchLabels:
+            app: ledger
+    central_compute:
+      egress:
+        # Whitelist the IP block 10.20.0.0/16
+        - ipBlock:
+            cidr: 10.20.0.0/16
 
   # Prometheus settings, for sending system metadata to the server.
   prometheus:
