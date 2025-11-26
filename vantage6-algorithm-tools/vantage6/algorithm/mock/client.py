@@ -8,12 +8,12 @@ from vantage6.algorithm.tools.exceptions import (
 )
 from vantage6.algorithm.tools.util import error, warn
 
-from vantage6.mock.globals import MockDatabase
+from vantage6.algorithm.mock.globals import MockDatabase
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
-    from vantage6.mock.network import MockNetwork
-    from vantage6.mock.node import MockNode
+    from vantage6.algorithm.mock.network import MockNetwork
+    from vantage6.algorithm.mock.node import MockNode
 
 
 class MockBaseClient:
