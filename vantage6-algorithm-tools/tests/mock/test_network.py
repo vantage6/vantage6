@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
-from vantage6.mock import MockNetwork
-from vantage6.mock.client import MockUserClient
-from vantage6.mock.node import MockNode
-from vantage6.mock.server import MockServer
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.client import MockUserClient
+from vantage6.algorithm.mock.node import MockNode
+from vantage6.algorithm.mock.server import MockServer
 
 TEST_ALGORITHM_NAME = "test_algorithm"
 DATASET_LABEL = "dataset_1"
@@ -21,7 +21,9 @@ class TestMockNetworkDataframe(TestCase):
         self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
@@ -97,7 +99,9 @@ class TestMockNetworkDataframe(TestCase):
 class TestMockNetworkURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[

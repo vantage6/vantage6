@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 
-from vantage6.mock.util import env_vars
+from vantage6.algorithm.mock.util import env_vars
 
 
 class TestEnvVars(TestCase):

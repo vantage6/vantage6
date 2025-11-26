@@ -1,8 +1,8 @@
 import json
 from unittest import TestCase
 
-from vantage6.mock import MockNetwork
-from vantage6.mock.server import MockServer
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.server import MockServer
 
 
 class TestMockServer(TestCase):
