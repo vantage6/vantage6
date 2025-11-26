@@ -93,7 +93,7 @@ class PostUpdates(commands.Cog):
             "https://docs.vantage6.ai/en/main/release_notes.html)\n\n"
             "To upgrade:"
             "```"
-            f"uv add vantage6=={version}"
+            f"uv pip install vantage6=={version}"
             "```"
             "\n\n"
             f"_{notes}_"

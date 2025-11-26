@@ -60,7 +60,7 @@ latest version of the vantage6 CLI, you need to have
 Install the latest version of the vantage6 CLI by using:
 
 ```bash
-uv add vantage6
+uv pip install vantage6
 # or, if you are using conda / pyenv / ...
 pip install vantage6
 ```
