@@ -21,6 +21,6 @@ Algorithm store
 .. |requirements-link| replace:: :ref:`requirements <server-requirements>`
 .. |chart-link| replace:: ``harbor2.vantage6.ai/chartrepo/infrastructure/algorithm-store``
 .. |chart-5.0.0-link| replace:: ``https://harbor2.vantage6.ai/chartrepo/infrastructure/algorithm-store-5.0.0.tgz``
-.. |deployment-link| replace:: :ref:`deployment <algorithm-store-deployment>`
+.. |deployment-link| replace:: :ref:`deployment <server-deployment>`
 
 .. include:: ../common/install.rst

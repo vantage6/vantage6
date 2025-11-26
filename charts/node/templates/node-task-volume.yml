@@ -1,8 +1,8 @@
-{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-node-task-pv" .Release.Name)) }}
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-task-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-vantage6-node-task-pv
+  name: {{ .Release.Name }}-task-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     type: local-tasks

@@ -108,9 +108,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 }
             )
 
-        store_service = (
-            f"vantage6-{self.server_name}-store-user-algorithm-store-store-service"
-        )
+        store_service = f"vantage6-{self.server_name}-store-user-algorithm-store"
         store_address = (
             f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
             f":{Ports.SANDBOX_ALGO_STORE.value}"

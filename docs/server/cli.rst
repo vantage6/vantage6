@@ -180,8 +180,8 @@ Store
 -----
 
 This section explains which commands are available to manage your algorithm
-store. These can be used to set up a test server locally. To deploy a server,
-see the :ref:`deployment <algorithm-store-deployment>` section.
+store. These can be used to set up a test server locally. To deploy a store,
+see the general :ref:`deployment <server-deployment>` section.
 
 
 Quick start

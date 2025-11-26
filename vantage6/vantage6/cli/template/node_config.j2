@@ -14,12 +14,12 @@ node:
   # Settings for the server to connect to.
   {% if node.server is defined %}
   server:
-    url: {{ node.server.url | default('http://vantage6-server-vantage6-server-service') }}
+    url: {{ node.server.url | default('http://vantage6-server') }}
     port: {{ node.server.port | default(7601) }}
     path: {{ node.server.path | default('/server') }}
   {% else %}
   server:
-    url: http://vantage6-server-vantage6-server-service
+    url: http://vantage6-server
     port: 7601
     path: /server
   {% endif %}

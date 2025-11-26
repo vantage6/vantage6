@@ -205,7 +205,7 @@ def create_node_config(
         {
             "logging": {"file": f"node_{node_number}.log"},
             "port": 7601,
-            "server_url": "http://vantage6-server-vantage6-server-service",
+            "server_url": "http://vantage6-server",
             "task_dir": f"{task_directory}/node_{node_number}",
             "task_dir_extension": f"node_{node_number}",
             "api_path": "/server",

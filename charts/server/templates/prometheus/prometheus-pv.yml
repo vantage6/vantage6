@@ -1,9 +1,9 @@
 {{- if .Values.prometheus.enabled }}
-{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-prometheus-data-pv" .Release.Name)) }}
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-prom-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-prometheus-data-pv
+  name: {{ .Release.Name }}-prom-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
