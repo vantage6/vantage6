@@ -13,6 +13,8 @@ import questionary as q
 
 from vantage6.common import error, info, warning
 
+MAX_LEN_NAME = 16
+
 
 def _is_valid_k8s_dns_name(name: str) -> bool:
     """
@@ -111,6 +113,15 @@ def prompt_config_name(name: str | None) -> str:
         if name.count(" ") > 0:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
+    if len(name) > MAX_LEN_NAME:
+        # Note that we set a limit of 16 chars because kubernetes has a limit of 63
+        # chars for DNS labels. The remaining 47 chars may be appended and prepended by
+        # vantage6 to identify a kubernetes resource.
+        error(
+            f"Configuration name '{name}' is too long! Maximum length is "
+            f"{MAX_LEN_NAME} characters."
+        )
+        exit(1)
     _check_k8s_dns_name(name)
     return name
 
