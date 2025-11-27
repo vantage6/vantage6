@@ -17,13 +17,13 @@ Run this command to install the CLI in your environment:
 
 ::
 
-   uv add vantage6
+   uv pip install vantage6
 
 Or if you want to install a specific version:
 
 ::
 
-   uv add vantage6==x.y.z
+   uv pip install vantage6==x.y.z
 
 
 You can verify that the CLI has been installed by running the command

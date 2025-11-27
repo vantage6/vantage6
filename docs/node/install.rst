@@ -15,7 +15,7 @@ Run this command to install the CLI in your environment:
 ::
 
    # using uv (recommended)
-   uv add vantage6
+   uv pip install vantage6
 
    # or, if you are using conda / pyenv / ...
    pip install vantage6
@@ -24,7 +24,7 @@ Or if you want to install a specific version:
 
 ::
 
-   uv add vantage6==x.y.z
+   uv pip install vantage6==x.y.z
 
    # or, if you are using conda / pyenv / ...
    pip install vantage6==x.y.z
@@ -36,4 +36,3 @@ completed.
 The next pages will explain to configure, start and stop the node. The
 node software itself will be downloaded when you start the node for the first
 time.
-

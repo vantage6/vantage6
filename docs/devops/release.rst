@@ -58,7 +58,7 @@ the following steps to test a release:
 
     uv venv --python 3.13
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    uv add vantage6==<version>
+    uv pip install vantage6==<version>
 
 3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
    release candidate using a ``v6 sandbox`` network:

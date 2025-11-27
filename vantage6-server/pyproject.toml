@@ -26,9 +26,11 @@ dependencies = [
     "Flask-RESTful==0.3.10",
     "Flask-SocketIO==5.3.6",
     "gevent==25.4.2",
+    # TODO remove httpx once 1.0.0 is released - atm this is added to prevent 1.0.dev3 is installed
+    "httpx==0.28.1",
     "ipython==8.10.0",
     "kombu==5.5.4",
-    "marshmallow==3.19.0",
+    "marshmallow==3.20.2",
     "names_generator==0.2.0",
     "prometheus-client==0.21.1",
     "pyjwt==2.9.0",
