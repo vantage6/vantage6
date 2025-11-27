@@ -9,8 +9,8 @@ from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
 
-from vantage6.mock.globals import MockDatabase
-from vantage6.mock.node import MockNode
+from vantage6.algorithm.mock.globals import MockDatabase
+from vantage6.algorithm.mock.node import MockNode
 
 LABEL_1 = "label_1"
 
@@ -25,7 +25,8 @@ class TestMockNodeDataframe(TestCase):
         self.mock_import_return = MagicMock("algorithm_module")
         self.mock_import_return.test_method = MagicMock("test_method")
         with patch(
-            "vantage6.mock.node.import_module", return_value=self.mock_import_return
+            "vantage6.algorithm.mock.node.import_module",
+            return_value=self.mock_import_return,
         ) as mock_import:
             self.node = MockNode(
                 id_=1,
@@ -60,7 +61,7 @@ class TestMockNodeDataframe(TestCase):
 
         # Patch the _get_method_fn_from_method to return our mock
         with patch(
-            "vantage6.mock.node.MockNode._get_method_fn_from_method",
+            "vantage6.algorithm.mock.node.MockNode._get_method_fn_from_method",
             return_value=mock_method,
         ):
             # Simulate running a task
@@ -84,7 +85,7 @@ class TestMockNodeDataframe(TestCase):
         mock_env_vars = {"env1": "value1"}
 
         # Test running with environment variables
-        with patch("vantage6.mock.node.env_vars") as mock_env:
+        with patch("vantage6.algorithm.mock.node.env_vars") as mock_env:
             result = self.node.run(mock_method, mock_args, task_env_vars=mock_env_vars)
 
             # Check if environment variables were set correctly
@@ -119,7 +120,7 @@ class TestMockNodeDataframe(TestCase):
 
         # Patch the _get_method_fn_from_method to return our mock
         with patch(
-            "vantage6.mock.node.MockNode._get_method_fn_from_method",
+            "vantage6.algorithm.mock.node.MockNode._get_method_fn_from_method",
             return_value=mock_method,
         ):
             # Simulate creating a dataframe
@@ -215,7 +216,9 @@ class TestMockNodeURI(TestCase):
             MockDatabase(label=LABEL_1, database="mock_data.csv", db_type="csv")
         ]
         self.network = MagicMock()
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.node = MockNode(
                 id_=1,
                 organization_id=1,

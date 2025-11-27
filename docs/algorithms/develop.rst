@@ -285,7 +285,7 @@ be easy to switch between the two. The following example shows how to use the
 
 .. code:: python
 
-        from vantage6.mock.mock_network import MockNetwork
+        from vantage6.algorithm.mock.mock_network import MockNetwork
         network = MockNetwork(
             module_name="my_algorithm",
             datasets=[
@@ -318,7 +318,7 @@ DataFrame instead of a string for the database value:
 .. code:: python
 
         import pandas as pd
-        from vantage6.mock.mock_network import MockNetwork
+        from vantage6.algorithm.mock.mock_network import MockNetwork
 
         network = MockNetwork(
             module_name="my_algorithm",

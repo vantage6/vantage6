@@ -10,7 +10,7 @@ from vantage6.algorithm.tools.util import error
 from vantage6.algorithm.client import AlgorithmClient
 
 if TYPE_CHECKING:
-    from vantage6.mock.client import MockAlgorithmClient
+    from vantage6.algorithm.mock.client import MockAlgorithmClient
 
 
 def _algorithm_client() -> Callable:

@@ -5,8 +5,8 @@ import pandas as pd
 
 from vantage6.client import UserClient
 
-from vantage6.mock import MockNetwork
-from vantage6.mock.client import MockUserClient
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.client import MockUserClient
 
 
 class TestMockUserClient(TestCase):
@@ -15,7 +15,9 @@ class TestMockUserClient(TestCase):
         self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name="test_algorithm",
                 datasets=[

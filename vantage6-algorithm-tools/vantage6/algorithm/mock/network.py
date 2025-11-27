@@ -5,10 +5,10 @@ from vantage6.common import info
 from vantage6.algorithm.tools.exceptions import AlgorithmModuleNotFoundError
 from vantage6.algorithm.tools.util import error
 
-from vantage6.mock.client import MockUserClient
-from vantage6.mock.globals import MockDatabase
-from vantage6.mock.node import MockNode
-from vantage6.mock.server import MockServer
+from vantage6.algorithm.mock.client import MockUserClient
+from vantage6.algorithm.mock.globals import MockDatabase
+from vantage6.algorithm.mock.node import MockNode
+from vantage6.algorithm.mock.server import MockServer
 
 
 class MockNetwork:
@@ -66,7 +66,7 @@ class MockNetwork:
 
         An example of how to create a dataframe and then use this dataframe in a task:
 
-        >>> from vantage6.mock.network import MockNetwork
+        >>> from vantage6.algorithm.mock.network import MockNetwork
         >>> network = MockNetwork(
         >>>     module_name="my_algorithm",
         >>>     datasets=[

@@ -13,13 +13,13 @@ from vantage6.algorithm.tools.exceptions import (
     SessionActionMismatchError,
 )
 
-from vantage6.mock.client import MockAlgorithmClient
-from vantage6.mock.globals import MockDatabase
-from vantage6.mock.util import env_vars
+from vantage6.algorithm.mock.client import MockAlgorithmClient
+from vantage6.algorithm.mock.globals import MockDatabase
+from vantage6.algorithm.mock.util import env_vars
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
-    from vantage6.mock.network import MockNetwork
+    from vantage6.algorithm.mock.network import MockNetwork
 
 
 class MockNode:

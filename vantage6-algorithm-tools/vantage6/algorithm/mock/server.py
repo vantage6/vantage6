@@ -7,7 +7,7 @@ import pandas as pd
 from vantage6.common.globals import AuthStatus
 
 if TYPE_CHECKING:
-    from vantage6.mock.network import MockNetwork
+    from vantage6.algorithm.mock.network import MockNetwork
 
 
 class MockServer:
