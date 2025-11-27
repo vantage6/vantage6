@@ -35,6 +35,13 @@ node:
   # image: harbor2.vantage6.ai/infrastructure/node:latest
   {% endif %}
 
+  # Node image pull policy.
+  # Possible values are:
+  # - Always: always pull the image from the registry
+  # - IfNotPresent: pull the image from the registry if it is not present on the node
+  # - Never: never pull the image from the registry
+  imagePullPolicy: {{ node.imagePullPolicy | default('Always') }}
+
   # Namespace in which the task kubernetes resources are created. This must be a
   # namespace where the node has access to create pods.
   taskNamespace: {{ node.taskNamespace | default('vantage6-tasks') }}

@@ -28,7 +28,7 @@ spec:
       - name: vantage6-node
         # TODO v5+ change to final v5 image
         image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:5" }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"

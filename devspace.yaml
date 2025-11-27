@@ -258,6 +258,7 @@ deployments:
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
+          imagePullPolicy: IfNotPresent
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
@@ -280,6 +281,7 @@ deployments:
               api_path: /store
         ui:
           image: ${UI_IMAGE}
+          imagePullPolicy: IfNotPresent
           keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
@@ -298,6 +300,7 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
+          imagePullPolicy: IfNotPresent
           api_path: /store
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
@@ -346,6 +349,7 @@ deployments:
       values:
         node:
           image: ${NODE_IMAGE}
+          imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
