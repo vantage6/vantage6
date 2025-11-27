@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-postgres-deployment
+  name: {{ .Release.Name }}-postgres
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "store.labels" . | indent 4 }}
@@ -36,4 +36,4 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-store-postgres-pvc
+          claimName: {{ .Release.Name }}-pgres-pvc

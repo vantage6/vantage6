@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-prometheus-config
+  name: {{ .Release.Name }}-prom-conf
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -17,5 +17,5 @@ data:
       - job_name: vantage6_server_metrics
         static_configs:
           - targets:
-              - {{ .Release.Name }}-prometheus-service:{{ .Values.prometheus.exporter_port | default 7603 }}
+              - {{ .Release.Name }}-prometheus:{{ .Values.prometheus.exporter_port | default 7603 }}
 {{- end }}

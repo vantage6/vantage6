@@ -292,8 +292,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "server": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-user-server-vantage6-"
-                        f"server-service.{self.k8s_config.namespace}.svc.cluster"
+                        f"http://vantage6-{self.server_name}-user-server"
+                        f".{self.k8s_config.namespace}.svc.cluster"
                         ".local"
                     ),
                     "port": self.server_port,

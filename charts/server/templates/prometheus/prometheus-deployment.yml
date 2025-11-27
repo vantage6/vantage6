@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-prometheus-deployment
+  name: {{ .Release.Name }}-prometheus
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -47,8 +47,8 @@ spec:
       volumes:
       - name: prometheus-config
         configMap:
-          name: {{ .Release.Name }}-prometheus-config
+          name: {{ .Release.Name }}-prom-conf
       - name: prometheus-data
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-prometheus-data-pvc
+          claimName: {{ .Release.Name }}-prom-pvc
 {{- end }}

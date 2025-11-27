@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-store-deployment
+  name: {{ .Release.Name }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "store.labels" . | indent 4 }}
@@ -29,7 +29,7 @@ spec:
           value: {{ .Values.store.keycloakRealm }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-store-secrets
+            name: {{ .Release.Name }}-secrets
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [
@@ -48,7 +48,7 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: {{ .Release.Name }}-store-configmap
+          name: {{ .Release.Name }}-configmap
       - name: store-logs
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-store-logs-pvc
+          claimName: {{ .Release.Name }}-logs-pvc
