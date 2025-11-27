@@ -14,7 +14,7 @@ from vantage6.common import Fore, Singleton, Style, __version__, error, get_conf
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
-from vantage6.common.kubernetes.utils import running_in_pod
+from vantage6.common.kubernetes.utils import running_in_pod, running_in_wsl, running_on_windows
 
 
 class AppContext(metaclass=Singleton):
@@ -339,6 +339,17 @@ class AppContext(metaclass=Singleton):
                 "log": Path("/mnt/log"),
                 "data": Path("/mnt/data"),
                 "config": Path("/mnt/config"),
+            }
+        elif (in_wsl := running_in_wsl()) or (in_windows := running_on_windows()):
+            if in_wsl:
+                mount_path = Path("/mnt/wsl/vantage6")
+            elif in_windows:
+                mount_path = Path(r"\\wsl$\Ubuntu\mnt\wsl\vantage6")
+            return {
+                "log": mount_path / "log",
+                "data": mount_path / "data",
+                "config": mount_path / "config",
+                "dev": mount_path / "dev",
             }
         elif system_folders:
             return {

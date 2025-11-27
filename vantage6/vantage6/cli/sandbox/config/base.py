@@ -5,7 +5,7 @@ import yaml
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.context import select_context_class
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path, str_replace_wsl_path
 
 
 class BaseSandboxConfigManager:
@@ -55,7 +55,7 @@ class BaseSandboxConfigManager:
         node_name: str | None = None,
         is_log_dir: bool = False,
         custom_folder: str | None = None,
-    ) -> Path:
+    ) -> str:
         """
         Create and get the data directory.
 
@@ -76,7 +76,7 @@ class BaseSandboxConfigManager:
 
         Returns
         -------
-        Path
+        str
             Path to the created directory
         """
         ctx_class = select_context_class(instance_type)
@@ -116,8 +116,9 @@ class BaseSandboxConfigManager:
         # is converted to /mnt/wsl to create the directory on the host (not
         # /run/desktop/mnt/host/wsl as will raise non-existent directory errors)
         data_dir = replace_wsl_path(data_dir, to_mnt_wsl=True)
+        print(f"Creating directory: {data_dir}")
         data_dir.mkdir(parents=True, exist_ok=True)
         # now ensure that the wsl path is properly replaced to /run/desktop/mnt/host/wsl
         # if it is a WSL path, because that path will be used in the node configuration
         # files and is required to successfully mount the volumes.
-        return replace_wsl_path(data_dir, to_mnt_wsl=False)
+        return str_replace_wsl_path(data_dir, to_mnt_wsl=False)

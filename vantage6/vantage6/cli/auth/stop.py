@@ -2,14 +2,13 @@ import subprocess
 
 import click
 
-from vantage6.common import error, info, warning
-from vantage6.common.globals import InstanceType
-
 from vantage6.cli.common.stop import execute_stop, helm_uninstall
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
-
+from vantage6.common import error, info, warning
+from vantage6.common.globals import InstanceType
+from vantage6.common.kubernetes.utils import running_on_windows
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
@@ -82,6 +81,48 @@ def stop_port_forward(service_name: str) -> None:
     # Input validation
     validate_input_cmd_args(service_name, "service name")
 
+    if running_on_windows():
+        # Windows does not support pgrep/kill. Inspect netstat output instead.
+        try:
+            netstat = subprocess.run(
+                ["netstat", "-aon"],
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            error(f"Failed to inspect netstat output: {exc}")
+            return
+
+        pid = None
+        for line in netstat.stdout.splitlines():
+            if ":8080" not in line or "LISTENING" not in line:
+                continue
+            columns = line.split()
+            if columns and columns[-1].isdigit():
+                pid = columns[-1]
+                break
+
+        if not pid:
+            warning(
+                f"No port forwarding process listening on 8080 found for '{service_name}'."
+            )
+            return
+        elif int(pid) == 0:
+            warning("Detected PID 0. This process will not be terminated.")
+            return
+
+        try:
+            subprocess.run(["taskkill", "/PID", pid, "/F"], check=True)
+            info(
+                f"Terminated port forwarding process for service '{service_name}' "
+                f"(PID: {pid})"
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            error(f"Failed to terminate port forwarding: {exc}")
+
+        return
+
     try:
         # Find the process ID (PID) of the port forwarding command
         result = subprocess.run(
@@ -90,6 +131,7 @@ def stop_port_forward(service_name: str) -> None:
             text=True,
             capture_output=True,
         )
+        print("not here")
         pids = result.stdout.strip().splitlines()
 
         if not pids:

@@ -178,7 +178,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             end = (i + 1) * length_df // self.num_nodes
             data = full_df[start:end]
             data_file = (
-                replace_wsl_path(path_to_dev_dir, to_mnt_wsl=True)
+                replace_wsl_path(Path(path_to_dev_dir), to_mnt_wsl=True)
                 / f"df_{node_dataset.label}_{node_name}.csv"
             )
 

@@ -104,7 +104,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "exporter_port": Ports.SANDBOX_PROMETHEUS.value,
                     "storageSize": "2Gi",
                     "storageClass": "local-storage",
-                    "volumeHostPath": str(prometheus_dir),
+                    "volumeHostPath": prometheus_dir,
                 }
             )
 
@@ -136,7 +136,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 ],
                 "logging": {
                     "level": "DEBUG",
-                    "volumeHostPath": str(log_dir),
+                    "volumeHostPath": log_dir,
                 },
                 "jwt": {
                     "secret": "development-constant-secret!",
@@ -159,7 +159,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             },
             "rabbitmq": {},
             "database": {
-                "volumePath": str(data_dir),
+                "volumePath": data_dir,
                 "k8sNodeName": self.k8s_config.k8s_node,
             },
             "ui": {
@@ -223,7 +223,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         )
 
     def __algo_store_config_return_func(
-        self, extra_config: dict, data_dir: Path, log_dir: Path
+        self, extra_config: dict, data_dir: str, log_dir: str
     ) -> dict:
         """
         Return a dict with algorithm store configuration values to be used in creating
@@ -242,7 +242,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "port": Ports.SANDBOX_ALGO_STORE.value,
                 "logging": {
                     "level": "DEBUG",
-                    "volumeHostPath": str(log_dir),
+                    "volumeHostPath": log_dir,
                 },
                 "vantage6ServerUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER.value}",
                 "image": (
@@ -270,7 +270,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 },
             },
             "database": {
-                "volumePath": str(data_dir),
+                "volumePath": data_dir,
                 "k8sNodeName": self.k8s_config.k8s_node,
             },
         }
