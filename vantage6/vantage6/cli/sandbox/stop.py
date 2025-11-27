@@ -44,7 +44,7 @@ def cli_sandbox_stop(
 
     if not name:
         selected_service = select_running_service(running_services, InstanceType.SERVER)
-        name = selected_service.split("-")[-3]
+        name = "-".join(selected_service.split("-")[1:-2])
     else:
         ctx = get_context(InstanceType.SERVER, name, False, is_sandbox=True)
         name = ctx.name
