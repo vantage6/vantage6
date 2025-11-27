@@ -70,4 +70,9 @@ node:
   prometheus:
     enabled: false
 
-  whitelist: []
+  whitelist:
+    data_extraction:
+    preprocessing:
+    federated_compute:
+    central_compute:
+    postprocessing:

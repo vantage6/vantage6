@@ -12,9 +12,9 @@ spec:
       # must match the 'app' label defined on node/templates/node-deployment
       app: v6-node-server-proxy
   policyTypes:
-  - Egress
+    - Egress
   egress:
-  - {}
+    - {}
 
 ---
 
@@ -33,6 +33,7 @@ spec:
   - Egress
   ingress: []
   egress: []
+
 
 ---
 
@@ -56,14 +57,6 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: {{ .Values.namespace | default .Release.Namespace }}
-    {{- if
-            and
-            .Values.node.whitelist
-            (hasKey .Values.node.whitelist "central_compute")
-            (hasKey .Values.node.whitelist.central_compute "egress")
-    }}
-    {{ toYaml .Values.node.whitelist.central_compute.egress }}
-  {{- end }}
     ports:
     # If numberOfNodes and and nodeProxyStartingPortNumber exist, this chart template is being
     # used within a dev environment (devspace), where multiple ports must be enabled
@@ -89,10 +82,17 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-
+  {{- if
+            and
+            (.Values.node.whitelist)
+            (hasKey .Values.node.whitelist "central_compute")
+            (hasKey .Values.node.whitelist.central_compute "egress")
+    }}
+    - to:
+{{ .Values.node.whitelist.central_compute.egress | toYaml | indent 8 }}
+{{- end }}
 
 ---
-
 
 {{- if
     and
@@ -116,10 +116,9 @@ spec:
   - Ingress
   - Egress
   ingress: []
-
   egress:
-    to:
-      {{ toYaml .Values.node.whitelist.data_extraction.egress }}
+    - to:
+{{ .Values.node.whitelist.data_extraction.egress | toYaml | indent 6 }}
 {{- end }}
 
 ---
@@ -148,12 +147,11 @@ spec:
   ingress: []
 
   egress:
-    to:
-      {{ toYaml .Values.node.whitelist.preprocessing.egress }}
+    - to:
+{{ .Values.node.whitelist.preprocessing.egress | toYaml | indent 8 }}
 {{- end }}
 
 ---
-
 
 {{- if
     and
@@ -179,8 +177,8 @@ spec:
   ingress: []
 
   egress:
-    to:
-      {{ toYaml .Values.node.whitelist.federated_compute.egress }}
+    - to:
+{{ .Values.node.whitelist.federated_compute.egress | toYaml | indent 8 }}
 {{- end }}
 
 ---
@@ -209,6 +207,6 @@ spec:
   ingress: []
 
   egress:
-    to:
-      {{ toYaml .Values.node.whitelist.postprocessing.egress }}
+    - to:
+{{ .Values.node.whitelist.postprocessing.egress | toYaml | indent 8 }}
 {{- end }}
