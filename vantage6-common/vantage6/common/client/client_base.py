@@ -205,6 +205,7 @@ class ClientBase(BlobStorageMixin):
         retry: bool = True,
         attempts_on_timeout: int = None,
         is_for_algorithm_store: bool = False,
+        silent_on_connection_error: bool = False,
     ) -> dict:
         """Create http(s) request to the vantage6 server
 
@@ -229,6 +230,8 @@ class ClientBase(BlobStorageMixin):
             which leads to unlimited amount of attempts.
         is_for_algorithm_store: bool, optional
             Whether the request is for the algorithm store. Default False.
+        silent_on_connection_error: bool, optional
+            Whether to suppress errors on generic connection errors. Default is False.
 
         Returns
         -------
@@ -269,8 +272,9 @@ class ClientBase(BlobStorageMixin):
                     and timeout_attempts > attempts_on_timeout
                 ):
                     return {"msg": "Connection error"}
-                self.log.error("Connection error... Retrying")
-                self.log.info(exc)
+                if not silent_on_connection_error:
+                    self.log.error("Connection error... Retrying")
+                    self.log.info(exc)
                 time.sleep(1)
 
         # TODO: should check for a non 2xx response
