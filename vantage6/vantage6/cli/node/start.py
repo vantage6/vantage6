@@ -116,7 +116,10 @@ def cli_node_start(
             is_sandbox=ctx.is_sandbox,
         )
 
-def create_task_namespace_if_not_exists(ctx: NodeContext, k8s_config: KubernetesConfig) -> None:
+
+def create_task_namespace_if_not_exists(
+    ctx: NodeContext, k8s_config: KubernetesConfig
+) -> None:
     """
     Create the task namespace if it does not exist.
 
@@ -137,7 +140,9 @@ def create_task_namespace_if_not_exists(ctx: NodeContext, k8s_config: Kubernetes
     try:
         namespace_list = core_api.list_namespace()
     except Exception:
-        error("Failed to list namespaces. Check if the cluster is running and reachable.")
+        error(
+            "Failed to list namespaces. Check if the cluster is running and reachable."
+        )
         exit(1)
     namespace_names = [ns.metadata.name for ns in namespace_list.items]
     if task_namespace not in namespace_names:

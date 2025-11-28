@@ -433,7 +433,9 @@ class UserClient(ClientBase):
             dict
                 Containing the server health information
             """
-            return self.parent.request("health", silent_on_connection_error=silent_on_connection_error)
+            return self.parent.request(
+                "health", silent_on_connection_error=silent_on_connection_error
+            )
 
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
