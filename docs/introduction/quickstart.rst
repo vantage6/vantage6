@@ -73,6 +73,22 @@ browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
         sudo apt-get install wslview
 
+.. note::
+
+    For those using Microk8s, we have seen networking issues when you move your machine
+    to a different network, e.g. from home to work. What we found helped is to reset the
+    certificates of your microk8s cluster, so that they no longer depend on an outdated
+    IP address. To do this, run:
+
+    .. code-block:: bash
+
+        microk8s config > ~/.kube/config
+        kubectl config use-context microk8s
+        sudo microk8s refresh-certs --cert ca.crt
+
+    This will reset the certificates of your microk8s cluster, so that they no longer
+    depend on an outdated IP address.
+
 Stopping the network
 --------------------
 
