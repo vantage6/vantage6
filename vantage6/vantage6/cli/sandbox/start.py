@@ -318,6 +318,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     server_url : str
         URL of the server.
     """
+    info("Waiting for server to become ready...")
     client = Client(
         # TODO replace default API path global
         server_url=server_url,
@@ -329,7 +330,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     ready = False
     for _ in range(max_retries):
         try:
-            result = client.util.get_server_health()
+            result = client.util.get_server_health(silent_on_connection_error=True)
             if result and result.get("api"):
                 info("Server is ready.")
                 ready = True
