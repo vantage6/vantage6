@@ -48,18 +48,13 @@ def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
     """
     # wsl_path_from_windows = r"\\wsl$\Ubuntu\mnt\wsl"
     wsl_reference_path = "/run/desktop/mnt/host/wsl"
-    wsl_regular_path = "/mnt/wsl" if not running_on_windows else "//wsl$/Ubuntu/mnt/wsl"
-
-    # # for windows WSL paths, first convert to a regular WSL path. This must only be done
-    # # if we want a /run/desktop path because the directory /mnt/wsl in Windows must actually
-    # # be the original \\wsl$\Ubuntu\mnt\wsl for Windows to interact with it
-    # if not to_mnt_wsl and str(path).startswith(wsl_path_from_windows):
-    #     path = Path(wsl_regular_path) / path.relative_to(wsl_path_from_windows)
+    wsl_regular_path = "/mnt/wsl" if not running_on_windows() else "//wsl$/Ubuntu/mnt/wsl"
 
     if to_mnt_wsl and path_to_str(path).startswith(wsl_reference_path):
         path = Path(wsl_regular_path) / path.relative_to(wsl_reference_path)
     elif not to_mnt_wsl and path_to_str(path).startswith(wsl_regular_path):
         path = Path(wsl_reference_path) / path.relative_to(wsl_regular_path)
+
     return path
 
 
