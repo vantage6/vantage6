@@ -736,17 +736,36 @@ class Node:
 
     def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        try:
-            while True:
+        while True:
+            try:
                 self.log.info("Waiting for new tasks....")
                 run_to_execute = self.runs_queue.get()
+            except Exception as e:
+                self.log.exception("Error while processing tasks queue: %s", e)
+                time.sleep(1)
+                continue
+
+            try:
                 self.log.info("New task received")
                 self.__start_task(run_to_execute)
-
-        except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Node is interrupted, shutting down...")
-            self.cleanup()
-            sys.exit()
+            except Exception as e:
+                self.log.exception("Error while starting task: %s", e)
+                self.log.error(
+                    "Task %s failed to start and will not be retried",
+                    run_to_execute["task"]["id"],
+                )
+                # alert the server that the task failed to start
+                try:
+                    self.client.run.patch(
+                        id_=run_to_execute["id"],
+                        data={
+                            "status": RunStatus.FAILED.value,
+                            "log": "Error in the node while starting the task",
+                        },
+                    )
+                except Exception as e:
+                    self.log.exception("Error while patching task: %s", e)
+                continue
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
         """
