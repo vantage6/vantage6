@@ -86,9 +86,6 @@ browser and log in with the username ``admin`` and password ``admin``. Enjoy!
         kubectl config use-context microk8s
         sudo microk8s refresh-certs --cert ca.crt
 
-    This will reset the certificates of your microk8s cluster, so that they no longer
-    depend on an outdated IP address.
-
 Stopping the network
 --------------------
 
