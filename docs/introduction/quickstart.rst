@@ -60,6 +60,19 @@ you.
 You can now access the user interface by navigating to http://localhost:30760 in your
 browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
+.. note::
+
+    If you are using Windows or WSL with Docker Desktop to run your sandbox, the sandbox
+    files are stored in a WSL folder. Unfortunately, this folder is deleted when you
+    restart WSL or your machine itself. This means your sandbox will be lost.
+
+    Also, note that to run the sandbox from WSL, you need to install ``wslview`` so that
+    WSL can initiate the authentication process in your browser. To install it, run:
+
+    .. code-block:: bash
+
+        sudo apt-get install wslview
+
 Stopping the network
 --------------------
 
