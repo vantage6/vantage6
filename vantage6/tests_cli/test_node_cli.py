@@ -188,8 +188,10 @@ class NodeCLITest(unittest.TestCase):
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
     @patch("vantage6.cli.node.start.helm_install")
+    @patch("vantage6.cli.node.start.create_task_namespace_if_not_exists")
     def test_start(
         self,
+        create_task_namespace_if_not_exists,
         helm_install,
         context,
         os_makedirs,
