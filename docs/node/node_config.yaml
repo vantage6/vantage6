@@ -150,7 +150,7 @@ node:
 
   # Whitelisting settings to specify external addresses algorithms are allowed to
   # connect to. Only Kubernetes network policies are supported. See:
-  #   https://kubernetes.io/docs/concepts/services-networking/network-policies
+  # https://kubernetes.io/docs/concepts/services-networking/network-policies
   # Only add egress destinations that are absolutely necessary for your algorithm
   # to function (for example, a required database server). Whitelists are defined
   # per task type. The allowed task types are: data_extraction, preprocessing,
