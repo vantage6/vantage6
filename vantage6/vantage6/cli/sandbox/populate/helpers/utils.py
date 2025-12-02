@@ -46,7 +46,6 @@ def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
         If True, the path will be replaced from the /run/desktop/mnt/host/wsl path to
         the /mnt/wsl path. If false, vice versa. By default, it is False.
     """
-    # wsl_path_from_windows = r"\\wsl$\Ubuntu\mnt\wsl"
     wsl_reference_path = "/run/desktop/mnt/host/wsl"
     wsl_regular_path = (
         "/mnt/wsl" if not running_on_windows() else "//wsl$/Ubuntu/mnt/wsl"
