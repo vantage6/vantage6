@@ -16,7 +16,11 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import (
+    path_to_linux_style_str,
+    replace_wsl_path,
+    str_replace_wsl_path,
+)
 
 
 @dataclass
@@ -178,14 +182,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             end = (i + 1) * length_df // self.num_nodes
             data = full_df[start:end]
             data_file = (
-                replace_wsl_path(path_to_dev_dir, to_mnt_wsl=True)
+                replace_wsl_path(Path(path_to_dev_dir), to_mnt_wsl=True)
                 / f"df_{node_dataset.label}_{node_name}.csv"
             )
 
             # write data to file
             data.to_csv(data_file, index=False)
             data_files.append(
-                (node_dataset.label, replace_wsl_path(data_file, to_mnt_wsl=False))
+                (node_dataset.label, str_replace_wsl_path(data_file, to_mnt_wsl=False))
             )
         return data_files
 
@@ -284,7 +288,11 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                             "name": dataset[0],
                             "uri": dataset[1],
                             "type": "csv",
-                            "volumePath": Path(dataset[1]).parent,
+                            # Call to path_to_linux_style_str is relevant for Windows
+                            # paths in the sandbox environment.
+                            "volumePath": path_to_linux_style_str(
+                                Path(dataset[1]).parent
+                            ),
                             "originalName": Path(dataset[1]).name,
                         }
                         for dataset in [datasets[0]]

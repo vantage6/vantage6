@@ -420,15 +420,22 @@ class UserClient(ClientBase):
                 "version", attempts_on_timeout=attempts_on_timeout
             )
 
-        def get_server_health(self) -> dict:
+        def get_server_health(self, silent_on_connection_error: bool = False) -> dict:
             """View the health of the vantage6-server
+
+            Parameters
+            ----------
+            silent_on_connection_error: bool, optional
+                Whether to suppress errors on generic connection errors. Default is False.
 
             Returns
             -------
             dict
                 Containing the server health information
             """
-            return self.parent.request("health")
+            return self.parent.request(
+                "health", silent_on_connection_error=silent_on_connection_error
+            )
 
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key

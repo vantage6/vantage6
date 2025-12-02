@@ -71,6 +71,32 @@ you.
 You can now access the user interface by navigating to http://localhost:30760 in your
 browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
+.. note::
+
+    If you are using Windows or WSL with Docker Desktop to run your sandbox, the sandbox
+    files are stored in a WSL folder. Unfortunately, this folder is deleted when you
+    restart WSL or your machine itself. This means your sandbox will be lost.
+
+    Also, note that to run the sandbox from WSL, you need to install ``wslview`` so that
+    WSL can initiate the authentication process in your browser. To install it, run:
+
+    .. code-block:: bash
+
+        sudo apt-get install wslview
+
+.. note::
+
+    For those using Microk8s, we have seen networking issues when you move your machine
+    to a different network, e.g. from home to work. What we found helped is to reset the
+    certificates of your microk8s cluster, so that they no longer depend on an outdated
+    IP address. To do this, run:
+
+    .. code-block:: bash
+
+        microk8s config > ~/.kube/config
+        kubectl config use-context microk8s
+        sudo microk8s refresh-certs --cert ca.crt
+
 Stopping the network
 --------------------
 

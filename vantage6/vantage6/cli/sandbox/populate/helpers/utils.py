@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from vantage6.common.kubernetes.utils import running_on_windows
+
 
 @dataclass
 class NodeConfigCreationDetails:
@@ -9,6 +11,23 @@ class NodeConfigCreationDetails:
     task_directory: str
     task_namespace: str
     prometheus_enabled: bool = False
+
+
+def path_to_linux_style_str(path: Path) -> str:
+    """
+    Convert a path, either Linux or Windows, to a Linux-style string representation of the path.
+
+    Parameters
+    ----------
+    path: Path
+        Path to convert.
+
+    Returns
+    -------
+    str
+        Linux-style string path.
+    """
+    return str(path).replace("\\", "/")
 
 
 def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
@@ -28,9 +47,17 @@ def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
         the /mnt/wsl path. If false, vice versa. By default, it is False.
     """
     wsl_reference_path = "/run/desktop/mnt/host/wsl"
-    wsl_regular_path = "/mnt/wsl"
-    if to_mnt_wsl and str(path).startswith(wsl_reference_path):
+    wsl_regular_path = (
+        "/mnt/wsl" if not running_on_windows() else "//wsl$/Ubuntu/mnt/wsl"
+    )
+
+    if to_mnt_wsl and path_to_linux_style_str(path).startswith(wsl_reference_path):
         path = Path(wsl_regular_path) / path.relative_to(wsl_reference_path)
-    elif not to_mnt_wsl and str(path).startswith(wsl_regular_path):
+    elif not to_mnt_wsl and path_to_linux_style_str(path).startswith(wsl_regular_path):
         path = Path(wsl_reference_path) / path.relative_to(wsl_regular_path)
+
     return path
+
+
+def str_replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
+    return path_to_linux_style_str(replace_wsl_path(path, to_mnt_wsl))
