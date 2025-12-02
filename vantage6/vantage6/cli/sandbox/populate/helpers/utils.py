@@ -13,7 +13,7 @@ class NodeConfigCreationDetails:
     prometheus_enabled: bool = False
 
 
-def path_to_str(path: Path) -> str:
+def path_to_linux_style_str(path: Path) -> str:
     """
     Convert a path, either Linux or Windows, to a Linux-style string representation of the path.
 
@@ -52,13 +52,13 @@ def replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
         "/mnt/wsl" if not running_on_windows() else "//wsl$/Ubuntu/mnt/wsl"
     )
 
-    if to_mnt_wsl and path_to_str(path).startswith(wsl_reference_path):
+    if to_mnt_wsl and path_to_linux_style_str(path).startswith(wsl_reference_path):
         path = Path(wsl_regular_path) / path.relative_to(wsl_reference_path)
-    elif not to_mnt_wsl and path_to_str(path).startswith(wsl_regular_path):
+    elif not to_mnt_wsl and path_to_linux_style_str(path).startswith(wsl_regular_path):
         path = Path(wsl_reference_path) / path.relative_to(wsl_regular_path)
 
     return path
 
 
 def str_replace_wsl_path(path: Path, to_mnt_wsl: bool = True) -> Path:
-    return path_to_str(replace_wsl_path(path, to_mnt_wsl))
+    return path_to_linux_style_str(replace_wsl_path(path, to_mnt_wsl))

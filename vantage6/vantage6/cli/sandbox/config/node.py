@@ -17,7 +17,7 @@ from vantage6.cli.globals import (
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
 from vantage6.cli.sandbox.populate.helpers.utils import (
-    path_to_str,
+    path_to_linux_style_str,
     replace_wsl_path,
     str_replace_wsl_path,
 )
@@ -288,9 +288,11 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                             "name": dataset[0],
                             "uri": dataset[1],
                             "type": "csv",
-                            # Call path_to_str to ensure that the path is a Linux-style string path.
-                            # This is relevant for Windows paths in the sandbox environment.
-                            "volumePath": path_to_str(Path(dataset[1]).parent),
+                            # Call to path_to_linux_style_str is relevant for Windows
+                            # paths in the sandbox environment.
+                            "volumePath": path_to_linux_style_str(
+                                Path(dataset[1]).parent
+                            ),
                             "originalName": Path(dataset[1]).name,
                         }
                         for dataset in [datasets[0]]
