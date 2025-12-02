@@ -1,6 +1,20 @@
 Release notes
 =============
 
+4.13.3
+------
+
+*3 December 2025*
+
+- **Security**
+
+  - Update node-forge dependency to version 1.3.2, and werkzeug to 3.1.4, and others
+    (`PR#2431 <https://github.com/vantage6/vantage6/pull/2431>`_).
+
+- **Change**
+
+  - Update UI from Angular v19 to v20 (`PR#2431 <https://github.com/vantage6/vantage6/pull/2431>`_).
+
 4.13.2
 ------
 
