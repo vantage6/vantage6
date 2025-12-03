@@ -151,8 +151,11 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
       return this.translateService.instant(`store-policies.${key}-values.${value}`);
     } else if (key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
       return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
-    } else if (key === AvailableStorePolicies.ALLOWED_REVIEWERS || key === AvailableStorePolicies.ALLOWED_REVIEW_ASSIGNERS) {
-      return value === null ? this.translateService.instant('store-policies.not-defined') : value;
+    } else if (
+      value === null &&
+      (key === AvailableStorePolicies.ALLOWED_REVIEWERS || key === AvailableStorePolicies.ALLOWED_REVIEW_ASSIGNERS)
+    ) {
+      return this.translateService.instant('store-policies.not-defined');
     } else if (Array.isArray(value)) {
       return value.join(', ');
     } else {
