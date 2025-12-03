@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "vantage6"
+name = "vantage6-base"
 version = "5.0.0b1"
 description = "Vantage6 - Privacy-preserving federated learning"
 readme = "README.md"
