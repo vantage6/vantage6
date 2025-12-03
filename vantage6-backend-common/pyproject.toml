@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-backend-common"
-version = "5.0.0a47"
+version = "5.0.0b1"
 description = "Vantage6 backend common utilities"
 readme = "README.md"
 license = {text = "MIT"}
@@ -33,7 +33,7 @@ dependencies = [
     "sqlalchemy==2.0.37",
     "werkzeug==3.1.4",
     "requests==2.32.4",
-    "vantage6-common==5.0.0a47",
+    "vantage6-common==5.0.0b1",
 ]
 
 [project.optional-dependencies]
