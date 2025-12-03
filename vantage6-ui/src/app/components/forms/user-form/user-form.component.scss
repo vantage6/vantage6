@@ -7,9 +7,9 @@
   &__label {
     transform-origin: 0 0;
     transform: scale(0.75);
-    color: var(--mdc-filled-text-field-label-text-color);
-    font-size: var(--mdc-filled-text-field-label-text-size);
-    font-weight: var(--mdc-filled-text-field-label-text-weight);
+    color: var(--mat-form-field-filled-label-text-color);
+    font-size: var(--mat-form-field-filled-label-text-size);
+    font-weight: var(--mat-form-field-filled-label-text-weight);
   }
   &__button-container {
     margin-top: $spacing-px-4;

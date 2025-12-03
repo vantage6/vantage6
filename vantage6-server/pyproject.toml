@@ -40,7 +40,7 @@ dependencies = [
     "schema==0.7.5",
     "sqlalchemy==2.0.37",
     "traitlets==5.8.1",
-    "werkzeug==3.1.3",
+    "werkzeug==3.1.4",
     "vantage6==5.0.0a46",
     "vantage6-common==5.0.0a46",
 ]
