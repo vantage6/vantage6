@@ -7,4 +7,4 @@
   window["env"]["api_path"] = "${API_PATH}";
   window["env"]["allowed_algorithm_stores"] = "${ALLOWED_ALGORITHM_STORES}";
   window["env"]["community_store_url"] = "${COMMUNITY_STORE_URL}";
-})(this);
+})(window);

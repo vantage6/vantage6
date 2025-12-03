@@ -29,10 +29,7 @@
             "styles": ["src/styles.scss"],
             "scripts": [],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                ".",
-                "."
-              ]
+              "includePaths": [".", "."]
             },
             "browser": "src/main.ts"
           },
