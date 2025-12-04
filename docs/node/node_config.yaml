@@ -12,6 +12,8 @@ node:
 
   # The image to use for the node.
   image: harbor2.vantage6.ai/infrastructure/node:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
 
   # The URL, port and API path to the vantage6 server
   server:
@@ -80,7 +82,6 @@ node:
       env:
         USER: vantage6
         PASSWORD: vantage6
-      # TODO v5+ move this elsewhere?
       # It is also possible not to specify the details of the service-based databases
       # in this configuration file, but elsewhere in kubernetes (e.g. a parent chart's
       # values.yaml file).
@@ -148,6 +149,45 @@ node:
     # before running it. This ensures that no potentially outdated local images are used
     # if internet connection is not available. Default value is true.
     require_algorithm_pull: true
+
+  # Whitelisting settings to specify external addresses algorithms are allowed to
+  # connect to. Only Kubernetes network policies are supported. See:
+  # https://kubernetes.io/docs/concepts/services-networking/network-policies
+  # Only add egress destinations that are absolutely necessary for your algorithm
+  # to function (for example, a required database server). Whitelists are defined
+  # per task type. The allowed task types are: data_extraction, preprocessing,
+  # federated_compute, central_compute, postprocessing.
+  #
+  # Each entry in the whitelist defines one allowed connection path. Multiple entries
+  # are OR'd together (traffic is allowed if it matches any entry). You can specify:
+  # - namespaceSelector: to allow connections to all pods in a namespace or a subset of
+  #   pods in a namespace when used in combination with podSelector
+  # - podSelector: to allow connections to pods matching labels (make sure that the
+  #   namespace of this pod is whitelisted)
+  # - ipBlock: to allow connections to IP addresses or CIDR ranges (e.g. a database
+  #   server that is not part of the cluster)
+  whitelist:
+    data_extraction:
+      egress:
+      # Whitelist the namespace 'frontend' and 'backend'
+      - namespaceSelector:
+        matchExpressions:
+        - key: namespace
+          operator: In
+          values: ["frontend", "backend"]
+      # Whitelist the namespace 'ops' and the pod (within this namespace) with the
+      # label 'app: ledger'
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: ops
+        podSelector:
+          matchLabels:
+            app: ledger
+    central_compute:
+      egress:
+        # Whitelist the IP block 10.20.0.0/16
+        - ipBlock:
+            cidr: 10.20.0.0/16
 
   # Prometheus settings, for sending system metadata to the server.
   prometheus:

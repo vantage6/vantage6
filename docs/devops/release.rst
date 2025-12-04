@@ -58,7 +58,7 @@ the following steps to test a release:
 
     uv venv --python 3.13
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    uv add vantage6==<version>
+    uv pip install vantage6==<version>
 
 3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
    release candidate using a ``v6 sandbox`` network:
@@ -144,15 +144,15 @@ The release pipeline executes the following steps:
    tag and commit this back to the main branch.
 3. Install the dependencies and build the Python package.
 4. Upload the package to PyPi.
-5. Build and push the Docker image to `harbor2.vantage6.ai
+5. Build and push the Docker images and Helm charts to `harbor2.vantage6.ai
    <https://harbor2.vantage6.ai>`_.
 6. Post a message in Discord to alert the community of the new release. This
    is not done if the version is a pre-release (e.g. version/x.y.0rc1).
 
 .. note::
 
-    If you specify a tag with a version that already exists, the build pipeline
-    will fail as the upload to PyPi is rejected.
+    All vantage6 infrastructure components (server, node, store, UI, etc.) are released
+    at the same time, with the same version number.
 
 The release pipeline uses a number of environment variables to, for instance,
 authenticate to PyPi and Discord. These variables are listed and explained
@@ -189,11 +189,16 @@ in the table below.
 
 Distribute release
 ------------------
-Nodes and servers that are already running will automatically be upgraded to
-the latest version of their major release when they are restarted. This
-happens by pulling the newly released docker image. Note that the major
+Central components (hub, auth, store, UI) that are already running will automatically
+be upgraded to the latest version of their major release when they are restarted, unless otherwise
+specified in the respective configuration files. Nodes behave similarly, but instead of
+picking the latest version, they check which version the server is running and update to
+that (minor) version. The update to the new version happens by pulling the newly
+released Helm charts and Docker images.
+
+Note that the major
 release is never automatically updated: for example, a node running version
-2.1.0 will update to 2.1.1 or 2.2.0, but never to 3.0.0. Depending on the
+4.1.0 will update to 4.1.1 or 4.2.0, but never to 5.0.0. Depending on the
 version of vantage6 that is being used, there is a reserved Docker image tag
 for distributing the upgrades. These are the following:
 
@@ -210,34 +215,6 @@ for distributing the upgrades. These are the following:
 +---------------+------------------------+
 | troltunga     | ``1.x.x`` release      |
 +---------------+------------------------+
-
-Docker images can be pulled manually with e.g.
-
-::
-
-  docker pull harbor2.vantage6.ai/infrastructure/server:uluru
-  docker pull harbor2.vantage6.ai/infrastructure/node:3.1.0
-
-User Interface release
-----------------------
-The release process for the user interface (UI) is very similar to the release
-of the infrastructure detailed above. The same versioning format is used, and
-when you push a version tag, the automated release process is triggered.
-
-We have semi-synchronized the version of the UI with that of the infrastructure.
-That is, we try to release major and minor versions at the same time. For
-example, if we are currently at version 3.5 and release version 3.6, we release
-it both for the infrastructure and for the UI. However, there may be different
-patch versions for both: the latest version for the infrastructure may then be
-3.6.2 while the UI may still be at 3.6.
-
-The release pipeline for the UI executes the following steps:
-
-1. Version tag is verified (same as infrastructure).
-2. Version is updated in the code (same as infrastructure).
-3. Application is built.
-4. Docker images are built and released to harbor2.
-5. Application is pushed to our UI deployment slot (an Azure app service).
 
 
 Post-release checks

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from vantage6.algorithm.client import AlgorithmClient
-from vantage6.mock import MockNetwork
-from vantage6.mock.client import MockAlgorithmClient
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.client import MockAlgorithmClient
 
 TEST_ALGORITHM_NAME = "test_algorithm"
 
@@ -13,7 +13,9 @@ TEST_ALGORITHM_NAME = "test_algorithm"
 class TestMockAlgorithmClient(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
@@ -22,13 +24,14 @@ class TestMockAlgorithmClient(TestCase):
                             "database": pd.DataFrame(
                                 {"id": [1, 2, 3], "value": [10, 20, 30]}
                             ),
-                            "db_type": "csv",
                         }
                     }
                 ],
                 collaboration_id=1,
             )
-        self.client = MockAlgorithmClient(self.network.nodes[0])
+        self.client = MockAlgorithmClient(
+            self.network.nodes[0], self.network.nodes[0].datasets
+        )
 
     def test_client_initialization(self):
         """Test if client is properly initialized"""

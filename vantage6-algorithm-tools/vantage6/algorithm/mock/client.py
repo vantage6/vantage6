@@ -2,19 +2,18 @@ import json
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from vantage6.common.enum import AlgorithmStepType
-
 from vantage6.algorithm.tools.exceptions import (
     MethodNotFoundError,
     SessionActionMismatchError,
 )
 from vantage6.algorithm.tools.util import error, warn
 
+from vantage6.algorithm.mock.globals import MockDatabase
 from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
-    from vantage6.mock.network import MockNetwork
-    from vantage6.mock.node import MockNode
+    from vantage6.algorithm.mock.network import MockNetwork
+    from vantage6.algorithm.mock.node import MockNode
 
 
 class MockBaseClient:
@@ -192,9 +191,9 @@ class MockBaseClient:
             method: str,
             name: str = "mock",
             description: str = "mock",
-            databases: list[list[dict]] | list[dict] | None = None,
             arguments: dict | None = None,
-            action: str = AlgorithmStepType.FEDERATED_COMPUTE.value,
+            databases: list[list[dict]] | list[dict] | None = None,
+            action: str | None = None,
             *_args,
             **_kwargs,
         ) -> dict:
@@ -207,21 +206,21 @@ class MockBaseClient:
                 The name of the method that should be called.
             organizations : list[int]
                 A list of organization ids that should run the algorithm.
-            databases : list[list[dict]] | list[dict] | None, optional
-                Databases to be used at the node. Each dict should contain
-                at least a 'label' key. If a list of lists is provided, the first
-                list is the databases that are required for the first argument, the
-                second list is the databases that are required for the second
-                argument, etc.
             arguments : dict | None
                 Arguments for the algorithm method. The dictionary should contain
                 the same keys as the arguments of the algorithm method.
             name : str, optional
                 The name of the task, by default "mock"
-            description : str, optional
-                The description of the task, by default "mock"
+            databases: list[list[dict]] | list[dict], optional
+                Databases to be used at the node. Each dict should look like this:
+                {"type": "dataframe", "dataframe_id": <my_dataframe_id>}
             action : str, optional
-                The action of the task, by default "federated_compute"
+                The action of the task, by default None. If not provided, the
+                action would normally be inferred from the algorithm store, but for the
+                mock client we do not have an algorithm store, so we infer it from the
+                method directly. Suitable actions may be one of 'data_extraction',
+                'preprocessing', 'federated_compute', 'central_compute' or
+                'postprocessing'.
 
             Returns
             -------
@@ -236,6 +235,8 @@ class MockBaseClient:
 
             if not arguments:
                 arguments = {}
+            if not databases:
+                databases = []
 
             task = self.parent.network.server.save_task(
                 init_organization_id=self.parent.organization_id,
@@ -249,7 +250,10 @@ class MockBaseClient:
                 node = self.parent.network.get_node(org_id)
                 try:
                     result = node.simulate_task_run(
-                        method, arguments, databases, action
+                        method=method,
+                        arguments=arguments,
+                        databases=databases,
+                        action=action,
                     )
                 except MethodNotFoundError:
                     error(
@@ -258,20 +262,20 @@ class MockBaseClient:
                         "sure that the method is available in the top level of your "
                         "algorithm module?"
                     )
-                    return
+                    exit(1)
                 except SessionActionMismatchError:
                     error(
                         f"The {method} method is not a computation task, are you sure "
                         "you specified the correct method?"
                     )
-                    return
+                    exit(1)
                 except DataFrameNotFound as e:
                     error(f"A dataframe you specified does not exist: {e}")
-                    return
+                    exit(1)
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     traceback.print_exc()
-                    return
+                    exit(1)
 
                 result_response = self.parent.network.server.save_result(
                     result, task["id"]
@@ -485,7 +489,12 @@ class MockBaseClient:
 
 
 class MockUserClient(MockBaseClient):
-    def __init__(self, network: "MockNetwork", *args, **kwargs):
+    def __init__(
+        self,
+        network: "MockNetwork",
+        *args,
+        **kwargs,
+    ):
         super().__init__(network)
         self.network = network
         self.dataframe = self.Dataframe(self)
@@ -570,13 +579,16 @@ class MockUserClient(MockBaseClient):
                     )
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a data extraction method.")
-                    return
+                    error("Exiting...")
+                    exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe creation for organization "
                         f"{org_id}: {e}"
                     )
-                    return
+                    error("Exiting...")
+                    traceback.print_exc()
+                    exit(1)
 
                 dataframes.append(df_response)
 
@@ -620,13 +632,16 @@ class MockUserClient(MockBaseClient):
                     )
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a preprocessing method.")
-                    return
+                    error("Exiting...")
+                    exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe preprocessing for organization "
                         f"{org_id}: {e}"
                     )
-                    return
+                    error("Exiting...")
+                    traceback.print_exc()
+                    exit(1)
                 dataframes.append(df)
 
                 result_response = self.parent.network.server.save_result({}, task["id"])
@@ -644,7 +659,9 @@ class MockUserClient(MockBaseClient):
 
 
 class MockAlgorithmClient(MockBaseClient):
-    def __init__(self, node: "MockNode", *args, **kwargs):
+    def __init__(
+        self, node: "MockNode", databases: list[MockDatabase], *args, **kwargs
+    ):
         super().__init__(node.network)
 
         self.image = "mock-image"
@@ -652,34 +669,23 @@ class MockAlgorithmClient(MockBaseClient):
         self.collaboration_id = node.collaboration_id
         self.study_id = node.network.server.study_id
         self.organization_id = node.organization_id
-
-        # these need to be set from the call
-        self.databases = None
-
-    def set_databases(self, databases: list[list[dict]]):
-        """
-        Set the databases for the algorithm client.
-
-        Parameters
-        ----------
-        databases : list[list[dict]]
-            The databases to set for the algorithm client.
-        """
         self.databases = databases
 
     class Task(MockBaseClient.Task):
         def create(self, *args, **kwargs):
             """
             Create a new task with the mock algorithm client. This is the algorithm
-            client, so the databases need to be set using `set_databases` before
-            creating a task.
+            client, so the databases need to be initialized with the databases from the
+            parent task before creating a task.
             """
             if self.parent.databases is None:
                 error(
                     "No databases have been set for the mock algorithm client. Please"
-                    "set the databases using `set_databases` before creating a task."
+                    "initialize the MockAlgorithmClient with the databases from the "
+                    "parent task."
                 )
-                return
+                error("Exiting...")
+                exit(1)
 
             # inject the mock data into the arguments
             kwargs["databases"] = self.parent.databases

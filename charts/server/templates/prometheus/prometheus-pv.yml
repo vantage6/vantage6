@@ -1,0 +1,30 @@
+{{- if .Values.prometheus.enabled }}
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-prom-pv" .Release.Name)) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-prom-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    type: prometheus-data
+    app: {{ include "vantage6.name" . }}
+spec:
+  capacity:
+    storage: {{ .Values.prometheus.storageSize | default "2Gi" }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.prometheus.storageClass | default "local-storage" }}
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ .Values.prometheus.volumeHostPath }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName }}
+{{- end }}
+{{- end }}

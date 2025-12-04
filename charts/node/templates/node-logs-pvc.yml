@@ -1,8 +1,8 @@
-{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-vantage6-node-logs-pvc" .Release.Name)) }}
+{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-logs-pvc" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-vantage6-node-logs-pvc
+  name: {{ .Release.Name }}-logs-pvc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}

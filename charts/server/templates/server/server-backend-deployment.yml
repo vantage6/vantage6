@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-vantage6-server-deployment
+  name: {{ .Release.Name }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -21,7 +21,7 @@ spec:
       containers:
       - name: vantage6-server
         image: {{ .Values.server.image }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.server.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
           value: {{ .Values.server.keycloakUrl }}
@@ -33,9 +33,13 @@ spec:
 {{- end }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-server-secrets
+            name: {{ .Release.Name }}-secrets
         ports:
         - containerPort: {{ .Values.server.internal.port }}
+        {{- if and .Values.prometheus .Values.prometheus.enabled }}
+        - containerPort: {{ .Values.prometheus.exporter_port | default 7603 }}
+          name: prmths-export
+        {{- end }}
         command: [
           "uwsgi", "--http", ":{{ .Values.server.internal.port }}", "--gevent", "1000", "--http-websockets",
           "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
@@ -52,7 +56,7 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: {{ .Release.Name }}-vantage6-server-config
+          name: {{ .Release.Name }}-configmap
       - name: server-logs
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-server-logs-pvc
+          claimName: {{ .Release.Name }}-logs-pvc

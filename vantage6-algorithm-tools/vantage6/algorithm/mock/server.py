@@ -7,7 +7,7 @@ import pandas as pd
 from vantage6.common.globals import AuthStatus
 
 if TYPE_CHECKING:
-    from vantage6.mock.network import MockNetwork
+    from vantage6.algorithm.mock.network import MockNetwork
 
 
 class MockServer:
@@ -149,7 +149,7 @@ class MockServer:
         self,
         name: str,
         description: str,
-        databases: list[dict[str, str]],
+        databases: list[list[dict]] | list[dict],
         init_organization_id: int,
     ) -> dict:
         """
@@ -161,9 +161,8 @@ class MockServer:
             The name of the task.
         description : str
             The description of the task.
-        databases : list[dict[str, str]]
-            The required databases for the task. This can either be a source database
-            or a dataframe.
+        databases : list[list[dict]] | list[dict]
+            The databases used by the task.
         init_organization_id : int
             The id of the organization that created the task.
 
@@ -263,3 +262,12 @@ class MockServer:
         }
         self.dataframes.append(dataframe)
         return dataframe
+
+    def get_label_for_df_id(self, id_: int) -> str:
+        """
+        Get the label for a dataframe ID
+        """
+        for dataframe in self.dataframes:
+            if dataframe.get("id") == id_:
+                return dataframe.get("db_label")
+        return None

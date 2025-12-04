@@ -7,7 +7,7 @@ from collections.abc import Callable
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
-from typing import Any, OrderedDict
+from typing import Any, OrderedDict, get_args, get_origin
 
 import click
 import pandas as pd
@@ -118,7 +118,7 @@ class Function:
         # Only merge the function jsons with template json data if it is an
         # infrastructure-defined function
         if (
-            not self.func.__module__.startswith("vantage6.algorithm.")
+            not self._is_func_defined_in_vantage6()
             or self.json["name"] not in PREPROCESSING_FUNCTIONS_JSON_DATA
         ):
             return
@@ -137,6 +137,10 @@ class Function:
     def merge_with_existing_json(self, existing_json: dict) -> None:
         """Merge the function json with the existing json data"""
         self._merge_dicts(self.json, existing_json)
+
+    def _is_func_defined_in_vantage6(self) -> bool:
+        """Check if the function is defined in the vantage6 package"""
+        return self.func.__module__.startswith("vantage6.algorithm.")
 
     def _merge_dicts(self, target: dict, source: dict) -> None:
         """
@@ -188,7 +192,7 @@ class Function:
                 target[key] = value
 
     def _get_argument_json(
-        self, name: str, param: inspect.Parameter
+        self, name: str, param: inspect.Parameter, warn_if_unsupported_arg: bool = True
     ) -> tuple[dict | None, FunctionArgumentType | None]:
         """Get the argument JSON"""
 
@@ -210,7 +214,9 @@ class Function:
             }, FunctionArgumentType.DATAFRAME
         else:
             # This is a regular function parameter
-            type_ = self._get_argument_type(param, name)
+            type_ = self._get_argument_type(
+                param, name, warn_if_unsupported=not self._is_func_defined_in_vantage6()
+            )
             arg_json = {
                 "name": name,
                 "display_name": self._pretty_print_name(name),
@@ -221,6 +227,7 @@ class Function:
             }
             if param.default != inspect.Parameter.empty:
                 arg_json["default"] = param.default
+
             return arg_json, FunctionArgumentType.PARAMETER
 
     def _add_frontend_argument(
@@ -247,7 +254,7 @@ class Function:
             )
 
     def _get_argument_type(
-        self, param: inspect.Parameter, name: str
+        self, param: inspect.Parameter, name: str, warn_if_unsupported: bool = True
     ) -> AlgorithmArgumentType | None:
         """Get the type of the argument"""
         if isinstance(param.annotation, UnionType):
@@ -255,20 +262,22 @@ class Function:
             # case, we want to use the type of the first element in the union.
             if len(param.annotation.__args__) > 2:
                 # if there are more than 2 elements in the union, don't handle
-                warning(
-                    f"Unsupported argument type: {param.annotation} for argument {name}"
-                    f" in function {self.name}"
-                )
+                if warn_if_unsupported:
+                    warning(
+                        f"Unsupported argument type: {param.annotation} for argument "
+                        f"{name} in function {self.name}"
+                    )
                 return None
             elif len(param.annotation.__args__) == 2:
                 # if there are two, we want to use the first one if the second is None
                 if param.annotation.__args__[1] is type(None):
                     type_ = param.annotation.__args__[0]
                 else:
-                    warning(
-                        f"Unsupported argument type: {param.annotation} for argument "
-                        f"{name} in function {self.name}"
-                    )
+                    if warn_if_unsupported:
+                        warning(
+                            f"Unsupported argument type: {param.annotation} for "
+                            f"argument '{name}' in function '{self.name}'"
+                        )
                     return None
             else:
                 # normally, unions have 2+ elements. If there is only one, use that
@@ -288,17 +297,25 @@ class Function:
             return AlgorithmArgumentType.BOOLEAN
         elif type_ is list:
             return AlgorithmArgumentType.STRINGS
-        elif type_ is list[str]:
+        elif get_origin(type_) is list:
+            # Handle generic list types like list[str], list[int], list[float]
+            args = get_args(type_)
+            if len(args) == 1:
+                inner_type = args[0]
+                if inner_type is str:
+                    return AlgorithmArgumentType.STRINGS
+                elif inner_type is int:
+                    return AlgorithmArgumentType.INTEGERS
+                elif inner_type is float:
+                    return AlgorithmArgumentType.FLOATS
+            # Fallback: if list has no args or multiple args, default to STRINGS
             return AlgorithmArgumentType.STRINGS
-        elif type_ is list[int]:
-            return AlgorithmArgumentType.INTEGERS
-        elif type_ is list[float]:
-            return AlgorithmArgumentType.FLOATS
         else:
-            warning(
-                f"Unsupported argument type: {param.annotation} for argument {name} "
-                f"in function {self.name}"
-            )
+            if warn_if_unsupported:
+                warning(
+                    f"Unsupported argument type: {param.annotation} for argument "
+                    f"'{name}' in function '{self.name}'"
+                )
             return None
 
     def _pretty_print_name(self, name: str) -> str:
@@ -410,12 +427,12 @@ def cli_algorithm_generate_json(
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(current_json_data, f, indent=2)
 
-    info(f"New algorithm.json file written to {output_file}")
+    info(f"New algorithm.json file written to: {output_file}")
 
-    warning("-" * 80)
-    warning("Always check the generated algorithm.json file before submitting it to ")
-    warning("the algorithm store!")
-    warning("-" * 80)
+    warning("-" * 60)
+    warning(f"Check the generated '{output_file}' file before ")
+    warning("submitting it to the algorithm store!")
+    warning("-" * 60)
 
 
 def _get_functions_from_file(file_path: str) -> None:

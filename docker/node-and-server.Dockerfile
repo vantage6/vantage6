@@ -30,6 +30,7 @@ WORKDIR /vantage6
 # Install all packages in editable mode globally
 RUN uv pip install --system -e vantage6-common
 RUN uv pip install --system -e vantage6-client
+RUN uv pip install --system -e vantage6-algorithm-tools
 RUN uv pip install --system -e vantage6
 RUN uv pip install --system -e vantage6-backend-common
 RUN uv pip install --system -e vantage6-server

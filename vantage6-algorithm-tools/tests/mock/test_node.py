@@ -9,7 +9,8 @@ from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.exceptions import SessionActionMismatchError
 
-from vantage6.mock.node import MockNode
+from vantage6.algorithm.mock.globals import MockDatabase
+from vantage6.algorithm.mock.node import MockNode
 
 LABEL_1 = "label_1"
 
@@ -18,19 +19,20 @@ class TestMockNodeDataframe(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.data = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
-        self.datasets = {LABEL_1: {"database": self.data, "db_type": "csv"}}
+        self.datasets = [MockDatabase(label=LABEL_1, database=self.data, db_type="csv")]
         self.network = MagicMock()
         self.network.module_name = "test_module"
         self.mock_import_return = MagicMock("algorithm_module")
         self.mock_import_return.test_method = MagicMock("test_method")
         with patch(
-            "vantage6.mock.node.import_module", return_value=self.mock_import_return
+            "vantage6.algorithm.mock.node.import_module",
+            return_value=self.mock_import_return,
         ) as mock_import:
             self.node = MockNode(
                 id_=1,
                 organization_id=1,
                 collaboration_id=1,
-                datasets=self.datasets,
+                databases=self.datasets,
                 network=self.network,
             )
             self.mock_import = mock_import
@@ -41,30 +43,32 @@ class TestMockNodeDataframe(TestCase):
         self.assertEqual(self.node.organization_id, 1)
         self.assertEqual(self.node.collaboration_id, 1)
         self.assertEqual(len(self.node.datasets), 1)
-        self.assertIn(LABEL_1, self.node.datasets)
-        pd.testing.assert_frame_equal(self.node.dataframes[LABEL_1], self.data)
+        self.assertIn(LABEL_1, [db.label for db in self.node.datasets])
+        db_label_1 = next(db for db in self.node.datasets if db.label == LABEL_1)
+        pd.testing.assert_frame_equal(db_label_1.database, self.data)
 
     def test_simulate_task_run(self):
         """Test if task run simulation works properly"""
 
+        # Mock the server's get_label_for_df_id to return the correct label
+        self.network.server = MagicMock()
+        self.network.server.get_label_for_df_id = MagicMock(return_value=LABEL_1)
+
         # Create a mock method function
         mock_method = MagicMock()
-        mock_method.vantage6_decorator_step_type = (
-            AlgorithmStepType.FEDERATED_COMPUTE.value
-        )
+        mock_method.vantage6_decorator_step_type = AlgorithmStepType.FEDERATED_COMPUTE
         mock_method.return_value = {"result": "test"}
 
         # Patch the _get_method_fn_from_method to return our mock
         with patch(
-            "vantage6.mock.node.MockNode._get_method_fn_from_method",
+            "vantage6.algorithm.mock.node.MockNode._get_method_fn_from_method",
             return_value=mock_method,
         ):
             # Simulate running a task
             result = self.node.simulate_task_run(
                 method="test_method",
                 arguments={"arg1": "value1"},
-                databases=[{"label": LABEL_1}],
-                action=AlgorithmStepType.FEDERATED_COMPUTE.value,
+                databases=[{"type": "dataframe", "dataframe_id": 1}],
             )
 
             # Verify the result
@@ -81,7 +85,7 @@ class TestMockNodeDataframe(TestCase):
         mock_env_vars = {"env1": "value1"}
 
         # Test running with environment variables
-        with patch("vantage6.mock.node.env_vars") as mock_env:
+        with patch("vantage6.algorithm.mock.node.env_vars") as mock_env:
             result = self.node.run(mock_method, mock_args, task_env_vars=mock_env_vars)
 
             # Check if environment variables were set correctly
@@ -116,7 +120,7 @@ class TestMockNodeDataframe(TestCase):
 
         # Patch the _get_method_fn_from_method to return our mock
         with patch(
-            "vantage6.mock.node.MockNode._get_method_fn_from_method",
+            "vantage6.algorithm.mock.node.MockNode._get_method_fn_from_method",
             return_value=mock_method,
         ):
             # Simulate creating a dataframe
@@ -128,10 +132,11 @@ class TestMockNodeDataframe(TestCase):
             )
 
             # Verify the method was called with correct arguments
+            db_label_1 = next(db for db in self.node.datasets if db.label == LABEL_1)
             mock_method.assert_called_once_with(
                 arg1="value1",
-                mock_uri=self.datasets[LABEL_1]["database"],
-                mock_type=self.datasets[LABEL_1]["db_type"],
+                mock_uri=db_label_1.database,
+                mock_type=db_label_1.db_type,
             )
 
             # Verify the dataframe was stored
@@ -185,7 +190,7 @@ class TestMockNodeDataframe(TestCase):
         self.network.server.tasks = [1, 2, 3]  # 3 existing tasks
 
         # Call _task_env_vars with test values
-        action = "compute"
+        action = AlgorithmStepType.FEDERATED_COMPUTE
         method = "test_method"
         env_vars = self.node._task_env_vars(action, method)
 
@@ -207,14 +212,18 @@ class TestMockNodeDataframe(TestCase):
 class TestMockNodeURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.datasets = {LABEL_1: {"database": "mock_data.csv", "db_type": "csv"}}
+        self.databases = [
+            MockDatabase(label=LABEL_1, database="mock_data.csv", db_type="csv")
+        ]
         self.network = MagicMock()
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.node = MockNode(
                 id_=1,
                 organization_id=1,
                 collaboration_id=1,
-                datasets=self.datasets,
+                databases=self.databases,
                 network=self.network,
             )
 
@@ -224,8 +233,9 @@ class TestMockNodeURI(TestCase):
         self.assertEqual(self.node.organization_id, 1)
         self.assertEqual(self.node.collaboration_id, 1)
         self.assertEqual(len(self.node.datasets), 1)
-        self.assertIn(LABEL_1, self.node.datasets)
-        self.assertEqual(self.node.datasets[LABEL_1]["database"], "mock_data.csv")
+        self.assertIn(LABEL_1, [db.label for db in self.node.datasets])
+        label_1_database = next(db for db in self.node.datasets if db.label == LABEL_1)
+        self.assertEqual(label_1_database.database, "mock_data.csv")
         self.assertEqual(len(self.node.dataframes), 0)
 
     def test_node_network_reference(self):

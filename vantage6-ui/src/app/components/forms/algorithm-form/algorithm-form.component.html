@@ -404,8 +404,13 @@
         <div class="button-container button-container-separate">
           <button mat-flat-button color="primary" (click)="addFunction()">{{ "algorithm-create.function.add" | translate }}</button>
         </div>
+        <ng-container *ngIf="formErrorMessages.length > 0">
+          <h3>{{ "general.errors" | translate }}</h3>
+          <p>{{ "algorithm-create.errors-explanation" | translate }}</p>
+          <app-alert *ngFor="let error of formErrorMessages" class="node-alert" [label]="error"></app-alert>
+        </ng-container>
         <div class="button-container">
-          <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+          <button mat-flat-button type="submit" color="primary" disabled="{{ !form.valid }}">{{ "general.submit" | translate }}</button>
           <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
         </div>
       </form>

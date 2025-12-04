@@ -20,6 +20,8 @@ server:
 
   # The image used to start the server
   image: harbor2.vantage6.ai/infrastructure/server:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
 
   # The number of replicas of the server
   replications: 1
@@ -74,22 +76,6 @@ server:
   cors_allowed_origins:
     - https://portal.uluru.vantage6.ai
     - http://localhost:7600
-
-  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU,
-  # memory). This is done using Prometheus. There are two components to this:
-  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
-  #    the metrics from the nodes.
-  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
-  #     metrics exposed by the Prometheus exporter and stores them.
-  # The exporter is started by default when the server starts (if prometheus is
-  # enabled). The Prometheus server may be started separately.
-  prometheus:
-    # Set to true to enable Prometheus reporting. Default is false.
-    enabled: false
-    # Set to true to start the Prometheus server when starting the server
-    start_with_server: false
-    # The port on which the Prometheus exporter will be available.
-    exporter_port: 7603
 
   # Settings for the large result store. By default, the server uses a database to store all arguments and results.
   # Adding this will set Vantage6 to use blob storage rather than the database for both argumentsand results.
@@ -179,7 +165,10 @@ server:
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: true
     # If forward_ports is true, this is the port that will be exposed on the host.
-    local_port_to_expose: 30761
+    local_hub_port_to_expose: 30761
+    # And these ports will be exposed for the UI and prometheus (if enabled).
+    local_ui_port_to_expose: 30760
+    local_prometheus_port_to_expose: 30763
 
   # Additional debug flags
   debug:
@@ -189,12 +178,12 @@ server:
     # Set to `true` to enable debug mode in the Flask app
     flask: false
 
-
-
 ui:
 
   # The image used to start the UI
   image: harbor2.vantage6.ai/infrastructure/ui:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
   # Service port for the UI
   port: 7600
   # keycloak settings
@@ -255,3 +244,26 @@ database:
 
   # The name of the k8s node where the server is running
   k8sNodeName: docker-desktop
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+#    the metrics from the nodes.
+# 2. The Prometheus server (running as a separate service), which scrapes the
+#     metrics exposed by the Prometheus exporter and stores them.
+prometheus:
+  # Set to true to enable Prometheus reporting. Default is false. Note that nodes need
+  # to be configured to report metrics to the server to be useful.
+  enabled: false
+
+  # **The settings below are only used if enabled is true**
+  # The port on which the Prometheus exporter will be available.
+  exporter_port: 7603
+  # image to use for the Prometheus server.
+  image: prom/prometheus:latest
+  # The size of the storage for the Prometheus server.
+  storageSize: 2Gi
+  # The kubernetes storage class to use for the Prometheus server.
+  storageClass: local-storage
+  # The host path for storing the Prometheus server data.
+  volumeHostPath: /var/lib/prometheus

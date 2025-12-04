@@ -258,6 +258,7 @@ deployments:
       values:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
+          imagePullPolicy: IfNotPresent
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
@@ -272,14 +273,15 @@ deployments:
           dev:
             host_uri: ${HOST_URI}
             allow_drop_all: true
-            store_address: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+            store_address: http://vantage6-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
             forward_ports: false
           algorithm_stores:
             - name: Local store
-              url: http://vantage6-store-store-service.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+              url: http://vantage6-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
               api_path: /store
         ui:
           image: ${UI_IMAGE}
+          imagePullPolicy: IfNotPresent
           keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
           keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
@@ -287,6 +289,8 @@ deployments:
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
+        prometheus:
+          enabled: false
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -296,6 +300,7 @@ deployments:
       values:
         store:
           image: ${STORE_IMAGE}
+          imagePullPolicy: IfNotPresent
           api_path: /store
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
@@ -344,6 +349,7 @@ deployments:
       values:
         node:
           image: ${NODE_IMAGE}
+          imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}
           keycloakUrl: ${KEYCLOAK_URL}
           keycloakRealm: ${KEYCLOAK_REALM}
@@ -390,6 +396,8 @@ dev:
         disableDownload: true
         startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
+    logs:
+      enabled: true
     ports:
       - port: 7601:7601
         bindAddress: localhost
@@ -424,6 +432,8 @@ dev:
       - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
         disableDownload: true
         startContainer: true
+    logs:
+      enabled: true
     command: ["/bin/sh", "/vantage6/vantage6-algorithm-store/dev_store.sh"]
 
   vantage6-store-db:
@@ -489,9 +499,10 @@ dev:
         startContainer: true
         onUpload:
           restartContainer: true
-
     restartHelper:
       inject: true
+    logs:
+      enabled: true
 
     command: ["bash", "/vantage6/vantage6-node/dev_start.sh", "/mnt/config/"]
 

@@ -76,6 +76,7 @@ class ContainerManager:
         self.ctx = ctx
         self.client = client
         self.socket_io = None
+        self.num_active_tasks = 0
 
         # When a pod runs in Kubernetes with a ServiceAccount, Kubernetes automatically
         # mounts the service account credentials at
@@ -289,10 +290,8 @@ class ContainerManager:
             # need it when we are creating new volume mounts for the algorithm
             # containers
             local_uri = uri
-            # TODO v5+ we should ensure that DATABASE_BASE_PATH is also used in the CLI
-            # so that we can be sure this file exists. From the type we could then
-            # derive if it's a file or directory, and it may be entirely unneccesary in
-            # that case to mount the database files/dirs into the node container.
+            # Note that this path is specified in the helm chart so that we should be
+            # able to find the database here.
             tmp_uri = Path(DATABASE_BASE_PATH) / f"{label}.{db_type}"
 
             db_is_file = tmp_uri.exists() and tmp_uri.is_file()
@@ -609,6 +608,8 @@ class ContainerManager:
 
         # start streaming logs to the server
         self._stream_logs(run_io=run_io, task_id=task_id)
+
+        self.num_active_tasks += 1
 
         return status
 
@@ -1445,6 +1446,8 @@ class ContainerManager:
                     parent_id=job.metadata.annotations["task_parent_id"],
                 )
 
+                self.num_active_tasks -= 1
+
                 delete_job_related_pods(
                     run_id=run_io.run_id,
                     container_name=run_io.container_name,
@@ -1729,6 +1732,7 @@ class ContainerManager:
             logs += "\n\nAlgorithm was killed by user request."
         elif initiator == KillInitiator.NODE_SHUTDOWN:
             logs += "\n\nAlgorithm was killed because the node was shut down."
+        self.num_active_tasks -= 1
         delete_job_related_pods(
             run_id=run_io.run_id,
             container_name=run_io.container_name,

@@ -37,7 +37,7 @@ class BaseServerContext(AppContext):
             db_conf = self.config["database"]
             uri = (
                 f"postgresql://{db_conf['username']}:{db_conf['password']}@"
-                f"{self.helm_release_name}-postgres-service:5432/{db_conf['name']}"
+                f"{self.helm_release_name}-postgres:5432/{db_conf['name']}"
             )
 
         return uri

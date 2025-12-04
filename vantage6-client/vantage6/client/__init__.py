@@ -420,15 +420,22 @@ class UserClient(ClientBase):
                 "version", attempts_on_timeout=attempts_on_timeout
             )
 
-        def get_server_health(self) -> dict:
+        def get_server_health(self, silent_on_connection_error: bool = False) -> dict:
             """View the health of the vantage6-server
+
+            Parameters
+            ----------
+            silent_on_connection_error: bool, optional
+                Whether to suppress errors on generic connection errors. Default is False.
 
             Returns
             -------
             dict
                 Containing the server health information
             """
-            return self.parent.request("health")
+            return self.parent.request(
+                "health", silent_on_connection_error=silent_on_connection_error
+            )
 
         def generate_private_key(self, file_: str = None) -> None:
             """Generate new private key
@@ -1819,11 +1826,8 @@ class UserClient(ClientBase):
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
             databases: list[list[dict]] | list[dict], optional
-                Databases to be used at the node. Each dict should contain
-                at least a 'label' key. If a list of lists is provided, the first
-                list is the databases that are required for the first argument, the
-                second list is the databases that are required for the second
-                argument, etc.
+                Databases to be used at the node. Each dict should look like this:
+                {"type": "dataframe", "dataframe_id": <my_dataframe_id>}
             action: str, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not

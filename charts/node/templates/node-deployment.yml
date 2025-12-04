@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-node-deployment
+  name: {{ .Release.Name }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}
@@ -23,24 +23,24 @@ spec:
     #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
     #     hostnames:
     #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
-      serviceAccountName: {{ .Release.Name }}-node-serviceaccount
+      serviceAccountName: {{ .Release.Name }}-sa
       containers:
       - name: vantage6-node
         # TODO v5+ change to final v5 image
         image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:5" }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
         - name: PROXY_SERVER_PORT
           value: "{{ .Values.node.proxyPort }}"
         - name: PROXY_SERVER_HOST
-          value: http://{{ .Release.Name }}-node-service.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+          value: http://{{ .Release.Name }}.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         - name: KEYCLOAK_URL
           value: {{ .Values.node.keycloakUrl | quote }}
         - name: KEYCLOAK_REALM
           value: {{ .Values.node.keycloakRealm | quote }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-node-secrets
+            name: {{ .Release.Name }}-secrets
         command: ["vnode-local", "start", "-c", "/app/config/config.yml"]
         volumeMounts:
         - name: task-files-root
@@ -57,15 +57,15 @@ spec:
       volumes:
       - name: task-files-root
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-node-task-pvc
+          claimName: {{ .Release.Name }}-task-pvc
       - name: config-volume
         configMap:
-          name: {{ .Release.Name }}-node-configmap
+          name: {{ .Release.Name }}-configmap
       - name: node-logs
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-vantage6-node-logs-pvc
+          claimName: {{ .Release.Name }}-logs-pvc
       {{- range default (list) .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:
-          claimName: {{ $.Release.Name }}-vantage6-node-database-pvc
+          claimName: {{ $.Release.Name }}-db-pvc
       {{- end }}

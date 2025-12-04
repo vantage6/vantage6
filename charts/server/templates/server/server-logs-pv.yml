@@ -1,12 +1,13 @@
-{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-server-logs-pv" .Release.Name)) }}
+{{- if not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-vantage6-server-logs-pv
+  name: {{ .Release.Name }}-logs-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
     type: local-logs
+    app: {{ include "vantage6.name" . }}
 spec:
   capacity:
     storage: {{ .Values.server.logging.storageSize | default "128M" }}

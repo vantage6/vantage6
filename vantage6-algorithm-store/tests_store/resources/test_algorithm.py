@@ -642,14 +642,13 @@ class TestAlgorithmResources(TestResources):
 
         # Test case 1: Image with digest found
         image_name = "example/image:latest"
-        expected_image_wo_tag = "example/image"
         expected_digest = "some-digest"
         get_digest_mock.return_value = expected_digest
 
         # pylint: disable=protected-access
         image_wo_tag, digest = resource._get_image_digest(image_name)
 
-        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(image_wo_tag, image_name)
         self.assertEqual(digest, expected_digest)
         get_digest_mock.assert_called_once_with(image_name)
 
@@ -668,7 +667,7 @@ class TestAlgorithmResources(TestResources):
 
         image_wo_tag, digest = resource._get_image_digest(image_name)
 
-        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(image_wo_tag, image_name)
         self.assertEqual(digest, expected_digest)
         get_digest_mock.assert_any_call(image_name)
         get_digest_mock.assert_any_call(
@@ -687,7 +686,7 @@ class TestAlgorithmResources(TestResources):
 
         image_wo_tag, digest = resource._get_image_digest(image_name)
 
-        self.assertEqual(image_wo_tag, expected_image_wo_tag)
+        self.assertEqual(image_wo_tag, image_name)
         self.assertEqual(digest, None)
         get_digest_mock.assert_called_once_with(image_name)
 

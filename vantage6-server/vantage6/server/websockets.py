@@ -411,6 +411,8 @@ class DefaultSocketNamespace(Namespace):
         auth.last_seen = dt.datetime.now(dt.timezone.utc)
         auth.save()
 
+        self.__cleanup()
+
     def on_dataframe_deleted(self, data: dict) -> None:
         """
         A dataframe has been deleted at a node.
@@ -424,6 +426,8 @@ class DefaultSocketNamespace(Namespace):
             data["df_name"], data["session_id"], data["node_id"]
         )
         df_to_be_deleted.delete()
+
+        self.__cleanup()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -546,7 +550,7 @@ class DefaultSocketNamespace(Namespace):
         if not self._is_node():
             return
 
-        node = db.Node.get(session.auth_id)
+        node = db.Node.get_by_keycloak_id(session.auth_id)
 
         os_label = data.pop("os", "unknown")
         platform_label = data.pop("platform", "unknown")
@@ -567,6 +571,8 @@ class DefaultSocketNamespace(Namespace):
                 self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")
+
+        self.__cleanup()
 
     @staticmethod
     def __is_identified_client() -> bool:

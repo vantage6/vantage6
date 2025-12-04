@@ -16,7 +16,11 @@ from vantage6.cli.globals import (
 )
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import (
+    path_to_linux_style_str,
+    replace_wsl_path,
+    str_replace_wsl_path,
+)
 
 
 @dataclass
@@ -50,6 +54,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
+    with_prometheus : bool
+        Whether Prometheus is enabled for the node.
     """
 
     def __init__(
@@ -63,6 +69,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         extra_dataset: NodeDataset | None,
         k8s_config: KubernetesConfig,
         custom_data_dir: Path | None,
+        with_prometheus: bool = False,
     ) -> None:
         super().__init__(server_name, custom_data_dir)
         self.api_keys = api_keys
@@ -76,6 +83,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         else:
             self.node_datasets = []
         self.k8s_config = k8s_config
+        self.with_prometheus = with_prometheus
 
         self.node_configs = []
         self.node_config_files = []
@@ -174,14 +182,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             end = (i + 1) * length_df // self.num_nodes
             data = full_df[start:end]
             data_file = (
-                replace_wsl_path(path_to_dev_dir, to_mnt_wsl=True)
+                replace_wsl_path(Path(path_to_dev_dir), to_mnt_wsl=True)
                 / f"df_{node_dataset.label}_{node_name}.csv"
             )
 
             # write data to file
             data.to_csv(data_file, index=False)
             data_files.append(
-                (node_dataset.label, replace_wsl_path(data_file, to_mnt_wsl=False))
+                (node_dataset.label, str_replace_wsl_path(data_file, to_mnt_wsl=False))
             )
         return data_files
 
@@ -280,7 +288,11 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                             "name": dataset[0],
                             "uri": dataset[1],
                             "type": "csv",
-                            "volumePath": Path(dataset[1]).parent,
+                            # Call to path_to_linux_style_str is relevant for Windows
+                            # paths in the sandbox environment.
+                            "volumePath": path_to_linux_style_str(
+                                Path(dataset[1]).parent
+                            ),
                             "originalName": Path(dataset[1]).name,
                         }
                         for dataset in [datasets[0]]
@@ -288,8 +300,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "server": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-user-server-vantage6-"
-                        f"server-service.{self.k8s_config.namespace}.svc.cluster"
+                        f"http://vantage6-{self.server_name}-user-server"
+                        f".{self.k8s_config.namespace}.svc.cluster"
                         ".local"
                     ),
                     "port": self.server_port,
@@ -298,6 +310,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         }
         if self.node_image:
             config["node"]["image"] = self.node_image
+
+        if self.with_prometheus:
+            config["node"]["prometheus"] = {
+                "enabled": True,
+                "report_interval_seconds": 45,
+            }
 
         # merge the extra config with the node config
         if extra_config is not None:

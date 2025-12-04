@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-node"
-version = "5.0.0a43"
+version = "5.0.0b1"
 description = "vantage6 node"
 readme = "README.md"
 license = {text = "MIT"}
@@ -26,9 +26,9 @@ dependencies = [
     "psutil==7.0.0",
     "python-socketio==5.14.3",
     "requests==2.32.4",
-    "vantage6==5.0.0a43",
-    "vantage6-client==5.0.0a43",
-    "vantage6-common==5.0.0a43",
+    "vantage6==5.0.0b1",
+    "vantage6-client==5.0.0b1",
+    "vantage6-common==5.0.0b1",
 ]
 
 [project.optional-dependencies]

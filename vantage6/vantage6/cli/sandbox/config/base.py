@@ -5,7 +5,10 @@ import yaml
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.context import select_context_class
-from vantage6.cli.sandbox.populate.helpers.utils import replace_wsl_path
+from vantage6.cli.sandbox.populate.helpers.utils import (
+    replace_wsl_path,
+    str_replace_wsl_path,
+)
 
 
 class BaseSandboxConfigManager:
@@ -54,7 +57,8 @@ class BaseSandboxConfigManager:
         is_data_folder: bool = False,
         node_name: str | None = None,
         is_log_dir: bool = False,
-    ) -> Path:
+        custom_folder: str | None = None,
+    ) -> str:
         """
         Create and get the data directory.
 
@@ -70,11 +74,13 @@ class BaseSandboxConfigManager:
         is_log_dir: bool
             Whether or not to create a log directory instead of a data directory.
             Default is False.
+        custom_folder: str | None
+            Name of the custom folder to create. Default is None.
 
         Returns
         -------
-        Path
-            Path to the data directory
+        str
+            Path to the created directory
         """
         ctx_class = select_context_class(instance_type)
         folders = ctx_class.instance_folders(
@@ -90,11 +96,15 @@ class BaseSandboxConfigManager:
             main_data_dir = Path(folders["dev"])
 
         if instance_type == InstanceType.SERVER:
-            data_dir = main_data_dir / self.server_name / "server"
+            folder_name = custom_folder or "server"
+            data_dir = main_data_dir / self.server_name / folder_name
         elif instance_type == InstanceType.ALGORITHM_STORE:
-            data_dir = main_data_dir / self.server_name / "store"
+            folder_name = custom_folder or "store"
+            data_dir = main_data_dir / self.server_name / folder_name
         elif instance_type == InstanceType.NODE:
-            if is_data_folder:
+            if custom_folder:
+                last_subfolder = custom_folder
+            elif is_data_folder:
                 if node_name:
                     last_subfolder = f"data_{node_name}"
                 else:
@@ -113,4 +123,4 @@ class BaseSandboxConfigManager:
         # now ensure that the wsl path is properly replaced to /run/desktop/mnt/host/wsl
         # if it is a WSL path, because that path will be used in the node configuration
         # files and is required to successfully mount the volumes.
-        return replace_wsl_path(data_dir, to_mnt_wsl=False)
+        return str_replace_wsl_path(data_dir, to_mnt_wsl=False)

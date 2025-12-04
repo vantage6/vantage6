@@ -2,7 +2,8 @@
 @use "config.scss" as *;
 
 // ANGULAR MATERIAL SETUP
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 $primary-pallette: mat.m2-define-palette($vantage-primary, 900);
 $accent-pallette: mat.m2-define-palette($vantage-accent, 800);
@@ -48,7 +49,7 @@ mat-card {
   mat-hint {
     display: block;
     margin-left: $spacing-px-4;
-    font-size: var(--mdc-typography-caption-font-size, $spacing-px-3);
+    font-size: var(--mat-typography-caption-font-size, $spacing-px-3);
   }
 }
 

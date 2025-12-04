@@ -8,7 +8,7 @@ node:
   keycloakRealm: vantage6
 
   server:
-    url: http://vantage6-server-vantage6-server-service
+    url: http://vantage6-server
     port: 7601
     path: /server
 
@@ -69,3 +69,10 @@ node:
 
   prometheus:
     enabled: false
+
+  whitelist:
+    data_extraction:
+    preprocessing:
+    federated_compute:
+    central_compute:
+    postprocessing:

@@ -36,10 +36,7 @@ class TestUserResource(TestResources):
         )
         reviewer_role.save()
         self.register_user("other-username", user_roles=[reviewer_role])
-        # test filter by users with review permission
-        response = self.app.get("/api/user?can_review=1")
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(len(response.json["data"]), 1)
+
         # test filter by role ID
         response = self.app.get(f"/api/user?role_id={reviewer_role.id}")
         self.assertEqual(response.status_code, HTTPStatus.OK)

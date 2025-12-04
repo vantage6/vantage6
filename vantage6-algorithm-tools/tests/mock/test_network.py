@@ -4,14 +4,13 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
-from vantage6.mock import MockNetwork
-from vantage6.mock.client import MockUserClient
-from vantage6.mock.node import MockNode
-from vantage6.mock.server import MockServer
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.client import MockUserClient
+from vantage6.algorithm.mock.node import MockNode
+from vantage6.algorithm.mock.server import MockServer
 
 TEST_ALGORITHM_NAME = "test_algorithm"
-DB_LABEL_1 = "label_1"
-DB_LABEL_2 = "label_2"
+DATASET_LABEL = "dataset_1"
 MOCK_DATA_CSV = "mock_data.csv"
 
 
@@ -22,18 +21,22 @@ class TestMockNetworkDataframe(TestCase):
         self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
         self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
 
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
+                    # datasets for node 1
                     {
-                        DB_LABEL_1: {
+                        DATASET_LABEL: {
                             "database": self.data1,
                             "db_type": MockDatabaseType.CSV.value,
                         }
                     },
+                    # datasets for node 2
                     {
-                        DB_LABEL_2: {
+                        DATASET_LABEL: {
                             "database": self.data2,
                             "db_type": MockDatabaseType.CSV.value,
                         }
@@ -47,8 +50,8 @@ class TestMockNetworkDataframe(TestCase):
         self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
 
         # Check if data is properly assigned to nodes
-        node1_data = self.network.nodes[0].dataframes[DB_LABEL_1]
-        node2_data = self.network.nodes[1].dataframes[DB_LABEL_2]
+        node1_data = self.network.nodes[0].dataframes[DATASET_LABEL]
+        node2_data = self.network.nodes[1].dataframes[DATASET_LABEL]
 
         pd.testing.assert_frame_equal(node1_data, self.data1)
         pd.testing.assert_frame_equal(node2_data, self.data2)
@@ -96,12 +99,14 @@ class TestMockNetworkDataframe(TestCase):
 class TestMockNetworkURI(TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        with patch("vantage6.mock.node.import_module", return_value=MagicMock()):
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
             self.network = MockNetwork(
                 module_name=TEST_ALGORITHM_NAME,
                 datasets=[
                     {
-                        DB_LABEL_1: {
+                        DATASET_LABEL: {
                             "database": MOCK_DATA_CSV,
                             "db_type": MockDatabaseType.CSV.value,
                         }
@@ -113,9 +118,10 @@ class TestMockNetworkURI(TestCase):
         """Test if network is properly initialized"""
         self.assertEqual(len(self.network.nodes), 1)
         self.assertEqual(len(self.network.nodes[0].dataframes), 0)
-        self.assertEqual(
-            self.network.nodes[0].datasets[DB_LABEL_1]["database"], MOCK_DATA_CSV
+        db_matched = next(
+            db for db in self.network.nodes[0].datasets if db.label == DATASET_LABEL
         )
+        self.assertEqual(db_matched.database, MOCK_DATA_CSV)
 
     def test_node_initialization(self):
         """Test if node is properly initialized"""

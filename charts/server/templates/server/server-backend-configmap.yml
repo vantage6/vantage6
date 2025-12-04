@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-vantage6-server-config
+  name: {{ .Release.Name }}-configmap
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yaml: |
@@ -29,7 +29,7 @@ data:
     {{- if .Values.database.external }}
     uri: {{ .Values.database.uri }}
     {{- else }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres-service:5432/{{ .Values.database.name }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres:5432/{{ .Values.database.name }}
     {{- end }}
     {{- if .Values.server.cors_allowed_origins }}
     cors_allowed_origins:
@@ -39,7 +39,7 @@ data:
     {{- end }}
     {{- if .Values.rabbitmq }}
     rabbitmq:
-      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq-service:5672/{{ .Values.rabbitmq.vhost }}
+      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost }}
     {{- end }}
     {{- if .Values.server.dev.host_uri }}
     dev:
@@ -66,17 +66,12 @@ data:
     {{- if .Values.server.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.server.runs_data_cleanup_include_args }}
     {{- end }}
-    {{- if .Values.server.prometheus }}
-    {{- if .Values.server.prometheus.enabled }}
+    {{- if and .Values.prometheus .Values.prometheus.enabled }}
     prometheus:
-      enabled: {{ .Values.server.prometheus.enabled }}
-      {{- if .Values.server.prometheus.start_with_server }}
-      start_with_server: {{ .Values.server.prometheus.start_with_server }}
+      enabled: {{ .Values.prometheus.enabled }}
+      {{- if .Values.prometheus.exporter_port }}
+      exporter_port: {{ .Values.prometheus.exporter_port }}
       {{- end }}
-      {{- if .Values.server.prometheus.exporter_port }}
-      exporter_port: {{ .Values.server.prometheus.exporter_port }}
-      {{- end }}
-    {{- end }}
     {{- end }}
     {{- if .Values.server.large_result_store }}
     large_result_store:

@@ -65,7 +65,6 @@ templates_path = ["_templates"]
 # in other files, and excluding them here prevents duplicate errors.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "common/*.rst"]
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

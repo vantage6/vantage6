@@ -152,6 +152,10 @@ export class ParameterStepComponent implements OnInit, OnDestroy {
   }
 
   clearForm(): void {
+    // Remove all existing controls to prevent validation errors from old function parameters
+    Object.keys(this.formGroup.controls).forEach((key) => {
+      this.formGroup.removeControl(key);
+    });
     this.formGroup.reset();
   }
 

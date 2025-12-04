@@ -142,7 +142,7 @@ def helm_uninstall(
         )
         info(f"Successfully uninstalled release '{release_name}'.")
     except subprocess.CalledProcessError as e:
-        error(f"Failed to uninstall release '{release_name}': {e.stderr}")
+        error(f"Failed to uninstall release '{release_name}': {e}")
     except FileNotFoundError:
         error(
             "Helm command not found. Please ensure Helm is installed and available in "

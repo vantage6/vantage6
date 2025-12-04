@@ -200,10 +200,6 @@ exceptions:
    algorithm you can use the ``HOST``, ``POST`` and ``API_PATH`` to find
    the address of the server.
 
-.. note::
-    We are working on a whitelisting feature which allows a node to
-    configure addresses that the algorithm container is able to reach.
-
 VPN connection
 ^^^^^^^^^^^^^^
 

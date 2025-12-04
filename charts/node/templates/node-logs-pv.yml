@@ -1,8 +1,8 @@
-{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-vantage6-node-logs-pv" .Release.Name))) (eq .Values.node.logging.storageClass "local-storage") }}
+{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name))) (eq .Values.node.logging.storageClass "local-storage") }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Release.Name }}-vantage6-node-logs-pv
+  name: {{ .Release.Name }}-logs-pv
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "node.labels" . | indent 4 }}

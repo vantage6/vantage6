@@ -63,7 +63,7 @@ keep track of your changes. An initial commit of the boilerplate code could be:
    git commit -m "Initial commit"
 
 Note that having your code in a git repository is necessary if you want to
-:ref:`update your algorithm <algo-dev-update-algo>`.
+:ref:`update your algorithm <algo-dev-update-algo>` at a later stage.
 
 Implementing your algorithm
 ---------------------------
@@ -205,6 +205,10 @@ Data extraction function
 
        return df
 
+Note that the ``USERNAME`` and ``PASSWORD`` environment variables are not provided by the
+vantage6 infrastructure, but by the node configuration file as explained in the
+:ref:`algo-env-vars` section.
+
 Preprocessing function
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -256,6 +260,12 @@ vantage6 algorithm tools:
       def my_function(data: pd.DataFrame):
          return data
 
+   All data extraction and preprocessing functions provided by the vantage6 algorithm
+   tools package are decorated with the
+   ``handle_pandas_errors`` decorator, so that any error occurring during the execution
+   of the function will be caught and a generic error message will be returned instead
+   of the traceback.
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
@@ -275,10 +285,17 @@ be easy to switch between the two. The following example shows how to use the
 
 .. code:: python
 
-        from vantage6.mock.mock_network import MockNetwork
+        from vantage6.algorithm.mock.mock_network import MockNetwork
         network = MockNetwork(
             module_name="my_algorithm",
-            datasets=[{"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}}],
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 2
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 3
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+            ],
         )
         client = network.user_client
         client.dataframe.create(
@@ -301,11 +318,18 @@ DataFrame instead of a string for the database value:
 .. code:: python
 
         import pandas as pd
-        from vantage6.mock.mock_network import MockNetwork
+        from vantage6.algorithm.mock.mock_network import MockNetwork
 
         network = MockNetwork(
             module_name="my_algorithm",
-            datasets=[{"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})}],
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+                # datasets for node 2
+                {"dataset_1": pd.DataFrame({"column_1": [4, 5, 6]})},
+                # datasets for node 3
+                {"dataset_1": pd.DataFrame({"column_1": [7, 8, 9]})},
+            ],
         )
         client = network.user_client
         client.task.create(
@@ -374,8 +398,32 @@ Here are a few examples of how to build and upload your image:
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
 
+Uploading your algorithm to the algorithm store
+-----------------------------------------------
+
+To upload your algorithm to the algorithm store, you should generate an
+``algorithm.json`` file, that contains the metadata of your algorithm, such as,
+which functions are available, which arguments are needed, etc.
+
+The easiest way to generate this file is to run the following command:
+
+.. code:: bash
+
+   v6 algorithm generate-store-json
+
+That command will help you to generate the appropriate JSON file. Note that type hints
+and docstrings are important to generate a fully correct JSON file.
+
+Once you have the ``algorithm.json`` file, you can upload it to the algorithm store
+by going to the relevant page in the UI and uploading the file.
+
 Calling your algorithm from vantage6
 ------------------------------------
+
+.. TODO v5+ remove this when implemented
+.. warning::
+
+    This does not work yet in v5 - the ``v6 test`` commands are not implemented yet.
 
 If you want to test your algorithm in the context of vantage6, you should
 set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``

@@ -1,15 +1,25 @@
 import json
 from unittest import TestCase
 
-from vantage6.mock import MockNetwork
-from vantage6.mock.server import MockServer
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.server import MockServer
 
 
 class TestMockServer(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
-            module_name="test_algorithm", datasets=[], collaboration_id=1
+            module_name="test_algorithm",
+            datasets=[
+                # {
+                #     "dataset_1": {
+                #         "database": pd.DataFrame(
+                #             {"id": [1, 2, 3], "value": [10, 20, 30]}
+                #         ),
+                #     }
+                # }
+            ],
+            collaboration_id=1,
         )
         self.server = MockServer(self.network)
 

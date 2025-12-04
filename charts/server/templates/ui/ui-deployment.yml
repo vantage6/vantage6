@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-vantage6-frontend-deployment
+  name: {{ .Release.Name }}-ui
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -21,7 +21,7 @@ spec:
       containers:
       - name: vantage6-server-frontend
         image: {{ .Values.ui.image }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ .Values.ui.imagePullPolicy | default "Always" }}
         ports:
         - containerPort: 80
         env:

@@ -123,14 +123,6 @@ class Users(AlgorithmStoreResources):
               type: integer
             description: Role that is assigned to user
           - in: query
-            name: can_review
-            schema:
-              type: boolean
-            description: >-
-              Filter users that can review algorithms. If true, only users that are
-              allowed to review algorithms are returned. If false, only users that are
-              not allowed to review algorithms are returned.
-          - in: query
             name: reviewers_for_algorithm_id
             schema:
               type: integer
@@ -190,21 +182,7 @@ class Users(AlgorithmStoreResources):
                 .filter(db.Role.id == args["role_id"])
             )
 
-        # find users that can review algorithms
-        # TODO v5+ this option is superseded by the reviewers_for_algorithm_id option.
-        # Remove it in 5.0.
-        if "can_review" in args:
-            can_review = bool(args["can_review"])
-            # TODO this approach may not be the most efficient if there are many users.
-            # Consider improving.
-            reviewers = [
-                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
-            ]
-            if can_review:
-                q = q.filter(db.User.id.in_(reviewers))
-            else:
-                q = q.filter(db.User.id.notin_(reviewers))
-
+        # find users that can review this algorithm
         if "reviewers_for_algorithm_id" in args:
             try:
                 algorithm_id = int(args["reviewers_for_algorithm_id"])

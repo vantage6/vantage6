@@ -152,6 +152,11 @@ jobs:
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
+        # TODO v5+ remove this at some point. It is here now because helm plugin install
+        # otherwise requires --verify=false flags as helm v4 appears unsupported by the
+        # plugin at present.
+        with:
+          version: v3.18.4
 
       - name: Login to harbor2.vantage6.ai
         env:

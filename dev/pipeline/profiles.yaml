@@ -1,10 +1,11 @@
+# This file lists profiles to run devspace in a custom way.
+version: v2beta1
 # Profile to run without local Keycloak
 # This profile removes the local Keycloak deployment and configures all components to
 # use external Keycloak
 # You can use this profile by running `devspace run start-dev --profile no-local-auth`.
 # When doing so, also make sure to set the environment variables in the `.devspace/.env`
 # file.
-version: v2beta1
 profiles:
 - name: no-local-auth
   patches:
@@ -70,3 +71,43 @@ profiles:
         image: ${UI_IMAGE}
         dockerfile: docker/ui_dev.Dockerfile
         context: .
+
+- name: with-prometheus
+  patches:
+  # Add prometheus folder creation to the create-log-folder hook
+  - op: replace
+    path: hooks/2/command
+    value: |
+      echo "Creating log folder"
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/server
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/prometheus
+  # Enable Prometheus in the server Helm values
+  - op: replace
+    path: deployments.vantage6-server.helm.values.prometheus.enabled
+    value: true
+  - op: add
+    path: deployments.vantage6-server.helm.values.prometheus.exporter_port
+    value: 7603
+  - op: add
+    path: deployments.vantage6-server.helm.values.prometheus.storageSize
+    value: "2Gi"
+  - op: add
+    path: deployments.vantage6-server.helm.values.prometheus.storageClass
+    value: local-storage
+  - op: add
+    path: deployments.vantage6-server.helm.values.prometheus.volumeHostPath
+    value: ${HOST_DATA_PATH}/prometheus
+  # Replace the entire ports array to include prometheus exporter (7603) port forwards
+  - op: replace
+    path: dev.vantage6-server.ports
+    value:
+      - port: 7601:7601
+        bindAddress: localhost
+      - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
+      - port: 7603:7603
+        bindAddress: localhost
+      - port: 7603:7603
+        bindAddress: ${PORTS_BIND_ADDRESS}

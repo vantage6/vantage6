@@ -1,7 +1,8 @@
 import logging
 import uuid
 
-# TODO v5+ check if this is still needed.
+# TODO check if this is still needed, now that in v5 we no longer use the old
+# v6 dev create-demo-network (maybe still required for the new dev env / sandbox).
 # uwsgi is not available when running outside of a uwsgi process.
 # (see https://uwsgi-docs.readthedocs.io/en/latest/PythonModule.html)
 # This prevents a ModuleNotFoundError if this resource is loaded

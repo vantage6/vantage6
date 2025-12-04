@@ -7,7 +7,6 @@ require external parameters like minimum and maximum values or means and
 standard deviations for scaling operations.
 """
 
-import numpy as np
 import pandas as pd
 
 from vantage6.algorithm.tools.error_handling import handle_pandas_errors
@@ -408,7 +407,7 @@ def extract_from_string(
     df: pd.DataFrame,
     column: str,
     pattern: str,
-    not_found: str | None = np.nan,
+    not_found: str | None = None,
     keep_original: bool = True,
     output_column: str = "extracted",
 ) -> pd.DataFrame:
@@ -423,7 +422,7 @@ def extract_from_string(
         The name of the column containing the string to be processed.
     pattern : str
         The regex pattern to extract.
-    not_found : str | None, default=np.nan
+    not_found : str | None, default=None
         The value to insert if the pattern is not found.
     keep_original : bool, default=True
         If True, retains the original column. If False, removes the original

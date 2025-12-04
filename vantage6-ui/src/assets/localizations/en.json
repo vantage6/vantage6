@@ -28,7 +28,8 @@
     "parameter": "Parameter",
     "show_more": "Show more",
     "show_less": "Show less",
-    "details-title": "Details"
+    "details-title": "Details",
+    "errors": "Errors"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -485,6 +486,7 @@
     "title": "Add a new algorithm to the algorithm store",
     "subtitle": "Add algorithm details",
     "short-title": "Add algorithm",
+    "errors-explanation": "Your form is invalid. Please fix the following errors before submitting the form:",
     "function": {
       "title": "Function",
       "add": "Add function",

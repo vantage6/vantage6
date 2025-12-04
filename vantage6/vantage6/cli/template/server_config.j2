@@ -43,6 +43,13 @@ server:
   # The image used to start the server
   image: {{ server.image | default('harbor2.vantage6.ai/infrastructure/server:latest') }}
 
+  # Server image pull policy.
+  # Possible values are:
+  # - Always: always pull the image from the registry
+  # - IfNotPresent: pull the image from the registry if it is not present on the server
+  # - Never: never pull the image from the registry
+  imagePullPolicy: {{ server.imagePullPolicy | default('Always') }}
+
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
@@ -119,8 +126,13 @@ server:
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: {{ server.dev.forward_ports | default(false) }}
     # If forward_ports is true, these are the ports that will be exposed on the host.
-    local_port_to_expose: {{ server.dev.local_port_to_expose | default(30761) }}
+    local_hub_port_to_expose: {{ server.dev.local_hub_port_to_expose | default(30761) }}
     local_ui_port_to_expose: {{ server.dev.local_ui_port_to_expose | default(30760) }}
+    {% if server.dev.local_prometheus_port_to_expose is defined %}
+    local_prometheus_port_to_expose: {{ server.dev.local_prometheus_port_to_expose }}
+    {% else %}
+    # local_prometheus_port_to_expose: 30763
+    {% endif %}
   {% endif %}
 
   # If you want to couple algorithm stores to the server on startup, you can add them here.
@@ -158,36 +170,6 @@ server:
   {% if server.runs_data_cleanup_include_args is not defined %}
   # runs_data_cleanup_include_args: false
   {% endif %}
-
-  # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
-  # This is done using Prometheus. There are two components to this:
-  # 1. The Prometheus exporter (running as part of the vantage6 server), which collects
-  #    the metrics from the nodes.
-  # 2. The Prometheus server (running as a separate Docker container), which scrapes the
-  #     metrics exposed by the Prometheus exporter and stores them.
-  # The exporter is started by default when the server starts (if prometheus is enabled).
-  # The Prometheus server can be started separately.
-  prometheus:
-    # Set to true to enable Prometheus reporting. Default is false.
-    {% if server.prometheus is defined %}
-    enabled: {{ server.prometheus.enabled | default(false) }}
-    {% else %}
-    enabled: false
-    {% endif %}
-    # Set to true to start the Prometheus server when starting the server
-    {% if server.prometheus is defined and server.prometheus.start_with_server is defined %}
-    start_with_server: {{ server.prometheus.start_with_server }}
-    {% else %}
-    # start_with_server: false
-    {% endif %}
-    # The port on which the Prometheus exporter will be available. This is the port that the Prometheus server will scrape.
-    # Note: The Prometheus server assumes the exporter is accessible via the Docker container's hostname.
-    # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
-    {% if server.prometheus is defined and server.prometheus.exporter_port is defined %}
-    exporter_port: {{ server.prometheus.exporter_port }}
-    {% else %}
-    # exporter_port: 7603
-    {% endif %}
 
   # set up with which origins the server should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
@@ -263,6 +245,8 @@ ui:
 
   # The image of the UI
   image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
+  # UI image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI
   port: {{ ui.port | default(7600) }}
   # keycloak realm
@@ -280,3 +264,45 @@ ui:
   communityStoreUrl: {{ ui.communityStoreUrl | default('https://store.uluru.vantage6.ai') }}
   # Community algorithm store API path
   communityStoreApiPath: {{ ui.communityStoreApiPath | default('/api') }}
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+#    the metrics from the nodes.
+# 2. The Prometheus server (running as a separate service), which scrapes the
+#     metrics exposed by the Prometheus exporter and stores them.
+prometheus:
+  # Set to true to enable Prometheus reporting. Default is false.
+  {% if prometheus.enabled is defined %}
+  enabled: {{ prometheus.enabled | default(false) }}
+  {% else %}
+  enabled: false
+  {% endif %}
+
+  # **The settings below are only used if enabled is true**
+
+  # The port on which the Prometheus exporter will be available.
+  {% if prometheus is defined and prometheus.exporter_port is defined %}
+  exporter_port: {{ prometheus.exporter_port }}
+  {% else %}
+  # exporter_port: 7603
+  {% endif %}
+
+  # The image to use for the Prometheus server.
+  {% if prometheus.image is defined %}
+  image: {{ prometheus.image }}
+  {% else %}
+  # image: prom/prometheus:latest
+  {% endif %}
+  # The size of the storage for the Prometheus server.
+  {% if prometheus.storageSize is defined %}
+  storageSize: {{ prometheus.storageSize }}
+  {% else %}
+  # storageSize: 2Gi
+  {% endif %}
+  # The kubernetes storage class to use for the Prometheus server.
+  {% if prometheus.storageClass is defined %}
+  storageClass: {{ prometheus.storageClass }}
+  {% else %}
+  # storageClass: local-storage
+  {% endif %}

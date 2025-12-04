@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-vantage6-store-postgres-pvc
+  name: {{ .Release.Name }}-pgres-pvc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   accessModes:

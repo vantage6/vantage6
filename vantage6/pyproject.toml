@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6"
-version = "5.0.0a43"
+version = "5.0.0b1"
 description = "vantage6 command line interface"
 readme = "README.md"
 license = {text = "MIT"}
@@ -25,13 +25,15 @@ dependencies = [
     "ipython==8.10.0",
     "jinja2==3.1.6",
     "kubernetes==28.1.0",
+    "marshmallow==3.20.2",
     "pandas>=2.2.3",
     "questionary==2.1.1",
     "rich==13.5.2",
     "schema==0.7.5",
     "sqlalchemy==2.0.37",
-    "vantage6-common==5.0.0a43",
-    "vantage6-client==5.0.0a43",
+    "vantage6-common==5.0.0b1",
+    "vantage6-client==5.0.0b1",
+    "vantage6-algorithm-tools==5.0.0b1",
 ]
 
 [project.optional-dependencies]
@@ -62,5 +64,4 @@ where = ["vantage6/cli"]
     "template/auth_config.j2",
     "sandbox/data/olympic_athletes_2016.csv",
     "sandbox/data/km_dataset.csv",
-    "prometheus/prometheus.yml",
 ]
