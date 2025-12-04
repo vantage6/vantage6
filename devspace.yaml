@@ -41,6 +41,9 @@ vars:
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
     default: ${PWD}/dev/.db/db_pv_store
+  AUTH_DATABASE_MOUNT_PATH:
+    question: "Where is your auth database located on the host machine?"
+    default: ${PWD}/dev/.db/db_pv_auth
   LOG_MOUNT_PATH:
     question: "Where should your logs be saved on the host machine?"
     default: ${PWD}/dev/.log
@@ -94,8 +97,8 @@ pipelines:
     run: |-
       run_pipelines \
         server \
-        populate \
-        node \
+        # populate \
+        # node \
         --sequential
 
   server:
@@ -103,16 +106,22 @@ pipelines:
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-server \
-        vantage6-store \
         vantage6-auth
+      echo "Waiting for Keycloak pod to be ready..."
+      kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=vantage6-auth-kc --timeout=300s
+      echo "Keycloak is ready, starting dev mode..."
       start_dev \
-        vantage6-server \
-        vantage6-server-db \
-        vantage6-ui \
-        vantage6-store \
-        vantage6-store-db \
         vantage6-auth
+      echo "Starting other components..."
+      # create_deployments \
+      #   vantage6-server \
+      #   vantage6-store
+      # start_dev \
+      #   vantage6-server \
+      #   vantage6-server-db \
+      #   vantage6-ui \
+      #   vantage6-store \
+      #   vantage6-store-db
 
   node:
     run: |-
@@ -134,6 +143,7 @@ pipelines:
         ${TASK_DIRECTORY} \
         ${SERVER_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH} \
+        ${AUTH_DATABASE_MOUNT_PATH} \
         ${LOG_MOUNT_PATH}
   stop-dev:
     run: |-
@@ -154,6 +164,11 @@ hooks:
       echo "Creating server database folder"
       python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
     events: ["before:deploy:vantage6-server"]
+  - name: "create-auth-database-folder"
+    command: |
+      echo "Creating auth database folder"
+      python dev/create_mount_directory.py ${AUTH_DATABASE_MOUNT_PATH}
+    events: ["before:deploy:vantage6-auth"]
   - name: "create-log-folder"
     command: |
       echo "Creating log folder"
@@ -203,6 +218,9 @@ deployments:
       values:
         service:
           type: ClusterIP
+        database:
+          volumePath: ${SERVER_DATABASE_MOUNT_PATH}
+          k8sNodeName: ${K8S_NODE_NAME}
         keycloak:
           # for dev environment, we don't need TLS for internal Keycloak communication
           # as everything is on HTTP, not HTTPS
@@ -375,9 +393,12 @@ dev:
   # This starts keycloak in development mode.
   vantage6-auth:
     labelSelector:
-      app.kubernetes.io/instance: vantage6-auth
+      app.kubernetes.io/instance: vantage6-auth-kc
     ports:
       - port: 8080:8080
+        bindAddress: localhost
+      - port: 8080:8080
+        bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the server container in development mode. It syncs the local files with
   # the container and starts the server in development mode. Code changes will be

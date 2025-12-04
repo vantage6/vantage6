@@ -1,4 +1,5 @@
 # PostgreSQL configuration for Keycloak
+# TODO v5+ update this file
 database:
   external: false
   image:

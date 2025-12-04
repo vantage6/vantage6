@@ -65,12 +65,11 @@ spec:
       {{- end }}
     {{- end }}
   {{- end }}
-  # Admin credentials are set via environment variables
-  # The operator will use these to configure the admin user
-  env:
-    - name: KEYCLOAK_ADMIN
-      value: {{ .Values.keycloak.auth.adminUser }}
-    - name: KEYCLOAK_ADMIN_PASSWORD
-      secret:
-        name: {{ .Release.Name }}kc-adm-secret
-        key: password
+  # Bootstrap admin credentials - used for initial admin user creation
+  # If not specified, the operator will generate random credentials and store them
+  # in a secret named <keycloak-cr-name>-initial-admin
+  {{- if and .Values.keycloak.auth.adminUser .Values.keycloak.auth.adminPassword }}
+  bootstrapAdmin:
+    user:
+      secret: {{ .Release.Name }}-kc-adm-secret
+  {{- end }}
