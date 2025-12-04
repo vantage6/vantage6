@@ -4,7 +4,7 @@ node:
   name: put-your-node-name-here
   apiKey: put-your-api-key-here
 
-  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakUrl: http://vantage6-auth.vantage6.svc.cluster.local
   keycloakRealm: vantage6
 
   server:

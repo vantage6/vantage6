@@ -65,7 +65,7 @@ def _stop_auth(auth_name: str, k8s_config: KubernetesConfig) -> None:
 
     # stop the port forwarding for auth service
     stop_port_forward(
-        service_name=f"{auth_name}-keycloak",
+        service_name=f"{auth_name}",
     )
 
     info(f"Auth {auth_name} stopped successfully.")

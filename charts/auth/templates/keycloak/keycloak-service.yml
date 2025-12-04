@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-keycloak
+  name: {{ .Release.Name }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "auth.labels" . | indent 4 }}

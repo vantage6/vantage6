@@ -1,7 +1,7 @@
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
-  name: {{ .Release.Name }}-keycloak
+  name: {{ .Release.Name }}-kc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "auth.labels" . | indent 4 }}
@@ -19,14 +19,14 @@ spec:
     {{- if .Values.database.external }}
     host: {{ .Values.keycloak.database.host }}
     {{- else }}
-    host: {{ .Release.Name }}-keycloak-postgres-service
+    host: {{ .Release.Name }}-kc-pgres
     {{- end }}
     database: {{ .Values.keycloak.database.database }}
     usernameSecret:
-      name: {{ .Release.Name }}-keycloak-db-secret
+      name: {{ .Release.Name }}-kc-db-secret
       key: username
     passwordSecret:
-      name: {{ .Release.Name }}-keycloak-db-secret
+      name: {{ .Release.Name }}-kc-db-secret
       key: password
   {{- if .Values.keycloak.production }}
   http:
@@ -72,5 +72,5 @@ spec:
       value: {{ .Values.keycloak.auth.adminUser }}
     - name: KEYCLOAK_ADMIN_PASSWORD
       secret:
-        name: {{ .Release.Name }}-keycloak-admin-secret
+        name: {{ .Release.Name }}kc-adm-secret
         key: password

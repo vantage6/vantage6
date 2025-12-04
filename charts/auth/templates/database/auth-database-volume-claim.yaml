@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-keycloak-postgres-pvc
+  name: {{ .Release.Name }}-kc-pgres-pvc
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 spec:
   accessModes:

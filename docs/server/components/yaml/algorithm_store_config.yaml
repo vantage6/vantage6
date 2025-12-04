@@ -28,7 +28,7 @@ store:
   port: 7602
 
   # Keycloak configuration
-  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakUrl: https://my-vantage6-auth.org
   keycloakRealm: vantage6
   keycloakAdminUsername: admin
   keycloakAdminPassword: admin

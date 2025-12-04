@@ -269,7 +269,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     "volumeHostPath": str(log_dir),
                 },
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"http://vantage6-{self.server_name}-auth-user-auth."
                     f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "persistence": {

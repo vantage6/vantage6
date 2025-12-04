@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-keycloak-postgres-deployment
+  name: {{ .Release.Name }}-kc-db
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "auth.labels" . | indent 4 }}
@@ -37,5 +37,5 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-keycloak-postgres-pvc
+          claimName: {{ .Release.Name }}-kc-pgres-pvc
 {{- end }}

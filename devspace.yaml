@@ -49,7 +49,7 @@ vars:
     default: docker-desktop
   KEYCLOAK_URL:
     source: env
-    default: http://vantage6-auth-keycloak.${CURRENT_NAMESPACE}.svc.cluster.local
+    default: http://vantage6-auth.${CURRENT_NAMESPACE}.svc.cluster.local
   KEYCLOAK_PUBLIC_URL:
     source: env
     default: http://localhost:8080
