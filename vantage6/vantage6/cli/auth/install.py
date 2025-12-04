@@ -66,8 +66,9 @@ def cli_auth_install_operator(
     Install the Keycloak Operator and its CRDs in the Kubernetes cluster.
 
     This command installs the Keycloak Operator which is required to manage
-    Keycloak instances using Custom Resources. The operator will be installed
-    in a dedicated namespace.
+    Keycloak instances using Custom Resources. This installation is done according to
+    the docs in
+    https://www.keycloak.org/operator/installation#_installing_by_using_kubectl_without_operator_lifecycle_manager
     """
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
@@ -120,27 +121,14 @@ def cli_auth_install_operator(
     )
     info("Keycloak Operator rolled out successfully.")
 
-    # # Step 3: Install the operator deployment
-    # info(f"Installing Keycloak Operator in namespace '{k8s_config.namespace}'...")
-    # operator_url = f"{base_url}/keycloak-operator.yaml"
-    # _run_kubectl_command(
-    #     [
-    #         "kubectl",
-    #         "apply",
-    #         "-f",
-    #         operator_url,
-    #     ],
-    #     k8s_config,
-    # )
+    # Wait for operator to be ready
+    info("Waiting for Keycloak Operator to become ready...")
+    _wait_for_operator_ready(k8s_config.namespace, k8s_config, timeout=300)
 
-    # # Step 4: Wait for operator to be ready
-    # info("Waiting for Keycloak Operator to become ready...")
-    # _wait_for_operator_ready(k8s_config.namespace, k8s_config, timeout=300)
-
-    # info(
-    #     f"Keycloak Operator installed successfully in namespace '{k8s_config.namespace}'."
-    # )
-    # info("You can now create Keycloak instances using Keycloak Custom Resources.")
+    info(
+        "Keycloak Operator installed successfully in namespace "
+        f"'{k8s_config.namespace}'."
+    )
 
 
 def _run_kubectl_command(
@@ -210,7 +198,7 @@ def _wait_for_operator_ready(
         Maximum time to wait in seconds (default: 300).
     """
     start_time = time.time()
-    deployment_name = "keycloak-operator-controller-manager"
+    deployment_name = "keycloak-operator"
 
     while time.time() - start_time < timeout:
         try:
@@ -222,7 +210,7 @@ def _wait_for_operator_ready(
                 "-n",
                 namespace,
                 "-o",
-                "jsonpath={.status.conditions[?(@.type=='Available')].status}",
+                'jsonpath={.status.conditions[?(@.type=="Available")].status}',
             ]
 
             if k8s_config.context:
@@ -239,35 +227,6 @@ def _wait_for_operator_ready(
                 info("Keycloak Operator is ready.")
                 return
 
-            # Also check if pods are running
-            command = [
-                "kubectl",
-                "get",
-                "pods",
-                "-n",
-                namespace,
-                "-l",
-                "control-plane=controller-manager",
-                "-o",
-                "jsonpath={.items[*].status.phase}",
-            ]
-
-            if k8s_config.context:
-                command.extend(["--context", k8s_config.context])
-
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-
-            if "Running" in result.stdout:
-                info("Keycloak Operator pods are running.")
-                # Give it a bit more time for the deployment to report ready
-                time.sleep(5)
-                continue
-
         except Exception as e:
             warning(f"Error checking operator status: {e}")
 
@@ -276,5 +235,5 @@ def _wait_for_operator_ready(
     error(f"Timeout: Keycloak Operator did not become ready within {timeout} seconds.")
     warning(
         "You can check the operator status manually with: "
-        f"kubectl get pods -n {namespace}"
+        f"kubectl get deployment keycloak-operator -n {namespace}"
     )
