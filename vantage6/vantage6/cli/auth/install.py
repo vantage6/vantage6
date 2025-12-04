@@ -1,3 +1,4 @@
+import os
 import subprocess
 import time
 
@@ -20,11 +21,17 @@ def _get_latest_keycloak_version() -> str:
     """
     github_api_url = "https://api.github.com/repos/keycloak/keycloak/releases/latest"
 
+    # Prepare headers with optional GitHub token for authentication
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if github_token:
+        headers["Authorization"] = f"token {github_token}"
+
     try:
         response = requests.get(
             github_api_url,
             timeout=5,
-            headers={"Accept": "application/vnd.github.v3+json"},
+            headers=headers,
         )
         response.raise_for_status()
         release_data = response.json()
@@ -37,6 +44,19 @@ def _get_latest_keycloak_version() -> str:
         if version.startswith("v"):
             version = version[1:]
         return version
+    except requests.HTTPError as e:
+        if e.response.status_code == 403:
+            error(
+                "GitHub API rate limit exceeded. "
+                "Set GITHUB_TOKEN environment variable to authenticate and increase rate limits, "
+                "or specify a version manually using the --operator-version flag."
+            )
+        else:
+            error(
+                f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. "
+            )
+        info("Please specify a version manually using the --operator-version flag.")
+        exit(1)
     except (requests.RequestException, KeyError, ValueError) as e:
         error(f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. ")
         info("Please specify a version manually using the --operator-version flag.")
@@ -48,8 +68,8 @@ def _get_latest_keycloak_version() -> str:
 @click.option("--namespace", default=None, help="Kubernetes namespace for the operator")
 @click.option(
     "--operator-version",
-    default=_get_latest_keycloak_version(),
-    help="Keycloak Operator version to install",
+    default=None,
+    help="Keycloak Operator version to install (defaults to latest from GitHub)",
 )
 @click.option(
     "--skip-crds/--no-skip-crds",
@@ -59,7 +79,7 @@ def _get_latest_keycloak_version() -> str:
 def cli_auth_install_operator(
     context: str | None,
     namespace: str | None,
-    operator_version: str,
+    operator_version: str | None,
     skip_crds: bool,
 ) -> None:
     """
@@ -70,6 +90,10 @@ def cli_auth_install_operator(
     the docs in
     https://www.keycloak.org/operator/installation#_installing_by_using_kubectl_without_operator_lifecycle_manager
     """
+    # Get the latest version if not specified
+    if operator_version is None:
+        operator_version = _get_latest_keycloak_version()
+
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     # Base URL for Keycloak Operator manifests
