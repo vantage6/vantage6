@@ -223,7 +223,7 @@ deployments:
         service:
           type: ClusterIP
         database:
-          volumePath: ${SERVER_DATABASE_MOUNT_PATH}
+          volumePath: ${AUTH_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         keycloak:
           # for dev environment, we don't need TLS for internal Keycloak communication
@@ -231,44 +231,43 @@ deployments:
           production: false
           tls:
             enabled: false
-          keycloakConfigCli:
-            configuration:
-              realm:
-                # overwrite password policy - we don't need to enforce a password policy
-                # for dev environment
-                passwordPolicy: ""
-                # Overwrite users: for dev environment, initialize admin user fully and
-                # turn off MFA, so we don't need to configure OTP and setup account on
-                # first login.
-                users:
-                  - username: admin
-                    enabled: true
-                    emailVerified: true
-                    email: admin@vantage6.org
-                    firstName: Admin
-                    lastName: Admin
-                    credentials:
-                      - type: password
-                        # note that for the dev env, we also overwrite the password in
-                        # the values.yaml file (this pw is easier)
-                        value: admin
-                  - username: service-account-backend-admin-client
-                    enabled: true
-                    serviceAccountClientId: backend-admin-client
-                    clientRoles:
-                      realm-management:
-                        - view-users
-                        - manage-users
-                        - view-clients
-                        - manage-clients
-                        - create-client
-                # turn off TOTP / MFA in dev environment
-                requiredActions:
-                  - alias: CONFIGURE_TOTP
-                    name: Configure OTP
-                    providerId: CONFIGURE_TOTP
-                    enabled: true
-                    defaultAction: false
+          realmImport:
+            enabled: true
+            # overwrite password policy - we don't need to enforce a password policy
+            # for dev environment
+            passwordPolicy: ""
+            # turn off TOTP / MFA in dev environment
+            requiredActions:
+              - alias: CONFIGURE_TOTP
+                name: Configure OTP
+                providerId: CONFIGURE_TOTP
+                enabled: true
+                defaultAction: false
+            # Overwrite users: for dev environment, initialize admin user fully and
+            # turn off MFA, so we don't need to configure OTP and setup account on
+            # first login.
+            users:
+              - username: admin
+                enabled: true
+                emailVerified: true
+                email: admin@vantage6.org
+                firstName: Admin
+                lastName: Admin
+                credentials:
+                  - type: password
+                    # note that for the dev env, we also overwrite the password in
+                    # the values.yaml file (this pw is easier)
+                    value: admin
+              - username: service-account-backend-admin-client
+                enabled: true
+                serviceAccountClientId: backend-admin-client
+                clientRoles:
+                  realm-management:
+                    - view-users
+                    - manage-users
+                    - view-clients
+                    - manage-clients
+                    - create-client
 
   # The server deployment contains the server, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
