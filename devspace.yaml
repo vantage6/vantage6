@@ -97,8 +97,8 @@ pipelines:
     run: |-
       run_pipelines \
         server \
-        # populate \
-        # node \
+        populate \
+        node \
         --sequential
 
   server:
@@ -113,15 +113,19 @@ pipelines:
       start_dev \
         vantage6-auth
       echo "Starting other components..."
-      # create_deployments \
-      #   vantage6-server \
-      #   vantage6-store
-      # start_dev \
-      #   vantage6-server \
-      #   vantage6-server-db \
-      #   vantage6-ui \
-      #   vantage6-store \
-      #   vantage6-store-db
+      create_deployments \
+        vantage6-server \
+        vantage6-store
+      echo "Waiting for database pods to be ready..."
+      kubectl wait --for=condition=ready pod -l app=vantage6-server,component=postgres --timeout=300s
+      kubectl wait --for=condition=ready pod -l app=store,component=postgres --timeout=300s
+      echo "Database pods are ready, starting dev mode..."
+      start_dev \
+        vantage6-server \
+        vantage6-server-db \
+        vantage6-ui \
+        vantage6-store \
+        vantage6-store-db
 
   node:
     run: |-
