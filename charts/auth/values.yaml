@@ -58,3 +58,85 @@ keycloak:
   # Service configuration
   service:
     type: ClusterIP  # ClusterIP, NodePort, or LoadBalancer
+
+  # Realm import configuration - used to initialize the vantage6 realm
+  # This creates a KeycloakRealmImport CRD that imports the realm configuration
+  realmImport:
+    enabled: true
+    realm: vantage6
+    # access token lifespan in seconds
+    accessTokenLifespan: 300
+    # sso session idle timeout in seconds. With default settings, this value
+    # controls the time before the refresh token expires. Note that if setting this
+    # to >3600, you probably also need to set ssoSessionMaxLifespan and/or
+    # clientSessionIdleTimeout and/or clientSessionMaxLifespan to higher values.
+    ssoSessionIdleTimeout: 1800
+    # password policy configuration
+    passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
+    # do not allow users to edit their username - this would lead to problems with
+    # syncing the user between keycloak and vantage6 server/store
+    editUsernameAllowed: false
+    # required actions for users. By setting defaultAction to true for configuring
+    # OTP, the user will be prompted to configure OTP on first login.
+    requiredActions:
+      - alias: CONFIGURE_TOTP
+        name: Configure OTP
+        providerId: CONFIGURE_TOTP
+        enabled: true
+        defaultAction: true
+        priority: 10
+    # users to be created in the realm. This initializes the realm with a default
+    # admin user. It also initializes the service account for the backend admin
+    # client to give it the necessary permissions to manage the realm.
+    users:
+      - username: admin
+        enabled: true
+        credentials:
+          - type: password
+            value: Admin123!
+        requiredActions:
+          - CONFIGURE_TOTP
+          - UPDATE_PASSWORD
+      - username: service-account-backend-admin-client
+        enabled: true
+        serviceAccountClientId: backend-admin-client
+        clientRoles:
+          realm-management:
+            - view-users
+            - manage-users
+            - view-clients
+            - manage-clients
+            - create-client
+    # clients to be created in the realm. This initializes the realm with a default
+    # public client and a backend admin client.
+    clients:
+      - clientId: public_client
+        publicClient: true
+        # redirect URIs are the URIs that keycloak is allowed to redirect to after
+        # authentication. This should be set to the UI URL, and to the Keycloak
+        # service on port 7681. The latter is needed for authentication from outside
+        # the browser - if e.g. the Python client authenticates, it will open a
+        # browser window to authenticate that redirects to the Keycloak service on
+        # port 7681.
+        redirectUris:
+          - "http://localhost:7600/*"
+          - "http://localhost:7681/*"
+        # By setting webOrigins to "+", we allow the same origins as redirectUris.
+        webOrigins:
+          - "+"
+        # The public client is only for users, not for nodes. Therefore, map a
+        # constant claim to indicate the that the client is a user.
+        protocolMappers:
+          - name: vantage6_client_type
+            protocol: openid-connect
+            protocolMapper: oidc-hardcoded-claim-mapper
+            consentRequired: false
+            config:
+              claim.name: vantage6_client_type
+              claim.value: user
+              access.token.claim: "true"
+      - clientId: backend-admin-client
+        publicClient: false
+        secret: myadminclientsecret
+        serviceAccountsEnabled: true
+        standardFlowEnabled: false
