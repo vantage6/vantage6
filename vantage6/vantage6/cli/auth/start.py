@@ -80,11 +80,12 @@ def cli_auth_start(
     # port forward for auth service
     info("Port forwarding for auth service")
     start_port_forward(
-        service_name=f"{ctx.helm_release_name}-keycloak",
+        service_name=f"{ctx.helm_release_name}",
         service_port=Ports.HTTP.value,
         port=port or Ports.DEV_AUTH.value,
         ip=ip,
-        k8s_config=k8s_config,
+        context=k8s_config.context,
+        namespace=k8s_config.namespace,
     )
 
     if attach:

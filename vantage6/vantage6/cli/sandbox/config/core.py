@@ -151,7 +151,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"http://vantage6-{self.server_name}-auth-user-auth."
                     f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
             },
@@ -248,7 +248,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-keycloak."
+                    f"http://vantage6-{self.server_name}-auth-user-auth."
                     f"{self.k8s_config.namespace}.svc.cluster.local"
                 ),
                 "policies": {
