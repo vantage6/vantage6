@@ -52,7 +52,7 @@ vars:
     default: docker-desktop
   KEYCLOAK_URL:
     source: env
-    default: http://vantage6-auth.${CURRENT_NAMESPACE}.svc.cluster.local
+    default: http://vantage6-auth-kc-service.${CURRENT_NAMESPACE}.svc.cluster.local:8080
   KEYCLOAK_PUBLIC_URL:
     source: env
     default: http://localhost:8080
@@ -97,8 +97,8 @@ pipelines:
     run: |-
       run_pipelines \
         server \
-        populate \
-        node \
+        # populate \
+        # node \
         --sequential
 
   server:
