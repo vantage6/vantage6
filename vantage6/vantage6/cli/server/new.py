@@ -113,7 +113,9 @@ def server_configuration_questionaire(
 
     # === Keycloak settings ===
     k8s_config = select_k8s_config(context=context, namespace=namespace)
-    keycloak_url = f"http://vantage6-auth.{k8s_config.namespace}.svc.cluster.local"
+    keycloak_url = (
+        f"http://vantage6-auth-kc-service.{k8s_config.namespace}.svc.cluster.local:8080"
+    )
     config["server"]["keycloakUrl"] = keycloak_url
 
     # set directory to store log files on host machine
