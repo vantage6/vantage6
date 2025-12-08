@@ -105,10 +105,21 @@ pipelines:
     run: |-
       run_dependencies --all
       ensure_pull_secrets --all
+      wait_for_pod_ready() {
+        selector="$1"
+        timeout="${2:-300s}"
+        interval="${3:-5}"
+        echo "  Waiting for pod(s) with selector '${selector}' to be created..."
+        until kubectl get pod -l "${selector}" -o name 2>/dev/null | grep -q '^pod/'; do
+          sleep "${interval}"
+        done
+        echo "  Waiting for pod(s) with selector '${selector}' to become Ready..."
+        kubectl wait --for=condition=ready pod -l "${selector}" --timeout="${timeout}"
+      }
       create_deployments \
         vantage6-auth
       echo "Waiting for Keycloak pod to be ready..."
-      kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=vantage6-auth-kc --timeout=300s
+      wait_for_pod_ready app.kubernetes.io/instance=vantage6-auth-kc 300s
       echo "Keycloak is ready, starting dev mode..."
       start_dev \
         vantage6-auth
@@ -117,8 +128,8 @@ pipelines:
         vantage6-server \
         vantage6-store
       echo "Waiting for database pods to be ready..."
-      kubectl wait --for=condition=ready pod -l app=vantage6-server,component=postgres --timeout=300s
-      kubectl wait --for=condition=ready pod -l app=store,component=postgres --timeout=300s
+      wait_for_pod_ready app=vantage6-server,component=postgres 300s
+      wait_for_pod_ready app=store,component=postgres 300s
       echo "Database pods are ready, starting dev mode..."
       start_dev \
         vantage6-server \
