@@ -97,8 +97,8 @@ pipelines:
     run: |-
       run_pipelines \
         server \
-        # populate \
-        # node \
+        populate \
+        node \
         --sequential
 
   server:
