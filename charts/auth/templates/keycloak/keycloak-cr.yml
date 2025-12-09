@@ -7,9 +7,9 @@ metadata:
 {{ include "auth.labels" . | indent 4 }}
 spec:
   instances: {{ .Values.keycloak.instances }}
-  {{- if .Values.keycloak.hostname.hostname }}
+  {{- if .Values.keycloak.hostname }}
   hostname:
-    hostname: {{ .Values.keycloak.hostname.hostname }}
+    hostname: {{ .Values.keycloak.hostname }}
   {{- else if not .Values.keycloak.production }}
   hostname:
     strict: false
@@ -17,11 +17,11 @@ spec:
   db:
     vendor: postgres
     {{- if .Values.database.external }}
-    host: {{ .Values.keycloak.database.host }}
+    host: {{ .Values.database.host }}
     {{- else }}
     host: {{ .Release.Name }}-kc-pgres
     {{- end }}
-    database: {{ .Values.keycloak.database.database }}
+    database: {{ .Values.database.name }}
     usernameSecret:
       name: {{ .Release.Name }}-kc-db-secret
       key: username
