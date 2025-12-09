@@ -7,6 +7,7 @@ import click
 from vantage6.common import error, info, warning
 from vantage6.common.globals import LOCALHOST, InstanceType, Ports
 
+from vantage6.cli.auth.install import check_and_install_keycloak_operator
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
@@ -63,6 +64,8 @@ def cli_auth_start(
     prestart_checks(ctx, InstanceType.AUTH, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
+
+    check_and_install_keycloak_operator(k8s_config)
 
     # TODO: re-enable when we save the auth logs
     # create_directory_if_not_exists(ctx.log_dir)
