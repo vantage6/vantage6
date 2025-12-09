@@ -8,6 +8,7 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.new import new
+from vantage6.cli.configuration_create import add_database_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 
 
@@ -49,7 +50,7 @@ def auth_configuration_questionaire() -> dict[str, Any]:
     Kubernetes-specific questionnaire to generate Helm values for the Keycloak helm
     chart.
     """
-    config = {"keycloak": {}}
+    config = {"keycloak": {}, "database": {}}
 
     is_production = q.confirm(
         "Do you want to use production settings? If not, the service will be configured"
@@ -58,6 +59,8 @@ def auth_configuration_questionaire() -> dict[str, Any]:
     ).unsafe_ask()
 
     config["keycloak"]["production"] = is_production
+
+    config = add_database_config(config, InstanceType.AUTH)
 
     if is_production:
         ui_url = q.text(

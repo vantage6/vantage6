@@ -264,7 +264,7 @@ def _wait_for_operator_ready(
     )
 
 
-def check_and_install_keycloak_operator():
+def check_and_install_keycloak_operator(k8s_config: KubernetesConfig):
     try:
         k8s_config = select_k8s_config(context=None, namespace=None)
         if not _check_keycloak_operator_installed(k8s_config):
