@@ -124,6 +124,10 @@ keycloak:
         email: admin@vantage6.org
         firstName: Admin
         lastName: Admin
+        clientRoles:
+          account:
+            - manage-account
+            - view-profile
         {% endif %}
         credentials:
           - type: password
