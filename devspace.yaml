@@ -269,13 +269,6 @@ deployments:
                     # note that for the dev env, we also overwrite the password in
                     # the values.yaml file (this pw is easier)
                     value: admin
-                # TODO for some reason, the realm import process does not assign this
-                # user the default realm roles, so we need to assign them manually.
-                # Figure out if that can be improved.
-                clientRoles:
-                  account:
-                    - manage-account
-                    - view-profile
               - username: service-account-backend-admin-client
                 enabled: true
                 serviceAccountClientId: backend-admin-client

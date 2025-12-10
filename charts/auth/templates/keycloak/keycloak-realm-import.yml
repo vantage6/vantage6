@@ -80,6 +80,8 @@ spec:
           {{- end }}
         {{- end }}
         {{- end }}
+        realmRoles:
+          - default-roles-{{ $.Values.keycloak.realmImport.realm | default "vantage6" }}
     {{- end }}
     {{- end }}
     {{- if .Values.keycloak.realmImport.clients }}
