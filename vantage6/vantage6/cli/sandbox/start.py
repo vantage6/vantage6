@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 from colorama import Fore, Style
 
-from vantage6.common import error, info
+from vantage6.common import error, info, warning
 from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
 from vantage6.client import Client
@@ -291,9 +291,7 @@ def _print_auth_credentials(server_name: str) -> None:
     auth_config = auth_ctx.config
 
     try:
-        admin_user = auth_config["keycloak"]["keycloakConfigCli"]["configuration"][
-            "realm"
-        ]["users"][0]
+        admin_user = auth_config["keycloak"]["realmImport"]["users"][0]
         username = admin_user["username"]
         password = admin_user["credentials"][0]["value"]
         info("--------------------------------")
@@ -306,8 +304,7 @@ def _print_auth_credentials(server_name: str) -> None:
         info(f"Password: {Fore.GREEN}{password}{Style.RESET_ALL}")
         info("--------------------------------")
     except KeyError:
-        # No user found, skip printing credentials
-        pass
+        warning("No user credentials found in the auth config.")
 
 
 def _wait_for_server_to_be_ready(server_url: str) -> None:
