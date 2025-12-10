@@ -140,6 +140,7 @@ def execute_sandbox_start(
         "--namespace",
         k8s_config.namespace,
         "--sandbox",
+        "--wait-ready",
     ]
     if local_chart_dir:
         cmd.extend(["--local-chart-dir", local_chart_dir])
@@ -239,7 +240,7 @@ def _initialize_sandbox(
     info("Populating server")
     node_details = populate_server_sandbox(
         server_url=server_url,
-        auth_url=f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         number_of_nodes=num_nodes,
     )
 
@@ -322,7 +323,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     client = Client(
         # TODO replace default API path global
         server_url=server_url,
-        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         log_level=LogLevel.ERROR,
     )
     max_retries = 100

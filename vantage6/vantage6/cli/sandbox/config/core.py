@@ -151,8 +151,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth."
-                    f"{self.k8s_config.namespace}.svc.cluster.local"
+                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
                 ),
             },
             "rabbitmq": {},
@@ -167,6 +167,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
+                "keycloakPublicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
             },
             "prometheus": prometheus_config,
         }
@@ -248,8 +249,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
                 "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth."
-                    f"{self.k8s_config.namespace}.svc.cluster.local"
+                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
                 ),
                 "policies": {
                     "allowLocalhost": True,
@@ -296,6 +297,8 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         config file.
         """
 
+        data_dir = self._create_and_get_data_dir(InstanceType.AUTH)
+
         config = {
             "keycloak": {
                 "production": False,
@@ -304,6 +307,10 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
                     f"{HTTP_LOCALHOST}:7681",
                 ],
+            },
+            "database": {
+                "volumePath": data_dir,
+                "k8sNodeName": self.k8s_config.k8s_node,
             },
         }
 
