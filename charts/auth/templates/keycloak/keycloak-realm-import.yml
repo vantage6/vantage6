@@ -1,0 +1,134 @@
+{{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: {{ .Release.Name }}-realm-import
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+spec:
+  keycloakCRName: {{ .Release.Name }}-kc
+  realm:
+    realm: {{ .Values.keycloak.realmImport.realm | default "vantage6" }}
+    enabled: {{ .Values.keycloak.realmImport.enabled | default true }}
+    {{- if .Values.keycloak.realmImport.accessTokenLifespan }}
+    accessTokenLifespan: {{ .Values.keycloak.realmImport.accessTokenLifespan }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.ssoSessionIdleTimeout }}
+    ssoSessionIdleTimeout: {{ .Values.keycloak.realmImport.ssoSessionIdleTimeout }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.passwordPolicy }}
+    passwordPolicy: {{ .Values.keycloak.realmImport.passwordPolicy | quote }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "editUsernameAllowed" }}
+    editUsernameAllowed: {{ .Values.keycloak.realmImport.editUsernameAllowed }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.requiredActions }}
+    requiredActions:
+    {{- range .Values.keycloak.realmImport.requiredActions }}
+      - alias: {{ .alias }}
+        name: {{ .name }}
+        providerId: {{ .providerId }}
+        enabled: {{ .enabled | default true }}
+        {{- if hasKey . "defaultAction" }}
+        defaultAction: {{ .defaultAction }}
+        {{- end }}
+        {{- if hasKey . "priority" }}
+        priority: {{ .priority }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.users }}
+    users:
+    {{- range .Values.keycloak.realmImport.users }}
+      - username: {{ .username }}
+        enabled: {{ .enabled | default true }}
+        {{- if hasKey . "emailVerified" }}
+        emailVerified: {{ .emailVerified }}
+        {{- end }}
+        {{- if hasKey . "email" }}
+        email: {{ .email }}
+        {{- end }}
+        {{- if hasKey . "firstName" }}
+        firstName: {{ .firstName }}
+        {{- end }}
+        {{- if hasKey . "lastName" }}
+        lastName: {{ .lastName }}
+        {{- end }}
+        {{- if .credentials }}
+        credentials:
+        {{- range .credentials }}
+          - type: {{ .type }}
+            value: {{ .value }}
+        {{- end }}
+        {{- end }}
+        {{- if .requiredActions }}
+        requiredActions:
+        {{- range .requiredActions }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+        {{- if hasKey . "serviceAccountClientId" }}
+        serviceAccountClientId: {{ .serviceAccountClientId }}
+        {{- end }}
+        {{- if .clientRoles }}
+        clientRoles:
+        {{- range $clientId, $roles := .clientRoles }}
+          {{ $clientId }}:
+          {{- range $roles }}
+            - {{ . }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+        realmRoles:
+          - default-roles-{{ $.Values.keycloak.realmImport.realm | default "vantage6" }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.clients }}
+    clients:
+    {{- range .Values.keycloak.realmImport.clients }}
+      - clientId: {{ .clientId }}
+        {{- if hasKey . "publicClient" }}
+        publicClient: {{ .publicClient }}
+        {{- end }}
+        {{- if hasKey . "secret" }}
+        secret: {{ .secret }}
+        {{- end }}
+        {{- if hasKey . "serviceAccountsEnabled" }}
+        serviceAccountsEnabled: {{ .serviceAccountsEnabled }}
+        {{- end }}
+        {{- if hasKey . "standardFlowEnabled" }}
+        standardFlowEnabled: {{ .standardFlowEnabled }}
+        {{- end }}
+        {{- if .redirectUris }}
+        redirectUris:
+        {{- range .redirectUris }}
+          - {{ . | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if .webOrigins }}
+        webOrigins:
+        {{- range .webOrigins }}
+          - {{ . | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if .protocolMappers }}
+        protocolMappers:
+        {{- range .protocolMappers }}
+          - name: {{ .name }}
+            protocol: {{ .protocol }}
+            protocolMapper: {{ .protocolMapper }}
+            {{- if hasKey . "consentRequired" }}
+            consentRequired: {{ .consentRequired }}
+            {{- end }}
+            {{- if .config }}
+            config:
+            {{- range $key, $value := .config }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end }}

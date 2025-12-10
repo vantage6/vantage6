@@ -77,20 +77,14 @@ def add_common_server_config(
 
     backend_config["api_path"] = DEFAULT_API_PATH
 
-    # === Database settings ===
-    config["database"]["volumePath"] = q.text(
-        "Where is your server database located on the host machine?",
-        default=f"{Path.cwd()}/dev/.db/db_pv_server",
-    ).unsafe_ask()
+    service_name = "hub" if instance_type == InstanceType.SERVER else "store"
 
-    config["database"]["k8sNodeName"] = q.text(
-        "What is the name of the k8s node where the databases are running?",
-        default="docker-desktop",
-    ).unsafe_ask()
+    config = add_database_config(config, instance_type)
 
     is_production = q.confirm(
-        "Do you want to use production settings for this server? If not, the server will "
-        "be configured to be more suitable for development or testing purposes.",
+        f"Do you want to use production settings for this {service_name}? If not, the "
+        f"{service_name} will be configured to be more suitable for development or "
+        "testing purposes.",
         default=True,
     ).unsafe_ask()
 
@@ -98,6 +92,33 @@ def add_common_server_config(
         config = _add_production_server_config(config)
 
     return config, is_production
+
+
+def add_database_config(config: dict, instance_type: InstanceType) -> dict:
+    """
+    Add the database configuration to the config
+    """
+    if instance_type == InstanceType.SERVER:
+        service_name = "hub"
+    elif instance_type == InstanceType.ALGORITHM_STORE:
+        service_name = "store"
+    elif instance_type == InstanceType.AUTH:
+        service_name = "auth"
+    else:
+        raise ValueError(f"Invalid instance type: {instance_type}")
+
+    # === Database settings ===
+    config["database"]["volumePath"] = q.text(
+        f"Where is your {service_name} database located on the host machine?",
+        default=f"{Path.cwd()}/dev/.db/db_pv_{service_name}",
+    ).unsafe_ask()
+
+    config["database"]["k8sNodeName"] = q.text(
+        "What is the name of the k8s node where the databases are running?",
+        default="docker-desktop",
+    ).unsafe_ask()
+
+    return config
 
 
 def _add_production_server_config(config: dict) -> dict:
