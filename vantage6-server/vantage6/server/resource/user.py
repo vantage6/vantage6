@@ -15,7 +15,6 @@ from vantage6.backend.common.auth import (
     create_service_account_in_keycloak,
     delete_service_account_in_keycloak,
     get_keycloak_admin_client,
-    get_keycloak_id_for_user,
 )
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
@@ -403,11 +402,7 @@ class Users(UserBase):
         if db.User.username_exists(data["username"]):
             return {"msg": "username already exists."}, HTTPStatus.BAD_REQUEST
 
-        if (
-            self.config.get("keycloak", {}).get("manage_users_and_nodes", True)
-            and not data.get("password")
-            and not data.get("is_service_account")
-        ):
+        if not data.get("password") and not data.get("is_service_account"):
             raise ValidationError(
                 "Password is required if the user has to be created in Keycloak"
             )
@@ -468,16 +463,13 @@ class Users(UserBase):
         # Ok, looks like we got most of the security hazards out of the way. Create
         # the user in keycloak and database.
         keycloak_service_account: KeycloakServiceAccount | None = None
-        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            if data.get("is_service_account"):
-                keycloak_service_account = create_service_account_in_keycloak(
-                    f"{data['username']}-user-client", is_node=False
-                )
-                keycloak_id = keycloak_service_account.user_id
-            else:
-                keycloak_id = self._create_user_in_keycloak(data)
+        if data.get("is_service_account"):
+            keycloak_service_account = create_service_account_in_keycloak(
+                f"{data['username']}-user-client", is_node=False
+            )
+            keycloak_id = keycloak_service_account.user_id
         else:
-            keycloak_id = get_keycloak_id_for_user(data["username"])
+            keycloak_id = self._create_user_in_keycloak(data)
 
         user = db.User(
             username=data["username"],
@@ -866,13 +858,10 @@ class User(UserBase):
                 for task in user.created_tasks:
                     task.delete()
 
-        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            if user.is_service_account:
-                delete_service_account_in_keycloak(user.keycloak_client_id)
-            else:
-                self._delete_user_in_keycloak(user)
+        if user.is_service_account:
+            delete_service_account_in_keycloak(user.keycloak_client_id)
         else:
-            log.info("User id=%s will not be deleted from Keycloak", id)
+            self._delete_user_in_keycloak(user)
 
         user.delete()
         log.info("user id=%s is removed from the database", id)

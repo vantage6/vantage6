@@ -14,8 +14,6 @@ server:
   keycloakAdminPassword: admin
   keycloakAdminClient: backend-admin-client
   keycloakAdminClientSecret: myadminclientsecret
-  keycloak:
-    manage_users_and_nodes: true
 
   port: 7601
   internal:

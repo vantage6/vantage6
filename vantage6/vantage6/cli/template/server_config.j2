@@ -17,14 +17,6 @@ server:
   keycloakAdminPassword: {{ server.keycloakAdminPassword | default('admin') }}
   keycloakAdminClient: {{ server.keycloakAdminClient | default('backend-admin-client') }}
   keycloakAdminClientSecret: {{ server.keycloakAdminClientSecret | default('myadminclientsecret') }}
-  {% if server.keycloak is defined %}
-  keycloak:
-    manage_users_and_nodes: {{ server.keycloak.manage_users_and_nodes | default(true) }}
-  {% endif %}
-  {% if server.keycloak is not defined %}
-  keycloak:
-    manage_users_and_nodes: true
-  {% endif %}
 
   {% if server.internal is defined %}
   internal:

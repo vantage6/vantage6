@@ -22,7 +22,6 @@ import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
-import { ServerConfigService } from 'src/app/services/server-config.service';
 
 @Component({
   selector: 'app-user-form',
@@ -50,7 +49,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
   @Input() user?: User;
   @Input() isServiceAccount: boolean = false;
   organizations: (BaseOrganization | Organization)[] = [];
-  manageUsersAndNodes: boolean = true;
   setPasswords: boolean = true;
 
   form = this.fb.nonNullable.group(
@@ -85,8 +83,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     private organizationService: OrganizationService,
     private ruleService: RuleService,
     private roleService: RoleService,
-    private permissionService: PermissionService,
-    private serverConfigService: ServerConfigService
+    private permissionService: PermissionService
   ) {
     super();
   }
@@ -152,8 +149,7 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
       this.organizations = await this.organizationService.getAllowedOrganizations(ResourceType.USER, OperationType.CREATE);
     }
 
-    this.manageUsersAndNodes = await this.serverConfigService.doesKeycloakManageUsersAndNodes();
-    this.setPasswords = this.manageUsersAndNodes && !this.isServiceAccount;
+    this.setPasswords = !this.isServiceAccount;
     this.togglePasswordValidators(this.setPasswords);
 
     // TODO these should depend on the logged-in user's permissions

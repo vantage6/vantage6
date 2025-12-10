@@ -11,7 +11,6 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { UserFormComponent } from '../../../../components/forms/user-form/user-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ServerConfigService } from 'src/app/services/server-config.service';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { FileService } from 'src/app/services/file.service';
@@ -28,7 +27,6 @@ export class UserCreateComponent extends BaseCreateComponent {
   constructor(
     private router: Router,
     private userService: UserService,
-    private serverConfigService: ServerConfigService,
     private dialog: MatDialog,
     private translateService: TranslateService,
     private fileService: FileService
@@ -45,8 +43,6 @@ export class UserCreateComponent extends BaseCreateComponent {
     // don't send password if user doesn't have to be created in keycloak
     if (this.isCreateServiceAccount) {
       userCreate.is_service_account = true;
-      delete userCreate.password;
-    } else if (!(await this.serverConfigService.doesKeycloakManageUsersAndNodes())) {
       delete userCreate.password;
     }
     const user = await this.userService.createUser(userCreate);
