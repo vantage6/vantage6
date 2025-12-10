@@ -86,9 +86,25 @@ def cli_auth_start(
         # )
 
 
-def _kubectl(args: list[str], k8s_config) -> None:
+def _kubectl(
+    args: list[str], k8s_config, check: bool = True
+) -> subprocess.CompletedProcess:
     """
     Run a kubectl command with optional context/namespace from k8s_config.
+
+    Parameters
+    ----------
+    args : list[str]
+        Arguments to pass to kubectl
+    k8s_config
+        Kubernetes configuration with context and namespace
+    check : bool
+        Whether to raise exception on non-zero exit code (default: True)
+
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The result of the subprocess call
     """
     cmd = ["kubectl"] + args
     if k8s_config.context:
@@ -96,7 +112,7 @@ def _kubectl(args: list[str], k8s_config) -> None:
     if k8s_config.namespace:
         cmd.extend(["--namespace", k8s_config.namespace])
     return subprocess.run(
-        cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        cmd, check=check, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
 
@@ -105,6 +121,8 @@ def _wait_for_keycloak_ready(release_name: str, k8s_config) -> None:
     Ensure Keycloak pod is ready and realm import job finished.
     """
     selector = f"app.kubernetes.io/instance={release_name}-kc"
+    job_name = f"{release_name}-realm-import"
+
     info("Waiting for Keycloak pod to be created...")
     while True:
         result = _kubectl(["get", "pod", "-l", selector], k8s_config)
@@ -117,3 +135,25 @@ def _wait_for_keycloak_ready(release_name: str, k8s_config) -> None:
         ["wait", "--for=condition=ready", "pod", "-l", selector, "--timeout", "300s"],
         k8s_config,
     )
+
+    info("Waiting for Keycloak realm import job to finish...")
+    # Check if the job exists first (don't raise exception if it doesn't)
+    job_check = _kubectl(["get", "job", job_name], k8s_config, check=False)
+    if job_check.returncode == 0:
+        # Job exists, wait for it to complete
+        try:
+            _kubectl(
+                [
+                    "wait",
+                    "--for=condition=complete",
+                    f"job/{job_name}",
+                    "--timeout",
+                    "120s",
+                ],
+                k8s_config,
+            )
+            info("Realm import job completed successfully.")
+        except subprocess.CalledProcessError:
+            warning("Realm import job did not complete in time; continuing startup.")
+    else:
+        info("No realm import job found (realm import may be disabled).")
