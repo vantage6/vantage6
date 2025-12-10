@@ -136,7 +136,14 @@ def _wait_for_keycloak_ready(release_name: str, k8s_config) -> None:
         k8s_config,
     )
 
-    info("Waiting for Keycloak realm import job to finish...")
+    info("Waiting for Keycloak realm import job to be created...")
+    while True:
+        result = _kubectl(["get", "job", job_name], k8s_config, check=False)
+        if result.returncode == 0:
+            break
+        else:
+            time.sleep(1)
+    info("Keycloak realm import job was created, waiting for it to finish...")
     # Check if the job exists first (don't raise exception if it doesn't)
     job_check = _kubectl(["get", "job", job_name], k8s_config, check=False)
     if job_check.returncode == 0:
