@@ -63,7 +63,7 @@ def cli_hub_new(
     }
     auth_name = f"{name}-auth"
     auth_credentials = {}
-    new(
+    auth_config = new(
         config_producing_func=auth_configuration_questionaire,
         config_producing_func_args=(auth_name, k8s_cfg, auth_credentials),
         name=auth_name,
@@ -74,12 +74,18 @@ def cli_hub_new(
 
     # create server service configuration
     info("Now, let's setup the vantage6 server...")
+    extra_config = {
+        "server": {
+            "keycloakAdminClientSecret": auth_config["keycloak"]["adminClientSecret"]
+        }
+    }
     new(
         config_producing_func=server_configuration_questionaire,
         config_producing_func_args=(name, system_folders),
         name=name,
         system_folders=system_folders,
         type_=InstanceType.SERVER,
+        extra_config=extra_config,
     )
 
     # create algorithm store service configuration
@@ -105,15 +111,10 @@ def _get_base_config() -> dict[str, Any]:
         default="https://auth.vantage6.ai",
     ).unsafe_ask()
 
-    base_config["has_ui"] = q.confirm(
-        "Do you want to use a UI?",
-        default=True,
+    base_config["ui_url"] = q.text(
+        "On what address will the UI be reachable?",
+        default="https://ui.vantage6.ai",
     ).unsafe_ask()
-    if base_config["has_ui"]:
-        base_config["ui_url"] = q.text(
-            "On what address will the UI be reachable?",
-            default="https://ui.vantage6.ai",
-        ).unsafe_ask()
 
     base_config["has_store"] = q.confirm(
         "Do you want to use an algorithm store?",

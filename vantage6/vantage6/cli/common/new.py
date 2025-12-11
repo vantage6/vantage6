@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from pathlib import Path
 
 from colorama import Fore, Style
 
@@ -20,7 +19,7 @@ def new(
     type_: InstanceType,
     is_sandbox: bool = False,
     extra_config: dict | None = None,
-) -> Path | None:
+) -> dict | None:
     """
     Create a new configuration.
 
@@ -44,8 +43,8 @@ def new(
 
     Returns
     -------
-    Path | None
-        Path to the configuration file. None if the process is aborted for any reason.
+    dict | None
+        Dict with the configuration. None if the process is aborted for any reason.
     """
     name = prompt_config_name(name)
 
@@ -76,7 +75,7 @@ def new(
 
     # create config in ctx location
     try:
-        cfg_file = make_configuration(
+        config, cfg_file = make_configuration(
             config_producing_func=config_producing_func,
             config_producing_func_args=config_producing_func_args,
             type_=type_,
@@ -95,4 +94,4 @@ def new(
         f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name} "
         f"start {flag}{Style.RESET_ALL}"
     )
-    return cfg_file
+    return config

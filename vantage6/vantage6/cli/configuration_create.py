@@ -150,7 +150,7 @@ def make_configuration(
     system_folders: bool,
     is_sandbox: bool = False,
     extra_config: dict | None = None,
-) -> Path:
+) -> tuple[dict, Path]:
     """
     Create a configuration file for a node or server instance.
 
@@ -174,8 +174,8 @@ def make_configuration(
 
     Returns
     -------
-    Path
-        Path to the configuration file
+    tuple[dict, Path]
+        Dictionary with the configuration and path to the configuration file
     """
     # for defaults and where to save the config
     dirs = AppContext.instance_folders(type_, instance_name, system_folders)
@@ -211,7 +211,7 @@ def make_configuration(
     config_manager.put(config)
     config_file = config_manager.save(config_file)
 
-    return config_file
+    return config, config_file
 
 
 def select_configuration_questionnaire(

@@ -56,10 +56,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.k8s_config = k8s_config
         self.with_prometheus = with_prometheus
 
-        self.server_config_file = None
-        self.store_config_file = None
-        self.auth_config_file = None
-
     def generate_server_configs(self) -> None:
         """Generates the demo network."""
 
@@ -193,7 +189,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             extra_config["ui"] = ui_config
 
         # Create the server config file
-        self.server_config_file = new(
+        new(
             config_producing_func=self.__server_config_return_func,
             config_producing_func_args=(extra_config,),
             name=self.server_name,
@@ -212,7 +208,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             InstanceType.ALGORITHM_STORE, is_log_dir=True
         )
 
-        self.store_config_file = new(
+        new(
             config_producing_func=self.__algo_store_config_return_func,
             config_producing_func_args=(extra_config, data_dir, log_dir),
             name=f"{self.server_name}-store",
@@ -282,7 +278,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
     def _create_auth_config(self) -> None:
         """Create auth configuration file (YAML)."""
-        self.auth_config_file = new(
+        new(
             config_producing_func=self.__auth_config_return_func,
             config_producing_func_args=(self.extra_auth_config,),
             name=f"{self.server_name}-auth",

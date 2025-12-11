@@ -4,6 +4,7 @@ import questionary as q
 
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
+    MAIN_VERSION_NAME,
     InstanceType,
 )
 
@@ -45,13 +46,13 @@ def server_configuration_questionaire(
     # === Server settings ===
     config["server"]["image"] = q.text(
         "Server Docker image:",
-        default="harbor2.vantage6.ai/infrastructure/server:latest",
+        default=f"harbor2.vantage6.ai/infrastructure/server:{MAIN_VERSION_NAME}",
     ).unsafe_ask()
 
     # === UI settings ===
     config["ui"]["image"] = q.text(
         "UI Docker image:",
-        default="harbor2.vantage6.ai/infrastructure/ui:latest",
+        default=f"harbor2.vantage6.ai/infrastructure/ui:{MAIN_VERSION_NAME}",
     ).unsafe_ask()
 
     # TODO v5+ we need to add a question to ask which algorithm stores are allowed, to
