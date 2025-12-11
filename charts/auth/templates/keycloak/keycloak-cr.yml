@@ -68,7 +68,7 @@ spec:
   # Bootstrap admin credentials - used for initial Keycloak admin user creation
   # If not specified, the operator will generate random credentials and store them
   # in a secret named <keycloak-cr-name>-initial-admin which is inconvenient.
-  {{- $keycloakAdminExistingSecret := .Values.keycloak.auth.adminUserSecret }}
+  {{- $keycloakAdminExistingSecret := .Values.keycloak.auth.adminUserSecret | default "" }}
   {{- $hasExistingKCAdminSecret := ne (trim $keycloakAdminExistingSecret) "" }}
   {{- $keycloakAdminSecretName := ($keycloakAdminExistingSecret | default (printf "%s-kc-adm-secret" .Release.Name)) }}
   bootstrapAdmin:
