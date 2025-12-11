@@ -99,6 +99,7 @@ class CLICommandName(StrEnumBase):
     DEV = "dev"
     USE = "use"
     AUTH = "auth"
+    HUB = "hub"
 
 
 class InfraComponentName(StrEnumBase):

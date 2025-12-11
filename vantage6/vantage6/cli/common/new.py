@@ -19,6 +19,7 @@ def new(
     system_folders: bool,
     type_: InstanceType,
     is_sandbox: bool = False,
+    extra_config: dict | None = None,
 ) -> Path | None:
     """
     Create a new configuration.
@@ -37,6 +38,9 @@ def new(
         Type of the configuration (node, server, algorithm store, etc)
     is_sandbox : bool
         Whether to create a sandbox configuration or not
+    extra_config: dict | None = None
+        Extra configuration to add. Note that this may overwrite the configuration
+        produced by the config producing function if the keys overlap.
 
     Returns
     -------
@@ -79,6 +83,7 @@ def new(
             instance_name=name,
             system_folders=system_folders,
             is_sandbox=is_sandbox,
+            extra_config=extra_config,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")

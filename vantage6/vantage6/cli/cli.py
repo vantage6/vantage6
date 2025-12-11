@@ -15,7 +15,6 @@ from vantage6.cli.auth.attach import cli_auth_attach
 from vantage6.cli.auth.files import cli_auth_files
 from vantage6.cli.auth.install import cli_auth_install_operator
 from vantage6.cli.auth.list import cli_auth_configuration_list
-from vantage6.cli.auth.new import cli_auth_new
 from vantage6.cli.auth.remove import cli_auth_remove
 from vantage6.cli.auth.start import cli_auth_start
 from vantage6.cli.auth.stop import cli_auth_stop
@@ -24,6 +23,7 @@ from vantage6.cli.dev.rebuild import cli_rebuild_dev_env
 from vantage6.cli.dev.start import cli_start_dev_env
 from vantage6.cli.dev.stop import cli_stop_dev_env
 from vantage6.cli.globals import CLICommandName
+from vantage6.cli.hub.new import cli_hub_new
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.files import cli_node_files
@@ -185,7 +185,6 @@ def cli_auth() -> None:
 
 
 # Define the commands for the auth group
-cli_auth.add_command(cli_auth_new, name="new")
 cli_auth.add_command(cli_auth_start, name="start")
 cli_auth.add_command(cli_auth_stop, name="stop")
 cli_auth.add_command(cli_auth_attach, name="attach")
@@ -206,6 +205,18 @@ def cli_use() -> None:
 # Define the commands for the use group
 cli_use.add_command(cli_use_context, name="context")
 cli_use.add_command(cli_use_namespace, name="namespace")
+
+
+# Define the hub group
+@click.group(name=CLICommandName.HUB.value)
+def cli_hub() -> None:
+    """
+    Manage your vantage6 hub instances.
+    """
+
+
+# Define the commands for the hub group
+cli_hub.add_command(cli_hub_new, name="new")
 
 
 # Define the overall group
@@ -229,3 +240,4 @@ cli_complete.add_command(cli_test)
 cli_complete.add_command(cli_algo_store)
 cli_complete.add_command(cli_use)
 cli_complete.add_command(cli_auth)
+cli_complete.add_command(cli_hub)

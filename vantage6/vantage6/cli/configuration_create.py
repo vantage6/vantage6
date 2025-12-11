@@ -18,6 +18,7 @@ from vantage6.cli.configuration_manager import (
     ServerConfigurationManager,
 )
 from vantage6.cli.context import select_context_class
+from vantage6.cli.utils import merge_nested_dicts
 
 
 def add_common_server_config(
@@ -155,6 +156,7 @@ def make_configuration(
     instance_name: str,
     system_folders: bool,
     is_sandbox: bool = False,
+    extra_config: dict | None = None,
 ) -> Path:
     """
     Create a configuration file for a node or server instance.
@@ -173,6 +175,9 @@ def make_configuration(
         Whether to use the system folders or not
     is_sandbox : bool
         Whether to create a sandbox configuration or not
+    extra_config: dict | None = None
+        Extra configuration to add. Note that this may overwrite the configuration
+        produced by the config producing function if the keys overlap.
 
     Returns
     -------
@@ -185,7 +190,10 @@ def make_configuration(
     # invoke function to create configuration file. Usually this is a questionaire
     # but it can also be a function that immediately returns a dict with the
     # configuration.
-    config = config_producing_func(*config_producing_func_args)
+    config: dict = config_producing_func(*config_producing_func_args)
+
+    if extra_config:
+        config = merge_nested_dicts(config, extra_config)
 
     # in the case of an environment we need to add it to the current
     # configuration. In the case of application we can simply overwrite this
