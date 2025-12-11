@@ -88,11 +88,21 @@ def server_configuration_questionaire(
         config["server"]["jwt"] = {
             "secret": "constant_development_secret`",
         }
+        k8s_config = select_k8s_config(context=context, namespace=namespace)
         config["server"]["dev"] = {
             "host_uri": "host.docker.internal",
-            # TODO v5+ adapt to name space and service name etc, check from sandbox
-            "store_address": "http://vantage6-store-store.service.default.svc.cluster.local",
+            "store_address": (
+                f"http://vantage6-{instance_name}-store-user-algorithm-"
+                f"store.{k8s_config.namespace}.svc.cluster.local:"
+                f"{Ports.SANDBOX_ALGO_STORE.value}"
+            ),
         }
+        keycloak_url = (
+            f"http://vantage6-{instance_name}-auth-user-auth-kc-service."
+            f"{k8s_config.namespace}.svc.cluster.local:"
+            f"{Ports.SANDBOX_AUTH.value}"
+        )
+        config["server"]["keycloakUrl"] = keycloak_url
 
     # TODO v5+ these should be removed, latest should usually be used so question is
     # not needed. However, for now we want to specify alpha/beta images.
@@ -113,12 +123,6 @@ def server_configuration_questionaire(
     # store and keycloak service can also be setup in the `v6 server new` command.
 
     # === Keycloak settings ===
-    k8s_config = select_k8s_config(context=context, namespace=namespace)
-    keycloak_url = (
-        f"http://vantage6-auth-kc-service.{k8s_config.namespace}.svc.cluster.local:"
-        f"{Ports.SANDBOX_AUTH.value}"
-    )
-    config["server"]["keycloakUrl"] = keycloak_url
 
     # set directory to store log files on host machine
     config["server"]["logging"]["volumeHostPath"] = str(log_dir)

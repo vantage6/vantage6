@@ -106,7 +106,29 @@ def auth_configuration_questionaire(
         # add http://localhost:7681 as that is used by the Python client
         config["keycloak"]["redirectUris"] = [ui_url, "http://localhost:7681"]
 
+        config["keycloak"]["adminClientSecret"] = _get_admin_client_secret()
+
     return config
+
+
+def _get_admin_client_secret() -> str:
+    """
+    Get the admin client secret.
+    """
+    provide_secret = q.confirm(
+        "Do you want to choose a secret for the Keycloak backend client yourself? "
+        "Choosing 'no' will generate a strong secret and print it once.",
+        default=False,
+    ).unsafe_ask()
+
+    if provide_secret:
+        admin_client_secret = q.password(
+            "Enter Keycloak admin client secret:"
+        ).unsafe_ask()
+    else:
+        admin_client_secret = generate_password(password_length=32)
+
+    return admin_client_secret
 
 
 def _add_keycloak_admin_secret(

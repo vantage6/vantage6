@@ -221,8 +221,11 @@ keycloak:
       # keycloak.
       - clientId: backend-admin-client
         publicClient: false
-        # TODO v5+ configure secrets where necessary
+        {% if keycloak.adminClientSecret is defined %}
+        secret: {{ keycloak.adminClientSecret }}
+        {% else %}
         secret: myadminclientsecret
+        {% endif %}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
 
