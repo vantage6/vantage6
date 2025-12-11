@@ -89,6 +89,9 @@ def server_configuration_questionaire(
             "secret": "constant_development_secret`",
         }
         k8s_config = select_k8s_config(context=context, namespace=namespace)
+        # TODO v5+ these addresses are not necessarily correct - find a solution for
+        # that. Maybe it's better to remove all these separate commands for new server
+        # and generate for full core.
         config["server"]["dev"] = {
             "host_uri": "host.docker.internal",
             "store_address": (
