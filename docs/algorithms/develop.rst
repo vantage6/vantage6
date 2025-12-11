@@ -462,7 +462,8 @@ execution result. For example, to test the average algorithm, the script could l
     def run_test():
         # Create a client and authenticate
         client = Client(
-            server_url="http://localhost:30761/server", auth_url="http://localhost:8080"
+            server_url="http://localhost:30761/server",
+            auth_url="http://localhost:30764"
         )
         client.authenticate()
 

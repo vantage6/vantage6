@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 
 import questionary as q
+from kubernetes import client as k8s_client
 
 from vantage6.common import error
 from vantage6.common.globals import (
@@ -267,3 +268,64 @@ def extract_name_and_is_sandbox(name: str | None, is_sandbox: bool) -> tuple[str
         return name[: -len(SANDBOX_SUFFIX)], True
     else:
         return name, is_sandbox
+
+
+def generate_password(password_length: int = 16) -> str:
+    """
+    Generate a strong password that meets the password policy requirements.
+
+    This ensures that the password has at least 8 characters, one uppercase letter,
+    one lowercase letter, one number and one special character.
+
+    Parameters
+    ----------
+    password_length : int, optional
+        The length of the password to generate. By default 16.
+
+    Returns
+    -------
+    str
+        The generated password
+    """
+    import secrets
+    import string
+
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    while True:
+        password = "".join(secrets.choice(alphabet) for i in range(password_length))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in string.punctuation for c in password)
+        ):
+            break
+    return password
+
+
+def create_kubernetes_secret(
+    core_api: k8s_client.CoreV1Api,
+    secret_name: str,
+    namespace: str,
+    secret_data: dict[str, str],
+) -> None:
+    """
+    Create a Kubernetes secret.
+
+    Parameters
+    ----------
+    core_api: k8s_client.CoreV1Api
+        The Kubernetes Core API instance
+    secret_name: str
+        The name of the secret
+    namespace: str
+        The namespace where the secret will be created
+    secret_data: dict[str, str]
+        The data to be stored in the secret
+    """
+    secret_body = k8s_client.V1Secret(
+        metadata=k8s_client.V1ObjectMeta(name=secret_name, namespace=namespace),
+        type="Opaque",
+        string_data=secret_data,
+    )
+    core_api.create_namespaced_secret(namespace=namespace, body=secret_body)
