@@ -76,7 +76,7 @@ def cli_hub_new(
     info("Now, let's setup the vantage6 server...")
     new(
         config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(name, system_folders, k8s_cfg),
+        config_producing_func_args=(name, system_folders),
         name=name,
         system_folders=system_folders,
         type_=InstanceType.SERVER,

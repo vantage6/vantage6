@@ -1,6 +1,5 @@
 from typing import Any
 
-import click
 import questionary as q
 
 from vantage6.common.context import AppContext
@@ -9,46 +8,10 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.configuration_create import add_common_server_config
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.k8s_config import KubernetesConfig
-
-
-@click.command()
-@click.option(
-    "-n", "--name", default=None, help="name of the configuration you want to use."
-)
-@click.option(
-    "--system",
-    "system_folders",
-    flag_value=True,
-    help="Use system folders instead of user folders. This is the default",
-)
-@click.option(
-    "--user",
-    "system_folders",
-    flag_value=False,
-    default=DEFAULT_SERVER_SYSTEM_FOLDERS,
-    help="Use user folders instead of system folders",
-)
-@click.option("--context", default=None, help="Kubernetes context to use")
-@click.option(
-    "--namespace",
-    default=None,
-    help="Kubernetes namespace to use",
-)
-def cli_server_new(
-    name: str,
-    system_folders: bool,
-    namespace: str,
-    context: str,
-) -> None:
-    """
-    Create a new server configuration.
-    """
 
 
 def server_configuration_questionaire(
-    instance_name: str, system_folders: bool, k8s_config: KubernetesConfig
+    instance_name: str, system_folders: bool
 ) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
