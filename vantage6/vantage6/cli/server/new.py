@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 import click
@@ -7,13 +6,11 @@ import questionary as q
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     InstanceType,
-    Ports,
 )
 
-from vantage6.cli.common.new import new
 from vantage6.cli.configuration_create import add_common_server_config
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.k8s_config import KubernetesConfig
 
 
 @click.command()
@@ -48,20 +45,10 @@ def cli_server_new(
     """
     Create a new server configuration.
     """
-    dirs = AppContext.instance_folders(InstanceType.SERVER, name, system_folders)
-    log_dir = dirs.get("log")
-
-    new(
-        config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(name, log_dir, namespace, context),
-        name=name,
-        system_folders=system_folders,
-        type_=InstanceType.SERVER,
-    )
 
 
 def server_configuration_questionaire(
-    instance_name: str, log_dir: Path, namespace: str, context: str
+    instance_name: str, system_folders: bool, k8s_config: KubernetesConfig
 ) -> dict[str, Any]:
     """
     Kubernetes-specific questionnaire to generate Helm values for server.
@@ -70,42 +57,25 @@ def server_configuration_questionaire(
     ----------
     instance_name : str
         Name of the server instance.
-    log_dir : Path
-        Path to the log directory.
+    system_folders : bool
+        Whether to use system folders or user folders.
+    k8s_cfg : KubernetesConfig
+        Kubernetes configuration.
 
     Returns
     -------
     dict[str, Any]
         dictionary with Helm values for the server configuration
     """
-    # Initialize config with basic structure
-    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}}
-
-    config, is_production = add_common_server_config(
-        config, InstanceType.SERVER, instance_name
+    dirs = AppContext.instance_folders(
+        InstanceType.SERVER, instance_name, system_folders
     )
-    if not is_production:
-        config["server"]["jwt"] = {
-            "secret": "constant_development_secret`",
-        }
-        k8s_config = select_k8s_config(context=context, namespace=namespace)
-        # TODO v5+ these addresses are not necessarily correct - find a solution for
-        # that. Maybe it's better to remove all these separate commands for new server
-        # and generate for full core.
-        config["server"]["dev"] = {
-            "host_uri": "host.docker.internal",
-            "store_address": (
-                f"http://vantage6-{instance_name}-store-user-algorithm-"
-                f"store.{k8s_config.namespace}.svc.cluster.local:"
-                f"{Ports.SANDBOX_ALGO_STORE.value}"
-            ),
-        }
-        keycloak_url = (
-            f"http://vantage6-{instance_name}-auth-user-auth-kc-service."
-            f"{k8s_config.namespace}.svc.cluster.local:"
-            f"{Ports.SANDBOX_AUTH.value}"
-        )
-        config["server"]["keycloakUrl"] = keycloak_url
+    log_dir = dirs.get("log")
+
+    # Initialize config with basic structure
+    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}, "prometheus": {}}
+
+    config = add_common_server_config(config, InstanceType.SERVER, instance_name)
 
     # TODO v5+ these should be removed, latest should usually be used so question is
     # not needed. However, for now we want to specify alpha/beta images.

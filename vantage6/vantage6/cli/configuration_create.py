@@ -44,8 +44,10 @@ def add_common_server_config(
         config["server"] if instance_type == InstanceType.SERVER else config["store"]
     )
 
+    service_name = "server" if instance_type == InstanceType.SERVER else "store"
+
     backend_config["port"] = q.text(
-        "Enter port to which the server listens:",
+        f"Enter port to which the {service_name} listens:",
         default=(
             str(Ports.DEV_SERVER)
             if instance_type == InstanceType.SERVER
@@ -78,21 +80,11 @@ def add_common_server_config(
 
     backend_config["api_path"] = DEFAULT_API_PATH
 
-    service_name = "server" if instance_type == InstanceType.SERVER else "store"
-
     config = add_database_config(config, instance_type)
 
-    is_production = q.confirm(
-        f"Do you want to use production settings for this {service_name}? If not, the "
-        f"{service_name} will be configured to be more suitable for development or "
-        "testing purposes.",
-        default=True,
-    ).unsafe_ask()
+    config = _add_production_server_config(config)
 
-    if is_production:
-        config = _add_production_server_config(config)
-
-    return config, is_production
+    return config
 
 
 def add_database_config(config: dict, instance_type: InstanceType) -> dict:
@@ -109,6 +101,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
         raise ValueError(f"Invalid instance type: {instance_type}")
 
     # === Database settings ===
+    # TODO v5+ this should be updated to allow for remote databases.
     config["database"]["volumePath"] = q.text(
         f"Where is your {service_name} database located on the host machine?",
         default=f"{Path.cwd()}/dev/.db/db_pv_{service_name}",

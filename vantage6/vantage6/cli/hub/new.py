@@ -13,6 +13,7 @@ from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.server.new import server_configuration_questionaire
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -51,9 +52,11 @@ def cli_hub_new(
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
 
     # get basic general configuration (e.g. URLs for the services)
+    info("Starting with the basic configuration...")
     base_config = _get_base_config()
 
     # create authentication service configuration
+    info("Now, let's setup the authentication service...")
     extra_config = {
         # add http://localhost:7681 as that is used by the Python client
         "keycloak": {"redirectUris": [base_config["ui_url"], "http://localhost:7681"]}
@@ -70,10 +73,20 @@ def cli_hub_new(
     )
 
     # create server service configuration
-    # TODO
+    info("Now, let's setup the vantage6 server...")
+    new(
+        config_producing_func=server_configuration_questionaire,
+        config_producing_func_args=(name, system_folders, k8s_cfg),
+        name=name,
+        system_folders=system_folders,
+        type_=InstanceType.SERVER,
+    )
 
     # create algorithm store service configuration
     # TODO
+    if base_config["has_store"]:
+        info("Finally, let's setup the algorithm store...")
+        pass
 
     _print_credentials_one_time(auth_credentials)
 
