@@ -5,7 +5,7 @@
 Server
 ====
 
-The vantage6 server is the central hub of the vantage6 platform. It is responsible
+The vantage6 server is the central point of the vantage6 platform. It is responsible
 for managing the different organizations and their nodes, authorizing the users and
 nodes, and managing the communication of task requests and results between the nodes
 and the users.

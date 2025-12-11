@@ -77,7 +77,7 @@ def add_common_server_config(
 
     backend_config["api_path"] = DEFAULT_API_PATH
 
-    service_name = "hub" if instance_type == InstanceType.SERVER else "store"
+    service_name = "server" if instance_type == InstanceType.SERVER else "store"
 
     config = add_database_config(config, instance_type)
 
@@ -99,7 +99,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     Add the database configuration to the config
     """
     if instance_type == InstanceType.SERVER:
-        service_name = "hub"
+        service_name = "server"
     elif instance_type == InstanceType.ALGORITHM_STORE:
         service_name = "store"
     elif instance_type == InstanceType.AUTH:
