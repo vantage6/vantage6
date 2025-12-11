@@ -38,7 +38,7 @@ setup(
         "Flask-Principal==0.4.0",
         "Flask-RESTful==0.3.10",
         "flask-marshmallow==0.15.0",
-        "Flask-SocketIO==5.3.6",
+        "flask-socketio==5.5.1",
         "gevent==25.4.2",
         "ipython==8.10.0",
         "kombu==5.2.4",

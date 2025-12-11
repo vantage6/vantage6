@@ -22,7 +22,7 @@ Flask-Mail==0.9.1
 flask-marshmallow==0.15.0
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.10
-Flask-SocketIO==5.3.6
+flask-socketio==5.5.1
 gevent==25.4.2
 greenlet==3.2.1
 idna==3.7
@@ -53,7 +53,7 @@ pyparsing==3.0.9
 pyrsistent==0.19.3
 python-dateutil==2.8.2
 python-engineio==4.12.3
-python-socketio==5.14.3
+python-socketio==5.15.0
 pytz==2022.7.1
 PyYAML==6.0.1
 qrcode==7.3.1
@@ -67,7 +67,7 @@ six==1.16.0
 SPARQLWrapper==2.0.0
 SQLAlchemy==1.4.46
 traitlets==5.8.1
-urllib3==2.5.0
+urllib3==2.6.0
 wcwidth==0.2.6
 websocket-client==1.5.0
 werkzeug==3.1.4
