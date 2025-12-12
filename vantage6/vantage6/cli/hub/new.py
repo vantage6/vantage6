@@ -60,7 +60,13 @@ def cli_hub_new(
     info("Now, let's setup the authentication service...")
     extra_config = {
         # add http://localhost:7681 as that is used by the Python client
-        "keycloak": {"redirectUris": [base_config["ui_url"], "http://localhost:7681"]}
+        "keycloak": {
+            "redirectUris": [base_config["ui_url"], "http://localhost:7681"],
+            "k8sNodeName": base_config["k8sNodeName"],
+        },
+        "database": {
+            "k8sNodeName": base_config["k8sNodeName"],
+        },
     }
     auth_name = f"{name}-auth"
     auth_credentials = {}
@@ -79,9 +85,16 @@ def cli_hub_new(
     extra_config = {
         "server": {
             "keycloak": {
-                "adminClientSecret": auth_config["keycloak"]["adminClientSecret"]
-            }
-        }
+                "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
+                "url": base_config["auth_url"],
+            },
+            "logging": {
+                "level": base_config["log_level"],
+            },
+        },
+        "database": {
+            "k8sNodeName": base_config["k8sNodeName"],
+        },
     }
     new(
         config_producing_func=server_configuration_questionaire,
@@ -93,20 +106,26 @@ def cli_hub_new(
     )
 
     # create algorithm store service configuration
-    # TODO
     if base_config["has_store"]:
         info("Finally, let's setup the algorithm store...")
         store_name = f"{name}-store"
         extra_config = {
             "store": {
                 "keycloak": {
-                    "adminClientSecret": auth_config["keycloak"]["adminClientSecret"]
+                    "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
+                    "url": base_config["auth_url"],
                 },
                 "root_user": {
                     "v6_server_uri": base_config["server_url"],
                     "username": "admin",
                 },
-            }
+                "logging": {
+                    "level": base_config["log_level"],
+                },
+            },
+            "database": {
+                "k8sNodeName": base_config["k8sNodeName"],
+            },
         }
         new(
             config_producing_func=algo_store_configuration_questionaire,
@@ -125,6 +144,10 @@ def _get_base_config() -> dict[str, Any]:
     Get the base configuration for a vantage6 hub.
     """
     base_config = {}
+    base_config["k8sNodeName"] = q.text(
+        "What is the name of the k8s node where the databases are running?",
+        default="docker-desktop",
+    ).unsafe_ask()
     base_config["server_url"] = q.text(
         "On what address will the vantage6server be reachable?",
         default="https://server.vantage6.ai",
@@ -148,6 +171,11 @@ def _get_base_config() -> dict[str, Any]:
             "On what address will the algorithm store be reachable?",
             default="https://store.vantage6.ai",
         ).unsafe_ask()
+    base_config["log_level"] = q.select(
+        "What is the log level for the algorithm store?",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    ).unsafe_ask()
     return base_config
 
 

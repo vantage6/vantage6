@@ -48,22 +48,11 @@ def add_common_server_config(
 
     backend_config["port"] = q.text(
         f"Enter port to which the {service_name} listens:",
-        default=(
-            str(Ports.DEV_SERVER)
-            if instance_type == InstanceType.SERVER
-            else str(Ports.DEV_ALGO_STORE)
-        ),
-    ).unsafe_ask()
-
-    res = q.select(
-        "Which level of logging would you like?",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
+        default=str(Ports.HTTPS),
     ).unsafe_ask()
 
     backend_config["logging"] = {
-        "level": res,
-        "file": f"{instance_name}.log",
+        "file": f"{instance_name}-{service_name}.log",
         "use_console": True,
         "backup_count": 5,
         "max_size": 1024,
@@ -105,11 +94,6 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     config["database"]["volumePath"] = q.text(
         f"Where is your {service_name} database located on the host machine?",
         default=f"{Path.cwd()}/dev/.db/db_pv_{service_name}",
-    ).unsafe_ask()
-
-    config["database"]["k8sNodeName"] = q.text(
-        "What is the name of the k8s node where the databases are running?",
-        default="docker-desktop",
     ).unsafe_ask()
 
     return config
