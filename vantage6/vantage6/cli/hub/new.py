@@ -8,6 +8,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
+from vantage6.cli.algostore.new import algo_store_configuration_questionaire
 from vantage6.cli.auth.new import auth_configuration_questionaire
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
@@ -74,6 +75,7 @@ def cli_hub_new(
 
     # create server service configuration
     info("Now, let's setup the vantage6 server...")
+    server_name = f"{name}-server"
     extra_config = {
         "server": {
             "keycloak": {
@@ -83,8 +85,8 @@ def cli_hub_new(
     }
     new(
         config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(name, system_folders),
-        name=name,
+        config_producing_func_args=(server_name, system_folders),
+        name=server_name,
         system_folders=system_folders,
         type_=InstanceType.SERVER,
         extra_config=extra_config,
@@ -94,7 +96,26 @@ def cli_hub_new(
     # TODO
     if base_config["has_store"]:
         info("Finally, let's setup the algorithm store...")
-        pass
+        store_name = f"{name}-store"
+        extra_config = {
+            "store": {
+                "keycloak": {
+                    "adminClientSecret": auth_config["keycloak"]["adminClientSecret"]
+                },
+                "root_user": {
+                    "v6_server_uri": base_config["server_url"],
+                    "username": "admin",
+                },
+            }
+        }
+        new(
+            config_producing_func=algo_store_configuration_questionaire,
+            config_producing_func_args=(store_name, system_folders),
+            name=store_name,
+            system_folders=system_folders,
+            type_=InstanceType.ALGORITHM_STORE,
+            extra_config=extra_config,
+        )
 
     _print_credentials_one_time(auth_credentials)
 
