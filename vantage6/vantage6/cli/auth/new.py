@@ -46,6 +46,8 @@ def auth_configuration_questionaire(
 
     config["keycloak"]["adminClientSecret"] = _get_admin_client_secret()
 
+    config["keycloak"]["adminPassword"] = _get_admin_password()
+
     return config
 
 
@@ -66,6 +68,13 @@ def _get_admin_client_secret() -> str:
         admin_client_secret = generate_password(password_length=32)
 
     return admin_client_secret
+
+
+def _get_admin_password() -> str:
+    """
+    Get the admin password.
+    """
+    return generate_password()
 
 
 def _add_keycloak_admin_secret(

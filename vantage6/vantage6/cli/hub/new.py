@@ -85,6 +85,7 @@ def cli_hub_new(
     extra_config = {
         "server": {
             "keycloak": {
+                "adminPassword": auth_config["keycloak"]["adminPassword"],
                 "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
                 "url": base_config["auth_url"],
             },
@@ -112,6 +113,7 @@ def cli_hub_new(
         extra_config = {
             "store": {
                 "keycloak": {
+                    "adminPassword": auth_config["keycloak"]["adminPassword"],
                     "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
                     "url": base_config["auth_url"],
                 },
@@ -136,7 +138,7 @@ def cli_hub_new(
             extra_config=extra_config,
         )
 
-    _print_credentials_one_time(auth_credentials)
+    _print_credentials_one_time(auth_credentials, auth_config["keycloak"])
 
 
 def _get_base_config() -> dict[str, Any]:
@@ -179,9 +181,18 @@ def _get_base_config() -> dict[str, Any]:
     return base_config
 
 
-def _print_credentials_one_time(credentials: dict[AuthCredentials, Any]) -> None:
+def _print_credentials_one_time(
+    credentials: dict[AuthCredentials, Any], keycloak_config: dict
+) -> None:
     """
     Print the used credentials one time.
+
+    Parameters
+    ----------
+    credentials: dict[AuthCredentials, Any]
+        Dictionary with the credentials for the authentication service.
+    keycloak_config: dict
+        Keycloak section of the auth configuration
     """
     if not credentials:
         return
@@ -198,4 +209,8 @@ def _print_credentials_one_time(credentials: dict[AuthCredentials, Any]) -> None
     info("--------------------------------")
     for credential, value in credentials.items():
         info(f"{credential.description}: {value}")
+    info("--------------------------------")
+    info("You can login to vantage6 with the following credentials:")
+    info(f"Username: {keycloak_config.get('adminUser', 'admin')}")
+    info(f"Password: {keycloak_config['adminPassword']}")
     info("--------------------------------")
