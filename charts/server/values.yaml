@@ -70,9 +70,10 @@ ui:
   image: harbor2.vantage6.ai/infrastructure/ui:latest
   port: 7600
 
-  keycloakRealm: vantage6
-  keycloakClient: public_client
-  keycloakPublicUrl: http://localhost:8080
+  keycloak:
+    realm: vantage6
+    client: public_client
+    publicUrl: http://localhost:8080
 
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai

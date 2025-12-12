@@ -81,7 +81,7 @@ def cli_hub_new(
 
     # create server service configuration
     info("Now, let's setup the vantage6 server...")
-    server_name = f"{name}-server"
+    server_name = name
     extra_config = {
         "server": {
             "baseUrl": base_config["server_url"],
@@ -98,7 +98,9 @@ def cli_hub_new(
             "k8sNodeName": base_config["k8sNodeName"],
         },
         "ui": {
-            "keycloakPublicUrl": base_config["auth_url"],
+            "keycloak": {
+                "publicUrl": base_config["auth_url"],
+            },
         },
     }
     new(

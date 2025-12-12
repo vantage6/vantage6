@@ -14,9 +14,36 @@ from vantage6.cli.common.utils import (
     select_running_service,
 )
 from vantage6.cli.context import get_context
-from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.globals import CLICommandName, InfraComponentName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils import validate_input_cmd_args
+
+
+def execute_cli_stop(
+    command_name: CLICommandName,
+    name: str,
+    k8s_config: KubernetesConfig,
+    system_folders: bool,
+    is_sandbox: bool = False,
+) -> None:
+    """
+    Execute the stop command for an infrastructure service.
+    """
+    cmd = [
+        "v6",
+        command_name.value,
+        "stop",
+        "--name",
+        name,
+        "--context",
+        k8s_config.context,
+        "--namespace",
+        k8s_config.namespace,
+    ]
+    cmd.append("--system" if system_folders else "--user")
+    if is_sandbox:
+        cmd.append("--sandbox")
+    subprocess.run(cmd, check=True)
 
 
 def execute_stop(

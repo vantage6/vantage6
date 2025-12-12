@@ -146,10 +146,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "local_hub_port_to_expose": Ports.SANDBOX_SERVER.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
-                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
-                ),
+                "keycloak": {
+                    "url": (
+                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                    ),
+                },
             },
             "rabbitmq": {},
             "database": {
@@ -163,7 +165,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
-                "keycloakPublicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
+                "keycloak": {
+                    "publicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
+                },
             },
             "prometheus": prometheus_config,
         }
@@ -244,10 +248,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
-                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
-                ),
+                "keycloak": {
+                    "url": (
+                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                    ),
+                },
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,

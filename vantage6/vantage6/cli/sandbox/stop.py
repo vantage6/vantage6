@@ -1,18 +1,17 @@
-import subprocess
-
 import click
 
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.common.stop import execute_cli_stop
 from vantage6.cli.common.utils import (
     find_running_service_names,
     select_running_service,
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
+from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import select_k8s_config
-from vantage6.cli.server.stop import cli_server_stop
 
 
 @click.command()
@@ -53,49 +52,32 @@ def cli_sandbox_stop(
     nodes_user_folder, _ = NodeContext.available_configurations(False, is_sandbox=True)
     for node in nodes_user_folder:
         if node.name.startswith(f"{name}-node-"):
-            cmd = [
-                "v6",
-                "node",
-                "stop",
-                "--name",
-                node.name,
-                "--sandbox",
-                "--context",
-                k8s_config.context,
-                "--namespace",
-                k8s_config.namespace,
-            ]
-            subprocess.run(cmd, check=True)
+            execute_cli_stop(
+                command_name=CLICommandName.NODE,
+                name=node.name,
+                k8s_config=k8s_config,
+                system_folders=False,
+                is_sandbox=True,
+            )
 
-    # # Stop all server services
-    click_ctx.invoke(
-        cli_server_stop,
-        name=name,
-        context=k8s_config.context,
-        namespace=k8s_config.namespace,
+    execute_cli_stop(
+        command_name=CLICommandName.AUTH,
+        name=f"{name}-auth.sandbox",
+        k8s_config=k8s_config,
         system_folders=False,
-        all_servers=False,
         is_sandbox=True,
     )
-
-    # stop the auth service
-    cmd = [
-        "v6",
-        "auth",
-        "stop",
-        "--name",
-        f"{name}-auth.sandbox",
-        "--sandbox",
-    ]
-    subprocess.run(cmd, check=True)
-
-    # stop the algorithm store
-    cmd = [
-        "v6",
-        "algorithm-store",
-        "stop",
-        "--name",
-        f"{name}-store.sandbox",
-        "--sandbox",
-    ]
-    subprocess.run(cmd, check=True)
+    execute_cli_stop(
+        command_name=CLICommandName.ALGORITHM_STORE,
+        name=f"{name}-store.sandbox",
+        k8s_config=k8s_config,
+        system_folders=False,
+        is_sandbox=True,
+    )
+    execute_cli_stop(
+        command_name=CLICommandName.SERVER,
+        name=name,
+        k8s_config=k8s_config,
+        system_folders=False,
+        is_sandbox=True,
+    )

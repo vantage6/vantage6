@@ -187,9 +187,10 @@ ui:
   # Service port for the UI
   port: 7600
   # keycloak settings
-  keycloakRealm: vantage6
-  keycloakClient: public_client
-  keycloakPublicUrl: http://localhost:8080
+  keycloak:
+    realm: vantage6
+    client: public_client
+    publicUrl: http://localhost:8080
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs

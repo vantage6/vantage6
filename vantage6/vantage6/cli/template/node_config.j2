@@ -8,8 +8,9 @@ node:
   apiKey: {{ node.apiKey | default('put-your-api-key-here') }}
 
   # Keycloak configuration
-  keycloakUrl: {{ node.keycloakUrl | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080') }}
-  keycloakRealm: {{ node.keycloakRealm | default('vantage6') }}
+  keycloak:
+    url: {{ node.keycloak.url | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080') }}
+    realm: {{ node.keycloak.realm | default('vantage6') }}
 
   # Settings for the server to connect to.
   {% if node.server is defined %}

@@ -243,12 +243,11 @@ ui:
   imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI
   port: {{ ui.port | default(7600) }}
-  # keycloak realm
-  keycloakRealm: {{ ui.keycloakRealm | default('vantage6') }}
-  # keycloak client
-  keycloakClient: {{ ui.keycloakClient | default('public_client') }}
-  # keycloak public URL
-  keycloakPublicUrl: {{ ui.keycloakPublicUrl | default('http://localhost:8080') }}
+  # keycloak connection settings
+  keycloak:
+    realm: {{ ui.keycloak.realm | default('vantage6') }}
+    client: {{ ui.keycloak.client | default('public_client') }}
+    publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:8080') }}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs

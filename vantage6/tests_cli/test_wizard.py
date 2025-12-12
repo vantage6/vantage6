@@ -129,7 +129,7 @@ class WizardTest(unittest.TestCase):
             ["database", "volumePath"],
             ["server", "api_path"],
             ["server", "image"],
-            ["server", "keycloakUrl"],
+            ["server", "keycloak", "url"],
             ["server", "logging", "level"],
             ["server", "port"],
             ["ui", "image"],

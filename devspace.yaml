@@ -315,9 +315,10 @@ deployments:
         ui:
           image: ${UI_IMAGE}
           imagePullPolicy: IfNotPresent
-          keycloakPublicUrl: ${KEYCLOAK_PUBLIC_URL}
-          keycloakRealm: ${KEYCLOAK_REALM}
-          keycloakClient: ${KEYCLOAK_FRONTEND_CLIENT}
+          keycloak:
+            publicUrl: ${KEYCLOAK_PUBLIC_URL}
+            realm: ${KEYCLOAK_REALM}
+            client: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
           volumePath: ${SERVER_DATABASE_MOUNT_PATH}
@@ -385,8 +386,9 @@ deployments:
           image: ${NODE_IMAGE}
           imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}
-          keycloakUrl: ${KEYCLOAK_URL}
-          keycloakRealm: ${KEYCLOAK_REALM}
+          keycloak:
+            url: ${KEYCLOAK_URL}
+            realm: ${KEYCLOAK_REALM}
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
