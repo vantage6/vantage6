@@ -8,6 +8,7 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
+from vantage6.cli.auth.new import generate_password
 from vantage6.cli.configuration_create import add_common_server_config
 
 
@@ -65,9 +66,10 @@ def server_configuration_questionaire(
     # set the CSP headers in the UI. This is not done now because it becomes easier when
     # store and keycloak service can also be setup in the `v6 server new` command.
 
-    # === Keycloak settings ===
-
     # set directory to store log files on host machine
     config["server"]["logging"]["volumeHostPath"] = str(log_dir)
+
+    # set strong password for RabbitMQ
+    config["rabbitmq"]["password"] = generate_password()
 
     return config

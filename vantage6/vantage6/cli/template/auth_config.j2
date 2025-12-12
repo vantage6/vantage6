@@ -15,7 +15,6 @@ keycloak:
   # for development, use a local PostgreSQL instance.
   {% if keycloak.production %}
   # for production, TLS should be enabled for internal Keycloak communication
-  # TODO v5+ we should test if this works when we have CLI commands (#1923)
   production: true
   tls:
     enabled: true

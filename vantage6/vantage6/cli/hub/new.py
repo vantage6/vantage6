@@ -84,6 +84,7 @@ def cli_hub_new(
     server_name = f"{name}-server"
     extra_config = {
         "server": {
+            "baseUrl": base_config["server_url"],
             "keycloak": {
                 "adminPassword": auth_config["keycloak"]["adminPassword"],
                 "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
@@ -95,6 +96,9 @@ def cli_hub_new(
         },
         "database": {
             "k8sNodeName": base_config["k8sNodeName"],
+        },
+        "ui": {
+            "keycloakPublicUrl": base_config["auth_url"],
         },
     }
     new(
@@ -117,10 +121,7 @@ def cli_hub_new(
                     "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
                     "url": base_config["auth_url"],
                 },
-                "root_user": {
-                    "v6_server_uri": base_config["server_url"],
-                    "username": "admin",
-                },
+                "vantage6ServerUri": base_config["server_url"],
                 "logging": {
                     "level": base_config["log_level"],
                 },
@@ -168,11 +169,11 @@ def _get_base_config() -> dict[str, Any]:
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
-    if base_config["has_store"]:
-        base_config["store_url"] = q.text(
-            "On what address will the algorithm store be reachable?",
-            default="https://store.vantage6.ai",
-        ).unsafe_ask()
+    # if base_config["has_store"]:
+    #     base_config["store_url"] = q.text(
+    #         "On what address will the algorithm store be reachable?",
+    #         default="https://store.vantage6.ai",
+    #     ).unsafe_ask()
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
