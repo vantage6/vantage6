@@ -86,6 +86,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.with_prometheus = with_prometheus
 
         self.node_configs = []
+        self.node_config_names = []
         self.extra_config = None
 
     def generate_node_configs(self) -> None:
@@ -238,6 +239,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             type_=InstanceType.NODE,
             is_sandbox=True,
         )
+        self.node_config_names.append(config_name)
 
         return node_config
 
