@@ -26,14 +26,15 @@ from vantage6.cli.k8s_config import KubernetesConfig
     flag_value=False,
     help="Search for configuration in the user folders instead of system folders.",
 )
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click.option("--all", "all_servers", flag_value=True, help="Stop all running servers")
 def cli_server_stop(
     name: str,
     context: str,
     namespace: str,
     system_folders: bool,
+    sandbox: bool,
     all_servers: bool,
-    is_sandbox: bool = False,
 ):
     """
     Stop an running server.
@@ -47,7 +48,7 @@ def cli_server_stop(
         namespace=namespace,
         context=context,
         system_folders=system_folders,
-        is_sandbox=is_sandbox,
+        is_sandbox=sandbox,
     )
 
 

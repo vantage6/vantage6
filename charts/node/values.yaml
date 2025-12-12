@@ -4,8 +4,9 @@ node:
   name: put-your-node-name-here
   apiKey: put-your-api-key-here
 
-  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
-  keycloakRealm: vantage6
+  keycloak:
+    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
+    realm: vantage6
 
   server:
     url: http://vantage6-server
@@ -69,10 +70,3 @@ node:
 
   prometheus:
     enabled: false
-
-  whitelist:
-    data_extraction:
-    preprocessing:
-    federated_compute:
-    central_compute:
-    postprocessing:

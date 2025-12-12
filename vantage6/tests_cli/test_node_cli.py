@@ -69,7 +69,7 @@ class NodeCLITest(unittest.TestCase):
         """No error produced when creating new configuration."""
         context.config_exists.return_value = False
         permissions.return_value = True
-        make_configuration.return_value = "/some/file/path"
+        make_configuration.return_value = (MagicMock(), "/some/file/path")
 
         runner = CliRunner()
         result = runner.invoke(

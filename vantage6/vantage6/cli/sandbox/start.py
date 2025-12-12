@@ -1,24 +1,24 @@
-import subprocess
 import time
 from pathlib import Path
 
 import click
 from colorama import Fore, Style
 
-from vantage6.common import error, info
+from vantage6.common import error, info, warning
 from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
 from vantage6.client import Client
 from vantage6.client.utils import LogLevel
 
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.common.start import execute_cli_start
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_server_sandbox
-from vantage6.cli.server.start import cli_server_start
 
 
 @click.command()
@@ -128,54 +128,35 @@ def execute_sandbox_start(
     with_prometheus = ctx.config.get("prometheus", {}).get("enabled", False)
 
     # First we need to start the keycloak service
-    cmd = [
-        "v6",
-        "auth",
-        "start",
-        "--name",
-        f"{server_name}-auth.sandbox",
-        "--user",
-        "--context",
-        k8s_config.context,
-        "--namespace",
-        k8s_config.namespace,
-        "--sandbox",
-    ]
-    if local_chart_dir:
-        cmd.extend(["--local-chart-dir", local_chart_dir])
-    subprocess.run(cmd, check=True)
-    # Note: the CLI auth start function is blocking until the auth service is ready,
-    # so no need to wait for it to be ready here.
+    execute_cli_start(
+        command_name=CLICommandName.AUTH,
+        name=f"{server_name}-auth.sandbox",
+        k8s_config=k8s_config,
+        local_chart_dir=local_chart_dir,
+        system_folders=False,
+        is_sandbox=True,
+        extra_args=["--wait-ready"],
+    )
 
     # run the store. The store is started before the server so that the server can
     # couple to the store on startup.
-    cmd = [
-        "v6",
-        "algorithm-store",
-        "start",
-        "--name",
-        f"{ctx.name}-store.sandbox",
-        "--user",
-        "--context",
-        k8s_config.context,
-        "--namespace",
-        k8s_config.namespace,
-        "--sandbox",
-    ]
-    if local_chart_dir:
-        cmd.extend(["--local-chart-dir", local_chart_dir])
-    subprocess.run(cmd, check=True)
+    execute_cli_start(
+        command_name=CLICommandName.ALGORITHM_STORE,
+        name=f"{server_name}-store.sandbox",
+        k8s_config=k8s_config,
+        local_chart_dir=local_chart_dir,
+        system_folders=False,
+        is_sandbox=True,
+    )
 
     # Then we need to start the server
-    click_ctx.invoke(
-        cli_server_start,
-        ctx=ctx,
+    execute_cli_start(
+        command_name=CLICommandName.SERVER,
         name=ctx.name,
-        system_folders=False,
-        namespace=k8s_config.namespace,
-        context=k8s_config.context,
-        attach=False,
+        k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
+        system_folders=False,
+        is_sandbox=True,
     )
 
     server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
@@ -208,17 +189,14 @@ def execute_sandbox_start(
     # Then start the nodes
     info("Starting nodes")
     for node_config_name in node_config_names:
-        cmd = [
-            "v6",
-            "node",
-            "start",
-            "--name",
-            node_config_name,
-            "--sandbox",
-        ]
-        if local_chart_dir:
-            cmd.extend(["--local-chart-dir", local_chart_dir])
-        subprocess.run(cmd, check=True)
+        execute_cli_start(
+            command_name=CLICommandName.NODE,
+            name=node_config_name,
+            k8s_config=k8s_config,
+            local_chart_dir=local_chart_dir,
+            system_folders=False,
+            is_sandbox=True,
+        )
 
     # Print the authentication credentials
     _print_auth_credentials(server_name)
@@ -239,7 +217,7 @@ def _initialize_sandbox(
     info("Populating server")
     node_details = populate_server_sandbox(
         server_url=server_url,
-        auth_url=f"{HTTP_LOCALHOST}:{Ports.DEV_AUTH}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         number_of_nodes=num_nodes,
     )
 
@@ -290,9 +268,7 @@ def _print_auth_credentials(server_name: str) -> None:
     auth_config = auth_ctx.config
 
     try:
-        admin_user = auth_config["keycloak"]["keycloakConfigCli"]["configuration"][
-            "realm"
-        ]["users"][0]
+        admin_user = auth_config["keycloak"]["realmImport"]["users"][0]
         username = admin_user["username"]
         password = admin_user["credentials"][0]["value"]
         info("--------------------------------")
@@ -305,8 +281,7 @@ def _print_auth_credentials(server_name: str) -> None:
         info(f"Password: {Fore.GREEN}{password}{Style.RESET_ALL}")
         info("--------------------------------")
     except KeyError:
-        # No user found, skip printing credentials
-        pass
+        warning("No user credentials found in the auth config.")
 
 
 def _wait_for_server_to_be_ready(server_url: str) -> None:
@@ -322,7 +297,7 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     client = Client(
         # TODO replace default API path global
         server_url=server_url,
-        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER}",
+        auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         log_level=LogLevel.ERROR,
     )
     max_retries = 100

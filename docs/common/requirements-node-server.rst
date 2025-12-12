@@ -61,7 +61,7 @@ the different options:
   `Microk8s <https://microk8s.io/docs/getting-started>`_, which is a lightweight
   Kubernetes distribution that is easy to install and use. We recommend using this for
   development environments as well as for deploying nodes. Deploying central
-  components (hub, auth, algorithm store) is also possible with Microk8s, but usually
+  components (server, auth, algorithm store) is also possible with Microk8s, but usually
   it would be preferable to use a Kubernetes cluster, e.g for easier scaling.
 - **Docker Desktop**: If you are using Docker Desktop, you can simply
   `switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.

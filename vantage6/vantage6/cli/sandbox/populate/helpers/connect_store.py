@@ -35,15 +35,22 @@ def _wait_for_store_to_be_online(
     max_retries = 100
     wait_time = 3
     ready = False
+    print_unexpected_error = True
     for _ in range(max_retries):
         try:
             result = requests.get(f"{local_store_url}{local_store_api_path}/version")
             if result.status_code == HTTPStatus.OK:
                 ready = True
                 break
+            elif print_unexpected_error:
+                try:
+                    error(f"Store returns unexpected error: {result.json()['msg']}")
+                except Exception:
+                    error(f"Store returns unexpected error: {result.status_code}")
+                print_unexpected_error = False
         except Exception:
             info(f"Store not ready yet, waiting {wait_time} seconds...")
-            time.sleep(wait_time)
+        time.sleep(wait_time)
 
     if not ready:
         error("Store did not become ready in time. Exiting...")

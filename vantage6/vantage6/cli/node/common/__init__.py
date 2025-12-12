@@ -57,11 +57,14 @@ def create_client(ctx: NodeContext, use_sandbox_port: bool = False) -> UserClien
 
     url = f"{host}:{port}{api_path}"
 
-    auth_url = ctx.config.get("node", {}).get("keycloakUrl", None) or os.environ.get(
-        RequiredNodeEnvVars.KEYCLOAK_URL.value
-    )
+    auth_url = ctx.config.get("node", {}).get("keycloak", {}).get(
+        "url", None
+    ) or os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value)
     # append the port to the auth URL as it is not included in the config
-    auth_url = f"{auth_url}:{Ports.DEV_AUTH.value}"
+    if use_sandbox_port:
+        auth_url = f"{auth_url}:{Ports.SANDBOX_AUTH.value}"
+    else:
+        auth_url = f"{auth_url}:{Ports.DEV_AUTH.value}"
 
     # if the server is a Kubernetes address, we need to use localhost because here
     # we are connecting from the CLI outside the cluster

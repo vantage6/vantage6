@@ -30,11 +30,11 @@ spec:
         - name: API_PATH
           value: /server
         - name: AUTH_URL
-          value: {{ .Values.ui.keycloakPublicUrl | quote }}
+          value: {{ .Values.ui.keycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.ui.keycloakRealm | quote }}
+          value: {{ .Values.ui.keycloak.realm | quote }}
         - name: KEYCLOAK_CLIENT
-          value: {{ .Values.ui.keycloakClient | quote }}
+          value: {{ .Values.ui.keycloak.client | quote }}
         # set the length of the refresh token. This is the time before keycloak-angular
         # automatically logs out the user.
         - name: REFRESH_TOKEN_VALIDITY_SECONDS

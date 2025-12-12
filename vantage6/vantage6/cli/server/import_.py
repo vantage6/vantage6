@@ -72,9 +72,9 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
 
     client = UserClient(
         server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
-        auth_url=ctx.config["ui"]["keycloakPublicUrl"],
-        auth_realm=ctx.config["ui"]["keycloakRealm"],
-        auth_client=ctx.config["ui"]["keycloakClient"],
+        auth_url=ctx.config["ui"]["keycloak"]["publicUrl"],
+        auth_realm=ctx.config["ui"]["keycloak"]["realm"],
+        auth_client=ctx.config["ui"]["keycloak"]["client"],
         log_level=LogLevel.INFO,
     )
 

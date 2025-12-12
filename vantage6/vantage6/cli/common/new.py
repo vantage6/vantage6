@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from pathlib import Path
 
 from colorama import Fore, Style
 
@@ -19,7 +18,8 @@ def new(
     system_folders: bool,
     type_: InstanceType,
     is_sandbox: bool = False,
-) -> Path | None:
+    extra_config: dict | None = None,
+) -> dict | None:
     """
     Create a new configuration.
 
@@ -37,11 +37,14 @@ def new(
         Type of the configuration (node, server, algorithm store, etc)
     is_sandbox : bool
         Whether to create a sandbox configuration or not
+    extra_config: dict | None = None
+        Extra configuration to add. Note that this may overwrite the configuration
+        produced by the config producing function if the keys overlap.
 
     Returns
     -------
-    Path | None
-        Path to the configuration file. None if the process is aborted for any reason.
+    dict | None
+        Dict with the configuration. None if the process is aborted for any reason.
     """
     name = prompt_config_name(name)
 
@@ -72,13 +75,14 @@ def new(
 
     # create config in ctx location
     try:
-        cfg_file = make_configuration(
+        config, cfg_file = make_configuration(
             config_producing_func=config_producing_func,
             config_producing_func_args=config_producing_func_args,
             type_=type_,
             instance_name=name,
             system_folders=system_folders,
             is_sandbox=is_sandbox,
+            extra_config=extra_config,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
@@ -90,4 +94,4 @@ def new(
         f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name} "
         f"start {flag}{Style.RESET_ALL}"
     )
-    return cfg_file
+    return config
