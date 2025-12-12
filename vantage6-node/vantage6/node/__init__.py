@@ -765,6 +765,7 @@ class Node:
                     )
                 except Exception as e:
                     self.log.exception("Error while patching task: %s", e)
+                time.sleep(1)
                 continue
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
