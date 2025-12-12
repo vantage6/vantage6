@@ -320,6 +320,21 @@ class K8SConfigManager:
         return self.kubernetes_config
 
 
+def get_k8s_node_names() -> list[str]:
+    """
+    Returns a list of available Kubernetes node names.
+
+    Returns
+    -------
+    list[str]
+        A list of available Kubernetes node names.
+    """
+    core_api = get_core_api_with_ssl_handling()
+    nodes = core_api.list_node()
+
+    return [item.metadata.name for item in nodes.items]
+
+
 def select_k8s_config(
     context: str | None = None,
     namespace: str | None = None,

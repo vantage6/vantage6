@@ -13,7 +13,7 @@ from vantage6.cli.auth.new import auth_configuration_questionaire
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
 from vantage6.cli.hub.utils.enum import AuthCredentials
-from vantage6.cli.k8s_config import select_k8s_config
+from vantage6.cli.k8s_config import get_k8s_node_names, select_k8s_config
 from vantage6.cli.server.new import server_configuration_questionaire
 from vantage6.cli.utils import prompt_config_name
 
@@ -149,9 +149,11 @@ def _get_base_config() -> dict[str, Any]:
     Get the base configuration for a vantage6 hub.
     """
     base_config = {}
-    base_config["k8sNodeName"] = q.text(
-        "What is the name of the k8s node where the databases are running?",
-        default="docker-desktop",
+    k8s_node_names = get_k8s_node_names()
+    base_config["k8sNodeName"] = q.select(
+        "What is the name of the k8s node you are using?",
+        choices=k8s_node_names,
+        default=k8s_node_names[0],
     ).unsafe_ask()
     base_config["server_url"] = q.text(
         "On what address will the vantage6server be reachable?",
