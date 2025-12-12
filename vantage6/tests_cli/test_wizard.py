@@ -8,7 +8,6 @@ from vantage6.cli.configuration_create import (
     make_configuration,
     select_configuration_questionnaire,
 )
-from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.node.new import node_configuration_questionaire
 from vantage6.cli.server.new import server_configuration_questionaire
 
@@ -89,22 +88,16 @@ class WizardTest(unittest.TestCase):
         assert len(config["node"]["databases"]["fileBased"]) == 0
         assert len(config["node"]["databases"]["serviceBased"]) == 1
 
-    @patch("vantage6.cli.server.new.select_k8s_config")
+    @patch("vantage6.cli.configuration_create.AppContext")
     @patch("vantage6.cli.configuration_create.q")
     @patch("vantage6.cli.server.new.q")
-    def test_server_wizard(self, q, q_server_common, select_k8s_config):
-        select_k8s_config.return_value = KubernetesConfig(
-            context="test-context",
-            namespace="test-namespace",
-        )
+    def test_server_wizard(self, q, q_server_common, app_context):
+        app_context.instance_folders.return_value = {"log": "/log"}
         q.unsafe_prompt.side_effect = self.prompts
         q_server_common.unsafe_prompt.side_effect = self.prompts
         q_server_common.confirm.return_value.unsafe_ask.side_effect = [
             1234,  # port
-            "DEBUG",  # level of logging
             "/data/db",  # path to database
-            "docker-desktop",  # name of k8s node
-            True,  # use production settings
             "postgresql://uri",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
@@ -114,9 +107,7 @@ class WizardTest(unittest.TestCase):
 
         config = server_configuration_questionaire(
             instance_name="vtg6",
-            log_dir="/log",
-            namespace="test-namespace",
-            context="test-context",
+            system_folders=False,
         )
 
         keys = ["database", "rabbitmq", "server", "ui"]
@@ -124,15 +115,15 @@ class WizardTest(unittest.TestCase):
             self.assertIn(key, config)
         nested_keys = [
             ["database", "external"],
-            ["database", "k8sNodeName"],
             ["database", "uri"],
             ["database", "volumePath"],
             ["server", "api_path"],
             ["server", "image"],
-            ["server", "keycloak", "url"],
-            ["server", "logging", "level"],
+            ["server", "keycloak"],
+            ["server", "logging"],
             ["server", "port"],
             ["ui", "image"],
+            ["rabbitmq", "password"],
         ]
         for nesting in nested_keys:
             current_config = config
@@ -155,7 +146,7 @@ class WizardTest(unittest.TestCase):
         node_m.return_value.save.side_effect = lambda path: path
         server_m.return_value.save.side_effect = lambda path: path
 
-        file_ = make_configuration(
+        _, file_ = make_configuration(
             config_producing_func=node_q,
             config_producing_func_args=("/some/path/", "vtg6"),
             type_=InstanceType.NODE,
@@ -164,7 +155,7 @@ class WizardTest(unittest.TestCase):
         )
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
-        file_ = make_configuration(
+        _, file_ = make_configuration(
             config_producing_func=server_q,
             config_producing_func_args=("vtg6",),
             type_=InstanceType.SERVER,
