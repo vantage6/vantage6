@@ -76,7 +76,9 @@ def cli_hub_new(
     info("Now, let's setup the vantage6 server...")
     extra_config = {
         "server": {
-            "keycloakAdminClientSecret": auth_config["keycloak"]["adminClientSecret"]
+            "keycloak": {
+                "adminClientSecret": auth_config["keycloak"]["adminClientSecret"]
+            }
         }
     }
     new(

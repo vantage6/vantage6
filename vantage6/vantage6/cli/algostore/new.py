@@ -64,7 +64,7 @@ def algo_store_configuration_questionaire(instance_name: str, log_dir: str) -> d
     dict
         Dictionary with the new server configuration
     """
-    config = {"store": {}, "database": {}}
+    config = {"store": {"keycloak": {}}, "database": {}}
 
     config, is_production = add_common_server_config(
         config, InstanceType.ALGORITHM_STORE, instance_name

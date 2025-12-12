@@ -291,12 +291,13 @@ deployments:
         server:
           image: ${SERVER_IMAGE} # needed for automatic image tag update
           imagePullPolicy: IfNotPresent
-          keycloakUrl: ${KEYCLOAK_URL}
-          keycloakRealm: ${KEYCLOAK_REALM}
-          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
-          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
-          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
-          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloak:
+            url: ${KEYCLOAK_URL}
+            realm: ${KEYCLOAK_REALM}
+            adminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+            adminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+            adminClient: ${KEYCLOAK_ADMIN_CLIENT}
+            adminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/server
@@ -334,12 +335,13 @@ deployments:
           image: ${STORE_IMAGE}
           imagePullPolicy: IfNotPresent
           api_path: /store
-          keycloakUrl: ${KEYCLOAK_URL}
-          keycloakRealm: ${KEYCLOAK_REALM}
-          keycloakAdminUsername: ${KEYCLOAK_ADMIN_USERNAME}
-          keycloakAdminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
-          keycloakAdminClient: ${KEYCLOAK_ADMIN_CLIENT}
-          keycloakAdminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          keycloak:
+            url: ${KEYCLOAK_URL}
+            realm: ${KEYCLOAK_REALM}
+            adminUsername: ${KEYCLOAK_ADMIN_USERNAME}
+            adminPassword: ${KEYCLOAK_ADMIN_PASSWORD}
+            adminClient: ${KEYCLOAK_ADMIN_CLIENT}
+            adminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/store

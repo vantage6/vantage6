@@ -37,7 +37,13 @@ def server_configuration_questionaire(
     log_dir = dirs.get("log")
 
     # Initialize config with basic structure
-    config = {"server": {}, "database": {}, "ui": {}, "rabbitmq": {}, "prometheus": {}}
+    config = {
+        "server": {"keycloak": {}},
+        "database": {},
+        "ui": {},
+        "rabbitmq": {},
+        "prometheus": {},
+    }
 
     config = add_common_server_config(config, InstanceType.SERVER, instance_name)
 
