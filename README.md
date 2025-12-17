@@ -41,10 +41,14 @@ You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai
 _A High level overview of the vantage6 infrastructure. Vantage6 has both a
 client-server and peer-to-peer architecture. The client is used by the researcher to
 create (PET) computation requests. It is also used to manage users, organizations and
-collaborations. The server contains users, organizations, collaborations, tasks and
-their results. It provides a central access point for both the clients and nodes. The
-nodes have access to privacy sensitive data and handle computation requests retrieved
-from the server. Computation request are executed as separate containers on the node.
+collaborations.
+The server is referred to as the vantage6 'hub' and consists of several
+components. Most importantly, the vantage6 headquarters (HQ) contains the users,
+organizations, collaborations, tasks and their results. It provides a central access
+point for both the clients and nodes. Other important components of the hub are the
+authentication service, algorithm store, and user interface.
+The nodes have access to privacy sensitive data and handle computation requests retrieved
+from the HQ. Computation request are executed as separate containers on the node.
 These containers are connected to containers at other nodes by a internal network._
 
 ## :books: Quickstart

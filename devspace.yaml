@@ -10,7 +10,7 @@ vars:
   CURRENT_NAMESPACE:
     command: kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null | grep -v "^null$" | grep -v "^$" || echo "default"
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
-  SERVER_IMAGE: harbor2.vantage6.ai/infrastructure/server
+  HQ_IMAGE: harbor2.vantage6.ai/infrastructure/hq
   NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
   STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
   UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
@@ -35,9 +35,9 @@ vars:
     question: "How many nodes do you want to create for your development environment?"
     default: 3
   TASK_NAMESPACE: vantage6-tasks
-  SERVER_DATABASE_MOUNT_PATH:
-    question: "Where is your server database located on the host machine?"
-    default: ${PWD}/dev/.db/db_pv_server
+  HQ_DATABASE_MOUNT_PATH:
+    question: "Where is your HQ database located on the host machine?"
+    default: ${PWD}/dev/.db/db_pv_hq
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
     default: ${PWD}/dev/.db/db_pv_store
@@ -89,19 +89,19 @@ pipelines:
   all-without-populate:
     run: |-
       run_pipelines \
-        server \
+        hq \
         node \
         --sequential
 
   all-with-populate:
     run: |-
       run_pipelines \
-        server \
+        hq \
         populate \
         node \
         --sequential
 
-  server:
+  hq:
     run: |-
       run_dependencies --all
       ensure_pull_secrets --all
@@ -125,15 +125,15 @@ pipelines:
         vantage6-auth
       echo "Starting other components..."
       create_deployments \
-        vantage6-server \
+        vantage6-hq \
         vantage6-store
       echo "Waiting for database pods to be ready..."
-      wait_for_pod_ready app=vantage6-server,component=postgres 300s
+      wait_for_pod_ready app=vantage6-hq,component=postgres 300s
       wait_for_pod_ready app=store,component=postgres 300s
       echo "Database pods are ready, starting dev mode..."
       start_dev \
-        vantage6-server \
-        vantage6-server-db \
+        vantage6-hq \
+        vantage6-hq-db \
         vantage6-ui \
         vantage6-store \
         vantage6-store-db
@@ -156,7 +156,7 @@ pipelines:
       dev/purge_data.sh \
         ${POPULATE_MARKER} \
         ${TASK_DIRECTORY} \
-        ${SERVER_DATABASE_MOUNT_PATH} \
+        ${HQ_DATABASE_MOUNT_PATH} \
         ${STORE_DATABASE_MOUNT_PATH} \
         ${AUTH_DATABASE_MOUNT_PATH} \
         ${LOG_MOUNT_PATH}
@@ -174,11 +174,11 @@ hooks:
       echo "Creating tasks folder"
       python dev/create_mount_directory.py ${TASK_DIRECTORY}
     events: ["before:deploy:vantage6-node"]
-  - name: "create-server-database-folder"
+  - name: "create-hq-database-folder"
     command: |
-      echo "Creating server database folder"
-      python dev/create_mount_directory.py ${SERVER_DATABASE_MOUNT_PATH}
-    events: ["before:deploy:vantage6-server"]
+      echo "Creating HQ database folder"
+      python dev/create_mount_directory.py ${HQ_DATABASE_MOUNT_PATH}
+    events: ["before:deploy:vantage6-hq"]
   - name: "create-auth-database-folder"
     command: |
       echo "Creating auth database folder"
@@ -187,10 +187,10 @@ hooks:
   - name: "create-log-folder"
     command: |
       echo "Creating log folder"
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/server
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/hq
       python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
       python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
-    events: ["before:deploy:vantage6-server", "before:deploy:vantage6-store", "before:deploy:vantage6-node"]
+    events: ["before:deploy:vantage6-hq", "before:deploy:vantage6-store", "before:deploy:vantage6-node"]
   - name: "create-store-database-folder"
     command: |
       echo "Creating algorithm store database folder"
@@ -204,13 +204,13 @@ hooks:
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
 images:
-  server:
-    image: ${SERVER_IMAGE}
-    dockerfile: docker/node-and-server.Dockerfile
+  hq:
+    image: ${HQ_IMAGE}
+    dockerfile: docker/node-and-hq.Dockerfile
     context: .
   node:
     image: ${NODE_IMAGE}
-    dockerfile: docker/node-and-server.Dockerfile
+    dockerfile: docker/node-and-hq.Dockerfile
     context: .
   store:
     image: ${STORE_IMAGE}
@@ -280,16 +280,16 @@ deployments:
                     - manage-clients
                     - create-client
 
-  # The server deployment contains the server, database, rabbit mq and the UI. The
+  # The HQ deployment contains the HQ, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
-  # server (This is also why they are in separate Helm charts).
-  vantage6-server:
+  # hq (This is also why they are in separate Helm charts).
+  vantage6-hq:
     helm:
       chart:
-        name: ./charts/server
+        name: ./charts/hq
       values:
-        server:
-          image: ${SERVER_IMAGE} # needed for automatic image tag update
+        hq:
+          image: ${HQ_IMAGE} # needed for automatic image tag update
           imagePullPolicy: IfNotPresent
           keycloak:
             url: ${KEYCLOAK_URL}
@@ -300,7 +300,7 @@ deployments:
             adminClientSecret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
           logging:
             level: DEBUG
-            volumeHostPath: ${LOG_MOUNT_PATH}/server
+            volumeHostPath: ${LOG_MOUNT_PATH}/hq
           jwt:
             secret: development-constant-secret!
           dev:
@@ -321,7 +321,7 @@ deployments:
             client: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
-          volumePath: ${SERVER_DATABASE_MOUNT_PATH}
+          volumePath: ${HQ_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         prometheus:
           enabled: false
@@ -346,7 +346,7 @@ deployments:
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/store
-          vantage6ServerUri: http://localhost:7601/server
+          vantage6HqUri: http://localhost:7601/hq
           policies:
             allowLocalhost: true
             assignReviewOwnAlgorithm: true
@@ -418,12 +418,12 @@ dev:
       - port: 8080:8080
         bindAddress: ${PORTS_BIND_ADDRESS}
 
-  # This puts the server container in development mode. It syncs the local files with
-  # the container and starts the server in development mode. Code changes will be
-  # hot-reloaded and a port forward is created to access the server.
-  vantage6-server:
+  # This puts the HQ container in development mode. It syncs the local files with
+  # the container and starts the HQ in development mode. Code changes will be
+  # hot-reloaded and a port forward is created to access the HQ.
+  vantage6-hq:
     labelSelector:
-      component: vantage6-server
+      component: vantage6-hq
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
@@ -431,10 +431,10 @@ dev:
         disableDownload: true
       - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
         disableDownload: true
-      - path: ./vantage6-server/:/vantage6/vantage6-server/
+      - path: ./vantage6-hq/:/vantage6/vantage6-hq/
         disableDownload: true
         startContainer: true
-    command: ["/bin/sh", "/vantage6/vantage6-server/dev_server.sh"]
+    command: ["/bin/sh", "/vantage6/vantage6-hq/dev_hq.sh"]
     logs:
       enabled: true
     ports:
@@ -443,12 +443,12 @@ dev:
       - port: 7601:7601
         bindAddress: ${PORTS_BIND_ADDRESS}
 
-  vantage6-server-db:
+  vantage6-hq-db:
     labelSelector:
-      app: vantage6-server
+      app: vantage6-hq
       component: postgres
     ports:
-      # expose the server database port
+      # expose the HQ database port
       - port: 7632:5432
         bindAddress: localhost
       - port: 7632:5432
@@ -505,7 +505,7 @@ dev:
     logs:
       enabled: true
 
-  # Where as we could hot-reload the server code using wsgi, we cannot do this with the
+  # Where as we could hot-reload the HQ code using wsgi, we cannot do this with the
   # node code. We leverage the `restartHelper` and `onUpload.restartContainer` to
   # restart the node container (with multiple nodes) when the code changes.
   vantage6-node:
@@ -550,7 +550,7 @@ commands:
   # This will put all components in development mode. This is the main entrypoint
   # for development.
   start-dev:
-    description: "Start the development environment. Use --repopulate to repopulate the server."
+    description: "Start the development environment. Use --repopulate to repopulate the HQ."
     command: |
       if ! command -v uname >/dev/null 2>&1; then
         echo "--------------------------------"
@@ -577,6 +577,6 @@ commands:
   # you want to run. In case you do not run it, it will pull the latest images from
   # our harbor registry (which potentially has outdated dependencies).
   rebuild:
-    description: "Rebuild images for this project (use --server, --node, --store, --ui for specific images)"
+    description: "Rebuild images for this project (use --hq, --node, --store, --ui for specific images)"
     command: |
       $(./dev/get_rebuild_command.sh "$@")
