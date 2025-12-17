@@ -13,7 +13,8 @@ from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 
 def _get_latest_keycloak_version() -> str:
     """
-    Get the latest Keycloak Operator version from GitHub releases.
+    Get the latest Keycloak Operator version from GitHub releases. Exits when unable
+    to find what version is the latest version.
 
     Returns
     -------
