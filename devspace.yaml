@@ -103,6 +103,7 @@ pipelines:
 
   server:
     run: |-
+      # TODO refactor this section
       run_dependencies --all
       ensure_pull_secrets --all
       wait_for_pod_ready() {
