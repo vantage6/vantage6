@@ -64,7 +64,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(server_url=hq_url, auth_url=auth_url)
+        super(UserClient, self).__init__(hq_url=hq_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
@@ -1902,7 +1902,7 @@ class UserClient(ClientBase):
                     encrypted_arguments = self.parent.cryptor.encrypt_bytes_to_str(
                         serialized_arguments, pub_key, skip_base64_encoding_of_msg=True
                     )
-                    organization_arguments = self.parent._upload_run_data_to_server(
+                    organization_arguments = self.parent._upload_run_data_to_hq(
                         encrypted_arguments
                     )
                 else:

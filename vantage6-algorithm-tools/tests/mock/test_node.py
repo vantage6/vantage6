@@ -50,9 +50,9 @@ class TestMockNodeDataframe(TestCase):
     def test_simulate_task_run(self):
         """Test if task run simulation works properly"""
 
-        # Mock the server's get_label_for_df_id to return the correct label
-        self.network.server = MagicMock()
-        self.network.server.get_label_for_df_id = MagicMock(return_value=LABEL_1)
+        # Mock the HQ's get_label_for_df_id to return the correct label
+        self.network.hq = MagicMock()
+        self.network.hq.get_label_for_df_id = MagicMock(return_value=LABEL_1)
 
         # Create a mock method function
         mock_method = MagicMock()
@@ -186,8 +186,8 @@ class TestMockNodeDataframe(TestCase):
 
     def test_task_env_vars(self):
         """Test if _task_env_vars returns correct environment variables"""
-        # Mock the server tasks to simulate task count
-        self.network.server.tasks = [1, 2, 3]  # 3 existing tasks
+        # Mock the HQ tasks to simulate task count
+        self.network.hq.tasks = [1, 2, 3]  # 3 existing tasks
 
         # Call _task_env_vars with test values
         action = AlgorithmStepType.FEDERATED_COMPUTE

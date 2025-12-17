@@ -2,10 +2,10 @@ import json
 from unittest import TestCase
 
 from vantage6.algorithm.mock import MockNetwork
-from vantage6.algorithm.mock.server import MockServer
+from vantage6.algorithm.mock.hq import MockHQ
 
 
-class TestMockServer(TestCase):
+class TestMockHQ(TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.network = MockNetwork(
@@ -21,23 +21,23 @@ class TestMockServer(TestCase):
             ],
             collaboration_id=1,
         )
-        self.server = MockServer(self.network)
+        self.hq = MockHQ(self.network)
 
     def test_initialization(self):
-        """Test if server is properly initialized"""
-        self.assertEqual(self.server.network.collaboration_id, 1)
-        self.assertEqual(self.server.session_id, 1)
-        self.assertEqual(self.server.study_id, 1)
-        self.assertEqual(len(self.server.tasks), 0)
-        self.assertEqual(len(self.server.runs), 0)
-        self.assertEqual(len(self.server.results), 0)
+        """Test if HQ is properly initialized"""
+        self.assertEqual(self.hq.network.collaboration_id, 1)
+        self.assertEqual(self.hq.session_id, 1)
+        self.assertEqual(self.hq.study_id, 1)
+        self.assertEqual(len(self.hq.tasks), 0)
+        self.assertEqual(len(self.hq.runs), 0)
+        self.assertEqual(len(self.hq.results), 0)
 
     def test_save_result(self):
         """Test if results are properly saved"""
         test_result = {"test": "data"}
-        result = self.server.save_result(test_result, task_id=1)
+        result = self.hq.save_result(test_result, task_id=1)
 
-        self.assertEqual(len(self.server.results), 1)
+        self.assertEqual(len(self.hq.results), 1)
         self.assertEqual(result["id"], 1)
         self.assertEqual(json.loads(result["result"]), test_result)
         self.assertEqual(result["task"]["id"], 1)
@@ -45,11 +45,9 @@ class TestMockServer(TestCase):
     def test_save_run(self):
         """Test if runs are properly saved"""
         test_args = {"arg1": "value1"}
-        run = self.server.save_run(
-            arguments=test_args, task_id=1, result_id=1, org_id=1
-        )
+        run = self.hq.save_run(arguments=test_args, task_id=1, result_id=1, org_id=1)
 
-        self.assertEqual(len(self.server.runs), 1)
+        self.assertEqual(len(self.hq.runs), 1)
         self.assertEqual(run["id"], 1)
         self.assertEqual(json.loads(run["arguments"]), test_args)
         self.assertEqual(run["task"]["id"], 1)
@@ -59,14 +57,14 @@ class TestMockServer(TestCase):
     def test_save_task(self):
         """Test if tasks are properly saved"""
         test_databases = [{"name": "test_db", "uri": "test_uri"}]
-        task = self.server.save_task(
+        task = self.hq.save_task(
             name="test_task",
             description="test description",
             databases=test_databases,
             init_organization_id=1,
         )
 
-        self.assertEqual(len(self.server.tasks), 1)
+        self.assertEqual(len(self.hq.tasks), 1)
         self.assertEqual(task["id"], 1)
         self.assertEqual(task["name"], "test_task")
         self.assertEqual(task["description"], "test description")

@@ -63,17 +63,17 @@ class TestResources(unittest.TestCase):
             "vantage6.algorithm.store.AlgorithmStoreApp._get_keycloak_public_key"
         ) as mock_get_key:
             mock_get_key.return_value = MOCK_PUBLIC_KEY_PEM.decode()
-            # create server instance. Patch the start_background_task method
-            # to prevent the server from starting a ping/pong thread that will
+            # create store instance. Patch the start_background_task method
+            # to prevent the store from starting a ping/pong thread that will
             # prevent the tests from starting
-            server = AlgorithmStoreApp(ctx)
+            backend_service = AlgorithmStoreApp(ctx)
             # Configure JWT for container tokens
-            server.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
-            server.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM
+            backend_service.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
+            backend_service.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM
 
-        cls.server = server
-        cls.server.app.testing = True
-        cls.app = cls.server.app.test_client()
+        cls.backend = backend_service
+        cls.backend.app.testing = True
+        cls.app = cls.backend.app.test_client()
 
     @classmethod
     def tearDownClass(cls):

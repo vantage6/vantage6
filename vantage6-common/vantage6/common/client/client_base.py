@@ -78,7 +78,7 @@ class ClientBase(BlobStorageMixin):
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str, auth_url: str | None = None) -> None:
+    def __init__(self, hq_url: str, auth_url: str | None = None) -> None:
         """Basic setup for the client
 
         Parameters
@@ -92,7 +92,7 @@ class ClientBase(BlobStorageMixin):
         self.log = logging.getLogger(module_name)
 
         # server settings
-        self.__server_url = server_url
+        self.__server_url = hq_url
         self.__auth_url = auth_url
 
         # tokens
@@ -431,7 +431,7 @@ class ClientBase(BlobStorageMixin):
                 uuid = uuid.decode(STRING_ENCODING)
             uuid = uuid.strip("'\"")
             try:
-                run_data = self._download_run_data_from_server(uuid)
+                run_data = self._download_run_data_from_hq(uuid)
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)

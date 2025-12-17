@@ -355,30 +355,28 @@ class Vantage6App:
                 )
 
 
-def get_server_url(
-    config: dict, server_url_from_request: str | None = None
-) -> str | None:
+def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | None:
     """ "
-    Get the server url from the request data, or from the configuration if it is
+    Get the HQ url from the request data, or from the configuration if it is
     not present in the request.
 
     Parameters
     ----------
     config : dict
-        Server configuration
-    server_url_from_request : str | None
-        Server url from the request data.
+        HQ configuration
+    hq_url_from_request : str | None
+        HQ url from the request data.
 
     Returns
     -------
     str | None
-        The server url
+        The HQ url
     """
-    if server_url_from_request:
-        return server_url_from_request
-    server_url = config.get("server_url")
+    if hq_url_from_request:
+        return hq_url_from_request
+    hq_url = config.get("hq_url")
     # make sure that the server url ends with the api path
     api_path = config.get("api_path", DEFAULT_API_PATH)
-    if server_url and not server_url.endswith(api_path):
-        server_url = server_url + api_path
-    return server_url
+    if hq_url and not hq_url.endswith(api_path):
+        hq_url = hq_url + api_path
+    return hq_url

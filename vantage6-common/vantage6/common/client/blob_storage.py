@@ -14,7 +14,7 @@ class BlobStorageMixin:
     Mixin class to add blob storage functionality to client classes.
     """
 
-    def _upload_run_data_to_server(
+    def _upload_run_data_to_hq(
         self, run_data_bytes: bytes, pub_key: str | None = None
     ) -> str:
         """
@@ -69,7 +69,7 @@ class BlobStorageMixin:
         self.log.info(f"Run data uploaded to server with UUID: {run_data_uuid}")
         return run_data_uuid
 
-    def _download_run_data_from_server(self, run_data_uuid: str) -> bytes:
+    def _download_run_data_from_hq(self, run_data_uuid: str) -> bytes:
         """
         Download run data (either input or result)
         from the server using its UUID.

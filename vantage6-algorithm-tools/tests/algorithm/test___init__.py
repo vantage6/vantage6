@@ -29,7 +29,7 @@ class TestAlgorithmClient(unittest.TestCase):
         dummy_token = jwt.encode(payload, key="", algorithm=None)
         self.client = AlgorithmClient(
             token=dummy_token,
-            server_url="http://dummy_host:1234",
+            hq_url="http://dummy_host:1234",
         )
         self.client.parent = MagicMock()
         self.client.parent.request = MagicMock()
@@ -89,9 +89,7 @@ class TestAlgorithmClient(unittest.TestCase):
         self.assertEqual(results[0], {"foo": "bar"})
 
     @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
-    @patch(
-        "vantage6.common.client.client_base.ClientBase._download_run_data_from_server"
-    )
+    @patch("vantage6.common.client.client_base.ClientBase._download_run_data_from_hq")
     def test_result_from_task_azure(
         self, mock_download_run_data, mock_multi_page_request
     ):
@@ -100,7 +98,7 @@ class TestAlgorithmClient(unittest.TestCase):
                 self.client.result.parent, "_multi_page_request"
             ) as mock_multi_page_request,
             patch.object(
-                self.client.result.parent, "_download_run_data_from_server"
+                self.client.result.parent, "_download_run_data_from_hq"
             ) as mock_download_run_data,
         ):
             # Simulate a result where blob_storage_used is True

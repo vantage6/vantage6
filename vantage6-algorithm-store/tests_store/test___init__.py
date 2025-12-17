@@ -30,7 +30,7 @@ class TestAlgorithmStoreApp(TestResources):
         }
 
         # Call the setup_policies method
-        self.server.setup_policies(config)
+        self.backend.setup_policies(config)
 
         # Check that the Policy objects are created with the correct values, and that
         # the non-existing policy is ignored and existing policies were deleted
@@ -47,19 +47,19 @@ class TestAlgorithmStoreApp(TestResources):
 
     @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_default_roles")
     @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_keycloak_id_to_super_user")
-    def test_server_startup(self, mock_add_keycloak_id, mock_add_default_roles):
-        """Test that the server is started correctly"""
+    def test_store_startup(self, mock_add_keycloak_id, mock_add_default_roles):
+        """Test that the store is started correctly"""
 
         # ensure root role is present - this role will be assigned to the root user
-        # that is created on server startup
+        # that is created on store startup
         root_role = Role(name=DefaultRole.ROOT.value, rules=Rule.get())
         root_role.save()
 
-        self.server.ctx.config["root_user"] = {
+        self.backend.ctx.config["root_user"] = {
             "username": "superuser",
         }
 
-        self.server.start()
+        self.backend.start()
 
         mock_add_default_roles.assert_called_once()
         mock_add_keycloak_id.assert_called_once()
@@ -73,7 +73,7 @@ class TestAlgorithmStoreApp(TestResources):
         """Test that the default roles are added to the database"""
 
         # pylint: disable=protected-access
-        self.server._add_default_roles(get_default_roles(), db)
+        self.backend._add_default_roles(get_default_roles(), db)
 
         roles = Role.get()
         role_names = [role.value for role in DefaultRole]
@@ -82,7 +82,7 @@ class TestAlgorithmStoreApp(TestResources):
             self.assertIn(role.name, role_names)
 
         # run function again to ensure that the roles are not duplicated
-        self.server._add_default_roles(get_default_roles(), db)
+        self.backend._add_default_roles(get_default_roles(), db)
         self.assertEqual(len(Role.get()), len(role_names))
 
         # verify that function to get the default roles includes all default roles
@@ -94,7 +94,7 @@ class TestAlgorithmStoreApp(TestResources):
         role = Role.get_by_name(DefaultRole.VIEWER.value)
         role.rules = []
         role.save()
-        self.server._add_default_roles(get_default_roles(), db)
+        self.backend._add_default_roles(get_default_roles(), db)
         role = Role.get_by_name(DefaultRole.VIEWER.value)
         self.assertNotEqual(len(role.rules), 0)
         for r in default_role_list_dict:

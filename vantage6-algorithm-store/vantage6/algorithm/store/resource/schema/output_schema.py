@@ -35,7 +35,7 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         setattr(self, "role", lambda obj: self.create_hateoas("role", obj))
         setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
         setattr(self, "review", lambda obj: self.create_hateoas("review", obj))
-        setattr(self, "server", lambda obj: self.create_hateoas("server", obj))
+        setattr(self, "hq", lambda obj: self.create_hateoas("hq", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.

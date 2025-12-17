@@ -34,15 +34,15 @@ class MockBaseClient:
                 "_access_token",
                 "_ClientBase__auth_url",
                 "_ClientBase__check_algorithm_store_valid",
-                "_ClientBase__server_url",
+                "_ClientBase__hq_url",
                 "_decrypt_run_data",
                 "_decrypt_field",
-                "_download_run_data_from_server",
+                "_download_run_data_from_hq",
                 "_fetch_and_decrypt_run_data",
                 "_multi_page_request",
                 "_refresh_token",
                 "_refresh_url",
-                "_upload_run_data_to_server",
+                "_upload_run_data_to_hq",
                 "auth_url",
                 "authenticate",
                 "check_if_blob_store_enabled",
@@ -57,7 +57,7 @@ class MockBaseClient:
                 "node_id",
                 "obtain_new_token",
                 "request",
-                "server_url",
+                "hq_url",
                 "session_id",
                 "setup_encryption",
                 "store_id",
@@ -168,7 +168,7 @@ class MockBaseClient:
             dict
                 Dictionary containing study data.
             """
-            return self.parent.network.server.study
+            return self.parent.network.hq.study
 
     class Task(SubClient):
         """
@@ -238,7 +238,7 @@ class MockBaseClient:
             if not databases:
                 databases = []
 
-            task = self.parent.network.server.save_task(
+            task = self.parent.network.hq.save_task(
                 init_organization_id=self.parent.organization_id,
                 name=name,
                 description=description,
@@ -277,10 +277,8 @@ class MockBaseClient:
                     traceback.print_exc()
                     exit(1)
 
-                result_response = self.parent.network.server.save_result(
-                    result, task["id"]
-                )
-                self.parent.network.server.save_run(
+                result_response = self.parent.network.hq.save_result(result, task["id"])
+                self.parent.network.hq.save_run(
                     arguments, task["id"], result_response["id"], org_id
                 )
 
@@ -311,7 +309,7 @@ class MockBaseClient:
             dict
                 A mocked run.
             """
-            for run in self.parent.network.server.runs:
+            for run in self.parent.network.hq.runs:
                 if run.get("id") == id_:
                     return run
             return {"msg": f"Could not find run with id {id_}"}
@@ -331,7 +329,7 @@ class MockBaseClient:
                 A list of mocked runs.
             """
             runs = []
-            for run in self.parent.network.server.runs:
+            for run in self.parent.network.hq.runs:
                 if run.get("task").get("id") == task_id:
                     runs.append(run)
             return runs
@@ -355,7 +353,7 @@ class MockBaseClient:
             Any
                 A mocked result.
             """
-            for result in self.network.parent.server.results:
+            for result in self.network.parent.hq.results:
                 if result.get("id") == id_:
                     return json.loads(result.get("result"))
             return {"msg": f"Could not find result with id {id_}"}
@@ -375,7 +373,7 @@ class MockBaseClient:
                 The results of the task.
             """
             results = []
-            for result in self.parent.network.server.results:
+            for result in self.parent.network.hq.results:
                 if result.get("task").get("id") == task_id:
                     results.append(json.loads(result.get("result")))
             return results
@@ -477,7 +475,7 @@ class MockBaseClient:
             dict
                 A mocked collaboration.
             """
-            id_ = self.parent.network.server.collaboration_id
+            id_ = self.parent.network.hq.collaboration_id
             return {
                 "id": id_,
                 "name": "mock-collaboration",
@@ -545,7 +543,7 @@ class MockUserClient(MockBaseClient):
             """
             Get dataframe by ID
             """
-            for dataframe in self.parent.network.server.dataframes:
+            for dataframe in self.parent.network.hq.dataframes:
                 if dataframe.get("id") == id_:
                     return dataframe
             return {"msg": f"Could not find dataframe with id {id_}"}
@@ -561,7 +559,7 @@ class MockUserClient(MockBaseClient):
             if not arguments:
                 arguments = {}
 
-            task = self.parent.network.server.save_task(
+            task = self.parent.network.hq.save_task(
                 init_organization_id=self.parent.organization_id,
                 name=name,
                 description=f"Mock dataframe creation for {label}",
@@ -594,12 +592,12 @@ class MockUserClient(MockBaseClient):
 
                 # In case of a dataframe we do not store a result, as the dataframe
                 # creation on the node is the result of this action.
-                result_response = self.parent.network.server.save_result({}, task["id"])
-                self.parent.network.server.save_run(
+                result_response = self.parent.network.hq.save_result({}, task["id"])
+                self.parent.network.hq.save_run(
                     arguments, task["id"], result_response["id"], org_id
                 )
 
-            dataframe = self.parent.network.server.save_dataframe(
+            dataframe = self.parent.network.hq.save_dataframe(
                 name=name,
                 dataframes=dataframes,
                 source_db_label=label,
@@ -611,12 +609,12 @@ class MockUserClient(MockBaseClient):
             self, id_: int, image: str, method: str, arguments: dict
         ) -> dict:
             """ """
-            dataframe = self.parent.network.server.get_dataframe(id_)
+            dataframe = self.parent.network.hq.get_dataframe(id_)
             data_frame_name = dataframe.get("name")
             if not dataframe or not data_frame_name:
                 return {"msg": f"An error occurred while fetching dataframe {id_}"}
 
-            task = self.parent.network.server.save_task(
+            task = self.parent.network.hq.save_task(
                 init_organization_id=self.parent.organization_id,
                 name=f"Preprocess {data_frame_name}",
                 description=f"Preprocess {data_frame_name}",
@@ -644,18 +642,18 @@ class MockUserClient(MockBaseClient):
                     exit(1)
                 dataframes.append(df)
 
-                result_response = self.parent.network.server.save_result({}, task["id"])
-                self.parent.network.server.save_run(
+                result_response = self.parent.network.hq.save_result({}, task["id"])
+                self.parent.network.hq.save_run(
                     arguments, task["id"], result_response["id"], org_id
                 )
 
-            return self.parent.network.server.update_dataframe(id_, dataframes)
+            return self.parent.network.hq.update_dataframe(id_, dataframes)
 
         def list(self) -> list[dict]:
             """
             List all dataframes
             """
-            return self.parent.network.server.dataframes
+            return self.parent.network.hq.dataframes
 
 
 class MockAlgorithmClient(MockBaseClient):
@@ -667,7 +665,7 @@ class MockAlgorithmClient(MockBaseClient):
         self.image = "mock-image"
         self.node_id = node.id_
         self.collaboration_id = node.collaboration_id
-        self.study_id = node.network.server.study_id
+        self.study_id = node.network.hq.study_id
         self.organization_id = node.organization_id
         self.databases = databases
 

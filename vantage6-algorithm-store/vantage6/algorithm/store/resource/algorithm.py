@@ -17,7 +17,7 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 
-from vantage6.backend.common import get_server_url
+from vantage6.backend.common import get_hq_url
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -715,7 +715,7 @@ class Algorithms(AlgorithmBaseResource):
             template_vars = {
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
-                "store_url": get_server_url(config, store_url),
+                "store_url": get_hq_url(config, store_url),
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
                 "support_email": support_email,

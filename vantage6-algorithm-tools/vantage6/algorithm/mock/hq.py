@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from vantage6.algorithm.mock.network import MockNetwork
 
 
-class MockServer:
+class MockHQ:
     def __init__(self, network: "MockNetwork"):
         """
         Create a mock server.

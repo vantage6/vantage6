@@ -1,7 +1,7 @@
 """
 Database connection classes for algorithm store.
 
-Note that this file is almost identical to the one for the vantage6 server. However,
+Note that this file is almost identical to the one for the vantage6 HQ. However,
 this is necessary because the database class is a singleton so we have to create
 two different classes for it.
 """

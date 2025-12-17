@@ -38,7 +38,7 @@ class NodeClient(ClientBase):
         auth_url : str
             The url of the authentication server.
         """
-        super().__init__(server_url=server_url, auth_url=auth_url)
+        super().__init__(hq_url=server_url, auth_url=auth_url)
 
         self.node_account_name = node_account_name
         self.api_key = api_key
@@ -279,7 +279,7 @@ class NodeClient(ClientBase):
                 # If blob store is enabled, stream the result to the server, which
                 # will stream it to the blob store and return the UUID reference to use.
                 if blob_store_enabled:
-                    result_uuid = self.parent._upload_run_data_to_server(data["result"])
+                    result_uuid = self.parent._upload_run_data_to_hq(data["result"])
                     self.parent.log.debug(
                         f"Result uploaded to server with UUID: {result_uuid}"
                     )

@@ -203,7 +203,7 @@ def with_permission_to_view_algorithms() -> Callable:
             ):
                 return fn(self, *args, **kwargs)
 
-            # not everyone has permission: authenticate with server
+            # not everyone has permission: authenticate the request
             user_or_error, status = _authenticate(request)
             if status != HTTPStatus.OK:
                 return user_or_error, status
