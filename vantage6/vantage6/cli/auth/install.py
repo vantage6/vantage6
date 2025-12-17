@@ -50,8 +50,8 @@ def _get_latest_keycloak_version() -> str:
         if e.response.status_code == 403:
             error(
                 "GitHub API rate limit exceeded. "
-                "Set GITHUB_TOKEN environment variable to authenticate and increase rate limits, "
-                "or specify a version manually using the --operator-version flag."
+                "Set GITHUB_TOKEN environment variable to authenticate and increase rate "
+                "limits, or specify a version manually using the --operator-version flag."
             )
         else:
             error(
