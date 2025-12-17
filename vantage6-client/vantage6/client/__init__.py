@@ -19,6 +19,7 @@ from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
+from vantage6.common.context import running_in_wsl
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import APPNAME, LOCALHOST, AuthStatus
@@ -218,10 +219,7 @@ class UserClient(ClientBase):
         # Try to open browser with different methods
         try:
             # Check if we're in WSL
-            if (
-                os.path.exists("/proc/version")
-                and "microsoft" in open("/proc/version").read().lower()
-            ):
+            if running_in_wsl():
                 # We're in WSL, try to use Windows browser
                 try:
                     # Try to use wslview (WSL2)
