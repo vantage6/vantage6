@@ -9,12 +9,12 @@ from vantage6.cli.dev.common import check_devspace_installed
 
 
 @click.command()
-@click.option("--only-server", is_flag=True, help="Rebuild the server image.")
+@click.option("--only-hq", is_flag=True, help="Rebuild the HQ image.")
 @click.option("--only-node", is_flag=True, help="Rebuild the node image.")
 @click.option("--only-store", is_flag=True, help="Rebuild the store image.")
 @click.option("--only-ui", is_flag=True, help="Rebuild the ui image.")
 def cli_rebuild_dev_env(
-    only_server: bool, only_node: bool, only_store: bool, only_ui: bool
+    only_hq: bool, only_node: bool, only_store: bool, only_ui: bool
 ):
     """Rebuild Docker images for your development environment."""
     check_devspace_installed()
@@ -23,8 +23,8 @@ def cli_rebuild_dev_env(
         info("🔄 Rebuilding development environment with devspace...")
         cmd = ["devspace", "run", "rebuild"]
 
-        if only_server:
-            cmd.append("--server")
+        if only_hq:
+            cmd.append("--hq")
         if only_node:
             cmd.append("--node")
         if only_store:

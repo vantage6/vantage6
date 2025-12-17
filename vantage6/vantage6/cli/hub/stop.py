@@ -47,4 +47,4 @@ def cli_hub_stop(
 
     execute_cli_stop(CLICommandName.AUTH, f"{name}-auth", k8s_config, False)
     execute_cli_stop(CLICommandName.ALGORITHM_STORE, f"{name}-store", k8s_config, False)
-    execute_cli_stop(CLICommandName.SERVER, name, k8s_config, False)
+    execute_cli_stop(CLICommandName.HQ, name, k8s_config, False)

@@ -8,8 +8,8 @@ from vantage6.common.configuration_manager import Configuration, ConfigurationMa
 from vantage6.cli.globals import (
     ALGO_STORE_TEMPLATE_FILE,
     AUTH_TEMPLATE_FILE,
+    HQ_TEMPLATE_FILE,
     NODE_TEMPLATE_FILE,
-    SERVER_TEMPLATE_FILE,
 )
 
 LOGGING_VALIDATORS = {
@@ -24,11 +24,8 @@ LOGGING_VALIDATORS = {
 }
 
 
-class ServerConfiguration(Configuration):
-    """
-    Stores the server's configuration and defines a set of server-specific
-    validators.
-    """
+class HQConfiguration(Configuration):
+    """Stores the HQ's configuration and defines a set of HQ-specific validators."""
 
     # TODO: explore how to validate helm values.yaml files, see issue 2105
     VALIDATORS = {}
@@ -36,8 +33,8 @@ class ServerConfiguration(Configuration):
 
 class AlgorithmStoreConfiguration(Configuration):
     """
-    Stores the algorithm store's configuration and defines a set of algorithm store-specific
-    validators.
+    Stores the algorithm store's configuration and defines a set of algorithm
+    store-specific validators.
     """
 
     VALIDATORS = {}
@@ -54,7 +51,7 @@ class NodeConfiguration(Configuration):
     VALIDATORS = {
         # # TODO enable validators for node. To see if it works, use v6 node list
         # "node": {
-        #     "server_url": Use(str),
+        #     "hq_url": Use(str),
         #     "port": Or(Use(int), None),
         #     "task_dir": Use(str),
         #     # TODO: remove `dict` validation from databases
@@ -117,9 +114,9 @@ class NodeConfigurationManager(ConfigurationManager):
         return super()._get_config_template(NODE_TEMPLATE_FILE)
 
 
-class ServerConfigurationManager(ConfigurationManager):
+class HQConfigurationManager(ConfigurationManager):
     """
-    Maintains the server's configuration.
+    Maintains the HQ's configuration.
 
     Parameters
     ----------
@@ -128,14 +125,12 @@ class ServerConfigurationManager(ConfigurationManager):
     """
 
     def __init__(self, name: str, is_sandbox: bool = False, *args, **kwargs) -> None:
-        super().__init__(
-            conf_class=ServerConfiguration, name=name, is_sandbox=is_sandbox
-        )
+        super().__init__(conf_class=HQConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
     def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
         """
-        Create a new instance of the ServerConfigurationManager from a
+        Create a new instance of the HQConfigurationManager from a
         configuration file.
 
         Parameters
@@ -145,23 +140,23 @@ class ServerConfigurationManager(ConfigurationManager):
 
         Returns
         -------
-        ServerConfigurationManager
-            A new instance of the ServerConfigurationManager.
+        HQConfigurationManager
+            A new instance of the HQConfigurationManager.
         """
         return super().from_file(
-            path, conf_class=ServerConfiguration, is_sandbox=is_sandbox
+            path, conf_class=HQConfiguration, is_sandbox=is_sandbox
         )
 
     def get_config_template(self) -> str:
         """
-        Get the configuration template for the server.
+        Get the configuration template for the HQ.
 
         Returns
         -------
         str
-            The configuration template for the server.
+            The configuration template for the HQ.
         """
-        return super()._get_config_template(SERVER_TEMPLATE_FILE)
+        return super()._get_config_template(HQ_TEMPLATE_FILE)
 
 
 class AlgorithmStoreConfigurationManager(ConfigurationManager):

@@ -5,16 +5,16 @@ from pathlib import Path
 from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli import __version__
-from vantage6.cli.configuration_manager import ServerConfigurationManager
-from vantage6.cli.context.base_server import BaseServerContext
+from vantage6.cli.configuration_manager import HQConfigurationManager
+from vantage6.cli.context.base_backend import BaseBackendContext
 from vantage6.cli.globals import (
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
+    DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL,
     PROMETHEUS_DIR,
-    ServerType,
+    BackendType,
 )
 
 
-class ServerContext(BaseServerContext):
+class HQContext(BaseBackendContext):
     """
     Server context
 
@@ -29,7 +29,7 @@ class ServerContext(BaseServerContext):
 
     # The server configuration manager is aware of the structure of the server
     # configuration file and makes sure only valid configuration can be loaded.
-    INST_CONFIG_MANAGER = ServerConfigurationManager
+    INST_CONFIG_MANAGER = HQConfigurationManager
 
     def __init__(
         self,
@@ -85,7 +85,7 @@ class ServerContext(BaseServerContext):
     @classmethod
     def from_external_config_file(
         cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
-    ) -> ServerContext:
+    ) -> HQContext:
         """
         Create a server context from an external configuration file. External
         means that the configuration file is not located in the default folders
@@ -107,7 +107,7 @@ class ServerContext(BaseServerContext):
         """
         return super().from_external_config_file(
             path,
-            ServerType.V6SERVER,
+            BackendType.HQ,
             system_folders,
             in_container,
         )

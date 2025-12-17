@@ -8,8 +8,8 @@ from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
-from vantage6.cli.context.server import ServerContext
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+from vantage6.cli.context.hq import HQContext
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
 
 from vantage6.server import __version__
 from vantage6.server.model.base import Database
@@ -53,7 +53,7 @@ def click_insert_context(func: Callable) -> Callable:
     ) -> Callable:
         # select configuration if none supplied
         if config:
-            ctx = ServerContext.from_external_config_file(config, system_folders)
+            ctx = HQContext.from_external_config_file(config, system_folders)
         else:
             if not name:
                 try:
@@ -65,7 +65,7 @@ def click_insert_context(func: Callable) -> Callable:
                     exit()
 
             # raise error if config could not be found
-            if not ServerContext.config_exists(name, system_folders):
+            if not HQContext.config_exists(name, system_folders):
                 scope = "system" if system_folders else "user"
                 error(
                     f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
@@ -74,7 +74,7 @@ def click_insert_context(func: Callable) -> Callable:
                 exit(1)
 
             # create server context, and initialize db
-            ctx = ServerContext(name, system_folders=system_folders, in_container=True)
+            ctx = HQContext(name, system_folders=system_folders, in_container=True)
 
         # initialize database (singleton)
         Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)

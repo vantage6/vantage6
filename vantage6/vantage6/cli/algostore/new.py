@@ -5,31 +5,31 @@ from vantage6.common.globals import (
     InstanceType,
 )
 
-from vantage6.cli.configuration_create import add_common_server_config
+from vantage6.cli.configuration_create import add_common_backend_config
 
 
 def algo_store_configuration_questionaire(
     instance_name: str, system_folders: bool
 ) -> dict:
     """
-    Questionary to generate a config file for the algorithm store server
+    Questionary to generate a config file for the algorithm store
     instance.
 
     Parameters
     ----------
     instance_name : str
-        Name of the server instance.
+        Name of the store instance.
     system_folders : bool
         Whether to use system folders or user folders.
 
     Returns
     -------
     dict
-        Dictionary with the new server configuration
+        Dictionary with the new store configuration
     """
     config = {"store": {"keycloak": {}}, "database": {}}
 
-    config = add_common_server_config(
+    config = add_common_backend_config(
         config, InstanceType.ALGORITHM_STORE, instance_name
     )
 

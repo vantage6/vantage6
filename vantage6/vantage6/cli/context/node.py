@@ -31,7 +31,7 @@ class NodeContext(AppContext):
         Whether the configuration is a sandbox configuration, by default False
     """
 
-    # The server configuration manager is aware of the structure of the server
+    # The node configuration manager is aware of the structure of the node
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
@@ -120,7 +120,7 @@ class NodeContext(AppContext):
         cls, system_folders: bool = N_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
-        Find all available server configurations in the default folders.
+        Find all available node configurations in the default folders.
 
         Parameters
         ----------

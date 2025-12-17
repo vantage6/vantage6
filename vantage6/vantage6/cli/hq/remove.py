@@ -4,7 +4,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.remove import execute_remove
-from vantage6.cli.context import ServerContext
+from vantage6.cli.context import HQContext
 from vantage6.cli.globals import InfraComponentName
 
 
@@ -17,9 +17,7 @@ from vantage6.cli.globals import InfraComponentName
     sandbox_param="sandbox",
 )
 @click.option("-f", "--force", "force", flag_value=True)
-def cli_server_remove(
-    ctx: ServerContext, name: str, system_folders: bool, force: bool
-) -> None:
+def cli_hq_remove(ctx: HQContext, name: str, system_folders: bool, force: bool) -> None:
     """
     Function to remove a server.
 

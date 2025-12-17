@@ -58,15 +58,13 @@ def run_test(custom_args: dict | None = None):
     """
     # Create a client and authenticate
     client = Client(
-        server_url=f"http://localhost:{Ports.DEV_HQ}/api",
+        hq_url=f"http://localhost:{Ports.DEV_HQ}/api",
         auth_url="http://localhost:8080",
     )
     try:
         client.authenticate()
     except ConnectionError:
-        error(
-            "Could not connect to the server. Please check if a dev network is running."
-        )
+        error("Could not connect. Please check if a dev network is running.")
         exit(1)
 
     # if custom arguments are provided, use them for running the task

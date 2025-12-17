@@ -8,8 +8,8 @@ from vantage6.cli.configuration_create import (
     make_configuration,
     select_configuration_questionnaire,
 )
+from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.node.new import node_configuration_questionaire
-from vantage6.cli.server.new import server_configuration_questionaire
 
 module_path = "vantage6.cli.configuration_create"
 
@@ -66,7 +66,7 @@ class WizardTest(unittest.TestCase):
             "encryption",
             "logging",
             "port",
-            "server_url",
+            "hq_url",
             "task_dir",
         ]
         for key in keys:
@@ -90,38 +90,38 @@ class WizardTest(unittest.TestCase):
 
     @patch("vantage6.cli.configuration_create.AppContext")
     @patch("vantage6.cli.configuration_create.q")
-    @patch("vantage6.cli.server.new.q")
-    def test_server_wizard(self, q, q_server_common, app_context):
+    @patch("vantage6.cli.hq.new.q")
+    def test_hq_wizard(self, q, q_hq_common, app_context):
         app_context.instance_folders.return_value = {"log": "/log"}
         q.unsafe_prompt.side_effect = self.prompts
-        q_server_common.unsafe_prompt.side_effect = self.prompts
-        q_server_common.confirm.return_value.unsafe_ask.side_effect = [
+        q_hq_common.unsafe_prompt.side_effect = self.prompts
+        q_hq_common.confirm.return_value.unsafe_ask.side_effect = [
             1234,  # port
             "/data/db",  # path to database
             "postgresql://uri",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
-            "server-image",  # server image
+            "hq-image",  # hq image
             "ui-image",  # UI image
         ]
 
-        config = server_configuration_questionaire(
+        config = hq_configuration_questionaire(
             instance_name="vtg6",
             system_folders=False,
         )
 
-        keys = ["database", "rabbitmq", "server", "ui"]
+        keys = ["database", "rabbitmq", "hq", "ui"]
         for key in keys:
             self.assertIn(key, config)
         nested_keys = [
             ["database", "external"],
             ["database", "uri"],
             ["database", "volumePath"],
-            ["server", "api_path"],
-            ["server", "image"],
-            ["server", "keycloak"],
-            ["server", "logging"],
-            ["server", "port"],
+            ["hq", "api_path"],
+            ["hq", "image"],
+            ["hq", "keycloak"],
+            ["hq", "logging"],
+            ["hq", "port"],
             ["ui", "image"],
             ["rabbitmq", "password"],
         ]
@@ -132,19 +132,17 @@ class WizardTest(unittest.TestCase):
                 current_config = current_config[key]
 
     @patch("vantage6.cli.node.new.node_configuration_questionaire")
-    @patch("vantage6.cli.server.new.server_configuration_questionaire")
-    @patch("vantage6.cli.configuration_create.ServerConfigurationManager")
+    @patch("vantage6.cli.hq.new.hq_configuration_questionaire")
+    @patch("vantage6.cli.configuration_create.HQConfigurationManager")
     @patch("vantage6.cli.configuration_create.NodeConfigurationManager")
     @patch("vantage6.cli.configuration_create.AppContext")
-    def test_configuration_create_interface(
-        self, context, node_m, server_m, server_q, node_q
-    ):
+    def test_configuration_create_interface(self, context, node_m, hq_m, hq_q, node_q):
         context.instance_folders.return_value = {"config": "/some/path/"}
         # Configure mocks to return whatever path is passed as argument - this is
         # necessary as it converts the path to a Path object and that generates Mocking
         # issues otherwise
         node_m.return_value.save.side_effect = lambda path: path
-        server_m.return_value.save.side_effect = lambda path: path
+        hq_m.return_value.save.side_effect = lambda path: path
 
         _, file_ = make_configuration(
             config_producing_func=node_q,
@@ -156,7 +154,7 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(Path("/some/path/vtg6.yaml"), file_)
 
         _, file_ = make_configuration(
-            config_producing_func=server_q,
+            config_producing_func=hq_q,
             config_producing_func_args=("vtg6",),
             type_=InstanceType.HQ,
             instance_name="vtg6",

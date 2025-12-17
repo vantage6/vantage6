@@ -13,16 +13,16 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
     Parameters
     ----------
-    server_name : str
-        Name of the server.
-    server_image : str | None
-        Image of the server.
+    hq_name : str
+        Name of the HQ.
+    hq_image : str | None
+        Image of the HQ.
     store_image : str | None
         Image of the algorithm store.
     ui_image : str | None
         Image of the UI.
-    extra_server_config : Path | None
-        Path to the extra server configuration file.
+    extra_hq_config : Path | None
+        Path to the extra HQ configuration file.
     extra_store_config : Path | None
         Path to the extra algorithm store configuration file.
     k8s_config : KubernetesConfig
@@ -34,55 +34,55 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
     def __init__(
         self,
-        server_name: str,
-        server_image: str | None,
+        hq_name: str,
+        hq_image: str | None,
         store_image: str | None,
         ui_image: str | None,
-        extra_server_config: Path | None,
+        extra_hq_config: Path | None,
         extra_store_config: Path | None,
         extra_auth_config: Path | None,
         k8s_config: KubernetesConfig,
         with_prometheus: bool = False,
         custom_data_dir: Path | None = None,
     ) -> None:
-        super().__init__(server_name, custom_data_dir)
+        super().__init__(hq_name, custom_data_dir)
 
-        self.server_image = server_image
+        self.hq_image = hq_image
         self.store_image = store_image
         self.ui_image = ui_image
-        self.extra_server_config = extra_server_config
+        self.extra_hq_config = extra_hq_config
         self.extra_store_config = extra_store_config
         self.extra_auth_config = extra_auth_config
         self.k8s_config = k8s_config
         self.with_prometheus = with_prometheus
 
-    def generate_server_configs(self) -> None:
-        """Generates the demo network."""
+    def generate_hq_configs(self) -> None:
+        """Generates the local sandbox network."""
 
         self._create_auth_config()
 
-        self._create_vserver_config()
+        self._create_hq_config()
 
         self._create_algo_store_config()
 
-    def __server_config_return_func(
+    def __hq_config_return_func(
         self,
         extra_config: dict,
     ) -> dict:
         """
-        Return a dict with server configuration values to be used in creating the
+        Return a dict with HQ configuration values to be used in creating the
         config file.
 
         Parameters
         ----------
         extra_config : dict
-            Extra configuration (parsed from YAML) to be added to the server
+            Extra configuration (parsed from YAML) to be added to the HQ
             configuration.
 
         Returns
         -------
         dict
-            Dictionary with server configuration values.
+            Dictionary with HQ configuration values.
         """
         data_dir = self._create_and_get_data_dir(instance_type=InstanceType.HQ)
 
@@ -104,22 +104,21 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 }
             )
 
-        store_service = f"vantage6-{self.server_name}-store-user-algorithm-store"
+        store_service = f"vantage6-{self.hq_name}-store-user-algorithm-store"
         store_address = (
             f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
             f":{Ports.SANDBOX_ALGO_STORE.value}"
         )
         config = {
-            "server": {
-                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER.value}",
-                "port": Ports.SANDBOX_SERVER.value,
+            "hq": {
+                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_HQ.value}",
+                "port": Ports.SANDBOX_HQ.value,
                 "internal": {
-                    "port": Ports.SANDBOX_SERVER.value,
+                    "port": Ports.SANDBOX_HQ.value,
                 },
                 # TODO: v5+ set to latest v5 image
                 "image": (
-                    self.server_image
-                    or "harbor2.vantage6.ai/infrastructure/server:5.0.0a43"
+                    self.hq_image or "harbor2.vantage6.ai/infrastructure/hq:5.0.0a43"
                 ),
                 "algorithm_stores": [
                     {
@@ -143,12 +142,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     ),
                     "store_address": store_address,
                     "forward_ports": True,
-                    "local_hub_port_to_expose": Ports.SANDBOX_SERVER.value,
+                    "local_hub_port_to_expose": Ports.SANDBOX_HQ.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
                 "keycloak": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
                         f"{self.k8s_config.namespace}.svc.cluster.local:8080"
                     ),
                 },
@@ -173,30 +172,30 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         }
 
         if self.with_prometheus:
-            config["server"]["dev"]["local_prometheus_port_to_expose"] = (
+            config["hq"]["dev"]["local_prometheus_port_to_expose"] = (
                 Ports.SANDBOX_PROMETHEUS.value
             )
 
-        # merge the extra config with the server config
+        # merge the extra config with the HQ config
         if extra_config is not None:
             config.update(extra_config)
 
         return config
 
-    def _create_vserver_config(self) -> None:
-        """Creates server configuration file (YAML)."""
+    def _create_hq_config(self) -> None:
+        """Creates HQ configuration file (YAML)."""
 
-        extra_config = self._read_extra_config_file(self.extra_server_config)
+        extra_config = self._read_extra_config_file(self.extra_hq_config)
         if self.ui_image is not None:
             ui_config = extra_config.get("ui", {}) if extra_config is not None else {}
             ui_config["image"] = self.ui_image
             extra_config["ui"] = ui_config
 
-        # Create the server config file
+        # Create the HQ config file
         new(
-            config_producing_func=self.__server_config_return_func,
+            config_producing_func=self.__hq_config_return_func,
             config_producing_func_args=(extra_config,),
-            name=self.server_name,
+            name=self.hq_name,
             system_folders=False,
             type_=InstanceType.HQ,
             is_sandbox=True,
@@ -215,7 +214,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         new(
             config_producing_func=self.__algo_store_config_return_func,
             config_producing_func_args=(extra_config, data_dir, log_dir),
-            name=f"{self.server_name}-store",
+            name=f"{self.hq_name}-store",
             system_folders=False,
             type_=InstanceType.ALGORITHM_STORE,
             is_sandbox=True,
@@ -243,14 +242,14 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                     "volumeHostPath": log_dir,
                 },
-                "vantage6ServerUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_SERVER.value}",
+                "vantage6HQUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_HQ.value}",
                 "image": (
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
                 "keycloak": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
                         f"{self.k8s_config.namespace}.svc.cluster.local:8080"
                     ),
                 },
@@ -287,7 +286,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         new(
             config_producing_func=self.__auth_config_return_func,
             config_producing_func_args=(self.extra_auth_config,),
-            name=f"{self.server_name}-auth",
+            name=f"{self.hq_name}-auth",
             system_folders=False,
             type_=InstanceType.AUTH,
             is_sandbox=True,

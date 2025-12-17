@@ -9,49 +9,47 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.auth.new import generate_password
-from vantage6.cli.configuration_create import add_common_server_config
+from vantage6.cli.configuration_create import add_common_backend_config
 
 
-def server_configuration_questionaire(
+def hq_configuration_questionaire(
     instance_name: str, system_folders: bool
 ) -> dict[str, Any]:
     """
-    Kubernetes-specific questionnaire to generate Helm values for server.
+    Kubernetes-specific questionnaire to generate Helm values for HQ.
 
     Parameters
     ----------
     instance_name : str
-        Name of the server instance.
+        Name of the HQ instance.
     system_folders : bool
         Whether to use system folders or user folders.
-    k8s_cfg : KubernetesConfig
-        Kubernetes configuration.
 
     Returns
     -------
     dict[str, Any]
-        dictionary with Helm values for the server configuration
+        dictionary with Helm values for the HQ configuration
     """
     dirs = AppContext.instance_folders(InstanceType.HQ, instance_name, system_folders)
     log_dir = dirs.get("log")
 
     # Initialize config with basic structure
     config = {
-        "server": {"keycloak": {}},
+        "hq": {"keycloak": {}},
         "database": {},
         "ui": {},
         "rabbitmq": {},
         "prometheus": {},
     }
 
-    config = add_common_server_config(config, InstanceType.HQ, instance_name)
+    config = add_common_backend_config(config, InstanceType.HQ, instance_name)
 
     # TODO v5+ these should be removed, latest should usually be used so question is
     # not needed. However, for now we want to specify alpha/beta images.
-    # === Server settings ===
-    config["server"]["image"] = q.text(
-        "Server Docker image:",
-        default=f"harbor2.vantage6.ai/infrastructure/server:{MAIN_VERSION_NAME}",
+    # === HQ settings ===
+    config["hq"]["image"] = q.text(
+        "HQ Docker image:",
+        default=f"harbor2.vantage6.ai/infrastructure/hq:{MAIN_VERSION_NAME}",
     ).unsafe_ask()
 
     # === UI settings ===
@@ -62,10 +60,10 @@ def server_configuration_questionaire(
 
     # TODO v5+ we need to add a question to ask which algorithm stores are allowed, to
     # set the CSP headers in the UI. This is not done now because it becomes easier when
-    # store and keycloak service can also be setup in the `v6 server new` command.
+    # store and keycloak service can also be setup in the `v6 hq new` command.
 
     # set directory to store log files on host machine
-    config["server"]["logging"]["volumeHostPath"] = str(log_dir)
+    config["hq"]["logging"]["volumeHostPath"] = str(log_dir)
 
     # set strong password for RabbitMQ
     config["rabbitmq"]["password"] = generate_password()

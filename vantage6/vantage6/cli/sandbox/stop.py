@@ -75,7 +75,7 @@ def cli_sandbox_stop(
         is_sandbox=True,
     )
     execute_cli_stop(
-        command_name=CLICommandName.SERVER,
+        command_name=CLICommandName.HQ,
         name=name,
         k8s_config=k8s_config,
         system_folders=False,

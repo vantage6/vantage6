@@ -3,12 +3,12 @@ from __future__ import annotations
 from vantage6.common.context import AppContext
 
 from vantage6.cli.globals import (
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
-    ServerType,
+    DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL,
+    BackendType,
 )
 
 
-class BaseServerContext(AppContext):
+class BaseBackendContext(AppContext):
     """
     Base context for a vantage6 server or algorithm store server
 
@@ -46,10 +46,10 @@ class BaseServerContext(AppContext):
     def from_external_config_file(
         cls,
         path: str,
-        server_type: ServerType,
+        server_type: BackendType,
         system_folders: bool = S_FOL,
         in_container: bool = False,
-    ) -> BaseServerContext:
+    ) -> BaseBackendContext:
         """
         Create a server context from an external configuration file. External
         means that the configuration file is not located in the default folders

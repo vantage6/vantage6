@@ -6,7 +6,7 @@ especially for MicroK8s environments that may have SSL certificate issues.
 
 The issue is that the python kubernetes client does not automatically use the
 certificate from microk8s, so it is manually configured in this module. Note that this
-is only an issue for the CLI and not for running nodes/servers/stores/etc., because
+is only an issue for the CLI and not for running nodes/HQs/stores/etc., because
 those are started using the `kubectl` command, which includes the microk8scertificate
 automatically.
 """

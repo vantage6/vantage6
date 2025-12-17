@@ -85,20 +85,18 @@ def node_configuration_questionaire(
             {"type": "text", "name": "api_key", "message": "Enter given api-key:"},
             {
                 "type": "text",
-                "name": "server_url",
-                "message": "The base-URL of the server:",
+                "name": "hq_url",
+                "message": "The base-URL of HQ:",
                 "default": HTTP_LOCALHOST,
             },
         ]
     )
-    # remove trailing slash from server_url if entered by user
-    config["server_url"] = config["server_url"].rstrip("/")
+    # remove trailing slash from hq_url if entered by user
+    config["hq_url"] = config["hq_url"].rstrip("/")
 
-    # set default port to the https port if server_url is https
+    # set default port to the https port if hq_url is https
     default_port = (
-        str(Ports.HTTPS)
-        if config["server_url"].startswith("https")
-        else str(Ports.DEV_HQ)
+        str(Ports.HTTPS) if config["hq_url"].startswith("https") else str(Ports.DEV_HQ)
     )
 
     config = config | q.unsafe_prompt(
@@ -106,7 +104,7 @@ def node_configuration_questionaire(
             {
                 "type": "text",
                 "name": "port",
-                "message": "Enter port to which the server listens:",
+                "message": "Enter port to which HQ listens:",
                 "default": default_port,
             },
             {
@@ -193,18 +191,20 @@ def node_configuration_questionaire(
         "volumeHostPath": log_dir,
     }
 
-    # Check if we can login to the server to retrieve collaboration settings
+    # Check if we can login to HQ to retrieve collaboration settings
     client = NodeClient(
         instance_name,
         config["api_key"],
-        server_url=f"{config['server_url']}:{config['port']}{config['api_path']}",
+        hq_url=f"{config['hq_url']}:{config['port']}{config['api_path']}",
         auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
     )
     try:
         client.authenticate()
     except Exception as e:
-        error(f"Could not authenticate with server: {e}")
-        error("Please check (1) your API key and (2) if your server is online")
+        error(f"Could not authenticate: {e}")
+        error(
+            "Please check your API key and if HQ and authentication service are online."
+        )
         warning(
             "If you continue, you should provide your collaboration settings manually."
         )

@@ -19,7 +19,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 )
 def cli_auth_attach(context: str, namespace: str, name: str) -> None:
     """
-    Show the server logs in the current console.
+    Show the auth logs in the current console.
     """
     info("Attaching to auth logs...")
 

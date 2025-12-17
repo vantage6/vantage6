@@ -35,7 +35,7 @@ def find_running_service_names(
     k8s_config: KubernetesConfig | None = None,
 ) -> list[str]:
     """
-    List running Vantage6 servers.
+    List running vantage6 infrastructure components.
 
     Parameters
     ----------
@@ -123,7 +123,7 @@ def find_running_service_names(
     for release in releases:
         release_name = release.get("name", "")
 
-        # Check if this is a Vantage6 server release
+        # Check if this is a vantage6 service
         is_matching_service = (
             release_name.startswith(svc_starts_with)
             and release_name.endswith(svc_ends_with)
@@ -174,7 +174,7 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
         The type of instance to get the main CLI command name for
     """
     if instance_type == InstanceType.HQ:
-        return CLICommandName.SERVER.value
+        return CLICommandName.HQ.value
     elif instance_type == InstanceType.ALGORITHM_STORE:
         return CLICommandName.ALGORITHM_STORE.value
     elif instance_type == InstanceType.NODE:

@@ -5,11 +5,11 @@ from colorama import Fore, Style
 
 from vantage6.common import error
 
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.hq import HQContext
+from vantage6.cli.hq.common import get_hq_context
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.core import CoreSandboxConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
-from vantage6.cli.server.common import get_server_context
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -24,11 +24,10 @@ from vantage6.cli.utils import prompt_config_name
     help="Generate this number of nodes in the development network",
 )
 @click.option(
-    "--server-image",
+    "--hq-image",
     type=str,
     default=None,
-    help="Server docker image to use when setting up resources for "
-    "the development server",
+    help="HQ docker image to use when setting up resources",
 )
 @click.option(
     "--ui-image",
@@ -51,11 +50,10 @@ from vantage6.cli.utils import prompt_config_name
     help="Node docker image to use when setting up resources for the development node",
 )
 @click.option(
-    "--extra-server-config",
+    "--extra-hq-config",
     type=click.Path(exists=True),
     default=None,
-    help="YAML File with additional server "
-    "configuration. This will be appended to the server "
+    help="YAML File with additional HQ configuration. This will be appended to the HQ "
     "configuration file",
 )
 @click.option(
@@ -110,11 +108,11 @@ def cli_new_sandbox(
     click_ctx: click.Context,
     name: str,
     num_nodes: int,
-    server_image: str | None,
+    hq_image: str | None,
     ui_image: str | None,
     store_image: str | None,
     node_image: str | None,
-    extra_server_config: Path | None,
+    extra_hq_config: Path | None,
     extra_node_config: Path | None,
     extra_store_config: Path | None,
     extra_auth_config: Path | None,
@@ -138,17 +136,17 @@ def cli_new_sandbox(
             error(f"Data directory {data_dir} does not exist!")
             exit(1)
 
-    server_name = prompt_config_name(name)
-    if ServerContext.config_exists(server_name, False, is_sandbox=True):
-        error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
+    hq_name = prompt_config_name(name)
+    if HQContext.config_exists(hq_name, False, is_sandbox=True):
+        error(f"Configuration {Fore.RED}{hq_name}{Style.RESET_ALL} already exists!")
         exit(1)
 
     sb_config_manager = CoreSandboxConfigManager(
-        server_name=server_name,
-        server_image=server_image,
+        hq_name=hq_name,
+        hq_image=hq_image,
         ui_image=ui_image,
         store_image=store_image,
-        extra_server_config=extra_server_config,
+        extra_hq_config=extra_hq_config,
         extra_store_config=extra_store_config,
         extra_auth_config=extra_auth_config,
         k8s_config=k8s_config,
@@ -156,14 +154,14 @@ def cli_new_sandbox(
         custom_data_dir=data_dir,
     )
 
-    sb_config_manager.generate_server_configs()
+    sb_config_manager.generate_hq_configs()
 
-    ctx = get_server_context(server_name, False, ServerContext, is_sandbox=True)
+    ctx = get_hq_context(hq_name, False, HQContext, is_sandbox=True)
 
     execute_sandbox_start(
         click_ctx=click_ctx,
         ctx=ctx,
-        server_name=server_name,
+        hq_name=hq_name,
         k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=True,

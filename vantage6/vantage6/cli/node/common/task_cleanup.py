@@ -21,7 +21,7 @@ def delete_job_related_pods(
     Parameters
     ----------
     run_id: int
-        Server run identifier
+        ID of the run
     container_name: str
         Name of the container
     namespace: str

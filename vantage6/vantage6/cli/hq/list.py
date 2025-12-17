@@ -6,8 +6,8 @@ from vantage6.cli.common.list import get_configuration_list
 
 
 @click.command()
-def cli_server_configuration_list() -> None:
+def cli_hq_configuration_list() -> None:
     """
-    Print the available server configurations.
+    Print the available HQ configurations.
     """
     get_configuration_list(InstanceType.HQ)

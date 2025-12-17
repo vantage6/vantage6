@@ -21,7 +21,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option(
     "--attach/--detach",
     default=False,
-    help="Print server logs to the console after start",
+    help="Print store logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click.option("--chart-version", default=None, help="Chart version to use")

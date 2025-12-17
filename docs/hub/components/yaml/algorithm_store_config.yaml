@@ -38,7 +38,7 @@ store:
 
   # The URI of the vantage6 server that provides the admin user that will be admin
   # user in the store on startup.
-  vantage6ServerUri: https://my_server.org/my_api_path
+  vantage6HQUri: https://my_server.org/my_api_path
 
   policies:
     # Set who is allowed to view the algorithms in the store. Possible values are:

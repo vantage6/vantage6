@@ -13,28 +13,28 @@ from vantage6.cli.utils import error
 
 @click.command()
 @click.option(
-    "--server-url",
+    "--hq-url",
     type=str,
     default=f"http://localhost:{Ports.DEV_HQ}/api",
-    help="URL of the server",
+    help="URL of HQ",
 )
 @click.option(
     "--auth-url",
     type=str,
     default="http://localhost:8080",
-    help="URL of the authentication server (Keycloak)",
+    help="URL of the authentication service (Keycloak)",
 )
 @click.option(
     "--auth-realm",
     type=str,
     default="vantage6",
-    help="Realm of the authentication server (Keycloak)",
+    help="Realm of the authentication service (Keycloak)",
 )
 @click.option(
     "--auth-client",
     type=str,
     default="public_client",
-    help="Client ID of the authentication server (Keycloak)",
+    help="Client ID of the authentication service (Keycloak)",
 )
 @click.option(
     "--collaboration",
@@ -68,7 +68,7 @@ from vantage6.cli.utils import error
     help="Path to the private key for end-to-end encryption",
 )
 def cli_test_features(
-    server_url: str,
+    hq_url: str,
     auth_url: str,
     auth_realm: str,
     auth_client: str,
@@ -93,7 +93,7 @@ def cli_test_features(
         organizations = None
 
     client = UserClient(
-        server_url=server_url,
+        hq_url=hq_url,
         auth_url=auth_url,
         auth_realm=auth_realm,
         auth_client=auth_client,

@@ -25,7 +25,7 @@ from werkzeug.exceptions import HTTPException
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.globals import DEFAULT_API_PATH, LOCALHOST
 
-from vantage6.cli.context.base_server import BaseServerContext
+from vantage6.cli.context.base_backend import BaseBackendContext
 
 from vantage6.backend.common.auth import get_keycloak_id_for_user
 from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
@@ -47,7 +47,7 @@ log = logging.getLogger(module_name)
 class Vantage6App:
     """Base class for all vantage6 server applications."""
 
-    def __init__(self, ctx: BaseServerContext, server_module_name: str) -> None:
+    def __init__(self, ctx: BaseBackendContext, server_module_name: str) -> None:
         """Initialize the vantage6 app."""
         self.ctx = ctx
 

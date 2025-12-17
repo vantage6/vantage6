@@ -93,7 +93,7 @@ keycloak:
     {% endif %}
 
     # do not allow users to edit their username - this would lead to problems with
-    # syncing the user between keycloak and vantage6 server/store. This setting
+    # syncing the user between keycloak and vantage6 HQ+store. This setting
     # should always be set to false.
     editUsernameAllowed: false
 
@@ -126,7 +126,7 @@ keycloak:
     # TODO v5+ configure secrets where necessary
     users:
       # create the vantage6 admin user. The name of this user should also be present
-      # in the vantage6 server and store configuration - it is the user that will be
+      # in vantage6 HQ and store configuration - it is the user that will be
       # assigned admin permissions on initial startup.
       - username: {{ keycloak.adminUser | default('admin') }}
         enabled: true
@@ -162,7 +162,7 @@ keycloak:
           {% endif %}
       # create a service account user for the backend admin client. The
       # serviceAccountClientId should match the value set in the client section
-      # below. The vantage6 server and store will use this user to create new
+      # below. The vantage6 HQ and store will use this user to create new
       # accounts for users and nodes in keycloak - that is why it gets assigned some
       # realm-management permissions.
       - username: service-account-backend-admin-client

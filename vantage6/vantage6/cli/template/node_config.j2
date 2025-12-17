@@ -12,27 +12,27 @@ node:
     url: {{ node.keycloak.url | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080') }}
     realm: {{ node.keycloak.realm | default('vantage6') }}
 
-  # Settings for the server to connect to.
-  {% if node.server is defined %}
-  server:
-    url: {{ node.server.url | default('http://vantage6-server') }}
-    port: {{ node.server.port | default(7601) }}
-    path: {{ node.server.path | default('/server') }}
+  # Settings for HQ to connect to.
+  {% if node.hq is defined %}
+  hq:
+    url: {{ node.hq.url | default('http://vantage6-hq') }}
+    port: {{ node.hq.port | default(7601) }}
+    path: {{ node.hq.path | default('/hq') }}
   {% else %}
-  server:
-    url: http://vantage6-server
+  hq:
+    url: http://vantage6-hq
     port: 7601
-    path: /server
+    path: /hq
   {% endif %}
 
 
   {% if node.image is defined %}
   # Fixed image to use to run the node. Note that if specified, the node will not
-  # automatically run the version matching the server version.
+  # automatically run the version matching the HQ version.
   image: {{ node.image }}
   {% else %}
   # You may specify a fixed image to use to run the node. Note that if specified, the
-  # node will not automatically run the version matching the server version.
+  # node will not automatically run the version matching the HQ version.
   # image: harbor2.vantage6.ai/infrastructure/node:latest
   {% endif %}
 
@@ -201,12 +201,12 @@ node:
   {% endif %}
 
   # Whether or not your node shares some configuration (e.g. which images are
-  # allowed to run on your node) with the central server. This can be useful
+  # allowed to run on your node) with HQ. This can be useful
   # for other organizations in your collaboration to understand why a task
   # is not completed. Obviously, no sensitive data is shared. Default true
   share_config: {{ node.share_config | default(true) }}
 
-  # Whether or not to share algorithm logs with the server. Otherwise they will
+  # Whether or not to share algorithm logs with HQ. Otherwise they will
   # only be displayed as part of the node logs. Default is true.
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: {{ node.share_algorithm_logs | default(true) }}
@@ -321,13 +321,13 @@ node:
     require_algorithm_pull: true
   {% endif %}
 
-  # Prometheus settings, for sending system metadata to the server.
+  # Prometheus settings, for sending system metadata to HQ.
   {% if node.prometheus is defined %}
   prometheus:
     # Whether or not to enable Prometheus reporting. Default is false.
     enabled: {{ node.prometheus.enabled | default(false) }}
 
-    # Interval (in seconds) at which the node sends system metadata to the server.
+    # Interval (in seconds) at which the node sends system metadata to HQ.
     # This should align with the Prometheus scrape_interval to avoid stale data.
     report_interval_seconds: {{ node.prometheus.report_interval_seconds | default(45) }}
   {% else %}
@@ -335,7 +335,7 @@ node:
     # Whether or not to enable Prometheus reporting. Default is false.
     enabled: false
 
-    # Interval (in seconds) at which the node sends system metadata to the server.
+    # Interval (in seconds) at which the node sends system metadata to HQ.
     # This should align with the Prometheus scrape_interval to avoid stale data.
     # report_interval_seconds: 45
   {% endif %}

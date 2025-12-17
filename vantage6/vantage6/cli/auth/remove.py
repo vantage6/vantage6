@@ -23,14 +23,14 @@ def cli_auth_remove(
     ctx: AuthContext, name: str, system_folders: bool, force: bool
 ) -> None:
     """
-    Function to remove a server.
+    Function to remove an authentication service's data.
 
     Parameters
     ----------
-    ctx : ServerContext
-        Server context object
+    ctx : AuthContext
+        Auth context object
     name : str
-        Name of the auth server
+        Name of the auth service
     system_folders : bool
         Whether to use system folders or user folders
     force : bool

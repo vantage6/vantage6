@@ -10,7 +10,7 @@ from vantage6.cli.common.start import (
     prestart_checks,
 )
 from vantage6.cli.common.utils import create_directory_if_not_exists
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.hq import HQContext
 from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 
@@ -21,7 +21,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option(
     "--attach/--detach",
     default=False,
-    help="Print server logs to the console after start",
+    help="Print HQ logs to the console after start",
 )
 @click.option("--local-chart-dir", default=None, help="Local chart directory to use")
 @click.option("--chart-version", default=None, help="Chart version to use")
@@ -32,8 +32,8 @@ from vantage6.cli.k8s_config import select_k8s_config
     include_system_folders=True,
     sandbox_param="sandbox",
 )
-def cli_server_start(
-    ctx: ServerContext,
+def cli_hq_start(
+    ctx: HQContext,
     name: str,
     system_folders: bool,
     context: str,
@@ -43,9 +43,9 @@ def cli_server_start(
     chart_version: str | None,
 ) -> None:
     """
-    Start the server.
+    Start an instance of vantage6 HQ.
     """
-    info("Starting server...")
+    info("Starting HQ...")
     prestart_checks(ctx, InstanceType.HQ, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
@@ -54,7 +54,7 @@ def cli_server_start(
 
     helm_install(
         release_name=ctx.helm_release_name,
-        chart_name=ChartName.SERVER,
+        chart_name=ChartName.HQ,
         values_file=ctx.config_file,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,

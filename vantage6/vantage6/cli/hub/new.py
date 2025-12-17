@@ -11,10 +11,10 @@ from vantage6.common.globals import (
 from vantage6.cli.algostore.new import algo_store_configuration_questionaire
 from vantage6.cli.auth.new import auth_configuration_questionaire
 from vantage6.cli.common.new import new
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
+from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import get_k8s_node_names, select_k8s_config
-from vantage6.cli.server.new import server_configuration_questionaire
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -32,7 +32,7 @@ from vantage6.cli.utils import prompt_config_name
     "--user",
     "system_folders",
     flag_value=False,
-    default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+    default=DEFAULT_API_SERVICE_SYSTEM_FOLDERS,
     help="Use user folders instead of system folders",
 )
 @click.option("--context", default=None, help="Kubernetes context to use")
@@ -46,8 +46,9 @@ def cli_hub_new(
     """
     Create production-ready configuration for a complete vantage6 hub.
 
-    This will create production-ready configurations for the server, auth, algorithm
-    store, ui, as well as related services such as RabbitMQ and Prometheus.
+    This will create production-ready configurations for the vantage6 hub's components,
+    i.e. HQ, auth, algorithm store, ui, as well as related services such as RabbitMQ
+    and Prometheus.
     """
     name = prompt_config_name(name)
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
@@ -79,12 +80,12 @@ def cli_hub_new(
         extra_config=extra_config,
     )
 
-    # create server service configuration
-    info("Now, let's setup the vantage6 server...")
-    server_name = name
+    # create hq service configuration
+    info("Now, let's setup the vantage6 HQ...")
+    hq_name = name
     extra_config = {
-        "server": {
-            "baseUrl": base_config["server_url"],
+        "hq": {
+            "baseUrl": base_config["hq_url"],
             "keycloak": {
                 "adminPassword": auth_config["keycloak"]["adminPassword"],
                 "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
@@ -104,9 +105,9 @@ def cli_hub_new(
         },
     }
     new(
-        config_producing_func=server_configuration_questionaire,
-        config_producing_func_args=(server_name, system_folders),
-        name=server_name,
+        config_producing_func=hq_configuration_questionaire,
+        config_producing_func_args=(hq_name, system_folders),
+        name=hq_name,
         system_folders=system_folders,
         type_=InstanceType.HQ,
         extra_config=extra_config,
@@ -123,7 +124,7 @@ def cli_hub_new(
                     "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
                     "url": base_config["auth_url"],
                 },
-                "vantage6ServerUri": base_config["server_url"],
+                "vantage6HQUri": base_config["hq_url"],
                 "logging": {
                     "level": base_config["log_level"],
                 },
@@ -146,7 +147,7 @@ def cli_hub_new(
 
 def _get_base_config() -> dict[str, Any]:
     """
-    Get the base configuration for a vantage6 hub.
+    Get the base configuration for a vantage6 hub's components.
     """
     base_config = {}
     k8s_node_names = get_k8s_node_names()
@@ -155,9 +156,9 @@ def _get_base_config() -> dict[str, Any]:
         choices=k8s_node_names,
         default=k8s_node_names[0],
     ).unsafe_ask()
-    base_config["server_url"] = q.text(
-        "On what address will the vantage6server be reachable?",
-        default="https://server.vantage6.ai",
+    base_config["hq_url"] = q.text(
+        "On what address will the HQ be reachable?",
+        default="https://hq.vantage6.ai",
     ).unsafe_ask()
     base_config["auth_url"] = q.text(
         "On what address will the auth service be reachable?",

@@ -41,7 +41,7 @@ class UserClient(ClientBase):
 
     def __init__(
         self,
-        server_url: str,
+        hq_url: str,
         auth_url: str,
         auth_realm: str = "vantage6",
         auth_client: str = "public_client",
@@ -64,7 +64,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(server_url=server_url, auth_url=auth_url)
+        super(UserClient, self).__init__(server_url=hq_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
@@ -404,7 +404,7 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_server_version(self, attempts_on_timeout: int = None) -> dict:
+        def get_hq_version(self, attempts_on_timeout: int = None) -> dict:
             """View the version number of the vantage6-server
             Parameters
             ----------
@@ -420,7 +420,7 @@ class UserClient(ClientBase):
                 "version", attempts_on_timeout=attempts_on_timeout
             )
 
-        def get_server_health(self, silent_on_connection_error: bool = False) -> dict:
+        def get_hq_health(self, silent_on_connection_error: bool = False) -> dict:
             """View the health of the vantage6-server
 
             Parameters

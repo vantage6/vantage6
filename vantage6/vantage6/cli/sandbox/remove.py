@@ -15,17 +15,11 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import InfraComponentName
-from vantage6.cli.server.remove import cli_server_remove
+from vantage6.cli.hq.remove import cli_hq_remove
 
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Name of the configuration.")
-@click.option(
-    "-c",
-    "--config",
-    default=None,
-    help="Path to configuration-file; overrides --name",
-)
 @click.option(
     "--data-dir",
     "custom_data_dir",
@@ -39,13 +33,12 @@ from vantage6.cli.server.remove import cli_server_remove
 def cli_sandbox_remove(
     click_ctx: click.Context,
     name: str | None,
-    config: str | None,
     custom_data_dir: Path | None,
 ) -> None:
     """Remove all related demo network files and folders.
 
-    Select a server configuration to remove that server and the nodes attached
-    to it.
+    Select an HQ configuration to remove. The related sandbox components will also be
+    removed.
     """
 
     if not name:
@@ -143,14 +136,14 @@ def cli_sandbox_remove(
     except Exception as e:
         warning(f"Failed to delete data directory {data_dirs_nodes / ctx.name}: {e}")
 
-    # remove the server last - if anything goes wrong, the server is still there so the
+    # remove the HQ last - if anything goes wrong, the HQ is still there so the
     # user can still retry the removal.
-    # Note that this also checks if the server is running. Therefore, it is prevented
+    # Note that this also checks if the HQ is running. Therefore, it is prevented
     # that a running sandbox is removed.
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
     click_ctx.invoke(
-        cli_server_remove, ctx=ctx, name=name, system_folders=False, force=True
+        cli_hq_remove, ctx=ctx, name=name, system_folders=False, force=True
     )
 
     # remove the right data in the custom data directory if it is provided. If a custom

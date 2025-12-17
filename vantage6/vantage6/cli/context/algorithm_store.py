@@ -4,16 +4,16 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import AlgorithmStoreConfigurationManager
-from vantage6.cli.context.base_server import BaseServerContext
+from vantage6.cli.context.base_backend import BaseBackendContext
 from vantage6.cli.globals import (
-    DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL,
-    ServerType,
+    DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL,
+    BackendType,
 )
 
 
-class AlgorithmStoreContext(BaseServerContext):
+class AlgorithmStoreContext(BaseBackendContext):
     """
-    A context class for the algorithm store server.
+    A context class for the algorithm store.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class AlgorithmStoreContext(BaseServerContext):
         cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
     ) -> AlgorithmStoreContext:
         """
-        Create a server context from an external configuration file. External
+        Create a store context from an external configuration file. External
         means that the configuration file is not located in the default folders
         but its location is specified by the user.
 
@@ -69,11 +69,11 @@ class AlgorithmStoreContext(BaseServerContext):
         Returns
         -------
         AlgorithmStoreContext
-            Server context object
+            Store context object
         """
         return super().from_external_config_file(
             path,
-            ServerType.ALGORITHM_STORE,
+            BackendType.ALGORITHM_STORE,
             system_folders,
             in_container,
         )
@@ -108,7 +108,7 @@ class AlgorithmStoreContext(BaseServerContext):
         cls, system_folders: bool = S_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
-        Find all available server configurations in the default folders.
+        Find all available store configurations in the default folders.
 
         Parameters
         ----------

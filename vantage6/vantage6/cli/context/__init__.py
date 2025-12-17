@@ -1,6 +1,6 @@
 """
 The context module in the CLI package contains the Context classes of instances
-started from the CLI, such as nodes and servers. These contexts are related to
+started from the CLI, such as nodes and HQs. These contexts are related to
 the host system and therefore part of the CLI package.
 
 All classes are derived from the abstract AppContext class and provide the
@@ -16,13 +16,13 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
+from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context.server import ServerContext
 
 
 def select_context_class(
     type_: InstanceType,
-) -> ServerContext | NodeContext | AlgorithmStoreContext | AuthContext:
+) -> HQContext | NodeContext | AlgorithmStoreContext | AuthContext:
     """
     Select the context class based on the type of instance.
 
@@ -33,7 +33,7 @@ def select_context_class(
 
     Returns
     -------
-    ServerContext | NodeContext | AlgorithmStoreContext | AuthContext
+    HQContext | NodeContext | AlgorithmStoreContext | AuthContext
         Specialized subclass of AppContext for the given instance type
 
     Raises
@@ -42,7 +42,7 @@ def select_context_class(
         If the type_ is not implemented
     """
     if type_ == InstanceType.HQ:
-        return ServerContext
+        return HQContext
     elif type_ == InstanceType.ALGORITHM_STORE:
         return AlgorithmStoreContext
     elif type_ == InstanceType.NODE:
@@ -55,9 +55,9 @@ def select_context_class(
 
 def get_context(
     type_: InstanceType, name: str, system_folders: bool, is_sandbox: bool = False
-) -> ServerContext | NodeContext | AlgorithmStoreContext:
+) -> HQContext | NodeContext | AlgorithmStoreContext:
     """
-    Load the server context from the configuration file.
+    Load the service context from the configuration file.
 
     Parameters
     ----------
@@ -90,7 +90,7 @@ def get_context(
     # the host. We only want CLI logging here.
     ctx_class.LOGGING_ENABLED = False
 
-    # create server context, and initialize db
+    # create context, and initialize db
     ctx = ctx_class(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
     return ctx

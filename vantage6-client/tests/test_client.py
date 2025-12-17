@@ -126,7 +126,7 @@ class TestClient(TestCase):
     @staticmethod
     def setup_client() -> UserClient:
         client = UserClient(
-            server_url=f"{HOST}:{PORT}/api",
+            hq_url=f"{HOST}:{PORT}/api",
             auth_url=AUTH_URL,
         )
         client.authenticate()

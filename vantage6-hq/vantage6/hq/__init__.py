@@ -37,7 +37,7 @@ from vantage6.common.globals import (
     AuthStatus,
 )
 
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
@@ -76,7 +76,7 @@ class ServerApp(Vantage6App):
         Context object that contains the configuration of the server.
     """
 
-    def __init__(self, ctx: ServerContext) -> None:
+    def __init__(self, ctx: HQContext) -> None:
         """Create a vantage6-server application."""
 
         super().__init__(ctx, SERVER_MODULE_NAME)
@@ -485,8 +485,6 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
     ServerApp
         A running instance of the vantage6 server
     """
-    ctx = ServerContext.from_external_config_file(
-        config, system_folders, in_container=True
-    )
+    ctx = HQContext.from_external_config_file(config, system_folders, in_container=True)
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
     return ServerApp(ctx).start()

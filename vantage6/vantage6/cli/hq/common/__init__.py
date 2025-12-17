@@ -4,7 +4,7 @@ from vantage6.common import error
 from vantage6.common.context import AppContext
 
 
-def get_server_context(
+def get_hq_context(
     name: str, system_folders: bool, ctx_class: AppContext, is_sandbox: bool = False
 ) -> AppContext:
     """

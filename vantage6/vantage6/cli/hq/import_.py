@@ -13,7 +13,7 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.hq import HQContext
 
 
 @click.command()
@@ -26,12 +26,12 @@ from vantage6.cli.context.server import ServerContext
 )
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(type_=InstanceType.HQ, sandbox_param="sandbox")
-def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
+def cli_hq_import(ctx: HQContext, file: str, drop_all: bool) -> None:
     """
-    Import vantage6 resources into a server instance from a yaml FILE.
+    Import vantage6 resources into a HQ instance from a yaml FILE.
 
     This allows you to create organizations, collaborations, users, tasks, etc. from a
-    yaml FILE. This method expects the server configuration file to be located on the
+    YAML file. This method expects the YAML file to be located on the
     same machine as this method is invoked from.
 
     This import assigns the root role to all users, which contains all permissions. So
@@ -40,27 +40,26 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     The FILE argument should be a path to a yaml file containing the vantage6 formatted
     data to import.
     """
-    info("Validating server version: ")
-    info(f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version")
+    info("Validating HQ version: ")
+    info(f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}/version")
     response = requests.get(
-        f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}/version"
+        f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}/version"
     )
     if response.status_code != 200:
-        error("Unable to get server version")
+        error("Unable to get HQ version")
         return
 
     body = response.json()
     if "version" not in body:
-        error("Server gave a valid response but did not include the version")
+        error("HQ gave a valid response but did not include the version")
         return
 
     # Compare it to this package version
-    server_version = body["version"]
-    if server_version != __version__:
+    hq_version = body["version"]
+    if hq_version != __version__:
         error(
-            f"You are using CLI version {__version__} but the server is running "
-            f"version {server_version}. Please use the same version of the CLI and "
-            "server."
+            f"You are using CLI version {__version__} but the HQ is running "
+            f"version {hq_version}. Please use the same version of the CLI and HQ."
         )
         return
 
@@ -71,7 +70,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     _check_import_file(import_data)
 
     client = UserClient(
-        server_url=f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}",
+        hq_url=f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}",
         auth_url=ctx.config["ui"]["keycloak"]["publicUrl"],
         auth_realm=ctx.config["ui"]["keycloak"]["realm"],
         auth_client=ctx.config["ui"]["keycloak"]["client"],
@@ -82,8 +81,8 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
     client.authenticate()
 
     # Note: we do not validate that the user has the correct permissions to import data.
-    # As the user has access to the `v6 server import` command, they already have
-    # access to the server+database.
+    # As the user has access to the `v6 hq import` command, they already have
+    # access to HQ+database.
 
     if drop_all:
         info("Dropping all existing data")
@@ -147,7 +146,7 @@ def cli_server_import(ctx: ServerContext, file: str, drop_all: bool) -> None:
 
 def _drop_all(client: UserClient) -> None:
     """
-    Drop all existing data from the server.
+    Drop all existing data from the HQ.
     """
     while nodes := client.node.list()["data"]:
         for node in nodes:
