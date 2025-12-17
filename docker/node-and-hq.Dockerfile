@@ -1,9 +1,9 @@
-# Dockerfile for the node an server images
+# Dockerfile for the node an HQ images
 #
 # IMAGES
 # ------
 # * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/server:x.x.x
+# * harbor2.vantage6.ai/infrastructure/hq:x.x.x
 #
 ARG TAG=latest
 ARG BASE=5.0
@@ -33,7 +33,7 @@ RUN uv pip install --system -e vantage6-client
 RUN uv pip install --system -e vantage6-algorithm-tools
 RUN uv pip install --system -e vantage6
 RUN uv pip install --system -e vantage6-backend-common
-RUN uv pip install --system -e vantage6-server
+RUN uv pip install --system -e vantage6-hq
 RUN uv pip install --system -e vantage6-node
 
 # Overwrite uWSGI installation from the requirements.txt
@@ -44,7 +44,7 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
   uv pip install --system --no-binary=uwsgi uwsgi
 
-RUN chmod +x /vantage6/vantage6-server/server.sh
+RUN chmod +x /vantage6/vantage6-hq/hq.sh
 
 # Create directories to mount on the host
 RUN mkdir -p /mnt/log
@@ -53,4 +53,4 @@ RUN mkdir -p /mnt/data
 # expose the proxy server port
 ARG port=80
 EXPOSE ${port}
-ENV PROXY_SERVER_PORT=${port}
+ENV V6_PROXY_PORT=${port}

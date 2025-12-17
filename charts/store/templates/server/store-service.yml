@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
 {{ include "store.matchLabels" . | indent 4 }}
-    component: store-server
+    component: store
   ports:
     - protocol: TCP
       port: {{ .Values.store.port }}

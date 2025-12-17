@@ -14,5 +14,5 @@ spec:
   selector:
     matchLabels:
       type: local
-      app: vantage6-server
+      app: vantage6-hq
 {{- end }}

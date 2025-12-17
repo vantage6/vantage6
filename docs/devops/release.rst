@@ -13,24 +13,23 @@ Version format
 ``Major.Minor.Patch.Pre[N].Post<n>``.
 
 **Major** releases update the first digit, e.g. ``1.2.3`` is updated to
-``2.0.0``. This is used for releasing breaking changes: server and nodes of
+``2.0.0``. This is used for releasing breaking changes: hub components and nodes of
 version 2.x.y are unlikely to be able to run an algorithm written for version
-1.x.y. Also, the responses of the central server API may change in a way that
-changes the response to client requests.
+1.x.y. Also, the API responses may change in a way that breaks compatibility.
 
 **Minor** releases update the second digit, e.g. ``1.2.3`` to ``1.3.0``. This is
 used for releasing new features (e.g. a new endpoint), enhancements and other
 changes that are compatible with all other components. Algorithms written for
-version``1.x.y`` should run on any server of version ``1.z.a``. Also, the
-central server API should be compatible with other minor versions - the same
+version``1.x.y`` should run on any vantage6 hub of version ``1.z.a``. Also, the
+APIs should be compatible with other minor versions - the same
 fields present before will be present in the new version, although new fields
-may be added. However, nodes and servers of different minor versions may not be
+may be added. However, nodes and hubs of different minor versions may not be
 able to communicate properly.
 
 **Patch** releases update the third digit, e.g. ``1.2.3`` to ``1.2.4``. This is
 used for bugfixes and other minor changes. Different patch releases should be
 compatible with each other, so a node of version ``1.2.3`` should be able to
-communicate with a server of version ``1.2.4``.
+communicate with a vantage6 HQ of version ``1.2.4``.
 
 **Pre[N]** is used for alpha (a), beta (b) and release candidates (rc) releases
 and the build number is appended (e.g. ``2.0.1b1`` indicates the first
@@ -60,13 +59,13 @@ the following steps to test a release:
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     uv pip install vantage6==<version>
 
-3. *Start server and nodes*. Start the server, nodes, UI and algorithm store for the
+3. *Start hub and nodes*. Start the hub and the nodes for the
    release candidate using a ``v6 sandbox`` network:
 
   .. code:: bash
 
     v6 sandbox new \
-        --server-image harbor2.vantage6.ai/infrastructure/server:<version> \
+        --hq-image harbor2.vantage6.ai/infrastructure/hq:<version> \
         --ui-image harbor2.vantage6.ai/infrastructure/ui:<version> \
         --node-image harbor2.vantage6.ai/infrastructure/node:<version> \
         --store-image harbor2.vantage6.ai/infrastructure/algorithm-store:<version>
@@ -151,7 +150,7 @@ The release pipeline executes the following steps:
 
 .. note::
 
-    All vantage6 infrastructure components (server, node, store, UI, etc.) are released
+    All vantage6 infrastructure components (HQ, node, store, UI, etc.) are released
     at the same time, with the same version number.
 
 The release pipeline uses a number of environment variables to, for instance,
@@ -189,10 +188,11 @@ in the table below.
 
 Distribute release
 ------------------
-Central components (server, auth, store, UI) that are already running will automatically
+
+Hub components (HQ, auth, store, UI) that are already running will automatically
 be upgraded to the latest version of their major release when they are restarted, unless otherwise
 specified in the respective configuration files. Nodes behave similarly, but instead of
-picking the latest version, they check which version the server is running and update to
+picking the latest version, they check which version the HQ is using and update to
 that (minor) version. The update to the new version happens by pulling the newly
 released Helm charts and Docker images.
 
@@ -221,14 +221,14 @@ Post-release checks
 -------------------
 
 After a release, there are a few checks that are performed. Most of these are
-only relevant if you are hosting a server yourself that is being automatically
-updated upon new releases, as is for instance the case for the Uluru server.
+only relevant if you are hosting a vantage6 hub yourself that is being automatically
+updated upon new releases, as is for instance the case for the Uluru community service.
 
 For Uluru, the following checks are done:
 
-- Check that harbor2.vantage6.ai has updated images ``server:uluru``,
-  ``server:uluru-live`` and ``node:uluru``.
-- Check if the (live) server version is updated. Go to:
+- Check that harbor2.vantage6.ai has updated images, e.g. ``hq:uluru``,
+  ``hq:uluru-live`` and ``node:uluru``.
+- Check if the (live) hub version is updated. Go to:
   https://uluru.vantage6.ai/version. Check logs if it is not updated.
 - Release any documentation that may not yet have been released.
 - Upgrade issue status to 'Done' in any relevant issue tracker.

@@ -1,5 +1,5 @@
 """
-Script to populate the server with basic fixtures.
+Script to populate the hub with basic fixtures.
 """
 
 import time
@@ -18,19 +18,19 @@ from vantage6.cli.sandbox.populate.helpers.load_fixtures import create_fixtures
 from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
 
 
-def populate_server_dev(
-    server_url: str,
+def populate_hub_dev(
+    hq_url: str,
     auth_url: str,
     number_of_nodes: int,
     node_config_creation_details: NodeConfigCreationDetails,
 ) -> str | None:
     """
-    Populate the server with basic fixtures.
+    Populate the hub with basic fixtures.
 
     Parameters
     ----------
-    server_url : str
-        The URL of the server to connect to.
+    hq_url : str
+        The URL of the HQ to connect to.
     auth_url : str
         The URL of the auth service to connect to.
     number_of_nodes : int
@@ -52,12 +52,12 @@ def populate_server_dev(
     Raises
     ------
     Exception
-        If connection/authentication to the server fails.
+        If connection/authentication to the HQ fails.
     """
-    client = _initalize_client(server_url, auth_url)
+    client = _initalize_client(hq_url, auth_url)
 
-    # Create new resources in the server
-    # Delete existing resources in the server first, before creating new ones.
+    # Create new resources in the HQ and store
+    # Delete existing resources in the HQ first, before creating new ones.
     try:
         report_deletion = delete_fixtures(client)
         report_creation = create_fixtures(
@@ -72,23 +72,23 @@ def populate_server_dev(
 
     except Exception:
         error("=" * 80)
-        error("Failed to populate server")
+        error("Failed to populate hub")
         error(traceback.format_exc())
         error("=" * 80)
 
 
-def populate_server_sandbox(
-    server_url: str,
+def populate_hub_sandbox(
+    hq_url: str,
     auth_url: str,
     number_of_nodes: int,
 ) -> dict:
     """
-    Populate sandbox server with basic resources.
+    Populate sandbox hub with basic resources.
 
     Parameters
     ----------
-    server_url : str
-        The URL of the server to connect to.
+    hq_url : str
+        The URL of the HQ to connect to.
     auth_url : str
         The URL of the auth service to connect to.
     number_of_nodes : int
@@ -102,9 +102,9 @@ def populate_server_sandbox(
     Raises
     ------
     Exception
-        If connection/authentication to the server fails.
+        If connection/authentication to the HQ fails.
     """
-    client = _initalize_client(server_url, auth_url)
+    client = _initalize_client(hq_url, auth_url)
 
     try:
         delete_fixtures(client)
@@ -117,7 +117,7 @@ def populate_server_sandbox(
         connect_store(client, store_port=Ports.SANDBOX_ALGO_STORE.value)
     except Exception:
         error("=" * 80)
-        error("Failed to populate server")
+        error("Failed to populate hub")
         error(traceback.format_exc())
         error("=" * 80)
         exit(1)
@@ -126,26 +126,26 @@ def populate_server_sandbox(
     return report_creation["nodes"]["created"]
 
 
-def _initalize_client(server_url, auth_url) -> Client:
+def _initalize_client(hq_url, auth_url) -> Client:
     """
-    Initialize an authenticated client to the server.
+    Initialize an authenticated client to the HQ.
 
-    The server may not be ready yet, so we retry until it is.
+    The HQ may not be ready yet, so we retry until it is.
 
     Parameters
     ----------
-    server_url : str
-        The URL of the server to connect to.
+    hq_url : str
+        The URL of the HQ to connect to.
     auth_url : str
         The URL of the auth service to connect to.
 
     Returns
     -------
     Client
-        An authenticated client to the server.
+        An authenticated client to the vantage6 hub.
     """
     client = Client(
-        server_url=server_url,
+        hq_url=hq_url,
         auth_url=auth_url,
         log_level=LogLevel.WARN,
     )
@@ -158,13 +158,13 @@ def _initalize_client(server_url, auth_url) -> Client:
         try:
             print(".", end="", flush=True)
             client.authenticate()
-            info("Successfully authenticated with server!")
+            info("Successfully authenticated!")
             break
         except Exception as e:
             if attempt == max_attempts:
                 error(
                     f"Failed to authenticate after {max_attempts} attempts. "
-                    "Server may not be online."
+                    "Vantage6 hub may not be online."
                 )
                 raise e
 

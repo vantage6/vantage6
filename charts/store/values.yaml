@@ -10,7 +10,7 @@ store:
     adminPassword: admin
     adminClient: backend-admin-client
     adminClientSecret: myadminclientsecret
-  vantage6ServerUri: http://localhost:7601/server
+  vantage6HQUri: http://localhost:7601/hq
 
   policies:
     algorithmView: public

@@ -1,12 +1,12 @@
-# TODO v5+ this nameOverride is required to be present, otherwise the server will
+# TODO v5+ this nameOverride is required to be present, otherwise the HQ will
 # not work (tested with v6 dev start). It should not be required
-nameOverride: vantage6-server
-server:
-  description: Vantage6 server version 5
+nameOverride: vantage6-hq
+hq:
+  description: Vantage6 headquarters version 5
 
   baseUrl: http://localhost:7601
-  apiPath: /server
-  image: harbor2.vantage6.ai/infrastructure/server:latest
+  apiPath: /hq
+  image: harbor2.vantage6.ai/infrastructure/hq:latest
 
   keycloak:
     url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
@@ -25,14 +25,14 @@ server:
 
   logging:
     level: DEBUG
-    file: server.log
+    file: hq.log
     max_size: 1024
     use_console: true
     datefmt: "%Y-%m-%d %H:%M:%S"
     format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
     storageSize: "128M"
     storageClass: "local-storage"
-    volumeHostPath: "/var/log/vantage6-server"
+    volumeHostPath: "/var/log/vantage6-hq"
     backup_count: 5
     loggers:
     - level: warning
@@ -63,7 +63,7 @@ database:
   username: vantage6
   password: vantage6
   name: vantage6
-  volumePath: /mnt/data_server
+  volumePath: /mnt/data_hq
   k8sNodeName: docker-desktop
 
 ui:

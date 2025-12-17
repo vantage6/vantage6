@@ -1,11 +1,11 @@
 """
-Script to populate the server with basic fixtures.
+Script to populate the hub with basic fixtures.
 """
 
 import argparse
 from pathlib import Path
 
-from vantage6.cli.sandbox.populate import populate_server_dev
+from vantage6.cli.sandbox.populate import populate_hub_dev
 from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
 
 #
@@ -28,7 +28,7 @@ parser.add_argument(
     type=int,
     default=7654,
     help=(
-        "The port number to be allocated to the proxy server of the first node. "
+        "The port number to be allocated to the proxy service of the first node. "
         "Additional nodes will use consecutive ports incremented by 1 from this value."
     ),
 )
@@ -71,16 +71,16 @@ node_config_creation_details = NodeConfigCreationDetails(
 )
 
 #
-# Call common script in CLI to populate the server
+# Call common script in CLI to populate the hq
 #
-report_populate_server = populate_server_dev(
-    server_url="http://localhost:7601/server",
+report_populate_hq = populate_hub_dev(
+    hq_url="http://localhost:7601/hq",
     auth_url="http://localhost:8080",
     number_of_nodes=number_of_nodes,
     node_config_creation_details=node_config_creation_details,
 )
 
 # Create marker file
-if report_populate_server:
+if report_populate_hq:
     with open(populate_marker, "w") as f:
-        f.write(report_populate_server)
+        f.write(report_populate_hq)

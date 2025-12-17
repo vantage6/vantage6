@@ -19,16 +19,16 @@ spec:
         component: ui
     spec:
       containers:
-      - name: vantage6-server-frontend
+      - name: vantage6-ui
         image: {{ .Values.ui.image }}
         imagePullPolicy: {{ .Values.ui.imagePullPolicy | default "Always" }}
         ports:
         - containerPort: 80
         env:
-        - name: SERVER_URL
-          value: {{ .Values.server.baseUrl | quote }}
+        - name: HQ_URL
+          value: {{ .Values.hq.baseUrl | quote }}
         - name: API_PATH
-          value: /server
+          value: {{ .Values.hq.apiPath | quote }}
         - name: AUTH_URL
           value: {{ .Values.ui.keycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM

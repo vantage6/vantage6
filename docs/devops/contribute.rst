@@ -280,9 +280,21 @@ changes to verify that it does what you expect it to do. The ``v6 dev``
 :ref:`commands <develop-env>` can be used for this purpose. With these commands, a local
 vantage6 network can be run that immediately syncs code changes that you make. It also
 restarts those infrastructure components affected by your changes. Note
-that this only works for changes that you make to code running *within* containers of
-the server, node, store and UI. However, changes to e.g. the CLI or the Kubernetes
-resources may require other means to test your changes.
+that this only works for changes that you make to code running *within* vantage6
+containers.
+
+To test changes to the CLI, make sure that you create an editable installation of the
+CLI, as indicated above with the ``make install-dev`` command.
+
+Changes in the Helm charts are automatically applied when you run the ``v6 dev``
+commands. However, note that for most changes, you will need to restart the development
+environment to apply the changes. If you want to test chart changes together with other
+CLI changes, you can use the ``--local-chart-dir`` flag to test the changes locally.
+For example:
+
+  ::
+
+    v6 sandbox new --local-chart-dir /path/to/vantage6/charts
 
 .. note::
 

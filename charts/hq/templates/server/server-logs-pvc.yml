@@ -6,15 +6,15 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
-    component: vantage6-server-logs
+    component: vantage6-hq-logs
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.server.logging.storageSize | default "128M" }}
-  {{- if .Values.server.logging.storageClass }}
-  storageClassName: {{ .Values.server.logging.storageClass }}
+      storage: {{ .Values.hq.logging.storageSize | default "128M" }}
+  {{- if .Values.hq.logging.storageClass }}
+  storageClassName: {{ .Values.hq.logging.storageClass }}
   {{- end }}
   selector:
     matchLabels:

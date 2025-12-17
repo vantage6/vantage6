@@ -14,7 +14,7 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 # TODO Check and remove
 # HCR: This constants is not being used, as well as the other defined in cli/globals.py
-# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# NODE_V6_PROXY_HOSTNAME = "proxyserver"
 
 # Timeout in seconds of the K8S event-stream watch used by the container manager.
 # This is the maximum amount of time the container manager will wait
@@ -57,4 +57,4 @@ DATABASE_BASE_PATH = "/app/databases/"
 
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
-DEFAULT_PROXY_SERVER_PORT = 7654
+DEFAULT_PROXY_PORT = 7654

@@ -19,9 +19,9 @@ as much).
 - A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernets Cluster)
 
 .. note::
-    For the server, Ubuntu is highly recommended. It is possible to run a
-    development server on Windows or MacOS, but for production purposes we recommend
-    using Ubuntu.
+    For the hub, Ubuntu is highly recommended. It is possible to run a
+    vantage6 hub for development on Windows or MacOS, but for production purposes we
+    recommend using Ubuntu.
 
 .. warning::
     The hardware requirements of the node also depend on the algorithms that
@@ -60,8 +60,8 @@ the different options:
 - **Microk8s**: For Ubuntu, we recommend installing
   `Microk8s <https://microk8s.io/docs/getting-started>`_, which is a lightweight
   Kubernetes distribution that is easy to install and use. We recommend using this for
-  development environments as well as for deploying nodes. Deploying central
-  components (server, auth, algorithm store) is also possible with Microk8s, but usually
+  development environments as well as for deploying nodes. Deploying the central hub
+  components (HQ, auth, algorithm store) is also possible with Microk8s, but usually
   it would be preferable to use a Kubernetes cluster, e.g for easier scaling.
 - **Docker Desktop**: If you are using Docker Desktop, you can simply
   `switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.

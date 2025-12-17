@@ -7,7 +7,7 @@ The following is a list of definitions used in vantage6.
 
 -  **Algorithm**: a piece of code that performs a specific task.
 -  **Algorithm store**: A repository of algorithms, which can be coupled to specific
-   collaborations or all collaborations on a server.
+   collaborations or all collaborations on a vantage6 HQ.
 -  **API**: Application Programming Interface, a set of routines, protocols, and tools
    for building software applications.
 -  **Authentication**: the process of verifying the identity of a user.
@@ -22,7 +22,7 @@ The following is a list of definitions used in vantage6.
 -  **Child container**: A container created by an algorithm container to perform
    subtasks, typically a *federated function*
 -  **Client**: A vantage6 user or application that communicates with the
-   vantage6-server.
+   vantage6 hub.
 -  **Collaboration**: an agreement between two or more parties to participate in a study
    (i.e., to answer a research question).
 -  **Computation task**: A (vantage6) task that performs a computation on a DataFrame.
@@ -85,6 +85,14 @@ The following is a list of definitions used in vantage6.
 
 -  **Horizontal scaling**: the ability of a system to handle an increasing amount of
    requests by creating more instances of itself.
+-  **HQ**: Public access point of the vantage6 infrastructure. Contains at
+   least the **vantage6-hq** application. Optional components such as RabbitMQ message
+   broker and Prometheus monitoring can be made available in the same deployment.
+-  **Headquarters**: see *HQ*
+-  **Hub**: All central components of the vantage6 infrastructure. Together with the
+   nodes, it forms the vantage6 network. The Hub always contains the vantage6 HQ
+   application and an authentication service. It may also contain other components,
+   such as the algorithm store and the user interface.
 
 **I**
 
@@ -99,8 +107,7 @@ The following is a list of definitions used in vantage6.
 
 - **Kubernetes**: An open-source system for automating deployment, scaling, and
    operations of application containers across clusters of hosts. Vantage6 is
-   built on top of Kubernetes to run the vantage6-server, nodes and algorithm
-   containers.
+   built on top of Kubernetes to run the vantage6 hub and the node containers.
 
 **N**
 
@@ -137,25 +144,23 @@ The following is a list of definitions used in vantage6.
 **S**
 
 -  **Secure multi-party computation**: see *Multi-party computation*
--  **Server**: Public access point of the vantage6 infrastructure. Contains at
-   least the **vantage6-server** application but can also host the optional
-   components: Docker registry, VPN server and RabbitMQ. In this documentation
-   space we try to be explicit when we talk about *server* and
-   *vantage6 server*, however you might encounter *server* where
-   *vantage6 server* should have been.
 -  **Session**: A way to prepare a dataset that can be reused in many computation
    tasks, especially useful for large datasets and flexible preprocessing.
 -  **Study**: A study is a subgroup of organizations within a collaboration.
 
 **T**
 
--  **Task**: A task is a request from a client to the vantage6-server to execute an
+-  **Task**: A task is a request from a client to the vantage6 HQ to execute an
    algorithm. Is is the main unit of work in vantage6.
 -  **TOTP (Time-based One-Time Password)**: A form of two-factor authentication where
    users generate time-based codes using an authenticator app.
 -  **Two-factor authentication**: A method of authentication that requires two
    forms of identification.
 
+**U**
+
+-  **UI**: User Interface, the web application that allows users to interact with the
+   vantage6 hub.
 
 **V**
 

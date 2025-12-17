@@ -1,4 +1,4 @@
-.. _install-server:
+.. _install-hq:
 
 .. TODO v5+ check if the links to the charts are correct
 

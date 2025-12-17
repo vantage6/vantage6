@@ -42,7 +42,7 @@ _A High level overview of the vantage6 infrastructure. Vantage6 has both a
 client-server and peer-to-peer architecture. The client is used by the researcher to
 create (PET) computation requests. It is also used to manage users, organizations and
 collaborations.
-The server is referred to as the vantage6 'hub' and consists of several
+The server is referred to as the 'vantage6 hub' and consists of several
 components. Most importantly, the vantage6 headquarters (HQ) contains the users,
 organizations, collaborations, tasks and their results. It provides a central access
 point for both the clients and nodes. Other important components of the hub are the
@@ -69,7 +69,7 @@ uv pip install vantage6
 pip install vantage6
 ```
 
-This installs the `v6` commands, which allows you to manage your nodes and servers. To
+This installs the `v6` commands, which allows you to manage your hub and nodes. To
 view all available options, run:
 
 ```bash
@@ -82,7 +82,7 @@ For example you can create a local test setup by using:
 v6 sandbox new
 ```
 
-This creates a local network with a server and three nodes, and also starts it. You can
+This creates a local network with a hub and three nodes, and also starts it. You can
 then manage this network with the following commands:
 
 ```bash
@@ -94,7 +94,7 @@ v6 sandbox start
 v6 sandbox remove
 ```
 
-This will start the server and nodes in the background. You can go to your browser and
+This will start the hub and nodes in the background. You can go to your browser and
 access the UI at ``http://localhost:30760``.
 You can view the logs by running:
 
@@ -102,12 +102,14 @@ You can view the logs by running:
 # View node logs
 v6 node attach
 
-# View server logs
-v6 server attach
+# View hub components logs
+v6 hq attach
+v6 algorithm-store attach
+v6 auth attach
 ```
 
 From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client)
-to interact with the server. The demo network has a pre-configured organization with
+to interact with the hub. The demo network has a pre-configured organization with
 the following credentials:
 
 - Username: `admin`
@@ -119,7 +121,7 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client(
-  server_url='http://localhost:30761/api',
+  hq_url='http://localhost:30761/api',
   auth_url='http://localhost:30764',
   log_level='debug'
 )
@@ -144,20 +146,19 @@ You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai
 
 This repository is home to 8 PyPI packages:
 
-- [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and server instances_
-- [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with the vantage6-server_
+- [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and hub instances_
+- [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with vantage6_
 - [vantage6-algorithm-tools](https://pypi.org/project/vantage6-algorithm-tools) -> _Python tools to facilitate algorithm development_
 - [vantage6-node](https://pypi.org/project/vantage6-node) -> _Node application package_
-- [vantage6-server](https://pypi.org/project/vantage6-server) -> _Server application package_
+- [vantage6-hq](https://pypi.org/project/vantage6-hq) -> _HQ application package_
 - [vantage6-algorithm-store](https://pypi.org/project/vantage6-algorithm-store) -> _Algorithm store application package_
 - [vantage6-common](https://pypi.org/project/vantage6-common) -> _Package with common vantage6 functions_
-- [vantage6-backend-common](https://pypi.org/project/vantage6-backend-common) -> _Package with functions common to central server and algorithm store_
+- [vantage6-backend-common](https://pypi.org/project/vantage6-backend-common) -> _Package with functions common to HQ and algorithm store_
 
-**Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered to you in Docker images.**
+**Note that when using vantage6 you do not have to install the _hq_ and _node_ packages. These are delivered to you in Docker images.**
 
 This repository also hosts the code for the vantage6 user interface (UI). The UI
-is an Angular web application that can be used to interact with the vantage6 server
-easily.
+is an Angular web application that can be used to interact with the vantage6 HQ easily.
 
 ### Docker images
 
@@ -165,7 +166,7 @@ The vantage6 infrastructure is delivered in Docker images. All Docker images are
 in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
 - `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
-- `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
+- `harbor2.vantage6.ai/infrastructure/hq:VERSION` -> _HQ application Docker image_
 - `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
 - `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 

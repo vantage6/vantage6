@@ -10,13 +10,13 @@ metadata:
     app: {{ include "vantage6.name" . }}
 spec:
   capacity:
-    storage: {{ .Values.server.logging.storageSize | default "128M" }}
+    storage: {{ .Values.hq.logging.storageSize | default "128M" }}
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.server.logging.storageClass | default "local-storage" }}
+  storageClassName: {{ .Values.hq.logging.storageClass | default "local-storage" }}
   persistentVolumeReclaimPolicy: Retain
   local:
-    path: {{ .Values.server.logging.volumeHostPath  }}
+    path: {{ .Values.hq.logging.volumeHostPath  }}
   nodeAffinity:
     required:
       nodeSelectorTerms:

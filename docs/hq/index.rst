@@ -8,7 +8,7 @@ Server admin guide
 Required components
 ^^^^^^^^^^^^^^^^^^^
 
-:ref:`install-server`
+:ref:`install-hq`
   The vantage6 server is the core component of the vantage6 infrastructure.
   It is responsible for managing the nodes and tasks.
 

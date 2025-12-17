@@ -12,18 +12,18 @@ profiles:
   # Remove the auth deployment from the deployments section
   - op: remove
     path: deployments.vantage6-auth
-  # Remove vantage6-auth from the server pipeline create_deployments command
+  # Remove vantage6-auth from the hq pipeline create_deployments command
   - op: replace
-    path: pipelines.server.run
+    path: pipelines.hq.run
     value: |-
       run_dependencies --all
       ensure_pull_secrets --all
       create_deployments \
-        vantage6-server \
+        vantage6-hq \
         vantage6-store
       start_dev \
-        vantage6-server \
-        vantage6-server-db \
+        vantage6-hq \
+        vantage6-hq-db \
         vantage6-ui \
         vantage6-store \
         vantage6-store-db
@@ -32,14 +32,14 @@ profiles:
     path: dev.vantage6-auth
 
 # Profiles for building individual images
-- name: build-server-only
+- name: build-hq-only
   patches:
   - op: replace
     path: images
     value:
-      server:
-        image: ${SERVER_IMAGE}
-        dockerfile: docker/node-and-server.Dockerfile
+      hq:
+        image: ${HQ_IMAGE}
+        dockerfile: docker/node-and-hq.Dockerfile
         context: .
 
 - name: build-node-only
@@ -49,7 +49,7 @@ profiles:
     value:
       node:
         image: ${NODE_IMAGE}
-        dockerfile: docker/node-and-server.Dockerfile
+        dockerfile: docker/node-and-hq.Dockerfile
         context: .
 
 - name: build-store-only
@@ -79,29 +79,29 @@ profiles:
     path: hooks/2/command
     value: |
       echo "Creating log folder"
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/server
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/hq
       python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
       python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
       python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/prometheus
-  # Enable Prometheus in the server Helm values
+  # Enable Prometheus in the HQ Helm values
   - op: replace
-    path: deployments.vantage6-server.helm.values.prometheus.enabled
+    path: deployments.vantage6-hq.helm.values.prometheus.enabled
     value: true
   - op: add
-    path: deployments.vantage6-server.helm.values.prometheus.exporter_port
+    path: deployments.vantage6-hq.helm.values.prometheus.exporter_port
     value: 7603
   - op: add
-    path: deployments.vantage6-server.helm.values.prometheus.storageSize
+    path: deployments.vantage6-hq.helm.values.prometheus.storageSize
     value: "2Gi"
   - op: add
-    path: deployments.vantage6-server.helm.values.prometheus.storageClass
+    path: deployments.vantage6-hq.helm.values.prometheus.storageClass
     value: local-storage
   - op: add
-    path: deployments.vantage6-server.helm.values.prometheus.volumeHostPath
+    path: deployments.vantage6-hq.helm.values.prometheus.volumeHostPath
     value: ${HOST_DATA_PATH}/prometheus
   # Replace the entire ports array to include prometheus exporter (7603) port forwards
   - op: replace
-    path: dev.vantage6-server.ports
+    path: dev.vantage6-hq.ports
     value:
       - port: 7601:7601
         bindAddress: localhost

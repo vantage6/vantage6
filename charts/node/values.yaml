@@ -8,10 +8,10 @@ node:
     url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
     realm: vantage6
 
-  server:
-    url: http://vantage6-server
+  hq:
+    url: http://vantage6-hq
     port: 7601
-    path: /server
+    path: /hq
 
   # TODO v5+ set to v5 image name
   image: harbor2.vantage6.ai/infrastructure/node:latest

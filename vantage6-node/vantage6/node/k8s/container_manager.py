@@ -40,7 +40,7 @@ from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
     DATABASE_BASE_PATH,
-    DEFAULT_PROXY_SERVER_PORT,
+    DEFAULT_PROXY_PORT,
     ENV_VARS_NOT_SETTABLE_BY_NODE,
     JOB_POD_INPUT_PATH,
     JOB_POD_OUTPUT_PATH,
@@ -423,20 +423,20 @@ class ContainerManager:
 
         # Set environment variables for the algorithm client. This client is used
         # to communicate from the algorithm to the vantage6 server through the proxy.
-        # The PROXY_SERVER_HOST env. variable is assumed to be set at this
+        # The V6_PROXY_HOST env. variable is assumed to be set at this
         # point (no need to check here again), as its presence is validated when the
         # node is initialized (node/__init__.py)
-        env_vars[ContainerEnvNames.HOST.value] = os.environ.get("PROXY_SERVER_HOST")
+        env_vars[ContainerEnvNames.HOST.value] = os.environ.get("V6_PROXY_HOST")
         env_vars[ContainerEnvNames.PORT.value] = os.environ.get(
-            "PROXY_SERVER_PORT", str(DEFAULT_PROXY_SERVER_PORT)
+            "V6_PROXY_PORT", str(DEFAULT_PROXY_PORT)
         )
 
         if action == AlgorithmStepType.CENTRAL_COMPUTE:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
-            "[Algorithm job run %s] Setting PROXY_SERVER_HOST=%s and "
-            "PROXY_SERVER_PORT=%s env variables on the job POD",
+            "[Algorithm job run %s] Setting V6_PROXY_HOST=%s and "
+            "V6_PROXY_PORT=%s env variables on the job POD",
             run_id,
             env_vars[ContainerEnvNames.HOST.value],
             env_vars[ContainerEnvNames.PORT.value],

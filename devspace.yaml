@@ -346,7 +346,7 @@ deployments:
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/store
-          vantage6HqUri: http://localhost:7601/hq
+          vantage6HQUri: http://localhost:7601/hq
           policies:
             allowLocalhost: true
             assignReviewOwnAlgorithm: true

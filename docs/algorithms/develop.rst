@@ -273,7 +273,7 @@ Testing your algorithm
 
 It can be helpful to test your algorithm outside of a containerized environment using
 the ``MockNetwork``. This may save time as it does not require you to set up a test
-infrastructure with a vantage6 server and nodes, and allows you to test your algorithm
+infrastructure with a vantage6 hub and nodes, and allows you to test your algorithm
 without building a Docker image every time. The algorithm boilerplate code comes with a
 test file that you can use to test your algorithm using the ``MockNetwork`` - you can
 of course extend that to add more or different tests.
@@ -427,8 +427,8 @@ Calling your algorithm from vantage6
 
 If you want to test your algorithm in the context of vantage6, you should
 set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
-command, which will create a sandbox environment with a server, several nodes and an
-algorithm store. Once you have a vantage6 sandbox running, you can create a task for
+command, which will create a sandbox environment with a hub and several nodes.
+Once you have a vantage6 sandbox running, you can create a task for
 your algorithm. You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
@@ -462,7 +462,7 @@ execution result. For example, to test the average algorithm, the script could l
     def run_test():
         # Create a client and authenticate
         client = Client(
-            server_url="http://localhost:30761/server",
+            hq_url="http://localhost:30761/hq",
             auth_url="http://localhost:30764"
         )
         client.authenticate()

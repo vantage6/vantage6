@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script that takes arguments and returns the appropriate devspace build command
-# Usage: ./dev/get_rebuild_command.sh [--server|--node|--store|--ui]
+# Usage: ./dev/get_rebuild_command.sh [--hq|--node|--store|--ui]
 
 set -e
 
@@ -10,7 +10,7 @@ SELECTED_FLAG=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --server|--node|--store|--ui)
+    --hq|--node|--store|--ui)
       SELECTED_FLAG="$1"
       break
       ;;
@@ -26,8 +26,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$SELECTED_FLAG" in
-  --server)
-    echo "devspace build --profile build-server-only"
+  --hq)
+    echo "devspace build --profile build-hq-only"
     ;;
   --node)
     echo "devspace build --profile build-node-only"

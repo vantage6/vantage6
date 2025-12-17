@@ -1,6 +1,6 @@
-# Policy for the POD where the Node and its server-proxy are running.
-# It ensures that only the POD running the server-proxy is able to
-# reach the outside world (in this case, to get access to the v6-server).
+# Policy for the POD where the Node and its proxy are running.
+# It ensures that only the POD running the proxy is able to
+# reach the outside world (in this case, to get access to v6 HQ).
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -10,7 +10,7 @@ spec:
   podSelector: # Allow outbound traffic only to the node-proxy
     matchLabels:
       # must match the 'app' label defined on node/templates/node-deployment
-      app: v6-node-server-proxy
+      app: v6-node-hq-proxy
   policyTypes:
     - Egress
   egress:
@@ -38,7 +38,7 @@ spec:
 ---
 
 # Network policies for central_compute step/jobs
-# These jobs require access to the server proxy provided by the node
+# These jobs require access to the hq proxy provided by the node
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

@@ -266,15 +266,15 @@ class Node:
         server.
         """
 
-        # The PROXY_SERVER_HOST is required for the node to work. There are no default
+        # The V6_PROXY_HOST is required for the node to work. There are no default
         # values for it as its value (a FQDN) depends on the namespace where the
         # K8S-service with the node is running.
-        if "PROXY_SERVER_HOST" in os.environ:
-            proxy_host = os.environ.get("PROXY_SERVER_HOST")
-            os.environ["PROXY_SERVER_HOST"] = proxy_host
+        if "V6_PROXY_HOST" in os.environ:
+            proxy_host = os.environ.get("V6_PROXY_HOST")
+            os.environ["V6_PROXY_HOST"] = proxy_host
         else:
             self.log.error(
-                "The environment variable PROXY_SERVER_HOST, required to start the Node's proxy-server is not set"
+                "The environment variable V6_PROXY_HOST, required to start the Node's proxy-server is not set"
             )
             self.log.info("Shutting down the node...")
             exit(1)
@@ -310,7 +310,7 @@ class Node:
         )
 
         try:
-            os.environ["PROXY_SERVER_PORT"] = str(node_proxy_port)
+            os.environ["V6_PROXY_PORT"] = str(node_proxy_port)
             http_server.serve_forever()
 
         except OSError as e:

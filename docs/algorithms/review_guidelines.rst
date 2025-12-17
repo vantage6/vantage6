@@ -117,12 +117,12 @@ but are not limited to:
 
 - Privacy risks:
 
-  - Is the (non-personal) data that is being shared with the central server the
+  - Is the (non-personal) data that is being shared with the vantage6 HQ the
     minimum of what is necessary to answer the research question? Is this the
     case for both the final results and the results of subtasks?
   - Is there a risk that sensitive data are printed in the algorithm logs?
   - Even if it is the absolute minimum, is the data that is being sent back to
-    the central server acceptable?
+    the vantage6 HQ acceptable?
 
     - Does it (potentially) disclose detailed information of individual
       patients/records?
@@ -144,7 +144,7 @@ but are not limited to:
 
   - Is the algorithm at risk for one or more of the federate learning exploits
     described in :ref:`prevent-common-federated-learning-exploits`?
-  - If a server administrator, node administrator or researcher tries to gain
+  - If a hub administrator, node administrator or researcher tries to gain
     access to your data, does the algorithm properly protect the data from them?
 
 .. _prevent-common-federated-learning-exploits:
@@ -186,8 +186,3 @@ machine-learning (ML) algorithms.
    * - Watermark attacks
      - An attacker includes a unique pattern into their partial ML model, which
        can later be used to derive information about the training data of others.
-
-
-
-
-

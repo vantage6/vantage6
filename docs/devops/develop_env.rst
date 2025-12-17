@@ -100,27 +100,29 @@ following commands:
    * - ``v6 dev clean``
      - Delete all running k8s resources and local data (e.g. tasks data, database data)
    * - ``v6 dev rebuild``
-     - Rebuild all infrastructure (server, node, etc.) Docker images for this project
+     - Rebuild all infrastructure Docker images (HQ, node, etc.)
 
 By default, ``v6 dev rebuild`` will build all images. You can rebuild specific
-images by passing the ``--server``, ``--node``, ``--store`` or ``--ui`` flag. For
-example, if you want to rebuild only the server image, you can run:
+images by passing the ``--hq``, ``--node``, ``--store`` or ``--ui`` flag. For
+example, if you want to rebuild only the HQ image, you can run:
 
 .. code-block:: bash
 
-    v6 dev rebuild --server
+    v6 dev rebuild --hq
 
 Using the development environment
 --------------------------------
 
 Once the development environment is running, it will spin up the following services:
 
-- User interface (http://localhost:7600)
-- Server (http://localhost:7601/server)
+- The vantage6 hub, consisting of:
+  - User interface (http://localhost:7600)
+  - HQ (http://localhost:7601/hq)
+  - Algorithm store (http://localhost:7602)
+  - Authentication (Keycloak), including the admin interface (http://localhost:8080)
+  - PostgreSQL databases to support the HQ, store and authentication services
+
 - One or more nodes (as indicated by the ``NUMBER_OF_NODES`` variable)
-- Algorithm store (http://localhost:7602)
-- Authentication (Keycloak), including the admin interface (http://localhost:8080)
-- PostgreSQL databases to support the server, store and keycloak services
 
 The following user is created to authenticate with:
 
@@ -128,7 +130,7 @@ The following user is created to authenticate with:
 - Password: ``admin``
 
 The first time you start the development environment, you will be asked if you want to
-populate the server with some example data. This is useful to test the development
+populate the hub with some example data. This is useful to test the development
 environment. This will create additional users and organizations. The users will have
 the username ``user_1`` (for organization ``org_1``), ``user_2`` (for organization
 ``org_2``), etc., up to the number of nodes you have configured. Each user will have

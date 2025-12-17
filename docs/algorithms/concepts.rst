@@ -8,8 +8,8 @@ these concepts is helpful when you to create your own algorithms. A guide to
 develop your own algorithms can be found in the :ref:`algo-dev-guide`.
 
 Algorithms are executed at the vantage6 node. The node receives a computation
-task from the vantage6-server. The node will then retrieve the algorithm,
-execute it and return the results to the server.
+task from the vantage6 HQ. The node will then retrieve the algorithm,
+execute it and return the results to the HQ.
 
 Algorithms are shared using `Docker images <https://docs.docker.com/get-started
 /#what-is-a-container-image>`_ which are stored in a :ref:`Docker image registry
@@ -23,7 +23,7 @@ explain the fundamentals of algorithm containers.
    and output
 4. `Child containers`_: Creating subtasks from an algorithm container
 5. `Networking`_: Communicate with other algorithm containers and the
-   vantage6-server
+   vantage6 HQ
 6. `Cross language`_: Cross language data serialization
 
 Algorithm structure
@@ -53,11 +53,11 @@ nodes and combine them on your own machine, but it is usually preferable to run
 the central part within vantage6, because:
 
 -  You don't have to keep your machine running during the analysis
--  The results are stored on the server, so they may also be accessed by other
+-  The results are stored on the HQ, so they may also be accessed by other
    users
 
 .. note::
-    Central functions also run at a node and *not* at the server. For more
+    Central functions also run at a node and *not* at the HQ. For more
     information, see `here <https://vantage6.ai/news/algorithm-journey/>`_.
 
 Input & output
@@ -101,12 +101,12 @@ The available file mounts are:
 
 *Output*
     The algorithm writes its output to this file. When the docker
-    container exits, the contents of this file will be send back to the
-    vantage6-server.
+    container exits, the contents of this file will be sent back to the
+    vantage6 HQ.
 
 *Token*
     The token file contains a JWT token which can be used by the algorithm
-    to communicate with the central server. The token can only be used to
+    to communicate with the HQ. The token can only be used to
     create a new task with the same image, and is only valid while the task
     has not yet been completed.
 
@@ -168,7 +168,7 @@ When a user creates a task, one or more nodes spawn an algorithm
 container. These algorithm containers can create new tasks themselves.
 
 Every algorithm is supplied with a JWT token (see `Input & output`_).
-This token can be used to communicate with the vantage6-server. In case
+This token can be used to communicate with the vantage6 HQ. In case
 you use an algorithm wrapper, you can supply an ``AlgorithmClient`` using
 the :ref:`appropriate decorator <implementing-decorators>`.
 
@@ -180,7 +180,7 @@ a single parent container which handles many child containers.
 
    Each container can spawn new containers in the network. Each
    container is provided with a unique token which they can use to
-   communicate to the vantage6-server.
+   communicate to the vantage6 HQ.
 
 The token to which the containers have access supplies limited permissions to
 the container. For example, the token can be used to create additional tasks,
@@ -190,23 +190,11 @@ Networking
 ----------
 
 The algorithm container is deployed in an isolated network to reduce their
-exposure. Hence, the algorithm it cannot reach the internet. There are two
-exceptions:
-
-1. When the VPN feature is enabled on the server all algorithm
-   containers are able to reach each other using an ``ip`` and
-   ``port`` over VPN.
-2. The central server is reachable through a local proxy service. In the
-   algorithm you can use the ``HOST``, ``POST`` and ``API_PATH`` to find
-   the address of the server.
-
-VPN connection
-^^^^^^^^^^^^^^
-
-Algorithm containers within the same task can communicate directly with each
-other over a VPN network. More information on that can be found
-:ref:`here <vpn-feature>` and :ref:`this section <vpn-in-algo-dev>` describes
-how to use it in an algorithm.
+exposure. Hence, the algorithm it cannot reach the internet. The main exception is that
+the vantage6 HQ is reachable through a local proxy service. In the algorithm you can use
+the ``HOST``, ``POST`` and ``API_PATH`` to find the address of the HQ. Additionally,
+it is possible to whitelist addresses and domains in your
+:ref:`node configuration <node-configure-structure>` - see the ``whitelist`` section.
 
 Cross language
 --------------
@@ -225,9 +213,8 @@ When data is exchanged between the user and the algorithm they both need
 to be able to read the data. When the algorithm uses a language specific
 serialization (e.g. a ``pickle`` in the case of Python or ``RData`` in
 the case of R) the user needs to use the same language to read the
-results. A better solution would be to use a type of serialization that
-is not specific to a language. In our wrappers we use JSON for this
-purpose.
+results. Therefore, we recommend using a type of serialization that
+is not specific to a language. In the vantage6 infrastructure wrappers, JSON is used.
 
 .. note::
     Communication between algorithm containers can use language specific
