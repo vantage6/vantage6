@@ -84,7 +84,7 @@ class InstanceType(StrEnumBase):
     """The types of instances that can be created."""
 
     NODE = "node"
-    SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "algorithm-store"
     UI = "ui"
     AUTH = "auth"
@@ -116,7 +116,7 @@ class Ports(IntEnum):
 
     HTTP = 80
     HTTPS = 443
-    DEV_SERVER = 7601
+    DEV_HQ = 7601
     DEV_UI = 7600
     DEV_ALGO_STORE = 7602
     DEV_PROMETHEUS = 7603

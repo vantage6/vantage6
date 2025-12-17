@@ -27,7 +27,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.SERVER,
+    type_=InstanceType.HQ,
     include_name=True,
     include_system_folders=True,
     sandbox_param="sandbox",
@@ -46,7 +46,7 @@ def cli_server_start(
     Start the server.
     """
     info("Starting server...")
-    prestart_checks(ctx, InstanceType.SERVER, name, system_folders)
+    prestart_checks(ctx, InstanceType.HQ, name, system_folders)
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
@@ -64,8 +64,8 @@ def cli_server_start(
     if attach:
         attach_logs(
             name,
-            instance_type=InstanceType.SERVER,
-            infra_component=InfraComponentName.SERVER,
+            instance_type=InstanceType.HQ,
+            infra_component=InfraComponentName.HQ,
             system_folders=system_folders,
             k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,

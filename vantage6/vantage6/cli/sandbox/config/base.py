@@ -84,7 +84,7 @@ class BaseSandboxConfigManager:
         """
         ctx_class = select_context_class(instance_type)
         folders = ctx_class.instance_folders(
-            instance_type=InstanceType.SERVER,
+            instance_type=InstanceType.HQ,
             instance_name=self.server_name,
             system_folders=False,
         )
@@ -95,7 +95,7 @@ class BaseSandboxConfigManager:
         else:
             main_data_dir = Path(folders["dev"])
 
-        if instance_type == InstanceType.SERVER:
+        if instance_type == InstanceType.HQ:
             folder_name = custom_folder or "server"
             data_dir = main_data_dir / self.server_name / folder_name
         elif instance_type == InstanceType.ALGORITHM_STORE:

@@ -58,7 +58,7 @@ def run_test(custom_args: dict | None = None):
     """
     # Create a client and authenticate
     client = Client(
-        server_url=f"http://localhost:{Ports.DEV_SERVER}/api",
+        server_url=f"http://localhost:{Ports.DEV_HQ}/api",
         auth_url="http://localhost:8080",
     )
     try:

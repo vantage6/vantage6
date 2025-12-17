@@ -43,7 +43,7 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        if instance_type == InstanceType.SERVER:
+        if instance_type == InstanceType.HQ:
             return (
                 package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
             )

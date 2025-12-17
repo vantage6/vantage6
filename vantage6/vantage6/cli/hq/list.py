@@ -10,4 +10,4 @@ def cli_server_configuration_list() -> None:
     """
     Print the available server configurations.
     """
-    get_configuration_list(InstanceType.SERVER)
+    get_configuration_list(InstanceType.HQ)

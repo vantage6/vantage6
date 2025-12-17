@@ -5,7 +5,7 @@ Introduction
 
 The vantage6 node is the software that runs on the machine of the data
 owner. It is responsible for the execution of the federated learning
-tasks and the communication with the central server.
+tasks and the communication with vantage6 HQ.
 
 Each organization that is involved in a federated learning collaboration has
 its own node in that collaboration. They should therefore install the node

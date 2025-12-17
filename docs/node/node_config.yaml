@@ -15,11 +15,11 @@ node:
   # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
   imagePullPolicy: Always
 
-  # The URL, port and API path to the vantage6 server
-  server:
-    url: http://my-vantage6-server.org
+  # The URL, port and API path to the vantage6 HQ
+  hq:
+    url: http://my-vantage6-hq.org
     port: 7601
-    path: /server
+    path: /api
 
   # Namespace in which the task kubernetes resources are created. This must be a
   # namespace where the node has access to create pods.
@@ -28,7 +28,7 @@ node:
   # Kubernetes node name, used for local persistent volumes
   k8sNodeName: docker-desktop
 
-  # Keycloak configuration to authenticate the node with the server.
+  # Keycloak configuration to authenticate the node.
   keycloak:
     url: http://my-vantage6-auth.org
     realm: vantage6
@@ -100,14 +100,14 @@ node:
       #
       # It is recommended to do this through Kubernetes secrets.
 
-  # Whether or not your node shares some configuration (e.g. which images are
-  # allowed to run on your node) with the central server. This can be useful
-  # for other organizations in your collaboration to understand why a task
-  # is not completed. Obviously, no sensitive data is shared. Default true
+  # Whether or not your node shares some configuration (e.g. which images are allowed
+  # to run on your node) with HQ. This can be useful for other organizations in your
+  # collaboration to understand why a task is not completed. Obviously, no sensitive
+  # data is shared. Default true.
   share_config: true
 
-  # Whether or not to share algorithm logs with the server. Otherwise they will
-  # only be displayed as part of the node logs. Default is true.
+  # Whether or not to share algorithm logs with HQ. Otherwise they will only be
+  # displayed as part of the node logs. Default is true.
   # NOTE: It's recommented to set this to false when using sensitive data
   share_algorithm_logs: true
 
@@ -190,12 +190,12 @@ node:
         - ipBlock:
             cidr: 10.20.0.0/16
 
-  # Prometheus settings, for sending system metadata to the server.
+  # Prometheus settings, for sending system metadata to HQ.
   prometheus:
     # Whether or not to enable Prometheus reporting. Default is false.
     enabled: false
 
-    # Interval (in seconds) at which the node sends system metadata to the server.
+    # Interval (in seconds) at which the node sends system metadata to HQ.
     # This should align with the Prometheus scrape_interval to avoid stale data.
     report_interval_seconds: 45
 

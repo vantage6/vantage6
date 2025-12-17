@@ -32,9 +32,7 @@ def server_configuration_questionaire(
     dict[str, Any]
         dictionary with Helm values for the server configuration
     """
-    dirs = AppContext.instance_folders(
-        InstanceType.SERVER, instance_name, system_folders
-    )
+    dirs = AppContext.instance_folders(InstanceType.HQ, instance_name, system_folders)
     log_dir = dirs.get("log")
 
     # Initialize config with basic structure
@@ -46,7 +44,7 @@ def server_configuration_questionaire(
         "prometheus": {},
     }
 
-    config = add_common_server_config(config, InstanceType.SERVER, instance_name)
+    config = add_common_server_config(config, InstanceType.HQ, instance_name)
 
     # TODO v5+ these should be removed, latest should usually be used so question is
     # not needed. However, for now we want to specify alpha/beta images.

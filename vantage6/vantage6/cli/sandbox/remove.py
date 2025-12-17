@@ -51,13 +51,13 @@ def cli_sandbox_remove(
     if not name:
         try:
             name = select_configuration_questionnaire(
-                type_=InstanceType.SERVER, system_folders=False, is_sandbox=True
+                type_=InstanceType.HQ, system_folders=False, is_sandbox=True
             )
         except Exception:
             error("No configurations could be found!")
             exit()
 
-    ctx = get_context(InstanceType.SERVER, name, system_folders=False, is_sandbox=True)
+    ctx = get_context(InstanceType.HQ, name, system_folders=False, is_sandbox=True)
 
     # remove the store folder
     store_configs = AlgorithmStoreContext.instance_folders(

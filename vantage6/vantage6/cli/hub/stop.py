@@ -28,7 +28,7 @@ def cli_hub_stop(
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     running_services = find_running_service_names(
-        instance_type=InstanceType.SERVER,
+        instance_type=InstanceType.HQ,
         only_system_folders=False,
         only_user_folders=False,
         k8s_config=k8s_config,
@@ -39,10 +39,10 @@ def cli_hub_stop(
         return
 
     if not name:
-        selected_service = select_running_service(running_services, InstanceType.SERVER)
+        selected_service = select_running_service(running_services, InstanceType.HQ)
         name = "-".join(selected_service.split("-")[1:-2])
     else:
-        ctx = get_context(InstanceType.SERVER, name, False)
+        ctx = get_context(InstanceType.HQ, name, False)
         name = ctx.name
 
     execute_cli_stop(CLICommandName.AUTH, f"{name}-auth", k8s_config, False)

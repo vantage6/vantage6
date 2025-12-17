@@ -41,7 +41,7 @@ def select_context_class(
     NotImplementedError
         If the type_ is not implemented
     """
-    if type_ == InstanceType.SERVER:
+    if type_ == InstanceType.HQ:
         return ServerContext
     elif type_ == InstanceType.ALGORITHM_STORE:
         return AlgorithmStoreContext

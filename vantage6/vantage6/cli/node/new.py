@@ -98,7 +98,7 @@ def node_configuration_questionaire(
     default_port = (
         str(Ports.HTTPS)
         if config["server_url"].startswith("https")
-        else str(Ports.DEV_SERVER)
+        else str(Ports.DEV_HQ)
     )
 
     config = config | q.unsafe_prompt(

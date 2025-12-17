@@ -20,7 +20,7 @@ from vantage6.cli.k8s_config import select_k8s_config
     default=None,
     help="Local chart repository to use.",
 )
-@click_insert_context(type_=InstanceType.SERVER)
+@click_insert_context(type_=InstanceType.HQ)
 def cli_hub_start(
     ctx: ServerContext,
     context: str | None,

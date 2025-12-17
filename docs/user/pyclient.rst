@@ -3,15 +3,13 @@
 Python client
 -------------
 
-The Python client is the recommended way to interact with the vantage6 server
+The Python client is the recommended way to interact with the vantage6 hub
 for tasks that you want to automate. It is a Python library that facilitates
-communication with the vantage6 server, e.g. by encrypting and decrypting data
-for tasks for you.
-
-The Python client aims to completely cover the vantage6 server communication.
-It can create computation tasks and collect their
-results, manage organizations, collaborations, users, etc. Under the hood,
-the Python client talks to the server API to achieve this.
+communication with the vantage6 hub, e.g. by encrypting and decrypting data
+for tasks for you. It can create computation tasks and collect their
+results, manage organizations, collaborations, users, etc. Everything you can do
+with the UI, you can also do with the Python client, making it a powerful tool for
+automation.
 
 Requirements
 ^^^^^^^^^^^^
@@ -28,9 +26,10 @@ Install
 ^^^^^^^
 
 It is important to install the Python client with the same version as the
-vantage6 server you are talking to. Check your server version by going to
-``https://<server_url>/version`` (e.g. `https://uluru.vantage6.ai/version`
-or `http://localhost:30761/server/version`) to find its version.
+vantage6 hub you are talking to, most importantly the API version of vantage6 HQ. Check
+your HQ version by going to
+``https://<my-v6-HQ>/version`` (e.g. `https://uluru.vantage6.ai/version`
+or `http://localhost:30761/hq/version`) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 
@@ -115,7 +114,7 @@ example, a rule that gives a certain permission cannot be deleted).
 -  ``client.node``
 
 Finally, the class ``client.util`` contains some utility functions, for example
-to check if the server is up and running or to change your own password.
+to check if HQ is up and running or to change your own password.
 
 .. _authentication:
 
@@ -127,10 +126,9 @@ administrative tasks that you can perform with our
 :ref:`Python client <use-python-client>`. We start by authenticating.
 
 To authenticate, we create a config file to store our login information.
-We do this so we do not have to define the ``server_url``,
-``server_port`` and so on every time we want to use the client.
-Moreover, it enables us to separate the sensitive information (login
-details, organization key) that you do not want to make publicly
+We do this so we do not have to define the ``hq_url``, ``auth_url`` and so on every
+time we want to use the client. Moreover, it enables us to separate the sensitive
+information (login details, organization key) that you do not want to make publicly
 available, from other parts of the code you might write later (e.g. on
 submitting particular tasks) that you might want to share publicly.
 
@@ -138,14 +136,14 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   # Server address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/api
-   # for a local dev server
-   server_url = "https://<my_server_url>:<my_port>/<my_api_path>"
-   # Auth server address (keycloak), e.g. https://auth.uluru.vantage6.ai/, or
-   # http://localhost:8080 for a local dev server
+   # HQ address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/api
+   # for a local dev HQ
+   hq_url = "https://<my_hq_url>:<my_port>/<my_api_path>"
+   # Authentication service address, e.g. https://auth.uluru.vantage6.ai/, or
+   # http://localhost:8080 for a local development auth service
    auth_url = "https://<my_auth_url>:<my_port>"
 
-   # Realm and client id of the auth server (keycloak)
+   # Realm and client id of the authentication service
    keycloak_realm = "vantage6"
    keycloak_client = "public_client"
 
@@ -155,7 +153,7 @@ Note that the ``organization_key`` should be a filepath that points to
 the private key that was generated when the organization to which your
 login belongs was first created (see :ref:`creating-organization`).
 
-Then, we connect to the vantage 6 server by initializing a Client
+Then, we connect to the vantage6 hub by initializing a Client
 object, and authenticating
 
 .. code:: python
@@ -168,7 +166,7 @@ object, and authenticating
 
    # Initialize the client object, and run the authentication
    client = Client(
-       server_url=config.server_url,
+       hq_url=config.hq_url,
        auth_url=config.auth_url,
        auth_realm=config.keycloak_realm,
        auth_client=config.keycloak_client,
@@ -203,7 +201,7 @@ Creating an organization
 """"""""""""""""""""""""
 
 After you have authenticated, you can start generating resources. The following
-also assumes that you have a login on the vantage6 server that has the
+also assumes that you have a login on the vantage6 hub that has the
 permissions to create a new organization. Regular end-users typically do
 not have these permissions (typically only administrators do); they may skip
 this part.
@@ -260,7 +258,7 @@ Creating a collaboration
 
 Here, we assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`. We
-also assume that you have a login on the vantage6 server that has the
+also assume that you have a login on the vantage6 hub that has the
 permissions to create a new collaboration (regular end-users typically
 do not have these permissions, this is typically only for
 administrators).
@@ -485,9 +483,9 @@ on both organizations ``2`` and ``3``.
 
 **Inspecting the results**
 
-Of course, it will take a little while to run your algorithm. You can
-use the following code snippet to run a loop that checks the server
-every 3 seconds to see if the task has been completed:
+Of course, it will take a little while to run your algorithm. You can use the following
+code snippet to run a loop that checks HQ every 3 seconds to see if the task has been
+completed:
 
 .. code:: python
 

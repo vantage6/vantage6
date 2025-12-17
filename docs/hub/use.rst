@@ -1,46 +1,46 @@
-Command line interface
+Use
 ======================
 
-.. _use-server:
+.. _use-hub:
 
-Server
-----
+Headquarters
+------------
 
-This section explains which commands are available to manage your server. It
-also explains how to set up a test server locally.
+This section explains which commands are available to manage your vantage6 hub. It
+also explains how to set up a test environment locally.
 
 Quick start
 ^^^^^^^^^^^
 
-To create a new server, run the command below. A menu will be started
-that allows you to set up a server configuration file.
+To create a new vantage6 hub, run the command below. A questionnaire will be started
+that allows you to set up configuration files for the hub's components, i.e. for HQ,
+algorithm store, and authentication service.
 
 ::
 
-   v6 server new
+   v6 hub new
 
-For more details, check out the :ref:`server-configure` section.
+For more details, check out the :ref:`hub-configure` section.
 
-To run a server, execute the command below. The ``--attach`` flag will
-copy log output to the console.
-
-::
-
-   v6 server start --name <your_server> --attach
-
-.. warning::
-    When the server is run for the first time, the following user is created:
-
-    -  username: root
-    -  password: root
-
-    It is recommended to change this password immediately.
-
-Finally, a server can be stopped again with:
+To run a vantage6 hub, execute the command below.
 
 ::
 
-   v6 server stop --name <your_server>
+   v6 hub start --name <your_hub>
+
+To show the current logs of the hub components, you can use the following commands:
+
+::
+
+   v6 hq attach
+   v6 algorithm-store attach
+   v6 auth attach
+
+Finally, a vantage6 hub can be stopped again with:
+
+::
+
+   v6 hub stop --name <your_hub>
 
 Available commands
 ^^^^^^^^^^^^^^^^^^
@@ -181,7 +181,7 @@ Store
 
 This section explains which commands are available to manage your algorithm
 store. These can be used to set up a test server locally. To deploy a store,
-see the general :ref:`deployment <server-deployment>` section.
+see the general :ref:`deployment <hub-deployment>` section.
 
 
 Quick start

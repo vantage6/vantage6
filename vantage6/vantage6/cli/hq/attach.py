@@ -17,7 +17,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option(
     "--sandbox", "is_sandbox", flag_value=True, help="Attach to a sandbox environment"
 )
-def cli_server_attach(
+def cli_hq_attach(
     name: str | None,
     system_folders: bool,
     context: str,
@@ -25,16 +25,16 @@ def cli_server_attach(
     is_sandbox: bool,
 ) -> None:
     """
-    Show the server logs in the current console.
+    Show the HQ logs in the current console.
     """
-    info("Attaching to server logs...")
+    info("Attaching to HQ logs...")
     k8s_config = select_k8s_config(context=context, namespace=namespace)
     attach_logs(
         name=name,
-        instance_type=InstanceType.SERVER,
-        infra_component=InfraComponentName.SERVER,
+        instance_type=InstanceType.HQ,
+        infra_component=InfraComponentName.HQ,
         system_folders=system_folders,
         k8s_config=k8s_config,
         is_sandbox=is_sandbox,
-        additional_labels="component=vantage6-server",
+        additional_labels="component=vantage6-hq",
     )

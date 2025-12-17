@@ -1,12 +1,7 @@
-.. _server-deployment:
+.. _hub-deployment:
 
 Deployment
 ==========
-
-The vantage6 server is a Flask application, that uses
-`python-socketio <https://python-socketio.readthedocs.io>`_ for socketIO
-connections. The server runs as a standalone process (listening on its own ip
-address/port).
 
 The server deployment should be done using the server's Helm chart in a Kubernetes
 cluster. For small projects, the server may also be deployed on a VM using ``microk8s``,

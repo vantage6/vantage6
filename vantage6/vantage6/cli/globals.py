@@ -105,7 +105,7 @@ class CLICommandName(StrEnumBase):
 class InfraComponentName(StrEnumBase):
     """Enum containing infrastructure components"""
 
-    SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"

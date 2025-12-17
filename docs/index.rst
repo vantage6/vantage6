@@ -110,7 +110,7 @@ Index
 
    user/index
    node/index
-   hq/index
+   hub/index
    algorithms/index
    devops/index
    technical_reference/index

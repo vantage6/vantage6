@@ -57,7 +57,7 @@ class ServerCLITest(unittest.TestCase):
         """Configuration list without errors."""
         server_name = "iknl"
         find_running_service_names.return_value = [
-            f"{APPNAME}-{server_name}-system-{InstanceType.SERVER.value}"
+            f"{APPNAME}-{server_name}-system-{InstanceType.HQ.value}"
         ]
 
         # returns a list of configurations and failed inports
@@ -158,7 +158,7 @@ collaborations: []
         """Stop server without errors."""
 
         instance_name = "iknl"
-        server_name = f"{APPNAME}-{instance_name}-system-{InstanceType.SERVER.value}"
+        server_name = f"{APPNAME}-{instance_name}-system-{InstanceType.HQ.value}"
 
         find_running_service_names.return_value = [server_name]
         get_context.return_value = MagicMock(helm_release_name=server_name)
@@ -188,8 +188,8 @@ collaborations: []
         self.assertEqual(result.exit_code, 0)
         attach_logs.assert_called_once_with(
             name=None,
-            instance_type=InstanceType.SERVER,
-            infra_component=InfraComponentName.SERVER,
+            instance_type=InstanceType.HQ,
+            infra_component=InfraComponentName.HQ,
             system_folders=False,
             k8s_config=KubernetesConfig(
                 context="test-context",
@@ -229,8 +229,8 @@ collaborations: []
         # Call the function with a sample label
         attach_logs(
             name=None,
-            instance_type=InstanceType.SERVER,
-            infra_component=InfraComponentName.SERVER,
+            instance_type=InstanceType.HQ,
+            infra_component=InfraComponentName.HQ,
             system_folders=True,
             k8s_config=select_k8s_config.return_value,
             is_sandbox=False,

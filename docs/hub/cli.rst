@@ -1,0 +1,238 @@
+Command line interface
+======================
+
+.. _use-hub:
+
+Headquarters
+------------
+
+This section explains which commands are available to manage your vantage6 hub. It
+also explains how to set up a test environment locally.
+
+Quick start
+^^^^^^^^^^^
+
+To create a new vantage6 hub, run the command below. A questionnaire will be started
+that allows you to set up configuration files for the hub's components, i.e. for HQ,
+algorithm store, and authentication service.
+
+::
+
+   v6 hub new
+
+For more details, check out the :ref:`hub-configure` section.
+
+To run a vantage6 hub, execute the command below.
+
+::
+
+   v6 hub start --name <your_hub>
+
+To show the current logs of the hub components, you can use the following commands:
+
+::
+
+   v6 hq attach
+   v6 algorithm-store attach
+   v6 auth attach
+
+Finally, a vantage6 hub can be stopped again with:
+
+::
+
+   v6 hub stop --name <your_hub>
+
+Available commands
+^^^^^^^^^^^^^^^^^^
+
+The following commands are available in your environment. To see all the
+options that are available per command use the ``--help`` flag,
+e.g. ``v6 server start --help``.
+
++----------------+-----------------------------------------------------+
+| **Command**    | **Description**                                     |
++================+=====================================================+
+| ``v6 server    | Create a new server configuration file              |
+| new``          |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | Start a server                                      |
+| start``        |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | Stop a server                                       |
+| stop``         |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | List the files that a server is using               |
+| files``        |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | Show a server's logs in the current terminal        |
+| attach``       |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | List the available server instances                 |
+| list``         |                                                     |
++----------------+-----------------------------------------------------+
+| ``v6 server    | Import server entities such as organizations, users |
+| import``       | and collaborations                                  |
++----------------+-----------------------------------------------------+
+| ``v6 server    | Shows the versions of all the components of the     |
+| version``      | running server                                      |
++----------------+-----------------------------------------------------+
+
+.. _server-import:
+
+Batch import
+^^^^^^^^^^^^
+
+You can easily create a set of test users, organizations and collaborations by
+using a batch import. To do this, use the
+``v6 server import /path/to/file.yaml`` command. An example ``yaml`` file is
+provided below.
+
+You can download this file :download:`here <components/yaml/batch_import.yaml>`.
+
+
+.. raw:: html
+
+   <details>
+   <summary><a>Example batch import</a></summary>
+
+.. literalinclude :: components/yaml/batch_import.yaml
+    :language: yaml
+
+.. raw:: html
+
+   </details>
+
+.. warning::
+    All users that are imported using ``v6 server import`` receive the superuser
+    role. We are looking into ways to also be able to import roles. For more
+    background info refer to this
+    `issue <https://github.com/vantage6/vantage6/issues/71>`__.
+
+.. _local-test:
+
+Testing
+^^^^^^^
+
+You can test the infrastructure via the ``v6 sandbox`` and ``v6 test`` commands. The purpose of
+``v6 sandbox`` is to easily setup and run a test server accompanied by `N` nodes locally
+(default is 3 nodes). For example, if you have `N = 10` datasets to test a particular
+algorithm on, then you can spawn a server and 10 nodes with a single command. By default,
+the nodes are given access to a test dataset of olympic medal winners, containing data
+on e.g. their age, height, length, weight, medal type and sport.
+
+The ``v6 test`` command is used to run the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_.
+You can run it on an existing network or create a ``v6 sandbox`` network and run the
+test on that in one go.
+
+You can view all available commands in the table below, or alternatively, use
+``v6 sandbox --help``. By using ``--help`` with the individual commands (e.g.
+``v6 sandbox start --help``), you can view more details on how to
+execute them.
+
++--------------------------------+-----------------------------------------------------+
+| **Command**                    | **Description**                                     |
++================================+=====================================================+
+| ``v6 sandbox new``             | Create a new network, and start it                  |
++--------------------------------+-----------------------------------------------------+
+| ``v6 sandbox start``           | Start the network                                   |
++--------------------------------+-----------------------------------------------------+
+| ``v6 sandbox stop``            | Stop the network                                    |
++--------------------------------+-----------------------------------------------------+
+| ``v6 sandbox remove``          | Remove the network completely                       |
++--------------------------------+-----------------------------------------------------+
+| ``v6 test feature-test``       | Run the feature-tester algorithm on an existing     |
+|                                | network                                             |
++--------------------------------+-----------------------------------------------------+
+| ``v6 test integration-test``   | Create a dev network and run feature-tester on that |
+|                                | network                                             |
++--------------------------------+-----------------------------------------------------+
+
+An overview of the tests that the `v6-diagnostics algorithm <https://github.com/vantage6/v6-diagnostics>`_
+runs is given below.
+
+- **Environment variables**: Reports the environment variables that are set in the algorithm
+  container by the node instance. For example the location of the input,
+  token and output files.
+- **Input file**: Reports the contents of the input file, usually the algorithm method
+  and its arguments. You can verify that the input
+  set by the client is actually received by the algorithm.
+- **Output file**: Writes 'test' to the output file and reads it back.
+- **Token file**: Prints the contents of the token file. It should contain a JWT that you
+  can decode and verify the payload. The payload contains information like the
+  organization and collaboration ids.
+- **Temporary directory**: Creates a file in the temporary directory. The temporary directory
+  is a directory that is shared between all containers that share the same run id.
+  This checks that the temporary directory is writable.
+- **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach the
+  central server from the algorithm container. This is needed as parent containers
+  need to be able to create child containers (=subtasks). The local proxy also
+  handles encryption/decryption of the algorithm arguments and results as the algorithm
+  container is not allowed to know the private key.
+- **Subtask creation**: Creates a subtask (using the local proxy) and waits for the result.
+- **Isolation test**: Checks if the algorithm container is isolated such that it can not
+  reach the internet. It tests this by trying to reach google.nl, so make sure
+  this is not a whitelisted domain when testing.
+- **Database readable**: Check if the file-based database is readable.
+
+.. _use-algorithm-store:
+
+Store
+-----
+
+This section explains which commands are available to manage your algorithm
+store. These can be used to set up a test server locally. To deploy a store,
+see the general :ref:`deployment <hub-deployment>` section.
+
+
+Quick start
+^^^^^^^^^^^
+
+To create a new algorithm store, run the command below. A menu will be started
+that allows you to set up an algorithm store configuration file.
+
+.. code-block:: bash
+
+   v6 algorithm-store new
+
+For more details, check out the :ref:`algorithm-store-configure` section.
+
+To run an algorithm store, execute the command below. The ``--attach`` flag will
+copy log output to the console.
+
+.. code-block:: bash
+
+   v6 algorithm-store start --name <your_store> --attach
+
+Finally, a server can be stopped again with:
+
+.. code-block:: bash
+
+   v6 algorithm-store stop --name <your_store>
+
+
+Available commands
+^^^^^^^^^^^^^^^^^^
+
+The following commands are available in your environment. To see all the
+options that are available per command use the ``--help`` flag,
+e.g. ``v6 server start --help``.
+
+.. list-table:: Available commands
+   :name: algorithm-store-commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - ``v6 algorithm-store new``
+     - Create a new algorithm store configuration file
+   * - ``v6 algorithm-store start``
+     - Start an algorithm store
+   * - ``v6 algorithm-store stop``
+     - Stop an algorithm store
+   * - ``v6 algorithm-store files``
+     - List the files that an algorithm store is using
+   * - ``v6 algorithm-store attach``
+     - Show an algorithm store's logs in the current terminal
+   * - ``v6 algorithm-store list``
+     - List the available algorithm store instances

@@ -10,7 +10,7 @@
 # Vantage6 CLI
 
 This package provides the command-line interface (CLI) for managing vantage6
-infrastructure instances, such as servers and nodes.
+infrastructure instances, such as HQs and nodes.
 
 ## Documentation
 

@@ -75,7 +75,7 @@
 #         name=name,
 #         num_nodes=3,
 #         server_url=server_url,
-#         server_port=Ports.DEV_SERVER.value,
+#         server_port=Ports.DEV_HQ.value,
 #         image=image,
 #         extra_server_config=extra_server_config,
 #         extra_node_config=extra_node_config,
@@ -98,7 +98,7 @@
 #     diagnose_results = click_ctx.invoke(
 #         cli_test_features,
 #         host="http://localhost",
-#         port=Ports.DEV_SERVER.value,
+#         port=Ports.DEV_HQ.value,
 #         api_path="/api",
 #         username="dev_admin",
 #         password="password",

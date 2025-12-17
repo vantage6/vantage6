@@ -148,7 +148,7 @@ def update_pyproject_versions(version: str, spec: str, build: int, post: int) ->
             "vantage6",
             "vantage6-node",
             "vantage6-backend-common",
-            "vantage6-server",
+            "vantage6-hq",
             "vantage6-algorithm-store",
         ]
 
@@ -175,10 +175,10 @@ def update_version_docker_files(version: str) -> None:
     """
     major_minor = ".".join(version.split(".")[:2])
 
-    # update version label in node-and-server and algorithm store dockerfile
-    print("Updating version in Dockerfiles for node, server and algorithm store")
+    # update version label in node-and-hq and algorithm store dockerfile
+    print("Updating version in Dockerfiles for node, HQ and algorithm store")
     files = [
-        Path("../docker/node-and-server.Dockerfile"),
+        Path("../docker/node-and-hq.Dockerfile"),
         Path("../docker/algorithm-store.Dockerfile"),
     ]
     for file in files:
@@ -285,7 +285,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
         Path("../charts/common/Chart.yaml"),
         Path("../charts/node/Chart.yaml"),
         Path("../charts/store/Chart.yaml"),
-        Path("../charts/server/Chart.yaml"),
+        Path("../charts/hq/Chart.yaml"),
         Path("../charts/auth/Chart.yaml"),
     ]
     new_version = build_version_string(version, spec, build, with_dash=True)

@@ -58,7 +58,7 @@ def click_insert_context(func: Callable) -> Callable:
             if not name:
                 try:
                     name = select_configuration_questionnaire(
-                        InstanceType.SERVER, system_folders
+                        InstanceType.HQ, system_folders
                     )
                 except Exception:
                     error("No configurations could be found!")

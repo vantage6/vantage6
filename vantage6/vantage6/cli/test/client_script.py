@@ -106,7 +106,7 @@
 #             name=name,
 #             num_nodes=3,
 #             server_url=server_url,
-#             server_port=Ports.DEV_SERVER.value,
+#             server_port=Ports.DEV_HQ.value,
 #             image=image,
 #             extra_server_config=None,
 #             extra_node_config=None,

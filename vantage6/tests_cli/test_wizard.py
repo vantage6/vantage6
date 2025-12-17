@@ -158,7 +158,7 @@ class WizardTest(unittest.TestCase):
         _, file_ = make_configuration(
             config_producing_func=server_q,
             config_producing_func_args=("vtg6",),
-            type_=InstanceType.SERVER,
+            type_=InstanceType.HQ,
             instance_name="vtg6",
             system_folders=True,
         )

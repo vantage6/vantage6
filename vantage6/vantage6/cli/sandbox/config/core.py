@@ -84,16 +84,16 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         dict
             Dictionary with server configuration values.
         """
-        data_dir = self._create_and_get_data_dir(instance_type=InstanceType.SERVER)
+        data_dir = self._create_and_get_data_dir(instance_type=InstanceType.HQ)
 
-        log_dir = self._create_and_get_data_dir(InstanceType.SERVER, is_log_dir=True)
+        log_dir = self._create_and_get_data_dir(InstanceType.HQ, is_log_dir=True)
 
         prometheus_config = {
             "enabled": self.with_prometheus,
         }
         if self.with_prometheus:
             prometheus_dir = self._create_and_get_data_dir(
-                InstanceType.SERVER, custom_folder="prometheus"
+                InstanceType.HQ, custom_folder="prometheus"
             )
             prometheus_config.update(
                 {
@@ -198,7 +198,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             config_producing_func_args=(extra_config,),
             name=self.server_name,
             system_folders=False,
-            type_=InstanceType.SERVER,
+            type_=InstanceType.HQ,
             is_sandbox=True,
         )
 

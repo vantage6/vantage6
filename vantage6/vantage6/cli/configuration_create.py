@@ -41,10 +41,10 @@ def add_common_server_config(
         Dictionary with new (partial) server configuration
     """
     backend_config = (
-        config["server"] if instance_type == InstanceType.SERVER else config["store"]
+        config["server"] if instance_type == InstanceType.HQ else config["store"]
     )
 
-    service_name = "server" if instance_type == InstanceType.SERVER else "store"
+    service_name = "server" if instance_type == InstanceType.HQ else "store"
 
     backend_config["port"] = q.text(
         f"Enter port to which the {service_name} listens:",
@@ -80,7 +80,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     """
     Add the database configuration to the config
     """
-    if instance_type == InstanceType.SERVER:
+    if instance_type == InstanceType.HQ:
         service_name = "server"
     elif instance_type == InstanceType.ALGORITHM_STORE:
         service_name = "store"
@@ -178,7 +178,7 @@ def make_configuration(
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
     if type_ == InstanceType.NODE:
         conf_manager = NodeConfigurationManager
-    elif type_ == InstanceType.SERVER:
+    elif type_ == InstanceType.HQ:
         conf_manager = ServerConfigurationManager
     elif type_ == InstanceType.ALGORITHM_STORE:
         conf_manager = AlgorithmStoreConfigurationManager

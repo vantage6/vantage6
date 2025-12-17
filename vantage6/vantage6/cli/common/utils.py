@@ -173,7 +173,7 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
     instance_type : InstanceType
         The type of instance to get the main CLI command name for
     """
-    if instance_type == InstanceType.SERVER:
+    if instance_type == InstanceType.HQ:
         return CLICommandName.SERVER.value
     elif instance_type == InstanceType.ALGORITHM_STORE:
         return CLICommandName.ALGORITHM_STORE.value

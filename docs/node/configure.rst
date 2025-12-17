@@ -186,7 +186,7 @@ restrictions on both the algorithm store and the registry. One policy defines
 that only algorithms from the projects's own algorithm store are allowed and the
 other policy only allows algorithms from the project's own image registry. That way,
 an attacker would need to gain access to both the private registry, the algorithm store
-and the server before being able to send a malicious task. The probability of a
+and HQ before being able to send a malicious task. The probability of a
 successful attack on all of these components is much lower than a successful attack on
 a single component.
 
@@ -201,6 +201,6 @@ in the example configuration file in :ref:`node-configure-structure`.
 Useful commands:
 
 1. ``v6 node files``: shows you where the log file is stored
-2. ``v6 node attach``: shows live logs of a running server in your current
+2. ``v6 node attach``: shows live logs of a running node in your current
    console. This can also be achieved when starting the node with
    ``v6 node start --attach``

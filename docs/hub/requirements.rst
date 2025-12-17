@@ -1,4 +1,4 @@
-.. _server-requirements:
+.. _hub-requirements:
 
 Requirements
 ------------
@@ -14,4 +14,4 @@ Server and algorithm store
 .. |requirement-public-ip| replace:: *Note that the service's IP address should also be reachable by all users and nodes. This will usually be a public IP address.*
 .. |requirement-OS| replace:: \
 
-.. include:: ../common/requirements-node-server.rst
+.. include:: ../common/requirements-node-hub.rst

@@ -78,7 +78,7 @@ class TestResourceBase(unittest.TestCase):
         """Called immediately before running a test method."""
         Database().connect("sqlite://", allow_drop_all=True)
 
-        ctx = TestContext.from_external_config_file(PACKAGE_FOLDER, InstanceType.SERVER)
+        ctx = TestContext.from_external_config_file(PACKAGE_FOLDER, InstanceType.HQ)
 
         # set required environment variables *before* creating the app
         os.environ["KEYCLOAK_URL"] = "dummy-keycloak-url"

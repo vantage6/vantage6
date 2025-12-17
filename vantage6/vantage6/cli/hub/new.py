@@ -108,7 +108,7 @@ def cli_hub_new(
         config_producing_func_args=(server_name, system_folders),
         name=server_name,
         system_folders=system_folders,
-        type_=InstanceType.SERVER,
+        type_=InstanceType.HQ,
         extra_config=extra_config,
     )
 

@@ -15,12 +15,12 @@ given access to the internet (neither outbound nor inbound).
   isolated Docker networks.
 
 While the algorithm is thus isolated from the internet, it still has to be able
-to access several different resources, such as the vantage6 server if it needs
+to access several different resources, such as the vantage6 HQ if it needs
 to spawn other containers for subtasks. Such communication all takes place over
 interfaces that are an integral part of vantage6, and are thus considered safe.
 Below is a list of interfaces that are available to the algorithm container.
 
-- The vantage6 server is available to the algorithm container via a proxy server
+- Vantage6 HQ is available to the algorithm container via a proxy server
   running on the node.
 - Addresses that are explicitly whitelisted by the node owner are made available to the
   algorithm container.

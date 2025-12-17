@@ -41,8 +41,8 @@ def cli_server_stop(
     """
     execute_stop(
         stop_function=_stop_server,
-        instance_type=InstanceType.SERVER,
-        infra_component=InfraComponentName.SERVER,
+        instance_type=InstanceType.HQ,
+        infra_component=InfraComponentName.HQ,
         stop_all=all_servers,
         to_stop=name,
         namespace=namespace,

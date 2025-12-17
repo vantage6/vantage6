@@ -15,7 +15,7 @@ from vantage6.cli.utils import error
 @click.option(
     "--server-url",
     type=str,
-    default=f"http://localhost:{Ports.DEV_SERVER}/api",
+    default=f"http://localhost:{Ports.DEV_HQ}/api",
     help="URL of the server",
 )
 @click.option(

@@ -39,7 +39,7 @@ class ServerContext(BaseServerContext):
         is_sandbox: bool = False,
     ):
         super().__init__(
-            InstanceType.SERVER,
+            InstanceType.HQ,
             instance_name,
             system_folders=system_folders,
             in_container=in_container,
@@ -134,7 +134,7 @@ class ServerContext(BaseServerContext):
             Whether the configuration file exists or not
         """
         return super().base_config_exists(
-            InstanceType.SERVER,
+            InstanceType.HQ,
             instance_name,
             system_folders=system_folders,
             is_sandbox=is_sandbox,
@@ -161,5 +161,5 @@ class ServerContext(BaseServerContext):
             list contains invalid configuration files.
         """
         return super().available_configurations(
-            InstanceType.SERVER, system_folders, is_sandbox
+            InstanceType.HQ, system_folders, is_sandbox
         )

@@ -31,7 +31,7 @@ def cli_server_version(
     if is_sandbox:
         system_folders = False
     ctx = get_and_select_ctx(
-        InstanceType.SERVER, name, system_folders, context, namespace, is_sandbox
+        InstanceType.HQ, name, system_folders, context, namespace, is_sandbox
     )
     server_config = ctx.config.get("server", {})
     base_url = server_config.get("baseUrl", "")

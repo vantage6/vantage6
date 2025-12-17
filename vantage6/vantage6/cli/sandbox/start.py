@@ -76,7 +76,7 @@ from vantage6.cli.sandbox.populate import populate_server_sandbox
     "on WSL because of mount issues for default directories. Only used if the "
     "--re-initialize flag is provided.",
 )
-@click_insert_context(type_=InstanceType.SERVER, is_sandbox=True)
+@click_insert_context(type_=InstanceType.HQ, is_sandbox=True)
 @click.pass_context
 def cli_sandbox_start(
     click_ctx: click.Context,

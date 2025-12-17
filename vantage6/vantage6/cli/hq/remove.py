@@ -11,7 +11,7 @@ from vantage6.cli.globals import InfraComponentName
 @click.command()
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click_insert_context(
-    type_=InstanceType.SERVER,
+    type_=InstanceType.HQ,
     include_name=True,
     include_system_folders=True,
     sandbox_param="sandbox",
@@ -31,5 +31,5 @@ def cli_server_remove(
         Whether to ask for confirmation before removing or not
     """
     execute_remove(
-        ctx, InstanceType.SERVER, InfraComponentName.SERVER, name, system_folders, force
+        ctx, InstanceType.HQ, InfraComponentName.HQ, name, system_folders, force
     )
