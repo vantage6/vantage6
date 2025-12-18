@@ -40,12 +40,23 @@ keycloak:
     {% endif %}
   {% endif %}
 
-  # TODO v5+ set secrets in CLI
+  # Set the username and password for the Keycloak admin. This user is created when
+  # Keycloak is initialized and can be used to login to the Keycloak admin UI and
+  # manage Keycloak settings.
   auth:
-    # Set the username and password for the Keycloak admin. This user is created when
-    # the service is initialized.
+    {% if keycloak.adminUserSecret is defined %}
+    # The following secret must contain the 'username' and 'password' keys.
+    adminUserSecret: {{ keycloak.adminUserSecret }}
+    # for development environments, you can set the username and password directly.
+    # adminUser: admin
+    # adminPassword: admin
+    {% else %}
     adminUser: {{ keycloak.adminUser | default('admin') }}
     adminPassword: {{ keycloak.adminPassword | default('admin') }}
+    # for production, we recommend storing the admin password in a secret (which MUST
+    # contain the 'username' and 'password' keys).
+    # adminPassword: {{ keycloak.adminPassword | default('admin') }}
+    {% endif %}
 
   # ensure that the auth pod has enough resources to run. The default values are enough
   # in most cases, but for a larger environment, you might need to increase the limits.
