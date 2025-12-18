@@ -3,15 +3,12 @@
 Requirements
 ------------
 
-Server and algorithm store
-^^^^^^^^^^^^^^^^
-
 .. note::
 
-    The requirements for the server and the algorithm store are the same. The
-    :ref:`node requirements <node-requirements>` are also very similar.
+    The requirements for the hub are very similar to the
+    :ref:`node requirements <node-requirements>`.
 
-.. |requirement-public-ip| replace:: *Note that the service's IP address should also be reachable by all users and nodes. This will usually be a public IP address.*
+.. |requirement-public-ip| replace:: *Note that the IP addresses of hub components should also be reachable by all users and nodes. This will usually be a public IP address.*
 .. |requirement-OS| replace:: \
 
 .. include:: ../common/requirements-node-hub.rst

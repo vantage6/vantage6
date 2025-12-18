@@ -3,65 +3,68 @@
 Deployment
 ==========
 
-The server deployment should be done using the server's Helm chart in a Kubernetes
-cluster. For small projects, the server may also be deployed on a VM using ``microk8s``,
+The hub deployment should be done using vantage6 Helm charts in a Kubernetes
+cluster. For small projects, the hub may also be deployed on a VM using ``microk8s``,
 which is a lightweight Kubernetes distribution that is easy to install and use.
 
-By running the server's Helm chart, several services are deployed, that together make
-up the core components of the vantage6 infrastructure. These services are:
+Helm charts
+-----------
 
-- The server itself
-- The user interface - for users to interact with the server
-- The message broker (RabbitMQ) - to ensure node-server communication is reliable
-.. TODO v5+ the database should NOT be part of the server always - this should be
-.. optional
-- The database (PostgreSQL) - to store the server's data
+The hub consists of several components. The following Helm charts are available to
+deploy them:
+
+- ``harbor2.vantage6.ai/chartrepo/infrastructure/hq``: Vantage6 HQ, UI, RabbitMQ, Prometheus.
+- ``harbor2.vantage6.ai/chartrepo/infrastructure/auth``: Authentication service
+- ``harbor2.vantage6.ai/chartrepo/infrastructure/algorithm-store``: Algorithm store
+
+.. note::
+
+    We recommend to use the latest version. Should you have reasons to
+    deploy an older version use the helm chart. For instance, for version 5.0.0, use
+    the chart ``https://harbor2.vantage6.ai/chartrepo/infrastructure/hq-5.0.0.tgz``
+    for HQ, and similarly for the other components.
+
+The image registry, mailserver and blob storage are optional components that cannot be
+installed by vantage6. You have to install and deploy them yourself.
+
 
 Configuration
 -------------
 
-When deploying the server, you should also deploy the authentication service (Keycloak)
-and optionally (but recommended) the algorithm store. It is recommended that you first
-generate configuration files for the server, authentication service and algorithm store
-using the following commands:
-
-- ``v6 server new``
-- ``v6 auth new``
-- ``v6 algorithm-store new``
-
-These commands will generate the necessary configuration files.
+To generate the appropriate configuration files, you can use ``v6 hub new``, as
+described in the :ref:`use-hub` section.
 
 Deployment
 ----------
 
-Once you have generated the configuration files, you can deploy the server using the
-command ``v6 server start``. This command will deploy the server using the Helm chart.
+Once you have generated the configuration files, you can deploy the hubusing the
+command ``v6 hub start``. This command will deploy the hub using the Helm charts.
 
-In some production environments, it may not be feasible to deploy the server using the
+In some production environments, it may not be feasible to deploy the hub using the
 CLI, for instance because Python is not available. In these cases, you can deploy the
-server using the Helm chart directly. The base command to deploy the server, auth and
-algorithm store is:
+hub using the Helm charts directly. The base commands to deploy HQ, authentication
+service and algorithm store are:
 
 .. code-block:: bash
 
-    # install server
-    helm install my-server-release server --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
+    # deploy HQ
+    helm install my-hq-release hq --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
 
-    # install auth
+    # deploy authentication service
     helm install my-auth-release auth --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
 
-    # install algorithm store
+    # deploy algorithm store
     helm install my-store-release algorithm-store --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
 
-Of course, you may want to specify additional flags to the helm commands - see
+Of course, you may specify additional flags to the helm commands - see
 the `helm documentation <https://helm.sh/docs/helm/helm_install>`_ for more information.
 
 Configuring access to the services
 ----------------------------------
 
 For production environments, you still need to configure routing traffic to the
-server, auth and algorithm store. The helm charts do not include this configuration,
-as it is expected that you will use your own routing solution.
+hub. The helm charts do not include this configuration, as it is expected that you
+will use your own routing solution.
 
 .. note::
 

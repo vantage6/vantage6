@@ -40,9 +40,9 @@ package manager native to your OS and/or distribution.
 .. note::
     We recommend you install vantage6 in a new, clean Python environment using uv.
 
-    Higher versions of Python (3.11+) will most likely also work, as might lower
-    versions (3.8 or 3.9). However, we develop and test vantage6 on version
-    3.13, so that is the safest choice.
+    Higher versions of Python (3.14+) will most likely also work, as might lower
+    versions. However, we develop and test vantage6 on version 3.13, so that is the
+    best choice.
 
 .. warning::
     Note that Python 3.13 is only used in vantage6 v5.0.0 and higher. In lower versions,

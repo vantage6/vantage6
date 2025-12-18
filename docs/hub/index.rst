@@ -62,6 +62,8 @@ Optional components
   algorithms, it is possible to use Azure Blob Storage for storage rather than the
   relational database.
 
+.. TODO v5+ include section on Prometheus.
+
 Table of contents
 ^^^^^^^^^^^^^^^^^
 
@@ -74,4 +76,3 @@ Table of contents
     install
     use
     deploy
-    logging

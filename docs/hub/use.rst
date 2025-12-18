@@ -3,14 +3,17 @@ Use
 
 .. _use-hub:
 
-Headquarters
-------------
+Hub
+-----
 
-This section explains which commands are available to manage your vantage6 hub. It
-also explains how to set up a test environment locally.
+You can manage the hub as a whole using the `v6 hub` command, and manage individual
+components using their respective commands, i.e. `v6 hq`, `v6 algorithm-store`,
+`v6 auth`.
 
-Quick start
-^^^^^^^^^^^
+To quickly set up a local environment, see the :ref:`quickstart` section.
+
+Production - Quick start
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 To create a new vantage6 hub, run the command below. A questionnaire will be started
 that allows you to set up configuration files for the hub's components, i.e. for HQ,
@@ -45,68 +48,81 @@ Finally, a vantage6 hub can be stopped again with:
 Available commands
 ^^^^^^^^^^^^^^^^^^
 
-The following commands are available in your environment. To see all the
+The following commands are available for the hub as a whole. To see all the
 options that are available per command use the ``--help`` flag,
-e.g. ``v6 server start --help``.
+e.g. ``v6 hub start --help``.
 
-+----------------+-----------------------------------------------------+
-| **Command**    | **Description**                                     |
-+================+=====================================================+
-| ``v6 server    | Create a new server configuration file              |
-| new``          |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Start a server                                      |
-| start``        |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Stop a server                                       |
-| stop``         |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | List the files that a server is using               |
-| files``        |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Show a server's logs in the current terminal        |
-| attach``       |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | List the available server instances                 |
-| list``         |                                                     |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Import server entities such as organizations, users |
-| import``       | and collaborations                                  |
-+----------------+-----------------------------------------------------+
-| ``v6 server    | Shows the versions of all the components of the     |
-| version``      | running server                                      |
-+----------------+-----------------------------------------------------+
+.. list-table:: Available commands
+   :name: hub-commands
+   :widths: 30 70
+   :header-rows: 1
 
-.. _server-import:
+   * - Command
+     - Description
+   * - ``v6 hub new``
+     - Create configuration files for all hub's components
+   * - ``v6 hub start``
+     - Start the hub
+   * - ``v6 hub stop``
+     - Stop the hub
 
-Batch import
-^^^^^^^^^^^^
+Managing individual components
+------------------------------
 
-You can easily create a set of test users, organizations and collaborations by
-using a batch import. To do this, use the
-``v6 server import /path/to/file.yaml`` command. An example ``yaml`` file is
-provided below.
+The individual components of the hub can be managed separately. The separate commands
+offer more options, since some actions cannot be performed on the hub as a whole. For
+example, the ``attach`` command that shows the logs would be confusing if shown for all
+components simultaneously.
 
-You can download this file :download:`here <components/yaml/batch_import.yaml>`.
+Available commands
+^^^^^^^^^^^^^^^^^^
+
+The commands ``v6 hq``, ``v6 algorithm-store`` and ``v6 auth`` contain roughly the same
+set of subcommands. Below, the commands they have in common are listed, as example for
+HQ.
+
+.. list-table:: Commands available for all hub components
+   :name: hq-commands
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Command
+     - Description
+   * - ``v6 hq start``
+     - Start HQ
+   * - ``v6 hq stop``
+     - Stop HQ
+   * - ``v6 hq files``
+     - List the files that HQ is using
+   * - ``v6 hq attach``
+     - Show HQ's logs in the current terminal
+   * - ``v6 hq remove``
+     - Remove the configuration files and data directories associated with HQ
+   * - ``v6 hq list``
+     - List the available HQ instances
 
 
-.. raw:: html
+There are also a few commands that are specific to a certain hub component. These are
+listed below.
 
-   <details>
-   <summary><a>Example batch import</a></summary>
+.. list-table:: Commands available only for specific hub components
+   :name: hq-commands
+   :widths: 30 70
+   :header-rows: 1
 
-.. literalinclude :: components/yaml/batch_import.yaml
-    :language: yaml
+   * - Command
+     - Description
+   * - ``v6 hq import``
+     - Import HQ entities such as organizations, users and collaborations
+   * - ``v6 hq version``
+     - Shows the HQ version.
+   * - ``v6 algorithm-store version``
+     - Shows the algorithm store version.
+   * - ``v6 auth install-keycloak``
+     - Installs custom Kubernetes resources required to run the authentication service.
 
-.. raw:: html
-
-   </details>
-
-.. warning::
-    All users that are imported using ``v6 server import`` receive the superuser
-    role. We are looking into ways to also be able to import roles. For more
-    background info refer to this
-    `issue <https://github.com/vantage6/vantage6/issues/71>`__.
+To see all the options that are available per command use the ``--help`` flag, e.g.
+``v6 hq start --help``.
 
 .. _local-test:
 
@@ -174,65 +190,36 @@ runs is given below.
   this is not a whitelisted domain when testing.
 - **Database readable**: Check if the file-based database is readable.
 
-.. _use-algorithm-store:
+Import resources into HQ
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Store
------
+.. note::
 
-This section explains which commands are available to manage your algorithm
-store. These can be used to set up a test server locally. To deploy a store,
-see the general :ref:`deployment <hub-deployment>` section.
+  If you are using a sandbox or development environment, a test set of users,
+  organizations and collaborations is created for you automatically.
 
+You can easily create a set of test users, organizations and collaborations by
+using a batch import. To do this, use the
+``v6 hq import /path/to/file.yaml`` command. An example ``yaml`` file is
+provided below.
 
-Quick start
-^^^^^^^^^^^
-
-To create a new algorithm store, run the command below. A menu will be started
-that allows you to set up an algorithm store configuration file.
-
-.. code-block:: bash
-
-   v6 algorithm-store new
-
-For more details, check out the :ref:`algorithm-store-configure` section.
-
-To run an algorithm store, execute the command below. The ``--attach`` flag will
-copy log output to the console.
-
-.. code-block:: bash
-
-   v6 algorithm-store start --name <your_store> --attach
-
-Finally, a server can be stopped again with:
-
-.. code-block:: bash
-
-   v6 algorithm-store stop --name <your_store>
+You can download this file :download:`here <components/yaml/batch_import.yaml>`.
 
 
-Available commands
-^^^^^^^^^^^^^^^^^^
+.. raw:: html
 
-The following commands are available in your environment. To see all the
-options that are available per command use the ``--help`` flag,
-e.g. ``v6 server start --help``.
+   <details>
+   <summary><a>Example batch import</a></summary>
 
-.. list-table:: Available commands
-   :name: algorithm-store-commands
-   :widths: 30 70
-   :header-rows: 1
+.. literalinclude :: components/yaml/batch_import.yaml
+    :language: yaml
 
-   * - Command
-     - Description
-   * - ``v6 algorithm-store new``
-     - Create a new algorithm store configuration file
-   * - ``v6 algorithm-store start``
-     - Start an algorithm store
-   * - ``v6 algorithm-store stop``
-     - Stop an algorithm store
-   * - ``v6 algorithm-store files``
-     - List the files that an algorithm store is using
-   * - ``v6 algorithm-store attach``
-     - Show an algorithm store's logs in the current terminal
-   * - ``v6 algorithm-store list``
-     - List the available algorithm store instances
+.. raw:: html
+
+   </details>
+
+.. warning::
+    All users that are imported using ``v6 hq import`` receive the superuser
+    role. We are looking into ways to also be able to import roles. For more
+    background info refer to this
+    `issue <https://github.com/vantage6/vantage6/issues/71>`__.

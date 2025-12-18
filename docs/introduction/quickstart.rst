@@ -1,3 +1,5 @@
+.. _quickstart:
+
 Quickstart
 ==========
 
@@ -13,7 +15,7 @@ all vantage6 components. Installation instructions are present, for instance, in
 :ref:`hub requirements <hub-requirements>` section.
 
 If you are using Docker Desktop, you can simply
-:ref:`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
+`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
 Otherwise, we recommend installing `microk8s <https://microk8s.io/>`_.
 
 Installation
