@@ -7,13 +7,14 @@ from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.auth.install import check_and_install_keycloak_operator
+from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
     helm_install,
     prestart_checks,
 )
 from vantage6.cli.context.auth import AuthContext
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 
 
@@ -70,20 +71,19 @@ def cli_auth_start(
         chart_version=chart_version,
     )
 
-    if wait_ready:
+    # Note that we also wait in case of attach - if not ready, we cannot attach
+    if wait_ready or attach:
         _wait_for_keycloak_ready(ctx.helm_release_name, k8s_config)
 
     if attach:
-        warning("Attaching to auth logs is not supported yet.")
-        # attach_logs(
-        #     name,
-        #     instance_type=InstanceType.AUTH,
-        #     infra_component=InfraComponentName.AUTH,
-        #     system_folders=system_folders,
-        #     context=context,
-        #     namespace=namespace,
-        #     is_sandbox=ctx.is_sandbox,
-        # )
+        attach_logs(
+            name,
+            instance_type=InstanceType.AUTH,
+            infra_component=InfraComponentName.AUTH,
+            system_folders=system_folders,
+            k8s_config=k8s_config,
+            is_sandbox=ctx.is_sandbox,
+        )
 
 
 def _kubectl(
