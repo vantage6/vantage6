@@ -7,7 +7,7 @@ from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
 
 
-class CoreSandboxConfigManager(BaseSandboxConfigManager):
+class SandboxHubConfigManager(BaseSandboxConfigManager):
     """
     Class to store the sandbox configurations.
 

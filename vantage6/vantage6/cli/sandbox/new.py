@@ -9,7 +9,7 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.context import get_context
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.k8s_config import select_k8s_config
-from vantage6.cli.sandbox.config.core import CoreSandboxConfigManager
+from vantage6.cli.sandbox.config.hub import SandboxHubConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.utils import prompt_config_name
 
@@ -142,7 +142,7 @@ def cli_new_sandbox(
         error(f"Configuration {Fore.RED}{hq_name}{Style.RESET_ALL} already exists!")
         exit(1)
 
-    sb_config_manager = CoreSandboxConfigManager(
+    sb_config_manager = SandboxHubConfigManager(
         hq_name=hq_name,
         hq_image=hq_image,
         ui_image=ui_image,
