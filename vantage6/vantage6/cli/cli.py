@@ -80,7 +80,10 @@ def cli_server() -> None:
     """
     Manage your vantage6 HQ instances.
     """
-    warning("The `v6 server` commands are deprecated. Use `v6 hq` instead.")
+    warning(
+        "The `v6 server` commands are deprecated: 'server' has been renamed to 'HQ'."
+    )
+    warning("Please use `v6 hq` instead.")
 
 
 cli_server.add_command(cli_hq_attach, name="attach")
