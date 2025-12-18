@@ -153,7 +153,14 @@ class Vantage6App:
         self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
             "jwt_decode_leeway", 10
         )
-        self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
+        try:
+            self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
+        except Exception as e:
+            log.exception(e)
+            log.error(f"Failed to get keycloak public key: {e}")
+            log.error("This means that you cannot login as a user")
+            log.error("Exiting...")
+            exit(1)
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings

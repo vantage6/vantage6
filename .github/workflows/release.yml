@@ -345,7 +345,10 @@ jobs:
           docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
 
       - name: Tag docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        # Tag the images with major name for any new release, except prereleases. Only
+        # prereleases of a new major version (x.0.0<N>) are tagged with the major name,
+        # as no definitive releases have been made yet for that major version.
+        if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0)) }}
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
