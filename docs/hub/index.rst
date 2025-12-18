@@ -1,34 +1,38 @@
 .. include:: <isonum.txt>
 
-.. _server-admin-guide:
+.. _hub-admin-guide:
 
-Server admin guide
+Hub admin guide
 ==================
+
+The vantage6 hub is the collection of all central components of the vantage6
+infrastructure - so everything that is not a node. The hub contains both components
+based on vantage6 software, such as vantage6 HQ and the user interface, as well as
+components based on external software, such as the authentication service (Keycloak)and
+monitoring (Prometheus). Below, each of the components is listed and explained.
 
 Required components
 ^^^^^^^^^^^^^^^^^^^
 
-:ref:`install-hq`
+:ref:`Vantage6 HQ <hub-admin-guide-hq>`
   The vantage6 server is the core component of the vantage6 infrastructure.
   It is responsible for managing the nodes and tasks.
 
-:ref:`install-auth`
+:ref:`Authentication <hub-admin-guide-auth>`
   Vantage6 authentication is managed through a separate
   `Keycloak <https://www.keycloak.org/>`_ service. The users as well as the nodes
   credentials are managed through this service.
 
 
-Optional components
+Recommended components
 ^^^^^^^^^^^^^^^^^^^
 
-There are several optional components that you can set up apart from the
-vantage6 server itself. While they are not required, they usually make it much easier to
-use vantage6.
+The following components are in principle optional, but recommended to use vantage6.
 
-:ref:`User interface <server-admin-guide-ui>`
+:ref:`User interface <hub-admin-guide-ui>`
   A web interface that allows your users to interact more easily the vantage6 server.
 
-:ref:`Algorithm store <server-admin-guide-store>`
+:ref:`Algorithm store <hub-admin-guide-store>`
   The algorithm store is used to store and manage algorithms for your project.
   Managing your algorithms in the store in the store is required if you want to use them
   in the UI. If your projects only uses algorithms that are available in the
@@ -40,27 +44,30 @@ use vantage6.
   with sensitive data, we recommend storing your own algorithms in your own Docker
   registry.
 
-:ref:`Message broker <rabbitmq-install>`
-  If you have a server with a high workload, you may want to set up a RabbitMQ message
-  queue service to improve the performance. This enables horizontal scaling of the
-  vantage6 server.
-
 :ref:`Mailserver <smtp-server>`
   If you want to send emails to your users, e.g. to help them reset their
   password, you need to set up an SMTP server.
 
-:ref:`azure-blob-storage <azure-blob-storage>`
+Optional components
+^^^^^^^^^^^^^^^^^^^
+
+:ref:`Message broker <hub-admin-guide-rabbitmq>`
+  If you have a server with a high workload, you may want to set up a RabbitMQ message
+  queue service to improve the performance. This enables horizontal scaling of the
+  vantage6 server. Note that is easy to add this service to the hub as it can be
+  deployed as part of the vantage6 HQ.
+
+:ref:`Blob storage <azure-blob-storage>`
   In order to facilitate usage of large input arguments and output results for your
   algorithms, it is possible to use Azure Blob Storage for storage rather than the
   relational database.
 
-The table of contents below lists details on how to install, configure and deploy these
-components.
+Table of contents
+^^^^^^^^^^^^^^^^^
 
 .. toctree::
     :maxdepth: 3
 
-    introduction
     components/index
     services/index
     requirements

@@ -1,6 +1,6 @@
 .. include:: <isonum.txt>
 
-.. _server-admin-guide-server:
+.. _hub-admin-guide-hq:
 
 Server
 ====

@@ -1,6 +1,6 @@
 .. include:: <isonum.txt>
 
-.. _server-admin-guide-ui:
+.. _hub-admin-guide-ui:
 
 UI
 ==

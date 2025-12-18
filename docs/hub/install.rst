@@ -1,5 +1,5 @@
 
-.. _install-hq:
+.. _install-hub:
 
 .. |instance-type| replace:: server
 .. |requirements-link| replace:: :ref:`requirements <hub-requirements>`

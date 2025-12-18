@@ -1,3 +1,5 @@
+.. _hub-admin-guide-rabbitmq:
+
 Message broker
 ========
 

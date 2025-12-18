@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yml: |
-    server_url: {{ .Values.node.server.url }}
-    api_path: {{ .Values.node.server.path }}
-    port: {{ .Values.node.server.port }}
+    hq_url: {{ .Values.node.hq.url }}
+    api_path: {{ .Values.node.hq.path }}
+    port: {{ .Values.node.hq.port }}
     node_proxy_port: {{ .Values.node.proxyPort }}
     task_dir: {{ .Values.node.persistence.tasks.hostPath }}
     task_namespace: {{ .Values.node.taskNamespace }}

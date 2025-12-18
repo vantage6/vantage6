@@ -49,8 +49,7 @@ This documentation space consists of the following main sections:
 * :doc:`/introduction/quickstart` |rarr| *Quickstart guide*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
-* :doc:`/hq/index` |rarr| *How to configure and deploy a vantage6 HQ and other
-  central vantage6 components*
+* :doc:`/hub/index` |rarr| *How to configure and deploy the central vantage6 components*
 * :doc:`/devops/index` |rarr| *How to collaborate on the development of the
   vantage6 infrastructure*
 * :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with

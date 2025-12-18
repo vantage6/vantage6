@@ -10,3 +10,8 @@ This section describes the components of the vantage6 server.
     auth
     store
     ui
+    image-registry
+    smtp-server
+    rabbitmq
+    database
+    azure-blob-storage

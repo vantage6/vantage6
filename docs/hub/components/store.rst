@@ -1,6 +1,6 @@
 .. include:: <isonum.txt>
 
-.. _server-admin-guide-store:
+.. _hub-admin-guide-store:
 
 Store
 =====
