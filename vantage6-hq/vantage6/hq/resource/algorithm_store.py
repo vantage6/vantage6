@@ -8,12 +8,12 @@ from sqlalchemy import or_, select
 
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.algo_store_communication import add_algorithm_store_to_database
-from vantage6.server.permission import Operation as P, RuleCollection
-from vantage6.server.resource import ServicesResources, with_user, with_user_or_node
-from vantage6.server.resource.common.input_schema import AlgorithmStoreInputSchema
-from vantage6.server.resource.common.output_schema import AlgorithmStoreSchema
+from vantage6.hq import db
+from vantage6.hq.algo_store_communication import add_algorithm_store_to_database
+from vantage6.hq.permission import Operation as P, RuleCollection
+from vantage6.hq.resource import ServicesResources, with_user, with_user_or_node
+from vantage6.hq.resource.common.input_schema import AlgorithmStoreInputSchema
+from vantage6.hq.resource.common.output_schema import AlgorithmStoreSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -71,14 +71,14 @@ class AlgorithmStoreBase(ServicesResources):
         Convert the Kubernetes URL to a localhost URL.
 
         This is done because the store URL is represented internally as a k8s URL so
-        that the server can communicate with it. However, when the store is requested,
+        that HQ can communicate with it. However, when the store is requested,
         it should be represented as a localhost URL so that the client can communicate
         with it.
         """
         if "svc.cluster.local" in store.url:
             port_and_api_path = store.url.split(":")[-1]
             # Note that we do NOT save the converted URL in the database, as the
-            # database needs to contain the original URL for the server to communicate
+            # database needs to contain the original URL for HQ to communicate
             # with the store.
             store.url = "http://localhost:" + port_and_api_path
 

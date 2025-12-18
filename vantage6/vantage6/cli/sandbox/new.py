@@ -4,9 +4,10 @@ import click
 from colorama import Fore, Style
 
 from vantage6.common import error
+from vantage6.common.globals import InstanceType
 
+from vantage6.cli.context import get_context
 from vantage6.cli.context.hq import HQContext
-from vantage6.cli.hq.common import get_hq_context
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.core import CoreSandboxConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
@@ -156,7 +157,12 @@ def cli_new_sandbox(
 
     sb_config_manager.generate_hq_configs()
 
-    ctx = get_hq_context(hq_name, False, HQContext, is_sandbox=True)
+    ctx = get_context(
+        type_=InstanceType.HQ,
+        name=hq_name,
+        system_folders=False,
+        is_sandbox=True,
+    )
 
     execute_sandbox_start(
         click_ctx=click_ctx,

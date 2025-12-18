@@ -1,12 +1,12 @@
 # import logging
 
-# from vantage6.server.resource import only_for
-# from vantage6.server.resource._schema import CollaborationSchemaSimple
+# from vantage6.hq.resource import only_for
+# from vantage6.hq.resource._schema import CollaborationSchemaSimple
 # from http import HTTPStatus
 
 # from vantage6.common import logger_name
-# from vantage6.server import db
-# from vantage6.server.resource import ServicesResources
+# from vantage6.hq import db
+# from vantage6.hq.resource import ServicesResources
 
 
 # module_name = logger_name(__name__)

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from keycloak import KeycloakAdmin, KeycloakOpenID
 
-from vantage6.backend.common.globals import RequiredServerEnvVars
+from vantage6.backend.common.globals import RequiredBackendEnvVars
 from vantage6.backend.common.resource.error_handling import BadRequestError
 
 log = logging.getLogger(__name__)
@@ -22,11 +22,11 @@ class KeycloakServiceAccount:
 def _get_admin_token():
     """Get a token for the admin client"""
     keycloak_openid = KeycloakOpenID(
-        server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-        client_id=os.environ.get(RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
-        realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
+        server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
+        client_id=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT.value),
+        realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
         client_secret_key=os.environ.get(
-            RequiredServerEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
+            RequiredBackendEnvVars.KEYCLOAK_ADMIN_CLIENT_SECRET.value
         ),
     )
 
@@ -42,8 +42,8 @@ def get_keycloak_admin_client():
 
     # Create KeycloakAdmin with the service account token
     keycloak_admin = KeycloakAdmin(
-        server_url=os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value),
-        realm_name=os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value),
+        server_url=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value),
+        realm_name=os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value),
         token=token,
         verify=True,
     )

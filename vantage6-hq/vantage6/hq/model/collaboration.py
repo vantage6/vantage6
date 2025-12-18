@@ -4,9 +4,9 @@ from sqlalchemy import Boolean, Column, String, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
-from vantage6.server.model.node import Node
-from vantage6.server.model.organization import Organization
+from vantage6.hq.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.node import Node
+from vantage6.hq.model.organization import Organization
 
 
 class Collaboration(Base):
@@ -15,10 +15,10 @@ class Collaboration(Base):
 
     Collaborations are combinations of one or more organizations
     that do studies together. Each
-    :class:`~vantage6.server.model.organization.Organization` has a
-    :class:`~vantage6.server.model.node.Node` for
+    :class:`~vantage6.hq.model.organization.Organization` has a
+    :class:`~vantage6.hq.model.node.Node` for
     each collaboration that it is part of. Within a collaboration multiple
-    :class:`~vantage6.server.model.task.Task` can be executed.
+    :class:`~vantage6.hq.model.task.Task` can be executed.
 
     Attributes
     ----------
@@ -33,17 +33,17 @@ class Collaboration(Base):
     Relationships
     -------------
     organizations :
-            list[:class:`~vantage6.server.model.organization.Organization`]
+            list[:class:`~vantage6.hq.model.organization.Organization`]
         List of organizations that are part of this collaboration
-    nodes : list[:class:`~vantage6.server.model.node.Node`]
+    nodes : list[:class:`~vantage6.hq.model.node.Node`]
         List of nodes that are part of this collaboration
-    tasks : list[:class:`~vantage6.server.model.task.Task`]
+    tasks : list[:class:`~vantage6.hq.model.task.Task`]
         List of tasks that are part of this collaboration
-    studies : list[:class:`~vantage6.server.model.study.Study`]
+    studies : list[:class:`~vantage6.hq.model.study.Study`]
         List of studies that are part of this collaboration
-    sessions : list[:class:`~vantage6.server.model.session.Session`]
+    sessions : list[:class:`~vantage6.hq.model.session.Session`]
         List of sessions that are part of this collaboration
-    algorithm_stores : list[:class:`~vantage6.server.model.algorithm_store.AlgorithmStore`]
+    algorithm_stores : list[:class:`~vantage6.hq.model.algorithm_store.AlgorithmStore`]
         List of algorithm stores that are part of this collaboration
 
     """
@@ -96,7 +96,7 @@ class Collaboration(Base):
 
         Returns
         -------
-        list[:class:`~vantage6.server.model.node.Node`]
+        list[:class:`~vantage6.hq.model.node.Node`]
             List of nodes that are part of the given organizations
         """
         return [n for n in self.nodes if n.organization.id in ids]
@@ -104,16 +104,16 @@ class Collaboration(Base):
     def get_node_from_organization(self, organization: Organization) -> Node | None:
         """
         Returns the node that is part of the given
-        :class:`~vantage6.server.model.organization.Organization`.
+        :class:`~vantage6.hq.model.organization.Organization`.
 
         Parameters
         ----------
-        organization: :class:`~vantage6.server.model.organization.Organization`
+        organization: :class:`~vantage6.hq.model.organization.Organization`
             Organization to get node from
 
         Returns
         -------
-        :class:`~vantage6.server.model.node.Node` | None
+        :class:`~vantage6.hq.model.node.Node` | None
             Node for the given organization for this collaboration, or None if
             there is no node for the given organization.
         """

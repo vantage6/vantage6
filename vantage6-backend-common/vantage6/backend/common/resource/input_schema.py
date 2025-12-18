@@ -81,7 +81,7 @@ class RoleInputSchema(_NameValidationSchema):
             raise ValidationError("Role name cannot be one of the default roles")
 
 
-class ServerRoleInputSchema(RoleInputSchema):
-    """Schema for validating input for creating a server role."""
+class HQRoleInputSchema(RoleInputSchema):
+    """Schema for validating input for creating a HQ role."""
 
     organization_id = fields.Integer(validate=Range(min=1))

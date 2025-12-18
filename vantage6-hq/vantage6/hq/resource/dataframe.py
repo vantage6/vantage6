@@ -13,20 +13,20 @@ from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.dataclass import CreateTaskDB
-from vantage6.server.model import DataframeToBeDeletedAtNode
-from vantage6.server.resource import only_for, with_node, with_user
-from vantage6.server.resource.common.input_schema import (
+from vantage6.hq import db
+from vantage6.hq.dataclass import CreateTaskDB
+from vantage6.hq.model import DataframeToBeDeletedAtNode
+from vantage6.hq.resource import only_for, with_node, with_user
+from vantage6.hq.resource.common.input_schema import (
     DataframeInitInputSchema,
     DataframeNodeUpdateSchema,
     DataframePreprocessingInputSchema,
 )
-from vantage6.server.resource.common.output_schema import (
+from vantage6.hq.resource.common.output_schema import (
     DataframeSchema,
 )
-from vantage6.server.resource.session import SessionBase
-from vantage6.server.websockets import send_delete_dataframe_event
+from vantage6.hq.resource.session import SessionBase
+from vantage6.hq.websockets import send_delete_dataframe_event
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -447,7 +447,7 @@ class SessionDataframe(SessionBase):
         for column in dataframe.columns:
             column.delete()
 
-        # Delete the dataframe itself from the server
+        # Delete the dataframe itself from HQ
         dataframe.delete()
 
         # TODO instruct nodes to delete the dataframe, consider the traceability of the
@@ -475,9 +475,8 @@ class SessionDataframe(SessionBase):
 
         # send socket event to nodes to delete the dataframe. Nodes that are online
         # will delete the dataframe from their local storage and respond with a socket
-        # event to the server. The server will then delete the record created above
-        # from the database. Other records will be deleted when the node comes online
-        # again.
+        # event to HQ. HQ will then delete the record created above from the database.
+        # Other records will be deleted when the node comes online again.
         send_delete_dataframe_event(
             self.socketio,
             dataframe.name,

@@ -11,10 +11,10 @@ from vantage6.backend.common.permission import (
 )
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
 
-from vantage6.server import db
-from vantage6.server.model.base import Base
-from vantage6.server.model.role import Role
-from vantage6.server.model.rule import Operation, Rule, Scope
+from vantage6.hq import db
+from vantage6.hq.model.base import Base
+from vantage6.hq.model.role import Role
+from vantage6.hq.model.rule import Operation, Rule, Scope
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -58,7 +58,7 @@ def obtain_auth_organization() -> db.Organization:
 class RuleCollection(RuleCollectionBase):
     """
     Class that tracks a set of all rules for a certain resource name for
-    permissions of the vantage6 server.
+    permissions of the vantage6 HQ.
     """
 
     def allowed_for_org(self, operation: Operation, subject_org_id: int | str) -> bool:
@@ -318,7 +318,8 @@ class PermissionManager(PermissionManagerBase):
 
     def get_new_collection(self, name: str) -> RuleCollection:
         """
-        Initialize and return a new ServerRuleCollection.
+        Initialize and return a new RuleCollection.
+
         Parameters
         ----------
         name: str
@@ -326,8 +327,8 @@ class PermissionManager(PermissionManagerBase):
 
         Returns
         -------
-        RuleCollectionBase
-            New ServerRuleCollection
+        RuleCollection
+            New empty RuleCollection object
         """
         return RuleCollection(name)
 
@@ -400,7 +401,7 @@ class PermissionManager(PermissionManagerBase):
 
         Parameters
         ----------
-        rules: list[:class:`~vantage6.server.model.rule.Rule`]
+        rules: list[:class:`~vantage6.hq.model.rule.Rule`]
             List of rules that user is checked to have
 
         Raises

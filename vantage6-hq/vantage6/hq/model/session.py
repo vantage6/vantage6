@@ -12,9 +12,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base
-from vantage6.server.model.collaboration import Collaboration
-from vantage6.server.model.rule import Scope
+from vantage6.hq.model.base import Base
+from vantage6.hq.model.collaboration import Collaboration
+from vantage6.hq.model.rule import Scope
 
 
 class Session(Base):
@@ -47,15 +47,15 @@ class Session(Base):
 
     Relationships
     -------------
-    owner : :class:`~vantage6.server.model.user.User`
+    owner : :class:`~vantage6.hq.model.user.User`
         User that owns the session
-    collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
+    collaboration : :class:`~vantage6.hq.model.collaboration.Collaboration`
         Collaboration that this session is part of
-    study : :class:`~vantage6.server.model.study.Study`
+    study : :class:`~vantage6.hq.model.study.Study`
         Study that this session is part of
-    tasks : list[:class:`~vantage6.server.model.task.Task`]
+    tasks : list[:class:`~vantage6.hq.model.task.Task`]
         List of tasks that are part of this study
-    dataframes : list[:class:`~vantage6.server.model.dataframe.Dataframe`]
+    dataframes : list[:class:`~vantage6.hq.model.dataframe.Dataframe`]
         List of dataframes that are part of this session
 
     Raises
@@ -108,7 +108,7 @@ class Session(Base):
         ----------
         name : str
             Name of the session to check
-        collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
+        collaboration : :class:`~vantage6.hq.model.collaboration.Collaboration`
             Collaboration to check the session name in
 
         Returns
@@ -126,7 +126,7 @@ class Session(Base):
 
         Returns
         -------
-        list[:class:`~vantage6.server.model.organization.Organization`]
+        list[:class:`~vantage6.hq.model.organization.Organization`]
             List of organizations that are part of the session
         """
         if self.study:

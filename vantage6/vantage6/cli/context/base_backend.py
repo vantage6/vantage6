@@ -10,9 +10,9 @@ from vantage6.cli.globals import (
 
 class BaseBackendContext(AppContext):
     """
-    Base context for a vantage6 server or algorithm store server
+    Base context for a vantage6 HQ or algorithm store
 
-    Contains functions that the ServerContext and AlgorithmStoreContext have
+    Contains functions that the HQContext and AlgorithmStoreContext have
     in common.
     """
 
@@ -46,12 +46,12 @@ class BaseBackendContext(AppContext):
     def from_external_config_file(
         cls,
         path: str,
-        server_type: BackendType,
+        backend_type: BackendType,
         system_folders: bool = S_FOL,
         in_container: bool = False,
     ) -> BaseBackendContext:
         """
-        Create a server context from an external configuration file. External
+        Create a backend context from an external configuration file. External
         means that the configuration file is not located in the default folders
         but its location is specified by the user.
 
@@ -59,8 +59,8 @@ class BaseBackendContext(AppContext):
         ----------
         path : str
             Path of the configuration file
-        server_type : ServerType
-            Type of server, either 'server' or 'algorithm-store'
+        backend_type : BackendType
+            Type of backend, either 'hq' or 'algorithm-store'
         system_folders : bool, optional
             System wide or user configuration, by default S_FOL
         in_container : bool, optional
@@ -68,10 +68,10 @@ class BaseBackendContext(AppContext):
 
         Returns
         -------
-        ServerContext
-            Server context object
+        HQContext | AlgorithmStoreContext
+            Base backend context object
         """
         cls = super().from_external_config_file(
-            path, server_type, system_folders, in_container
+            path, backend_type, system_folders, in_container
         )
         return cls

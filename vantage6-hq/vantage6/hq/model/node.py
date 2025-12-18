@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship
 
 from vantage6.common.globals import AuthStatus
 
-from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.model.base import DatabaseSessionManager
+from vantage6.hq.model.authenticatable import Authenticatable
+from vantage6.hq.model.base import DatabaseSessionManager
 
 
 class Node(Authenticatable):

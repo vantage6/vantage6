@@ -12,9 +12,9 @@ from vantage6.backend.common.resource.input_schema import (
     validate_name,
 )
 
-from vantage6.server.dataclass import CreateTaskDB
-from vantage6.server.model.common.utils import validate_password
-from vantage6.server.model.rule import Scope
+from vantage6.hq.dataclass import CreateTaskDB
+from vantage6.hq.model.common.utils import validate_password
+from vantage6.hq.model.rule import Scope
 
 _MAX_LEN_STR_SHORT = 128
 

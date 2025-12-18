@@ -4,7 +4,7 @@ import {
   OperationPermission,
   ResourcePermission,
   ScopePermission,
-  ServerResourcePermission
+  HQResourcePermission
 } from '../base/permissions-matrix.component';
 import { OperationType, ResourceType, Rule, ScopeType } from 'src/app/models/api/rule.model';
 import { PermissionService } from 'src/app/services/permission.service';
@@ -14,19 +14,19 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-permissions-matrix-server',
-    templateUrl: './permissions-matrix-server.component.html',
-    styleUrl: '../base/permissions-matrix.component.scss',
-    imports: [NgFor, NgClass, NgIf, MatCheckbox, MatIcon, TranslateModule]
+  selector: 'app-permissions-matrix-hq',
+  templateUrl: './permissions-matrix-hq.component.html',
+  styleUrl: '../base/permissions-matrix.component.scss',
+  imports: [NgFor, NgClass, NgIf, MatCheckbox, MatIcon, TranslateModule]
 })
-export class PermissionsMatrixServerComponent extends BasePermissionsMatrixComponent {
+export class PermissionsMatrixHQComponent extends BasePermissionsMatrixComponent {
   allResources = Object.values(ResourceType).filter(
     (resource) => ![ResourceType.ANY, ResourceType.RESULT, ResourceType.RULE].includes(resource)
   );
   allScopes = Object.values(ScopeType).filter((scope) => scope !== ScopeType.ANY);
   allOperations = Object.values(OperationType).filter((operation) => ![OperationType.ANY].includes(operation));
 
-  public resourcePermissions: ServerResourcePermission[] = [];
+  public resourcePermissions: HQResourcePermission[] = [];
 
   constructor(private permissionService: PermissionService) {
     super();
@@ -52,7 +52,7 @@ export class PermissionsMatrixServerComponent extends BasePermissionsMatrixCompo
             return new ScopePermission(scope, operationPermissions);
           });
 
-        const resourcePermission = new ServerResourcePermission(resource, scopePermissions);
+        const resourcePermission = new HQResourcePermission(resource, scopePermissions);
         return resourcePermission;
       })
       .filter((resourcePermission) => resourcePermission.scopes.length > 0);

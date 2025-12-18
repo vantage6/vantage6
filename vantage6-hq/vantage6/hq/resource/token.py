@@ -12,9 +12,9 @@ from marshmallow import ValidationError
 
 from vantage6.common.enum import AlgorithmStepType, TaskStatus
 
-from vantage6.server import db
-from vantage6.server.resource import ServicesResources, with_node
-from vantage6.server.resource.common.input_schema import TokenAlgorithmInputSchema
+from vantage6.hq import db
+from vantage6.hq.resource import ServicesResources, with_node
+from vantage6.hq.resource.common.input_schema import TokenAlgorithmInputSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -103,7 +103,7 @@ class ContainerToken(ServicesResources):
             return {"msg": "Parent task does not exist!"}, HTTPStatus.BAD_REQUEST
 
         # Check wether the action of the task is of type 'central_compute' as only
-        # the central task requires to communicate with the server.
+        # the central task requires to communicate with HQ.
         if db_task.action != AlgorithmStepType.CENTRAL_COMPUTE:
             log.warning(
                 "Node %s attempts to generate key for task %s which is not a "
@@ -173,8 +173,8 @@ class ContainerToken(ServicesResources):
             databases_by_position[pos] for pos in sorted(databases_by_position.keys())
         ]
 
-        # We store the task metadata in the token, so the server can verify later on
-        # that the container is allowed to access certain server resources.
+        # We store the task metadata in the token, so HQ can verify later on
+        # that the container is allowed to access certain resources.
         container = {
             "vantage6_client_type": "container",
             "node_id": g.node.id,

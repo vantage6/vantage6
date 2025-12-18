@@ -2,8 +2,8 @@ import datetime
 
 from sqlalchemy.exc import IntegrityError
 
-from vantage6.server.model import Session
-from vantage6.server.model.rule import Scope
+from vantage6.hq.model import Session
+from vantage6.hq.model.rule import Scope
 
 from .test_model_base import TestModelBase
 

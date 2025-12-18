@@ -7,13 +7,13 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common.auth import KeycloakServiceAccount
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Node,
     Organization,
     Rule,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 
@@ -22,7 +22,7 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-    @patch("vantage6.server.resource.node.create_service_account_in_keycloak")
+    @patch("vantage6.hq.resource.node.create_service_account_in_keycloak")
     def test_node_without_id(self, mock_create_node_in_keycloak):
         mock_create_node_in_keycloak.return_value = KeycloakServiceAccount(
             client_id=str(uuid.uuid1()),
@@ -303,7 +303,7 @@ class TestResources(TestResourceBase):
         # cleanup
         node.delete()
 
-    @patch("vantage6.server.resource.node.create_service_account_in_keycloak")
+    @patch("vantage6.hq.resource.node.create_service_account_in_keycloak")
     def test_create_node_permissions(self, mock_create_node_in_keycloak):
         mock_create_node_in_keycloak.return_value = KeycloakServiceAccount(
             client_id=str(uuid.uuid1()),
@@ -425,7 +425,7 @@ class TestResources(TestResourceBase):
         for resource in Node.get()[::-1][:3]:
             resource.delete()
 
-    @patch("vantage6.server.resource.node.delete_service_account_in_keycloak")
+    @patch("vantage6.hq.resource.node.delete_service_account_in_keycloak")
     def test_delete_node_permissions(self, mock_delete_node_in_keycloak):
         mock_delete_node_in_keycloak.return_value = None
 

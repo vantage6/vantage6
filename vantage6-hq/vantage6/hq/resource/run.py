@@ -12,26 +12,26 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOp
 
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.model import Collaboration, Node, Organization, Run as db_Run, Task
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.model import Collaboration, Node, Organization, Run as db_Run, Task
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import (
+from vantage6.hq.resource import (
     ServicesResources,
     only_for,
     with_node,
 )
-from vantage6.server.resource.common.input_schema import RunInputSchema
-from vantage6.server.resource.common.output_schema import (
+from vantage6.hq.resource.common.input_schema import RunInputSchema
+from vantage6.hq.resource.common.output_schema import (
     ResultSchema,
     RunSchema,
     RunTaskIncludedSchema,
 )
-from vantage6.server.utils import parse_datetime
+from vantage6.hq.utils import parse_datetime
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -687,7 +687,7 @@ class Run(SingleRunBase):
 
         if run.finished_at is not None:
             # For killed runs, allow updating only the logs. This is allowed because
-            # finished_at is by the server to the time the run was killed, but then the
+            # finished_at is set by HQ to the time the run was killed, but then the
             # node can still send logs. For all other statuses, we do not allow
             # updating the run when it is done.
             if run.status == RunStatus.KILLED.value:

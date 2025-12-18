@@ -19,12 +19,12 @@ from vantage6.cli.globals import InfraComponentName
 @click.option("-f", "--force", "force", flag_value=True)
 def cli_hq_remove(ctx: HQContext, name: str, system_folders: bool, force: bool) -> None:
     """
-    Function to remove a server.
+    Function to remove a HQ.
 
     Parameters
     ----------
-    ctx : ServerContext
-        Server context object
+    ctx : HQContext
+        HQ context object
     force : bool
         Whether to ask for confirmation before removing or not
     """

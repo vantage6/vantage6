@@ -1,4 +1,4 @@
-"""Python client for user to communicate with the vantage6 server"""
+"""Python client for user to communicate with the vantage6 hub"""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ module_name = __name__.split(".")[1]
 
 
 class UserClient(ClientBase):
-    """User interface to the vantage6-server"""
+    """User interface to the vantage6 hub"""
 
     def __init__(
         self,
@@ -53,10 +53,10 @@ class UserClient(ClientBase):
 
         Parameters
         ----------
-        server_url : str
-            The url of the server to connect to.
+        hq_url : str
+            The url of the HQ to connect to.
         auth_url : str
-            The url of the authentication server.
+            The url of the authentication service.
         auth_realm : str, optional
             The Keycloak realm to use for authentication, by default 'vantage6'
         auth_client : str, optional
@@ -170,7 +170,7 @@ class UserClient(ClientBase):
 
         token_store = TokenStore()
 
-        # Start local server to receive callback
+        # Start local HTTP server to receive callback
         class CallbackHandler(BaseHTTPRequestHandler):
             def do_GET(self):
                 # Parse the callback URL
@@ -359,7 +359,7 @@ class UserClient(ClientBase):
     def setup_collaboration(self, collaboration_id: int) -> None:
         """Setup the collaboration.
 
-        This gets the collaboration from the server and stores its details in
+        This gets the collaboration from HQ and stores its details in
         the client and sets the algorithm stores available for this collaboration.
         When this has been called, other functions no longer require
         the `collaboration_id` to be provided.
@@ -378,7 +378,7 @@ class UserClient(ClientBase):
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> dict:
         """
-        Polls the server to check when results are ready, and returns the
+        Polls HQ to check when results are ready, and returns the
         results when the task is completed.
 
         Parameters
@@ -405,12 +405,14 @@ class UserClient(ClientBase):
         """Collection of general utilities"""
 
         def get_hq_version(self, attempts_on_timeout: int = None) -> dict:
-            """View the version number of the vantage6-server
+            """View the version number of vantage6 HQ
+
             Parameters
             ----------
             attempts_on_timeout : int
-                Number of attempts to make when the server is not responding.
-                Default is unlimited.
+                Number of attempts to make when HQ is not responding. Default is
+                unlimited.
+
             Returns
             -------
             dict
@@ -421,7 +423,7 @@ class UserClient(ClientBase):
             )
 
         def get_hq_health(self, silent_on_connection_error: bool = False) -> dict:
-            """View the health of the vantage6-server
+            """View the health of vantage6 HQ
 
             Parameters
             ----------
@@ -431,7 +433,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Containing the server health information
+                Containing the HQ health information
             """
             return self.parent.request(
                 "health", silent_on_connection_error=silent_on_connection_error
@@ -623,7 +625,7 @@ class UserClient(ClientBase):
                 Id of the collaboration you want to delete
             delete_dependents : bool, optional
                 Delete the tasks, nodes and studies that are part of the collaboration
-                as well. If this is False, and dependents exist, the server will refuse
+                as well. If this is False, and dependents exist, HQ will refuse
                 to delete the collaboration. Default is False.
             """
             id_ = self.__get_id_or_use_provided_id(id_)
@@ -874,7 +876,7 @@ class UserClient(ClientBase):
                 Organization id to which this node belongs. If no id provided
                 the users organization is used. Default value is None
             name : str, optional
-                Name of the node. If no name is provided the server will
+                Name of the node. If no name is provided HQ will
                 generate one. Default value is None
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
@@ -962,7 +964,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-                Message from the server
+                Dictionary containing response from HQ.
             """
             return self.parent.request(
                 "kill/node/tasks", method="post", json={"id": id_}
@@ -1194,8 +1196,8 @@ class UserClient(ClientBase):
                 Id of the organization you want to delete.
             delete_dependents : bool, optional
                 Delete the nodes, users, runs, tasks and roles that are part of
-                the organization as well. If this is False, and dependents exist, the
-                server will refuse to delete the organization. Default is False.
+                the organization as well. If this is False, and dependents exist,
+                HQ will refuse to delete the organization. Default is False.
             """
             res = self.parent.request(
                 f"organization/{id_}",
@@ -1378,9 +1380,7 @@ class UserClient(ClientBase):
                 Used to login to the service. This can not be changed
                 later.
             password : str | None
-                Password of the new user. Required, unless is_service_account is True or
-                if the server doesn't manage its own users and nodes in Keycloak (
-                contact your administrator to know if this is the case)
+                Password of the new user. Required, unless is_service_account is True
             organization : int | None
                 Organization `id` this user should belong to. If not provided, the user
                 will be created in the organization of the current user.
@@ -1794,7 +1794,7 @@ class UserClient(ClientBase):
         ) -> dict:
             """Create a new task
 
-            If blob storage is configured at the server, the input data will be
+            If blob storage is configured at HQ, the input data will be
             encrypted and uploaded to the blob storage, and a UUID reference is
             stored as an input instead.
 
@@ -1846,7 +1846,7 @@ class UserClient(ClientBase):
             -------
             dict
                 A dictionairy containing data on the created task, or a message
-                from the server if the task could not be created
+                from HQ if the task could not be created
             """
             assert self.parent.cryptor, "Encryption has not yet been setup!"
 
@@ -1965,7 +1965,7 @@ class UserClient(ClientBase):
             ----
             We are looking before we leap (LBYL) rather than attempting to
             catch an exception later on (EAFP) because the task will be created
-            on the server before nodes might even get a chance to complain.
+            on HQ before nodes might even get a chance to complain.
             """
             if isinstance(databases, str):
                 # it is not unlikely that users specify a single database as a
@@ -2040,8 +2040,7 @@ class UserClient(ClientBase):
             Returns
             -------
             dict
-
-                Message from the server
+                Dictionary containing response from HQ.
             """
             msg = self.parent.request("/kill/task", method="post", json={"id": id_})
             self.parent.log.info(f"--> {msg}")
@@ -2283,7 +2282,7 @@ class UserClient(ClientBase):
             self.parent.log.info("--> Attempting to decrypt results!")
 
             results = self.parent.request("result", params={"task_id": task_id})
-            self.parent.log.info("Received results from server: %s", results)
+            self.parent.log.info("Received results from HQ: %s", results)
             decrypted_results = self._decrypt_result(results, is_single_result=False)
             self.parent.log.info("Successfully decrypted results")
             return decrypted_results
@@ -2378,7 +2377,7 @@ class UserClient(ClientBase):
             Returns
             -------
             list of dicts
-                Containing all the rules from the vantage6 server
+                Containing all the rules from vantage6 HQ
             """
             params = {
                 "page": page,

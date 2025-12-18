@@ -8,19 +8,19 @@ from sqlalchemy import select
 
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import ServicesResources, only_for, with_user
-from vantage6.server.resource.common.input_schema import (
+from vantage6.hq.resource import ServicesResources, only_for, with_user
+from vantage6.hq.resource.common.input_schema import (
     StudyChangeOrganizationSchema,
     StudyInputSchema,
 )
-from vantage6.server.resource.common.output_schema import (
+from vantage6.hq.resource.common.output_schema import (
     OrganizationSchema,
     StudySchema,
     StudyWithOrgsSchema,

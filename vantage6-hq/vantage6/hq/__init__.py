@@ -1,8 +1,7 @@
 """
-The server has a central function in the vantage6 architecture. It stores
-in the database which organizations, collaborations, users, etc.
-exist. It allows the users and nodes to authenticate and subsequently interact
-through the API the server hosts. Finally, it also communicates with
+HQ has a central role in the vantage6 architecture. It stores which organizations,
+collaborations, users, etc. exist. It allows the users and nodes to authenticate and
+subsequently interact through the API it hosts. Finally, it also communicates with
 authenticated nodes and users via the socketIO server that is run here.
 """
 
@@ -43,21 +42,21 @@ from vantage6.backend.common import Vantage6App
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
-from vantage6.server import db
-from vantage6.server.algo_store_communication import add_algorithm_store_to_database
-from vantage6.server.controller import cleanup
-from vantage6.server.default_roles import DefaultRole, get_default_roles
-from vantage6.server.globals import (
+from vantage6.hq import db
+from vantage6.hq.algo_store_communication import add_algorithm_store_to_database
+from vantage6.hq.controller import cleanup
+from vantage6.hq.default_roles import DefaultRole, get_default_roles
+from vantage6.hq.globals import (
+    HQ_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
-    SERVER_MODULE_NAME,
     SUPER_USER_INFO,
 )
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.permission import PermissionManager
-from vantage6.server.resource.common.output_schema import HATEOASModelSchema
-from vantage6.server.service.azure_storage_service import AzureStorageService
-from vantage6.server.websockets import DefaultSocketNamespace
+from vantage6.hq.model.base import Database, DatabaseSessionManager
+from vantage6.hq.permission import PermissionManager
+from vantage6.hq.resource.common.output_schema import HATEOASModelSchema
+from vantage6.hq.service.azure_storage_service import AzureStorageService
+from vantage6.hq.websockets import DefaultSocketNamespace
 
 __version__ = importlib.metadata.version(__package__)
 
@@ -66,20 +65,20 @@ module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
 
-class ServerApp(Vantage6App):
+class HQApp(Vantage6App):
     """
-    Vantage6 server instance.
+    Vantage6 HQ instance.
 
     Attributes
     ----------
-    ctx : ServerContext
-        Context object that contains the configuration of the server.
+    ctx : HQContext
+        Context object that contains the HQ configuration.
     """
 
     def __init__(self, ctx: HQContext) -> None:
-        """Create a vantage6-server application."""
+        """Create a vantage6 HQ application."""
 
-        super().__init__(ctx, SERVER_MODULE_NAME)
+        super().__init__(ctx, HQ_MODULE_NAME)
 
         self.metrics = Metrics(labels=["node_id", "platform", "os"])
         # Setup websocket channel
@@ -92,7 +91,7 @@ class ServerApp(Vantage6App):
         # Load API resources
         self.load_resources()
 
-        # couple any algoritm stores to the server if defined in config. This should be
+        # couple any algoritm stores to HQ if defined in config. This should be
         # done after the resources are loaded to ensure that rules are set up
         self.couple_algorithm_stores()
 
@@ -204,7 +203,7 @@ class ServerApp(Vantage6App):
 
     def configure_flask(self) -> None:
         """
-        Configure the Flask settings of the vantage6 server.
+        Configure the Flask settings of the vantage6 HQ.
 
         Parameters
         ----------
@@ -310,14 +309,14 @@ class ServerApp(Vantage6App):
         }
 
         for res in RESOURCES:
-            module = importlib.import_module("vantage6.server.resource." + res)
+            module = importlib.import_module("vantage6.hq.resource." + res)
             module.setup(self.api, self.ctx.config["api_path"], services)
 
     def start(self) -> None:
         """
-        Start the server.
+        Start HQ.
 
-        Before server is really started, some database settings are checked and
+        Before HQ is really started, some database settings are checked and
         (re)set where appropriate.
         """
         # add default roles (if they don't exist yet)
@@ -339,10 +338,10 @@ class ServerApp(Vantage6App):
         """
         Create the super user.
 
-        This method is used when the server is started for the first time.
+        This method is used when HQ is started for the first time.
         """
         # sanity check, this function should never be called in any other
-        # context than the first run of the server
+        # context than the first run of HQ
         try:
             db.User.get_by_username(SUPER_USER_INFO["username"])
             raise Exception("Attempted to create super user when it already existed!")
@@ -401,7 +400,7 @@ class ServerApp(Vantage6App):
         """Start a background thread to clean up data from old Runs."""
         # NOTE/TODO: this is a very simple implementation, horizonal scaling is
         # not being taken into account. We'd probably only need one worker per
-        # database, not per server instance (for example).
+        # database, not per HQ instance (for example).
         include_args = self.ctx.config.get("runs_data_cleanup_include_args", False)
         while True:
             try:
@@ -416,10 +415,10 @@ class ServerApp(Vantage6App):
             time.sleep(3600)
 
     def couple_algorithm_stores(self) -> None:
-        """Couple algorithm stores to the server.
+        """Couple algorithm stores to HQ.
 
         Checks if default algorithm stores are defined in the configuration and if so,
-        couples them to the server.
+        couples them to HQ.
         """
         algorithm_stores = self.ctx.config.get("algorithm_stores", [])
         if algorithm_stores:
@@ -449,29 +448,28 @@ class ServerApp(Vantage6App):
                     )
                     if status == HTTPStatus.CREATED:
                         log.info(
-                            "Algorithm store '%s' at %s has been coupled to the server",
+                            "Algorithm store '%s' at %s has been coupled to HQ",
                             name,
                             url,
                         )
                     else:
                         log.error(
-                            "Failed to couple algorithm store '%s' at %s to the server:"
-                            " %s",
+                            "Failed to couple algorithm store '%s' at %s to HQ: %s",
                             name,
                             url,
                             response["msg"],
                         )
                 else:
                     log.info(
-                        "Algorithm store '%s' at %s is already coupled to the server",
+                        "Algorithm store '%s' at %s is already coupled to HQ",
                         name,
                         url,
                     )
 
 
-def run_server(config: str, system_folders: bool = True) -> ServerApp:
+def run_hq(config: str, system_folders: bool = True) -> HQApp:
     """
-    Run a vantage6 server.
+    Run a vantage6 HQ.
 
     Parameters
     ----------
@@ -482,9 +480,9 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
 
     Returns
     -------
-    ServerApp
-        A running instance of the vantage6 server
+    HQApp
+        A running instance of the vantage6 HQ
     """
     ctx = HQContext.from_external_config_file(config, system_folders, in_container=True)
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
-    return ServerApp(ctx).start()
+    return HQApp(ctx).start()

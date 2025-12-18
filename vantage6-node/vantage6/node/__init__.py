@@ -1,5 +1,5 @@
 """
-The vantage6 node's core function is to retrieve tasks from the central server, run them
+The vantage6 node's core function is to retrieve tasks from HQ, run them
 and return the results.
 
 The node application runs four threads:
@@ -10,16 +10,15 @@ The node application runs four threads:
     Listens for incoming websocket messages. Among other functionality, it adds
     new tasks to the task queue.
 *Speaking thread*
-    Waits for tasks to finish. When they do, return the results to the central
-    server.
+    Waits for tasks to finish. When they do, return the results to HQ.
 *Proxy server thread*
     Algorithm containers are isolated from the internet for security reasons.
-    The local proxy server provides an interface to the central server for
+    The local proxy server provides an interface to HQ for
     algorithm containers to create subtasks and retrieve their results.
 
-The node connects to the server using a websocket connection. This connection
-is mainly used for sharing status updates. This avoids the need for polling to
-see if there are new tasks available.
+The node connects to HQ using a websocket connection. This connection is mainly used for
+sharing status updates. This avoids the need for polling to see if there are new tasks
+available.
 """
 
 import datetime
@@ -72,10 +71,11 @@ PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS = 45
 # ------------------------------------------------------------------------------
 class Node:
     """
-    Authenticates to the central server, setup encryption, a
-    websocket connection, retrieving task that were posted while
-    offline, preparing dataset for usage and finally setup a
-    local proxy server..
+    Initialize the node.
+
+    Authenticate to HQ, set up encryption, set up websocket connection, retrieve tasks
+    that were posted while offline, prepare datasets for usage and finally setup a
+    local proxy server.
 
     Parameters
     ----------
@@ -108,7 +108,7 @@ class Node:
 
         self._using_encryption = None
 
-        # initialize Node connection to the server
+        # initialize Node connection to HQ
         self.client = self._setup_node_client(self.config)
 
         self.k8s_container_manager = ContainerManager(self.ctx, self.client)
@@ -121,9 +121,9 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
-        self.log.info("Connecting server: %s", self.client.server_url)
+        self.log.info("Connecting to HQ: %s", self.client.hq_url)
 
-        # Authenticate with the server, obtaining a JSON Web Token.
+        # Authenticate with HQ, obtaining a JSON Web Token.
         # Note that self.authenticate() blocks until it succeeds.
         self.runs_queue = queue.Queue()
         self.log.debug("Authenticating")
@@ -133,13 +133,13 @@ class Node:
         self.setup_encryption()
 
         # Thread for proxy server for algorithm containers, so they can
-        # communicate with the central server.
+        # communicate with HQ.
         self.log.info("Setting up proxy server")
         t = Thread(target=self.__proxy_server_worker, daemon=True)
         t.start()
 
         # Create a long-lasting websocket connection.
-        self.log.debug("Creating websocket connection with the server")
+        self.log.debug("Creating websocket connection with HQ")
         self.connect_to_socket()
         self.k8s_container_manager.set_socket(self.socketIO)
 
@@ -154,9 +154,8 @@ class Node:
 
     def _setup_node_client(self, config: dict) -> NodeClient:
         return NodeClient(
-            server_url=(
-                f"{config.get('server_url')}:{config.get('port')}"
-                f"{config.get('api_path')}"
+            hq_url=(
+                f"{config.get('hq_url')}:{config.get('port')}{config.get('api_path')}"
             ),
             auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
@@ -165,7 +164,7 @@ class Node:
 
     def __metadata_worker(self) -> None:
         """
-        Periodically send system metadata to the server.
+        Periodically send system metadata to HQ.
         """
         report_interval = self.config.get("prometheus", {}).get(
             "report_interval_seconds", PROMETHEUS_DEFAULT_REPORT_INTERVAL_SECONDS
@@ -262,8 +261,7 @@ class Node:
         """
         Proxy algorithm container communcation.
 
-        A proxy for communication between algorithms and central
-        server.
+        A proxy for communication between algorithms and HQ.
         """
 
         # The V6_PROXY_HOST is required for the node to work. There are no default
@@ -274,7 +272,8 @@ class Node:
             os.environ["V6_PROXY_HOST"] = proxy_host
         else:
             self.log.error(
-                "The environment variable V6_PROXY_HOST, required to start the Node's proxy-server is not set"
+                "The environment variable V6_PROXY_HOST, required to start the Node's "
+                "proxy-server is not set"
             )
             self.log.info("Shutting down the node...")
             exit(1)
@@ -288,10 +287,10 @@ class Node:
 
         # The value on the module variable 'server_url' defines the target of the
         # 'make_request' method.
-        proxy_server.server_url = self.client.server_url
+        proxy_server.hq_url = self.client.hq_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
-            proxy_server.server_url,
+            proxy_server.hq_url,
         )
 
         # set up proxy server logging
@@ -327,11 +326,11 @@ class Node:
             self.log.info("Shutting down the node...")
             exit(1)
 
-    def sync_task_queue_with_server(self) -> None:
-        """Get all unprocessed tasks from the server for this node."""
+    def sync_task_queue_with_HQ(self) -> None:
+        """Get all unprocessed tasks from HQ for this node."""
         assert self.client.cryptor, "Encrpytion has not been setup"
 
-        # request open tasks from the server
+        # request open tasks from HQ
         runs_to_execute = self.client.run.list(
             state=TaskStatusQueryOptions.OPEN.value, include_task=True
         )
@@ -342,8 +341,8 @@ class Node:
 
     def get_task_and_add_to_queue(self, task_id: int) -> None:
         """
-        Fetches (open) task with task_id from the server. The `task_id` is
-        delivered by the websocket-connection.
+        Fetches (open) task with task_id from HQ. The task ID is delivered by the
+        websocket connection.
 
         Parameters
         ----------
@@ -383,7 +382,7 @@ class Node:
 
     def __start_task(self, run_to_execute: dict) -> None:
         """
-        Start the docker image and notify the server that the task has been
+        Start the docker image and notify HQ that the task has been
         started.
 
         Parameters
@@ -452,7 +451,7 @@ class Node:
             databases_to_use=task.get("databases", []),
         )
 
-        # save task status to the server
+        # save task status to HQ
         update = {"status": run_status.value}
         if run_status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
@@ -507,21 +506,15 @@ class Node:
             namespace="/tasks",
         )
 
-    def __poll_task_results(self) -> None:
+    def __send_updates_finished_tasks(self) -> None:
         """
-        Sending messages to central server.
-
-        Routine that is in a seperate thread sending results
-        to the server when they come available.
+        Send updates to HQ when tasks are finished (or failed).
         """
-        # TODO change to a single request, might need to reconsider
-        #     the flow
-        self.log.debug("Waiting for results to send to the server")
-
+        self.log.debug("Waiting for results to send to HQ")
         while True:
             try:
                 results = self.k8s_container_manager.process_next_completed_job()
-                self.log.info(f"Sending result (run={results.run_id}) to the server!")
+                self.log.info(f"Sending result (run={results.run_id}) to HQ!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
                 # just store the task_id when retrieving the task the first
@@ -556,8 +549,7 @@ class Node:
                     init_org_id=init_org.get("id"),
                 )
 
-                # notify other nodes, server and clients about algorithm status
-                # change
+                # notify HQ, other nodes, and clients about algorithm status change
                 self.socketIO.emit(
                     "algorithm_status_change",
                     data={
@@ -581,17 +573,15 @@ class Node:
             time.sleep(1)
 
     def __print_connection_error_logs(self):
-        """Print error message when node cannot find the server"""
-        self.log.warning("Could not connect to the server. Retrying in 10 seconds")
-        self.log.info(
-            "Are you sure the server can be reached at %s?", self.client.server_url
-        )
+        """Print error message when node cannot find HQ"""
+        self.log.warning("Could not connect to HQ. Retrying in 10 seconds")
+        self.log.info("Are you sure HQ can be reached at '%s'?", self.client.hq_url)
 
     def authenticate(self) -> None:
         """
-        Authenticate with the server using the api-key from the configuration
-        file. If the server rejects for any reason -other than a wrong API key-
-        serveral attempts are taken to retry.
+        Authenticate with HQ using the API key from the configuration file. If HQ
+        rejects the authentication for any reason -other than a wrong API key-
+        several attempts are taken to retry.
         """
 
         success = False
@@ -676,8 +666,8 @@ class Node:
 
     def connect_to_socket(self) -> None:
         """
-        Create long-lasting websocket connection with the server. The
-        connection is used to receive status updates, such as new tasks.
+        Create long-lasting websocket connection with HQ. The connection is used to
+        receive status updates, such as new tasks.
         """
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
@@ -690,7 +680,7 @@ class Node:
         NodeTaskNamespace.node_worker_ref = self
 
         self.socketIO.connect(
-            url=self.client.server_url,
+            url=self.client.hq_url,
             headers=self.client.headers,
             wait=False,
         )
@@ -708,17 +698,15 @@ class Node:
             time.sleep(1)
             i += 1
 
-        self.log.info("Connected to server at %s", self.client.server_url)
+        self.log.info("Connected to HQ at '%s'", self.client.hq_url)
 
-        self.log.debug(
-            "Starting thread to ping the server to notify this node is online."
-        )
+        self.log.debug("Starting thread to ping HQ to notify this node is online.")
         self.socketIO.start_background_task(self.__socket_ping_worker)
 
     def __socket_ping_worker(self) -> None:
         """
-        Send ping messages periodically to the server over the socketIO
-        connection to notify the server that this node is online
+        Send ping messages periodically to HQ over the socketIO connection to notify HQ
+        that this node is online
         """
         # Wait for the socket to be connected to the namespaces on startup
         time.sleep(5)
@@ -734,7 +722,7 @@ class Node:
             # Wait before sending next ping
             time.sleep(PING_INTERVAL_SECONDS)
 
-    def __process_tasks_queue(self) -> None:
+    def __process_new_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
         try:
             while True:
@@ -782,7 +770,7 @@ class Node:
             kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
         killed_algos = self.k8s_container_manager.kill_tasks(kill_list=kill_list)
         # update logs of killed tasks. Note that the status is already set to KILLED
-        # by the server.
+        # by HQ.
         for killed_algo in killed_algos:
             self.client.run.patch(
                 id_=killed_algo.run_id,
@@ -794,7 +782,7 @@ class Node:
 
     def share_node_details(self) -> None:
         """
-        Share part of the node's configuration with the server.
+        Share part of the node's configuration with HQ.
 
         This helps the other parties in a collaboration to see e.g. which
         algorithms they are allowed to run on this node.
@@ -863,14 +851,20 @@ class Node:
 
     def start_processing_threads(self) -> None:
         """
-        Start the threads that (1) consumes the queue with the requests produced by the server, and
-        (2) polls the K8S server for finished jobs, collects their output, and send it to the server;
+        Start the threads that (1) consumes the queue with the requests produced by HQ,
+        , and (2) polls Kubernetes for finished jobs, collects their output, and sends
+        it to HQ;
         """
         self.log.info("Starting threads")
-        # polls for results on completed jobpods using the k8s api, also reports the results (or error status) back to the server
-        results_polling_thread = threading.Thread(target=self.__poll_task_results)
-        # polls for new tasks sent by the server, and starts them using the k8s API
-        queue_processing_thread = threading.Thread(target=self.__process_tasks_queue)
+        # polls for results on completed jobpods using the k8s api, also reports the
+        # results (or error status) back to HQ
+        results_polling_thread = threading.Thread(
+            target=self.__send_updates_finished_tasks
+        )
+        # polls for new tasks sent by HQ, and starts them using the k8s API
+        queue_processing_thread = threading.Thread(
+            target=self.__process_new_tasks_queue
+        )
         results_polling_thread.start()
         queue_processing_thread.start()
 

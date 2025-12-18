@@ -26,7 +26,6 @@ from vantage6.common.globals import (
     DATAFRAME_BETWEEN_GROUPS_SEPARATOR,
     DATAFRAME_WITHIN_GROUP_SEPARATOR,
     DEFAULT_ALPINE_IMAGE,
-    DEFAULT_DOCKER_REGISTRY,
     ENV_VAR_EQUALS_REPLACEMENT,
     SESSION_STATE_FILENAME,
     STRING_ENCODING,
@@ -108,14 +107,12 @@ class ContainerManager:
             [f"{k}={v}" for k, v in self.task_job_labels.items()]
         )
 
-        # whether to share or not algorithm logs with the server
+        # whether to share or not algorithm logs with HQ
         # TODO: config loading could be centralized in a class, then validate,
         # set defaults, warn about dangers, etc
         self.share_algorithm_logs = self.ctx.config.get("share_algorithm_logs", True)
         if self.share_algorithm_logs:
-            self.log.warning(
-                "Algorithm logs and errors will be shared with the server."
-            )
+            self.log.warning("Algorithm logs and errors will be shared with HQ.")
 
     def set_socket(self, socket_io: SocketIO) -> None:
         """
@@ -174,9 +171,7 @@ class ContainerManager:
                         containers=[
                             k8s_client.V1Container(
                                 name="test-container",
-                                image=(
-                                    f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_ALPINE_IMAGE}"
-                                ),
+                                image=DEFAULT_ALPINE_IMAGE,
                             )
                         ]
                     ),
@@ -340,7 +335,7 @@ class ContainerManager:
         Parameters
         ----------
         run_id: int
-            Server run identifier
+            Algorithm run ID
         task_info: dict
             Dictionary with task information *** Includes parent-algorithm id
         image: str
@@ -422,7 +417,7 @@ class ContainerManager:
             return RunStatus.UNKNOWN_ERROR
 
         # Set environment variables for the algorithm client. This client is used
-        # to communicate from the algorithm to the vantage6 server through the proxy.
+        # to communicate from the algorithm to HQ through the proxy.
         # The V6_PROXY_HOST env. variable is assumed to be set at this
         # point (no need to check here again), as its presence is validated when the
         # node is initialized (node/__init__.py)
@@ -606,7 +601,7 @@ class ContainerManager:
             label=f"app={run_io.container_name}",
         )
 
-        # start streaming logs to the server
+        # start streaming logs to HQ
         self._stream_logs(run_io=run_io, task_id=task_id)
 
         self.num_active_tasks += 1
@@ -655,7 +650,7 @@ class ContainerManager:
 
     def _stream_logs(self, run_io: RunIO, task_id: int) -> None:
         """
-        Stream logs to the server.
+        Stream logs to HQ.
 
         Parameters
         ----------
@@ -670,7 +665,7 @@ class ContainerManager:
 
     def __log_stream(self, run_io: RunIO, task_id: int) -> None:
         """
-        Stream logs to the server.
+        Stream logs to HQ.
 
         Parameters
         ----------
@@ -1384,7 +1379,7 @@ class ContainerManager:
 
         This method is blocking until a job is completed. It checks the status of the
         kubernetes jobs and returns the results of the first completed job. The results
-        are then sent back to the server.
+        are then sent back to HQ.
 
         Returns
         -------
@@ -1432,7 +1427,7 @@ class ContainerManager:
                 logs = self._get_logs(run_io)
 
                 self.log.info(
-                    "Sending results of run_id=%s and task_id=%s back to the server",
+                    "Sending results of run_id=%s and task_id=%s back to HQ",
                     run_io.run_id,
                     job.metadata.annotations["task_id"],
                 )
@@ -1596,8 +1591,8 @@ class ContainerManager:
         """
         if not kill_list:
             self.log.warning(
-                "Received instruction from server to kill all algorithms "
-                "running on this node. Executing that now..."
+                "Received instruction from HQ to kill all algorithms running on this "
+                "node. Executing that now..."
             )
 
         killed_runs = self._kill_tasks(kill_list=kill_list)

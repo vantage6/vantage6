@@ -9,7 +9,7 @@
 
 # Vantage6 Backend Common
 
-This package contains code common to the central server and algorithm store.
+This package contains code common to the vantage6 HQ and the algorithm store.
 
 ## Documentation
 

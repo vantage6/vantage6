@@ -160,7 +160,8 @@ class PermissionManagerBase(ABC):
         Parameters
         ----------
         resources_location: str
-            Name of the module where to load the resources from (e.g. vantage6.server.resource).
+            Name of the module where to load the resources from (e.g.
+            vantage6.hq.resource).
 
         resources: list[str]
             List of the resources to load.

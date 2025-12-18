@@ -7,7 +7,7 @@ from sqlalchemy import event
 
 from vantage6.common import logger_name
 
-from vantage6.server.model.run import Run
+from vantage6.hq.model.run import Run
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

@@ -4,11 +4,11 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Role(Base):
-    """Collection of :class:`.~vantage6.server.model.rule.Rule` permissions
+    """Collection of :class:`.~vantage6.hq.model.rule.Rule` permissions
 
     Attributes
     ----------
@@ -23,11 +23,11 @@ class Role(Base):
 
     Relationships
     -------------
-    rules : list[:class:`.~vantage6.server.model.rule.Rule`]
+    rules : list[:class:`.~vantage6.hq.model.rule.Rule`]
         List of rules that belong to this role
-    organization : :class:`.~vantage6.server.model.organization.Organization`
+    organization : :class:`.~vantage6.hq.model.organization.Organization`
         Organization this role belongs to
-    users : list[:class:`.~vantage6.server.model.user.User`]
+    users : list[:class:`.~vantage6.hq.model.user.User`]
         List of users that belong to this role
     """
 
@@ -56,7 +56,7 @@ class Role(Base):
 
         Returns
         -------
-        :class:`.~vantage6.server.model.role.Role` | None
+        :class:`.~vantage6.hq.model.role.Role` | None
             Role with the given name or None if no role with the given name
             exists
         """

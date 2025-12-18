@@ -8,16 +8,16 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType
 
-from vantage6.server.model import Collaboration, Node, Organization
-from vantage6.server.model.base import Base, DatabaseSessionManager
-from vantage6.server.model.task import Task
+from vantage6.hq.model import Collaboration, Node, Organization
+from vantage6.hq.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.task import Task
 
 log_ = logging.getLogger(logger_name(__name__))
 
 
 class Run(Base):
     """
-    A Run is the description of a :class:`.~vantage6.server.model.task.Task` as
+    A Run is the description of a :class:`.~vantage6.hq.model.task.Task` as
     executed by a Node.
 
     The arguments and result fields will be encrypted and can be only read by the
@@ -55,9 +55,9 @@ class Run(Base):
 
     Relationships
     -------------
-    task : :class:`.~vantage6.server.model.task.Task`
+    task : :class:`.~vantage6.hq.model.task.Task`
         Task that was executed
-    organization : :class:`.~vantage6.server.model.organization.Organization`
+    organization : :class:`.~vantage6.hq.model.organization.Organization`
         Organization that executed the task
     """
 

@@ -5,13 +5,13 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common import session as db_session
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Organization,
     Role,
     Rule,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 
@@ -144,8 +144,6 @@ class TestResources(TestResourceBase):
 
         # create role
         result = self.app.post("/api/role", headers=headers, json=body)
-
-        # check that server responded ok
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # verify the values
@@ -185,8 +183,6 @@ class TestResources(TestResourceBase):
 
         # create role
         result = self.app.post("/api/role", headers=headers, json=body)
-
-        # check that server responded ok
         self.assertEqual(result.status_code, HTTPStatus.CREATED)
 
         # verify the organization

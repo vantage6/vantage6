@@ -10,9 +10,9 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.output_schema import RuleSchema
+from vantage6.hq import db
+from vantage6.hq.resource import ServicesResources, with_user
+from vantage6.hq.resource.common.output_schema import RuleSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -60,9 +60,8 @@ class Rules(ServicesResources):
         """List Rules
         ---
         description: >-
-            List of all available rules at the server. The user must be
-            authenticated, but does not require any additional permissions to
-            view the rules.\n
+            List of all available rules. The user must be authenticated, but does not
+            require any additional permissions to view the rules.\n
 
             Accesible to users.
 

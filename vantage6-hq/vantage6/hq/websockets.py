@@ -13,22 +13,22 @@ from vantage6.common.globals import AuthStatus
 
 from vantage6.backend.common.metrics import Metrics
 
-from vantage6.server import db
-from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.model.dataframe_to_be_deleted_at_node import (
+from vantage6.hq import db
+from vantage6.hq.model.authenticatable import Authenticatable
+from vantage6.hq.model.base import DatabaseSessionManager
+from vantage6.hq.model.dataframe_to_be_deleted_at_node import (
     DataframeToBeDeletedAtNode,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 ALL_NODES_ROOM = "all_nodes"
 
 
 class DefaultSocketNamespace(Namespace):
     """
-    This is the default SocketIO namespace. It is used for all the long-running
-    socket communication between the server and the clients. The clients of the
-    socket connection are nodes and users.
+    This is the default SocketIO namespace. It is used for all the long-running socket
+    communication between HQ and the clients. The clients of the socket connection are
+    nodes and users.
 
     When socket communication is received from one of the clients, the
     functions in this class are called to execute the corresponding action.
@@ -223,8 +223,7 @@ class DefaultSocketNamespace(Namespace):
             self.socketio.emit("node-status-changed", namespace="/admin")
             self.__alert_node_status(online=False, node=auth)
 
-            # delete any data on the node stored on the server (e.g.
-            # configuration data)
+            # delete any data on the node stored on HQ (e.g. configuration data)
             self.__clean_node_data(auth)
 
         self.log.info(f"{session.name} disconnected")
@@ -239,7 +238,7 @@ class DefaultSocketNamespace(Namespace):
         Parameters
         ----------
         message: str
-            Message that is going to be displayed in the server log
+            Message that is going to be displayed in the HQ log
         """
         self.log.info("received message: " + message)
 
@@ -250,7 +249,7 @@ class DefaultSocketNamespace(Namespace):
         Parameters
         ----------
         e: str
-            Error message that is being displayed in the server log
+            Error message that is being displayed in the HQ log
         """
         self.log.error(e)
 
@@ -293,7 +292,7 @@ class DefaultSocketNamespace(Namespace):
         run: db.Run = db.Run.get(run_id)
         job_id = run.task.job_id
 
-        # log event in server logs
+        # log event in HQ logs
         msg = (
             f"A container for job_id={job_id} and run_id={run_id} "
             f"in collaboration_id={collaboration_id} on node_id={node_id}"
@@ -390,13 +389,13 @@ class DefaultSocketNamespace(Namespace):
 
     def on_ping(self) -> None:
         """
-        A client sends a ping to the server. The server detects who sent the
-        ping and sets them as online.
+        A client sends a ping to HQ, which detects who sent the ping and sets them as
+        online.
         """
         auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
 
         # There is a bug https://github.com/vantage6/vantage6/issues/2386 where the node
-        # disconnects on the server side but the node is still connected to the server.
+        # disconnects on the HQ side but the node is still connected to HQ.
         # This is a last resort to recover the connection. It should be considered to
         # remove the setting of the `status` field in this method when the bug is fixed.
         if auth.status != AuthStatus.ONLINE.value:
@@ -492,7 +491,7 @@ class DefaultSocketNamespace(Namespace):
 
     def on_algorithm_log(self, data: dict) -> None:
         """
-        Handle log messages from algorithm containers and log them in the server logs.
+        Handle log messages from algorithm containers and log them in the HQ logs.
 
         Parameters
         ----------

@@ -9,8 +9,8 @@ from flask_restful import Api
 
 from vantage6.common import logger_name
 
-from vantage6.server import __version__
-from vantage6.server.resource import ServicesResources
+from vantage6.hq import __version__
+from vantage6.hq.resource import ServicesResources
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -48,7 +48,7 @@ class Version(ServicesResources):
     def get(self):
         """Get version
         ---
-        description: Return the version of the server instance
+        description: Return the version of the HQ instance
 
         responses:
           200:

@@ -3,9 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { OperationType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
 import { StoreRuleService } from './store-rule.service';
 import { AlgorithmStore, AlgorithmViewPolicies, AvailableStorePolicies, StorePolicies } from 'src/app/models/api/algorithmStore.model';
-import { environment } from 'src/environments/environment';
 import { AlgorithmStoreService } from './algorithm-store.service';
-import { POLICY_ALLOW_ALL_SERVERS } from '../models/constants/policies';
 
 @Injectable({
   providedIn: 'root'

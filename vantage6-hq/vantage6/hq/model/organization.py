@@ -9,7 +9,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.globals import STRING_ENCODING
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Organization(Base):
@@ -39,19 +39,19 @@ class Organization(Base):
     Relationships
     -------------
     collaborations :
-            list[:class:`~vantage6.server.model.collaboration.Collaboration`]
+            list[:class:`~vantage6.hq.model.collaboration.Collaboration`]
         List of collaborations that this organization is part of
-    runs : list[:class:`~vantage6.server.model.run.Run`]
+    runs : list[:class:`~vantage6.hq.model.run.Run`]
         List of runs that are part of this organization
-    nodes : list[:class:`~vantage6.server.model.node.Node`]
+    nodes : list[:class:`~vantage6.hq.model.node.Node`]
         List of nodes that are part of this organization
-    users : list[:class:`~vantage6.server.model.user.User`]
+    users : list[:class:`~vantage6.hq.model.user.User`]
         List of users that are part of this organization
-    tasks : list[:class:`~vantage6.server.model.task.Task`]
+    tasks : list[:class:`~vantage6.hq.model.task.Task`]
         List of tasks that are created by this organization
-    roles : list[:class:`~vantage6.server.model.role.Role`]
+    roles : list[:class:`~vantage6.hq.model.role.Role`]
         List of roles that are available to this organization
-    studies : list[:class:`~vantage6.server.model.study.Study`]
+    studies : list[:class:`~vantage6.hq.model.study.Study`]
         List of studies that are part of this organization
     """
 

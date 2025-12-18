@@ -1,7 +1,7 @@
 from sqlalchemy import Column as Column_, ForeignKey, Integer, String, and_, delete
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Column(Base):

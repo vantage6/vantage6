@@ -23,22 +23,22 @@ Frank Martin or Bart van Beusekom to acquire an account and upload your algorith
 will go through a review process before it is added to the community store.
 
 
-Linking algorithm store to server
+Linking algorithm store to HQ
 -------------------------------
-Algorithm stores can be linked to a vantage6 server or to a specific collaboration on a
-server. If an algorithm store is linked to a server, the algorithms in the store are
-available to all collaborations on that server. If an algorithm store is linked to a
+Algorithm stores can be linked to a vantage6 HQ or to a specific collaboration on an
+HQ. If an algorithm store is linked to an HQ, the algorithms in the store are
+available to all collaborations on that HQ. If an algorithm store is linked to a
 collaboration, the algorithms in the store are only available to that collaboration.
 
 Users can link algorithm stores to a collaboration if they have permission to modify
-that collaboration. Algorithm stores can only be linked to a server by users that have
-permission to modify all collaborations on the server.
+that collaboration. Algorithm stores can only be linked to an HQ by users that have
+permission to modify all collaborations on the HQ.
 
 To link an algorithm store, go to the collaboration settings page on the UI or use the
-Python client function ``client.store.create()``. When linking a store to a server, you
+Python client function ``client.store.create()``. When linking a store to an HQ, you
 need to provide the algorithm store URL, a name to refer to the store, and the
 collaboration ID of the collaboration you want to link the store to. Alternatively, you
-can link a store to all collaborations on the server by not providing a collaboration
+can link a store to all collaborations on the HQ by not providing a collaboration
 ID.
 
 .. _algorithm-store-configure:
@@ -165,7 +165,7 @@ In order to perform operations in the algorithm store, a user must be registered
 algorithm store and must be authenticated. Then, rules can be assigned to the user to
 give them the necessary permissions.
 
-Just like in the vantage6 server, in the algorithm store rules are used to allow or
+Just like in the vantage6 HQ, in the algorithm store rules are used to allow or
 prevent a user from performing an operation. An operation is an action that can be
 performed on a resource of the algorithm store. The following operations are defined:
 
@@ -317,7 +317,7 @@ The reviewer can provide comments to the developer when rejecting an algorithm. 
 the algorithm is rejected, the process is repeated as soon as the developer
 submits an improved version of the algorithm.
 
-If your algorithm store has been configured with an email server, emails will be sent
+If your algorithm store has been configured with an email SMTP server, emails will be sent
 all along the process to alert users that, for instance, their review is requested.
 
 Regularly, a developer has submitted an update to an algorithm that was already

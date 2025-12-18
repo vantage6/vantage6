@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base
+from vantage6.hq.model.base import Base
 
 
 class TaskDatabase(Base):
@@ -32,7 +32,7 @@ class TaskDatabase(Base):
 
     Relationships
     -------------
-    task : :class:`~vantage6.server.model.task.Task`
+    task : :class:`~vantage6.hq.model.task.Task`
         Task that uses the database
     """
 

@@ -1,14 +1,14 @@
 #!/bin/sh
 
 echo "*********************************************************************************"
-echo "******************** VANTAGE6 SERVER DEVELOPMENT MODE ***************************"
+echo "********************** VANTAGE6 HQ DEVELOPMENT MODE *****************************"
 echo "*********************************************************************************"
 
 # check if environment variable is set
-if [ -z "$VANTAGE6_SERVER_CONFIG_LOCATION" ]; then
-    echo "VANTAGE6_SERVER_CONFIG_LOCATION is not set"
+if [ -z "$VANTAGE6_HQ_CONFIG_LOCATION" ]; then
+    echo "VANTAGE6_HQ_CONFIG_LOCATION is not set"
     echo "  using default location /mnt/config.yaml"
-    VANTAGE6_SERVER_CONFIG_LOCATION="/mnt/config.yaml"
+    VANTAGE6_HQ_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
 
@@ -22,7 +22,7 @@ uwsgi \
     --master \
     --callable app \
     --disable-logging \
-    --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
-    --pyargv "${VANTAGE6_SERVER_CONFIG_LOCATION}"
+    --wsgi-file /vantage6/vantage6-hq/vantage6/hq/wsgi.py \
+    --pyargv "${VANTAGE6_HQ_CONFIG_LOCATION}"
 
-echo "exit dev_server.sh"
+echo "exit dev_hq.sh"

@@ -19,9 +19,9 @@ from flask_restful import Api
 from vantage6.common import logger_name
 from vantage6.common.enum import TaskStatus
 
-from vantage6.server.model import Run as db_Run, Task as db_Task
-from vantage6.server.permission import Operation as P, RuleCollection, Scope
-from vantage6.server.resource import (
+from vantage6.hq.model import Run as db_Run, Task as db_Task
+from vantage6.hq.permission import Operation as P, RuleCollection, Scope
+from vantage6.hq.resource import (
     ServicesResources,
     only_for,
 )
@@ -257,9 +257,9 @@ class BlobStream(BlobStreamBase):
         is_chunked = "chunked" in transfer_encoding
         try:
             # Unfortunately, in the case of streams smaller than one chunk,
-            # reverse proxies like nginx will automatically remove the chunked transfer encoding.
-            # Therefore, we need to handle both chunked and non-chunked uploads. Exchanging uwsgi
-            # to a different server might solve this issue.
+            # reverse proxies like nginx will automatically remove the chunked transfer
+            # encoding. Therefore, we need to handle both chunked and non-chunked
+            # uploads. Exchanging uwsgi to a different server might solve this issue.
             if is_chunked:
                 stream = UwsgiChunkedStream()
                 self.storage_adapter.store_blob(result_uuid, stream)

@@ -130,9 +130,9 @@ Testing
 ^^^^^^^
 
 You can test the infrastructure via the ``v6 sandbox`` and ``v6 test`` commands. The purpose of
-``v6 sandbox`` is to easily setup and run a test server accompanied by `N` nodes locally
+``v6 sandbox`` is to easily setup and run a test hub accompanied by `N` nodes locally
 (default is 3 nodes). For example, if you have `N = 10` datasets to test a particular
-algorithm on, then you can spawn a server and 10 nodes with a single command. By default,
+algorithm on, then you can spawn a hub and 10 nodes with a single command. By default,
 the nodes are given access to a test dataset of olympic medal winners, containing data
 on e.g. their age, height, length, weight, medal type and sport.
 
@@ -179,8 +179,8 @@ runs is given below.
 - **Temporary directory**: Creates a file in the temporary directory. The temporary directory
   is a directory that is shared between all containers that share the same run id.
   This checks that the temporary directory is writable.
-- **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach the
-  central server from the algorithm container. This is needed as parent containers
+- **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach
+  HQ from the algorithm container. This is needed as parent containers
   need to be able to create child containers (=subtasks). The local proxy also
   handles encryption/decryption of the algorithm arguments and results as the algorithm
   container is not allowed to know the private key.

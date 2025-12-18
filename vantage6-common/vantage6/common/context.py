@@ -23,7 +23,8 @@ from vantage6.common.kubernetes.utils import (
 
 class AppContext(metaclass=Singleton):
     """
-    Base class from which to create Node and Server context classes.
+    Base class from which to create context classes for specific infrastructure
+    components.
     """
 
     # FIXME: drop the prefix "INST_": a *class* is assigned.
@@ -454,7 +455,7 @@ class AppContext(metaclass=Singleton):
     @property
     def helm_release_name(self) -> str:
         """
-        Get the name of the Helm release for the server.
+        Get the name of the Helm release for a vantage6 component.
         """
         return f"{APPNAME}-{self.name}-{self.scope}-{self.instance_type.value}"
 

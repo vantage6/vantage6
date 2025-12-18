@@ -1,5 +1,5 @@
 """
-Database connection classes for the server.
+Database connection classes for HQ.
 
 Note that this file is almost identical to the one for the algorithm store. However,
 this is necessary because the database class is a singleton so we have to create

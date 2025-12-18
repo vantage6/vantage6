@@ -5,9 +5,9 @@ from sqlalchemy import select
 
 from vantage6.common.enum import RunStatus
 
-from vantage6.server.model import Run
-from vantage6.server.model.base import DatabaseSessionManager
-from vantage6.server.service.azure_storage_service import AzureStorageService
+from vantage6.hq.model import Run
+from vantage6.hq.model.base import DatabaseSessionManager
+from vantage6.hq.service.azure_storage_service import AzureStorageService
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)

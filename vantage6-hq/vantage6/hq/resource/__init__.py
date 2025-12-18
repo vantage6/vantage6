@@ -21,22 +21,22 @@ from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
 from vantage6.backend.common.services_resources import BaseServicesResources
 
-from vantage6.server import db
-from vantage6.server.default_roles import DefaultRole
-from vantage6.server.model.authenticatable import Authenticatable
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.default_roles import DefaultRole
+from vantage6.hq.model.authenticatable import Authenticatable
+from vantage6.hq.permission import (
     PermissionManager,
     obtain_auth_collaborations,
     obtain_auth_organization,
 )
-from vantage6.server.service.azure_storage_service import AzureStorageService
+from vantage6.hq.service.azure_storage_service import AzureStorageService
 
 log = logging.getLogger(logger_name(__name__))
 
 
 class ServicesResources(BaseServicesResources):
     """
-    Flask resource class for the vantage6 server.
+    Flask resource class for the vantage6 HQ.
 
     Adds functionality like mail, socket, permissions and the api itself.
     Also adds common helper functions.

@@ -20,7 +20,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixHQComponent } from '../../../../components/permissions-matrix/hq/permissions-matrix-hq.component';
 import { RoleSubmitButtonsComponent } from '../../../../components/helpers/role-submit-buttons/role-submit-buttons.component';
 import { TableComponent } from '../../../../components/table/table.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -38,7 +38,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
     MatTab,
     MatButton,
     MatIcon,
-    PermissionsMatrixServerComponent,
+    PermissionsMatrixHQComponent,
     RoleSubmitButtonsComponent,
     TableComponent,
     MatProgressSpinner,

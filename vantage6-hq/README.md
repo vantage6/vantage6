@@ -7,9 +7,9 @@
 
 ---
 
-# Vantage6 Server
+# Vantage6 HQ
 
-This package contains the vantage6 server application.
+This package contains the vantage6 HQ application.
 
 ## Documentation
 

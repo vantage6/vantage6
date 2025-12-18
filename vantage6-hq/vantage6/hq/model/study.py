@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base
+from vantage6.hq.model.base import Base
 
 
 class Study(Base):
@@ -24,14 +24,14 @@ class Study(Base):
 
     Relationships
     -------------
-    collaboration : :class:`~vantage6.server.model.collaboration.Collaboration`
+    collaboration : :class:`~vantage6.hq.model.collaboration.Collaboration`
         Collaboration that this study is part of
     organizations :
-            list[:class:`~vantage6.server.model.organization.Organization`]
+            list[:class:`~vantage6.hq.model.organization.Organization`]
         List of organizations that are part of this study
-    tasks : list[:class:`~vantage6.server.model.task.Task`]
+    tasks : list[:class:`~vantage6.hq.model.task.Task`]
         List of tasks that are part of this study
-    sessions : list[:class:`~vantage6.server.model.session.Session`]
+    sessions : list[:class:`~vantage6.hq.model.session.Session`]
         List of sessions that are part of this study
     """
 

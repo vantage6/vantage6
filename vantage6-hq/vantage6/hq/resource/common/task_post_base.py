@@ -23,16 +23,16 @@ from vantage6.backend.common.resource.error_handling import (
     handle_exceptions,
 )
 
-from vantage6.server import db
-from vantage6.server.algo_store_communication import request_algo_store
-from vantage6.server.dataclass import CreateTaskDB
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.algo_store_communication import request_algo_store
+from vantage6.hq.dataclass import CreateTaskDB
+from vantage6.hq.permission import (
     Operation as P,
     RuleCollection,
 )
-from vantage6.server.resource import ServicesResources
-from vantage6.server.resource.common.input_schema import TaskInputSchema
-from vantage6.server.resource.common.output_schema import TaskSchema
+from vantage6.hq.resource import ServicesResources
+from vantage6.hq.resource.common.input_schema import TaskInputSchema
+from vantage6.hq.resource.common.output_schema import TaskSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)

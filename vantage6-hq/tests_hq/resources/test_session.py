@@ -4,12 +4,12 @@ from uuid import uuid4
 
 from vantage6.common.enum import AlgorithmStepType
 
-from vantage6.server.model import Session, User
-from vantage6.server.model.collaboration import Collaboration
-from vantage6.server.model.dataframe import Dataframe
-from vantage6.server.model.organization import Organization
-from vantage6.server.model.rule import Operation, Rule, Scope
-from vantage6.server.model.study import Study
+from vantage6.hq.model import Session, User
+from vantage6.hq.model.collaboration import Collaboration
+from vantage6.hq.model.dataframe import Dataframe
+from vantage6.hq.model.organization import Organization
+from vantage6.hq.model.rule import Operation, Rule, Scope
+from vantage6.hq.model.study import Study
 
 from .test_resource_base import TestResourceBase
 
@@ -854,11 +854,11 @@ class TestSessionResource(TestResourceBase):
         assert response.status_code == HTTPStatus.OK
 
     @patch(
-        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "vantage6.hq.resource.common.task_post_base.TaskPostBase"
         "._check_arguments_encryption"
     )
     @patch(
-        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "vantage6.hq.resource.common.task_post_base.TaskPostBase"
         "._check_data_extract_ready_for_requested_orgs"
     )
     # pylint: disable=unused-argument

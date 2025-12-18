@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 from vantage6.common import logger_name
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     AlgorithmStore,
     Collaboration,
     Organization,
     Rule,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 
@@ -19,7 +19,7 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-    @patch("vantage6.server.algo_store_communication._check_algorithm_store_online")
+    @patch("vantage6.hq.algo_store_communication._check_algorithm_store_online")
     def test_create_algorithm_store_record(self, mock_check_algorithm_store_online):
         mock_check_algorithm_store_online.return_value = True
 

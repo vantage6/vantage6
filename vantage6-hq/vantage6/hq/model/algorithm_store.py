@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class AlgorithmStore(Base):
@@ -23,10 +23,10 @@ class AlgorithmStore(Base):
 
     Relationships
     -------------
-    collaboration: :class:`~vantage6.server.model.collaboration.Collaboration`
+    collaboration: :class:`~vantage6.hq.model.collaboration.Collaboration`
         The collaboration that this algorithm store belongs to or ``None`` if
         it is available for all collaborations.
-    tasks: list[:class:`~vantage6.server.model.task.Task`]
+    tasks: list[:class:`~vantage6.hq.model.task.Task`]
         List of tasks that use this algorithm store
     """
 

@@ -4,16 +4,16 @@ from uuid import uuid4
 
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 
-from vantage6.server.model.collaboration import Collaboration
-from vantage6.server.model.column import Column
-from vantage6.server.model.dataframe import Dataframe
-from vantage6.server.model.dataframe_to_be_deleted_at_node import (
+from vantage6.hq.model.collaboration import Collaboration
+from vantage6.hq.model.column import Column
+from vantage6.hq.model.dataframe import Dataframe
+from vantage6.hq.model.dataframe_to_be_deleted_at_node import (
     DataframeToBeDeletedAtNode,
 )
-from vantage6.server.model.organization import Organization
-from vantage6.server.model.rule import Operation, Rule, Scope
-from vantage6.server.model.run import Run
-from vantage6.server.model.session import Session
+from vantage6.hq.model.organization import Organization
+from vantage6.hq.model.rule import Operation, Rule, Scope
+from vantage6.hq.model.run import Run
+from vantage6.hq.model.session import Session
 
 from .test_resource_base import TestResourceBase
 
@@ -310,7 +310,7 @@ class TestDataframe(TestResourceBase):
         assert response.status_code == HTTPStatus.OK
 
     @patch(
-        "vantage6.server.resource.common.task_post_base.TaskPostBase."
+        "vantage6.hq.resource.common.task_post_base.TaskPostBase."
         "_check_arguments_encryption"
     )
     # pylint: disable=unused-argument
@@ -554,7 +554,7 @@ class TestDataframe(TestResourceBase):
         )
         assert response.status_code == HTTPStatus.UNAUTHORIZED
 
-    @patch("vantage6.server.resource.dataframe.send_delete_dataframe_event")
+    @patch("vantage6.hq.resource.dataframe.send_delete_dataframe_event")
     def test_delete(self, mock_send_delete_dataframe_event):
         org = self.create_organization()
         col = self.create_collaboration(organizations=[org])
@@ -743,11 +743,11 @@ class TestDataframe(TestResourceBase):
         assert response.status_code == HTTPStatus.UNAUTHORIZED
 
     @patch(
-        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "vantage6.hq.resource.common.task_post_base.TaskPostBase"
         "._check_arguments_encryption"
     )
     @patch(
-        "vantage6.server.resource.common.task_post_base.TaskPostBase"
+        "vantage6.hq.resource.common.task_post_base.TaskPostBase"
         "._check_data_extract_ready_for_requested_orgs"
     )
     # pylint: disable=unused-argument
@@ -862,7 +862,7 @@ class TestDataframe(TestResourceBase):
         )
         assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
-    @patch("vantage6.server.resource.session.SessionBase.can_edit_session")
+    @patch("vantage6.hq.resource.session.SessionBase.can_edit_session")
     # pylint: disable=unused-argument
     def test_preprocess_permissions(self, mock_can_edit_session):
         # the checks for permissions are identical to the checks for creating a

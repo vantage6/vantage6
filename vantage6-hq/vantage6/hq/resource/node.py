@@ -16,24 +16,24 @@ from vantage6.backend.common.auth import (
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import (
+from vantage6.hq.resource import (
     ServicesResources,
     with_node,
     with_user,
     with_user_or_node,
 )
-from vantage6.server.resource.common.input_schema import (
+from vantage6.hq.resource.common.input_schema import (
     NodeDeleteInputSchema,
     NodeInputSchema,
 )
-from vantage6.server.resource.common.output_schema import NodeSchema
+from vantage6.hq.resource.common.output_schema import NodeSchema
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -492,7 +492,7 @@ class Nodes(NodeBase):
             status=AuthStatus.OFFLINE.value,
         )
 
-        # Create a keycloak account for the node if the server is configured to do so,
+        # Create a keycloak account for the node if HQ is configured to do so,
         # otherwise verify that the node exists in keycloak
         if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
             keycloak_service_account = create_service_account_in_keycloak(

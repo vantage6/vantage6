@@ -18,7 +18,7 @@ import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
-import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixHQComponent } from '../../../../components/permissions-matrix/hq/permissions-matrix-hq.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { KeycloakUserProfile, KeycloakUserService } from 'src/app/services/keycloak-user.service';
@@ -42,7 +42,7 @@ import { KeycloakUserProfile, KeycloakUserService } from 'src/app/services/keycl
     MatCardContent,
     ChipComponent,
     NgFor,
-    PermissionsMatrixServerComponent,
+    PermissionsMatrixHQComponent,
     MatProgressSpinner,
     TranslateModule
   ]

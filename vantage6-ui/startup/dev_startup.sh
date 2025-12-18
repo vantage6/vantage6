@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# This script is used to start the UI dev server. It's main function is to ensure that
+# This script is used to start the UI development environment. It's main function is to ensure that
 # the contents of the env.js file are updated when the environment variables change.
 # This is not trivial because the upload sync from devspace does otherwise not trigger
 # a restart of the container.
 # If the env.js file is updated, the UI is restarted.
 
-echo "=== Starting UI dev server (dev_startup.sh) ==="
+echo "=== Starting UI development environment (dev_startup.sh) ==="
 
 # Function to generate env.js
 generate_env_js() {
@@ -26,21 +26,21 @@ get_env_var_value_from_env_js() {
 # Function to get environment variables hash
 get_env_hash() {
     env_api_path=$(get_env_var_value "API_PATH")
-    env_server_url=$(get_env_var_value "SERVER_URL")
+    env_hq_url=$(get_env_var_value "HQ_URL")
     env_keycloak_realm=$(get_env_var_value "KEYCLOAK_REALM")
     env_keycloak_client=$(get_env_var_value "KEYCLOAK_CLIENT")
     env_auth_url=$(get_env_var_value "AUTH_URL")
-    echo "$env_api_path$env_server_url$env_keycloak_realm$env_keycloak_client$env_auth_url" | md5sum | cut -d' ' -f1
+    echo "$env_api_path$env_hq_url$env_keycloak_realm$env_keycloak_client$env_auth_url" | md5sum | cut -d' ' -f1
 }
 
 # Function to get environment variables hash from env.js
 get_env_hash_from_env_js() {
     envjs_api_path=$(get_env_var_value_from_env_js "api_path")
-    envjs_server_url=$(get_env_var_value_from_env_js "server_url")
+    envjs_hq_url=$(get_env_var_value_from_env_js "hq_url")
     envjs_keycloak_realm=$(get_env_var_value_from_env_js "keycloak_realm")
     envjs_keycloak_client=$(get_env_var_value_from_env_js "keycloak_client")
     envjs_auth_url=$(get_env_var_value_from_env_js "auth_url")
-    echo "$envjs_api_path$envjs_server_url$envjs_keycloak_realm$envjs_keycloak_client$envjs_auth_url" | md5sum | cut -d' ' -f1
+    echo "$envjs_api_path$envjs_hq_url$envjs_keycloak_realm$envjs_keycloak_client$envjs_auth_url" | md5sum | cut -d' ' -f1
 }
 
 # Generate env.js initially

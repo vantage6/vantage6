@@ -8,7 +8,7 @@ authentication (2FA). This option is set at the server level: the server adminis
 decides if it is either enabled or disabled for everyone. Users cannot set this
 themselves. Server administrators can choose to require 2FA when
 prompted in ``v6 server new``, or by adding the option
-``two_factor_auth: true`` to the configuration file (see :ref:`server-configure`).
+``two_factor_auth: true`` to the configuration file (see :ref:`hq-configure`).
 
 Currently, the only 2FA option is to use
 `Time-based one-time passwords (TOTP) <https://www.twilio.com/docs/glossary/totp>`_

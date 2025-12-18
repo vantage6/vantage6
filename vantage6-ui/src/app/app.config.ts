@@ -57,14 +57,14 @@ import { environment } from 'src/environments/environment';
 
  * If the allowed algorithm stores is '*', return a pattern that matches all URLs.
  * If allowed algorithm stores are specified, we can determine the URL pattern to allow
- * for the Bearer token inclusion as thes server URL plus the allowed algorithm stores.
+ * for the Bearer token inclusion as thes HQ URL plus the allowed algorithm stores.
  */
 function getUrlPattern() {
   if (environment.allowed_algorithm_stores === '*') {
     return new RegExp(`.*`, 'i');
   }
   const urls: string[] = environment.allowed_algorithm_stores.split(' ');
-  urls.push(environment.server_url);
+  urls.push(environment.hq_url);
 
   // Create a pattern that matches the base URL and any subpaths
   // Escape special regex characters in URLs and add optional trailing slash and subpaths

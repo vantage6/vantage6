@@ -3,7 +3,6 @@ from kubernetes import client as k8s_client
 
 from vantage6.common import error, info, warning
 from vantage6.common.globals import (
-    DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
     InstanceType,
@@ -77,9 +76,7 @@ def cli_node_start(
             # try to get HQ version, skip if can't get a connection
             version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
             major_minor = ".".join(version.split(".")[:2])
-            image = (
-                f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
-            )
+            image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
         except Exception:
             warning("Could not determine HQ version. Using default node image")
 
@@ -93,7 +90,7 @@ def cli_node_start(
 
     # fail safe, in case no custom image is specified and we can't get the HQ version
     if not image:
-        image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
+        image = DEFAULT_NODE_IMAGE
 
     helm_install(
         release_name=ctx.helm_release_name,

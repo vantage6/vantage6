@@ -511,7 +511,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     // Also, if the task crashes, we should reload the task to get the logs.
     if ([TaskStatusGroup.Error, TaskStatusGroup.Success].includes(getStatusType(statusUpdate.status as TaskStatus))) {
       // Task is no longer running but we need to wait for the results to be available
-      // on the server. Poll every two seconds until the results are available.
+      // on HQ. Poll every two seconds until the results are available.
       timer(0, 2000)
         .pipe(takeUntil(this.waitTaskComplete$))
         .subscribe({
@@ -519,7 +519,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
             if (!this.task) return;
             const renewed_task = await this.getMainTask([]);
             // keep statuses of the task and the runs - these are updated by the socket
-            // and are likely more up-to-date than the statuses at the central server
+            // and are likely more up-to-date than the statuses at HQ
             renewed_task.status = this.task.status;
             renewed_task.init_org = this.task.init_org;
             renewed_task.init_user = this.task.init_user;

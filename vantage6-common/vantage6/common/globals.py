@@ -14,17 +14,13 @@ MAIN_VERSION_NAME = "uluru"
 
 DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
 
-DEFAULT_NODE_IMAGE = f"infrastructure/node:{MAIN_VERSION_NAME}"
+DEFAULT_NODE_IMAGE = (
+    f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node:{MAIN_VERSION_NAME}"
+)
 
-DEFAULT_NODE_IMAGE_WO_TAG = "infrastructure/node"
+DEFAULT_NODE_IMAGE_WO_TAG = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node"
 
-DEFAULT_SERVER_IMAGE = f"infrastructure/server:{MAIN_VERSION_NAME}"
-
-DEFAULT_UI_IMAGE = f"infrastructure/ui:{MAIN_VERSION_NAME}"
-
-DEFAULT_ALGO_STORE_IMAGE = f"infrastructure/algorithm-store:{MAIN_VERSION_NAME}"
-
-DEFAULT_ALPINE_IMAGE = "infrastructure/alpine:latest"
+DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
 
 #  CHART GLOBALS
 DEFAULT_CHART_REPO = "https://harbor2.vantage6.ai/chartrepo/infrastructure"
@@ -43,7 +39,7 @@ PING_INTERVAL_SECONDS = 60
 # Character to replace '=' with in encoded environment variables
 ENV_VAR_EQUALS_REPLACEMENT = "!"
 
-# default API path (for server and algorithm store)
+# default API path (for HQ and algorithm store)
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
 
@@ -59,7 +55,7 @@ DATAFRAME_MULTIPLE_KEYWORD = "multiple"
 DATAFRAME_WITHIN_GROUP_SEPARATOR = ","
 DATAFRAME_BETWEEN_GROUPS_SEPARATOR = ";"
 
-# Default timeout for requests to the server
+# Default timeout for requests
 REQUEST_TIMEOUT = 300
 
 # Default chunk size for streaming inputs and results

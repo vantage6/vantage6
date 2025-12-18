@@ -13,20 +13,20 @@ if TYPE_CHECKING:
 class MockHQ:
     def __init__(self, network: "MockNetwork"):
         """
-        Create a mock server.
+        Create a mock HQ.
 
-        Typically, you do not need to create a mock server manually. Instead, you should
-        use the MockNetwork class to create a mock network.
+        Typically, you do not need to create a mock HQ manually. Instead, you should
+        use the MockNetwork class to create a mock network, which contains a mock HQ.
 
         Parameters
         ----------
-        collaboration_id : int
-            The id of the collaboration, used to format the responses.
+        network : MockNetwork
+            The network that the HQ belongs to.
         """
         self.network = network
 
         # These contain the task, runs, results and dataframes as dictionaries that are
-        # the same format as you would get from the server responses.
+        # the same format as you would get from the HQ responses.
         self.tasks = []
         self.runs = []
         self.results = []
@@ -45,18 +45,18 @@ class MockHQ:
         return {
             "collaboration": {
                 "id": self.network.collaboration_id,
-                "link": f"/server/collaboration/{self.network.collaboration_id}",
+                "link": f"/hq/collaboration/{self.network.collaboration_id}",
                 "methods": ["PATCH", "GET", "DELETE"],
             },
-            "organizations": f"/server/organization?study_id={self.study_id}",
-            "tasks": f"/server/task?study_id={self.study_id}",
+            "organizations": f"/hq/organization?study_id={self.study_id}",
+            "tasks": f"/hq/task?study_id={self.study_id}",
             "name": "Mock Study",
             "id": self.study_id,
         }
 
     def save_result(self, result: Any, task_id: int):
         """
-        Save a result to the mock server.
+        Save a result to the mock HQ.
 
         Parameters
         ----------
@@ -92,7 +92,7 @@ class MockHQ:
         self, arguments: dict, task_id: int, result_id: int, org_id: int
     ) -> dict:
         """
-        Save a run to the mock server.
+        Save a run to the mock HQ.
 
         Parameters
         ----------
@@ -153,7 +153,7 @@ class MockHQ:
         init_organization_id: int,
     ) -> dict:
         """
-        Save a task to the mock server.
+        Save a task to the mock HQ.
 
         Parameters
         ----------
@@ -245,8 +245,8 @@ class MockHQ:
                 "link": f"/api/session/{self.session_id}",
                 "methods": ["GET", "PATCH", "DELETE"],
             },
-            "tasks": {"msg": "not implemented in the MockNetwork"},
-            "last_session_task": {"msg": "not implemented in the MockNetwork"},
+            "tasks": {"msg": "not implemented in the MockHQ"},
+            "last_session_task": {"msg": "not implemented in the MockHQ"},
             "columns": [
                 {
                     "name": column,

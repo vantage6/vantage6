@@ -1,7 +1,7 @@
-Server features
+HQ features
 ---------------
 
-The following pages each describe one feature of the vantage6 server.
+The following pages each describe one feature of the vantage6 HQ.
 
 .. toctree::
    :maxdepth: 1
@@ -18,6 +18,6 @@ The following pages each describe one feature of the vantage6 server.
 .. * background tasks
 .. * Database
 .. * Models / structure
-.. * CLI (v6 server local)
+.. * CLI (v6 hq local)
 .. * Clients (Python, R) (maybe elsewhere?)
 .. * UI (maybe elsewhere?)

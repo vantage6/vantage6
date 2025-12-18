@@ -4,11 +4,11 @@ from unittest.mock import patch
 
 from vantage6.common import logger_name
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Organization,
     Rule,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 
@@ -17,7 +17,7 @@ log = logging.getLogger(logger)
 
 
 class TestResources(TestResourceBase):
-    @patch("vantage6.server.resource.recover.ResetAPIKey._change_api_key_in_keycloak")
+    @patch("vantage6.hq.resource.recover.ResetAPIKey._change_api_key_in_keycloak")
     def test_reset_api_key(self, mock_change_api_key_in_keycloak):
         mock_change_api_key_in_keycloak.return_value = "new_api_key"
         org = Organization(name="Test Organization")

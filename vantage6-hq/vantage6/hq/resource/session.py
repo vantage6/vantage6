@@ -12,18 +12,18 @@ from vantage6.common.enum import AlgorithmStepType
 
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.dataclass import CreateTaskDB
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.dataclass import CreateTaskDB
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import only_for, with_user
-from vantage6.server.resource.common.input_schema import SessionInputSchema
-from vantage6.server.resource.common.output_schema import SessionSchema
-from vantage6.server.resource.common.task_post_base import TaskPostBase
+from vantage6.hq.resource import only_for, with_user
+from vantage6.hq.resource.common.input_schema import SessionInputSchema
+from vantage6.hq.resource.common.output_schema import SessionSchema
+from vantage6.hq.resource.common.task_post_base import TaskPostBase
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -879,8 +879,6 @@ class Session(SessionBase):
             dataframe.delete()
         for task in session.tasks:
             task.delete()
-
-        # This only deletes the session metadata from the server
         session.delete()
 
         return {"msg": f"Successfully deleted session id={id}"}, HTTPStatus.OK

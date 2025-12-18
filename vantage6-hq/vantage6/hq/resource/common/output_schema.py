@@ -12,9 +12,9 @@ from vantage6.backend.common.resource.output_schema import (
     create_one_to_many_link,
 )
 
-from vantage6.server import db
-from vantage6.server.model import User
-from vantage6.server.model.rule import Scope
+from vantage6.hq import db
+from vantage6.hq.model import User
+from vantage6.hq.model.rule import Scope
 
 log = logging.getLogger(logger_name(__name__))
 

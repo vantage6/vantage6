@@ -11,8 +11,8 @@ from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
 
-from vantage6.server import __version__
-from vantage6.server.model.base import Database
+from vantage6.hq import __version__
+from vantage6.hq.model.base import Database
 
 help_ = {
     "name": "name of the configutation you want to use.",
@@ -22,14 +22,13 @@ help_ = {
 
 def click_insert_context(func: Callable) -> Callable:
     """
-    Decorator to insert a ServerContext object into the function.
+    Decorator to insert a HQContext object into the function.
 
-    This decorator will insert a ServerContext object into the function. The
-    ServerContext object is created based on the configuration file that is
-    selected by the user. The user can select the configuration file by
-    supplying the name of the configuration file, or by supplying the path to
-    the configuration file. The decorator will also initialize the database
-    connection.
+    This decorator will insert a HQContext object into the function. The HQContext
+    object is created based on the configuration file that is selected by the user. The
+    user can select the configuration file by supplying the name of the configuration
+    file, or by supplying the path to the configuration file. The decorator will also
+    initialize the database connection.
 
     Parameters
     ----------
@@ -73,7 +72,7 @@ def click_insert_context(func: Callable) -> Callable:
                 )
                 exit(1)
 
-            # create server context, and initialize db
+            # create HQ context, and initialize db
             ctx = HQContext(name, system_folders=system_folders, in_container=True)
 
         # initialize database (singleton)
@@ -84,16 +83,16 @@ def click_insert_context(func: Callable) -> Callable:
     return func_with_context
 
 
-@click.group(name="server")
-def cli_server() -> None:
-    """Subcommand `vserver-local`."""
+@click.group(name="hq")
+def cli_hq() -> None:
+    """Subcommand `vhq-local`."""
     pass
 
 
 #
 #   version
 #
-@cli_server.command(name="version")
-def cli_server_version() -> None:
+@cli_hq.command(name="version")
+def cli_hq_version() -> None:
     """Prints current version of vantage6 services installed."""
     click.echo(__version__)

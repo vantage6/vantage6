@@ -15,7 +15,7 @@ Required components
 ^^^^^^^^^^^^^^^^^^^
 
 :ref:`Vantage6 HQ <hub-admin-guide-hq>`
-  The vantage6 server is the core component of the vantage6 infrastructure.
+  The vantage6 HQ is the core component of the vantage6 infrastructure.
   It is responsible for managing the nodes and tasks.
 
 :ref:`Authentication <hub-admin-guide-auth>`
@@ -30,7 +30,7 @@ Recommended components
 The following components are in principle optional, but recommended to use vantage6.
 
 :ref:`User interface <hub-admin-guide-ui>`
-  A web interface that allows your users to interact more easily the vantage6 server.
+  A web interface that allows your users to interact more easily with the vantage6 hub.
 
 :ref:`Algorithm store <hub-admin-guide-store>`
   The algorithm store is used to store and manage algorithms for your project.
@@ -52,9 +52,9 @@ Optional components
 ^^^^^^^^^^^^^^^^^^^
 
 :ref:`Message broker <hub-admin-guide-rabbitmq>`
-  If you have a server with a high workload, you may want to set up a RabbitMQ message
+  If you have an HQ with a high workload, you may want to set up a RabbitMQ message
   queue service to improve the performance. This enables horizontal scaling of the
-  vantage6 server. Note that is easy to add this service to the hub as it can be
+  vantage6 HQ. Note that is easy to add this service to the hub as it can be
   deployed as part of the vantage6 HQ.
 
 :ref:`Blob storage <azure-blob-storage>`

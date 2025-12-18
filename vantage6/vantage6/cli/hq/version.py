@@ -28,7 +28,7 @@ def cli_hq_version(
     name: str, system_folders: bool, context: str, namespace: str, is_sandbox: bool
 ) -> None:
     """
-    Print the version of the vantage6 server.
+    Print the version of the vantage6 HQ.
     """
     name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
     if is_sandbox:
@@ -36,22 +36,22 @@ def cli_hq_version(
     ctx = get_and_select_ctx(
         InstanceType.HQ, name, system_folders, context, namespace, is_sandbox
     )
-    server_config = ctx.config.get("server", {})
-    base_url = server_config.get("baseUrl", "")
-    api_path = server_config.get("apiPath", "")
+    hq_config = ctx.config.get("hq", {})
+    base_url = hq_config.get("baseUrl", "")
+    api_path = hq_config.get("apiPath", "")
     if not base_url:
-        error("No base URL found in server configuration.")
+        error("No base URL found in HQ configuration.")
         return
     if not api_path:
-        error("No API path found in server configuration.")
+        error("No API path found in HQ configuration.")
         return
 
     response = requests.get(f"{base_url}{api_path}/version")
     if response.status_code != 200:
-        error("Failed to get server version.")
+        error("Failed to get HQ version.")
         return
-    server_version = response.json().get("version", "")
+    hq_version = response.json().get("version", "")
 
     info("")
-    info(f"Server version: {server_version}")
+    info(f"HQ version: {hq_version}")
     info(f"CLI version: {__version__}")

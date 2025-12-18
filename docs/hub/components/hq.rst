@@ -2,13 +2,12 @@
 
 .. _hub-admin-guide-hq:
 
-Server
+Headquarters
 ====
 
-The vantage6 server is the central point of the vantage6 platform. It is responsible
-for managing the different organizations and their nodes, authorizing the users and
-nodes, and managing the communication of task requests and results between the nodes
-and the users.
+Vantage6 HQ is the central point of the vantage6 platform. It is responsible
+for managing the organizations, nodes, collaborations, etc., and managing the
+communication of task requests and results between the nodes and the users.
 
 Communication with the vantage6 server is managed through a RESTful API and
 socketIO server.
@@ -18,22 +17,18 @@ socketIO server.
 Configure
 ---------
 
-The vantage6-server requires a configuration file to run. This is a
-``yaml`` file with a specific format.
+Vantage6 HQ requires a configuration file to run. This is a ``yaml`` file with a
+specific format. To create these, see the :ref:`use-hub` section. This will help you
+create a basic configuration file, but will not cover all possible configuration
+options, as that would make a basic setup too complex.
 
-The next sections describes how to configure the server. It first provides a few
-quick answers on setting up your server, then explains where your vantage6
-configuration files are stored, and finally shows an example of all
-configuration file options.
+Below, we list all possible configuration options. You can download this file here:
+:download:`hq_config.yaml <yaml/hq_config.yaml>`
 
-How to create a configuration file
-""""""""""""""""""""""""""""""""""
+.. _hq-configuration-file:
 
-The easiest way to create an initial
-configuration file is via: ``v6 server new``. This allows you to configure the
-basic settings. For more advanced configuration options, which are listed below,
-you can view the :ref:`example configuration file <hq-config-file-structure>`.
-
+.. literalinclude :: yaml/hq_config.yaml
+    :language: yaml
 
 Where is my configuration file?
 """""""""""""""""""""""""""""""
@@ -43,44 +38,15 @@ command
 
 .. code:: bash
 
-    v6 server files
+    v6 hq files
 
 .. warning::
-    This command will only work for if the server has been deployed using the
-    ``v6`` commands.
-
-    Also, note that on local deployments you may need to specify the
-    ``--user`` flag if you put your configuration file in the
-    :ref:`user folder <hq-configure-location>`.
-
-You can also create and edit this file manually.
-
-.. _hq-config-file-structure:
-
-All configuration options
-"""""""""""""""""""""""""
-
-The following configuration file is an example that intends to list all possible
-configuration options.
-
-You can download this file here: :download:`server_config.yaml <yaml/server_config.yaml>`
-
-.. _hq-configuration-file:
-
-.. literalinclude :: yaml/server_config.yaml
-    :language: yaml
-
-.. todo this section is close duplicate of docs/node/configure -- merge?
-
-.. _hq-configure-location:
-
-Configuration file location
-"""""""""""""""""""""""""""
+    This command will only work for if HQ has been deployed using the ``v6`` commands.
 
 The directory where to store the configuration file depends on your
 operating system (OS). It is possible to store the configuration file at
 **system** or at **user** level. At the user level, configuration files are only
-available for your user. By default, server configuration files are stored at
+available for your user. By default, HQ configuration files are stored at
 **system** level.
 
 The default directories per OS are as follows:
@@ -95,36 +61,36 @@ The default directories per OS are as follows:
 | Linux   | |lin_sys|                  | |lin_usr|                          |
 +---------+----------------------------+------------------------------------+
 
-.. |win_sys| replace:: ``C:\ProgramData\vantage\server``
-.. |win_usr| replace:: ``C:\Users\<user>\AppData\Local\vantage\server``
-.. |mac_sys| replace:: ``/Library/Application/Support/vantage6/server``
-.. |mac_usr| replace:: ``/Users/<user>/Library/Application Support/vantage6/server``
-.. |lin_sys| replace:: ``/etc/xdg/vantage6/server/``
-.. |lin_usr| replace:: ``/home/<user>/.config/vantage6/server/``
+.. |win_sys| replace:: ``C:\ProgramData\vantage\hq``
+.. |win_usr| replace:: ``C:\Users\<user>\AppData\Local\vantage\hq``
+.. |mac_sys| replace:: ``/Library/Application/Support/vantage6/hq``
+.. |mac_usr| replace:: ``/Users/<user>/Library/Application Support/vantage6/hq``
+.. |lin_sys| replace:: ``/etc/xdg/vantage6/hq/``
+.. |lin_usr| replace:: ``/home/<user>/.config/vantage6/hq/``
 
 .. warning::
-    The command ``v6 server`` looks in certain directories by default. It is
+    The command ``v6 hq`` looks in certain directories by default. It is
     possible to use any directory and specify the location with the ``--config``
     flag. However, note that using a different directory requires you to specify
     the ``--config`` flag every time!
 
-    Similarly, you can put your server configuration file in the user folder
+    Similarly, you can put your HQ configuration file in the user folder
     by using the ``--user`` flag. Note that in that case, you have to specify
-    the ``--user`` flag for all ``v6 server`` commands.
+    the ``--user`` flag for all ``v6 hq`` commands.
 
 
 Permission management
 ---------------------
 
-Almost everything in the vantage6 server is under role-based access control: not
+Almost everything in vantage6 HQ is under role-based access control: not
 everyone is allowed to access everything.
 
 Authentication types
 ~~~~~~~~~~~~~~~~~~~~
 
-There are three types of entities that can attempt to use the vantage6 server: users,
+There are three types of entities that can attempt to use vantage6 HQ: users,
 nodes and algorithm containers. Not every resource is available to all three
-entities. In the vantage6 server code, this is ensured by using so-called
+entities. In the vantage6 HQ code, this is ensured by using so-called
 decorators that are placed on the API endpoints. These decorators check if the
 entity that is trying to access the endpoint is allowed to do so. For example,
 you may see the following decorators on an endpoint:
@@ -185,8 +151,8 @@ A user may be assigned anywhere between zero and all of the rules.
 
 .. note::
 
-  When you create a new server, the first time it is started, a new user 'root'
-  is created that has all permissions. This user is meant to be used to create
+  When you create a new hub, the first time it is started, a new user 'admin'
+  is created that has all permissions. This user should be used to create
   the first users and organizations.
 
 Roles
@@ -199,7 +165,7 @@ the rules that are part of that role.
 The permission structure of vantage6 allows for a lot of flexibility. However,
 especially for beginning users, it can be a bit daunting to set up all the
 permissions. Therefore, there are some default roles that can be used to quickly
-set up a server. These roles are, in descending order of permissions:
+set up a hub. These roles are, in descending order of permissions:
 
 * Root: all permissions
 * Collaboration Admin: can do almost everything for all organizations in

@@ -3,7 +3,7 @@ import logging
 
 from vantage6.common import logger_name
 
-from vantage6.server import __version__
+from vantage6.hq import __version__
 
 from .test_resource_base import TestResourceBase
 

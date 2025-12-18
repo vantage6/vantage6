@@ -10,10 +10,10 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common.auth import get_keycloak_admin_client
 
-from vantage6.server import db
-from vantage6.server.model.rule import Operation
-from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.input_schema import ResetAPIKeyInputSchema
+from vantage6.hq import db
+from vantage6.hq.model.rule import Operation
+from vantage6.hq.resource import ServicesResources, with_user
+from vantage6.hq.resource.common.input_schema import ResetAPIKeyInputSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

@@ -14,22 +14,22 @@ from vantage6.backend.common.resource.error_handling import (
 )
 from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.server import db
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
     Scope as S,
 )
-from vantage6.server.resource import only_for, with_user
-from vantage6.server.resource.common.output_schema import (
+from vantage6.hq.resource import only_for, with_user
+from vantage6.hq.resource.common.output_schema import (
     TaskSchema,
     TaskWithResultSchema,
     TaskWithRunAndResultSchema,
     TaskWithRunSchema,
 )
-from vantage6.server.resource.common.task_post_base import TaskPostBase
-from vantage6.server.resource.event import kill_task
+from vantage6.hq.resource.common.task_post_base import TaskPostBase
+from vantage6.hq.resource.event import kill_task
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)

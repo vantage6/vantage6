@@ -16,8 +16,8 @@ from sqlalchemy.orm import backref, relationship
 
 from vantage6.common.enum import RunStatus, TaskStatus
 
-import vantage6.server.model as models
-from vantage6.server.model.base import Base, DatabaseSessionManager
+import vantage6.hq.model as models
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Task(Base):

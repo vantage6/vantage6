@@ -41,7 +41,6 @@ class MockBaseClient:
                 "_fetch_and_decrypt_run_data",
                 "_multi_page_request",
                 "_refresh_token",
-                "_refresh_url",
                 "_upload_run_data_to_hq",
                 "auth_url",
                 "authenticate",

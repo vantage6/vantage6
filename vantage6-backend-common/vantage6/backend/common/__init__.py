@@ -1,4 +1,4 @@
-"""Common functionality for the vantage6 server and algorithm store."""
+"""Common functionality for vantage6 HQ and the algorithm store."""
 
 import importlib.metadata
 import json
@@ -32,7 +32,7 @@ from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBa
 from vantage6.backend.common.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
     HOST_URI_ENV,
-    RequiredServerEnvVars,
+    RequiredBackendEnvVars,
 )
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
@@ -45,9 +45,9 @@ log = logging.getLogger(module_name)
 
 
 class Vantage6App:
-    """Base class for all vantage6 server applications."""
+    """Base class for all vantage6 backend applications."""
 
-    def __init__(self, ctx: BaseBackendContext, server_module_name: str) -> None:
+    def __init__(self, ctx: BaseBackendContext, backend_module_name: str) -> None:
         """Initialize the vantage6 app."""
         self.ctx = ctx
 
@@ -56,7 +56,7 @@ class Vantage6App:
 
         # initialize, configure Flask
         self.app = Flask(
-            server_module_name,
+            backend_module_name,
             root_path=Path(__file__),
             template_folder=Path(__file__).parent / "templates",
             static_folder=Path(__file__).parent / "static",
@@ -97,7 +97,7 @@ class Vantage6App:
         if host_uri:
             os.environ[HOST_URI_ENV] = host_uri
 
-        # set the server version
+        # set the backend's version
         self.__version__ = __version__
 
     @abstractmethod
@@ -118,17 +118,17 @@ class Vantage6App:
 
     def validate_required_env_vars(self) -> None:
         """Validate that the required environment variables are set."""
-        validate_required_env_vars(RequiredServerEnvVars)
+        validate_required_env_vars(RequiredBackendEnvVars)
 
     def _get_keycloak_public_key(self) -> str:
-        """Get the public key for the keycloak server."""
+        """Get the public key from the keycloak service."""
         num_attempts = 10
         retry_delay = 5
         for _ in range(num_attempts):
             try:
                 response = requests.get(
-                    f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
-                    f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}",
+                    f"{os.environ.get(RequiredBackendEnvVars.KEYCLOAK_URL.value)}/realms"
+                    f"/{os.environ.get(RequiredBackendEnvVars.KEYCLOAK_REALM.value)}",
                     timeout=100,
                 )
                 key = response.json()["public_key"]
@@ -239,7 +239,7 @@ class Vantage6App:
             log.exception("Exception occured during request")
             database_session_manager.clear_session()
             return {
-                "msg": "An unexpected error occurred on the server!"
+                "msg": "An unexpected error occurred!"
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
         @self.app.route("/robots.txt")
@@ -375,7 +375,7 @@ def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | No
     if hq_url_from_request:
         return hq_url_from_request
     hq_url = config.get("hq_url")
-    # make sure that the server url ends with the api path
+    # make sure that the HQ url ends with the api path
     api_path = config.get("api_path", DEFAULT_API_PATH)
     if hq_url and not hq_url.endswith(api_path):
         hq_url = hq_url + api_path

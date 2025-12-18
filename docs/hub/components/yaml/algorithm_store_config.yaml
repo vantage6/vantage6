@@ -36,9 +36,9 @@ store:
     adminClient: backend-admin-client
     adminClientSecret: myadminclientsecret
 
-  # The URI of the vantage6 server that provides the admin user that will be admin
+  # The URI of the vantage6 HQ that provides the admin user that will be admin
   # user in the store on startup.
-  vantage6HQUri: https://my_server.org/my_api_path
+  vantage6HQUri: https://my_hq.org/my_api_path
 
   policies:
     # Set who is allowed to view the algorithms in the store. Possible values are:
@@ -76,10 +76,10 @@ store:
     allowedReviewAssigners:
       - some_username
 
-  # set up with which origins the server should allow CORS requests. The default
+  # set up with which origins the store should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here. Below are examples to allow requests from the Uluru UI, and
-  # port 7600 on localhost. Usually, only the UI needs to access the server.
+  # port 7600 on localhost. Usually, only the UI needs to access the store.
   cors_allowed_origins:
     - https://portal.uluru.vantage6.ai
     - http://localhost:7600
@@ -92,10 +92,10 @@ store:
       password: docker-registry-password
 
   # development mode settings. Only use when running both the algorithm store and
-  # the server that it communicates with locally
+  # the HQ that it communicates with locally
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
-    # communicate with the server. On Windows and Mac, when using Docker Desktop, you
+    # communicate with HQ. On Windows and Mac, when using Docker Desktop, you
     # can use the special hostname `host.docker.internal` to refer to the host machine.
     # On Linux, you should normally use http://172.17.0.1.
     host_uri: http://host.docker.internal

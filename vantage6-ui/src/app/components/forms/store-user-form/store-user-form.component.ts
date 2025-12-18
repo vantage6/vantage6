@@ -45,7 +45,7 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
   userRoles: StoreRole[] = [];
   userRules: StoreRule[] = [];
   availableRoles: StoreRole[] = [];
-  serverUsers: BaseUser[] = [];
+  hqUsers: BaseUser[] = [];
   store: AlgorithmStore | null = null;
   compareRolesForSelection = compareObjIDs;
 
@@ -99,10 +99,10 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
     this.setupForm();
 
     if (!this.user) {
-      // if the user is being created, get the users from the server
-      this.serverUsers = await this.userService.getUsers();
+      // if the user is being created, get the users from HQ
+      this.hqUsers = await this.userService.getUsers();
       // remove the current user from the list
-      this.serverUsers = this.serverUsers.filter((serverUser) => serverUser.id !== this.permissionService.activeUser?.id);
+      this.hqUsers = this.hqUsers.filter((user) => user.id !== this.permissionService.activeUser?.id);
     } else {
       // if the user is being edited, set the form values
       this.userRoles = this.user.roles;

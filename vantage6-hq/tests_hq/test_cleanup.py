@@ -7,10 +7,10 @@ from sqlalchemy import select
 
 from vantage6.common.enum import RunStatus
 
-from vantage6.server.controller import cleanup
-from vantage6.server.model import Task
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.model.run import Run
+from vantage6.hq.l import Task
+from vantage6.hq.l.base import Database, DatabaseSessionManager
+from vantage6.hq.l.run import Run
+from vantage6.hq.roller import cleanup
 
 
 class TestCleanupRunsIsolated(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         Database().clear_data()
         Database().close()
 
-    @patch("vantage6.server.model.task.Task")
+    @patch("vantage6.hq.model.task.Task")
     def test_cleanup_completed_old_run(self, mock_task):
         # Now use the actual instances, not ints
         task = Task(
@@ -54,9 +54,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.assertEqual(run.log, "log should be preserved")
         self.assertIsNotNone(run.cleanup_at)
 
-    @patch(
-        "vantage6.server.service.azure_storage_service.AzureStorageService.delete_blob"
-    )
+    @patch("vantage6.hq.service.azure_storage_service.AzureStorageService.delete_blob")
     def test_cleanup_completed_old_blob(self, mock_delete_blob):
         task = Task(
             name="test-task",

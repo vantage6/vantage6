@@ -13,7 +13,7 @@ A Docker registry or repository provides storage and versioning for Docker
 images. Installing a private Docker registry is useful if you don't want to
 share your algorithms. Also, a private registry may have security benefits,
 for example, you can scan your images for vulnerabilities and you can limit
-the range of IP addresses that the node may access to its server and the
+the range of IP addresses that the node may access to the vantage6 hub and the
 private registry.
 
 .. note::

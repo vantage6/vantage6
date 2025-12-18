@@ -3,7 +3,7 @@ from typing import Self
 import bcrypt
 from sqlalchemy import Column, DateTime, String, select
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Authenticatable(Base):

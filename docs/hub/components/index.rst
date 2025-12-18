@@ -1,12 +1,12 @@
 Components
 ==========
 
-This section describes the components of the vantage6 server.
+This section describes the components of the vantage6 hub.
 
 .. toctree::
     :maxdepth: 3
 
-    core
+    hq
     auth
     store
     ui

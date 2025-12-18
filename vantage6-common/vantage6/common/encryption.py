@@ -1,8 +1,7 @@
 """Encryption between organizations
 
 Module to provide async encrpytion between organizations. All input arguments and
-result fields should be encrypted when communicating to the central
-server.
+result fields should be encrypted when communicating to HQ.
 
 All incomming messages (input arguments/results) should be encrypted using the
 public key of this organization. This way we can decrypt them using our
@@ -256,7 +255,7 @@ class RSACryptor(CryptorBase):
     key from another organization, make sure the key is in the right
     data-type.
 
-    Communication between node and server requires serialization (and
+    Communication between node and HQ requires serialization (and
     deserialization) of the encrypted messages (which are in bytes).
     The API can not communicate bytes, therefore a base64 conversion
     needs to be executed (and also a utf-8 encoding needs to be applied
@@ -813,18 +812,17 @@ class RSACryptor(CryptorBase):
 
         Compare a public key with the generated public key from the private key
         that is stored in this instance. This is usefull for verifying that the
-        public key stored on the server is derived from the currently used
+        public key stored on HQ is derived from the currently used
         private key.
 
         Parameters
         ----------
         pubkey_base64: str
-            The public key to verify as returned from the server.
+            The public key to verify as returned from HQ.
 
         Returns
         -------
         bool
             True if the public key is valid, False otherwise.
         """
-        public_key_server = base64s_to_bytes(pubkey_base64)
-        return self.public_key_bytes == public_key_server
+        return self.public_key_bytes == base64s_to_bytes(pubkey_base64)

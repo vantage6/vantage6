@@ -6,9 +6,9 @@ from vantage6.common.enum import AlgorithmStepType, RunStatus
 
 from vantage6.backend.common.resource.error_handling import BadRequestError
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
-from vantage6.server.model.task import Task
-from vantage6.server.model.task_database import TaskDatabase
+from vantage6.hq.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.task import Task
+from vantage6.hq.model.task_database import TaskDatabase
 
 
 class Dataframe(Base):

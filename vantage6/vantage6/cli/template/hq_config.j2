@@ -1,89 +1,89 @@
 # Override the chart name
-nameOverride: {{ nameOverride | default('vantage6-server') }}
+nameOverride: {{ nameOverride | default('vantage6-hq') }}
 # Optional, by default the Release.Namespace is used
-# namespace: vantage6-server
-server:
-  # The description of the server
-  description: {{ server.description | default('Vantage6 server version 5') }}
+# namespace: vantage6-hq
+hq:
+  # The description of this HQ instance
+  description: {{ hq.description | default('Vantage6 HQ version 5') }}
 
-  # The external URL of the server
-  baseUrl: {{ server.baseUrl | default('http://localhost:7601') }}
-  apiPath: {{ server.apiPath | default('/server') }}
+  # The external URL of the HQ
+  baseUrl: {{ hq.baseUrl | default('http://localhost:7601') }}
+  apiPath: {{ hq.apiPath | default('/hq') }}
 
   # Keycloak configuration
   keycloak:
-    url: {{ server.keycloak.url }}
-    realm: {{ server.keycloak.realm | default('vantage6') }}
-    adminUsername: {{ server.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ server.keycloak.adminPassword | default('admin') }}
-    adminClient: {{ server.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ server.keycloak.adminClientSecret | default('myadminclientsecret') }}
-    manage_users_and_nodes: {{ server.keycloak.manage_users_and_nodes | default(true) }}
+    url: {{ hq.keycloak.url }}
+    realm: {{ hq.keycloak.realm | default('vantage6') }}
+    adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
+    adminPassword: {{ hq.keycloak.adminPassword | default('admin') }}
+    adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
+    adminClientSecret: {{ hq.keycloak.adminClientSecret | default('myadminclientsecret') }}
+    manage_users_and_nodes: {{ hq.keycloak.manage_users_and_nodes | default(true) }}
 
-  {% if server.internal is defined %}
+  {% if hq.internal is defined %}
   internal:
-    port: {{ server.internal.port | default(7601) }}
+    port: {{ hq.internal.port | default(7601) }}
   {% endif %}
-  {% if server.internal is not defined %}
+  {% if hq.internal is not defined %}
   internal:
     port: 7601
   {% endif %}
 
-  port: {{ server.port | default(7601) }}
+  port: {{ hq.port | default(7601) }}
 
-  # The number of replicas of the server
-  replications: {{ server.replications | default(1) }}
+  # The number of replicas of this HQ instance
+  replications: {{ hq.replications | default(1) }}
 
-  # The image used to start the server
-  image: {{ server.image | default('harbor2.vantage6.ai/infrastructure/server:latest') }}
+  # The image used to start the hq
+  image: {{ hq.image | default('harbor2.vantage6.ai/infrastructure/hq:latest') }}
 
-  # Server image pull policy.
+  # HQ image pull policy.
   # Possible values are:
   # - Always: always pull the image from the registry
-  # - IfNotPresent: pull the image from the registry if it is not present on the server
+  # - IfNotPresent: pull the image from the registry if it is not present
   # - Never: never pull the image from the registry
-  imagePullPolicy: {{ server.imagePullPolicy | default('Always') }}
+  imagePullPolicy: {{ hq.imagePullPolicy | default('Always') }}
 
   logging:
     # Controls the logging output level. Could be one of the following
     # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-    level: {{ server.logging.level | default('INFO') }}
+    level: {{ hq.logging.level | default('INFO') }}
 
     # Location to the log file
-    file: {{ server.logging.file | default('server.log') }}
+    file: {{ hq.logging.file | default('hq.log') }}
 
     # Size of the kubernetes persistent volume claim for logs
-    storageSize: {{ server.logging.storageSize | default('1Gi') }}
+    storageSize: {{ hq.logging.storageSize | default('1Gi') }}
 
     # Storage class to use for the kubernetes persistent volume claim for logs
-    storageClass: {{ server.logging.storageClass | default('local-storage') }}
+    storageClass: {{ hq.logging.storageClass | default('local-storage') }}
 
     # Host path for storing the logs (required for local-storage PV)
-    volumeHostPath: {{ server.logging.volumeHostPath | default('/var/log/vantage6-server') }}
+    volumeHostPath: {{ hq.logging.volumeHostPath | default('/var/log/vantage6-hq') }}
 
     # Size in kb of a single log file
-    max_size: {{ server.logging.max_size | default(1024) }}
-    use_console: {{ server.logging.use_console | default(true) }}
+    max_size: {{ hq.logging.max_size | default(1024) }}
+    use_console: {{ hq.logging.use_console | default(true) }}
 
     # Date format for the log file
-    datefmt: "{{ server.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+    datefmt: "{{ hq.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
 
     # Format for the log file
-    format: "{{ server.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+    format: "{{ hq.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
 
     # Maximum number of log files to keep. Log files are rotated when the size of the
     # current log file exceeds `max_size`.
-    backup_count: {{ server.logging.backup_count | default(5) }}
+    backup_count: {{ hq.logging.backup_count | default(5) }}
 
     # Loggers to include in the log file
     loggers:
-    {% if server.logging.loggers is defined %}
-    {% for logger in server.logging.loggers %}
+    {% if hq.logging.loggers is defined %}
+    {% for logger in hq.logging.loggers %}
     - level: {{ logger.level }}
       name: {{ logger.name }}
     {% endfor %}
     {% endif %}
-    {% if server.logging.loggers is not defined %}
+    {% if hq.logging.loggers is not defined %}
     - level: warning
       name: urllib3
     - level: warning
@@ -96,45 +96,45 @@ server:
       name: sqlalchemy.engine
     {% endif %}
 
-  {% if server.jwt is defined and server.jwt.secret is defined %}
+  {% if hq.jwt is defined and hq.jwt.secret is defined %}
   # Setting constant secret for the JWT token. This is not recommended for production
   # environments.
   jwt:
-    secret: {{ server.jwt.secret }}
+    secret: {{ hq.jwt.secret }}
   {% endif %}
 
   # Whether to forward ports using kubernetes or not. If set to false, the ports will
   # not be forwarded. You are then responsible yourself for forwarding the ports.
-  forward_ports: {{ server.forward_ports | default(true) }}
+  forward_ports: {{ hq.forward_ports | default(true) }}
 
-  {% if server.dev is defined %}
+  {% if hq.dev is defined %}
   dev:
-    host_uri: {{ server.dev.host_uri | default('host.docker.internal') }}
-    # store address of the algorithm store. This can be provided to the server for
+    host_uri: {{ hq.dev.host_uri | default('host.docker.internal') }}
+    # store address of the algorithm store. This can be provided to the hq for
     # a custom address of the local algorithm store within the k8s cluster.
-    store_address: {{ server.dev.store_address | default('http://vantage6-store-store.service.default.svc.cluster.local') }}
+    store_address: {{ hq.dev.store_address | default('http://vantage6-store-store.service.default.svc.cluster.local') }}
     # Whether to forward ports to host locally using kubernetes or not, using the
     # NodePort feature of kubernetes. If set to false, the ports will
     # not be forwarded. In production, this should be false and you are responsible
     # for forwarding the ports with your own ingress or load balancer.
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
-    forward_ports: {{ server.dev.forward_ports | default(false) }}
+    forward_ports: {{ hq.dev.forward_ports | default(false) }}
     # If forward_ports is true, these are the ports that will be exposed on the host.
-    local_hub_port_to_expose: {{ server.dev.local_hub_port_to_expose | default(30761) }}
-    local_ui_port_to_expose: {{ server.dev.local_ui_port_to_expose | default(30760) }}
-    {% if server.dev.local_prometheus_port_to_expose is defined %}
-    local_prometheus_port_to_expose: {{ server.dev.local_prometheus_port_to_expose }}
+    local_hub_port_to_expose: {{ hq.dev.local_hub_port_to_expose | default(30761) }}
+    local_ui_port_to_expose: {{ hq.dev.local_ui_port_to_expose | default(30760) }}
+    {% if hq.dev.local_prometheus_port_to_expose is defined %}
+    local_prometheus_port_to_expose: {{ hq.dev.local_prometheus_port_to_expose }}
     {% else %}
     # local_prometheus_port_to_expose: 30763
     {% endif %}
   {% endif %}
 
-  # If you want to couple algorithm stores to the server on startup, you can add them here.
-  # The name is used to identify the algorithm store in the server's database.
+  # If you want to couple algorithm stores to HQ on startup, you can add them here.
+  # The name is used to identify the algorithm store in the HQ's database.
   # The url is the URL of the algorithm store's API.
-  {% if server.algorithm_stores is defined %}
+  {% if hq.algorithm_stores is defined %}
   algorithm_stores:
-    {% for store in server.algorithm_stores %}
+    {% for store in hq.algorithm_stores %}
     - name: {{ store.name }}
       url: {{ store.url }}
       api_path: {{ store.api_path }}
@@ -151,31 +151,31 @@ server:
   # Disabled unless you specify this option. Careful! Make sure you have regular
   # backups of your database before enabling this feature, as a wrong configuration
   # could lead to data loss.
-  {% if server.runs_data_cleanup_days is defined %}
-  runs_data_cleanup_days: {{ server.runs_data_cleanup_days }}
+  {% if hq.runs_data_cleanup_days is defined %}
+  runs_data_cleanup_days: {{ hq.runs_data_cleanup_days }}
   {% endif %}
-  {% if server.runs_data_cleanup_days is not defined %}
+  {% if hq.runs_data_cleanup_days is not defined %}
   # runs_data_cleanup_days: 30
   {% endif %}
   # Whether to also delete the algorithm arguments of the runs. False by default.
-  {% if server.runs_data_cleanup_include_args is defined %}
-  runs_data_cleanup_include_args: {{ server.runs_data_cleanup_include_args }}
+  {% if hq.runs_data_cleanup_include_args is defined %}
+  runs_data_cleanup_include_args: {{ hq.runs_data_cleanup_include_args }}
   {% endif %}
-  {% if server.runs_data_cleanup_include_args is not defined %}
+  {% if hq.runs_data_cleanup_include_args is not defined %}
   # runs_data_cleanup_include_args: false
   {% endif %}
 
-  # set up with which origins the server should allow CORS requests. The default
+  # set up with which origins HQ should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here.
-  {% if server.cors_allowed_origins is defined %}
+  {% if hq.cors_allowed_origins is defined %}
   cors_allowed_origins:
-    {% for origin in server.cors_allowed_origins %}
+    {% for origin in hq.cors_allowed_origins %}
     - {{ origin }}
     {% endfor %}
   {% else %}
   # Below are examples to allow requests from the Uluru UI, and
-  # port 7600 on localhost. Usually, only the UI needs to access the server.
+  # port 7600 on localhost. Usually, only the UI needs to access HQ from a browser.
   # cors_allowed_origins:
   #   - https://portal.uluru.vantage6.ai
   #   - http://localhost:7600
@@ -260,7 +260,7 @@ ui:
 
 # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
 # This is done using Prometheus. There are two components to this:
-# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+# 1. The Prometheus exporter (running as part of vantage6 HQ), which collects
 #    the metrics from the nodes.
 # 2. The Prometheus server (running as a separate service), which scrapes the
 #     metrics exposed by the Prometheus exporter and stores them.

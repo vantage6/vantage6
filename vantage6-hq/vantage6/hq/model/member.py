@@ -11,7 +11,7 @@ same way as the Member table.
 
 from sqlalchemy import Column, ForeignKey, Integer, Table
 
-from vantage6.server.model.base import Base
+from vantage6.hq.model.base import Base
 
 Member = Table(
     "Member",

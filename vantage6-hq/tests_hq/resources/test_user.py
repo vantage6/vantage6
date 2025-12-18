@@ -7,14 +7,14 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common import session as db_session
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Organization,
     Role,
     Rule,
     User,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 
@@ -39,7 +39,7 @@ class TestResources(TestResourceBase):
         result = self.app.get("/api/user/9999", headers=headers)
         self.assertEqual(result.status_code, 404)
 
-    @patch("vantage6.server.resource.user.Users._create_user_in_keycloak")
+    @patch("vantage6.hq.resource.user.Users._create_user_in_keycloak")
     def test_user_post(self, mock_create_user_in_keycloak):
         mock_create_user_in_keycloak.return_value = str(uuid.uuid1())
 
@@ -54,7 +54,7 @@ class TestResources(TestResourceBase):
         result = self.app.post("/api/user", headers=headers, json=new_user)
         self.assertEqual(result.status_code, 400)
 
-    @patch("vantage6.server.resource.user.User._delete_user_in_keycloak")
+    @patch("vantage6.hq.resource.user.User._delete_user_in_keycloak")
     def test_user_delete(self, mock_delete_user_in_keycloak):
         mock_delete_user_in_keycloak.return_value = None
 
@@ -200,7 +200,7 @@ class TestResources(TestResourceBase):
         result = self.app.post("/api/user", headers=headers, json=userdata)
         self.assertEqual(result.status_code, HTTPStatus.BAD_REQUEST)
 
-    @patch("vantage6.server.resource.user.Users._create_user_in_keycloak")
+    @patch("vantage6.hq.resource.user.Users._create_user_in_keycloak")
     def test_new_permission_user(self, mock_create_user_in_keycloak):
         mock_create_user_in_keycloak.return_value = str(uuid.uuid1())
 
@@ -506,7 +506,7 @@ class TestResources(TestResourceBase):
         org3.delete()
         col.delete()
 
-    @patch("vantage6.server.resource.user.User._delete_user_in_keycloak")
+    @patch("vantage6.hq.resource.user.User._delete_user_in_keycloak")
     def test_delete_user_permissions(self, mock_delete_user_in_keycloak):
         mock_delete_user_in_keycloak.return_value = None
         org = Organization()

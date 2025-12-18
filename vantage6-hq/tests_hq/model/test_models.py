@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from vantage6.backend.common import session
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Node,
     Organization,
@@ -16,7 +16,7 @@ from vantage6.server.model import (
     Task,
     User,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_model_base import TestModelBase
 

@@ -2,7 +2,7 @@ from typing import Self
 
 from sqlalchemy import Column, ForeignKey, Integer, String, select
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class DataframeToBeDeletedAtNode(Base):

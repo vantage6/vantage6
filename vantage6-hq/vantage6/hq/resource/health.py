@@ -7,7 +7,7 @@ from sqlalchemy import text
 
 from vantage6.common import logger_name
 
-from vantage6.server.resource import ServicesResources
+from vantage6.hq.resource import ServicesResources
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -46,7 +46,7 @@ class Health(ServicesResources):
         """Displays the health of services
         ---
         description: >-
-          Checks if server can communicate with the database. If not, it throws
+          Checks if HQ can communicate with the database. If not, it throws
           an exception.
 
         responses:

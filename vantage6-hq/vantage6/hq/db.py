@@ -1,6 +1,6 @@
 # TODO this file is awkward...
 # ruff: noqa: F401
-from vantage6.server.model import (
+from vantage6.hq.model import (
     AlgorithmStore,
     Authenticatable,
     Base,

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "vantage6-server"
+name = "vantage6-hq"
 version = "5.0.0b1"
-description = "Vantage6 server"
+description = "Vantage6 HQ"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -53,7 +53,7 @@ dev = [
 ]
 
 [project.scripts]
-vserver-local = "vantage6.server.cli.server:cli_server"
+vhq-local = "vantage6.hq.cli.hq:cli_hq"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vantage6"]
@@ -62,7 +62,7 @@ packages = ["vantage6"]
 "vantage6" = "vantage6"
 
 [tool.setuptools.packages.find]
-where = ["vantage6/server"]
+where = ["vantage6/hq"]
 
 [tool.setuptools.package-data]
-"vantage6/server/" = ["_data"]
+"vantage6/hq/" = ["_data"]

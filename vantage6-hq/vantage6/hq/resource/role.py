@@ -14,7 +14,7 @@ from vantage6.backend.common.resource.error_handling import (
     UnauthorizedError,
     handle_exceptions,
 )
-from vantage6.backend.common.resource.input_schema import ServerRoleInputSchema
+from vantage6.backend.common.resource.input_schema import HQRoleInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.backend.common.resource.role import (
     apply_user_filter,
@@ -29,20 +29,20 @@ from vantage6.backend.common.resource.role import (
     validate_user_exists,
 )
 
-from vantage6.server import db
-from vantage6.server.default_roles import DefaultRole
-from vantage6.server.model.rule import Operation, Scope
-from vantage6.server.permission import (
+from vantage6.hq import db
+from vantage6.hq.default_roles import DefaultRole
+from vantage6.hq.model.rule import Operation, Scope
+from vantage6.hq.permission import (
     Operation as P,
     PermissionManager,
     RuleCollection,
 )
-from vantage6.server.resource import (
+from vantage6.hq.resource import (
     ServicesResources,
     get_org_ids_from_collabs,
     with_user,
 )
-from vantage6.server.resource.common.output_schema import RoleSchema, RuleSchema
+from vantage6.hq.resource.common.output_schema import RoleSchema, RuleSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -152,7 +152,7 @@ def permissions(permissions: PermissionManager) -> None:
 # -----------------------------------------------------------------------------
 role_schema = RoleSchema()
 rule_schema = RuleSchema()
-role_input_schema = ServerRoleInputSchema(default_roles=DefaultRole.list())
+role_input_schema = HQRoleInputSchema(default_roles=DefaultRole.list())
 
 
 class RoleBase(ServicesResources):
@@ -267,7 +267,7 @@ class Roles(RoleBase):
 
         description: >-
             Returns a list of roles. Depending on your permission, you get all
-            the roles at the server or only the roles that belong to your
+            the roles for all organizations or only the roles that belong to your
             organization.\n
 
             ### Permission Table\n

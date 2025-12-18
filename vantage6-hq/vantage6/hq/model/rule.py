@@ -6,7 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common.enum import StrEnumBase
 
-from vantage6.server.model.base import Base, DatabaseSessionManager
+from vantage6.hq.model.base import Base, DatabaseSessionManager
 
 
 class Operation(StrEnumBase):
@@ -85,7 +85,7 @@ class Rule(Base):
     """Rules to determine permissions in an API endpoint.
 
     A rule gives access to a single type of action with a given operation, scope and
-    resource on which it acts. Note that rules are defined on startup of the server,
+    resource on which it acts. Note that rules are defined on startup of HQ,
     based on permissions defined in the endpoints. You cannot edit the rules in the
     database.
 
@@ -102,9 +102,9 @@ class Rule(Base):
 
     Relationships
     -------------
-    roles : list[:class:`.~vantage6.server.model.role.Role`]
+    roles : list[:class:`.~vantage6.hq.model.role.Role`]
         Roles that have this rule
-    users : list[:class:`.~vantage6.server.model.user.User`]
+    users : list[:class:`.~vantage6.hq.model.user.User`]
         Users that have this rule
     """
 

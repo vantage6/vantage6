@@ -174,7 +174,7 @@ export class ApiService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getErrorMsg(error: any): string {
     let errorMsg = error.error?.msg ? error.error?.msg : 'An error occurred';
-    // Vantage6 server does request validation - if there are errors, they are returned in the response.
+    // Vantage6 HQ does request validation - if there are errors, they are returned in the response.
     // Here we append these errors to the error message.
     if (error.error?.errors) {
       errorMsg +=
@@ -195,9 +195,9 @@ export class ApiService {
   private getApiPath(path: string): string {
     // Lazy loaded calls already include API path
     if (path.startsWith('/') && path.startsWith(`${environment.api_path}/`)) {
-      return environment.server_url + path;
+      return environment.hq_url + path;
     }
-    return environment.server_url + environment.api_path + path;
+    return environment.hq_url + environment.api_path + path;
   }
 
   private getAlgoStorePath(algoStore: AlgorithmStore, path: string): string {

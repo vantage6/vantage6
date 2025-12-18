@@ -3,9 +3,9 @@
 Authentication service
 =======================
 
-The authentication service is responsible for authenticating users and nodes. It is a
-separate service that is not part of the vantage6 server. It is responsible for
-managing the users and nodes and their credentials.
+The authentication service is responsible for authenticating users and nodes. It uses
+the popular `Keycloak <https://www.keycloak.org/>`_ service to handle authentication
+within the vantage6 infrastructure.
 
 .. Installation
 .. ------------

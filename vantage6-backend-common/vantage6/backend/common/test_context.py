@@ -8,10 +8,10 @@ from vantage6.cli.configuration_manager import TestingConfigurationManager
 
 class TestContext(AppContext):
     """
-    Server context for testing purposes.
+    Backend context for testing purposes.
 
-    Note that this context is specific to the server: for nodes, there is a
-    separate test context.
+    This context is used to test the backend applications, i.e. the HQ and the
+    algorithm store.
     """
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
@@ -44,9 +44,7 @@ class TestContext(AppContext):
             Path to the unittest configuration file
         """
         if instance_type == InstanceType.HQ:
-            return (
-                package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
-            )
+            return package_folder / APPNAME / "hq" / "_data" / "unittest_config.yaml"
         elif instance_type == InstanceType.ALGORITHM_STORE:
             return (
                 package_folder

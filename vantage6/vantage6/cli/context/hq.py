@@ -16,7 +16,7 @@ from vantage6.cli.globals import (
 
 class HQContext(BaseBackendContext):
     """
-    Server context
+    HQ context
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ class HQContext(BaseBackendContext):
         System wide or user configuration, by default S_FOL
     """
 
-    # The server configuration manager is aware of the structure of the server
+    # The HQ configuration manager is aware of the structure of the HQ
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = HQConfigurationManager
 
@@ -61,12 +61,12 @@ class HQContext(BaseBackendContext):
     @property
     def prometheus_container_name(self) -> str:
         """
-        Get the name of the Prometheus pod for this server.
+        Get the name of the Prometheus pod for this HQ.
 
         Returns
         -------
         str
-            Prometheus container name, unique to this server instance.
+            Prometheus container name, unique to this HQ instance.
         """
         return f"{APPNAME}-{self.name}-{self.scope}-prometheus"
 
@@ -87,7 +87,7 @@ class HQContext(BaseBackendContext):
         cls, path: str, system_folders: bool = S_FOL, in_container: bool = False
     ) -> HQContext:
         """
-        Create a server context from an external configuration file. External
+        Create a HQ context from an external configuration file. External
         means that the configuration file is not located in the default folders
         but its location is specified by the user.
 
@@ -102,8 +102,8 @@ class HQContext(BaseBackendContext):
 
         Returns
         -------
-        ServerContext
-            Server context object
+        HQContext
+            HQ context object
         """
         return super().from_external_config_file(
             path,
@@ -145,7 +145,7 @@ class HQContext(BaseBackendContext):
         cls, system_folders: bool = S_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
-        Find all available server configurations in the default folders.
+        Find all available HQ configurations in the default folders.
 
         Parameters
         ----------

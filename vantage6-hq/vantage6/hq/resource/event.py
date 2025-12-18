@@ -11,10 +11,10 @@ from vantage6.common import logger_name
 from vantage6.common.enum import RunStatus, TaskStatus
 from vantage6.common.globals import AuthStatus
 
-from vantage6.server import db
-from vantage6.server.permission import Operation, PermissionManager, Scope
-from vantage6.server.resource import ServicesResources, with_user
-from vantage6.server.resource.common.input_schema import (
+from vantage6.hq import db
+from vantage6.hq.permission import Operation, PermissionManager, Scope
+from vantage6.hq.resource import ServicesResources, with_user
+from vantage6.hq.resource.common.input_schema import (
     KillNodeTasksInputSchema,
     KillTaskInputSchema,
 )

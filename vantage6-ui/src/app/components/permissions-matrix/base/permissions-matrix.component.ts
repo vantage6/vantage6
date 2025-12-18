@@ -8,7 +8,7 @@ import { OperationType, ResourceType, Rule, Rule_, ScopeType, StoreResourceType,
 
 type ResourceType_ = ResourceType | StoreResourceType;
 
-export class ServerResourcePermission {
+export class HQResourcePermission {
   constructor(
     public resource: ResourceType,
     public scopes: ScopePermission[]
@@ -22,7 +22,7 @@ export class StoreResourcePermission {
   ) {}
 }
 
-export type ResourcePermission = ServerResourcePermission | StoreResourcePermission;
+export type ResourcePermission = HQResourcePermission | StoreResourcePermission;
 
 export class ScopePermission {
   constructor(
@@ -82,10 +82,10 @@ export class OperationPermissionDictionary {
 }
 
 @Component({
-    selector: 'app-permissions-matrix',
-    templateUrl: './permissions-matrix.component.html',
-    styleUrls: ['./permissions-matrix.component.scss'],
-    standalone: false
+  selector: 'app-permissions-matrix',
+  templateUrl: './permissions-matrix.component.html',
+  styleUrls: ['./permissions-matrix.component.scss'],
+  standalone: false
 })
 export abstract class BasePermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy {
   /* Rules that are visualised as selected and cannot be unselected by the user. */

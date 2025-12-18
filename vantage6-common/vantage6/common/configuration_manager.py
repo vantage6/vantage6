@@ -238,14 +238,14 @@ class ConfigurationManager(object):
     @abstractmethod
     def get_config_template(self) -> Template:
         """
-        Get the configuration template for the server.
+        Get the configuration template for a specific infrastructure component.
         """
         pass
 
     @classmethod
     def _get_config_template(cls, template_file: str) -> Template:
         """
-        Get the configuration template for the server.
+        Get the configuration template for a specific infrastructure component.
 
         Parameters
         ----------

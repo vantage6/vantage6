@@ -43,7 +43,7 @@ class RunIO:
         action: AlgorithmStepType
             Type of action that is being performed
         client: NodeClient
-            Client to communicate with the server
+            Client to communicate with HQ
         dataframe_details: dict, optional
             Details of the dataframe that is being used in the run. Required for
             actions that update the session state.
@@ -250,5 +250,5 @@ class RunIO:
             for field in algo_result.schema
         ]
         self.client.column.post(self.df_id, columns_info)
-        self.log.debug("Column data sent to server: %s", columns_info)
+        self.log.debug("Column data sent to HQ: %s", columns_info)
         return RunStatus.COMPLETED

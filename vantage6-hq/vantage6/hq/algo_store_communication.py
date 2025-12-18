@@ -8,7 +8,7 @@ from flask import Response
 
 from vantage6.common.globals import DEFAULT_API_PATH, HTTP_LOCALHOST, LINUX_LOCALHOST
 
-from vantage6.server import db
+from vantage6.hq import db
 
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
@@ -114,7 +114,7 @@ def request_algo_store(
     headers: dict = None,
 ) -> tuple[dict | Response, HTTPStatus]:
     """
-    Whitelist this vantage6 server url for the algorithm store.
+    Whitelist this vantage6 HQ url for the algorithm store.
 
     Parameters
     ----------
@@ -186,7 +186,7 @@ def request_algo_store(
                 f"{response.status_code}"
             )
         return {"msg": msg}, response.status_code
-    # else: server has been registered at algorithm store, proceed
+    # else: HQ has been registered at algorithm store, proceed
     return response, response.status_code
 
 
@@ -203,8 +203,8 @@ def _execute_algo_store_request(
     headers: dict = None,
 ) -> requests.Response:
     """
-    Send a request to the algorithm store to whitelist this vantage6 server
-    url for the algorithm store.
+    Send a request to the algorithm store to whitelist this vantage6 HQ URL for the
+    algorithm store.
 
     Parameters
     ----------
@@ -213,8 +213,8 @@ def _execute_algo_store_request(
     endpoint : str
         Endpoint to use at the algorithm store.
     method : str
-        HTTP method to use. Choose "post" for adding the server url and
-        "delete" for removing it.
+        HTTP method to use. Choose "post" for adding the HQ URL and "delete" for
+        removing it.
     params : dict, optional
         Parameters to be included in the request
     headers : dict, optional

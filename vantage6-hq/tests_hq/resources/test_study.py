@@ -3,14 +3,14 @@ from http import HTTPStatus
 
 from vantage6.common import logger_name
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Node,
     Organization,
     Rule,
     Study,
 )
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 from .test_resource_base import TestResourceBase
 

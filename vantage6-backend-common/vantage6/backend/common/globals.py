@@ -18,8 +18,8 @@ DEFAULT_SUPPORT_EMAIL_ADDRESS = "support@vantage6.ai"
 DEFAULT_EMAIL_FROM_ADDRESS = "noreply@vantage6.ai"
 
 
-class RequiredServerEnvVars(StrEnumBase):
-    """Enum containing the required server environment variables"""
+class RequiredBackendEnvVars(StrEnumBase):
+    """Enum containing the required backend environment variables"""
 
     KEYCLOAK_URL = "KEYCLOAK_URL"
     KEYCLOAK_REALM = "KEYCLOAK_REALM"

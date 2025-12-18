@@ -7,16 +7,16 @@ from vantage6.common.globals import APPNAME
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
-DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "server" / "_data"
+DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "hq" / "_data"
 
-SERVER_MODULE_NAME = APPNAME + "-server"
+HQ_MODULE_NAME = APPNAME + "-hq"
 
 #
 #   RUNTIME SETTINGS
 #
 
 # Where the resources modules have to be loaded from
-RESOURCES_PATH = "vantage6.server.resource"
+RESOURCES_PATH = "vantage6.hq.resource"
 
 # Which resources should be initialized. These names correspond to the
 # file-names in the resource directory

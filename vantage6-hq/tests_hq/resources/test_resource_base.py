@@ -21,9 +21,9 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.backend.common.test_context import TestContext
 
-from vantage6.server import ServerApp
-from vantage6.server.globals import PACKAGE_FOLDER
-from vantage6.server.model import (
+from vantage6.hq import HQApp
+from vantage6.hq.globals import PACKAGE_FOLDER
+from vantage6.hq.model import (
     Collaboration,
     Node,
     Organization,
@@ -32,13 +32,13 @@ from vantage6.server.model import (
     Task,
     User,
 )
-from vantage6.server.model.algorithm_store import AlgorithmStore
-from vantage6.server.model.base import Database, DatabaseSessionManager
-from vantage6.server.model.column import Column
-from vantage6.server.model.dataframe import Dataframe
-from vantage6.server.model.rule import Scope
-from vantage6.server.model.session import Session
-from vantage6.server.model.study import Study
+from vantage6.hq.model.algorithm_store import AlgorithmStore
+from vantage6.hq.model.base import Database, DatabaseSessionManager
+from vantage6.hq.model.column import Column
+from vantage6.hq.model.dataframe import Dataframe
+from vantage6.hq.model.rule import Scope
+from vantage6.hq.model.session import Session
+from vantage6.hq.model.study import Study
 
 # Generate a mock RSA key pair for testing
 MOCK_PRIVATE_KEY = rsa.generate_private_key(
@@ -91,15 +91,15 @@ class TestResourceBase(unittest.TestCase):
         )
         # Patch Keycloak public key fetch and SocketIO background task
         with (
-            patch("vantage6.server.ServerApp._get_keycloak_public_key") as mock_get_key,
+            patch("vantage6.hq.HQApp._get_keycloak_public_key") as mock_get_key,
             patch.object(
                 SocketIO, "start_background_task"
             ) as mock_start_background_task,
-            patch("vantage6.server.Metrics", MagicMock()),
+            patch("vantage6.hq.Metrics", MagicMock()),
         ):
             mock_get_key.return_value = MOCK_PUBLIC_KEY_PEM.decode()
             mock_start_background_task.return_value = None
-            server = ServerApp(ctx)
+            server = HQApp(ctx)
             # Configure JWT for container tokens
             server.app.config["JWT_PRIVATE_KEY"] = MOCK_PRIVATE_KEY_PEM
             server.app.config["JWT_PUBLIC_KEY"] = MOCK_PUBLIC_KEY_PEM

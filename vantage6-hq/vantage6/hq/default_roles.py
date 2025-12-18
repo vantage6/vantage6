@@ -1,6 +1,6 @@
 from vantage6.common.enum import StrEnumBase
 
-from vantage6.server.model.rule import Operation, Scope
+from vantage6.hq.model.rule import Operation, Scope
 
 
 class DefaultRole(StrEnumBase):
@@ -31,7 +31,7 @@ def get_default_roles(db) -> list[dict]:
     Parameters
     ----------
     db
-        The vantage6.server.db module
+        The vantage6.hq.db module
 
     Returns
     -------

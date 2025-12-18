@@ -4,7 +4,7 @@ from http import HTTPStatus
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
 
-from vantage6.server.model import (
+from vantage6.hq.model import (
     Collaboration,
     Organization,
     Run,
