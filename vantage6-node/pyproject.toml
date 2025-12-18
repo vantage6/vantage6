@@ -24,7 +24,7 @@ dependencies = [
     "nvidia-ml-py==12.535.133",
     "parquet-tools==0.2.16",
     "psutil==7.0.0",
-    "python-socketio==5.14.3",
+    "python-socketio==5.15.0",
     "requests==2.32.4",
     "vantage6==5.0.0b1",
     "vantage6-client==5.0.0b1",

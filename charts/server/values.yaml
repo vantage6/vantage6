@@ -8,7 +8,7 @@ server:
   apiPath: /server
   image: harbor2.vantage6.ai/infrastructure/server:latest
 
-  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakUrl: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
   keycloakRealm: vantage6
   keycloakAdminUsername: admin
   keycloakAdminPassword: admin

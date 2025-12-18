@@ -5,7 +5,9 @@ import click
 
 from vantage6.common import error, info
 
+from vantage6.cli.auth.start import check_and_install_keycloak_operator
 from vantage6.cli.dev.common import check_devspace_installed
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
@@ -53,6 +55,11 @@ def cli_start_dev_env(
     if no_local_auth and with_prometheus:
         error("❌ Cannot use --no-local-auth and --with-prometheus together.")
         sys.exit(1)
+
+    # Check if Keycloak operator is installed (only if local auth is enabled)
+    k8s_config = select_k8s_config(context=None, namespace=None)
+    if not no_local_auth:
+        check_and_install_keycloak_operator(k8s_config)
 
     try:
         info("🚀 Starting development environment with devspace...")

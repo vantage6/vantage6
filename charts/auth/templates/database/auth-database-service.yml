@@ -1,0 +1,18 @@
+{{- if not .Values.database.external }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kc-pgres
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+    component: postgres
+spec:
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  selector:
+{{ include "auth.matchLabels" . | indent 4 }}
+    component: postgres
+{{- end }}

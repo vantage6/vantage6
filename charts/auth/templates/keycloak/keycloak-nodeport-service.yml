@@ -1,0 +1,24 @@
+# This service is used to expose the Keycloak service on a node port for development
+# purposes. Exposing on NodePort is not supported by the Keycloak Operator, so we need
+# to use a custom service.
+{{- if and .Values.keycloak.dev.forward_ports .Values.keycloak.dev.local_auth_port_to_expose }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kc-nodeport
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+      nodePort: {{ .Values.keycloak.dev.local_auth_port_to_expose }}
+  selector:
+    app: keycloak
+    app.kubernetes.io/instance: {{ .Release.Name }}-kc
+    app.kubernetes.io/managed-by: keycloak-operator
+{{- end }}

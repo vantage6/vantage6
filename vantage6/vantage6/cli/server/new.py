@@ -7,6 +7,7 @@ import questionary as q
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     InstanceType,
+    Ports,
 )
 
 from vantage6.cli.common.new import new
@@ -114,7 +115,8 @@ def server_configuration_questionaire(
     # === Keycloak settings ===
     k8s_config = select_k8s_config(context=context, namespace=namespace)
     keycloak_url = (
-        f"http://vantage6-auth-keycloak.{k8s_config.namespace}.svc.cluster.local"
+        f"http://vantage6-auth-kc-service.{k8s_config.namespace}.svc.cluster.local:"
+        f"{Ports.SANDBOX_AUTH.value}"
     )
     config["server"]["keycloakUrl"] = keycloak_url
 
