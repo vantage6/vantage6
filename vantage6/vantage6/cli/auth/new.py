@@ -94,7 +94,6 @@ def auth_configuration_questionaire(
 
     config = add_database_config(config, InstanceType.AUTH)
 
-    config = _add_keycloak_admin_secret(config, name, k8s_cfg)
     if is_production:
         config = _add_keycloak_admin_secret(config, name, k8s_cfg)
 
