@@ -3,7 +3,7 @@ store:
   description: Vantage algorithm store version 5
   api_path: /store
 
-  keycloakUrl: http://vantage6-auth-keycloak.vantage6.svc.cluster.local
+  keycloakUrl: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
   keycloakRealm: vantage6
   keycloakAdminUsername: admin
   keycloakAdminPassword: admin

@@ -112,6 +112,9 @@ class BaseSandboxConfigManager:
             else:
                 last_subfolder = "node"
             data_dir = main_data_dir / self.server_name / last_subfolder
+        elif instance_type == InstanceType.AUTH:
+            folder_name = custom_folder or "auth"
+            data_dir = main_data_dir / self.server_name / folder_name
         else:
             raise ValueError(f"Invalid instance type to get data dir: {instance_type}")
 

@@ -4,6 +4,7 @@ import importlib.metadata
 import json
 import logging
 import os
+import time
 import traceback
 from abc import abstractmethod
 from http import HTTPStatus
@@ -121,13 +122,21 @@ class Vantage6App:
 
     def _get_keycloak_public_key(self) -> str:
         """Get the public key for the keycloak server."""
-        response = requests.get(
-            f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
-            f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}",
-            timeout=100,
-        )
-        key = response.json()["public_key"]
-        return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
+        num_attempts = 10
+        retry_delay = 5
+        for _ in range(num_attempts):
+            try:
+                response = requests.get(
+                    f"{os.environ.get(RequiredServerEnvVars.KEYCLOAK_URL.value)}/realms"
+                    f"/{os.environ.get(RequiredServerEnvVars.KEYCLOAK_REALM.value)}",
+                    timeout=100,
+                )
+                key = response.json()["public_key"]
+                return f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
+            except KeyError as e:
+                log.error(f"Failed to get keycloak public key: {e}")
+                time.sleep(retry_delay)
+        raise Exception("Failed to get keycloak public key")
 
     def _configure_flask_base(
         self, database_session_manager: type["BaseDatabaseSessionManager"]
@@ -144,7 +153,14 @@ class Vantage6App:
         self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
             "jwt_decode_leeway", 10
         )
-        self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
+        try:
+            self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
+        except Exception as e:
+            log.exception(e)
+            log.error(f"Failed to get keycloak public key: {e}")
+            log.error("This means that you cannot login as a user")
+            log.error("Exiting...")
+            exit(1)
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
