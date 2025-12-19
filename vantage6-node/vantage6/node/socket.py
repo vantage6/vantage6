@@ -43,7 +43,7 @@ class NodeTaskNamespace(ClientNamespace):
         node connects to the socket namespace.
         """
         self.log.info("(Re)Connected to the /tasks namespace")
-        self.node_worker_ref.sync_task_queue_with_hq()
+        self.node_worker_ref.sync_task_queue_with_HQ()
         self.log.debug("Tasks synced again with HQ...")
         self.node_worker_ref.share_node_details()
 
@@ -133,7 +133,7 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("New token obtained")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-        self.node_worker_ref.sync_task_queue_with_hq()
+        self.node_worker_ref.sync_task_queue_with_HQ()
         self.log.debug("Tasks synced again with HQ...")
 
     def on_invalid_token(self) -> None:

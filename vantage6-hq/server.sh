@@ -19,7 +19,7 @@ uwsgi \
     --http-keepalive \
     --post-buffering 0 \
     --master --callable app --disable-logging \
-    --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py \
+    --wsgi-file /vantage6/vantage6-hq/vantage6/hq/wsgi.py \
     --pyargv "${VANTAGE6_CONFIG_LOCATION}"
 
 echo "[server.sh exit]"

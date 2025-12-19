@@ -1,9 +1,9 @@
 # Override the kubernetes chart name
-nameOverride: vantage6-server
+nameOverride: vantage6-hq
 
 # Specify the kubernetes namespace in which the server will be deployed. Optional,
 # by default the Release.Namespace is used
-namespace: vantage6-server
+namespace: vantage6-hq
 
 server:
   # The description of the server
@@ -109,7 +109,7 @@ server:
     level: DEBUG
 
     # Location to the log file
-    file: server.log
+    file: hq.log
 
     # Size in kb of a single log file
     max_size: 1024
@@ -127,7 +127,7 @@ server:
     storageClass: "local-storage"
 
     # Host path for storing the logs (required for local-storage PV)
-    volumeHostPath: "/var/log/vantage6-server"
+    volumeHostPath: "/var/log/vantage6-hq"
 
     # Maximum number of log files to keep. Log files are rotated when the size of the
     # current log file exceeds `max_size`.
