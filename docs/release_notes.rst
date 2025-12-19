@@ -1,6 +1,15 @@
 Release notes
 =============
 
+4.13.5
+
+*19 December 2025*
+
+- **Security**
+
+  - Update @modelcontextprotocol/sdk dependency to address security vulnerabilities
+    (`PR#2448 <https://github.com/vantage6/vantage6/pull/2448>`_).
+
 4.13.4
 ------
 
