@@ -75,6 +75,8 @@ keycloak:
         secret: myadminclientsecret
         serviceAccountsEnabled: true
         standardFlowEnabled: false
+    smtpServer:
+      # placeholder for SMTP server configuration
 
 # PostgreSQL configuration for Keycloak
 database:
