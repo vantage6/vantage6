@@ -44,7 +44,7 @@ RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \
   uv pip install --system --no-binary=uwsgi uwsgi
 
-RUN chmod +x /vantage6/vantage6-hq/hq.sh
+RUN chmod +x /vantage6/vantage6-hq/server.sh
 
 # Create directories to mount on the host
 RUN mkdir -p /mnt/log
