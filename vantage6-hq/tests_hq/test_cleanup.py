@@ -7,10 +7,10 @@ from sqlalchemy import select
 
 from vantage6.common.enum import RunStatus
 
-from vantage6.hq.l import Task
-from vantage6.hq.l.base import Database, DatabaseSessionManager
-from vantage6.hq.l.run import Run
-from vantage6.hq.roller import cleanup
+from vantage6.hq.controller import cleanup
+from vantage6.hq.model import Task
+from vantage6.hq.model.base import Database, DatabaseSessionManager
+from vantage6.hq.model.run import Run
 
 
 class TestCleanupRunsIsolated(unittest.TestCase):
