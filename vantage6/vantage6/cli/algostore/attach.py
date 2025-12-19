@@ -36,5 +36,5 @@ def cli_algo_store_attach(
         system_folders=system_folders,
         k8s_config=k8s_config,
         is_sandbox=is_sandbox,
-        additional_labels="component=store-server",
+        additional_labels="component=store",
     )
