@@ -1,7 +1,7 @@
 # This service is used to expose the Keycloak service on a node port for development
 # purposes. Exposing on NodePort is not supported by the Keycloak Operator, so we need
 # to use a custom service.
-{{- if and .Values.keycloak.dev.forward_ports .Values.keycloak.dev.local_auth_port_to_expose }}
+{{- if and .Values.keycloak.dev (and .Values.keycloak.dev.forward_ports .Values.keycloak.dev.local_auth_port_to_expose) }}
 apiVersion: v1
 kind: Service
 metadata:

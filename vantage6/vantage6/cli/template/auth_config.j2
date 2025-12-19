@@ -243,4 +243,5 @@ database:
   name: keycloak
   volumePath: {{ database.volumePath | default('/mnt/data_auth') }}
   k8sNodeName: {{ database.k8sNodeName | default('docker-desktop') }}
+  storageClass: {{ database.storageClass | default('local-storage') }}
   {% endif %}

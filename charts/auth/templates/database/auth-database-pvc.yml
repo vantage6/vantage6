@@ -10,7 +10,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: local-storage
+  storageClassName: {{ .Values.database.storageClass | default "local-storage" }}
   selector:
     matchLabels:
       type: local

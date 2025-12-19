@@ -12,7 +12,7 @@ spec:
     storage: 10Gi
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: {{ .Values.database.storageClass | default "local-storage" }}
   persistentVolumeReclaimPolicy: Retain
   local:
     path: {{ .Values.database.volumePath }}
