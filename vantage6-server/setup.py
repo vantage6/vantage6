@@ -42,7 +42,7 @@ setup(
         "gevent==25.4.2",
         "ipython==8.10.0",
         "kombu==5.2.4",
-        "marshmallow==3.19.0",
+        "marshmallow==3.26.2",
         "pyjwt==2.9.0",
         "pyotp==2.8.0",
         "prometheus-client==0.21.1",
