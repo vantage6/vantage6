@@ -129,3 +129,16 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
         raise BadRequestError(
             f"Service account '{client_id}' could not be deleted from Keycloak"
         ) from exc
+
+
+def get_email_for_keycloak_id(keycloak_id: str) -> str:
+    """
+    Get the email for a keycloak id
+    """
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        user_details = keycloak_admin.get_user(keycloak_id)
+        return user_details["email"]
+    except Exception as exc:
+        log.exception(exc)
+        raise BadRequestError("Could not retrieve email from Keycloak") from exc

@@ -47,8 +47,27 @@ log = logging.getLogger(module_name)
 class Vantage6App:
     """Base class for all vantage6 backend applications."""
 
-    def __init__(self, ctx: BaseBackendContext, backend_module_name: str) -> None:
-        """Initialize the vantage6 app."""
+    def __init__(
+        self,
+        ctx: BaseBackendContext,
+        backend_module_name: str,
+        template_folder: Path,
+        static_folder: Path,
+    ) -> None:
+        """
+        Initialize the vantage6 app.
+
+        Parameters
+        ----------
+        ctx: BaseBackendContext
+            The context of the backend
+        backend_module_name: str
+            The name of the backend module
+        template_folder: Path
+            The path to the template folder
+        static_folder: Path
+            The path to the static folder
+        """
         self.ctx = ctx
 
         # validate that the required environment variables are set
@@ -58,8 +77,8 @@ class Vantage6App:
         self.app = Flask(
             backend_module_name,
             root_path=Path(__file__),
-            template_folder=Path(__file__).parent / "templates",
-            static_folder=Path(__file__).parent / "static",
+            template_folder=template_folder,
+            static_folder=static_folder,
         )
         self.debug: dict = self.ctx.config.get("debug", {})
 
@@ -164,15 +183,15 @@ class Vantage6App:
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
-        mail_config = self.ctx.config.get("smtp", {})
+        mail_config = self.ctx.config.get("smtpServer", {})
         self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
-        self.app.config["MAIL_SERVER"] = mail_config.get("server", LOCALHOST)
+        self.app.config["MAIL_SERVER"] = mail_config.get("host", LOCALHOST)
         self.app.config["MAIL_USERNAME"] = mail_config.get(
-            "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
+            "user", DEFAULT_SUPPORT_EMAIL_ADDRESS
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
-        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS", True)
-        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL", False)
+        self.app.config["MAIL_USE_TLS"] = mail_config.get("starttls", True)
+        self.app.config["MAIL_USE_SSL"] = mail_config.get("ssl", False)
         debug_mode = self.debug.get("flask", False)
         if debug_mode:
             log.debug("Flask debug mode enabled")
