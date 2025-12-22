@@ -366,7 +366,7 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
 
       - name: Push docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0))}}
         run: |
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
