@@ -95,7 +95,7 @@ def _add_smtp_config(config: dict) -> dict:
     ).unsafe_ask()
 
     if not configure_smtp:
-        return None
+        return config
 
     smtp_config = {}
 
