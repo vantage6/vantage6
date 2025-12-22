@@ -49,9 +49,7 @@ def auth_configuration_questionaire(
     config["keycloak"]["adminPassword"] = _get_admin_password()
 
     # Add SMTP configuration if requested
-    smtp_config = _get_smtp_config()
-    if smtp_config:
-        config["keycloak"]["smtpServer"] = smtp_config
+    config = _add_smtp_config(config)
 
     return config
 
@@ -82,15 +80,14 @@ def _get_admin_password() -> str:
     return generate_password()
 
 
-def _get_smtp_config() -> dict[str, Any] | None:
+def _add_smtp_config(config: dict) -> dict:
     """
     Get SMTP server configuration from user.
 
     Returns
     -------
-    dict[str, Any] | None
-        Dictionary with SMTP configuration, or None if user doesn't want to configure
-        SMTP
+    dict
+        Configuration dict with added SMTP configuration
     """
     configure_smtp = q.confirm(
         "Do you want to configure an SMTP server for email sending?",
@@ -178,7 +175,16 @@ def _get_smtp_config() -> dict[str, Any] | None:
         default="",
     ).unsafe_ask()
 
-    return smtp_config
+    config["keycloak"]["smtpServer"] = smtp_config
+
+    # if we add email server, we can also enable reset password and verify email
+    config["keycloak"]["resetPasswordAllowed"] = True
+    config["keycloak"]["verifyEmail"] = q.confirm(
+        "Do you want to require users to verify their email address?",
+        default=True,
+    ).unsafe_ask()
+
+    return config
 
 
 def _add_keycloak_admin_secret(

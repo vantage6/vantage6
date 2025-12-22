@@ -97,27 +97,88 @@ keycloak:
     # should always be set to false.
     editUsernameAllowed: false
 
+    # allow users to reset their password
+    resetPasswordAllowed: {{ keycloak.resetPasswordAllowed | default(false) }}
+
+    # require users to verify their email address. Note that setting this to true should
+    # only be done if you have configured an email SMTP server.
+    verifyEmail: {{ keycloak.verifyEmail | default(false) }}
+
+    # brute force protection settings
+    # - bruteForceProtected: enable brute force protection
+    # - permanentLockout: whether to lock out a user permanently after a certain number
+    #   of failed login attempts.
+    # - failureFactor: the number of failed login attempts before a user is locked out.
+    bruteForceProtected: {{ keycloak.bruteForceProtected | default(false) }}
+    permanentLockout: {{ keycloak.permanentLockout | default(false) }}
+    failureFactor: {{ keycloak.failureFactor | default(5) }}
+
     {% if keycloak.production %}
-    # required actions for users. By setting defaultAction to true for configuring
-    # OTP, the user will be prompted to configure OTP (for two-factor
-    # authentication) on first login.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     requiredActions:
+      # configure OTP for two-factor authentication
       - alias: CONFIGURE_TOTP
         name: Configure OTP
         providerId: CONFIGURE_TOTP
         enabled: true
         defaultAction: true
         priority: 10
+      # update password on first login
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      # update email on first login
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+      # verify email on first login
+      {% if keycloak.verifyEmail %}
+      - alias: VERIFY_EMAIL
+        name: Verify Email
+        providerId: VERIFY_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 40
+      {% endif %}
     {% else %}
-    # If you want to require users to use two-factor authentication on first login,
-    # enable the settings below.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     # requiredActions:
+    # # configure OTP for two-factor authentication
     #  - alias: CONFIGURE_TOTP
     #    name: Configure OTP
     #    providerId: CONFIGURE_TOTP
     #    enabled: true
     #    defaultAction: true
     #    priority: 10
+    # # update password on first login
+    # - alias: UPDATE_PASSWORD
+    #   name: Update Password
+    #   providerId: UPDATE_PASSWORD
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 20
+    # # update email on first login
+    # - alias: UPDATE_EMAIL
+    #   name: Update Email
+    #   providerId: UPDATE_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 30
+    # # verify email on first login
+    # - alias: VERIFY_EMAIL
+    #   name: Verify Email
+    #   providerId: VERIFY_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 40
     {% endif %}
 
     # users to be created in the realm. This initializes the realm with a default

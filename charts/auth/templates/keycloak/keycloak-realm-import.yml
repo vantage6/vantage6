@@ -23,6 +23,21 @@ spec:
     {{- if hasKey .Values.keycloak.realmImport "editUsernameAllowed" }}
     editUsernameAllowed: {{ .Values.keycloak.realmImport.editUsernameAllowed }}
     {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "resetPasswordAllowed" }}
+    resetPasswordAllowed: {{ .Values.keycloak.realmImport.resetPasswordAllowed }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "verifyEmail" }}
+    verifyEmail: {{ .Values.keycloak.realmImport.verifyEmail }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "bruteForceProtected" }}
+    bruteForceProtected: {{ .Values.keycloak.realmImport.bruteForceProtected }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "permanentLockout" }}
+    permanentLockout: {{ .Values.keycloak.realmImport.permanentLockout }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "failureFactor" }}
+    failureFactor: {{ .Values.keycloak.realmImport.failureFactor }}
+    {{- end }}
     {{- if .Values.keycloak.realmImport.smtpServer }}
     smtpServer:
       {{- if .Values.keycloak.realmImport.smtpServer.host }}

@@ -27,6 +27,11 @@ keycloak:
     ssoSessionIdleTimeout: 1800
     passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
     editUsernameAllowed: false
+    resetPasswordAllowed: false
+    verifyEmail: false
+    bruteForceProtected: true
+    permanentLockout: false
+    failureFactor: 5
     requiredActions:
       - alias: CONFIGURE_TOTP
         name: Configure OTP
@@ -34,6 +39,24 @@ keycloak:
         enabled: true
         defaultAction: true
         priority: 10
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+      - alias: VERIFY_EMAIL
+        name: Verify Email
+        providerId: VERIFY_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 40
     users:
       - username: admin
         enabled: true
