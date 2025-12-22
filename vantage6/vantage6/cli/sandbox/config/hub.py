@@ -116,9 +116,8 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "internal": {
                     "port": Ports.SANDBOX_HQ.value,
                 },
-                # TODO: v5+ set to latest v5 image
                 "image": (
-                    self.hq_image or "harbor2.vantage6.ai/infrastructure/hq:5.0.0a43"
+                    self.hq_image or "harbor2.vantage6.ai/infrastructure/hq:uluru"
                 ),
                 "algorithm_stores": [
                     {
@@ -159,10 +158,8 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             },
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
-                # TODO: v5+ set to latest v5 image
-                # TODO: make this configurable
                 "image": (
-                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
+                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:uluru"
                 ),
                 "keycloak": {
                     "publicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
@@ -245,7 +242,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "vantage6HQUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_HQ.value}",
                 "image": (
                     self.store_image
-                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
+                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:uluru"
                 ),
                 "keycloak": {
                     "url": (

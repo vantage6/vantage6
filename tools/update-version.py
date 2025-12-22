@@ -44,7 +44,7 @@ def build_version_string(
     post : int
         Post release number
     with_dash : bool
-        Whether to include a dash between the version and spec (e.g. 5.0.0-1 instead
+        Whether to include a dash between the version and spec (e.g. 5.0.0-a1 instead
         of 5.0.0a1)
 
     Returns
