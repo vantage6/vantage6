@@ -6,6 +6,7 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.stop import execute_cli_stop
 from vantage6.cli.common.utils import (
     find_running_service_names,
+    get_config_name_from_helm_release_name,
     select_running_service,
 )
 from vantage6.cli.context import get_context
@@ -40,7 +41,7 @@ def cli_hub_stop(
 
     if not name:
         selected_service = select_running_service(running_services, InstanceType.SERVER)
-        name = "-".join(selected_service.split("-")[1:-2])
+        name = get_config_name_from_helm_release_name(selected_service)
     else:
         ctx = get_context(InstanceType.SERVER, name, False)
         name = ctx.name
