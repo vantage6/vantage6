@@ -187,7 +187,7 @@ def _get_base_config() -> dict[str, Any]:
 
 
 def _print_credentials_one_time(
-    credentials: dict[AuthCredentials, Any], keycloak_config: dict
+    credentials: dict[AuthCredentials, Any] | None, keycloak_config: dict
 ) -> None:
     """
     Print the used credentials one time.
