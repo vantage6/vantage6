@@ -20,7 +20,7 @@ from vantage6.cli.utils import prompt_config_name
 
 @click.command()
 @click.option(
-    "-n", "--name", default=None, help="name of the configuration you want to use."
+    "-n", "--name", default=None, help="name of the configuration you want to create."
 )
 @click.option(
     "--system",
@@ -188,14 +188,14 @@ def _get_base_config() -> dict[str, Any]:
 
 
 def _print_credentials_one_time(
-    credentials: dict[AuthCredentials, Any], keycloak_config: dict
+    credentials: dict[AuthCredentials, Any] | None, keycloak_config: dict
 ) -> None:
     """
     Print the used credentials one time.
 
     Parameters
     ----------
-    credentials: dict[AuthCredentials, Any]
+    credentials: dict[AuthCredentials, Any] | None
         Dictionary with the credentials for the authentication service.
     keycloak_config: dict
         Keycloak section of the auth configuration

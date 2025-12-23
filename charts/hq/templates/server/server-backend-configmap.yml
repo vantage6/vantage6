@@ -46,12 +46,6 @@ data:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address }}
     {{- end }}
-    keycloak:
-      {{- if hasKey .Values.hq.keycloak "manage_users_and_nodes" }}
-      manage_users_and_nodes: {{ .Values.hq.keycloak.manage_users_and_nodes }}
-      {{- else }}
-      manage_users_and_nodes: true
-      {{- end }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:
       {{- range .Values.hq.algorithm_stores }}

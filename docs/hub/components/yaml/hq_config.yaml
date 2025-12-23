@@ -49,7 +49,6 @@ server:
     adminPassword: admin
     adminClient: backend-admin-client
     adminClientSecret: myadminclientsecret
-    manage_users_and_nodes: true
 
   # The secret key used to generate JWT authorization tokens. This should
   # be kept secret as others are able to generate access tokens if they

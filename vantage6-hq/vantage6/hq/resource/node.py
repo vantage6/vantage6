@@ -11,7 +11,6 @@ from vantage6.common.globals import AuthStatus
 from vantage6.backend.common.auth import (
     create_service_account_in_keycloak,
     delete_service_account_in_keycloak,
-    get_service_account_in_keycloak,
 )
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
@@ -492,16 +491,10 @@ class Nodes(NodeBase):
             status=AuthStatus.OFFLINE.value,
         )
 
-        # Create a keycloak account for the node if HQ is configured to do so,
-        # otherwise verify that the node exists in keycloak
-        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            keycloak_service_account = create_service_account_in_keycloak(
-                f"{name}-node-client", is_node=True
-            )
-        else:
-            keycloak_service_account = get_service_account_in_keycloak(
-                f"{name}-node-client"
-            )
+        # Create a keycloak account for the node
+        keycloak_service_account = create_service_account_in_keycloak(
+            f"{name}-node-client", is_node=True
+        )
         node.keycloak_id = keycloak_service_account.user_id
         node.keycloak_client_id = keycloak_service_account.client_id
 
@@ -509,10 +502,9 @@ class Nodes(NodeBase):
         node.save()
 
         # Return the node information to the user. Manually include the api_key
-        # to the user if the keycloak account was just created.
+        # to the user
         node_json = node_schema.dump(node)
-        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            node_json["api_key"] = keycloak_service_account.client_secret
+        node_json["api_key"] = keycloak_service_account.client_secret
         return node_json, HTTPStatus.CREATED  # 201
 
 
@@ -663,10 +655,7 @@ class Node(NodeBase):
             }, HTTPStatus.UNAUTHORIZED
 
         # delete keycloak account
-        if self.config.get("keycloak", {}).get("manage_users_and_nodes", True):
-            delete_service_account_in_keycloak(node.keycloak_client_id)
-        else:
-            log.info("Node id=%s will not be deleted from Keycloak", id)
+        delete_service_account_in_keycloak(node.keycloak_client_id)
 
         # delete node columns
         if node.columns:
