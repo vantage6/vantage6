@@ -13,6 +13,7 @@ from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
 
 from vantage6.backend.common import get_backend_service_url
+from vantage6.backend.common.auth import get_email_for_keycloak_id
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -399,6 +400,8 @@ class Reviews(ReviewBase):
                 self.mail,
                 review,
                 g.user.username,
+                algorithm.name,
+                algorithm.developer.username,
                 self.config,
                 request.headers.get("store_url"),
             ),
@@ -412,6 +415,8 @@ class Reviews(ReviewBase):
         mail: Mail,
         review: db.Review,
         review_assigner_username: str,
+        algorithm_name: str,
+        dev_username: str,
         config: dict,
         store_url: str | None,
     ) -> None:
@@ -426,6 +431,10 @@ class Reviews(ReviewBase):
             Flask-Mail instance
         review : db.Review
             Review instance
+        algorithm_name : str
+            Name of the algorithm
+        dev_username : str
+            Username of the developer
         review_assigner_username : str
             Username of the user that assigned the review
         config : dict
@@ -433,22 +442,22 @@ class Reviews(ReviewBase):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtpServer", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that they have been assigned a review."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the reviewer's email address
-        # TODO remove v5+ as all users should have an email address
-        if not review.reviewer.email:
+        reviewer_email = get_email_for_keycloak_id(review.reviewer.keycloak_id)
+        if not reviewer_email:
             log.warning(
-                "No email address found for the reviewer %s (id %s). No email will be "
-                "sent to alert the reviewer that they have been assigned a review.",
+                "No email address found for the reviewer '%s' (id %s). No email will be"
+                " sent to alert the reviewer that they have been assigned a review.",
                 review.reviewer.username,
                 review.reviewer_id,
             )
@@ -462,8 +471,8 @@ class Reviews(ReviewBase):
 
         template_vars = {
             "reviewer_username": review.reviewer.username,
-            "algorithm_name": review.algorithm.name,
-            "dev_username": review.algorithm.developer.username,
+            "algorithm_name": algorithm_name,
+            "dev_username": dev_username,
             "assigner_username": review_assigner_username,
             "store_url": get_backend_service_url(config, store_url),
             "support_email": support_email,
@@ -472,7 +481,7 @@ class Reviews(ReviewBase):
             mail.send_email(
                 subject="New vantage6 algorithm to review",
                 sender=email_sender,
-                recipients=[review.reviewer.email],
+                recipients=[reviewer_email],
                 text_body=render_template("mail/new_review.txt", **template_vars),
                 html_body=render_template("mail/new_review.html", **template_vars),
             )
@@ -579,7 +588,7 @@ class Review(ReviewBase):
 
 class ReviewUpdateResources(AlgorithmStoreResources):
     @staticmethod
-    def send_email_review_update(
+    def _send_email_review_update(
         app: Flask,
         mail: Mail,
         algorithm: db.Algorithm,
@@ -606,23 +615,23 @@ class ReviewUpdateResources(AlgorithmStoreResources):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtpServer", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that they have been assigned a review."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the developer's email address
-        # TODO remove v5+ as all users should have an email address
         status_text = "approved" if is_approved else "rejected"
-        if not algorithm.developer.email:
+        developer_email = get_email_for_keycloak_id(algorithm.developer.keycloak_id)
+        if not developer_email:
             log.warning(
-                "No email address found for the developer %s (id %s). No email will be "
-                "sent to alert the developer that their algorithm has been %s.",
+                "No email address found for the developer '%s' (id %s). No email will "
+                "be sent to alert the developer that their algorithm has been %s.",
                 algorithm.developer.username,
                 algorithm.developer_id,
                 status_text,
@@ -663,7 +672,7 @@ class ReviewUpdateResources(AlgorithmStoreResources):
                     f"Your Vantage6 algorithm {algorithm.name} has been {status_text}"
                 ),
                 sender=email_sender,
-                recipients=[algorithm.developer.email],
+                recipients=[developer_email],
                 text_body=render_template(
                     "mail/algorithm_review_finalized.txt", **template_vars
                 ),
@@ -753,7 +762,7 @@ class ReviewApprove(ReviewUpdateResources):
 
             # notify the developer by email that their algorithm has been approved
             Thread(
-                target=self.send_email_review_update,
+                target=self._send_email_review_update,
                 args=(
                     current_app._get_current_object(),
                     self.mail,
@@ -864,7 +873,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # Notify the developer that their algorithm has been rejected
         Thread(
-            target=self.send_email_review_update,
+            target=self._send_email_review_update,
             args=(
                 current_app._get_current_object(),
                 self.mail,
@@ -906,29 +915,29 @@ class ReviewReject(ReviewUpdateResources):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtpServer", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that their review is no longer required."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the reviewer's email address
-        # TODO remove v5+ as all users should have an email address
-        if not review.reviewer.email:
+        reviewer_email = get_email_for_keycloak_id(review.reviewer.keycloak_id)
+        if not reviewer_email:
             log.warning(
-                "No email address found for the reviewer %s (id %s). No email will be "
-                "sent to alert the reviewer that their review is no longer required.",
+                "No email address found for the reviewer '%s' (id %s). No email will be"
+                " sent to alert the reviewer that their review is no longer required.",
                 review.reviewer.username,
                 review.reviewer_id,
             )
             return
         log.info(
-            "Sending email to reviewer %s (id %s) to notify them that their review is "
-            "no longer required.",
+            "Sending email to reviewer '%s' (id %s) to notify them that their review is"
+            " no longer required.",
             review.reviewer.username,
             review.reviewer_id,
         )
@@ -943,7 +952,7 @@ class ReviewReject(ReviewUpdateResources):
             mail.send_email(
                 subject="Vantage6 algorithm review no longer required",
                 sender=email_sender,
-                recipients=[review.reviewer.email],
+                recipients=[reviewer_email],
                 text_body=render_template(
                     "mail/review_no_longer_required.txt", **template_vars
                 ),
