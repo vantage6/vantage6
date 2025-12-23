@@ -234,6 +234,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         """
         config = {
             "store": {
+                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_ALGO_STORE.value}",
                 "internal": {
                     "port": Ports.SANDBOX_ALGO_STORE.value,
                 },

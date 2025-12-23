@@ -7,6 +7,7 @@ import os
 import time
 import traceback
 from abc import abstractmethod
+from dataclasses import field
 from http import HTTPStatus
 from pathlib import Path
 from types import ModuleType
@@ -381,7 +382,9 @@ class Vantage6App:
                 )
 
 
-def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | None:
+def get_backend_service_url(
+    config: dict, url_from_request: str | None = None
+) -> str | None:
     """ "
     Get the HQ url from the request data, or from the configuration if it is
     not present in the request.
@@ -398,9 +401,9 @@ def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | No
     str | None
         The HQ url
     """
-    if hq_url_from_request:
-        return hq_url_from_request
-    hq_url = config.get("hq_url")
+    if url_from_request:
+        return url_from_request
+    hq_url = config.get("base_url")
     # make sure that the HQ url ends with the api path
     api_path = config.get("api_path", DEFAULT_API_PATH)
     if hq_url and not hq_url.endswith(api_path):

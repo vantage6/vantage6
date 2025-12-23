@@ -131,14 +131,24 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
         ) from exc
 
 
-def get_email_for_keycloak_id(keycloak_id: str) -> str:
+def get_email_for_keycloak_id(keycloak_id: str) -> str | None:
     """
     Get the email for a keycloak id
+
+    Parameters
+    ----------
+    keycloak_id: str
+        The keycloak id of the user
+
+    Returns
+    -------
+    str | None:
+        The email address of the user or None if it was not found
     """
     try:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         user_details = keycloak_admin.get_user(keycloak_id)
         return user_details["email"]
     except Exception as exc:
-        log.exception(exc)
-        raise BadRequestError("Could not retrieve email from Keycloak") from exc
+        log.error(exc)
+        return None

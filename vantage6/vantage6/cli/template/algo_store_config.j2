@@ -7,6 +7,8 @@ store:
   # The description of the store
   description: {{ store.description | default('Vantage algorithm store version 5') }}
 
+  # The external URL of the algorithm store
+  baseUrl: {{ store.baseUrl | default('http://localhost:7602') }}
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration

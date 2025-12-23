@@ -128,6 +128,7 @@ def cli_hub_new(
                 "logging": {
                     "level": base_config["log_level"],
                 },
+                "baseUrl": base_config["store_url"],
             },
             "database": {
                 "k8sNodeName": base_config["k8sNodeName"],
@@ -200,11 +201,11 @@ def _get_base_config() -> dict[str, Any]:
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
-    # if base_config["has_store"]:
-    #     base_config["store_url"] = q.text(
-    #         "On what address will the algorithm store be reachable?",
-    #         default="https://store.vantage6.ai",
-    #     ).unsafe_ask()
+    if base_config["has_store"]:
+        base_config["store_url"] = q.text(
+            "On what address will the algorithm store be reachable?",
+            default="https://store.vantage6.ai",
+        ).unsafe_ask()
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],

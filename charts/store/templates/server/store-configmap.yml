@@ -73,6 +73,7 @@ data:
       review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
     {{- end }}
     port: {{ .Values.store.internal.port }}
+    base_url: {{ .Values.store.baseUrl }}
     root_user:
       username: {{ .Values.store.keycloak.adminUsername }}
       v6_hq_uri: {{ .Values.store.vantage6HQUri }}
