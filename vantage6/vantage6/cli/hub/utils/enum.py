@@ -1,7 +1,7 @@
-from vantage6.common.enum import StrEnumBase
+from vantage6.common.enum import EnumBase
 
 
-class AuthCredentials(StrEnumBase):
+class AuthCredentials(EnumBase):
     KEYCLOAK_ADMIN_USER = ("keycloakAdminUser", "Keycloak admin username")
     KEYCLOAK_ADMIN_PASSWORD = ("keycloakAdminPassword", "Keycloak admin password")
     VANTAGE6_ADMIN_PASSWORD = ("vantage6AdminPassword", "Vantage6 admin password")
