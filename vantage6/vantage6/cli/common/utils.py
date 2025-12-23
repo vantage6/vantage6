@@ -154,16 +154,6 @@ def select_running_service(
     return name
 
 
-def get_config_name_from_service_name(service_name: str) -> str:
-    """
-    Get the config name from a service name.
-    """
-    # helm release name is structured as:
-    # f"{APPNAME}-{name}-{scope}-{instance_type}"
-    # we want to get the name from the service name
-    return "-".join(service_name.split("-")[1:-2])
-
-
 def get_main_cli_command_name(instance_type: InstanceType) -> str:
     """
     Get the main CLI command name for a given instance type.

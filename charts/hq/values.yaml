@@ -15,7 +15,6 @@ hq:
     adminPassword: admin
     adminClient: backend-admin-client
     adminClientSecret: myadminclientsecret
-    manage_users_and_nodes: true
 
   port: 7601
   internal:
