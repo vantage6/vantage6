@@ -11,12 +11,13 @@ server:
   apiPath: {{ server.apiPath | default('/server') }}
 
   # Keycloak configuration
-  keycloakUrl: {{ server.keycloakUrl }}
-  keycloakRealm: {{ server.keycloakRealm | default('vantage6') }}
-  keycloakAdminUsername: {{ server.keycloakAdminUsername | default('admin') }}
-  keycloakAdminPassword: {{ server.keycloakAdminPassword | default('admin') }}
-  keycloakAdminClient: {{ server.keycloakAdminClient | default('backend-admin-client') }}
-  keycloakAdminClientSecret: {{ server.keycloakAdminClientSecret | default('myadminclientsecret') }}
+  keycloak:
+    url: {{ server.keycloak.url }}
+    realm: {{ server.keycloak.realm | default('vantage6') }}
+    adminUsername: {{ server.keycloak.adminUsername | default('admin') }}
+    adminPassword: {{ server.keycloak.adminPassword | default('admin') }}
+    adminClient: {{ server.keycloak.adminClient | default('backend-admin-client') }}
+    adminClientSecret: {{ server.keycloak.adminClientSecret | default('myadminclientsecret') }}
 
   {% if server.internal is defined %}
   internal:
@@ -241,12 +242,11 @@ ui:
   imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI
   port: {{ ui.port | default(7600) }}
-  # keycloak realm
-  keycloakRealm: {{ ui.keycloakRealm | default('vantage6') }}
-  # keycloak client
-  keycloakClient: {{ ui.keycloakClient | default('public_client') }}
-  # keycloak public URL
-  keycloakPublicUrl: {{ ui.keycloakPublicUrl | default('http://localhost:8080') }}
+  # keycloak connection settings
+  keycloak:
+    realm: {{ ui.keycloak.realm | default('vantage6') }}
+    client: {{ ui.keycloak.client | default('public_client') }}
+    publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:8080') }}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs

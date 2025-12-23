@@ -56,10 +56,6 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
         self.k8s_config = k8s_config
         self.with_prometheus = with_prometheus
 
-        self.server_config_file = None
-        self.store_config_file = None
-        self.auth_config_file = None
-
     def generate_server_configs(self) -> None:
         """Generates the demo network."""
 
@@ -150,10 +146,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     "local_hub_port_to_expose": Ports.SANDBOX_SERVER.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
-                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
-                ),
+                "keycloak": {
+                    "url": (
+                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                    ),
+                },
             },
             "rabbitmq": {},
             "database": {
@@ -167,7 +165,9 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:5.0.0a43"
                 ),
-                "keycloakPublicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
+                "keycloak": {
+                    "publicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
+                },
             },
             "prometheus": prometheus_config,
         }
@@ -193,7 +193,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             extra_config["ui"] = ui_config
 
         # Create the server config file
-        self.server_config_file = new(
+        new(
             config_producing_func=self.__server_config_return_func,
             config_producing_func_args=(extra_config,),
             name=self.server_name,
@@ -212,7 +212,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
             InstanceType.ALGORITHM_STORE, is_log_dir=True
         )
 
-        self.store_config_file = new(
+        new(
             config_producing_func=self.__algo_store_config_return_func,
             config_producing_func_args=(extra_config, data_dir, log_dir),
             name=f"{self.server_name}-store",
@@ -248,10 +248,12 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:5.0.0a43"
                 ),
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
-                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
-                ),
+                "keycloak": {
+                    "url": (
+                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                    ),
+                },
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,
@@ -282,7 +284,7 @@ class CoreSandboxConfigManager(BaseSandboxConfigManager):
 
     def _create_auth_config(self) -> None:
         """Create auth configuration file (YAML)."""
-        self.auth_config_file = new(
+        new(
             config_producing_func=self.__auth_config_return_func,
             config_producing_func_args=(self.extra_auth_config,),
             name=f"{self.server_name}-auth",

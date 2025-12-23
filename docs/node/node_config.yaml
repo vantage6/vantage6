@@ -29,8 +29,9 @@ node:
   k8sNodeName: docker-desktop
 
   # Keycloak configuration to authenticate the node with the server.
-  keycloakUrl: http://my-vantage6-auth.org
-  keycloakRealm: vantage6
+  keycloak:
+    url: http://my-vantage6-auth.org
+    realm: vantage6
 
   encryption:
     # Whether encryption is enabled or not. This should be the same as the `encrypted`

@@ -10,12 +10,13 @@ store:
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration
-  keycloakUrl: {{ store.keycloakUrl }}
-  keycloakRealm: {{ store.keycloakRealm | default('vantage6') }}
-  keycloakAdminUsername: {{ store.keycloakAdminUsername | default('admin') }}
-  keycloakAdminPassword: {{ store.keycloakAdminPassword | default('admin') }}
-  keycloakAdminClient: {{ store.keycloakAdminClient | default('backend-admin-client') }}
-  keycloakAdminClientSecret: {{ store.keycloakAdminClientSecret | default('myadminclientsecret') }}
+  keycloak:
+    url: {{ store.keycloak.url }}
+    realm: {{ store.keycloak.realm | default('vantage6') }}
+    adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
+    adminPassword: {{ store.keycloak.adminPassword | default('admin') }}
+    adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
+    adminClientSecret: {{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}
 
   vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
 

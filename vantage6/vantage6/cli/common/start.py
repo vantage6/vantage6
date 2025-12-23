@@ -12,9 +12,58 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.common.utils import check_running
-from vantage6.cli.globals import ChartName
+from vantage6.cli.globals import ChartName, CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
+
+
+def execute_cli_start(
+    command_name: CLICommandName,
+    name: str,
+    k8s_config: KubernetesConfig,
+    local_chart_dir: Path | None,
+    system_folders: bool,
+    is_sandbox: bool = False,
+    extra_args: list[str] | None = None,
+) -> None:
+    """
+    Execute the start command for an infrastructure service.
+
+    Parameters
+    ----------
+    component_name: InfraComponentName
+        The type of infrastructure service to start
+    name: str
+        The name of the infrastructure service to start
+    k8s_config: KubernetesConfig
+        The Kubernetes configuration to use
+    local_chart_dir: Path | None
+    system_folders: bool
+        Whether to use system folders or user folders
+    is_sandbox: bool
+        Whether to use sandbox mode
+    extra_args: list[str] | None
+        Extra options to pass to the start command
+    """
+    cmd = [
+        "v6",
+        command_name.value,
+        "start",
+        "--name",
+        name,
+        "--context",
+        k8s_config.context,
+        "--namespace",
+        k8s_config.namespace,
+    ]
+    cmd.append("--system" if system_folders else "--user")
+    if is_sandbox:
+        cmd.append("--sandbox")
+    if local_chart_dir:
+        cmd.extend(["--local-chart-dir", local_chart_dir])
+    if extra_args:
+        cmd.extend(extra_args)
+    subprocess.run(cmd, check=True)
 
 
 def prestart_checks(

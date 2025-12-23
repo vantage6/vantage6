@@ -189,7 +189,7 @@ in the table below.
 
 Distribute release
 ------------------
-Central components (hub, auth, store, UI) that are already running will automatically
+Central components (server, auth, store, UI) that are already running will automatically
 be upgraded to the latest version of their major release when they are restarted, unless otherwise
 specified in the respective configuration files. Nodes behave similarly, but instead of
 picking the latest version, they check which version the server is running and update to

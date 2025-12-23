@@ -86,7 +86,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         self.with_prometheus = with_prometheus
 
         self.node_configs = []
-        self.node_config_files = []
         self.node_config_names = []
         self.extra_config = None
 
@@ -136,14 +135,13 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "api_key": api_key,
                 "node_name": self.node_names[idx],
             }
-            config_file = self._create_node_config_file(
+            full_node_config = self._create_node_config_file(
                 config,
                 [files[idx] for files in node_data_files],
             )
-            self.node_configs.append(config)
-            self.node_config_files.append(config_file)
+            self.node_configs.append(full_node_config)
         info(
-            f"Created {Fore.GREEN}{len(self.node_config_files)}{Style.RESET_ALL} node "
+            f"Created {Fore.GREEN}{len(self.node_configs)}{Style.RESET_ALL} node "
             f"configuration(s), attaching them to {Fore.GREEN}{self.server_name}"
             f"{Style.RESET_ALL}."
         )
@@ -241,7 +239,6 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             type_=InstanceType.NODE,
             is_sandbox=True,
         )
-
         self.node_config_names.append(config_name)
 
         return node_config
@@ -268,10 +265,12 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                     "file": f"{node_specific_config['node_name']}.log",
                     "volumeHostPath": str(log_dir),
                 },
-                "keycloakUrl": (
-                    f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
-                    f"{self.k8s_config.namespace}.svc.cluster.local:8080"
-                ),
+                "keycloak": {
+                    "url": (
+                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                    ),
+                },
                 "persistence": {
                     "tasks": {
                         "hostPath": str(path_to_data_dir),

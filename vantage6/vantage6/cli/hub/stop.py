@@ -10,7 +10,6 @@ from vantage6.cli.common.utils import (
     select_running_service,
 )
 from vantage6.cli.context import get_context
-from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import select_k8s_config
 
@@ -19,15 +18,13 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option("-n", "--name", default=None, help="Name of the configuration.")
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
-@click.pass_context
-def cli_sandbox_stop(
-    click_ctx: click.Context,
+def cli_hub_stop(
     name: str | None,
     context: str | None,
     namespace: str | None,
 ) -> None:
     """
-    Stop a sandbox environment.
+    Stop a hub.
     """
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
@@ -39,46 +36,16 @@ def cli_sandbox_stop(
     )
 
     if not running_services:
-        error("No running sandbox services found.")
+        error("No running services found.")
         return
 
     if not name:
         selected_service = select_running_service(running_services, InstanceType.SERVER)
         name = get_config_name_from_helm_release_name(selected_service)
     else:
-        ctx = get_context(InstanceType.SERVER, name, False, is_sandbox=True)
+        ctx = get_context(InstanceType.SERVER, name, False)
         name = ctx.name
 
-    # stop the sandbox nodes
-    nodes_user_folder, _ = NodeContext.available_configurations(False, is_sandbox=True)
-    for node in nodes_user_folder:
-        if node.name.startswith(f"{name}-node-"):
-            execute_cli_stop(
-                command_name=CLICommandName.NODE,
-                name=node.name,
-                k8s_config=k8s_config,
-                system_folders=False,
-                is_sandbox=True,
-            )
-
-    execute_cli_stop(
-        command_name=CLICommandName.AUTH,
-        name=f"{name}-auth.sandbox",
-        k8s_config=k8s_config,
-        system_folders=False,
-        is_sandbox=True,
-    )
-    execute_cli_stop(
-        command_name=CLICommandName.ALGORITHM_STORE,
-        name=f"{name}-store.sandbox",
-        k8s_config=k8s_config,
-        system_folders=False,
-        is_sandbox=True,
-    )
-    execute_cli_stop(
-        command_name=CLICommandName.SERVER,
-        name=name,
-        k8s_config=k8s_config,
-        system_folders=False,
-        is_sandbox=True,
-    )
+    execute_cli_stop(CLICommandName.AUTH, f"{name}-auth", k8s_config, False)
+    execute_cli_stop(CLICommandName.ALGORITHM_STORE, f"{name}-store", k8s_config, False)
+    execute_cli_stop(CLICommandName.SERVER, name, k8s_config, False)

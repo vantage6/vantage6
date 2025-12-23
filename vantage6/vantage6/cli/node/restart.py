@@ -8,7 +8,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import (
     find_running_service_names,
-    get_config_name_from_service_name,
+    get_config_name_from_helm_release_name,
 )
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import select_k8s_config
@@ -73,7 +73,7 @@ def cli_node_restart(
 
     if all_nodes:
         names = [
-            get_config_name_from_service_name(container_name)
+            get_config_name_from_helm_release_name(container_name)
             for container_name in running_node_names
         ]
     else:
@@ -85,7 +85,7 @@ def cli_node_restart(
             except KeyboardInterrupt:
                 error("Aborted by user!")
                 return
-            names = [get_config_name_from_service_name(helm_name)]
+            names = [get_config_name_from_helm_release_name(helm_name)]
         else:
             names = [name]
 

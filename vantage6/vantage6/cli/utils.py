@@ -189,3 +189,31 @@ def validate_input_cmd_args(
             "dashes, underscores, or dots."
         )
         exit(1)
+
+
+def merge_nested_dicts(base: dict, extra: dict) -> dict:
+    """
+    Merge two nested dictionaries.
+
+    If a key is not present in the base dictionary, it is added.
+    If a key is present in the base dictionary and is a dictionary, it is merged.
+    If a key is present in the base dictionary and is not a dictionary, it is replaced.
+
+    Parameters
+    ----------
+    base: dict
+        The base dictionary to merge into
+    extra: dict
+        The extra dictionary to merge from
+
+    Returns
+    -------
+    dict
+        The merged dictionary
+    """
+    for k, v in extra.items():
+        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
+            merge_nested_dicts(base[k], v)  # merge in place
+        else:
+            base[k] = v
+    return base

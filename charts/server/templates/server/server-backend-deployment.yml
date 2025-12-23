@@ -24,9 +24,9 @@ spec:
         imagePullPolicy: {{ .Values.server.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.server.keycloakUrl }}
+          value: {{ .Values.server.keycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.server.keycloakRealm }}
+          value: {{ .Values.server.keycloak.realm }}
 {{- if and .Values.server.dev .Values.server.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.server.dev.store_address | quote }}

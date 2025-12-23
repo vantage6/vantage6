@@ -24,9 +24,9 @@ spec:
         imagePullPolicy: {{ .Values.store.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.store.keycloakUrl }}
+          value: {{ .Values.store.keycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.store.keycloakRealm }}
+          value: {{ .Values.store.keycloak.realm }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-secrets
