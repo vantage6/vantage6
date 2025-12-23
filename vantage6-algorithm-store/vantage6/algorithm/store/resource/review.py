@@ -866,6 +866,7 @@ class ReviewReject(ReviewUpdateResources):
                     current_app._get_current_object(),
                     self.mail,
                     other_review,
+                    algorithm.name,
                     self.config,
                     request.headers.get("store_url"),
                 ),
@@ -895,6 +896,7 @@ class ReviewReject(ReviewUpdateResources):
         app: Flask,
         mail: Mail,
         review: db.Review,
+        algorithm_name: str,
         config: dict,
         store_url: str | None,
     ) -> None:
@@ -910,6 +912,8 @@ class ReviewReject(ReviewUpdateResources):
             Flask-Mail instance
         review : db.Review
             Review instance
+        algorithm_name : str
+            Name of the algorithm
         config : dict
             Configuration dictionary
         store_url : str | None
@@ -944,7 +948,7 @@ class ReviewReject(ReviewUpdateResources):
 
         template_vars = {
             "reviewer_username": review.reviewer.username,
-            "algorithm_name": review.algorithm.name,
+            "algorithm_name": algorithm_name,
             "store_url": get_backend_service_url(config, store_url),
             "support_email": support_email,
         }
