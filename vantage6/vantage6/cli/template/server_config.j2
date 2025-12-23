@@ -18,7 +18,6 @@ server:
     adminPassword: {{ server.keycloak.adminPassword | default('admin') }}
     adminClient: {{ server.keycloak.adminClient | default('backend-admin-client') }}
     adminClientSecret: {{ server.keycloak.adminClientSecret | default('myadminclientsecret') }}
-    manage_users_and_nodes: {{ server.keycloak.manage_users_and_nodes | default(true) }}
 
   {% if server.internal is defined %}
   internal:
