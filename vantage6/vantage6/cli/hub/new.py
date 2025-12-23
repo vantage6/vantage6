@@ -20,7 +20,7 @@ from vantage6.cli.utils import prompt_config_name
 
 @click.command()
 @click.option(
-    "-n", "--name", default=None, help="name of the configuration you want to use."
+    "-n", "--name", default=None, help="name of the configuration you want to create."
 )
 @click.option(
     "--system",
