@@ -194,7 +194,7 @@ def _print_credentials_one_time(
 
     Parameters
     ----------
-    credentials: dict[AuthCredentials, Any]
+    credentials: dict[AuthCredentials, Any] | None
         Dictionary with the credentials for the authentication service.
     keycloak_config: dict
         Keycloak section of the auth configuration
