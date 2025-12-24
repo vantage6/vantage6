@@ -73,7 +73,7 @@ node_config_creation_details = NodeConfigCreationDetails(
 #
 # Call common script in CLI to populate the hq
 #
-report_populate_hq = populate_hub_dev(
+report_populate_hub = populate_hub_dev(
     hq_url="http://localhost:7601/hq",
     auth_url="http://localhost:8080",
     number_of_nodes=number_of_nodes,
@@ -81,6 +81,6 @@ report_populate_hq = populate_hub_dev(
 )
 
 # Create marker file
-if report_populate_hq:
+if report_populate_hub:
     with open(populate_marker, "w") as f:
-        f.write(report_populate_hq)
+        f.write(report_populate_hub)
