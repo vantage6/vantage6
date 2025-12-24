@@ -1,10 +1,7 @@
 from typing import Any
 
-import questionary as q
-
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
-    MAIN_VERSION_NAME,
     InstanceType,
 )
 
@@ -43,20 +40,6 @@ def hq_configuration_questionaire(
     }
 
     config = add_common_backend_config(config, InstanceType.HQ, instance_name)
-
-    # TODO v5+ these should be removed, latest should usually be used so question is
-    # not needed. However, for now we want to specify alpha/beta images.
-    # === HQ settings ===
-    config["hq"]["image"] = q.text(
-        "HQ Docker image:",
-        default=f"harbor2.vantage6.ai/infrastructure/hq:{MAIN_VERSION_NAME}",
-    ).unsafe_ask()
-
-    # === UI settings ===
-    config["ui"]["image"] = q.text(
-        "UI Docker image:",
-        default=f"harbor2.vantage6.ai/infrastructure/ui:{MAIN_VERSION_NAME}",
-    ).unsafe_ask()
 
     # TODO v5+ we need to add a question to ask which algorithm stores are allowed, to
     # set the CSP headers in the UI. This is not done now because it becomes easier when
