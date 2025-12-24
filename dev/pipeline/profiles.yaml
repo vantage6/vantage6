@@ -14,7 +14,7 @@ profiles:
     path: deployments.vantage6-auth
   # Remove vantage6-auth from the hq pipeline create_deployments command
   - op: replace
-    path: pipelines.hq.run
+    path: pipelines.hub.run
     value: |-
       run_dependencies --all
       ensure_pull_secrets --all
