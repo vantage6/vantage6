@@ -20,9 +20,7 @@ spec:
     {{- if .Values.keycloak.realmImport.passwordPolicy }}
     passwordPolicy: {{ .Values.keycloak.realmImport.passwordPolicy | quote }}
     {{- end }}
-    {{- if hasKey .Values.keycloak.realmImport "editUsernameAllowed" }}
-    editUsernameAllowed: {{ .Values.keycloak.realmImport.editUsernameAllowed }}
-    {{- end }}
+    editUsernameAllowed: false
     {{- if .Values.keycloak.realmImport.requiredActions }}
     requiredActions:
     {{- range .Values.keycloak.realmImport.requiredActions }}
