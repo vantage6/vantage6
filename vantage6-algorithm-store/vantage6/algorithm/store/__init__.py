@@ -8,6 +8,7 @@ store to a vantage6 HQ.
 """
 
 import os
+from pathlib import Path
 
 from gevent import monkey
 
@@ -65,7 +66,12 @@ class AlgorithmStoreApp(Vantage6App):
     def __init__(self, ctx: AlgorithmStoreContext) -> None:
         """Create a vantage6 algorithm store application."""
 
-        super().__init__(ctx, BACKEND_MODULE_NAME)
+        super().__init__(
+            ctx,
+            BACKEND_MODULE_NAME,
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
+        )
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)

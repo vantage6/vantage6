@@ -23,6 +23,60 @@ spec:
     {{- if hasKey .Values.keycloak.realmImport "editUsernameAllowed" }}
     editUsernameAllowed: {{ .Values.keycloak.realmImport.editUsernameAllowed }}
     {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "resetPasswordAllowed" }}
+    resetPasswordAllowed: {{ .Values.keycloak.realmImport.resetPasswordAllowed }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "verifyEmail" }}
+    verifyEmail: {{ .Values.keycloak.realmImport.verifyEmail }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "bruteForceProtected" }}
+    bruteForceProtected: {{ .Values.keycloak.realmImport.bruteForceProtected }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "permanentLockout" }}
+    permanentLockout: {{ .Values.keycloak.realmImport.permanentLockout }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "failureFactor" }}
+    failureFactor: {{ .Values.keycloak.realmImport.failureFactor }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.smtpServer }}
+    smtpServer:
+      {{- if .Values.keycloak.realmImport.smtpServer.host }}
+      host: {{ .Values.keycloak.realmImport.smtpServer.host | quote }}
+      {{- end }}
+      {{- if .Values.keycloak.realmImport.smtpServer.port }}
+      port: {{ .Values.keycloak.realmImport.smtpServer.port | quote }}
+      {{- end }}
+      {{- if .Values.keycloak.realmImport.smtpServer.from }}
+      from: {{ .Values.keycloak.realmImport.smtpServer.from | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "fromDisplayName" }}
+      fromDisplayName: {{ .Values.keycloak.realmImport.smtpServer.fromDisplayName | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "replyTo" }}
+      replyTo: {{ .Values.keycloak.realmImport.smtpServer.replyTo | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "replyToDisplayName" }}
+      replyToDisplayName: {{ .Values.keycloak.realmImport.smtpServer.replyToDisplayName | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "ssl" }}
+      ssl: {{ .Values.keycloak.realmImport.smtpServer.ssl | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "starttls" }}
+      starttls: {{ .Values.keycloak.realmImport.smtpServer.starttls | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "auth" }}
+      auth: {{ .Values.keycloak.realmImport.smtpServer.auth | quote }}
+      {{- end }}
+      {{- if hasKey .Values.keycloak.realmImport.smtpServer "authType" }}
+      authType: {{ .Values.keycloak.realmImport.smtpServer.authType | quote }}
+      {{- end }}
+      {{- if .Values.keycloak.realmImport.smtpServer.user }}
+      user: {{ .Values.keycloak.realmImport.smtpServer.user | quote }}
+      {{- end }}
+      {{- if .Values.keycloak.realmImport.smtpServer.password }}
+      password: {{ .Values.keycloak.realmImport.smtpServer.password | quote }}
+      {{- end }}
+    {{- end }}
     {{- if .Values.keycloak.realmImport.requiredActions }}
     requiredActions:
     {{- range .Values.keycloak.realmImport.requiredActions }}
