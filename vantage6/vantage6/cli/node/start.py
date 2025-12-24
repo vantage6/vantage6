@@ -3,7 +3,6 @@ from kubernetes import client as k8s_client
 
 from vantage6.common import error, info, warning
 from vantage6.common.globals import (
-    DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
     InstanceType,
@@ -65,36 +64,33 @@ def cli_node_start(
     create_task_namespace_if_not_exists(ctx, k8s_config)
 
     # Determine image-name. First we check if the image is set in the config file.
-    # If so, we use it. Otherwise, we use the same version as the server.
+    # If so, we use it. Otherwise, we use the same version as HQ.
     if custom_image := ctx.config.get("node", {}).get("image"):
         image = custom_image
     else:
-        # if no custom image is specified, find the server version and use
+        # if no custom image is specified, find HQ version and use
         # the latest images from that minor version
         client = create_client(ctx, use_sandbox_port=ctx.is_sandbox)
         major_minor = None
         try:
-            # try to get server version, skip if can't get a connection
-            version = client.util.get_server_version(attempts_on_timeout=3)["version"]
+            # try to get HQ version, skip if can't get a connection
+            version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
             major_minor = ".".join(version.split(".")[:2])
-            image = (
-                f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
-            )
+            image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
         except Exception:
-            warning("Could not determine server version. Using default node image")
+            warning("Could not determine HQ version. Using default node image")
 
         if major_minor and not __version__.startswith(major_minor):
             warning(
-                "Version mismatch between CLI and server/node. CLI is running on "
-                f"version {__version__}, while node and server are on version "
+                "Version mismatch between CLI and HQ/node. CLI is running on "
+                f"version {__version__}, while node and HQ are on version "
                 f"{major_minor}. This might cause unexpected issues; changing to "
                 f"{major_minor}.<latest> is recommended."
             )
 
-    # fail safe, in case no custom image is specified and we can't get the
-    # server version
+    # fail safe, in case no custom image is specified and we can't get the HQ version
     if not image:
-        image = f"{DEFAULT_DOCKER_REGISTRY}/{DEFAULT_NODE_IMAGE}"
+        image = DEFAULT_NODE_IMAGE
 
     helm_install(
         release_name=ctx.helm_release_name,

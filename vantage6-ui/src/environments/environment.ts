@@ -3,7 +3,7 @@ import { EnvironmentConfig } from 'src/app/models/application/enivronmentConfig.
 
 const env: EnvironmentConfig = {
   production: true,
-  server_url: (window as any).env?.server_url || 'https://uluru.vantage6.ai',
+  hq_url: (window as any).env?.hq_url || 'https://uluru.vantage6.ai',
   api_path: (window as any).env?.api_path || '',
   allowed_algorithm_stores: (window as any).env?.allowed_algorithm_stores || '*',
   auth_url: (window as any).env?.auth_url || 'https://auth.uluru.vantage6.ai',

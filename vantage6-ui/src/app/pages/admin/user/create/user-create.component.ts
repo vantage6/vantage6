@@ -81,7 +81,7 @@ To login to the service account with the Python client, you need to run:
 from vantage6.client import Client
 
 client = Client(
-    server_url="${environment.server_url}${environment.api_path}",
+    hq_url="${environment.hq_url}${environment.api_path}",
     auth_url="${environment.auth_url}",
     auth_realm="${environment.keycloak_realm}",
 )

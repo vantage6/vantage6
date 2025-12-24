@@ -590,7 +590,7 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
     if (this.node && nodeStatusUpdate.online) {
       // Our selected node just came online, and we need to refresh which
       // databases are available. These are obtained from the configuration that
-      // the node shares with the server after coming online. So we need to wait
+      // the node shares with HQ after coming online. So we need to wait
       // a bit and then refresh the node to get the node configuration
       let attempts = 0;
       let success = false;

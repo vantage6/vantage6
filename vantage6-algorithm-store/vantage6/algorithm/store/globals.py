@@ -8,7 +8,7 @@ from vantage6.common.globals import APPNAME
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent.parent
 
-SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
+BACKEND_MODULE_NAME = APPNAME + "-algorithm-store"
 
 # TODO: this should be done differently
 # Which resources should be initialized. These names correspond to the

@@ -8,8 +8,8 @@ from vantage6.cli.common.utils import (
 )
 from vantage6.cli.context import get_context
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.k8s_config import select_k8s_config
 
 
@@ -20,7 +20,7 @@ def get_and_select_ctx(
     context: str,
     namespace: str,
     is_sandbox: bool,
-) -> ServerContext | NodeContext | AlgorithmStoreContext:
+) -> HQContext | NodeContext | AlgorithmStoreContext:
     """
     Get and select the context for the given instance type.
 
@@ -41,7 +41,7 @@ def get_and_select_ctx(
 
     Returns
     -------
-    ServerContext | NodeContext | AlgorithmStoreContext
+    HQContext | NodeContext | AlgorithmStoreContext
         The context for the given instance type
     """
     k8s_config = select_k8s_config(

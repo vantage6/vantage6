@@ -21,7 +21,7 @@ class DiagnosticRunner:
     Parameters
     ----------
     client : UserClient
-        The client to use for communication with the server.
+        The client to use for communication with the vantage6 hub.
     collaboration_id : int
         The ID of the collaboration to run the diagnostics in.
     organizations : list[int] | None

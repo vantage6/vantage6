@@ -18,7 +18,7 @@ store:
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
     adminClientSecret: {{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}
 
-  vantage6ServerUri: {{ store.vantage6ServerUri | default('http://localhost:7601/server') }}
+  vantage6HQUri: {{ store.vantage6HQUri | default('http://localhost:7601/hq') }}
 
   # Which image to use to run the store.
   image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:latest') }}
@@ -97,7 +97,7 @@ store:
   {% if store.dev is defined %}
   dev:
     # Specify the URI to the host. This is used to generate the correct URIs to
-    # communicate with the server. On Windows and Mac, when using Docker Desktop, you
+    # communicate with HQ. On Windows and Mac, when using Docker Desktop, you
     # can use the special hostname `host.docker.internal` to refer to the host machine.
     # On Linux, you should normally use http://172.17.0.1.
     host_uri: {{ store.dev.host_uri | default('host.docker.internal') }}
@@ -201,8 +201,7 @@ store:
   # set up with which origins the store should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here. Below are examples to allow requests from the Uluru UI, and
-  # port 7600 on localhost. Usually, only the UI and the server need to access the
-  # store.
+  # port 7600 on localhost. Usually, only the UI and HQ need to access the store.
   {% if store.cors_allowed_origins is defined %}
   cors_allowed_origins:
     {% for origin in store.cors_allowed_origins %}

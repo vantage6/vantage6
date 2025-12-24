@@ -94,13 +94,13 @@ export class LayoutDefaultComponent implements AfterViewInit, OnDestroy {
       this.hideMenu = route.snapshot.data?.['hideMenu'] || false;
 
       // ensure permissions are initialized before setting navigation links
-      const serverPermissionInit = this.permissionService.isInitialized();
+      const hqPermissionInit = this.permissionService.isInitialized();
       const chosenStore = this.chosenStoreService.getCurrentStore();
       const storePermissionInit = this.storePermissionService.isInitialized();
-      combineLatest([serverPermissionInit, chosenStore, storePermissionInit])
+      combineLatest([hqPermissionInit, chosenStore, storePermissionInit])
         .pipe(takeUntil(this.destroy$))
-        .subscribe(([serverPermInit, chosenStore, storePermInit]) => {
-          if (serverPermInit && (chosenStore === null || storePermInit)) {
+        .subscribe(([HQPermInit, chosenStore, storePermInit]) => {
+          if (HQPermInit && (chosenStore === null || storePermInit)) {
             this.setNavigationLinks();
             this.canEditOwnUser = this.permissionService.isAllowed(ScopeType.OWN, ResourceType.USER, OperationType.EDIT);
             this.userId = this.permissionService.activeUser?.id;

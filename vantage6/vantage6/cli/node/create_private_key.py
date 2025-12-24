@@ -47,7 +47,7 @@ from vantage6.cli.node.common import create_client_and_authenticate
     "upload",
     flag_value=False,
     default=True,
-    help="Don't upload the public key to the server",
+    help="Don't upload the public key to HQ",
 )
 @click.option(
     "-o",
@@ -104,7 +104,7 @@ def cli_node_create_private_key(
             exit(1)
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
-    # Authenticate with the server to obtain organization name if it wasn't
+    # Authenticate with the hq to obtain organization name if it wasn't
     # provided
     if organization_name is None:
         client = create_client_and_authenticate(ctx, use_sandbox_port=ctx.is_sandbox)
@@ -159,11 +159,10 @@ def cli_node_create_private_key(
     ctx.config_manager.put(ctx.config)
     ctx.config_manager.save(ctx.config_file)
 
-    # upload key to the server
+    # upload key to the hq
     if upload:
         info(
-            "Uploading public key to the server. "
-            "This will overwrite any previously existing key!"
+            "Uploading public key to HQ. This will overwrite previously existing keys!"
         )
 
         if "client" not in locals():

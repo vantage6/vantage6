@@ -5,8 +5,7 @@
 Blob Storage
 ------------
 
-To use Azure Blob Storage, the following can be set in the server
-configuration file:
+To use Azure Blob Storage, the following can be set in the HQ configuration file:
 
 ::
 
@@ -50,9 +49,9 @@ Developer documentation
 
 When configured to use blob storage, argument data and results are streamed:
 
-- From the user client, through the server, to blob storage and vice versa
-- From the node client, through the server, to blob storage and vice versa
-- From the algorithm container, through the proxy, server to blob storage and vice versa
+- From the user client, through HQ, to blob storage and vice versa
+- From the node client, through HQ, to blob storage and vice versa
+- From the algorithm container, through the proxy and HQ, to blob storage and vice versa
 
 Whenever a blob is uploaded, it is stored using a UUID as identifier. This UUID is then used
 as reference in the `arguments` or `result` field in the database. To ensure backwards compatibility,
@@ -60,7 +59,7 @@ checks are made throughout the code to determine if the run was performed using 
 database, in which case the argument data or result should be interpreted as is, as opposed to first retrieving
 the data from blob storage.
 
-The `blobstream` endpoint on the server enables streaming of large argument data and result data
+The `blobstream` endpoint on HQ enables streaming of large argument data and result data
 directly to and from blob storage. This reduces memory usage by never storing the entire argument data
 or result in memory at once, and avoids storing large payloads in the database.
 

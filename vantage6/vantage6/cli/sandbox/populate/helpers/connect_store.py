@@ -1,5 +1,5 @@
 """
-Development script to connect the server to the local store.
+Development script to connect HQ to the local store.
 """
 
 import time
@@ -23,7 +23,7 @@ def _wait_for_store_to_be_online(
     Parameters
     ---------
     client: Client
-        The client to use to connect to the server.
+        The client to use to connect to vantage6 hub.
     local_store_url: str
         The URL of the local store.
     local_store_api_path: str
@@ -61,12 +61,12 @@ def _wait_for_store_to_be_online(
 
 def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) -> str:
     """
-    Connect the server to the local store.
+    Connect HQ to the local store.
 
     Parameters
     ---------
     client: Client
-        The client to use to connect to the server.
+        The client to use to connect to vantage6 hub.
     store_port: int
         The port of the store to connect to.
 
@@ -87,7 +87,7 @@ def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) 
 
     _wait_for_store_to_be_online(local_store_url, local_store_api_path)
 
-    # note that the store is already coupled to the server in the sandbox/devspace
+    # note that the store is already coupled to HQ in the sandbox/devspace
     # config.
     try:
         store = next(s for s in existing_stores if s["url"] == local_store_url)

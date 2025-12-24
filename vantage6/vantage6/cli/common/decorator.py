@@ -45,8 +45,8 @@ def click_insert_context(
 
     Examples
     --------
-    >>> @click_insert_context(InstanceType.SERVER)
-    >>> def cli_server_start(ctx: ServerContext, *args, **kwargs) -> None:
+    >>> @click_insert_context(InstanceType.HQ)
+    >>> def cli_hq_start(ctx: HQContext, *args, **kwargs) -> None:
     >>>     pass
     """
 

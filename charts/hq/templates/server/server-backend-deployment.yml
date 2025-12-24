@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    component: vantage6-hq
+spec:
+  replicas: {{ .Values.hq.replications }}
+  selector:
+    matchLabels:
+{{ include "vantage6.matchLabels" . | indent 6 }}
+      component: vantage6-hq
+  template:
+    metadata:
+      labels:
+{{ include "vantage6.labels" . | indent 8 }}
+        component: vantage6-hq
+    spec:
+      containers:
+      - name: vantage6-hq
+        image: {{ .Values.hq.image }}
+        imagePullPolicy: {{ .Values.hq.imagePullPolicy | default "Always" }}
+        env:
+        - name: KEYCLOAK_URL
+          value: {{ .Values.hq.keycloak.url }}
+        - name: KEYCLOAK_REALM
+          value: {{ .Values.hq.keycloak.realm }}
+{{- if and .Values.hq.dev .Values.hq.dev.store_address }}
+        - name: LOCAL_STORE_URL
+          value: {{ .Values.hq.dev.store_address | quote }}
+{{- end }}
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-secrets
+        ports:
+        - containerPort: {{ .Values.hq.internal.port }}
+        {{- if and .Values.prometheus .Values.prometheus.enabled }}
+        - containerPort: {{ .Values.prometheus.exporter_port | default 7603 }}
+          name: prmths-export
+        {{- end }}
+        command: [
+          "uwsgi", "--http", ":{{ .Values.hq.internal.port }}", "--gevent", "1000", "--http-websockets",
+          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
+          "/vantage6/vantage6-hq/vantage6/hq/wsgi.py", "--pyargv",
+          "/mnt/config.yaml",
+        ]
+        volumeMounts:
+        - name: config-file
+          mountPath: /mnt/config.yaml
+          subPath: config.yaml
+        - name: hq-logs
+          mountPath: /mnt/log
+
+      volumes:
+      - name: config-file
+        configMap:
+          name: {{ .Release.Name }}-configmap
+      - name: hq-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-logs-pvc

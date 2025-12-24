@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+  config.yaml: |
+    algorithm_stores: []
+    api_path: {{ .Values.hq.apiPath }}
+    description: {{ .Values.hq.description }}
+    {{- if and .Values.hq.jwt .Values.hq.jwt.secret }}
+    jwt_secret_key: {{ .Values.hq.jwt.secret }}
+    {{- end }}
+    logging:
+      backup_count: {{ .Values.hq.logging.backup_count }}
+      datefmt: {{ .Values.hq.logging.datefmt | quote }}
+      file: {{ .Values.hq.logging.file }}
+      format: {{ .Values.hq.logging.format | quote }}
+      level: {{ .Values.hq.logging.level }}
+      loggers:
+      {{- range .Values.hq.logging.loggers }}
+      - level: {{ .level }}
+        name: {{ .name }}
+      {{- end }}
+      max_size: {{ .Values.hq.logging.max_size }}
+      use_console: {{ .Values.hq.logging.use_console }}
+    port: {{ .Values.hq.internal.port }}
+    hq_url: {{ .Values.hq.baseUrl }}{{ .Values.hq.apiPath }}
+    {{- if .Values.database.external }}
+    uri: {{ .Values.database.uri }}
+    {{- else }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres:5432/{{ .Values.database.name }}
+    {{- end }}
+    {{- if .Values.hq.cors_allowed_origins }}
+    cors_allowed_origins:
+      {{- range .Values.hq.cors_allowed_origins }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.rabbitmq }}
+    rabbitmq:
+      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost }}
+    {{- end }}
+    {{- if .Values.hq.dev.host_uri }}
+    dev:
+      host_uri: {{ .Values.hq.dev.host_uri }}
+      store_address: {{ .Values.hq.dev.store_address }}
+    {{- end }}
+    {{- if .Values.hq.algorithm_stores }}
+    algorithm_stores:
+      {{- range .Values.hq.algorithm_stores }}
+      - name: {{ .name }}
+        url: {{ .url }}
+        api_path: {{ .api_path }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.hq.runs_data_cleanup_days }}
+    runs_data_cleanup_days: {{ .Values.hq.runs_data_cleanup_days }}
+    {{- end }}
+    {{- if .Values.hq.runs_data_cleanup_include_args }}
+    runs_data_cleanup_include_args: {{ .Values.hq.runs_data_cleanup_include_args }}
+    {{- end }}
+    {{- if and .Values.prometheus .Values.prometheus.enabled }}
+    prometheus:
+      enabled: {{ .Values.prometheus.enabled }}
+      {{- if .Values.prometheus.exporter_port }}
+      exporter_port: {{ .Values.prometheus.exporter_port }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.hq.large_result_store }}
+    large_result_store:
+      type: {{ .Values.hq.large_result_store.type }}
+      container_name: {{ .Values.hq.large_result_store.container_name }}
+      {{- if .Values.hq.large_result_store.connection_string }}
+      connection_string: {{ .Values.hq.large_result_store.connection_string }}
+      {{- end }}
+      {{- if .Values.hq.large_result_store.tenant_id }}
+      tenant_id: {{ .Values.hq.large_result_store.tenant_id }}
+      {{- end }}
+      {{- if .Values.hq.large_result_store.client_id }}
+      client_id: {{ .Values.hq.large_result_store.client_id }}
+      {{- end }}
+      {{- if .Values.hq.large_result_store.client_secret }}
+      client_secret: {{ .Values.hq.large_result_store.client_secret }}
+      {{- end }}
+      {{- if .Values.hq.large_result_store.storage_account_name }}
+      storage_account_name: {{ .Values.hq.large_result_store.storage_account_name }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.hq.debug }}
+    debug:
+      flask: {{ .Values.hq.debug.flask }}
+    {{- end }}

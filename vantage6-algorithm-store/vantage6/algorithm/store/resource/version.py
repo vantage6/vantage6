@@ -52,7 +52,7 @@ class Version(AlgorithmStoreResources):
     def get(self):
         """Get version
         ---
-        description: Return the version of the algorithm store server instance
+        description: Return the version of the algorithm store instance
 
         responses:
           200:

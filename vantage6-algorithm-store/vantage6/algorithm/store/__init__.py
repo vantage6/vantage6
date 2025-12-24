@@ -1,10 +1,10 @@
 """
 The algorithm store holds the algorithms that are available to the vantage6
-nodes. It is a repository of algorithms that can be coupled to a vantage6
-server. The algorithms are stored in a database and can be managed through
+nodes. It is a repository of algorithms that can be coupled to a vantage6 HQ.
+The algorithms are stored in a database and can be managed through
 the API. Note that is possible to couple multiple algorithm stores to a
-vantage6 server. This allows both coupling a community store and a private
-store to a vantage6 server.
+vantage6 HQ. This allows both coupling a community store and a private
+store to a vantage6 HQ.
 """
 
 import os
@@ -38,9 +38,9 @@ from vantage6.algorithm.store import db
 # make sure the version is available
 from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.globals import (
+    BACKEND_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
-    SERVER_MODULE_NAME,
 )
 from vantage6.algorithm.store.model.base import Base, Database, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
@@ -54,7 +54,7 @@ __version__ = importlib.metadata.version(__package__)
 
 class AlgorithmStoreApp(Vantage6App):
     """
-    Vantage6 server instance.
+    Vantage6 algorithm store instance.
 
     Attributes
     ----------
@@ -65,7 +65,7 @@ class AlgorithmStoreApp(Vantage6App):
     def __init__(self, ctx: AlgorithmStoreContext) -> None:
         """Create a vantage6 algorithm store application."""
 
-        super().__init__(ctx, SERVER_MODULE_NAME)
+        super().__init__(ctx, BACKEND_MODULE_NAME)
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
@@ -231,9 +231,9 @@ class AlgorithmStoreApp(Vantage6App):
 
     def start(self) -> None:
         """
-        Start the server.
+        Start the service.
 
-        Before server is really started, some database settings are checked and
+        Before service is really started, some database settings are checked and
         (re)set where appropriate.
         """
         self._add_default_roles(get_default_roles(), db)
@@ -248,7 +248,7 @@ class AlgorithmStoreApp(Vantage6App):
                 if not root_user:
                     log.warning(
                         "Creating root user. Please note that it cannot be verified at "
-                        "this point that the user exists at the given vantage6 server."
+                        "this point that the user exists at the given vantage6 HQ."
                     )
 
                     root = db.Role.get_by_name(DefaultRole.ROOT.value)
@@ -281,7 +281,7 @@ class AlgorithmStoreApp(Vantage6App):
                 if len(db.User.get()) == 0:
                     log.warning(
                         "%s No users are defined in the database either."
-                        "This means no-one can alter resources on this server.",
+                        "This means no-one can alter resources on this store.",
                         default_msg,
                     )
                 else:
@@ -289,14 +289,14 @@ class AlgorithmStoreApp(Vantage6App):
         elif len(db.User.get()) == 0:
             log.warning(
                 "No root user found in the configuration file, nor are users defined in"
-                " the database. This means no-one can alter resources on this server."
+                " the database. This means no-one can alter resources on this store."
             )
         return self
 
 
-def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
+def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     """
-    Run a vantage6 server.
+    Run a vantage6 algorithm store.
 
     Parameters
     ----------
@@ -308,7 +308,7 @@ def run_server(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     Returns
     -------
     AlgorithmStoreApp
-        A running instance of the vantage6 server
+        A running instance of the vantage6 algorithm store
     """
     ctx = AlgorithmStoreContext.from_external_config_file(
         config, system_folders, in_container=True

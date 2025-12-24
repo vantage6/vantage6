@@ -17,7 +17,7 @@ do and how they may be used. Each part of the code is documented separately belo
    vantage6.algorithm.client
    vantage6.algorithm.tools
    vantage6.node
-   vantage6.server
+   vantage6.hq
    vantage6.algorithm.store
    vantage6.backend.common
    vantage6.common

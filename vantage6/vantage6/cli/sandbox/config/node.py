@@ -35,14 +35,14 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
 
     Parameters
     ----------
-    server_name : str
-        Name of the server.
+    hq_name : str
+        Name of the HQ.
     api_keys : list[str]
         List of API keys.
     node_names : list[str]
         List of node names.
-    server_port : int
-        Port of the server.
+    hq_port : int
+        Port of the HQ.
     node_image : str | None
         Image of the node.
     extra_node_config : Path | None
@@ -60,10 +60,10 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
 
     def __init__(
         self,
-        server_name: str,
+        hq_name: str,
         api_keys: list[str],
         node_names: list[str],
-        server_port: int,
+        hq_port: int,
         node_image: str | None,
         extra_node_config: Path | None,
         extra_dataset: NodeDataset | None,
@@ -71,11 +71,11 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         custom_data_dir: Path | None,
         with_prometheus: bool = False,
     ) -> None:
-        super().__init__(server_name, custom_data_dir)
+        super().__init__(hq_name, custom_data_dir)
         self.api_keys = api_keys
         self.node_names = node_names
         self.num_nodes = len(api_keys)
-        self.server_port = server_port
+        self.hq_port = hq_port
         self.node_image = node_image
         self.extra_node_config = extra_node_config
         if extra_dataset:
@@ -142,7 +142,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_configs.append(full_node_config)
         info(
             f"Created {Fore.GREEN}{len(self.node_configs)}{Style.RESET_ALL} node "
-            f"configuration(s), attaching them to {Fore.GREEN}{self.server_name}"
+            f"configuration(s), attaching them to {Fore.GREEN}{self.hq_name}"
             f"{Style.RESET_ALL}."
         )
 
@@ -170,7 +170,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         full_df = pd.read_csv(node_dataset.path)
         length_df = len(full_df)
         for i in range(self.num_nodes):
-            node_name = f"{self.server_name}_node_{i + 1}"
+            node_name = f"{self.hq_name}_node_{i + 1}"
             path_to_dev_dir = self._create_and_get_data_dir(
                 InstanceType.NODE, is_data_folder=False
             )
@@ -210,7 +210,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             Path to the node configuration file.
         """
         node_name = config["node_name"]
-        config_name = f"{self.server_name}-{node_name}"
+        config_name = f"{self.hq_name}-{node_name}"
 
         path_to_data_dir = self._create_and_get_data_dir(
             InstanceType.NODE, is_data_folder=True, node_name=node_name
@@ -267,7 +267,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloak": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-auth-user-auth-kc-service."
+                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
                         f"{self.k8s_config.namespace}.svc.cluster.local:8080"
                     ),
                 },
@@ -297,13 +297,13 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                         for dataset in [datasets[0]]
                     ]
                 },
-                "server": {
+                "hq": {
                     "url": (
-                        f"http://vantage6-{self.server_name}-user-server"
+                        f"http://vantage6-{self.hq_name}-user-hq"
                         f".{self.k8s_config.namespace}.svc.cluster"
                         ".local"
                     ),
-                    "port": self.server_port,
+                    "port": self.hq_port,
                 },
             },
         }

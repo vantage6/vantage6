@@ -28,7 +28,6 @@ class User(Base):
     """
 
     # fields
-    # link with the v6 server. This is a temporary solution
     username = Column(String)
     organization_id = Column(Integer)
     keycloak_id = Column(String)

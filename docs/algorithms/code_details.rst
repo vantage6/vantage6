@@ -115,7 +115,7 @@ Another useful decorator is the ``@algorithm_client`` decorator:
         pass
 
 This decorator provides the algorithm with a client that can be used to interact
-with the vantage6 central server. For instance, you can use this client in
+with the vantage6 HQ. For instance, you can use this client in
 the central part of an algorithm to create a subtasks for each node with
 ``client.task.create()``. A full list of all commands that are available
 can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.
@@ -197,7 +197,7 @@ Another useful decorator is the ``@algorithm_client`` decorator:
         pass
 
 This decorator provides the algorithm with a client that can be used to interact
-with the vantage6 central server. For instance, you can use this client in
+with the vantage6 HQ. For instance, you can use this client in
 the central part of an algorithm to create a subtasks for each node with
 ``client.task.create()``. A full list of all commands that are available
 can be found in the :ref:`algorithm client documentation <algo-client-api-ref>`.

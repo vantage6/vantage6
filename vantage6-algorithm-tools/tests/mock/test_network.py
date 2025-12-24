@@ -6,8 +6,8 @@ import pandas as pd
 from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
 from vantage6.algorithm.mock import MockNetwork
 from vantage6.algorithm.mock.client import MockUserClient
+from vantage6.algorithm.mock.hq import MockHQ
 from vantage6.algorithm.mock.node import MockNode
-from vantage6.algorithm.mock.server import MockServer
 
 TEST_ALGORITHM_NAME = "test_algorithm"
 DATASET_LABEL = "dataset_1"
@@ -58,8 +58,8 @@ class TestMockNetworkDataframe(TestCase):
 
     def test_attributes(self):
         """Test if properties are properly initialized"""
-        # Check the type of the server
-        self.assertIsInstance(self.network.server, MockServer)
+        # Check the types
+        self.assertIsInstance(self.network.hq, MockHQ)
         self.assertIsInstance(self.network.user_client, MockUserClient)
 
         self.assertEqual(len(self.network.nodes), 2)
@@ -79,11 +79,11 @@ class TestMockNetworkDataframe(TestCase):
         self.assertIsInstance(self.network.get_node(1), MockNode)
         self.assertIsInstance(self.network.get_node(2), MockNode)
 
-    def test_server_initialization(self):
-        """Test if server is properly initialized"""
-        self.assertEqual(len(self.network.server.tasks), 0)
-        self.assertEqual(len(self.network.server.runs), 0)
-        self.assertEqual(len(self.network.server.results), 0)
+    def test_hq_initialization(self):
+        """Test if HQ is properly initialized"""
+        self.assertEqual(len(self.network.hq.tasks), 0)
+        self.assertEqual(len(self.network.hq.runs), 0)
+        self.assertEqual(len(self.network.hq.results), 0)
 
     def test_node_initialization(self):
         """Test if node is properly initialized"""

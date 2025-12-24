@@ -25,4 +25,4 @@ uwsgi \
     --wsgi-file /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
     --pyargv "${VANTAGE6_STORE_CONFIG_LOCATION}"
 
-echo "exit dev_server.sh"
+echo "exit dev_store.sh"

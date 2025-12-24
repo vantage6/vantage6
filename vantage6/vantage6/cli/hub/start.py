@@ -6,7 +6,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import execute_cli_start
-from vantage6.cli.context.server import ServerContext
+from vantage6.cli.context.hq import HQContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import select_k8s_config
 
@@ -20,9 +20,9 @@ from vantage6.cli.k8s_config import select_k8s_config
     default=None,
     help="Local chart repository to use.",
 )
-@click_insert_context(type_=InstanceType.SERVER)
+@click_insert_context(type_=InstanceType.HQ)
 def cli_hub_start(
-    ctx: ServerContext,
+    ctx: HQContext,
     context: str | None,
     namespace: str | None,
     local_chart_dir: Path | None,
@@ -42,7 +42,7 @@ def cli_hub_start(
         extra_args=["--wait-ready"],
     )
 
-    # run the store. The store is started before the server so that the server can
+    # run the store. The store is started before the HQ so that the HQ can
     # couple to the store on startup.
     execute_cli_start(
         CLICommandName.ALGORITHM_STORE,
@@ -52,9 +52,9 @@ def cli_hub_start(
         system_folders=False,
     )
 
-    # Then we need to start the server
+    # Then we need to start the HQ
     execute_cli_start(
-        CLICommandName.SERVER,
+        CLICommandName.HQ,
         ctx.name,
         k8s_config,
         local_chart_dir,

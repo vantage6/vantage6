@@ -277,11 +277,6 @@ class Users(AlgorithmStoreResources):
         if db.User.get_by_keycloak_id(keycloak_id=user_id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
-        # Check if the user exists in the relevant vantage6 server. Note that this only
-        # works if:
-        # 1. the user executing this request is in the same v6 server
-        # 2. They are allowed to see the user in the v6 server
-
         # TODO find organization id from keycloak - issue #1994
         # server_response, status_code = request_from_store_to_v6_server(
         #     url=f"{server.url}/user",

@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # This script is used to purge data for devspace.
-# It deletes the populate marker file, task directory, server database, store database, and keycloak database.
+# It deletes the populate marker file, task directory, HQ database, store database, and keycloak database.
 
 # Arguments:
 #   $1 - Path to the populate marker file
 #   $2 - Path to the task directory
-#   $3 - Path to the server database mount directory
+#   $3 - Path to the HQ database mount directory
 #   $4 - Path to the store database mount directory
 #   $5 - Path to the keycloak database mount directory
 
 # Functions
 usage() {
-  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <SERVER_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH> <AUTH_DATABASE_MOUNT_PATH> <LOG_MOUNT_PATH>"
+  echo "Usage: $0 <POPULATE_MARKER> <TASK_DIRECTORY> <HQ_DATABASE_MOUNT_PATH> <STORE_DATABASE_MOUNT_PATH> <AUTH_DATABASE_MOUNT_PATH> <LOG_MOUNT_PATH>"
   echo "Options:"
   echo "  --help      Display this help message"
   exit 1
@@ -36,19 +36,19 @@ fi
 
 POPULATE_MARKER=$(replace_wsl_path "$1")
 TASK_DIRECTORY=$(replace_wsl_path "$2")
-SERVER_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
+HQ_DATABASE_MOUNT_PATH=$(replace_wsl_path "$3")
 STORE_DATABASE_MOUNT_PATH=$(replace_wsl_path "$4")
 AUTH_DATABASE_MOUNT_PATH=$(replace_wsl_path "$5")
 LOG_MOUNT_PATH=$(replace_wsl_path "$6")
 
 # Validate that all required arguments are provided
-if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${SERVER_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ] || [ -z "${AUTH_DATABASE_MOUNT_PATH}" ] || [ -z "${LOG_MOUNT_PATH}" ]; then
+if [ -z "${POPULATE_MARKER}" ] || [ -z "${TASK_DIRECTORY}" ] || [ -z "${HQ_DATABASE_MOUNT_PATH}" ] || [ -z "${STORE_DATABASE_MOUNT_PATH}" ] || [ -z "${AUTH_DATABASE_MOUNT_PATH}" ] || [ -z "${LOG_MOUNT_PATH}" ]; then
   echo "Error: Missing arguments."
   usage
 fi
 
 # Validate the paths
-for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$SERVER_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH" "$AUTH_DATABASE_MOUNT_PATH" "$LOG_MOUNT_PATH"; do
+for path in "$POPULATE_MARKER" "$TASK_DIRECTORY" "$HQ_DATABASE_MOUNT_PATH" "$STORE_DATABASE_MOUNT_PATH" "$AUTH_DATABASE_MOUNT_PATH" "$LOG_MOUNT_PATH"; do
   # validate that the path is not empty or root
   if [[ "$path" == "/" || -z "$path" ]]; then
     echo "Error: Invalid path provided: $path"
@@ -101,7 +101,7 @@ delete_all_in_dir() {
 }
 
 delete_all_in_dir "$TASK_DIRECTORY"
-delete_all_in_dir "$SERVER_DATABASE_MOUNT_PATH"
+delete_all_in_dir "$HQ_DATABASE_MOUNT_PATH"
 delete_all_in_dir "$STORE_DATABASE_MOUNT_PATH"
 delete_all_in_dir "$AUTH_DATABASE_MOUNT_PATH"
 delete_all_in_dir "$LOG_MOUNT_PATH"

@@ -25,7 +25,7 @@ class Rule(Base, RuleInterface):
 
     A rule gives access to a single type of action with a given operation
     and resource on which it acts. Note that rules are defined on startup
-    of the server, based on permissions defined in the endpoints. You cannot
+    of the store, based on permissions defined in the endpoints. You cannot
     edit the rules in the database.
 
     Attributes

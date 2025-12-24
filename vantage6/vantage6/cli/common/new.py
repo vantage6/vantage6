@@ -34,7 +34,7 @@ def new(
     system_folders : bool
         Whether to store the configuration in the system folders
     type_ : InstanceType
-        Type of the configuration (node, server, algorithm store, etc)
+        Type of the configuration (node, HQ, algorithm store, etc)
     is_sandbox : bool
         Whether to create a sandbox configuration or not
     extra_config: dict | None = None

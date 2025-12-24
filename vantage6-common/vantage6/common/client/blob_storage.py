@@ -14,11 +14,11 @@ class BlobStorageMixin:
     Mixin class to add blob storage functionality to client classes.
     """
 
-    def _upload_run_data_to_server(
+    def _upload_run_data_to_hq(
         self, run_data_bytes: bytes, pub_key: str | None = None
     ) -> str:
         """
-        Upload run data (result or input) to the server in chunks.
+        Upload run data (result or input) to HQ in chunks.
 
         Parameters
         ----------
@@ -57,22 +57,21 @@ class BlobStorageMixin:
             )
 
         if not (200 <= response.status_code < 300):
-            error_msg = f"Failed to upload blob to server: {response.text}"
+            error_msg = f"Failed to upload blob to HQ: {response.text}"
             self.log.error(error_msg)
             raise RuntimeError(error_msg)
 
         run_data_uuid_response = response.json()
         run_data_uuid = run_data_uuid_response.get("uuid")
         if not run_data_uuid:
-            self.log.error("Failed to upload run data to server")
+            self.log.error("Failed to upload run data to HQ")
             raise RuntimeError("Failed to get UUID from blobstream response")
-        self.log.info(f"Run data uploaded to server with UUID: {run_data_uuid}")
+        self.log.info(f"Run data uploaded to HQ with UUID: {run_data_uuid}")
         return run_data_uuid
 
-    def _download_run_data_from_server(self, run_data_uuid: str) -> bytes:
+    def _download_run_data_from_hq(self, run_data_uuid: str) -> bytes:
         """
-        Download run data (either input or result)
-        from the server using its UUID.
+        Download run data (either input or result) from HQ using its UUID.
 
         Parameters
         ----------
@@ -132,12 +131,12 @@ class BlobStorageMixin:
 
     def check_if_blob_store_enabled(self):
         """
-        Check if the blob store is enabled on the server.
-        This function sends a request to the blob stream status endpoint
-        and returns whether the blob store is enabled or not.
+        Check if the blob store is enabled on HQ.
 
-        This is used so that the user does not need to be aware of storage
-        used at the server when uploading the first input in the client.
+        This function sends a request to the blob stream status endpoint and returns
+        whether the blob store is enabled or not. This is used so that the user does
+        not need to be aware of storage used at HQ when uploading the first input in
+        the client.
 
         Returns
         -------
@@ -157,7 +156,8 @@ class BlobStorageMixin:
         if not response.ok:
             self.log.warning(
                 f"Blob store check failed with status code {response.status_code}. "
-                "Assuming blob store is disabled. Does the server version match this client's version?"
+                "Assuming blob store is disabled. Does HQ version match this client's "
+                "version?"
             )
             return False
         response_json = response.json()

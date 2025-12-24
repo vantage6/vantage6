@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ui
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+{{ include "vantage6.matchLabels" . | indent 4 }}
+    component: ui
+  ports:
+    - protocol: TCP
+      port: {{ .Values.ui.port }}   # External port for the UI
+      targetPort: 80    # Container port for the UI
+      name: vantage6-ui
+{{- if and .Values.hq.dev.forward_ports .Values.hq.dev.local_ui_port_to_expose }}
+      nodePort: {{ .Values.hq.dev.local_ui_port_to_expose }}
+{{- end }}
+{{- if and .Values.hq.dev.forward_ports .Values.hq.dev.local_ui_port_to_expose }}
+  type: NodePort
+{{- else }}
+  type: ClusterIP
+{{- end }}

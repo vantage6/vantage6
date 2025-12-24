@@ -1,0 +1,269 @@
+# Override the kubernetes chart name
+nameOverride: vantage6-hq
+
+# Specify the kubernetes namespace in which the server will be deployed. Optional,
+# by default the Release.Namespace is used
+namespace: vantage6-hq
+
+server:
+  # The description of the server
+  description: Vantage6 server version 5
+
+  # Let the server know where it is hosted. This is used for communication with other
+  # vantage6 components. E.g. for the community server:
+  baseUrl: https://uluru.vantage6.ai
+  # For a localhost server with default settings:
+  # baseUrl: http://localhost:7601
+
+  # API path prefix. Server may be reached at https://my_server.org/<apiPath>/<resource>.
+  apiPath: /server
+
+  # The image used to start the server
+  image: harbor2.vantage6.ai/infrastructure/server:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
+
+  # The number of replicas of the server
+  replications: 1
+
+  # Port that the server exposes on the internal network from the containers
+  internal:
+    port: 7601
+
+  # Port that the server exposes on the kubernetes service to the outside world
+  port: 7601
+
+  # If you want to couple algorithm stores to the server on startup, you can add them
+  # here. The name is used to identify the algorithm store in the server's database.
+  # The url is the URL of the algorithm store's API.
+  algorithm_stores:
+    - name: Local store
+      url: http://localhost:7602/api
+      api_path: /api
+
+  # Keycloak configuration
+  keycloak:
+    url: https://auth.vantage6.ai
+    realm: vantage6
+    adminUsername: admin
+    adminPassword: admin
+    adminClient: backend-admin-client
+    adminClientSecret: myadminclientsecret
+
+  # The secret key used to generate JWT authorization tokens. This should
+  # be kept secret as others are able to generate access tokens if they
+  # know this secret. This parameter is optional. In case it is not
+  # provided in the configuration it is generated each time the server
+  # starts, thereby invalidating all previous distributed keys.
+  # Recommended for development, but DO NOT use in production!
+  jwt:
+    secret: "super-secret-key-that-you-shouldnt-use-in-production"
+
+  # Cleanup settings: This is used to cleanup the database from old results.
+  # Every hour, results older than the threshold for completed runs are deleted.
+  # Disabled by default.
+  # Careful! Make sure you have regular backups of your database before enabling this
+  # feature, as a wrong configuration could lead to data loss.
+  runs_data_cleanup_days: 30
+  # Whether to also delete the algorithm arguments of the runs. False by default.
+  runs_data_cleanup_include_args: false
+
+  # Set up with which origins the server should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Uluru UI, and
+  # port 7600 on localhost. Usually, only the UI needs to access the server.
+  cors_allowed_origins:
+    - https://portal.uluru.vantage6.ai
+    - http://localhost:7600
+
+  # Settings for the large result store. By default, the server uses a database to store all arguments and results.
+  # Adding this will set Vantage6 to use blob storage rather than the database for both argumentsand results.
+  large_result_store:
+    # Type of the large result store. Currently, only "azure" is supported.
+    type: "azure"
+    # The name of the Blob Storage container to use for storing large results.
+    container_name: test-container
+
+    # Use this block for connection string authentication:
+    # -------------------------------------------------------
+    # Connection string to the Storage account. Useful for testing purposes, such as connecting to Azurite.
+    # The example connection string uses the default account name and key for Azurite.
+    connection_string: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://172.17.0.1:10000/devstoreaccount1;QueueEndpoint=http://172.17.0.1:10001/devstoreaccount1;"
+    # -------------------------------------------------------
+
+    # Or use this block for service principal authentication:
+    # -------------------------------------------------------
+    # Credentials for accessing the Blob Storage. If provided, these will be used instead of the connection string.
+    # tenant_id, client_id, and client_secret are required for authentication.
+    tenant_id: "your-tenant-id"
+    client_id: "your-client-id"
+    client_secret: "your-client-secret"
+    # Name of the storage account.
+    storage_account_name: "your-storage-account-name"
+    # -------------------------------------------------------
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
+
+    # Location to the log file
+    file: hq.log
+
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
+
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Storage configuration for logs. Storage size is set to 128M by default,
+    # and storage class is k8s storage class that is used.
+    storageSize: "128M"
+    storageClass: "local-storage"
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: "/var/log/vantage6-hq"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
+
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+  # Development mode settings. Only use when running a vantage6 infrastructure locally.
+  # Commands such as `v6 sandbox` and `v6 dev` will use these settings automatically.
+  dev:
+    # Specify the URI to the host from within a server container. When using
+    # Docker Desktop, you can use the special hostname `host.docker.internal` to refer
+    #to the host machine. On Linux, you should normally use http://172.17.0.1.
+    host_uri: host.docker.internal
+
+    # Address of the algorithm store. This can be provided to the server for
+    # a custom address of the local algorithm store within the k8s cluster.
+    store_address: http://vantage6-store-store.service.default.svc.cluster.local
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: true
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_hub_port_to_expose: 30761
+    # And these ports will be exposed for the UI and prometheus (if enabled).
+    local_ui_port_to_expose: 30760
+    local_prometheus_port_to_expose: 30763
+
+  # Additional debug flags
+  debug:
+    # Set to `true` to enable debug mode for the socketio server
+    socketio: false
+
+    # Set to `true` to enable debug mode in the Flask app
+    flask: false
+
+ui:
+
+  # The image used to start the UI
+  image: harbor2.vantage6.ai/infrastructure/ui:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
+  # Service port for the UI
+  port: 7600
+  # keycloak settings
+  keycloak:
+    realm: vantage6
+    client: public_client
+    publicUrl: http://localhost:8080
+
+  # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
+  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai".
+  # If you don't want to run tasks via the UI, you can also set this to an empty string
+  # for the strictest CSP policy.
+  allowedAlgorithmStores: "*"
+  # Community algorithm store URL.
+  communityStoreUrl: https://store.uluru.vantage6.ai
+  # Community algorithm store API path
+  communityStoreApiPath: /api
+
+rabbitmq:
+  # The image of the RabbitMQ server
+  image:
+    repository: rabbitmq
+    tag: 3-management
+
+  # The username of the RabbitMQ server
+  username: rabbitmquser
+
+  # The password of the RabbitMQ server
+  password: rabbitmquserpassword
+
+  # The vhost of the RabbitMQ server
+  vhost: /vantage6
+
+database:
+
+  # whether or not to use an external database
+  external: false
+
+  # The URI of the external database. Only used if `external` is set to true.
+  uri: postgresql://vantage6:vantage6@localhost:5432/vantage6
+
+  # The image of the database
+  image:
+    repository: postgres
+    tag: 13
+
+  # The username of the database
+  username: vantage6
+
+  # The password of the database
+  password: vantage6
+
+  # The name of the database
+  name: vantage6
+
+  # Path on the host machine where the database is stored
+  volumePath: /mnt/data_server
+
+  # The name of the k8s node where the server is running
+  k8sNodeName: docker-desktop
+
+# Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
+# This is done using Prometheus. There are two components to this:
+# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+#    the metrics from the nodes.
+# 2. The Prometheus server (running as a separate service), which scrapes the
+#     metrics exposed by the Prometheus exporter and stores them.
+prometheus:
+  # Set to true to enable Prometheus reporting. Default is false. Note that nodes need
+  # to be configured to report metrics to the server to be useful.
+  enabled: false
+
+  # **The settings below are only used if enabled is true**
+  # The port on which the Prometheus exporter will be available.
+  exporter_port: 7603
+  # image to use for the Prometheus server.
+  image: prom/prometheus:latest
+  # The size of the storage for the Prometheus server.
+  storageSize: 2Gi
+  # The kubernetes storage class to use for the Prometheus server.
+  storageClass: local-storage
+  # The host path for storing the Prometheus server data.
+  volumeHostPath: /var/lib/prometheus

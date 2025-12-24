@@ -13,12 +13,12 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import execute_cli_start
 from vantage6.cli.context.auth import AuthContext
+from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.context.server import ServerContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
-from vantage6.cli.sandbox.populate import populate_server_sandbox
+from vantage6.cli.sandbox.populate import populate_hub_sandbox
 
 
 @click.command()
@@ -34,7 +34,7 @@ from vantage6.cli.sandbox.populate import populate_server_sandbox
     "--re-initialize",
     is_flag=True,
     default=False,
-    help="Re-initialize the sandbox. This will repopulate the server and create new "
+    help="Re-initialize the sandbox. This will repopulate HQ and create new "
     "node configurations.",
 )
 @click.option(
@@ -76,11 +76,11 @@ from vantage6.cli.sandbox.populate import populate_server_sandbox
     "on WSL because of mount issues for default directories. Only used if the "
     "--re-initialize flag is provided.",
 )
-@click_insert_context(type_=InstanceType.SERVER, is_sandbox=True)
+@click_insert_context(type_=InstanceType.HQ, is_sandbox=True)
 @click.pass_context
 def cli_sandbox_start(
     click_ctx: click.Context,
-    ctx: ServerContext,
+    ctx: HQContext,
     context: str | None,
     namespace: str | None,
     local_chart_dir: Path | None,
@@ -100,7 +100,7 @@ def cli_sandbox_start(
     execute_sandbox_start(
         click_ctx=click_ctx,
         ctx=ctx,
-        server_name=ctx.name,
+        hq_name=ctx.name,
         k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=re_initialize,
@@ -114,8 +114,8 @@ def cli_sandbox_start(
 
 def execute_sandbox_start(
     click_ctx: click.Context,
-    ctx: ServerContext,
-    server_name: str,
+    ctx: HQContext,
+    hq_name: str,
     k8s_config: KubernetesConfig,
     num_nodes: int,
     initialize: bool,
@@ -130,7 +130,7 @@ def execute_sandbox_start(
     # First we need to start the keycloak service
     execute_cli_start(
         command_name=CLICommandName.AUTH,
-        name=f"{server_name}-auth.sandbox",
+        name=f"{hq_name}-auth.sandbox",
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         system_folders=False,
@@ -138,20 +138,20 @@ def execute_sandbox_start(
         extra_args=["--wait-ready"],
     )
 
-    # run the store. The store is started before the server so that the server can
+    # run the store. The store is started before HQ so that HQ can
     # couple to the store on startup.
     execute_cli_start(
         command_name=CLICommandName.ALGORITHM_STORE,
-        name=f"{server_name}-store.sandbox",
+        name=f"{hq_name}-store.sandbox",
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         system_folders=False,
         is_sandbox=True,
     )
 
-    # Then we need to start the server
+    # Then we need to start HQ
     execute_cli_start(
-        command_name=CLICommandName.SERVER,
+        command_name=CLICommandName.HQ,
         name=ctx.name,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
@@ -159,14 +159,14 @@ def execute_sandbox_start(
         is_sandbox=True,
     )
 
-    server_url = f"{ctx.config['server']['baseUrl']}{ctx.config['server']['apiPath']}"
-    _wait_for_server_to_be_ready(server_url)
+    hq_url = f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}"
+    _wait_for_hq_to_be_ready(hq_url)
 
-    # Then we need to populate the server
+    # Then we need to populate HQ
     if initialize:
         node_config_names = _initialize_sandbox(
-            server_url=server_url,
-            server_name=server_name,
+            hq_url=hq_url,
+            hq_name=hq_name,
             num_nodes=num_nodes,
             ctx=ctx,
             node_image=node_image,
@@ -183,7 +183,7 @@ def execute_sandbox_start(
         node_config_names = [
             config.name
             for config in node_configs
-            if config.name.startswith(f"{server_name}-node-")
+            if config.name.startswith(f"{hq_name}-node-")
         ]
 
     # Then start the nodes
@@ -199,14 +199,14 @@ def execute_sandbox_start(
         )
 
     # Print the authentication credentials
-    _print_auth_credentials(server_name)
+    _print_auth_credentials(hq_name)
 
 
 def _initialize_sandbox(
-    server_url: str,
-    server_name: str,
+    hq_url: str,
+    hq_name: str,
     num_nodes: int,
-    ctx: ServerContext,
+    ctx: HQContext,
     node_image: str | None,
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
@@ -214,9 +214,9 @@ def _initialize_sandbox(
     custom_data_dir: Path | None,
     with_prometheus: bool,
 ) -> list[str]:
-    info("Populating server")
-    node_details = populate_server_sandbox(
-        server_url=server_url,
+    info("Populating vantage6 hub")
+    node_details = populate_hub_sandbox(
+        hq_url=hq_url,
         auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         number_of_nodes=num_nodes,
     )
@@ -233,12 +233,12 @@ def _initialize_sandbox(
         else None
     )
 
-    # Create node config files from the nodes that were just registered in the server
+    # Create node config files from the nodes that were just registered in the HQ
     node_config_manager = NodeSandboxConfigManager(
-        server_name=server_name,
+        hq_name=hq_name,
         api_keys=api_keys,
         node_names=node_names,
-        server_port=ctx.config["server"]["port"],
+        hq_port=ctx.config["hq"]["port"],
         node_image=node_image,
         extra_node_config=extra_node_config,
         extra_dataset=extra_dataset,
@@ -251,17 +251,17 @@ def _initialize_sandbox(
     return node_config_manager.node_config_names
 
 
-def _print_auth_credentials(server_name: str) -> None:
+def _print_auth_credentials(hq_name: str) -> None:
     """
     Find user credentials to print, from the auth config file
 
     Parameters
     ----------
-    server_name : str
-        Name of the server.
+    hq_name : str
+        Name of the HQ.
     """
     auth_ctx = AuthContext(
-        instance_name=f"{server_name}-auth",
+        instance_name=f"{hq_name}-auth",
         system_folders=False,
         is_sandbox=True,
     )
@@ -284,19 +284,18 @@ def _print_auth_credentials(server_name: str) -> None:
         warning("No user credentials found in the auth config.")
 
 
-def _wait_for_server_to_be_ready(server_url: str) -> None:
+def _wait_for_hq_to_be_ready(hq_url: str) -> None:
     """
-    Wait for the server to be initialized.
+    Wait for the HQ to be initialized.
 
     Parameters
     ----------
-    server_url : str
-        URL of the server.
+    hq_url : str
+        URL of the hq.
     """
-    info("Waiting for server to become ready...")
+    info("Waiting for HQ to become ready...")
     client = Client(
-        # TODO replace default API path global
-        server_url=server_url,
+        hq_url=hq_url,
         auth_url=f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH}",
         log_level=LogLevel.ERROR,
     )
@@ -305,15 +304,15 @@ def _wait_for_server_to_be_ready(server_url: str) -> None:
     ready = False
     for _ in range(max_retries):
         try:
-            result = client.util.get_server_health(silent_on_connection_error=True)
+            result = client.util.get_hq_health(silent_on_connection_error=True)
             if result and result.get("api"):
-                info("Server is ready.")
+                info("HQ is ready.")
                 ready = True
                 break
         except Exception:
-            info("Waiting for server to be ready...")
+            info("Waiting for HQ to be ready...")
             time.sleep(wait_time)
 
     if not ready:
-        error("Server did not become ready in time. Exiting...")
+        error("HQ did not become ready in time. Exiting...")
         exit(1)

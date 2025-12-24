@@ -138,16 +138,14 @@ class MockNode:
                 for db_group in databases:
                     group_data = {}
                     for db in db_group:
-                        label = self.network.server.get_label_for_df_id(
-                            db["dataframe_id"]
-                        )
+                        label = self.network.hq.get_label_for_df_id(db["dataframe_id"])
                         self._validate_dataframe_exists(label)
                         group_data[label] = self.dataframes[label]
                     mock_data.append(group_data)
             else:
                 # Single list format
                 for db in databases:
-                    label = self.network.server.get_label_for_df_id(db["dataframe_id"])
+                    label = self.network.hq.get_label_for_df_id(db["dataframe_id"])
                     self._validate_dataframe_exists(label)
                     mock_data.append(self.dataframes[label])
 
@@ -303,7 +301,7 @@ class MockNode:
         """
         Get the task environment variables.
         """
-        task_id = len(self.network.server.tasks)
+        task_id = len(self.network.hq.tasks)
         return {
             **self.env,
             ContainerEnvNames.FUNCTION_ACTION.value: action.value,

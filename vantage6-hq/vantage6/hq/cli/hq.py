@@ -1,0 +1,98 @@
+from collections.abc import Callable
+from functools import wraps
+
+import click
+from colorama import Fore, Style
+
+from vantage6.common import error
+from vantage6.common.globals import InstanceType
+
+from vantage6.cli.configuration_create import select_configuration_questionnaire
+from vantage6.cli.context.hq import HQContext
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
+
+from vantage6.hq import __version__
+from vantage6.hq.model.base import Database
+
+help_ = {
+    "name": "name of the configutation you want to use.",
+    "config": "absolute path to configuration-file; overrides NAME",
+}
+
+
+def click_insert_context(func: Callable) -> Callable:
+    """
+    Decorator to insert a HQContext object into the function.
+
+    This decorator will insert a HQContext object into the function. The HQContext
+    object is created based on the configuration file that is selected by the user. The
+    user can select the configuration file by supplying the name of the configuration
+    file, or by supplying the path to the configuration file. The decorator will also
+    initialize the database connection.
+
+    Parameters
+    ----------
+    func : Callable
+        The function to decorate.
+
+    Returns
+    -------
+    Callable
+        The decorated function.
+    """
+
+    # add option decorators
+    @click.option("-n", "--name", default=None, help=help_["name"])
+    @click.option("-c", "--config", default=None, help=help_["config"])
+    @click.option("--system", "system_folders", flag_value=True)
+    @click.option("--user", "system_folders", flag_value=False, default=S_FOL)
+    @wraps(func)
+    def func_with_context(
+        name: str, config: str, system_folders: bool, *args, **kwargs
+    ) -> Callable:
+        # select configuration if none supplied
+        if config:
+            ctx = HQContext.from_external_config_file(config, system_folders)
+        else:
+            if not name:
+                try:
+                    name = select_configuration_questionnaire(
+                        InstanceType.HQ, system_folders
+                    )
+                except Exception:
+                    error("No configurations could be found!")
+                    exit()
+
+            # raise error if config could not be found
+            if not HQContext.config_exists(name, system_folders):
+                scope = "system" if system_folders else "user"
+                error(
+                    f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
+                    f" exist in the {Fore.RED}{scope}{Style.RESET_ALL} folder!"
+                )
+                exit(1)
+
+            # create HQ context, and initialize db
+            ctx = HQContext(name, system_folders=system_folders, in_container=True)
+
+        # initialize database (singleton)
+        Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+
+        return func(ctx, *args, **kwargs)
+
+    return func_with_context
+
+
+@click.group(name="hq")
+def cli_hq() -> None:
+    """Subcommand `vhq-local`."""
+    pass
+
+
+#
+#   version
+#
+@cli_hq.command(name="version")
+def cli_hq_version() -> None:
+    """Prints current version of vantage6 services installed."""
+    click.echo(__version__)

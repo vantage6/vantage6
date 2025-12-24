@@ -138,7 +138,7 @@ class PostUpdates(commands.Cog):
             name="Docker Images",
             value=(
                 f"harbor2.vantage6.ai/infrastructure/node:{version} \n"
-                f" harbor2.vantage6.ai/infrastructure/server:{version}"
+                f" harbor2.vantage6.ai/infrastructure/hq:{version}"
             ),
             inline=False,
         )

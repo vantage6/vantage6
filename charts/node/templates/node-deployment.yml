@@ -6,7 +6,7 @@ metadata:
   labels:
 {{ include "node.labels" . | indent 4 }}
     name: {{ .Values.namespace | default .Release.Namespace }}
-    app: v6-node-server-proxy
+    app: v6-node-hq-proxy
     component: node
 spec:
   selector:
@@ -30,9 +30,9 @@ spec:
         image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:5" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
-        - name: PROXY_SERVER_PORT
+        - name: V6_PROXY_PORT
           value: "{{ .Values.node.proxyPort }}"
-        - name: PROXY_SERVER_HOST
+        - name: V6_PROXY_HOST
           value: http://{{ .Release.Name }}.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
         - name: KEYCLOAK_URL
           value: {{ .Values.node.keycloak.url | quote }}

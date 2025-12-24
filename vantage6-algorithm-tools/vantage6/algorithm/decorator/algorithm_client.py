@@ -19,7 +19,7 @@ def _algorithm_client() -> Callable:
 
     By adding @algorithm_client to a function, the ``algorithm_client``
     argument will be added to the front of the argument list. This client can
-    be used to communicate with the server.
+    be used to communicate with the vantage6 hub.
 
     There is one reserved argument `mock_client` in the function to be
     decorated. If this argument is provided, the decorator will add this
@@ -71,12 +71,12 @@ def _algorithm_client() -> Callable:
                 )
                 exit(1)
 
-            # read server address from the environment
+            # read HQ address from the environment
             host = os.environ[ContainerEnvNames.HOST.value]
             port = os.environ[ContainerEnvNames.PORT.value]
             api_path = os.environ[ContainerEnvNames.API_PATH.value]
 
-            client = AlgorithmClient(token=token, server_url=f"{host}:{port}{api_path}")
+            client = AlgorithmClient(token=token, hq_url=f"{host}:{port}{api_path}")
             return func(client, *args, **kwargs)
 
         # set attribute that this function is wrapped in an algorithm client

@@ -70,7 +70,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
     )
 
     # write output from the method to mounted output file. Which will be
-    # transferred back to the server by the node-instance.
+    # transferred back to HQ by the node-instance.
     output_file = os.environ[ContainerEnvNames.OUTPUT_FILE.value]
     info(f"Writing output to {output_file}")
 
@@ -182,9 +182,9 @@ def _write_output(output: Any, output_file: str) -> None:
     """
     Write output to output file.
 
-    In case the result needs to be sent to the server the output file should contain
+    In case the result needs to be sent to HQ, the output file should contain
     valid JSON data. This is because the node will read the output file and send the
-    data to the server.
+    data to HQ.
 
     In the case we are building a session, the output of the algorithm is expected to
     be a parquet table. In this case, the output file should contain the parquet data.

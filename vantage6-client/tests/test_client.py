@@ -7,8 +7,8 @@ from vantage6.common.globals import STRING_ENCODING
 
 from vantage6.client import UserClient
 
-# Mock server
-HOST = "mock_server"
+# Mock HQ
+HOST = "mock_hq"
 PORT = 1234
 AUTH_URL = "mock_auth_url"
 
@@ -126,7 +126,7 @@ class TestClient(TestCase):
     @staticmethod
     def setup_client() -> UserClient:
         client = UserClient(
-            server_url=f"{HOST}:{PORT}/api",
+            hq_url=f"{HOST}:{PORT}/api",
             auth_url=AUTH_URL,
         )
         client.authenticate()

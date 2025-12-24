@@ -96,7 +96,7 @@ following actions:
       steps. At any point in the preprocessing steps, it is possible to send a task
       to the current dataframe. It is thus also possible to execute a compute task
       directly after data extraction. Finally, the results of each compute task are
-      sent to the central vantage6 server, where the researcher can access them.
+      sent to vantage6 HQ, where the researcher can access them.
 
     !theme superhero-outline
     skinparam linetype ortho
@@ -118,7 +118,7 @@ following actions:
         rectangle m as M
     }
 
-    rectangle Server as server
+    rectangle HQ as HQ
     rectangle Researcher as user
 
     A --> C
@@ -126,10 +126,10 @@ following actions:
     C --> E
     D --> F
     D --> M
-    E --> server
-    F --> server
-    M --> server
-    server --> user
+    E --> HQ
+    F --> HQ
+    M --> HQ
+    HQ --> user
 
 These actions are managed by the infrastructure. For example, the infrastructure ensures
 that data extraction functions are the only functions that are allowed to access the

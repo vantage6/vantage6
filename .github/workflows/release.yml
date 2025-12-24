@@ -178,7 +178,7 @@ jobs:
           helm dependency update charts/common
           helm dependency update charts/node
           helm dependency update charts/store
-          helm dependency update charts/server
+          helm dependency update charts/hq
 
       - name: Package Helm charts
         run: |
@@ -186,7 +186,7 @@ jobs:
           helm package charts/common
           helm package charts/node
           helm package charts/store
-          helm package charts/server
+          helm package charts/hq
 
       - name: Push Helm charts
         run: |
@@ -194,7 +194,7 @@ jobs:
           helm cm-push common-*.tgz v6-harbor-infrastructure
           helm cm-push node-*.tgz v6-harbor-infrastructure
           helm cm-push store-*.tgz v6-harbor-infrastructure
-          helm cm-push server-*.tgz v6-harbor-infrastructure
+          helm cm-push hq-*.tgz v6-harbor-infrastructure
 
   support-images:
     name: Build support images
@@ -316,7 +316,7 @@ jobs:
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
-  # Update the server and node images on harbor2 for this major version,
+  # Update the infrastructure images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
@@ -338,7 +338,7 @@ jobs:
 
       - name: Pull docker images
         run: |
-          docker pull harbor2.vantage6.ai/infrastructure/server:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/hq:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
           docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
           docker pull harbor2.vantage6.ai/infrastructure/ui:${version}
@@ -350,8 +350,8 @@ jobs:
         # as no definitive releases have been made yet for that major version.
         if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0)) }}
         run: |
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker tag harbor2.vantage6.ai/infrastructure/hq:${version} harbor2.vantage6.ai/infrastructure/hq:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/hq:${version} harbor2.vantage6.ai/infrastructure/hq:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/algorithm-store:${version} harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:${major_name}
@@ -368,8 +368,8 @@ jobs:
       - name: Push docker images
         if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0))}}
         run: |
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker push harbor2.vantage6.ai/infrastructure/hq:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/hq:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}

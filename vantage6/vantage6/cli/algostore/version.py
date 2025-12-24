@@ -12,14 +12,17 @@ from vantage6.common.globals import (
 from vantage6.cli import __version__
 from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.common.version import get_and_select_ctx
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
 
 
 @click.command()
 @click.option("-n", "--name", default=None, help="Configuration name")
 @click.option("--system", "system_folders", flag_value=True)
 @click.option(
-    "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
+    "--user",
+    "system_folders",
+    flag_value=False,
+    default=DEFAULT_API_SERVICE_SYSTEM_FOLDERS,
 )
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")

@@ -8,20 +8,20 @@ from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.hq.attach import cli_hq_attach
+from vantage6.cli.hq.files import cli_hq_files
+from vantage6.cli.hq.import_ import cli_hq_import
+from vantage6.cli.hq.list import cli_hq_configuration_list
+from vantage6.cli.hq.start import cli_hq_start
+from vantage6.cli.hq.stop import cli_hq_stop
 from vantage6.cli.k8s_config import KubernetesConfig
-from vantage6.cli.server.attach import cli_server_attach
-from vantage6.cli.server.files import cli_server_files
-from vantage6.cli.server.import_ import cli_server_import
-from vantage6.cli.server.list import cli_server_configuration_list
-from vantage6.cli.server.start import cli_server_start
-from vantage6.cli.server.stop import cli_server_stop
 
 
-class ServerCLITest(unittest.TestCase):
-    @patch("vantage6.cli.server.start.select_k8s_config")
+class CLITestHQ(unittest.TestCase):
+    @patch("vantage6.cli.hq.start.select_k8s_config")
     @patch("os.makedirs")
     @patch("vantage6.cli.common.decorator.get_context")
-    @patch("vantage6.cli.server.start.helm_install")
+    @patch("vantage6.cli.hq.start.helm_install")
     def test_start(
         self,
         context,
@@ -29,7 +29,7 @@ class ServerCLITest(unittest.TestCase):
         os_makedirs,
         ctx_ns,
     ):
-        """Start server without errors"""
+        """Start HQ without errors"""
 
         ctx = MagicMock(
             config={"uri": "sqlite:///file.db", "port": 9999},
@@ -45,25 +45,25 @@ class ServerCLITest(unittest.TestCase):
         )
 
         runner = CliRunner()
-        result = runner.invoke(cli_server_start, ["--name", "not-running"])
+        result = runner.invoke(cli_hq_start, ["--name", "not-running"])
 
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.context.server.ServerContext.available_configurations")
+    @patch("vantage6.cli.context.hq.HQContext.available_configurations")
     @patch("vantage6.cli.common.list.find_running_service_names")
     def test_configuration_list(
         self, find_running_service_names, available_configurations
     ):
         """Configuration list without errors."""
-        server_name = "iknl"
+        hq_name = "iknl"
         find_running_service_names.return_value = [
-            f"{APPNAME}-{server_name}-system-{InstanceType.SERVER.value}"
+            f"{APPNAME}-{hq_name}-system-{InstanceType.HQ.value}"
         ]
 
         # returns a list of configurations and failed inports
         def side_effect(system_folders):
             config = MagicMock()
-            config.name = server_name
+            config.name = hq_name
             if not system_folders:
                 return [[config], []]
             else:
@@ -72,7 +72,7 @@ class ServerCLITest(unittest.TestCase):
         available_configurations.side_effect = side_effect
 
         runner = CliRunner()
-        result = runner.invoke(cli_server_configuration_list)
+        result = runner.invoke(cli_hq_configuration_list)
 
         self.assertEqual(result.exit_code, 0)
         self.assertIsNone(result.exception)
@@ -87,14 +87,14 @@ class ServerCLITest(unittest.TestCase):
         ctx.get_database_uri.return_value = "sqlite:///test.db"
 
         runner = CliRunner()
-        result = runner.invoke(cli_server_files, ["--name", "iknl"])
+        result = runner.invoke(cli_hq_files, ["--name", "iknl"])
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.import_.UserClient")
-    @patch("vantage6.cli.server.import_.requests.get")
-    @patch("vantage6.cli.server.import_.click.Path")
+    @patch("vantage6.cli.hq.import_.UserClient")
+    @patch("vantage6.cli.hq.import_.requests.get")
+    @patch("vantage6.cli.hq.import_.click.Path")
     @patch("vantage6.cli.common.decorator.get_context")
     def test_import(self, context, click_path, requests_get, user_client):
         """Import entities without errors."""
@@ -109,8 +109,8 @@ class ServerCLITest(unittest.TestCase):
         ctx.name = "some-name"
         context.return_value = ctx
 
-        # Mock the version to match the server version
-        with patch("vantage6.cli.server.import_.__version__", "1.0.0"):
+        # Mock the version to match the hq version
+        with patch("vantage6.cli.hq.import_.__version__", "1.0.0"):
             runner = CliRunner()
             with runner.isolated_filesystem():
                 with open("some.yaml", "w") as fp:
@@ -125,56 +125,52 @@ organizations:
     users: []
 collaborations: []
 """)
-                result = runner.invoke(
-                    cli_server_import, ["--name", "iknl", "some.yaml"]
-                )
+                result = runner.invoke(cli_hq_import, ["--name", "iknl", "some.yaml"])
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
         # check that the import fails when the yaml is invalid
-        with patch("vantage6.cli.server.import_.__version__", "1.0.0"):
+        with patch("vantage6.cli.hq.import_.__version__", "1.0.0"):
             runner = CliRunner()
             with runner.isolated_filesystem():
                 with open("some.yaml", "w") as fp:
                     fp.write("invalid")
-                result = runner.invoke(
-                    cli_server_import, ["--name", "iknl", "some.yaml"]
-                )
+                result = runner.invoke(cli_hq_import, ["--name", "iknl", "some.yaml"])
                 self.assertEqual(result.exit_code, 1)
                 self.assertIsNotNone(result.exception)
 
     @patch("vantage6.cli.common.stop.select_k8s_config")
     @patch("vantage6.cli.common.stop.find_running_service_names")
     @patch("vantage6.cli.common.stop.get_context")
-    @patch("vantage6.cli.server.stop._stop_server")
+    @patch("vantage6.cli.hq.stop._stop_hq")
     def test_stop(
         self,
-        _stop_server,
+        _stop_hq,
         get_context,
         find_running_service_names,
         context_and_namespace,
     ):
-        """Stop server without errors."""
+        """Stop HQ without errors."""
 
         instance_name = "iknl"
-        server_name = f"{APPNAME}-{instance_name}-system-{InstanceType.SERVER.value}"
+        hq_name = f"{APPNAME}-{instance_name}-system-{InstanceType.HQ.value}"
 
-        find_running_service_names.return_value = [server_name]
-        get_context.return_value = MagicMock(helm_release_name=server_name)
+        find_running_service_names.return_value = [hq_name]
+        get_context.return_value = MagicMock(helm_release_name=hq_name)
         context_and_namespace.return_value = KubernetesConfig(
             context="test-context",
             namespace="test-namespace",
         )
 
         runner = CliRunner()
-        result = runner.invoke(cli_server_stop, ["--name", instance_name])
+        result = runner.invoke(cli_hq_stop, ["--name", instance_name])
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
 
-    @patch("vantage6.cli.server.attach.attach_logs")
-    @patch("vantage6.cli.server.attach.select_k8s_config")
+    @patch("vantage6.cli.hq.attach.attach_logs")
+    @patch("vantage6.cli.hq.attach.select_k8s_config")
     def test_attach(self, select_k8s_config, attach_logs):
         """Attach logs to the console without errors."""
         select_k8s_config.return_value = KubernetesConfig(
@@ -182,26 +178,26 @@ collaborations: []
             namespace="test-namespace",
         )
         runner = CliRunner()
-        result = runner.invoke(cli_server_attach)
+        result = runner.invoke(cli_hq_attach)
 
         self.assertIsNone(result.exception)
         self.assertEqual(result.exit_code, 0)
         attach_logs.assert_called_once_with(
             name=None,
-            instance_type=InstanceType.SERVER,
-            infra_component=InfraComponentName.SERVER,
+            instance_type=InstanceType.HQ,
+            infra_component=InfraComponentName.HQ,
             system_folders=False,
             k8s_config=KubernetesConfig(
                 context="test-context",
                 namespace="test-namespace",
             ),
             is_sandbox=False,
-            additional_labels="component=vantage6-server",
+            additional_labels="component=vantage6-hq",
         )
 
     @patch("vantage6.cli.common.utils.subprocess.run")
     @patch("vantage6.cli.common.attach.select_running_service")
-    @patch("vantage6.cli.server.attach.select_k8s_config")
+    @patch("vantage6.cli.hq.attach.select_k8s_config")
     @patch("vantage6.cli.common.attach.Popen")
     def test_attach_logs(
         self,
@@ -214,12 +210,12 @@ collaborations: []
             context="test-context",
             namespace="test-namespace",
         )
-        select_running_service.return_value = "vantage6-iknl-system-server"
+        select_running_service.return_value = "vantage6-iknl-system-hq"
 
         # Mock subprocess.run to return success for helm list command
         subprocess_run.return_value = MagicMock(
             returncode=0,
-            stdout='[{"name": "vantage6-iknl-system-server", "status": "deployed"}]',
+            stdout='[{"name": "vantage6-iknl-system-hq", "status": "deployed"}]',
         )
 
         # Mock the Popen instance and its methods
@@ -229,8 +225,8 @@ collaborations: []
         # Call the function with a sample label
         attach_logs(
             name=None,
-            instance_type=InstanceType.SERVER,
-            infra_component=InfraComponentName.SERVER,
+            instance_type=InstanceType.HQ,
+            infra_component=InfraComponentName.HQ,
             system_folders=True,
             k8s_config=select_k8s_config.return_value,
             is_sandbox=False,
@@ -247,7 +243,7 @@ collaborations: []
             "logs",
             "--follow",
             "--selector",
-            "release=vantage6-iknl-system-server,test=label",
+            "release=vantage6-iknl-system-hq,test=label",
             "--all-containers=true",
         ]
 

@@ -27,7 +27,7 @@ def cli_auth_attach(
     is_sandbox: bool,
 ) -> None:
     """
-    Show the server logs in the current console.
+    Show the auth logs in the current console.
     """
     info("Attaching to auth logs...")
 

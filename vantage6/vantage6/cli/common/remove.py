@@ -68,5 +68,5 @@ def execute_remove(
         for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
             handler.close()
         # remove the whole folder with all the log files. This may also still contain
-        # other files like (for the server) RabbitMQ configuration etc
+        # other files like (for HQ) RabbitMQ configuration etc
         rmtree(log_dir)

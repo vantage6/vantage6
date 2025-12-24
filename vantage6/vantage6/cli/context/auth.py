@@ -5,12 +5,12 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import AuthConfigurationManager
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS as S_FOL
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
 
 
 class AuthContext(AppContext):
     """
-    Context class for the keycloak authentication server.
+    Context class for the keycloak authentication service.
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ class AuthContext(AppContext):
         cls, path: str, system_folders: bool = S_FOL
     ) -> AuthContext:
         """
-        Create a server context from an external configuration file. External
+        Create an auth context from an external configuration file. External
         means that the configuration file is not located in the default folders
         but its location is specified by the user.
 
@@ -59,8 +59,8 @@ class AuthContext(AppContext):
 
         Returns
         -------
-        ServerContext
-            Server context object
+        AuthContext
+            Auth context object
         """
         return super().from_external_config_file(
             path,

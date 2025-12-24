@@ -14,9 +14,9 @@ from vantage6.common.globals import APPNAME
 DEFAULT_CLI_CONFIG_FILE = "kubernetes_config.yaml"
 
 #
-#   SERVER SETTINGS
+#   BACKEND SETTINGS
 #
-DEFAULT_SERVER_SYSTEM_FOLDERS = True
+DEFAULT_API_SERVICE_SYSTEM_FOLDERS = True
 
 #
 #   NODE SETTINGS
@@ -32,7 +32,7 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 # one appears not to be used
 # TODO Check and remove
 # HCR: This constants is indeed not used, as well as the other defined in node/globals.py
-# NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# NODE_V6_PROXY_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
@@ -57,7 +57,7 @@ PROMETHEUS_DIR = "prometheus"
 
 # template configuration files
 TEMPLATE_FOLDER = PACKAGE_FOLDER / APPNAME / "cli" / "template"
-SERVER_TEMPLATE_FILE = "server_config.j2"
+HQ_TEMPLATE_FILE = "hq_config.j2"
 NODE_TEMPLATE_FILE = "node_config.j2"
 ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
 AUTH_TEMPLATE_FILE = "auth_config.j2"
@@ -71,17 +71,17 @@ class DefaultDatasets(StrEnumBase):
     KAPLAN_MEIER_TEST = "km_dataset.csv"
 
 
-class ServerType(StrEnumBase):
-    """Enum containing server types"""
+class BackendType(StrEnumBase):
+    """Enum containing backend types"""
 
-    V6SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "algorithm-store"
 
 
 class ChartName(StrEnumBase):
     """Enum containing chart names"""
 
-    SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"
@@ -90,7 +90,7 @@ class ChartName(StrEnumBase):
 class CLICommandName(StrEnumBase):
     """Enum containing CLI command names"""
 
-    SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "algorithm-store"
     NODE = "node"
     ALGORITHM = "algorithm"
@@ -105,7 +105,7 @@ class CLICommandName(StrEnumBase):
 class InfraComponentName(StrEnumBase):
     """Enum containing infrastructure components"""
 
-    SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"

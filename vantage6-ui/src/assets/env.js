@@ -3,7 +3,7 @@
     window["env"] = window["env"] || {};
 
     // Environment variables
-    window["env"]["server_url"] = "https://uluru.vantage6.ai";
+    window["env"]["hq_url"] = "https://uluru.vantage6.ai";
     window["env"]["api_path"] = "";
     window["env"]["allowed_algorithm_stores"] = "*";
     window["env"]["auth_url"] = "https://auth.uluru.vantage6.ai";

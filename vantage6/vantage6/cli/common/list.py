@@ -14,7 +14,7 @@ from vantage6.cli.context import select_context_class
 
 def get_configuration_list(instance_type: InstanceType) -> None:
     """
-    Print list of available server configurations.
+    Print list of available configurations.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def get_configuration_list(instance_type: InstanceType) -> None:
     """
     ctx_class = select_context_class(instance_type)
 
-    running_server_names = find_running_service_names(instance_type)
+    running_service_names = find_running_service_names(instance_type)
     header = "\nName" + (21 * " ") + "Status" + (10 * " ") + "System/User"
 
     click.echo(header)
@@ -41,7 +41,7 @@ def get_configuration_list(instance_type: InstanceType) -> None:
         status = (
             running
             if f"{APPNAME}-{config.name}-system-{instance_type.value}"
-            in running_server_names
+            in running_service_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25}System ")
@@ -55,7 +55,7 @@ def get_configuration_list(instance_type: InstanceType) -> None:
         status = (
             running
             if f"{APPNAME}-{config.name}-user-{instance_type.value}"
-            in running_server_names
+            in running_service_names
             else stopped
         )
         click.echo(f"{config.name:25}{status:25}User   ")

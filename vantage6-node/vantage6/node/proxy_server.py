@@ -1,7 +1,7 @@
 """
-This module contains a proxy server implementation that the node uses to
-communicate with the server. It contains general methods for any routes, and
-methods to handle tasks and results, including their encryption and decryption.
+This module contains a proxy server implementation that the node uses to communicate
+with HQ. It contains general methods for any routes, and methods to handle tasks and
+results, including their encryption and decryption.
 """
 
 import logging
@@ -24,7 +24,7 @@ log = logging.getLogger(logger_name(__name__))
 
 # Need to be set when the proxy server is initialized
 app.config["SERVER_IO"] = None
-server_url = None
+hq_url = None
 
 # Number of times the request is retried before the proxy server gives up
 RETRY = 3
@@ -59,17 +59,17 @@ def get_method(method: str) -> Callable:
 
 def make_proxied_request(endpoint: str) -> Response:
     """
-    Helper to create proxies requests to the central server.
+    Helper to create proxies requests to HQ.
 
     Parameters
     ----------
     endpoint: str
-        endpoint to be reached at the vantage6 server
+        Endpoint to be reached at HQ
 
     Returns
     -------
     requests.Response
-        Response from the vantage6 server
+        Response from HQ
     """
     present = "Authorization" in request.headers
     headers = {"Authorization": request.headers["Authorization"]} if present else None
@@ -86,14 +86,14 @@ def make_request(
     headers: dict = None,
 ) -> Response:
     """
-    Make request to the central server
+    Make request to HQ
 
     Parameters
     ----------
     method: str
         HTTP method to be used
     endpoint: str
-        endpoint of the vantage6 server
+        Endpoint of HQ
     json: dict, optional
         JSON body
     params: dict, optional
@@ -104,19 +104,18 @@ def make_request(
     Returns
     -------
     requests.Response
-        Response from the vantage6 server
+        Response from HQ
     """
 
     method = get_method(method)
 
-    # Forward the request to the central server. Retry when an exception is
-    # raised (e.g. timeout or connection error) or when the server gives an
-    # error code greater than 210
-    url = f"{server_url}/{endpoint}"
+    # Forward the request to HQ. Retry when an exception is raised (e.g. timeout or
+    # connection error) or when HQ gives an error code (i.e. greater than 210)
+    url = f"{hq_url}/{endpoint}"
     for i in range(RETRY):
         try:
             response: Response = method(url, json=json, params=params, headers=headers)
-            # verify that the server gave us a valid response, else we
+            # verify that HQ gave us a valid response, else we
             # would want to try again
             if response.status_code > 210:
                 log.warning(
@@ -203,12 +202,12 @@ def get_response_json_and_handle_exceptions(response: Response) -> dict | None:
 @app.route("/task", methods=["POST"])
 def proxy_task():
     """
-    Proxy to create tasks at the vantage6 server
+    Proxy to create tasks at HQ
 
     Returns
     -------
     requests.Response
-        Response from the vantage6 server
+        Response from HQ
     """
     # We need the server io for the decryption of the results
     client: NodeClient | None = app.config.get("SERVER_IO")
@@ -283,11 +282,11 @@ def proxy_task():
                 if is_uuid(org.get("arguments")):
                     log.warning(
                         "Arguments is a UUID, are you sending blob based arguments "
-                        "to a non-blob store enabled server?"
+                        "to a non-blob store enabled HQ?"
                     )
                 org["arguments"] = encrypt_input(org["id"], org.get("arguments", {}))
         data["organizations"] = organizations
-    # Attempt to send the task to the central server
+    # Attempt to send the task to HQ
     try:
         response = make_request("post", "task", data, headers=headers)
     except Exception:
@@ -312,7 +311,7 @@ def proxy_result() -> Response:
     Returns
     -------
     requests.Response
-        Response from the vantage6 server
+        Response from HQ
     """
     # We need the server io for the decryption of the results
     client = app.config.get("SERVER_IO")
@@ -353,8 +352,7 @@ def proxy_result() -> Response:
 @app.route("/result/<int:id>", methods=["GET"])
 def proxy_results(id_: int) -> Response:
     """
-    Obtain and decrypt the algorithm result from the vantage6 server to be used
-    by an algorithm container.
+    Obtain and decrypt the algorithm result from HQ to be used by an algorithm container
 
     Parameters
     ----------
@@ -364,10 +362,10 @@ def proxy_results(id_: int) -> Response:
     Returns
     -------
     requests.Response
-        Response of the vantage6 server
+        Response from HQ
     """
     # We need the server io for the decryption of the results
-    client: NodeClient = app.config.get("SERVER_IO")
+    client: NodeClient | None = app.config.get("SERVER_IO")
     if not client:
         return {
             "msg": "Proxy server not initialized properly"
@@ -393,7 +391,7 @@ def proxy_results(id_: int) -> Response:
 @app.route("/blobstream/<string:id>", methods=["GET"])
 def stream_handler(id: str) -> FlaskResponse:
     """
-    Proxy stream handler for GET requests, filestream a blob by its id from the Azure server.
+    Proxy stream handler for GET requests, filestream a blob by its ID from Azure.
     Proxied_request and standard response are not used here,
     as this function is specifically designed to handle streaming of blobs
     without loading the entire content into memory.
@@ -420,7 +418,7 @@ def stream_handler(id: str) -> FlaskResponse:
         if h in request.headers:
             headers[h] = request.headers[h]
     method = get_method(request.method)
-    url = f"{server_url}/blobstream/{id}"
+    url = f"{hq_url}/blobstream/{id}"
     log.debug("Making proxied request to %s", url)
 
     backend_response = method(url, stream=True, params=request.args, headers=headers)
@@ -476,16 +474,12 @@ def stream_handler(id: str) -> FlaskResponse:
 @app.route("/blobstream", methods=["POST"])
 def stream_handler_post() -> FlaskResponse:
     """
-    Proxy stream handler for POST requests, encrypt and stream a blob to the Azure server.
+    Proxy stream handler for POST requests, encrypt and stream a blob to Azure.
+
     Returns
-
-    Proxied_request and standard response are not used here,
-    as this function is specifically designed to handle streaming of blobs
-    without loading the entire content into memory.
-
     -------
     FlaskResponse
-        A Flask response object containing if the blob was successfully streamed to the server.
+        A Flask response object containing if the blob was successfully streamed to HQ.
     """
     log.debug("Proxy stream POST handler called")
 
@@ -502,11 +496,11 @@ def stream_handler_post() -> FlaskResponse:
         if h in request.headers:
             headers[h] = request.headers[h]
 
-    url = f"{server_url}/blobstream"
+    url = f"{hq_url}/blobstream"
     log.debug("Making proxied POST request to %s", url)
 
     encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)
-    # Stream the data to the server while encrypting it.
+    # Stream the data to HQ while encrypting it.
     # This is done to avoid loading the entire content into memory.
     # The encrypted stream is a generator that yields chunks of encrypted data.
     backend_response = requests.post(
@@ -542,25 +536,23 @@ def stream_handler_post() -> FlaskResponse:
     )
 
 
-@app.route(
-    "/<path:central_server_path>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"]
-)
-def proxy(central_server_path: str) -> Response:
+@app.route("/<path:hq_path>", methods=["GET", "POST", "PATCH", "PUT", "DELETE"])
+def proxy(hq_path: str) -> Response:
     """
     Generalized http proxy request
 
     Parameters
     ----------
-    central_server_path : str
-        The endpoint on the server to be reached
+    hq_path : str
+        The endpoint on HQ to be reached
 
     Returns
     -------
     requests.Response
-        Contains the server response
+        Contains the HQ response
     """
     try:
-        response = make_proxied_request(central_server_path)
+        response = make_proxied_request(hq_path)
     except Exception:
         log.exception("Generic proxy endpoint")
         return {

@@ -3,23 +3,21 @@ SocketIO connection
 
 A `SocketIO connection <https://socket.io/docs/v4/>`_ is a bidirectional,
 persistent, event-based communication line. In vantage6, it is used for example
-to send status updates from the server to the nodes or to send a signal to a
+to send status updates from HQ to the nodes or to send a signal to a
 node that it should kill a task.
 
-Each socketIO connection consists of a server and one or more clients. The
-clients can only send a message to the server and not to each other. The server
-can send messages to all clients or to a specific client. In vantage6, the
-central server is the socketIO server; the clients can be nodes or users.
+Each socketIO connection consists between HQ and one of the clients (nodes or users).
+The clients can only send a message to HQ and not to each other. HQ
+can send messages to all clients or to a specific client.
 
 .. note::
-    The vantage6 user interface automatically establishes a socketIO connection
-    with the server when the user logs in. The user can then view the updates
-    they are allowed to see.
+    The vantage6 user interface automatically establishes a socketIO connection with HQ
+    when the user logs in. The user can then view any updates they are allowed to see.
 
 Permissions
 +++++++++++
 
-The socketIO connection is split into different rooms. The vantage6 server
+The socketIO connection is split into different rooms. Vantage6 HQ
 decides which rooms a client is allowed to join; they will only be able to read
 messages from that room.
 
@@ -30,7 +28,7 @@ view which is checked via event view rules.
 Usage in vantage6
 +++++++++++++++++
 
-The server sends the following events to the clients:
+HQ sends the following events to the clients (nodes or users):
 
 - Notify nodes a new task is available
 - Letting nodes and users know if a node in their collaboration comes online or
@@ -42,13 +40,13 @@ The server sends the following events to the clients:
 - Instruct nodes to kill one or more tasks
 - Checking if nodes are still alive
 
-The nodes send the following events to the server:
+The nodes send the following events to HQ:
 
-- Alert the server of task state changes (e.g. started, finished, failed)
+- Alert HQ of task state changes (e.g. started, finished, failed)
 - Share information about the node configuration (e.g. which algorithms are
   allowed to run on the node)
 
 In theory, users could use their socketIO connection to send events, but
-none of the events they send will lead to action on the server.
+none of the events they send will lead to action on HQ.
 
 .. todo refer to API reference

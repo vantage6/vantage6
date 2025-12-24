@@ -586,7 +586,6 @@
     "card-per-review": {
       "title": "Review by {{reviewer}}",
       "reviewer": "Reviewer",
-      "reviewer-server": "Server that reviewer belongs to",
       "comment": "Reviewer comments",
       "requested-at": "Review requested at",
       "requested-by": "Review requested by",
@@ -911,11 +910,7 @@
     "StartFailed": "Start failed",
     "NotAllowed": "Algorithm not allowed by node"
   },
-  "store": {
-    "server": "Server URL"
-  },
   "store-user": {
-    "server": "Server at which user is registered",
     "roles": "Roles in store",
     "create": {
       "title": "Register user at store"

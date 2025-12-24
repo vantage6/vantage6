@@ -4,7 +4,7 @@ from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.stop import execute_stop, helm_uninstall
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS, InfraComponentName
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS, InfraComponentName
 from vantage6.cli.k8s_config import KubernetesConfig
 
 
@@ -16,7 +16,7 @@ from vantage6.cli.k8s_config import KubernetesConfig
     "--system",
     "system_folders",
     flag_value=True,
-    default=DEFAULT_SERVER_SYSTEM_FOLDERS,
+    default=DEFAULT_API_SERVICE_SYSTEM_FOLDERS,
     help="Search for configuration in system folders instead of user folders. "
     "This is the default.",
 )

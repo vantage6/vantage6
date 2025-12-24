@@ -9,7 +9,7 @@
 
 # Vantage6 Client
 
-This package provides a Python client for interacting with the vantage6 server.
+This package provides a Python client for interacting with the vantage6 hub.
 
 ## Documentation
 

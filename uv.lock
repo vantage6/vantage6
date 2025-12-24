@@ -2283,7 +2283,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.0b1"
+version = "5.0.0b2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -2393,7 +2393,7 @@ dependencies = [
     { name = "vantage6-client" },
     { name = "vantage6-common" },
     { name = "vantage6-node" },
-    { name = "vantage6-server" },
+    { name = "vantage6-hq" },
 ]
 
 [package.optional-dependencies]
@@ -2435,7 +2435,7 @@ requires-dist = [
     { name = "vantage6-client", specifier = "==5.0.0b1" },
     { name = "vantage6-common", specifier = "==5.0.0b1" },
     { name = "vantage6-node", specifier = "==5.0.0b1" },
-    { name = "vantage6-server", specifier = "==5.0.0b1" },
+    { name = "vantage6-hq", specifier = "==5.0.0b1" },
 ]
 provides-extras = ["dev", "docs"]
 
@@ -2501,7 +2501,7 @@ wheels = [
 ]
 
 [[package]]
-name = "vantage6-server"
+name = "vantage6-hq"
 version = "5.0.0b1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [

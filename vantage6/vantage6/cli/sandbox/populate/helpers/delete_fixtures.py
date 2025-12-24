@@ -1,5 +1,5 @@
 """
-Development script to delete all entities from the server
+Development script to delete all entities from HQ
 """
 
 from vantage6.client import Client
@@ -7,7 +7,7 @@ from vantage6.client import Client
 
 def delete_fixtures(client: Client) -> str:
     """
-    Delete all entities from the server.
+    Delete all entities from HQ.
 
     Arguments
     ---------

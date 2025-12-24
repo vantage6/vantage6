@@ -71,34 +71,33 @@ def _log_progress(
 
 
 class ClientBase(BlobStorageMixin):
-    """Common interface to the central server.
+    """Base class for all client implementations.
 
     Contains the basis for all other clients, e.g. UserClient, NodeClient and
     AlgorithmClient. This includes a basic interface to authenticate, send
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, server_url: str, auth_url: str | None = None) -> None:
+    def __init__(self, hq_url: str, auth_url: str | None = None) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
-        server_url : str
-            URL of the vantage6 server you want to connect to
+        hq_url : str
+            URL of the vantage6 HQ you want to connect to
         auth_url : str
-            URL of the vantage6 auth server (keycloak) you want to authenticate with
+            URL of the vantage6 authentication service you want to authenticate with
         """
 
         self.log = logging.getLogger(module_name)
 
-        # server settings
-        self.__server_url = server_url
+        # HQ settings
+        self.__hq_url = hq_url
         self.__auth_url = auth_url
 
         # tokens
         self._access_token = None
         self._refresh_token = None
-        self._refresh_url = None
 
         self.cryptor = None
         self.whoami = None
@@ -144,21 +143,21 @@ class ClientBase(BlobStorageMixin):
         return self._access_token
 
     @property
-    def server_url(self) -> str:
+    def hq_url(self) -> str:
         """
-        URL of the vantage6 server
+        URL of the vantage6 HQ
 
         Returns
         -------
         str
-            Host address of the vantage6 server
+            Host address of the vantage6 HQ
         """
-        return self.__server_url
+        return self.__hq_url
 
     @property
     def auth_url(self) -> str:
         """
-        URL of the vantage6 auth server (keycloak)
+        URL of the vantage6 authentication service
         """
         return self.__auth_url
 
@@ -168,7 +167,7 @@ class ClientBase(BlobStorageMixin):
         Parameters
         ----------
         endpoint : str
-            endpoint to which a fullpath needs to be generated
+            Endpoint to which a fullpath needs to be generated
         is_for_algorithm_store : bool
             Whether the request is for the algorithm store or not
 
@@ -178,7 +177,7 @@ class ClientBase(BlobStorageMixin):
             URL to the endpoint
         """
         if not is_for_algorithm_store:
-            base_path = self.server_url
+            base_path = self.hq_url
         else:
             try:
                 base_path = self.store.url
@@ -207,12 +206,12 @@ class ClientBase(BlobStorageMixin):
         is_for_algorithm_store: bool = False,
         silent_on_connection_error: bool = False,
     ) -> dict:
-        """Create http(s) request to the vantage6 server
+        """Create http(s) request to vantage6 HQ or algorithm store
 
         Parameters
         ----------
         endpoint : str
-            Endpoint of the server
+            API endpoint to call
         json : dict, optional
             payload, by default None
         method : str, optional
@@ -236,7 +235,7 @@ class ClientBase(BlobStorageMixin):
         Returns
         -------
         dict
-            Response of the server
+            Dictionary containing response from HQ or algorithm store
         """
         store_valid = self.__check_algorithm_store_valid(is_for_algorithm_store)
         if not store_valid:
@@ -251,7 +250,7 @@ class ClientBase(BlobStorageMixin):
             "delete": requests.delete,
         }.get(method.lower(), requests.get)
 
-        # send request to server
+        # send request
         url = self.generate_path_to(endpoint, is_for_algorithm_store)
         self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
 
@@ -279,7 +278,7 @@ class ClientBase(BlobStorageMixin):
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
-            self.log.error(f"Server responded with error code: {response.status_code}")
+            self.log.error(f"Received response with error code: {response.status_code}")
             try:
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
@@ -290,7 +289,10 @@ class ClientBase(BlobStorageMixin):
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:
-                self.log.error("Did not find a message from the server")
+                hq_or_algo_store = (
+                    "HQ" if not is_for_algorithm_store else "algorithm store"
+                )
+                self.log.error(f"Did not find a message from {hq_or_algo_store}")
                 self.log.error(response.content)
 
             if retry:
@@ -319,9 +321,9 @@ class ClientBase(BlobStorageMixin):
         collaborations to ensure that the client can read and write encrypted data.
 
         A Cryptor object that handles encryption and decryption will be attached to the
-        client, after verifying that the public key at the server matches the provided
-        private key. In case the server's public key does not match with the local
-        public key, the local one is uploaded to the server.
+        client, after verifying that the public key at HQ matches the provided
+        private key. In case the HQ's public key does not match with the local
+        public key, the local one is uploaded to HQ.
 
         Parameters
         ----------
@@ -347,22 +349,22 @@ class ClientBase(BlobStorageMixin):
 
         cryptor = RSACryptor(private_key_file)
 
-        # check if the public-key is the same on the server. If this is
+        # check if the public-key is the same on HQ. If this is
         # not the case, this node will not be able to read any messages
         # that are send to him! If this is the case, the new public_key
-        # will be uploaded to the central server
+        # will be uploaded to HQ.
         organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
         upload_pub_key = False
 
         if pub_key:
             if cryptor.verify_public_key(pub_key):
-                self.log.info("Public key matches the server key! Good to go!")
+                self.log.info("Public key matches HQ's public key! Good to go!")
 
             else:
                 self.log.critical(
-                    "Local public key does not match server public key. "
-                    "You will not able to read any messages that are intended "
+                    "Local public key does not match HQ's public key. "
+                    "You will not beable to read any messages that are intended "
                     "for you!"
                 )
                 upload_pub_key = True
@@ -376,7 +378,7 @@ class ClientBase(BlobStorageMixin):
                 method="patch",
                 json={"public_key": cryptor.public_key_str},
             )
-            self.log.info("The public key on the server is updated!")
+            self.log.info("The public key on HQ is updated!")
 
         self.cryptor = cryptor
 
@@ -431,7 +433,7 @@ class ClientBase(BlobStorageMixin):
                 uuid = uuid.decode(STRING_ENCODING)
             uuid = uuid.strip("'\"")
             try:
-                run_data = self._download_run_data_from_server(uuid)
+                run_data = self._download_run_data_from_hq(uuid)
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
@@ -572,7 +574,7 @@ class ClientBase(BlobStorageMixin):
         Parameters
         ----------
         request_func : Callable
-            Function to make requests to the server.
+            Function to make requests to HQ.
         task_id : int
             ID of the task to wait for.
         interval : float

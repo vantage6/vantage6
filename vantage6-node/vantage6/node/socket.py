@@ -39,22 +39,22 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_sync(self):
         """
-        Actions to be taken on socket sync event. This event is triggered by
-        the server when the node connects to the socket namespace.
+        Actions to be taken on socket sync event. This event is triggered by HQ when the
+        node connects to the socket namespace.
         """
         self.log.info("(Re)Connected to the /tasks namespace")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_HQ()
+        self.log.debug("Tasks synced again with HQ...")
         self.node_worker_ref.share_node_details()
 
     def on_disconnect(self):
         """Actions to be taken on socket disconnect event."""
         # self.node_worker_ref.socketIO.disconnect()
-        self.log.info("Disconnected from the server")
+        self.log.info("Disconnected from HQ")
 
     def on_new_task_update(self, data: dict):
         """
-        Actions to be taken when node is notified of new task by server
+        Actions to be taken when node is notified of new task by HQ
 
         Parameters
         ----------
@@ -124,8 +124,7 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_expired_token(self):
         """
-        Action to be taken when node is notified by server that its token
-        has expired.
+        Action to be taken when node is notified by HQ that its token has expired.
         """
         self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
@@ -134,13 +133,12 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("New token obtained")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_HQ()
+        self.log.debug("Tasks synced again with HQ...")
 
     def on_invalid_token(self) -> None:
         """
-        The server indicates that this node has an invalid token. We should
-        reauthenticate.
+        HQ indicates that this node has an invalid token. We should re-authenticate.
         """
         self.log.warning("Node has invalid token. Reauthenticating...")
         self.node_worker_ref.socketIO.disconnect()
@@ -153,7 +151,7 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_kill_containers(self, kill_info: dict):
         """
-        Action to be taken when nodes are instructed by server to kill one or
+        Action to be taken when nodes are instructed by HQ to kill one or
         more tasks
 
         Parameters
@@ -192,8 +190,7 @@ class NodeTaskNamespace(ClientNamespace):
             ),
         )
         session_file_manager.delete_dataframe_file(data["df_name"])
-        # send back a socket event to the server to indicate that the dataframe has been
-        # deleted
+        # send back a socket event to HQ to indicate that the dataframe has been deleted
         self.emit(
             "dataframe_deleted",
             {

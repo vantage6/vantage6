@@ -47,10 +47,10 @@ def create_client(ctx: NodeContext, use_sandbox_port: bool = False) -> UserClien
     UserClient
         vantage6 client
     """
-    host = ctx.config["node"]["server"]["url"]
-    port = ctx.config["node"]["server"]["port"]
-    api_path = ctx.config["node"]["server"]["path"]
-    # if the server is run locally in Docker, we need to use localhost here instead of
+    host = ctx.config["node"]["hq"]["url"]
+    port = ctx.config["node"]["hq"]["port"]
+    api_path = ctx.config["node"]["hq"]["path"]
+    # if the hq is run locally in Docker, we need to use localhost here instead of
     # the host address of docker
     if host in ["http://host.docker.internal", "http://172.17.0.1"]:
         host = HTTP_LOCALHOST
@@ -66,14 +66,14 @@ def create_client(ctx: NodeContext, use_sandbox_port: bool = False) -> UserClien
     else:
         auth_url = f"{auth_url}:{Ports.DEV_AUTH.value}"
 
-    # if the server is a Kubernetes address, we need to use localhost because here
+    # if the URL is a Kubernetes address, we need to use localhost because here
     # we are connecting from the CLI outside the cluster
     url = _convert_k8s_url_to_localhost(url)
     auth_url = _convert_k8s_url_to_localhost(auth_url)
 
-    info(f"Connecting to server at '{url}' using auth URL '{auth_url}'")
+    info(f"Connecting to HQ at '{url}' using auth URL '{auth_url}'")
     return UserClient(
-        server_url=url,
+        hq_url=url,
         auth_url=auth_url,
         log_level=LogLevel.WARN,
     )
@@ -83,7 +83,7 @@ def create_client_and_authenticate(
     ctx: NodeContext, use_sandbox_port: bool = False
 ) -> UserClient:
     """
-    Generate a client and authenticate with the server.
+    Generate a client and authenticate.
 
     Parameters
     ----------
@@ -102,7 +102,7 @@ def create_client_and_authenticate(
     try:
         client.authenticate()
     except Exception as exc:
-        error("Could not authenticate with server!")
+        error("Could not authenticate!")
         debug(str(exc))
         exit(1)
 

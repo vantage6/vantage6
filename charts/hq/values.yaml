@@ -1,0 +1,88 @@
+# TODO v5+ this nameOverride is required to be present, otherwise the HQ will
+# not work (tested with v6 dev start). It should not be required
+nameOverride: vantage6-hq
+hq:
+  description: Vantage6 headquarters version 5
+
+  baseUrl: http://localhost:7601
+  apiPath: /hq
+  image: harbor2.vantage6.ai/infrastructure/hq:latest
+
+  keycloak:
+    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
+    realm: vantage6
+    adminUsername: admin
+    adminPassword: admin
+    adminClient: backend-admin-client
+    adminClientSecret: myadminclientsecret
+
+  port: 7601
+  internal:
+    port: 7601
+
+  replications: 1
+
+  logging:
+    level: DEBUG
+    file: hq.log
+    max_size: 1024
+    use_console: true
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    storageSize: "128M"
+    storageClass: "local-storage"
+    volumeHostPath: "/var/log/vantage6-hq"
+    backup_count: 5
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+rabbitmq:
+  image:
+    repository: rabbitmq
+    tag: 3-management
+
+  username: rabbitmquser
+  password: rabbitmquserpassword
+  vhost: /vantage6
+
+database:
+  external: false
+  image:
+    repository: postgres
+    tag: 13
+  username: vantage6
+  password: vantage6
+  name: vantage6
+  volumePath: /mnt/data_hq
+  k8sNodeName: docker-desktop
+
+ui:
+  image: harbor2.vantage6.ai/infrastructure/ui:latest
+  port: 7600
+
+  keycloak:
+    realm: vantage6
+    client: public_client
+    publicUrl: http://localhost:8080
+
+  allowedAlgorithmStores: "*"
+  communityStoreUrl: https://store.uluru.vantage6.ai
+  communityStoreApiPath: /api
+
+prometheus:
+  enabled: false
+  exporter_port: 7603
+
+  image: prom/prometheus:latest
+  storageSize: "2Gi"
+  storageClass: "local-storage"
+  volumeHostPath: "/var/lib/prometheus"

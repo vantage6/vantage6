@@ -17,7 +17,7 @@ import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/for
 import { MatInput } from '@angular/material/input';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
-import { PermissionsMatrixServerComponent } from '../../permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixHQComponent } from '../../permissions-matrix/hq/permissions-matrix-hq.component';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -38,7 +38,7 @@ import { TranslateModule } from '@ngx-translate/core';
     NgFor,
     MatOption,
     MatHint,
-    PermissionsMatrixServerComponent,
+    PermissionsMatrixHQComponent,
     AlertComponent,
     MatButton,
     MatProgressSpinner,

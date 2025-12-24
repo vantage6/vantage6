@@ -372,9 +372,9 @@ class NodeCLITest(unittest.TestCase):
         ctx = MagicMock(
             config={
                 "node": {
-                    "server": {
+                    "hq": {
                         "url": LOCALHOST,
-                        "port": Ports.DEV_SERVER.value,
+                        "port": Ports.DEV_HQ.value,
                         "path": "",
                     }
                 }

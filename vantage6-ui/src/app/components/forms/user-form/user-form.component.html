@@ -41,12 +41,12 @@
           {{ "user.permissions" | translate }}
         </div>
       </div>
-      <app-permissions-matrix-server
+      <app-permissions-matrix-hq
         [fixedSelectedPrimary]="roleRules"
         [selectable]="selectableRules"
         [preselected]="editSessionUserRules"
         (changed)="handleChangedRules($event)"
-      ></app-permissions-matrix-server>
+      ></app-permissions-matrix-hq>
     </div>
     <app-alert *ngIf="isEditOwnUser" label="{{ 'user-edit.own-user-no-roles' | translate }}"></app-alert>
     <div class="button-container user-form__button-container">

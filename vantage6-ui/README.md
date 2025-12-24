@@ -15,12 +15,12 @@
 
 This part of the repository contains the code for the vantage6 user interface
 (UI). This is a web application that allows you to communicate easily with
-your vantage6 server.
+your vantage6 HQ.
 
 ## How to use
 
 For instructions on how to run your own user interface, see the instructions below.
-If you are using our Uluru server you can use this user interface by logging
+If you are using our Uluru community service you can use this user interface by logging
 on to https://portal.uluru.vantage6.ai/. Contact us if you would like to have
 a user account.
 
@@ -40,10 +40,12 @@ There are several ways in which you may deploy the UI. The most convenient way i
 to use the CLI:
 
 ```
-v6 server start
+v6 hub start
+# or
+v6 hq start
 ```
 
-This command starts up the UI together with the vantage6 server.
+This command starts up the UI together with the vantage6 HQ.
 
 Alternatively. Angular's
 [deployment documentation](https://angular.io/guide/deployment)
@@ -55,7 +57,7 @@ Finally, note that kubernetes uses the Docker image
 with a command such as:
 
 ```
-docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" \
+docker run --env HQ_URL="<your_url>" --env API_PATH="<your_path>" \
   -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
 ```
 
@@ -66,7 +68,7 @@ this README in a `release/4.x` branch (e.g. release/4.13) to view more details.
 
 The appropriate [CSP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
 will be generated when you deploy the UI through the kubernetes interface.
-The CSP headers are set so that your UI can only access the vantage6 server and
+The CSP headers are set so that your UI can only access the vantage6 HQ and
 algorithm stores.
 
 Note that it is important that the UI has settings on the allowed algorithm

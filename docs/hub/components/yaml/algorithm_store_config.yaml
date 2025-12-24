@@ -1,0 +1,190 @@
+# The namespace in which the algorithm store is deployed. By default, the namespace is
+# set to Release.Namespace (which is vantage6 by default).
+namespace: vantage6-store
+
+store:
+
+  # Human readable description of the algorithm store instance. This is to help
+  # your peers to identify the store
+  description: Vantage algorithm store version 5
+
+  # The number of replicas of the algorithm store. By default, the number of replicas is
+  # set to 1.
+  replications: 1
+
+  # API path prefix. Store may be reached at https://mystore.org/<api_path>/<endpoint>.
+  api_path: /store
+
+  # The image used to start the algorithm store.
+  image: harbor2.vantage6.ai/infrastructure/algorithm-store:latest
+  # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
+  imagePullPolicy: Always
+
+  # The internal port on the container pod that the store runs on
+  internal:
+    port: 7602
+
+  # The port to expose the store on in the cluster
+  port: 7602
+
+  # Keycloak configuration
+  keycloak:
+    url: https://my-vantage6-auth.org
+    realm: vantage6
+    adminUsername: admin
+    adminPassword: admin
+    adminClient: backend-admin-client
+    adminClientSecret: myadminclientsecret
+
+  # The URI of the vantage6 HQ that provides the admin user that will be admin
+  # user in the store on startup.
+  vantage6HQUri: https://my_hq.org/my_api_path
+
+  policies:
+    # Set who is allowed to view the algorithms in the store. Possible values are:
+    # - "public": everyone can view the algorithms
+    # - "authenticated": users with a token valid for this store can view the algorithms
+    # - "private": only users with explicit permission in the algorithm store can view
+    #   the algorithms
+    algorithmView: public
+
+    # Set the minimum number of reviewers that need to approve an algorithm before it
+    # is available in the store. In case this number is lower than
+    # min_reviewing_organizations, the min_reviewing_organizations still has to be met
+    # to proceed with the review process.
+    minReviewers: 2
+
+    # Define whether or not developers are able to assign reviewers to their own
+    # algorithms.
+    assignReviewOwnAlgorithm: false
+
+    # Define the minimum amount of organizations that must be involved in the review
+    # process.
+    minReviewingOrganizations: 2
+
+    # Specify the users that are allowed to review algorithms. This is a list of
+    # usernames that identify unique users. This policy works in combination with the
+    # permission system. If this policy is not set, all users with the right permissions
+    # are allowed to review algorithms.
+    allowedReviewers:
+      - some_username
+
+    # Specify the users that are allowed to assign reviews. This is a list of usernames
+    # that identify unique users. This policy works in combination with the permission
+    # system. If this policy is not set, all users with the right permissions are
+    # allowed to assign reviews.
+    allowedReviewAssigners:
+      - some_username
+
+  # set up with which origins the store should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Uluru UI, and
+  # port 7600 on localhost. Usually, only the UI needs to access the store.
+  cors_allowed_origins:
+    - https://portal.uluru.vantage6.ai
+    - http://localhost:7600
+
+  # Credentials used to login to private Docker registries. These credentials are used
+  # to e.g. find the digests of the algorithm.
+  private_docker_registries:
+    - registry: docker-registry.org
+      username: docker-registry-user
+      password: docker-registry-password
+
+  # development mode settings. Only use when running both the algorithm store and
+  # the HQ that it communicates with locally
+  dev:
+    # Specify the URI to the host. This is used to generate the correct URIs to
+    # communicate with HQ. On Windows and Mac, when using Docker Desktop, you
+    # can use the special hostname `host.docker.internal` to refer to the host machine.
+    # On Linux, you should normally use http://172.17.0.1.
+    host_uri: http://host.docker.internal
+
+    # disable review process - all submitted algorithms are automatically accepted, which
+    # can be useful while developing algorithms locally. By default, the review process
+    # is enabled.
+    disable_review: false
+
+    # Define whether or not developers are able to review their own algorithms. For
+    # production, this is not recommended, but it can facilitate development. By default,
+    # this is disabled.
+    review_own_algorithm: false
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: true
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_port_to_expose: 30762
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: DEBUG
+
+    # Location to the log file
+    file: store.log
+
+    # Size in kb of a single log file
+    max_size: 1024
+    use_console: true
+
+    # Date format for the log file
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+    # Format for the log file
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+
+    # Storage configuration for logs. Storage size is set to 128M by default,
+    # and storage class is k8s storage class that is used.
+    storageSize: "128M"
+    storageClass: "local-storage"
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: "/var/log/vantage6-store"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: 5
+
+    # Loggers to include in the log file
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+database:
+  # whether or not to use an external database
+  external: false
+
+  # the URI of the external database. Only used if external is set to true.
+  uri: postgres://vantage6:vantage6@localhost:5432/vantage6
+
+  # The image of the database
+  image:
+    repository: postgres
+    tag: 13
+
+  # The username of the database
+  username: vantage6
+
+  # The password of the database
+  password: vantage6
+
+  # The name of the database
+  name: vantage6
+
+  # Hostpath of the database mount. Only used if external is set to false.
+  volumePath: /mnt/data_store
+
+  # The name of the k8s node where the database is running
+  k8sNodeName: docker-desktop

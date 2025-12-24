@@ -1,5 +1,5 @@
 """
-Development script to populate the server
+Development script to populate HQ
 """
 
 import traceback
@@ -155,7 +155,7 @@ def register_node(
     organization: dict,
 ) -> dict:
     """
-    Register a node at the server.
+    Register a node at HQ.
 
     Returns
     -------
@@ -205,10 +205,10 @@ def create_node_config(
         {
             "logging": {"file": f"node_{node_number}.log"},
             "port": 7601,
-            "server_url": "http://vantage6-server",
+            "hq_url": "http://vantage6-hq",
             "task_dir": f"{task_directory}/node_{node_number}",
             "task_dir_extension": f"node_{node_number}",
-            "api_path": "/server",
+            "api_path": "/hq",
             "task_namespace": task_namespace,
             "node_proxy_port": node_starting_port_number + (node_number - 1),
             "prometheus_enabled": str(prometheus_enabled).lower(),
@@ -361,7 +361,7 @@ def create_fixtures(
     clear_dev_folders: bool = False,
 ) -> str | dict:
     """
-    Create the fixtures for the server.
+    Create the fixtures for HQ.
 
     Parameters
     ----------

@@ -7,8 +7,8 @@ from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.mock.client import MockUserClient
 from vantage6.algorithm.mock.globals import MockDatabase
+from vantage6.algorithm.mock.hq import MockHQ
 from vantage6.algorithm.mock.node import MockNode
-from vantage6.algorithm.mock.server import MockServer
 
 
 class MockNetwork:
@@ -44,8 +44,8 @@ class MockNetwork:
         ----------
         nodes : list[MockNode]
             The nodes of the mock network.
-        server : MockServer
-            The server of the mock network.
+        hq : MockHQ
+            The HQ of the mock network.
         user_client : MockUserClient
             The user client of the mock network.
 
@@ -120,7 +120,7 @@ class MockNetwork:
         organization_ids = list(range(1, len(datasets) + 1))
         node_ids = list(range(1, len(datasets) + 1))
 
-        self.server = MockServer(self)
+        self.hq = MockHQ(self)
 
         databases = [
             [
@@ -151,7 +151,7 @@ class MockNetwork:
                 exit(1)
 
         # In the case the user provides a pandas DataFrame we need to create a dataframe
-        # record in the server.
+        # record in HQ.
         dfs_by_label = {}
         for node_databases in databases:
             for database in node_databases:
@@ -161,7 +161,7 @@ class MockNetwork:
 
         for label, dfs in dfs_by_label.items():
             if all(isinstance(df, pd.DataFrame) for df in dfs):
-                self.server.save_dataframe(
+                self.hq.save_dataframe(
                     name=label, dataframes=dfs, source_db_label=label
                 )
 

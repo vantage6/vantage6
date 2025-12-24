@@ -14,37 +14,34 @@ from vantage6.common.globals import (
 from vantage6.cli.configuration_manager import (
     AlgorithmStoreConfigurationManager,
     AuthConfigurationManager,
+    HQConfigurationManager,
     NodeConfigurationManager,
-    ServerConfigurationManager,
 )
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import merge_nested_dicts
 
 
-def add_common_server_config(
+def add_common_backend_config(
     config: dict, instance_type: InstanceType, instance_name: str
 ) -> dict:
     """
-    Part of the questionaire that is common to all server types (vantage6
-    server and algorithm store server).
+    Part of the questionaire that is common to all backend types (HQ and algorithm
+    store).
 
     Parameters
     ----------
     instance_type : InstanceType
-        Type of server instance.
+        Type of backend instance.
     instance_name : str
-        Name of the server instance.
+        Name of the backend instance.
 
     Returns
     -------
     dict
-        Dictionary with new (partial) server configuration
+        Dictionary with new (partial) backend configuration
     """
-    backend_config = (
-        config["server"] if instance_type == InstanceType.SERVER else config["store"]
-    )
-
-    service_name = "server" if instance_type == InstanceType.SERVER else "store"
+    service_name = "hq" if instance_type == InstanceType.HQ else "store"
+    backend_config = config[service_name]
 
     backend_config["port"] = q.text(
         f"Enter port to which the {service_name} listens:",
@@ -71,7 +68,7 @@ def add_common_server_config(
 
     config = add_database_config(config, instance_type)
 
-    config = _add_production_server_config(config)
+    config = _add_production_backend_config(config)
 
     return config
 
@@ -80,8 +77,8 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     """
     Add the database configuration to the config
     """
-    if instance_type == InstanceType.SERVER:
-        service_name = "server"
+    if instance_type == InstanceType.HQ:
+        service_name = "HQ"
     elif instance_type == InstanceType.ALGORITHM_STORE:
         service_name = "store"
     elif instance_type == InstanceType.AUTH:
@@ -99,19 +96,19 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     return config
 
 
-def _add_production_server_config(config: dict) -> dict:
+def _add_production_backend_config(config: dict) -> dict:
     """
-    Add the production server configuration to the config
+    Add the production backend configuration to the config
 
     Parameters
     ----------
     config : dict
-        The config to add the production server configuration to
+        The config to add the production backend configuration to
 
     Returns
     -------
     dict
-        The config with the production server configuration added
+        The config with the production backend configuration added
     """
     info("For production environments, it is recommended to use an external database.")
     info("Please provide the URI of the external database.")
@@ -136,7 +133,7 @@ def make_configuration(
     extra_config: dict | None = None,
 ) -> tuple[dict, Path]:
     """
-    Create a configuration file for a node or server instance.
+    Create a configuration file for a vantage6 infrastructure component.
 
     Parameters
     ----------
@@ -178,8 +175,8 @@ def make_configuration(
     config_file = Path(dirs.get("config")) / (instance_name + ".yaml")
     if type_ == InstanceType.NODE:
         conf_manager = NodeConfigurationManager
-    elif type_ == InstanceType.SERVER:
-        conf_manager = ServerConfigurationManager
+    elif type_ == InstanceType.HQ:
+        conf_manager = HQConfigurationManager
     elif type_ == InstanceType.ALGORITHM_STORE:
         conf_manager = AlgorithmStoreConfigurationManager
     elif type_ == InstanceType.AUTH:

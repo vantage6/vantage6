@@ -29,7 +29,7 @@ def run():
     parser.add_argument(
         "--algorithm-tools", action="store_true", help="Run algorithm tools tests"
     )
-    parser.add_argument("--server", action="store_true", help="Run server tests")
+    parser.add_argument("--hq", action="store_true", help="Run HQ tests")
     parser.add_argument("--node", action="store_true", help="Run node tests")
     parser.add_argument("--all", action="store_true", help="Run all test suites")
 
@@ -42,7 +42,7 @@ def run():
             args.cli,
             args.algorithm_store,
             args.algorithm_tools,
-            args.server,
+            args.hq,
             args.node,
             args.all,
         ]
@@ -80,11 +80,11 @@ def run():
         success_algorithm_tools = run_tests(algorithm_tools_test_suites)
         success = success and success_algorithm_tools
 
-    # run server tests
-    if args.server or args.all:
-        server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
-        success_server = run_tests(server_test_suites)
-        success = success and success_server
+    # run HQ tests
+    if args.hq or args.all:
+        hq_test_suites = find_tests(str(Path(__file__).parent / "vantage6-hq"))
+        success_hq = run_tests(hq_test_suites)
+        success = success and success_hq
 
     # run node tests
     if args.node or args.all:

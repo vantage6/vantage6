@@ -12,7 +12,7 @@ from sqlalchemy import select
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
 
-from vantage6.backend.common import get_server_url
+from vantage6.backend.common import get_hq_url
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -465,7 +465,7 @@ class Reviews(ReviewBase):
             "algorithm_name": review.algorithm.name,
             "dev_username": review.algorithm.developer.username,
             "assigner_username": review_assigner_username,
-            "store_url": get_server_url(config, store_url),
+            "store_url": get_hq_url(config, store_url),
             "support_email": support_email,
         }
         with app.app_context():
@@ -653,7 +653,7 @@ class ReviewUpdateResources(AlgorithmStoreResources):
             "developer_username": algorithm.developer.username,
             "algorithm_name": algorithm.name,
             "status_text": status_text,
-            "store_url": get_server_url(config, store_url),
+            "store_url": get_hq_url(config, store_url),
             "final_paragraph": final_paragraph,
             "support_email": support_email,
         }
@@ -936,7 +936,7 @@ class ReviewReject(ReviewUpdateResources):
         template_vars = {
             "reviewer_username": review.reviewer.username,
             "algorithm_name": review.algorithm.name,
-            "store_url": get_server_url(config, store_url),
+            "store_url": get_hq_url(config, store_url),
             "support_email": support_email,
         }
         with app.app_context():

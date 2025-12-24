@@ -42,7 +42,7 @@ help:
 	@echo "  uninstall            : uninstall all vantage6 packages"
 	@echo "  install              : do a regular install of all vantage6 packages"
 	@echo "  install-dev          : do an editable install of all vantage6 packages"
-	@echo "  image                : build the node/server docker image"
+	@echo "  image                : build the node/hq docker image"
 	@echo "  algorithm-store-image: build the algorithm store docker image"
 	@echo "  ui-image             : build the user interface docker image"
 	@echo "  base-image           : build the infrastructure base image"
@@ -53,7 +53,7 @@ help:
 	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
 	@echo "  install-docs         : install documentation dependencies"
-	@echo "  devdocs              : run a documentation development server"
+	@echo "  devdocs              : run documentation locally with live reload"
 	@echo ""
 	@echo "Using "
 	@echo "  tag:       ${TAG}"
@@ -74,7 +74,7 @@ uninstall:
 	uv remove vantage6-common
 	uv remove vantage6-node
 	uv remove vantage6-backend-common
-	uv remove vantage6-server
+	uv remove vantage6-hq
 	uv remove vantage6-algorithm-store
 
 install:
@@ -84,7 +84,7 @@ install:
 	uv add vantage6
 	uv add vantage6-node
 	uv add vantage6-backend-common
-	uv add vantage6-server
+	uv add vantage6-hq
 	uv add vantage6-algorithm-store
 
 install-dev:
@@ -94,7 +94,7 @@ install-dev:
 	uv pip install -e vantage6[dev]
 	uv pip install -e vantage6-node[dev]
 	uv pip install -e vantage6-backend-common[dev]
-	uv pip install -e vantage6-server[dev]
+	uv pip install -e vantage6-hq[dev]
 	uv pip install -e vantage6-algorithm-store[dev]
 	uv pip install -e .[dev,docs]
 
@@ -137,16 +137,16 @@ support-alpine-image:
 
 image:
 	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/server:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/hq:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/node:${TAG} \
-		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		--tag ${REGISTRY}/infrastructure/hq:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/node:latest) \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/server:latest) \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/hq:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
-		-f ./docker/node-and-server.Dockerfile \
+		-f ./docker/node-and-hq.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
@@ -199,9 +199,9 @@ rebuild:
 	@echo "------------------------------------"
 	cd vantage6-backend-common && make rebuild
 	@echo "------------------------------------"
-	@echo "         VANTAGE6 SERVER            "
+	@echo "         VANTAGE6 HQ                "
 	@echo "------------------------------------"
-	cd vantage6-server && make rebuild
+	cd vantage6-hq && make rebuild
 	@echo "------------------------------------"
 	@echo "         VANTAGE6 ALGORITHM STORE   "
 	@echo "------------------------------------"
@@ -214,11 +214,11 @@ publish:
 	cd vantage6 && make publish
 	cd vantage6-node && make publish
 	cd vantage6-backend-common && make publish
-	cd vantage6-server && make publish
+	cd vantage6-hq && make publish
 	cd vantage6-algorithm-store && make publish
 
 # Default test subpackages if none specified
-TEST_SUBPACKAGES ?= common,cli,algorithm-store,server,algorithm-tools
+TEST_SUBPACKAGES ?= common,cli,algorithm-store,hq,algorithm-tools
 
 test:
 	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')

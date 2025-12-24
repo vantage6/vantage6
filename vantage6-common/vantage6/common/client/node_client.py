@@ -1,7 +1,4 @@
-"""
-This module provides a client interface for the node to communicate with the
-central server.
-"""
+"""This module provides a client interface for the node to communicate with HQ."""
 
 import datetime
 import os
@@ -19,10 +16,10 @@ from vantage6.common.globals import (
 
 
 class NodeClient(ClientBase):
-    """Node interface to the central server."""
+    """Node interface to vantage6 hub."""
 
     def __init__(
-        self, node_account_name: str, api_key: str, server_url: str, auth_url: str
+        self, node_account_name: str, api_key: str, hq_url: str, auth_url: str
     ):
         """
         Initialize the node client.
@@ -32,13 +29,13 @@ class NodeClient(ClientBase):
         node_account_name : str
             The name of the node account.
         api_key : str
-            The api key of the node.
-        server_url : str
-            The url of the server to connect to.
+            The API key of the node.
+        hq_url : str
+            The url of the HQ to connect to.
         auth_url : str
-            The url of the authentication server.
+            The url of the authentication service.
         """
-        super().__init__(server_url=server_url, auth_url=auth_url)
+        super().__init__(hq_url=hq_url, auth_url=auth_url)
 
         self.node_account_name = node_account_name
         self.api_key = api_key
@@ -62,7 +59,7 @@ class NodeClient(ClientBase):
 
     def authenticate(self) -> None:
         """
-        Nodes authentication by using keycloak.
+        Authentication this node by using keycloak.
         """
         # get token from keycloak
         try:
@@ -71,7 +68,7 @@ class NodeClient(ClientBase):
             self.log.exception("Getting token failed: %s", e)
             raise e
 
-        # get info on how the server sees this node
+        # get info on how HQ sees this node
         node = self.request("node/me")
 
         name = node.get("name")
@@ -129,7 +126,7 @@ class NodeClient(ClientBase):
                     token_expired = False
                 except Exception as e:
                     self.log.error("Getting new token failed: %s", e)
-                    # sleep for a bit and then try again. The server might be
+                    # sleep for a bit and then try again. HQ might be
                     # unreachable or internet connection down. We sleep so long that
                     # we should have about 20 attempts before the token expires.
                     time.sleep(interval_between_refreshes)
@@ -137,15 +134,14 @@ class NodeClient(ClientBase):
                 time.sleep(int(time_until_expiry - period_start_refresh + 1))
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
-        """Request a container-token at the central server.
+        """Request a container-token at HQ.
 
         This token is used by algorithm containers that run on this
         node. These algorithms can then create subtasks and retrieve
         subresults.
 
-        The server performs a few checks (e.g. if the task you
-        request the key for is in progress) before handing out this
-        token.
+        HQ performs a few checks (e.g. if the task you request the key for is in
+        progress) before handing out this token.
 
         Parameters
         ----------
@@ -227,7 +223,7 @@ class NodeClient(ClientBase):
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
-            Update the algorithm run data at the central server.
+            Update the algorithm run data at HQ.
 
             Typically used for task status updates (started, finished, etc)
 
@@ -245,13 +241,13 @@ class NodeClient(ClientBase):
             Returns
             -------
             dict | None
-                The response from the server, or None if wrong data was provided
+                The response from HQ, or None if wrong data was provided
             """
             if "result" in data:
                 if not init_org_id:
                     self.parent.log.critical(
                         "Organization id is not provided: cannot send results "
-                        "to server as they cannot be encrypted"
+                        "to HQ as they cannot be encrypted"
                     )
                     return
                 self.parent.log.debug(
@@ -268,7 +264,7 @@ class NodeClient(ClientBase):
                         "initiating organization belong to your organization?"
                     )
 
-                self.parent.log.debug("Sending algorithm run update to server")
+                self.parent.log.debug("Sending algorithm run update to HQ")
                 blob_store_enabled = self.parent.check_if_blob_store_enabled()
                 # If the result is a blob, it is not base64 encoded.
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
@@ -276,12 +272,12 @@ class NodeClient(ClientBase):
                     public_key,
                     skip_base64_encoding_of_msg=blob_store_enabled,
                 )
-                # If blob store is enabled, stream the result to the server, which
+                # If blob store is enabled, stream the result to HQ, which
                 # will stream it to the blob store and return the UUID reference to use.
                 if blob_store_enabled:
-                    result_uuid = self.parent._upload_run_data_to_server(data["result"])
+                    result_uuid = self.parent._upload_run_data_to_hq(data["result"])
                     self.parent.log.debug(
-                        f"Result uploaded to server with UUID: {result_uuid}"
+                        f"Result uploaded to HQ with UUID: {result_uuid}"
                     )
                     data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
@@ -291,7 +287,7 @@ class NodeClient(ClientBase):
 
         def get(self, id_) -> dict:
             """
-            Obtain algorithm store from the central server.
+            Obtain algorithm store from HQ.
 
             Parameters
             ----------
@@ -310,7 +306,7 @@ class NodeClient(ClientBase):
 
         def post(self, df_id: int, data: dict) -> dict:
             """
-            Create a column at the central server.
+            Create a column at HQ.
 
             Parameters
             ----------
@@ -322,7 +318,7 @@ class NodeClient(ClientBase):
             Returns
             -------
             dict
-                The response from the server.
+                The response from HQ.
             """
             return self.parent.request(
                 f"session/dataframe/{df_id}/column", method="post", json=data
@@ -332,10 +328,9 @@ class NodeClient(ClientBase):
         """
         Check whether the encryption is enabled.
 
-        End-to-end encryption is per collaboration managed at the
-        central server. It is important to note that the local
-        configuration-file should allow explicitly for unencrpyted
-        messages. This function returns the setting from the server.
+        End-to-end encryption is per collaboration managed at the HQ. It is important to
+        note that the local configuration-file should allow explicitly for unencrpyted
+        messages. This function returns the setting from HQ.
 
         Returns
         -------
@@ -347,7 +342,7 @@ class NodeClient(ClientBase):
 
     def set_run_start_time(self, id_: int) -> None:
         """
-        Sets the start time of the task at the central server.
+        Sets the start time of the task at HQ.
 
         This is important as this will note that the task has been
         started, and is waiting for restuls.

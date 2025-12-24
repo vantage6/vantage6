@@ -12,7 +12,7 @@ This section contains technical reference information about the vantage6 project
     :maxdepth: 3
 
     architecture
-    server/index
+    hub/index
     node/index
     algorithms/index
     inter-component/index
@@ -31,11 +31,11 @@ This section contains technical reference information about the vantage6 project
 .. - task serialization/deserialization (maybe just for developers?)
 .. - policies node
 .. - logging settings
-.. - sharing node configuration with server
-.. - settings on validity of JWT tokens (server admin)
-.. - node proxy server
+.. - sharing node configuration with HQ
+.. - settings on validity of JWT tokens (HQ admin)
+.. - node proxy
 .. - killing algorithms remotely
-.. - socket stuff - users/nodes can connect to server via socket - now only nodes described I think
+.. - socket stuff - users/nodes can connect to HQ via socket - now only nodes described I think
 .. - Permission system
 ..    - default roles
 .. - mail service
@@ -48,8 +48,7 @@ This section contains technical reference information about the vantage6 project
 
 .. for developers:
 .. - how to run unit tests
-.. - how to use a different image for node/server for development purposes
-.. - Server API - general description
+.. - HQ API - general description
 .. - Database model
 .. - How configuration is managed
 .. -

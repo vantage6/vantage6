@@ -3,7 +3,7 @@
   window["env"] = window["env"] || {};
 
   // Environment variables
-  window["env"]["server_url"] = "${SERVER_URL}";
+  window["env"]["hq_url"] = "${HQ_URL}";
   window["env"]["api_path"] = "${API_PATH}";
   window["env"]["allowed_algorithm_stores"] = "${ALLOWED_ALGORITHM_STORES}";
   window["env"]["auth_url"] = "${AUTH_URL}";

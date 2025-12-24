@@ -17,15 +17,15 @@ class BaseSandboxConfigManager:
 
     Parameters
     ----------
-    server_name : str
-        Name of the server.
+    hq_name : str
+        Name of the HQ.
     custom_data_dir : Path | None
         Path to the custom data directory. Useful on WSL because of mount issues for
         default directories.
     """
 
-    def __init__(self, server_name: str, custom_data_dir: Path | None) -> None:
-        self.server_name = server_name
+    def __init__(self, hq_name: str, custom_data_dir: Path | None) -> None:
+        self.hq_name = hq_name
         self.custom_data_dir = Path(custom_data_dir) if custom_data_dir else None
 
     @staticmethod
@@ -84,8 +84,8 @@ class BaseSandboxConfigManager:
         """
         ctx_class = select_context_class(instance_type)
         folders = ctx_class.instance_folders(
-            instance_type=InstanceType.SERVER,
-            instance_name=self.server_name,
+            instance_type=InstanceType.HQ,
+            instance_name=self.hq_name,
             system_folders=False,
         )
         if self.custom_data_dir:
@@ -95,12 +95,12 @@ class BaseSandboxConfigManager:
         else:
             main_data_dir = Path(folders["dev"])
 
-        if instance_type == InstanceType.SERVER:
-            folder_name = custom_folder or "server"
-            data_dir = main_data_dir / self.server_name / folder_name
+        if instance_type == InstanceType.HQ:
+            folder_name = custom_folder or "hq"
+            data_dir = main_data_dir / self.hq_name / folder_name
         elif instance_type == InstanceType.ALGORITHM_STORE:
             folder_name = custom_folder or "store"
-            data_dir = main_data_dir / self.server_name / folder_name
+            data_dir = main_data_dir / self.hq_name / folder_name
         elif instance_type == InstanceType.NODE:
             if custom_folder:
                 last_subfolder = custom_folder
@@ -111,10 +111,10 @@ class BaseSandboxConfigManager:
                     last_subfolder = "data"
             else:
                 last_subfolder = "node"
-            data_dir = main_data_dir / self.server_name / last_subfolder
+            data_dir = main_data_dir / self.hq_name / last_subfolder
         elif instance_type == InstanceType.AUTH:
             folder_name = custom_folder or "auth"
-            data_dir = main_data_dir / self.server_name / folder_name
+            data_dir = main_data_dir / self.hq_name / folder_name
         else:
             raise ValueError(f"Invalid instance type to get data dir: {instance_type}")
 

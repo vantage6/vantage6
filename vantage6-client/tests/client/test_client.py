@@ -8,8 +8,8 @@ from vantage6.common.globals import STRING_ENCODING
 
 from vantage6.client import UserClient
 
-# Mock server
-HOST = "mock_server"
+# Mock HQ
+HOST = "mock_hq"
 PORT = 1234
 
 # Mock credentials

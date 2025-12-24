@@ -1,19 +1,21 @@
+.. _quickstart:
+
 Quickstart
 ==========
 
-This quickstart section will show you how to run a vantage6 network, comprising of a
-central server, three nodes, an algorithm store and a user interface, on your local
-machine.
+This quickstart section will show you how to run a vantage6 network, comprising of
+three nodes and a vantage6 hub (consisting of HQ, authentication service, algorithm
+store and user interface), on your local machine.
 
 Requirements
 ------------
 
 Make sure you have installed Python and a form of Kubernetes. These are required for
 all vantage6 components. Installation instructions are present, for instance, in the
-:ref:`server requirements <server-requirements>` section.
+:ref:`hub requirements <hub-requirements>` section.
 
 If you are using Docker Desktop, you can simply
-:ref:`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
+`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
 Otherwise, we recommend installing `microk8s <https://microk8s.io/>`_.
 
 Installation
@@ -61,12 +63,12 @@ This will start an interactive dialog that will ask you to provide a name for th
 network. Note that default settings are used - you can view custom options with
 ``v6 sandbox new --help``.
 
-The network is automatically started. Using the default settings, this will start up a
-server, three nodes, an algorithm store and a user interface. The nodes contain some
+The network is automatically started. Using the default settings, this will start up
+all necessary components of the hub and three nodes. The nodes contain some
 `test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/sandbox/data/olympic_athletes_2016.csv>`_
-about olympic medal winners. Note also that the server is coupled automatically to the
+about olympic medal winners. Note also that HQ is coupled automatically to the
 community algorithm store, thereby making the community algorithms directly available to
-you.
+you in your local setup.
 
 You can now access the user interface by navigating to http://localhost:30760 in your
 browser and log in with the username ``admin`` and password ``admin``. Enjoy!
