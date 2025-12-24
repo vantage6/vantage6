@@ -62,7 +62,10 @@ Optional components
   algorithms, it is possible to use Azure Blob Storage for storage rather than the
   relational database.
 
-.. TODO v5+ include section on Prometheus.
+:ref:`Prometheus <hub-admin-guide-prometheus>`
+  If you want to monitor the performance of your vantage6 hub and nodes, you can use
+  Prometheus. This is a powerful tool that allows you to monitor various metrics from
+  your vantage6 hub and nodes.
 
 Table of contents
 ^^^^^^^^^^^^^^^^^

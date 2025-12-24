@@ -975,8 +975,6 @@ class ContainerManager:
             self._validate_source_database(databases_to_use)
             # A always has 1 source database to use in the extraction step. This
             # is validated in the previous method.
-            # TODO v5+ if the validate function above raises error, this is somehow
-            # still reached?!
             source_database = databases_to_use[0]
             db: TaskDB = self.databases[source_database["label"]]
             if db.is_file or db.is_dir:

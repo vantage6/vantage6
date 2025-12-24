@@ -14,3 +14,4 @@ This section describes the components of the vantage6 hub.
     smtp-server
     rabbitmq
     azure-blob-storage
+    prometheus
