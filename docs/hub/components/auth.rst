@@ -3,9 +3,10 @@
 Authentication service
 =======================
 
-The authentication service is responsible for authenticating users and nodes. It uses
-the popular `Keycloak <https://www.keycloak.org/>`_ service to handle authentication
-within the vantage6 infrastructure.
+The authentication service is responsible for authenticating users and nodes. It relies
+on the popular `Keycloak <https://www.keycloak.org/>`_ service to handle authentication
+within the vantage6 infrastructure. Vantage6 relies on Keycloak because it is a mature
+and well-supported authentication service that is easy to deploy and customize.
 
 Install
 -------
@@ -39,3 +40,24 @@ Below, we list all possible configuration options. You can download this file he
 
 .. literalinclude :: yaml/auth_config.yaml
     :language: yaml
+
+Customize
+--------
+
+The number of configuration options in Keycloak is enormous. The vantage6 helm chart
+intends to provide a way to deploy a Keycloak instance that is both adapted to the
+vantage6 infrastructure and secure by default. To support all the Keycloak configuration
+options is not in scope of this project. However, you can customize your Keycloak
+deployment further by logging in to the Keycloak admin console, or by using the Keycloak
+CLI or API.
+
+You can login to the Keycloak admin console by opening a browser and navigating to
+the address where you deployed the Keycloak service. For sandbox environments, this
+will be ``http://localhost:30764``. For production environments, this will be the
+address of the Keycloak service in your Kubernetes cluster. You can login with the
+Keycloak admin credentials - see where these are configured in the `admin` section of
+the configuration file above.
+
+Once you are logged in, you customize your Keycloak deployment in any way you want. Take
+care that you don't overwrite the vantage6-specific configuration, such as the backend
+client, as this may cause issues in communicating with vantage6 HQ and store.
