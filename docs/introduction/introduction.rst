@@ -63,7 +63,7 @@ The roles of these vantage6 components are as follows:
   it on the local data. Note that the node owner can control which algorithms are
   allowed to run on their data.
 
-Headquarters is part of a larger infrastructure, called the vantage6 **hub**. Apart from
+Headquarters is part of the vantage6 **hub**. Apart from
 HQ, the hub contains the following important components:
 
 - **Authentication service**: The authentication service for the vantage6 network.
