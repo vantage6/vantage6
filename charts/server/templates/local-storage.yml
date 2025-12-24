@@ -1,4 +1,7 @@
-{{- if not (lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage") }}
+{{- if and
+    (eq (.Values.database.k8sNodeName | default "") "docker-desktop")
+    (not (lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage"))
+}}
 {{- if or
     (eq (.Values.server.logging.storageClass | default "local-storage") "local-storage")
     (eq (.Values.prometheus.storageClass | default "local-storage") "local-storage")
