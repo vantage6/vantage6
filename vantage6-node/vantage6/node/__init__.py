@@ -285,8 +285,7 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the
-        # 'make_request' method.
+        # Use 'hq_url' as target of the 'make_request' method.
         proxy_server.hq_url = self.client.hq_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",

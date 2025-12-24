@@ -7,6 +7,7 @@ authenticated nodes and users via the socketIO server that is run here.
 
 import importlib.metadata
 import os
+from pathlib import Path
 
 from gevent import monkey
 
@@ -78,7 +79,12 @@ class HQApp(Vantage6App):
     def __init__(self, ctx: HQContext) -> None:
         """Create a vantage6 HQ application."""
 
-        super().__init__(ctx, HQ_MODULE_NAME)
+        super().__init__(
+            ctx,
+            HQ_MODULE_NAME,
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
+        )
 
         self.metrics = Metrics(labels=["node_id", "platform", "os"])
         # Setup websocket channel

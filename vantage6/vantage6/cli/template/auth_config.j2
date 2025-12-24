@@ -97,27 +97,88 @@ keycloak:
     # should always be set to false.
     editUsernameAllowed: false
 
+    # allow users to reset their password
+    resetPasswordAllowed: {{ keycloak.resetPasswordAllowed | default(false) }}
+
+    # require users to verify their email address. Note that setting this to true should
+    # only be done if you have configured an email SMTP server.
+    verifyEmail: {{ keycloak.verifyEmail | default(false) }}
+
+    # brute force protection settings
+    # - bruteForceProtected: enable brute force protection
+    # - permanentLockout: whether to lock out a user permanently after a certain number
+    #   of failed login attempts.
+    # - failureFactor: the number of failed login attempts before a user is locked out.
+    bruteForceProtected: {{ keycloak.bruteForceProtected | default(false) }}
+    permanentLockout: {{ keycloak.permanentLockout | default(false) }}
+    failureFactor: {{ keycloak.failureFactor | default(5) }}
+
     {% if keycloak.production %}
-    # required actions for users. By setting defaultAction to true for configuring
-    # OTP, the user will be prompted to configure OTP (for two-factor
-    # authentication) on first login.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     requiredActions:
+      # configure OTP for two-factor authentication
       - alias: CONFIGURE_TOTP
         name: Configure OTP
         providerId: CONFIGURE_TOTP
         enabled: true
         defaultAction: true
         priority: 10
+      # update password on first login
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      # update email on first login
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+      # verify email on first login
+      {% if keycloak.verifyEmail %}
+      - alias: VERIFY_EMAIL
+        name: Verify Email
+        providerId: VERIFY_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 40
+      {% endif %}
     {% else %}
-    # If you want to require users to use two-factor authentication on first login,
-    # enable the settings below.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     # requiredActions:
+    # # configure OTP for two-factor authentication
     #  - alias: CONFIGURE_TOTP
     #    name: Configure OTP
     #    providerId: CONFIGURE_TOTP
     #    enabled: true
     #    defaultAction: true
     #    priority: 10
+    # # update password on first login
+    # - alias: UPDATE_PASSWORD
+    #   name: Update Password
+    #   providerId: UPDATE_PASSWORD
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 20
+    # # update email on first login
+    # - alias: UPDATE_EMAIL
+    #   name: Update Email
+    #   providerId: UPDATE_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 30
+    # # verify email on first login
+    # - alias: VERIFY_EMAIL
+    #   name: Verify Email
+    #   providerId: VERIFY_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 40
     {% endif %}
 
     # users to be created in the realm. This initializes the realm with a default
@@ -227,6 +288,60 @@ keycloak:
         {% endif %}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
+
+    # SMTP server configuration for email sending
+    {% if keycloak.smtpServer is defined %}
+    smtpServer:
+      {% if keycloak.smtpServer.host is defined %}
+      host: {{ keycloak.smtpServer.host }}
+      {% endif %}
+      {% if keycloak.smtpServer.port is defined %}
+      port: "{{ keycloak.smtpServer.port }}"
+      {% endif %}
+      {% if keycloak.smtpServer.from is defined %}
+      from: {{ keycloak.smtpServer.from }}
+      {% endif %}
+      {% if keycloak.smtpServer.fromDisplayName is defined %}
+      fromDisplayName: {{ keycloak.smtpServer.fromDisplayName }}
+      {% endif %}
+      {% if keycloak.smtpServer.replyTo is defined %}
+      replyTo: {{ keycloak.smtpServer.replyTo }}
+      {% endif %}
+      {% if keycloak.smtpServer.replyToDisplayName is defined %}
+      replyToDisplayName: {{ keycloak.smtpServer.replyToDisplayName }}
+      {% endif %}
+      {% if keycloak.smtpServer.ssl is defined %}
+      ssl: "{{ keycloak.smtpServer.ssl }}"
+      {% endif %}
+      {% if keycloak.smtpServer.starttls is defined %}
+      starttls: "{{ keycloak.smtpServer.starttls }}"
+      {% endif %}
+      {% if keycloak.smtpServer.auth is defined %}
+      auth: "{{ keycloak.smtpServer.auth }}"
+      {% endif %}
+      {% if keycloak.smtpServer.authType is defined %}
+      authType: {{ keycloak.smtpServer.authType }}
+      {% endif %}
+      {% if keycloak.smtpServer.user is defined %}
+      user: {{ keycloak.smtpServer.user }}
+      {% endif %}
+      {% if keycloak.smtpServer.password is defined %}
+      password: {{ keycloak.smtpServer.password }}
+      {% endif %}
+    {% else %}
+    # smtpServer:
+    #  host: your-smtp-server-hostname.org
+    #  port: 587                # usually 587 for STARTTLS, 465 for SSL
+    #  from: your-email-address@your-domain.com
+    #  ssl: false                # true for SSL, false for STARTTLS
+    #  starttls: true            # true for STARTTLS, false for SSL
+    #  auth: true                # Usually true, unless running tests on localhost
+    #  authType: basic           # basic for username and password, bearer for bearer token (not supported yet)
+    #  user: your-username       # your username (often the same as the email address)
+    #  password: your-password   # your password
+    #  replyTo: reply-to-email-address@your-domain.com  # optional, may be the same as the from address
+    #  replyToDisplayName: display-name-for-reply-to  # optional
+    {% endif %}
 
 
 database:

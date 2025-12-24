@@ -336,6 +336,7 @@ deployments:
         store:
           image: ${STORE_IMAGE}
           imagePullPolicy: IfNotPresent
+          baseUrl: http://localhost:7602
           api_path: /store
           keycloak:
             url: ${KEYCLOAK_URL}
