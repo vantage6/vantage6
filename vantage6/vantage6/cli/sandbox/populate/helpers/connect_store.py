@@ -142,8 +142,9 @@ def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) 
         functions=function_metadata or [],
     )
 
-    # TODO: v5+ get this json data by downloading it from the github repo - that ensures
+    # TODO get this json data by downloading it from the github repo - that ensures
     # that the data is always up to date.
+    # This is part of issue #2042
     summary += "Creating Network Diagnostics algorithm\n"
     client.algorithm.create(
         name="Network Diagnostics",

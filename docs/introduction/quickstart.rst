@@ -36,7 +36,7 @@ Then, install the vantage6 command line interface (CLI) by running:
 
     uv pip install vantage6
 
-.. TODO v5+ remove note below
+.. TODO v5+ remove note below, see #2213
 
 .. note::
 
