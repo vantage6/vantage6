@@ -16,7 +16,7 @@ from vantage6.common.globals import (
 
 
 class NodeClient(ClientBase):
-    """Node interface to vantage6 HQ."""
+    """Node interface to vantage6 hub."""
 
     def __init__(
         self, node_account_name: str, api_key: str, hq_url: str, auth_url: str
