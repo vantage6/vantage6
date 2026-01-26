@@ -1,6 +1,42 @@
 Release notes
 =============
 
+4.13.6
+------
+
+*26 January 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: copier, urllib3, werkzeug,
+    marshmallow, and various UI dependencies
+    (`PR#2476 <https://github.com/vantage6/vantage6/pull/2476>`_).
+
+4.13.5
+------
+
+*19 December 2025*
+
+- **Security**
+
+  - Update @modelcontextprotocol/sdk dependency to address security vulnerabilities
+    (`PR#2448 <https://github.com/vantage6/vantage6/pull/2448>`_).
+
+4.13.4
+------
+
+*11 December 2025*
+
+- **Security**
+
+  - Update urllib3 to 2.6.0 (`PR#2439 <https://github.com/vantage6/vantage6/pull/2439>`_).
+
+- **Bugfix**
+
+  - Fix handling socketIO disconnect errors due to incompatible dependencies
+    (`Issue#2440 <https://github.com/vantage6/vantage6/issues/2440>`_,
+    `PR#2446 <https://github.com/vantage6/vantage6/pull/2446>`_).
+
 4.13.3
 ------
 
@@ -34,6 +70,7 @@ Release notes
     option (`PR#2403 <https://github.com/vantage6/vantage6/pull/2403>`_).
 
 - **Bugfix**
+
   - Fix infinite loop in requesting list of runs by node client if running a task on
     more than one page of runs
     (`Issue#2357 <https://github.com/vantage6/vantage6/issues/2357>`_,

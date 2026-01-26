@@ -26,12 +26,12 @@ dependencies = [
     "Flask-RESTful==0.3.10",
     # TODO remove httpx once 1.0.0 is released - atm this is added to prevent 1.0.dev3 is installed
     "httpx==0.28.1",
-    "marshmallow==3.20.2",
+    "marshmallow==3.26.2",
     "marshmallow-sqlalchemy==1.4.0",
     "prometheus-client==0.21.1",
     "python-keycloak==5.5.0",
     "sqlalchemy==2.0.37",
-    "werkzeug==3.1.4",
+    "werkzeug==3.1.5",
     "requests==2.32.4",
     "vantage6-common==5.0.0b2",
 ]
