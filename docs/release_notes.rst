@@ -1,7 +1,19 @@
 Release notes
 =============
 
+4.13.6
+------
+
+*26 January 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: copier, urllib3, werkzeug,
+    marshmallow, and various UI dependencies
+    (`PR#2476 <https://github.com/vantage6/vantage6/pull/2476>`_).
+
 4.13.5
+------
 
 *19 December 2025*
 
