@@ -34,11 +34,11 @@ setup(
         "flask==3.1.1",
         "flask-mail==0.9.1",
         "Flask-RESTful==0.3.10",
-        "marshmallow==3.19.0",
+        "marshmallow==3.26.2",
         "marshmallow-sqlalchemy==0.29.0",
         "SQLAlchemy==1.4.46",
         "prometheus-client==0.21.1",
-        f'vantage6-common == {version_ns["__version__"]}',
+        f"vantage6-common == {version_ns['__version__']}",
     ],
     extras_require={"dev": ["coverage==6.4.4"]},
     package_data={

@@ -5,7 +5,7 @@ flask-marshmallow==0.15.0
 Flask-RESTful==0.3.10
 gevent==25.4.2
 jsonschema==4.21.1
-marshmallow==3.19.0
+marshmallow==3.26.2
 requests==2.32.4
 schema==0.7.5
 SQLAlchemy==1.4.46

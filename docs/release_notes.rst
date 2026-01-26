@@ -9,7 +9,7 @@ Release notes
 - **Security**
 
   - Update dependencies to fix security vulnerabilities: copier, urllib3, werkzeug,
-    and various UI dependencies
+    marshmallow, and various UI dependencies
     (`PR#2476 <https://github.com/vantage6/vantage6/pull/2476>`_).
 
 4.13.5
