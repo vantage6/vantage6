@@ -104,6 +104,7 @@ class DiagnosticRunner:
         list[dict]
             The results of the diagnostic algorithm.
         """
+        info("Starting task to test base features...")
         task = self.client.task.create(
             collaboration=self.collaboration_id,
             name="test",
@@ -128,6 +129,8 @@ class DiagnosticRunner:
         """
         Create a task to extract the database.
         """
+        info("Before running compute task, we need to create a dataframe")
+        info(f"Creating dataframe for database with label: {self.database_label}")
         self.extraction_task_details = self.client.dataframe.create(
             label=self.database_label,
             image=DIAGNOSTICS_IMAGE,
@@ -136,9 +139,10 @@ class DiagnosticRunner:
             session=self.session_id,
         )
 
-        return self.client.wait_for_results(
+        self.client.wait_for_results(
             self.extraction_task_details.get("last_session_task", {}).get("id")
         )
+        info("Dataframe created successfully!")
 
     def _wait_and_display(self, task_id: int) -> list[dict]:
         """
