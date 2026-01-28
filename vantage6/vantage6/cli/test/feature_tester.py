@@ -15,13 +15,13 @@ from vantage6.cli.utils import error
 @click.option(
     "--hq-url",
     type=str,
-    default=f"http://localhost:{Ports.DEV_HQ}/api",
+    default=f"http://localhost:{Ports.SANDBOX_HQ}/hq",
     help="URL of HQ",
 )
 @click.option(
     "--auth-url",
     type=str,
-    default="http://localhost:8080",
+    default=f"http://localhost:{Ports.SANDBOX_AUTH}",
     help="URL of the authentication service (Keycloak)",
 )
 @click.option(
@@ -60,12 +60,23 @@ from vantage6.cli.utils import error
     is_flag=True,
     help="Run the diagnostic test on only nodes that are online",
 )
-@click.option("--no-vpn", is_flag=True, help="Don't execute VPN tests")
 @click.option(
     "--private-key",
     type=str,
     default=None,
     help="Path to the private key for end-to-end encryption",
+)
+@click.option(
+    "--session-id",
+    type=int,
+    default=1,
+    help="ID of the session to use for the diagnostic test",
+)
+@click.option(
+    "--database-label",
+    type=str,
+    default="olympic-athletes",
+    help="Label of the database to use for the diagnostic test",
 )
 def cli_test_features(
     hq_url: str,
@@ -76,8 +87,9 @@ def cli_test_features(
     organizations: list[int] | None,
     all_nodes: bool,
     online_only: bool,
-    no_vpn: bool,
     private_key: str | None,
+    session_id: int,
+    database_label: str,
 ) -> list[dict]:
     """
     Run diagnostic checks on an existing vantage6 network.
@@ -86,7 +98,7 @@ def cli_test_features(
     test the functionality of vantage6, and will report back the results.
     """
     if all_nodes and organizations:
-        error("Cannot use --all-nodes and --organization at the same time.")
+        error("Cannot use --all-nodes and --organizations at the same time.")
         sys.exit(1)
 
     if all_nodes or not organizations:
@@ -101,6 +113,13 @@ def cli_test_features(
     )
     client.authenticate()
     client.setup_encryption(private_key)
-    diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
-    res = diagnose(base=True, vpn=not no_vpn)
+    diagnose = DiagnosticRunner(
+        client,
+        collaboration,
+        organizations,
+        online_only,
+        session_id,
+        database_label,
+    )
+    res = diagnose()
     return res

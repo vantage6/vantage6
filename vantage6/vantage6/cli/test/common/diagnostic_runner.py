@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from vantage6.common import debug, info
+from vantage6.common.enum import AlgorithmStepType, TaskDatabaseType
 
 from vantage6.client import UserClient
 
@@ -31,6 +32,10 @@ class DiagnosticRunner:
     online_only : bool
         Whether to run the diagnostics only on nodes that are online. By
         default False
+    session_id : int
+        The ID of the session to use for the diagnostic test. By default 1.
+    database_label : str
+        The label of the database to use for the diagnostic test. By default "default".
     """
 
     def __init__(
@@ -39,9 +44,14 @@ class DiagnosticRunner:
         collaboration_id: int,
         organizations: list[int] | None = None,
         online_only: bool = False,
+        session_id: int = 1,
+        database_label: str = "olympic-athletes",
     ) -> None:
         self.client = client
         self.collaboration_id = collaboration_id
+        self.session_id = session_id
+        self.database_label = database_label
+        self.extract_task_details = None
 
         if not organizations:
             # run on all organizations in the collaboration
@@ -68,7 +78,7 @@ class DiagnosticRunner:
         info(f"  organizations: {self.organization_ids}")
         info(f"  collaboration: {self.collaboration_id}")
 
-    def __call__(self, base: bool = True, vpn: bool = True) -> Any:
+    def __call__(self) -> Any:
         """
         Run the diagnostics.
 
@@ -77,13 +87,13 @@ class DiagnosticRunner:
         base: bool
             Whether to run the base features of the diagnostic algorithm. By
             default True.
-        vpn: bool
-            Whether to run the VPN features of the diagnostic algorithm. By
-            default True.
         """
-        base_results = self.base_features() if base else []
-        vpn_results = self.vpn_features() if vpn else []
-        return base_results + vpn_results
+        # first create extraction task
+        if not self.extract_task_details:
+            self.extract()
+        # then create base features task
+        base_results = self.base_features()
+        return base_results
 
     def base_features(self) -> list[dict]:
         """
@@ -101,36 +111,34 @@ class DiagnosticRunner:
             image=DIAGNOSTICS_IMAGE,
             method="base_features",
             organizations=self.organization_ids,
-            databases=[{"label": "default"}],
+            databases=[
+                {
+                    "dataframe_id": self.extraction_task_details.get("id"),
+                    "type": TaskDatabaseType.DATAFRAME,
+                }
+            ],
+            session=self.session_id,
+            action=AlgorithmStepType.CENTRAL_COMPUTE,
         )
         debug(task)
 
         return self._wait_and_display(task.get("id"))
 
-    def vpn_features(self) -> list[dict]:
+    def extract(self) -> None:
         """
-        Create a task to run the VPN features of the diagnostic algorithm.
-
-        Returns
-        -------
-        list[dict]
-            The results of the diagnostic algorithm.
+        Create a task to extract the database.
         """
-        self.client.node.list(collaboration=self.collaboration_id)
-
-        task = self.client.task.create(
-            collaboration=self.collaboration_id,
-            name="test",
-            description="VPN Diagnostic test",
+        self.extraction_task_details = self.client.dataframe.create(
+            label=self.database_label,
             image=DIAGNOSTICS_IMAGE,
-            method="vpn_features",
-            arguments={
-                "other_nodes": self.organization_ids,
-            },
-            organizations=self.organization_ids,
+            method="read_csv",
+            arguments={},
+            session=self.session_id,
         )
 
-        return self._wait_and_display(task.get("id"))
+        return self.client.wait_for_results(
+            self.extraction_task_details.get("last_session_task", {}).get("id")
+        )
 
     def _wait_and_display(self, task_id: int) -> list[dict]:
         """
