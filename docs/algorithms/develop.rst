@@ -420,11 +420,6 @@ by going to the relevant page in the UI and uploading the file.
 Calling your algorithm from vantage6
 ------------------------------------
 
-.. TODO v5+ remove this when implemented
-.. warning::
-
-    This does not work yet in v5 - the ``v6 test`` commands are not implemented yet.
-
 If you want to test your algorithm in the context of vantage6, you should
 set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
 command, which will create a sandbox environment with a hub and several nodes.
@@ -433,31 +428,37 @@ your algorithm. You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
 It is also possible to test your algorithm by running a test script on a local
-vantage6 :ref:`dev network <create-dev-network>`. This can be done by running
+vantage6 :ref:`sandbox <local-test>`. This can be done by running
 the following CLI command:
 
 .. code:: bash
 
-   v6 test client-script --create-dev-network
+   # Run your own script
+   v6 test client-script --create-sandbox --script path/to/test_script.py
 
-This will create a dev network and run the test script included in the repository on the
-latest version of the vantage6 infrastructure.
-To let the script run the algorithm, the arguments needed by the task should be added to
-``algo_test_arguments.py``
+   # OR
+   # provide task arguments to the default test script
+   v6 test client-script --create-sandbox --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'arguments': {'column_name': 'my_column'}, 'databases': [{'label': 'db_label'}]}"
 
-A custom test script can be used by running:
+.. note::
 
-.. code:: bash
+    For v5.0, you need to have a sandbox that already has extracted dataframes in the
+    database, or the test script should create them. We hope to add features to make
+    this easier in the future.
 
-   v6 test client-script --create-dev-network --script path/to/test_script.py
 
-In this case, the script should contain the code to run and test the algorithm, and return the
-execution result. For example, to test the average algorithm, the script could look like this:
+The commands above will create a sandbox and run the test script on that sandbox. The
+infrastructure contains a default test script that creates a task where only the
+arguments for ``client.task.create`` have to be provided.
+
+The more flexible, but more complex, option is to write your own test script.
+In this case, the script should contain the code to run and test the algorithm, and
+return the execution result. For example, to test the average algorithm, the script
+could look like this:
 
 .. code:: python
 
     from vantage6.client import Client
-    from vantage6.common.globals import Ports
 
     def run_test():
         # Create a client and authenticate
@@ -469,14 +470,16 @@ execution result. For example, to test the average algorithm, the script could l
 
         # create the task
         task = client.task.create(
-            collaboration=1,
             organizations=[1],
             name="test_average_task",
             image="harbor2.vantage6.ai/demo/average",
             description="",
             method="central_average",
             arguments={"column_name": "Age"},
-            databases=[{"label": "olympic_athletes"}],
+            session=1,
+            collaboration=1,
+            databases=[{"dataframe_id": 1}],
+            action="central_compute",
         )
 
         # wait for the task to complete
@@ -488,34 +491,27 @@ execution result. For example, to test the average algorithm, the script could l
     if __name__ == "__main__":
         run_test()
 
-Another option to test the algorithm without writing a script, is to pass the arguments
-directly to the command:
-
-.. code:: bash
-
-   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'arguments': {'column_name': 'my_column'}, 'databases': [{'label': 'db_label'}]}"
-
-After running, the network will be stopped and removed unless you specify otherwise by setting
-``--keep true`` in the command.
+After running the CLI command, sandbox created/started for this test will be
+stopped/removed unless you specify the ``--keep`` flag in the command.
 
 If a dataset different from the default ones is needed, it can be included in the
-dev network by specifying the label and the path to the dataset in the ``--add-dataset``
+sandbox by specifying the label and the path to the dataset in the ``--add-dataset``
 argument of the command:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --create-dev-network --add-dataset my_label /path/to/dataset
+   v6 test client-script --script /path/to/test_script.py --create-sandbox --add-dataset my_label /path/to/dataset
 
-If a dev network configuration exists, but the network is not running, it is possible
-to start the existing network configuration and run the test script on it:
+If a sandbox configuration exists, but the sandbox is not running, it is possible
+to start the existing sandbox and run the test script on it:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --start-dev-network --name my_network
+   v6 test client-script --script /path/to/test_script.py --start-sandbox --name my_sandbox
 
-If a the ``--start-dev-network`` and the ``--create-dev-network`` arguments are not specified,
-the test script will be executed on the running dev network, if active.
-
+If a the ``--start-sandbox`` and the ``--create-sandbox`` arguments are not specified,
+the test script will be executed on the running sandbox - if none are running, an error
+will be raised.
 
 
 .. _algo-dev-update-algo:
