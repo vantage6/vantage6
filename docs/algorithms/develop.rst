@@ -225,6 +225,8 @@ Preprocessing function
        df["column_name"] = df["column_name"] + 1
        return df
 
+.. _algo-functions-provided:
+
 Functions provided by the vantage6 infrastructure
 -------------------------------------------------
 

@@ -10,11 +10,11 @@ enables privacy-enhancing analyses on distributed data. It allows organizations 
 collaborate on analyses while only sharing aggregated results, not the raw data.
 
 As a user, you can use vantage6 to run your algorithms on sensitive data. In order to
-create the tasks to run your algorithms, it will be helpful to understand how vantage6
-works. In order to help you understand this, we will first explain the basic
-architecture of vantage6, followed by a description of the resources that are available
+create the tasks to run your algorithms, you need to understand how vantage6
+works. We will first explain the basic
+architecture of vantage6, followed by a description of the resources available
 in vantage6. Using those concepts, we will explain give an example of a simple algorithm
-and explain how that is run within vantage6.
+and explain how it is run within vantage6.
 
 .. _vantage6-components-intro:
 
@@ -48,7 +48,8 @@ to HQ.
     hq <-- node1
     hq <-- node2
 
-    node1 <-r[dashed]-> node2
+.. TODO reactivate this dashed node line when communication between nodes is implemented
+..  node1 <-r[dashed]-> node2
 
 The roles of these vantage6 components are as follows:
 
@@ -63,8 +64,9 @@ The roles of these vantage6 components are as follows:
   it on the local data. Note that the node owner can control which algorithms are
   allowed to run on their data.
 
-Headquarters is part of the vantage6 **hub**. Apart from
-HQ, the hub contains the following important components:
+Headquarters is part of the vantage6 **hub**, which is the collection of all central
+components of the vantage6 infrastructure. Apart from HQ, the hub contains the following
+important components:
 
 - **Authentication service**: The authentication service for the vantage6 network.
 - **Algorithm store**: A place to share vantage6 algorithms (optional).
@@ -74,7 +76,7 @@ In addition, the hub can also spin up more services, such as message brokers, da
 and monitoring services, if the configuration specifies so.
 
 On a technical level, vantage6 may be seen as a container
-orchestration tool for privacy preserving analyses. It deploys a network of
+orchestration tool for privacy-preserving analyses. It deploys a network of
 containerized applications that together ensure insights can be exchanged
 without sharing record-level data.
 
@@ -100,26 +102,23 @@ their relationships.
    collaboration that are involved in a specific research question. By setting up
    studies, it can be easier to send tasks to a subset of the organizations in a
    collaboration and to keep track of the results of these analyses.
--  Each organization has zero or more **users** who can perform certain actions.
+-  Each organization has zero or more **users**.
 -  The permissions of the user are defined by the assigned **rules**.
 -  It is possible to collect multiple rules into a **role**, which can also be assigned
    to a user.
--  A **session** can contain several **dataframes**. A dataframe is a collection of
-   data retrieved from the original source database. A dataframe can be modified by
-   additional user defined preprocessing steps and can be used as input for **tasks**.
+-  Each collaboration can contain multiple **sessions** in which data may be analysed.
+   A session can contain multiple **dataframes**. A dataframe is a collection of
+   data retrieved from the original source database that is stored on the node. A
+   dataframe can be modified by additional user defined preprocessing steps and can
+   be used as input for **tasks**.
 -  Users can create **tasks** for one or more organizations within a collaboration and
    session. Tasks lead to the execution of the algorithms.
 -  A task should produce an algorithm **run** for each organization involved in the
    task. The **results** are part of such an algorithm run.
 
-The following schema is a *simplified* version of the database. A `1-n` relationship
-means that the entity on the left side of the relationship can have multiple entities
-on the right side. For instance, a single organization can have multiple vantage6 users,
-but a single user always belongs to one organization. There is one `0-n` relationship
-between roles and organizations, since a role can be coupled to an organization, but it
-doesn't have to be. An `n-n` relationship is a many-to-many relationship: for instance,
-a collaboration can contain multiple organizations, and an organization can participate
-in multiple collaborations.
+The following schema is a *simplified* version of the database. The `1-n`, `0-n` and
+`n-n` relationships describe one-to-many, zero-to-many and many-to-many relationships,
+respectively.
 
 .. uml::
 
@@ -194,7 +193,20 @@ The goal is to compute the average without sharing the individual numbers. In th
 of an average algorithm, each node therefore shares only the sum and the number of
 elements in the dataset. By summing the sums and dividing by the sum of the number of
 elements, the average can be found. This way, the individual numbers are
-never shared.
+never shared:
+
+.. code:: python
+
+   # on node 1
+   a = [1,2,3]
+   return {"sum": sum(a), "count": len(a)}
+
+   # on node 2
+   b = [4,5]
+   return {"sum": sum(b), "count": len(b)}
+
+   # computing the average of both nodes
+   average = (node_1["sum"] + node_2["sum"]) / (node_1["count"] + node_2["count"])
 
 How algorithms work in vantage6
 -------------------------------
@@ -243,8 +255,8 @@ HQ's resources whenever a new algorithm needs more resources.
    the user can retrieve it.
 
 Note that is also possible for the user to create the subtasks directly, and to compute
-the central part of the algorithm themselves. This is however not the most common
-approach as it is in general easier to let the central algorithm do the work.
+the central part of the algorithm themselves. However, this is not the most common
+approach as it is generally easier to let the central algorithm do the work.
 
 How to run algorithms in vantage6
 ---------------------------------
@@ -278,4 +290,4 @@ possible to run federated algorithms, but also MPC algorithms or other protocols
 Vantage6 is designed to be as flexible as possible,
 so you can use any programming language and any libraries you like. Python is the most
 common language to use within the vantage6 community, and also has the most
-:ref:`tools <algo-dev-guide>` available to help you with your work.
+:ref:`tools <algo-dev-guide>` available to help you with algorithm development.

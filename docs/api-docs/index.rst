@@ -1,6 +1,6 @@
 .. _api-docs:
 
-API documentation
+Code documentation
 ==================
 
 This part of the documentation documents the code of the vantage6
