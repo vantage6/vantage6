@@ -42,7 +42,7 @@ Available commands
 
 Below is a list of all commands you can run for your node(s). To see all
 available options per command use the ``--help`` flag,
-i.e. ``v6 node start --help`` .
+e.g. ``v6 node start --help`` .
 
 +---------------------+------------------------------------------------+
 | **Command**         | **Description**                                |

@@ -5,14 +5,23 @@
 Node admin guide
 ================
 
-This section shows you how you can set up your own vantage6 node. First, we
-discuss the requirements for your node machine, then guide you through the
-installation process. Finally, we explain how to configure and start your node.
+.. _node-intro:
+
+The vantage6 node is the software that runs on the machine of the data
+owner. It is responsible for the execution of the federated learning
+tasks and the communication with vantage6 HQ.
+
+Each organization that is involved in a federated learning collaboration has
+its own node in that collaboration. They should therefore install the node
+software on a virtual machine hosted in their own infrastructure. The node
+should have access to the data that is used in the federated learning
+collaboration.
+
+The following pages explain how to install and run the node software.
 
 .. toctree::
     :maxdepth: 3
 
-    introduction
     requirements
     install
     use
