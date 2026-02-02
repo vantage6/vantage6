@@ -47,3 +47,5 @@ researchers in the process, the risk of approving an inadequate algorithm is min
             min_reviewing_organizations: 2
             # ... <other policies>
 
+    See the :ref:`algorithm store configuration file <algorithm-store-configuration-file>`
+    section for more details on the available policies.

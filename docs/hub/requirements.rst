@@ -8,7 +8,7 @@ Requirements
     The requirements for the hub are very similar to the
     :ref:`node requirements <node-requirements>`.
 
-.. |requirement-public-ip| replace:: *Note that the IP addresses of hub components should also be reachable by all users and nodes. This will usually be a public IP address.*
+.. |requirement-public-ip| replace:: *Note that the IP addresses of hub components should also be reachable by all users and nodes. This usually means there should be one or more public IP addresses.*
 .. |requirement-OS| replace:: \
 .. |installation-note| replace:: \
     Ubuntu is highly recommended as operating system. It is possible to run a
