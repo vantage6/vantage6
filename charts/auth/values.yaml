@@ -51,12 +51,6 @@ keycloak:
         enabled: true
         defaultAction: true
         priority: 30
-      - alias: VERIFY_EMAIL
-        name: Verify Email
-        providerId: VERIFY_EMAIL
-        enabled: true
-        defaultAction: true
-        priority: 40
     users:
       - username: admin
         enabled: true
