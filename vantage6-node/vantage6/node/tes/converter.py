@@ -2,7 +2,13 @@ import json
 import base64
 
 
-def convert_task_to_tes(task_incl_run: dict, default_resources: dict) -> dict:
+def convert_task_to_tes(
+    task_incl_run: dict,
+    default_resources: dict,
+    project: str,
+    tres: str | None = None,
+    input_url: str | None = None,
+) -> dict:
     task = task_incl_run["task"]
     run_id = task_incl_run["id"]
     task_id = task["id"]
@@ -12,6 +18,21 @@ def convert_task_to_tes(task_incl_run: dict, default_resources: dict) -> dict:
         input_data = json.dumps(input_data)
     if isinstance(input_data, bytes):
         input_data = base64.b64encode(input_data).decode("utf-8")
+
+    if input_url:
+        input_entry = {
+            "name": "input",
+            "path": "/app/input.txt",
+            "url": input_url,
+            "type": "FILE",
+        }
+    else:
+        input_entry = {
+            "name": "input",
+            "path": "/app/input.txt",
+            "content": input_data,
+            "type": "FILE",
+        }
 
     tes_task = {
         "name": f"v6-task-{task_id}-run-{run_id}-{task.get('name', 'unnamed')}",
@@ -25,14 +46,7 @@ def convert_task_to_tes(task_incl_run: dict, default_resources: dict) -> dict:
                 },
             }
         ],
-        "inputs": [
-            {
-                "name": "input",
-                "path": "/app/input.txt",
-                "content": input_data,
-                "type": "FILE",
-            }
-        ],
+        "inputs": [input_entry],
         "outputs": [
             {
                 "name": "output",
@@ -42,6 +56,7 @@ def convert_task_to_tes(task_incl_run: dict, default_resources: dict) -> dict:
             }
         ],
         "tags": {
+            "project": project,
             "vantage6_task_id": str(task_id),
             "vantage6_run_id": str(run_id),
             "vantage6_job_id": str(task.get("job_id", "")),
@@ -51,6 +66,9 @@ def convert_task_to_tes(task_incl_run: dict, default_resources: dict) -> dict:
         },
         "volumes": ["/app/"],
     }
+
+    if tres:
+        tes_task["tags"]["tres"] = tres
 
     if task.get("databases"):
         db_labels = [db.get("label", "") for db in task["databases"]]

@@ -62,6 +62,11 @@ class NodeConfiguration(Configuration):
                 "client_secret": Use(str),
                 Optional("audience"): Use(str),
             },
+            "project": Use(str),
+            Optional("tres"): Use(str),
+            Optional("minio"): {
+                "bucket": Use(str),
+            },
             Optional("resources"): {
                 Optional("cpu_cores"): Use(int),
                 Optional("ram_gb"): Or(Use(float), Use(int)),
