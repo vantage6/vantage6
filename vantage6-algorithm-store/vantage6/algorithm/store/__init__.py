@@ -7,11 +7,10 @@ vantage6 HQ. This allows both coupling a community store and a private
 store to a vantage6 HQ.
 """
 
-import os
-from pathlib import Path
-
 from gevent import monkey
 
+import os
+from pathlib import Path
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
