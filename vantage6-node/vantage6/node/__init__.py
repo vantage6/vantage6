@@ -109,13 +109,18 @@ class Node:
 
     def initialize(self) -> None:
         """Initialization of the node"""
-        # check if docker is running, otherwise exit with error
-        check_docker_running()
-
         self.config = self.ctx.config
         self.debug: dict = self.config.get("debug", {})
         self.queue = queue.Queue()
         self._using_encryption = None
+
+        self._tes_forwarder = None
+        tes_config = self.config.get("tes_forwarding", {})
+        if tes_config.get("enabled", False):
+            from vantage6.node.tes import TesForwarder
+
+            self.log.info("TES forwarding is enabled")
+            self._tes_forwarder = TesForwarder(self.config)
 
         # initialize Node connection to the server
         self.client = NodeClient(
@@ -134,65 +139,71 @@ class Node:
         # Setup encryption
         self.setup_encryption()
 
-        # Thread for proxy server for algorithm containers, so they can
-        # communicate with the central server.
-        self.log.info("Setting up proxy server")
-        t = Thread(target=self.__proxy_server_worker, daemon=True)
-        t.start()
+        if not self._tes_forwarder:
+            # check if docker is running, otherwise exit with error
+            check_docker_running()
 
-        # setup docker isolated network manager
-        internal_ = running_in_docker()
-        if not internal_:
-            self.log.warn(
-                "Algorithms have internet connection! "
-                "This happens because you use 'vnode-local'!"
+            # Thread for proxy server for algorithm containers, so they can
+            # communicate with the central server.
+            self.log.info("Setting up proxy server")
+            t = Thread(target=self.__proxy_server_worker, daemon=True)
+            t.start()
+
+            # setup docker isolated network manager
+            internal_ = running_in_docker()
+            if not internal_:
+                self.log.warn(
+                    "Algorithms have internet connection! "
+                    "This happens because you use 'vnode-local'!"
+                )
+            isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
+            isolated_network_mgr.create_network(is_internal=internal_)
+
+            # Setup tasks dir
+            self._set_task_dir(self.ctx)
+
+            # Setup VPN connection
+            self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
+
+            # Create SSH tunnel according to the node configuration
+            self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
+
+            # Create Squid proxy server
+            self.squid = self.setup_squid_proxy(isolated_network_mgr)
+
+            # setup the docker manager
+            self.log.debug("Setting up the docker manager")
+            self.__docker = DockerManager(
+                ctx=self.ctx,
+                isolated_network_mgr=isolated_network_mgr,
+                vpn_manager=self.vpn_manager,
+                tasks_dir=self.__tasks_dir,
+                client=self.client,
+                proxy=self.squid,
             )
-        isolated_network_mgr = NetworkManager(self.ctx.docker_network_name)
-        isolated_network_mgr.create_network(is_internal=internal_)
-
-        # Setup tasks dir
-        self._set_task_dir(self.ctx)
-
-        # Setup VPN connection
-        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
-
-        # Create SSH tunnel according to the node configuration
-        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
-
-        # Create Squid proxy server
-        self.squid = self.setup_squid_proxy(isolated_network_mgr)
-
-        # setup the docker manager
-        self.log.debug("Setting up the docker manager")
-        self.__docker = DockerManager(
-            ctx=self.ctx,
-            isolated_network_mgr=isolated_network_mgr,
-            vpn_manager=self.vpn_manager,
-            tasks_dir=self.__tasks_dir,
-            client=self.client,
-            proxy=self.squid,
-        )
 
         # Create a long-lasting websocket connection.
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
 
-        # Connect the node to the isolated algorithm network *only* if we're
-        # running in a docker container.
-        if self.ctx.running_in_docker:
-            isolated_network_mgr.connect(
-                container_name=self.ctx.docker_container_name,
-                aliases=[NODE_PROXY_SERVER_HOSTNAME],
-            )
+        if not self._tes_forwarder:
+            # Connect the node to the isolated algorithm network *only* if
+            # we're running in a docker container.
+            if self.ctx.running_in_docker:
+                isolated_network_mgr.connect(
+                    container_name=self.ctx.docker_container_name,
+                    aliases=[NODE_PROXY_SERVER_HOSTNAME],
+                )
 
-        # Connect any docker services specified in the configuration file to
-        # the node container
-        self.link_docker_services()
+            # Connect any docker services specified in the configuration
+            # file to the node container
+            self.link_docker_services()
 
-        # Thread for sending results to the server when they come available.
-        self.log.debug("Start thread for sending messages (results)")
-        t = Thread(target=self.__speaking_worker, daemon=True)
-        t.start()
+            # Thread for sending results to the server when they come
+            # available.
+            self.log.debug("Start thread for sending messages (results)")
+            t = Thread(target=self.__speaking_worker, daemon=True)
+            t.start()
 
         # listen forever for incoming messages, tasks are stored in
         # the queue.
@@ -402,7 +413,9 @@ class Node:
         """
         for task_result in task_results:
             try:
-                if not self.__docker.is_running(task_result["id"]):
+                if self._tes_forwarder or not self.__docker.is_running(
+                    task_result["id"]
+                ):
                     self.queue.put(task_result)
                 else:
                     self.log.info(
@@ -412,6 +425,54 @@ class Node:
                     )
             except Exception:
                 self.log.exception("Error while syncing task queue")
+
+    def _forward_to_tes(self, task_incl_run: dict) -> None:
+        task = task_incl_run["task"]
+        self.log.info(
+            "Forwarding task %s - %s to TES",
+            task["id"],
+            task.get("name", ""),
+        )
+
+        self.client.set_task_start_time(task_incl_run["id"])
+
+        try:
+            tes_task_id = self._tes_forwarder.forward_task(task_incl_run)
+        except Exception:
+            self.log.exception("Failed to forward task to TES")
+            self.client.run.patch(
+                id_=task_incl_run["id"],
+                data={
+                    "status": TaskStatus.FAILED,
+                    "log": "Failed to forward task to external TES endpoint",
+                    "finished_at": datetime.datetime.now(
+                        datetime.timezone.utc
+                    ).isoformat(),
+                },
+            )
+            return
+
+        self.client.run.patch(
+            id_=task_incl_run["id"],
+            data={
+                "status": TaskStatus.ACTIVE,
+                "log": f"Forwarded to TES, tes_task_id={tes_task_id}",
+            },
+        )
+
+        self.socketIO.emit(
+            "algorithm_status_change",
+            data={
+                "node_id": self.client.whoami.id_,
+                "status": TaskStatus.ACTIVE,
+                "run_id": task_incl_run["id"],
+                "task_id": task["id"],
+                "collaboration_id": self.client.collaboration_id,
+                "organization_id": self.client.whoami.organization_id,
+                "parent_id": get_parent_id(task),
+            },
+            namespace="/tasks",
+        )
 
     def __start_task(self, task_incl_run: dict) -> None:
         """
@@ -1121,7 +1182,10 @@ class Node:
 
                 # if task becomes available, attempt to execute it
                 try:
-                    self.__start_task(taskresult)
+                    if self._tes_forwarder:
+                        self._forward_to_tes(taskresult)
+                    else:
+                        self.__start_task(taskresult)
                 except Exception as e:
                     self.log.exception(e)
 

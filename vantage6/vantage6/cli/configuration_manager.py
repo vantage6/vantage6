@@ -53,6 +53,21 @@ class NodeConfiguration(Configuration):
         Optional("node_extra_mounts"): [str],
         Optional("node_extra_hosts"): dict,
         Optional("share_algorithm_logs"): Use(bool),
+        Optional("tes_forwarding"): {
+            "enabled": Use(bool),
+            "endpoint": Use(str),
+            "keycloak": {
+                "token_url": Use(str),
+                "client_id": Use(str),
+                "client_secret": Use(str),
+                Optional("audience"): Use(str),
+            },
+            Optional("resources"): {
+                Optional("cpu_cores"): Use(int),
+                Optional("ram_gb"): Or(Use(float), Use(int)),
+                Optional("disk_gb"): Or(Use(float), Use(int)),
+            },
+        },
     }
 
 
