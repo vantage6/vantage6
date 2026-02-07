@@ -15,14 +15,14 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
-import importlib.metadata
-from pathlib import Path
 import datetime as dt
 import importlib
+import importlib.metadata
 import logging
 import time
 import uuid
 from http import HTTPStatus
+from pathlib import Path
 from threading import Thread
 
 from flask import current_app
