@@ -5,9 +5,7 @@ subsequently interact through the API it hosts. Finally, it also communicates wi
 authenticated nodes and users via the socketIO server that is run here.
 """
 
-import importlib.metadata
 import os
-from pathlib import Path
 
 from gevent import monkey
 
@@ -17,6 +15,8 @@ if not os.environ.get("READTHEDOCS"):
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
+import importlib.metadata
+from pathlib import Path
 import datetime as dt
 import importlib
 import logging
