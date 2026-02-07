@@ -9,8 +9,8 @@ regularly. In that section, we explain the fundamentals of algorithm containers
 in more detail than in this guide.
 
 Also, note that this guide is mainly aimed at developers who want to develop
-their algorithm in Python, although we will try to clearly indicate where
-this differs from algorithms written in other languages. Writing your algorithm in
+their algorithm in Python, although we will make an effort to indicate where
+this differs from algorithms written in other programming languages. Writing your algorithm in
 Python is recommended because it is currently the best supported  language for vantage6.
 
 .. _algo-dev-create-algorithm:
@@ -92,8 +92,8 @@ These results will be returned to the user after the algorithm has finished.
 
 .. warning::
 
-    The results that you return should be JSON serializable. This means that
-    you cannot, for example, return a ``pandas.DataFrame`` or a
+    The results that you return should ideally be JSON serializable. This means that
+    you should not, for example, return a ``pandas.DataFrame`` or a
     ``numpy.ndarray``. Such objects may not be readable to a non-Python-using
     recipient, or may even be insecure to send over the internet. They should
     be converted to a JSON-serializable format first (e.g. with ``df.to_json()`` in
@@ -128,17 +128,20 @@ provided by the vantage6 infrastructure.
 Example functions
 -----------------
 
-Just an example of how you can implement your algorithm:
+Below are simple but typical examples of different types of algorithm functions -
+central, partial, data extraction, and preprocessing functions.
 
 Central function
 ~~~~~~~~~~~~~~~~
 
 .. code:: python
 
-  from vantage6.algorithm.decorator.algorithm_client import algorithm_client
-  from vantage6.algorithm.client import AlgorithmClient
-  from vantage6.algorithm.tools.util import info, error
+   from vantage6.algorithm.decorator.algorithm_client import algorithm_client
+   from vantage6.algorithm.decorator.action import central
+   from vantage6.algorithm.client import AlgorithmClient
+   from vantage6.algorithm.tools.util import info, error
 
+   @central
    @algorithm_client
    def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
@@ -165,9 +168,11 @@ Partial function
 
    import pandas as pd
    from vantage6.algorithm.tools.decorator import dataframe
+   from vantage6.algorithm.decorator.action import federated
 
+   @federated
    @dataframe(1)
-   def my_partial_function(data: pd.DataFrame, column_name: str):
+   def add_one_and_sum(data: pd.DataFrame, column_name: str):
        # do something with the data
        data[column_name] = data[column_name] + 1
 
@@ -188,12 +193,14 @@ Data extraction function
    from vantage6.algorithm.tools.util import info
 
    @data_extraction
-   def my_data_extraction_function(db_connection_details: dict):
+   def read_csv(db_connection_details: dict):
        info("Extracting data")
 
        # for a CSV database, the URI is the path to the CSV file
        df = pd.read_csv(db_connection_details["uri"])
 
+    @data_extraction
+    def read_sql_database(db_connection_details: dict):
        # for a SQL database, the URI is the connection string. Environment variables
        # such as username+password can be provided in the node configuration file.
        df = pd.read_sql_query(
@@ -206,8 +213,8 @@ Data extraction function
        return df
 
 Note that the ``USERNAME`` and ``PASSWORD`` environment variables are not provided by the
-vantage6 infrastructure, but by the node configuration file as explained in the
-:ref:`algo-env-vars` section.
+vantage6 infrastructure. They should be added to the node configuration file as
+explained in the :ref:`algo-env-vars` section.
 
 Preprocessing function
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -220,9 +227,9 @@ Preprocessing function
    from vantage6.algorithm.tools.util import info
 
    @preprocessing
-   def my_preprocessing_function(df: pd.DataFrame):
+   def add_one(df: pd.DataFrame, column_name: str):
        # do some preprocessing with the data
-       df["column_name"] = df["column_name"] + 1
+       df[column_name] = df[column_name] + 1
        return df
 
 .. _algo-functions-provided:
@@ -263,10 +270,11 @@ vantage6 algorithm tools:
          return data
 
    All data extraction and preprocessing functions provided by the vantage6 algorithm
-   tools package are decorated with the
-   ``handle_pandas_errors`` decorator, so that any error occurring during the execution
-   of the function will be caught and a generic error message will be returned instead
-   of the traceback.
+   tools package are decorated with the ``handle_pandas_errors`` decorator, so that any
+   pandas-related error occurring during the execution of the function will be caught
+   and a generic error message will be returned instead of the traceback. Note that
+   this decorator does not catch all errors, so you should still be careful with the
+   data you handle in your algorithm functions.
 
 .. _mock-test-algo-dev:
 
@@ -391,9 +399,8 @@ Here are a few examples of how to build and upload your image:
     docker build -t my-user-name/algorithm-example:latest .
     docker push my-user-name/algorithm-example:latest
 
-    # Build and upload to private registry. Here you don't need to provide
-    # a username but you should write out the full image URL. Also, again you
-    # need to be logged in with ``docker login``.
+    # Build and upload to private registry. Note that to be able to use this, you need
+    # to have an account at the registry and be logged in with ``docker login``
     docker build -t harbor2.vantage6.ai/PROJECT/algorithm-example:latest .
     docker push harbor2.vantage6.ai/PROJECT/algorithm-example:latest
 
