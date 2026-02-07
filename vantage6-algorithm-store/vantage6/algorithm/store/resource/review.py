@@ -393,6 +393,7 @@ class Reviews(ReviewBase):
             algorithm.save()
 
         # send email to the reviewer to notify them of the new review
+        # TODO next time we change something here, update to kwargs instead of args
         Thread(
             target=self._send_email_to_reviewer,
             args=(
