@@ -183,7 +183,7 @@ class Vantage6App:
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
-        mail_config = self.ctx.config.get("smtpServer", {})
+        mail_config = self.ctx.config.get("smtp_server", {})
         self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
         self.app.config["MAIL_SERVER"] = mail_config.get("host", LOCALHOST)
         self.app.config["MAIL_USERNAME"] = mail_config.get(

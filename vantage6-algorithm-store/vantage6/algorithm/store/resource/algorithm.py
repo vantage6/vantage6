@@ -684,7 +684,7 @@ class Algorithms(AlgorithmBaseResource):
         store_url : str | None
             URL of the algorithm store
         """
-        smtp_settings = config.get("smtpServer", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert "

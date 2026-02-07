@@ -78,7 +78,7 @@ data:
       username: {{ .Values.store.keycloak.adminUsername }}
       v6_hq_uri: {{ .Values.store.vantage6HQUri }}
     {{- if .Values.store.smtpServer }}
-    smtpServer:
+    smtp_server:
       host: {{ .Values.store.smtpServer.host }}
       port: {{ .Values.store.smtpServer.port }}
       {{- if .Values.store.smtpServer.user }}

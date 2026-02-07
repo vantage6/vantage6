@@ -442,7 +442,7 @@ class Reviews(ReviewBase):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtpServer", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
@@ -615,7 +615,7 @@ class ReviewUpdateResources(AlgorithmStoreResources):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtpServer", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
@@ -919,7 +919,7 @@ class ReviewReject(ReviewUpdateResources):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtpServer", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
