@@ -51,8 +51,7 @@ docstrings, the documentation pages will also be reloaded.
 This documentation is automatically built and published on a commit (on
 certain branches, including ``main``). Both Frank and Bart have access to the
 vantage6 project when logged into readthedocs. Here they can manage which
-branches are to be synced, manage the webhook used to trigger a build, and some
-other -less important- settings.
+branches are to be synced, manage the webhook used to trigger a build, etc.
 
 The files in this documentation use the ``rst`` format, to see the syntax view
 `this cheatsheet <https://github.com/ralsina/rst-cheatsheet/blob/master/rst-cheatsheet.rst>`_.
