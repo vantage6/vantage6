@@ -8,11 +8,13 @@ node that it should kill a task.
 
 Each socketIO connection consists between HQ and one of the clients (nodes or users).
 The clients can only send a message to HQ and not to each other. HQ
-can send messages to all clients or to a specific client.
+can send messages to all clients or to a specific client or group of clients.
 
 .. note::
+
     The vantage6 user interface automatically establishes a socketIO connection with HQ
-    when the user logs in. The user can then view any updates they are allowed to see.
+    when the user logs in. It will use the connection to update information shown in the
+    UI.
 
 Permissions
 +++++++++++
@@ -38,7 +40,7 @@ HQ sends the following events to the clients (nodes or users):
   finished, failed). This is especially important for nodes to know in case
   an algorithm they are running depends on the output of another node.
 - Instruct nodes to kill one or more tasks
-- Checking if nodes are still alive
+- Checking if nodes are still online
 
 The nodes send the following events to HQ:
 
@@ -46,7 +48,7 @@ The nodes send the following events to HQ:
 - Share information about the node configuration (e.g. which algorithms are
   allowed to run on the node)
 
-In theory, users could use their socketIO connection to send events, but
+In theory, users could also use their socketIO connection to send events, but
 none of the events they send will lead to action on HQ.
 
 .. todo refer to API reference
