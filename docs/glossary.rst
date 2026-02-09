@@ -5,7 +5,10 @@ The following is a list of definitions used in vantage6.
 
 **A**
 
--  **Algorithm**: a piece of code that performs a specific task.
+-  **Algorithm**: a piece of code executed at the node to perform a specific task.
+   The most well-known usage is to compute an analysis on the local date, but algorithm
+   functions are also used to extract data from the node data sources and to preprocess
+   the data.
 -  **Algorithm store**: A repository of algorithms, which can be coupled to specific
    collaborations or all collaborations on a vantage6 HQ.
 -  **API**: Application Programming Interface, a set of routines, protocols, and tools
@@ -23,17 +26,17 @@ The following is a list of definitions used in vantage6.
    subtasks, typically a *federated function*
 -  **Client**: A vantage6 user or application that communicates with the
    vantage6 hub.
--  **Collaboration**: an agreement between two or more parties to participate in a study
-   (i.e., to answer a research question).
--  **Computation task**: A (vantage6) task that performs a computation on a DataFrame.
+-  **Collaboration**: an agreement between two or more parties to participate in a
+   project (i.e., to answer a research question).
+-  **Computation task**: A task that performs a computation on a DataFrame.
 -  **Container**: A lightweight, standalone, executable package of software that
    includes everything needed to run it.
 
 **D**
 
--  **DataFrame**: A standardized representation of data in a session that can be used
+-  **Dataframe**: A standardized representation of data in a session that can be used
    for computation tasks.
--  **Data extraction task**: A (vantage6) task that extracts data from a database.
+-  **Data extraction task**: A task that extracts data from a database.
    This data can be used for computation tasks (e.g., a preprocessing task or a
    computation task).
 -  **Data Station**: A vantage6 *node* that has access to the local data.
@@ -57,7 +60,7 @@ The following is a list of definitions used in vantage6.
 -  **FAIR data**: data that are Findable, Accessible, Interoperable, and
    Reusable. For more information, see `the original
    paper <https://www.nature.com/articles/sdata201618.pdf?origin=ppub>`__.
--  **Federated Analytics**: an approach for analyzing data that are
+-  **Federated analytics**: an approach for analyzing data that are
    spread across different parties using traditional statistical methods. The main
    idea is that parties run computations on their local data, yielding aggregated
    parameters. These are then shared to generate a global (statistical) model.
@@ -67,7 +70,7 @@ The following is a list of definitions used in vantage6.
    aggregated parameters. These are then shared to generate a global (statistical)
    model.
 -  **Federated function**: A function that is executed on the local data of a party.
-   It is a part of a *federated Analytics* or *federated learning* algorithm.
+   It is a part of a *federated analytics* or *federated learning* algorithm.
 
 **H**
 
@@ -96,7 +99,8 @@ The following is a list of definitions used in vantage6.
 
 **I**
 
-- **Image**: A blueprint for a *container*, which can be stored in a *Docker registry*.
+- **Image** (as in *container* image). A blueprint for a *container*, which can be
+  stored in an *image registry* (e.g. a *Docker registry*).
 
 **J**
 
@@ -106,8 +110,8 @@ The following is a list of definitions used in vantage6.
 **K**
 
 - **Kubernetes**: An open-source system for automating deployment, scaling, and
-   operations of application containers across clusters of hosts. Vantage6 is
-   built on top of Kubernetes to run the vantage6 hub and the node containers.
+  operations of application containers across clusters of hosts. Vantage6 uses
+  Kubernetes' container orchestration capabilities to deploy the hub and the nodes.
 
 **N**
 
@@ -127,13 +131,13 @@ The following is a list of definitions used in vantage6.
    a party is an organization.
 -  **Permission scope**: The level of access granted to users for viewing and modifying
    dataframes (personal, organization, or collaboration level).
--  **Pre-processing task**: A task that modifies dataframes by adding or removing
+-  **Preprocessing task**: A task that modifies dataframes by adding or removing
    columns, or filtering rows.
 -  **Privacy-enhancing Technology (PET)**: Technologies that enable privacy-preserving
    analyses on federated data. This includes technologies such as differential
    privacy, secure multi-party computation, and federated analytics/learning.
 -  **Python**: a high-level general purpose programming language. It
-   aims to help programmers write clear, logical code. vantage6 is
+   aims to help programmers write clear, logical code. Vantage6 is mostly
    `written in Python <https://github.com/vantage6/vantage6>`__.
 
 **R**
@@ -164,10 +168,8 @@ The following is a list of definitions used in vantage6.
 
 **V**
 
--  **vantage6**: priVAcy preserviNg federaTed leArninG infrastructurE
-   for Secure Insight eXchange. In short, vantage6 is an infrastructure
-   for executing federated learning analyses. However, it can also be
-   used as a FAIR data station and as a model repository.
+-  **vantage6**: an infrastructure for executing federated learning analyses. It can
+   also be used as a FAIR data station and as a model repository.
 -  **Vertically-partitioned data**: data spread across different parties
    where the latter have different features of the same instances (i.e.,
    patients). See also horizontally-partitioned data.

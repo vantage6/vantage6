@@ -36,7 +36,8 @@ a significant contribution to the design and implementation of vantage6.
         :align: center
 
 * Johan van Soest
-* Luis Sanchez
+* Luis Sanchez Gomez
+* Tim Hendriks
 
 **Would you like to contribute?** Check out
 :ref:`how to contribute! <Contribute>` Find and chat with us via the
