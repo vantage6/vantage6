@@ -331,7 +331,7 @@ class HQApp(Vantage6App):
         # create root user if it is not in the DB yet
         try:
             admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
-        except Exception:
+        except NoResultFound:
             log.warning("No root user found! Is this the first run?")
             admin_user = self._create_super_user()
 
@@ -355,8 +355,10 @@ class HQApp(Vantage6App):
             pass
 
         log.debug("Creating organization for root user")
-        if not (org := db.Organization.get_by_name("root")):
+        org = db.Organization.get_by_name("root")
+        if not org:
             org = db.Organization(name="root")
+            org.save()
 
         root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
