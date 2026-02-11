@@ -303,7 +303,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "no_password_update_required": True,
                 "redirectUris": [
                     f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
-                    f"{HTTP_LOCALHOST}:7681",
                 ],
             },
             "database": {
