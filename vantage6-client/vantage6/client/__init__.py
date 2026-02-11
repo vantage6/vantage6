@@ -7,21 +7,20 @@ import logging
 import os
 import subprocess
 import sys
-import threading
-import urllib.parse as urlparse
+import time
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import List
 
 import pyfiglet
+import requests
 from keycloak import KeycloakAuthenticationError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
-from vantage6.common.globals import APPNAME, LOCALHOST, AuthStatus
+from vantage6.common.globals import APPNAME, AuthStatus
 from vantage6.common.serialization import serialize
 
 from vantage6.client.filter import post_filtering
@@ -155,96 +154,200 @@ class UserClient(ClientBase):
     def authenticate(self) -> None:
         """Authenticate as a user
 
-        It also collects some additional info about your user.
+        This uses the device authorization flow because users may run the
+        client in environments without a local browser (e.g. headless servers).
         """
-        auth_url = self.kc_openid.auth_url(
-            redirect_uri="http://localhost:7681/callback",
-            scope="openid",
-            state="state",
-        )
 
-        # Create a class to store the token
-        class TokenStore:
-            def __init__(self):
-                self.token = None
+        device_endpoint, token_endpoint = self._get_device_flow_endpoints()
+        if not device_endpoint:
+            return
 
-        token_store = TokenStore()
+        device_data = self._start_device_authorization(device_endpoint)
+        if not device_data:
+            return
 
-        # Start local HTTP server to receive callback
-        class CallbackHandler(BaseHTTPRequestHandler):
-            def do_GET(self):
-                # Parse the callback URL
-                query = urlparse.urlparse(self.path).query
-                params = urlparse.parse_qs(query)
+        # check if browser can be opened to directly authenticate, otherwise fallback to
+        # console output
+        self._maybe_open_browser_for_device_flow(device_data)
 
-                if "code" in params:
-                    # Exchange code for token
-                    token = self.server.kc_openid.token(
-                        grant_type="authorization_code",
-                        code=params["code"][0],
-                        redirect_uri="http://localhost:7681/callback",
-                    )
+        token = self._poll_device_token(token_endpoint, device_data)
+        if not token:
+            return
 
-                    # Store the token
-                    token_store.token = token
+        self._finalize_successful_authentication(token)
 
-                    # Send success response
-                    self.send_response(200)
-                    self.send_header("Content-type", "text/html")
-                    self.end_headers()
-                    self.wfile.write(b"Login successful! You can close this window.")
-
-                    # Store the token
-                    self.server.token = token
-                else:
-                    # Send error response
-                    self.send_response(400)
-                    self.send_header("Content-type", "text/html")
-                    self.end_headers()
-                    self.wfile.write(b"Login failed! Please try again.")
-
-                # Stop the server
-                threading.Thread(target=self.server.shutdown).start()
-
-        # Start server in a separate thread
-        server = HTTPServer((LOCALHOST, 7681), CallbackHandler)
-        server.kc_openid = self.kc_openid
-        server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.daemon = True
-        server_thread.start()
-
-        # Open browser for login
-        self.log.info("Opening browser for login")
-        # Try to open browser with different methods
+    def _get_device_flow_endpoints(self) -> tuple[str | None, str | None]:
+        """Retrieve device authorization and token endpoints from Keycloak."""
         try:
-            # Check if we're in WSL
+            well_known = self.kc_openid.well_known()
+        except Exception as exc:  # pragma: no cover - network failure
+            self.log.error("Failed to retrieve OpenID configuration from Keycloak")
+            self.log.exception(exc)
+            return None, None
+
+        device_endpoint = well_known.get("device_authorization_endpoint")
+        token_endpoint = well_known.get("token_endpoint")
+
+        if not device_endpoint:
+            self.log.error(
+                "Keycloak does not expose a device authorization endpoint. "
+                "Make sure the OAuth 2.0 Device Authorization Grant feature is enabled."
+            )
+            return None, None
+
+        if not token_endpoint:
+            self.log.error("Keycloak OpenID configuration is missing a token endpoint")
+            return None, None
+
+        return device_endpoint, token_endpoint
+
+    def _start_device_authorization(self, device_endpoint: str) -> dict | None:
+        """Request device and user codes from Keycloak."""
+        try:
+            resp = requests.post(
+                device_endpoint,
+                data={
+                    "client_id": self.auth_client,
+                    "scope": "openid",
+                },
+                timeout=30,
+            )
+        except Exception as exc:
+            self.log.error("Failed to request device code from Keycloak")
+            self.log.exception(exc)
+            return None
+
+        if resp.status_code != 200:
+            self.log.error(
+                "Device authorization request failed: %s - %s",
+                resp.status_code,
+                resp.text,
+            )
+            return None
+
+        device_data = resp.json()
+        required_fields = ("device_code", "user_code", "verification_uri")
+        if not all(device_data.get(field) for field in required_fields):
+            self.log.error(
+                "Device authorization response missing required fields: %s", device_data
+            )
+            return None
+
+        return device_data
+
+    def _maybe_open_browser_for_device_flow(self, device_data: dict) -> None:
+        """Try to open the browser for the device flow; fall back to console output."""
+        verification_uri = device_data.get("verification_uri")
+        verification_uri_complete = device_data.get("verification_uri_complete")
+        user_code = device_data.get("user_code")
+
+        if not verification_uri or not user_code:
+            return
+
+        url_to_open = verification_uri_complete or verification_uri
+
+        self.log.info("Opening browser for authentication...")
+        try:
+            # Check if we're in WSL - then use wslview to open the browser
             if (
                 os.path.exists("/proc/version")
                 and "microsoft" in open("/proc/version").read().lower()
             ):
-                # We're in WSL, try to use Windows browser
                 try:
-                    # Try to use wslview (WSL2)
-                    subprocess.run(["wslview", auth_url], check=True)
+                    subprocess.run(["wslview", url_to_open], check=True)
                 except (subprocess.SubprocessError, FileNotFoundError):
-                    # Fallback to webbrowser module
-                    webbrowser.open(auth_url)
+                    webbrowser.open(url_to_open)
             else:
-                # Not in WSL, use regular webbrowser
-                webbrowser.open(auth_url)
-        except Exception as e:
-            self.log.error("Error opening browser: %s", e)
-            self.log.error(f"Please open this URL in your browser: {auth_url}")
+                webbrowser.open(url_to_open)
+        except Exception as exc:  # pragma: no cover - environment-dependent
+            self.log.warning("Could not open browser automatically: %s", exc)
+            print("--------------------------------")
+            print("")
+            print("To authenticate, open the following URL in your browser:")
+            print(f"  {verification_uri}")
+            print("and enter this code:")
+            print(f"  {user_code}")
+            if verification_uri_complete:
+                print("")
+                print("Alternatively, you can login directly with the following URL:")
+                print(f"  {verification_uri_complete}")
+            print("")
+            print("--------------------------------")
 
-        # Wait for callback
-        server_thread.join()
+    def _poll_device_token(self, token_endpoint: str, device_data: dict) -> dict | None:
+        """Poll the token endpoint until the user has authenticated."""
+        device_code = device_data["device_code"]
+        expires_in = device_data.get("expires_in", 600)
+        interval = device_data.get("interval", 5)
 
-        if not token_store.token:
-            self.log.error("Login failed or was cancelled")
+        start_time = time.time()
+
+        while True:
+            if time.time() - start_time > expires_in:
+                self.log.error(
+                    "Device code expired before authentication was completed. "
+                    "Please run `client.authenticate()` again."
+                )
+                return None
+
+            try:
+                token_resp = requests.post(
+                    token_endpoint,
+                    data={
+                        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                        "device_code": device_code,
+                        "client_id": self.auth_client,
+                    },
+                    timeout=30,
+                )
+            except Exception as exc:
+                self.log.error("Error while polling Keycloak token endpoint")
+                self.log.exception(exc)
+                return None
+
+            if token_resp.status_code == 200:
+                # Successfully authenticated!
+                return token_resp.json()
+            elif token_resp.status_code == 400:
+                try:
+                    error_payload = token_resp.json()
+                except Exception:
+                    error_payload = {}
+
+                error_code = error_payload.get("error")
+                if error_code == "authorization_pending":
+                    time.sleep(interval)
+                    continue
+                elif error_code == "slow_down":
+                    interval += 5
+                    time.sleep(interval)
+                    continue
+                elif error_code in {"access_denied", "expired_token"}:
+                    self.log.error(
+                        "Device authorization failed with error: %s", error_code
+                    )
+                    return None
+                else:
+                    self.log.error(
+                        "Unexpected error from token endpoint: %s", error_payload
+                    )
+                    return None
+
+            self.log.error(
+                "Unexpected response from token endpoint: %s - %s",
+                token_resp.status_code,
+                token_resp.text,
+            )
+            return None
+
+    def _finalize_successful_authentication(self, token: dict) -> None:
+        """Store tokens, load user info and set up encryption."""
+        self._access_token = token.get("access_token")
+        self._refresh_token = token.get("refresh_token")
+
+        if not self._access_token:
+            self.log.error("No access token received from Keycloak")
             return
-
-        self._access_token = token_store.token["access_token"]
-        self._refresh_token = token_store.token["refresh_token"]
 
         user = self.request("user/me")
         user_id = user.get("id")
