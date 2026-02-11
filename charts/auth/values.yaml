@@ -61,6 +61,8 @@ keycloak:
           - "http://localhost:7681/*"
         webOrigins:
           - "+"
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
         protocolMappers:
           - name: vantage6_client_type
             protocol: openid-connect

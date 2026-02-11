@@ -183,6 +183,8 @@ keycloak:
     clients:
       - clientId: public_client
         publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
         # redirect URIs are the URIs that keycloak is allowed to redirect to after
         # authentication. This should be set to the UI URL, and to the Keyloak
         # service on port 7681. The latter is needed for authentication from outside

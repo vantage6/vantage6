@@ -100,6 +100,12 @@ spec:
         {{- if hasKey . "standardFlowEnabled" }}
         standardFlowEnabled: {{ .standardFlowEnabled }}
         {{- end }}
+        {{- if .attributes }}
+        attributes:
+        {{- range $key, $value := .attributes }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
         {{- if .redirectUris }}
         redirectUris:
         {{- range .redirectUris }}
