@@ -9,25 +9,6 @@ within the vantage6 infrastructure. Vantage6 uses Keycloak because it is a matur
 and well-supported authentication service that is easy to deploy, customize and
 integrate with existing authentication services.
 
-Install
--------
-
-.. note::
-
-    This installation is also run automatically whenever you start the authentication
-    service with ``v6 auth start`` or via ``v6 hub start``.
-
-The Helm chart for the Keycloak authentication service is based on the
-`Keycloak Operator <https://www.keycloak.org/operator/installation>`_, which is
-Keycloak's recommended way to deploy Keycloak in a Kubernetes cluster. To use it,
-you need to install custom resource definitions (CRDs) for the Keycloak Operator. The
-CRDs are custom kubernetes resources that specify how Keycloak should be deployed.
-You can install the CRDs using the following command:
-
-.. code-block:: bash
-
-    v6 auth install-keycloak
-
 Configure
 ---------
 
@@ -62,3 +43,34 @@ the configuration file above.
 Once you are logged in, you customize your Keycloak deployment in any way you want. Take
 care that you don't overwrite the vantage6-specific configuration, such as the backend
 client, as this may cause issues in communicating with vantage6 HQ and store.
+
+Install and use
+---------------
+
+Once you have configured Keycloak, you can start it in a similar way to the other
+components. You can start it with the following command:
+
+.. code-block:: bash
+
+    v6 auth start
+
+Or you can start it as part of the hub:
+
+.. code-block:: bash
+
+    v6 hub start
+
+The Helm chart for the Keycloak authentication service is based on the
+`Keycloak Operator <https://www.keycloak.org/operator/installation>`_, which is
+Keycloak's recommended way to deploy Keycloak in a Kubernetes cluster.
+The first time you start the authentication service, it will install the Keycloak
+Operator automatically. The custom resource definitions (CRDs) for the Keycloak Operator
+are downloaded and installed in your Kubernetes cluster. These custom Kubernetes
+resources specify how your Kubernetes service should deploy Keycloak.
+
+If you prefer to install the CRDs yourself (and not as part of the ``v6 auth start``
+command), you can install them using the following command:
+
+.. code-block:: bash
+
+    v6 auth install-keycloak
