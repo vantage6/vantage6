@@ -10,7 +10,10 @@ from sqlalchemy.exc import IntegrityError
 
 from vantage6.common import logger_name
 
-from vantage6.backend.common.auth import get_keycloak_id_for_user
+from vantage6.backend.common.auth import (
+    get_keycloak_id_for_user,
+    get_organization_id_from_keycloak,
+)
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
 
@@ -277,19 +280,13 @@ class Users(AlgorithmStoreResources):
         if db.User.get_by_keycloak_id(keycloak_id=user_id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
-        # TODO find organization id from keycloak - issue #1994
-        # server_response, status_code = request_from_store_to_v6_server(
-        #     url=f"{server.url}/user",
-        #     params={"username": data["username"]},
-        # )
-        # if (
-        #     status_code != HTTPStatus.OK
-        #     or len(server_response.json().get("data", [])) != 1
-        # ):
-        #     return {
-        #         "msg": f"User '{data['username']}' not found in the Vantage6 server."
-        #     }, HTTPStatus.BAD_REQUEST
-        # user_org = server_response.json()["data"][0]["organization"]["id"]
+        # Retrieve organization_id from Keycloak user attributes
+        organization_id = get_organization_id_from_keycloak(user_id)
+        if organization_id is None:
+            log.warning(
+                "User '%s' does not have organization_id attribute in Keycloak",
+                data["username"],
+            )
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -305,8 +302,7 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            # organization_id=user_org,
-            # v6_server_id=server.id,
+            organization_id=organization_id,
             keycloak_id=user_id,
             roles=roles,
         )
