@@ -56,7 +56,7 @@ POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING = {
 }
 
 
-def compute_job_pod_run_status(
+def compute_run_pod_status(
     task_namespace: str, log: Logger, pod: V1Pod, label: str
 ) -> RunStatus:
     """
@@ -83,7 +83,7 @@ def compute_job_pod_run_status(
             - RunStatus.INITIALIZING: If the pod is still initializing or waiting for
               image pull.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
-            - RunStatus.COMPLETED: Not expected to happen but still possible: the job
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the task
               pod is reported as Succeded shortly after being created.
 
 
@@ -93,7 +93,7 @@ def compute_job_pod_run_status(
 
     if pod_phase == "Pending":
         log.debug(
-            "Job POD (label %s) is already in %s namespace, but still in pending "
+            "Task run (label %s) pod is already in %s namespace, but still in pending "
             "status...",
             label,
             task_namespace,
@@ -103,13 +103,13 @@ def compute_job_pod_run_status(
 
         # The POD has the container status available
         if pod.status and pod.status.container_statuses:
-            # The job pods have use single container, container_statuses will always
+            # Task runs use a single container, so container_statuses will always
             # have a single element
             container_status: V1ContainerStatus = pod.status.container_statuses[0]
             if container_status.state.waiting:
                 pending_status_reason = container_status.state.waiting.reason
                 log.debug(
-                    "Job POD (label %s, namespace %s) Still in pending phase. "
+                    "Task run pod (label %s, namespace %s) is still in pending phase. "
                     "Container status: %s",
                     label,
                     task_namespace,
@@ -123,7 +123,7 @@ def compute_job_pod_run_status(
                     in CONTAINER_IMAGE_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
-                        "Job POD (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE "
+                        "Task run (label %s, namespace %s) - Reporting NO_DOCKER_IMAGE "
                         "status: %s",
                         label,
                         task_namespace,
@@ -139,7 +139,7 @@ def compute_job_pod_run_status(
                     in RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
-                        "Job POD (label %s, namespace %s) - Reporting CRASHED status: "
+                        "Task run (label %s, namespace %s) - Reporting CRASHED status: "
                         "%s",
                         label,
                         task_namespace,
@@ -155,7 +155,7 @@ def compute_job_pod_run_status(
                     in POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING
                 ):
                     log.debug(
-                        "Job POD (label %s, namespace %s) - Reporting INITIALIZING "
+                        "Task run (label %s, namespace %s) - Reporting INITIALIZING "
                         "status: %s",
                         label,
                         task_namespace,
@@ -167,7 +167,7 @@ def compute_job_pod_run_status(
                 # The "Pending" status is caused by an unexpected reason
                 else:
                     log.warning(
-                        "Job POD (label %s, namespace %s) - WARNING: the POD has an "
+                        "Task run (label %s, namespace %s) - WARNING: the pod has an "
                         "unknown/unsupported status: %s. Reporting this as an "
                         "UNKNOWN error.",
                         label,
@@ -180,8 +180,8 @@ def compute_job_pod_run_status(
             # 'Pending' state) are not available yet.
             else:
                 log.debug(
-                    "Job POD (label %s, namespace %s) Still in Pending phase, details "
-                    "about the POD state are not available yet. ",
+                    "Task run (label %s, namespace %s) is still in Pending phase, "
+                    "details about the pod state are not available yet. ",
                     label,
                     task_namespace,
                 )
@@ -191,7 +191,7 @@ def compute_job_pod_run_status(
         # available.
         else:
             log.warning(
-                "Job POD (label %s, namespace %s) - POD container(s) state "
+                "Task run (label %s, namespace %s) - Pod container(s) state "
                 "information not yet available.",
                 label,
                 task_namespace,
@@ -202,7 +202,7 @@ def compute_job_pod_run_status(
     # one has been reached: return the v6-status that correspond to such phase
     elif pod_phase in POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP:
         log.debug(
-            "Job POD (label %s, namespace %s) - Reporting terminal status: %s",
+            "Task run (label %s, namespace %s) - Reporting terminal status: %s",
             label,
             task_namespace,
             POST_PENDING_K8S_PHASE_TO_V6_STATUS_MAP[pod_phase],
@@ -213,8 +213,8 @@ def compute_job_pod_run_status(
     # specifications)
     else:
         log.critical(
-            "Job (label %s, namespace %s) Unexpected/unhandled POD creation phase: %s. "
-            "Reporting this as an UNKNOWN_ERROR.",
+            "Task run (label %s, namespace %s) Unexpected/unhandled pod creation phase:"
+            " %s. Reporting this as an UNKNOWN_ERROR.",
             label,
             task_namespace,
             pod_phase,

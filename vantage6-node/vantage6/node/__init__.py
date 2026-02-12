@@ -285,8 +285,7 @@ class Node:
             proxy_server.app.debug = True
         proxy_server.app.config["SERVER_IO"] = self.client
 
-        # The value on the module variable 'server_url' defines the target of the
-        # 'make_request' method.
+        # Use 'hq_url' as target of the 'make_request' method.
         proxy_server.hq_url = self.client.hq_url
         self.log.info(
             "Setting target endpoint for the algorithm's client as : %s",
@@ -513,7 +512,7 @@ class Node:
         self.log.debug("Waiting for results to send to HQ")
         while True:
             try:
-                results = self.k8s_container_manager.process_next_completed_job()
+                results = self.k8s_container_manager.process_next_completed_run()
                 self.log.info(f"Sending result (run={results.run_id}) to HQ!")
 
                 # FIXME: why are we retrieving the result *again*? Shouldn't we
@@ -788,7 +787,9 @@ class Node:
         kill_list = kill_info.get("kill_list")
         if kill_list:
             kill_list = [ToBeKilled(**kill_info) for kill_info in kill_list]
-        killed_algos = self.k8s_container_manager.kill_tasks(kill_list=kill_list)
+        killed_algos = self.k8s_container_manager.kill_algorithm_runs(
+            kill_list=kill_list
+        )
         # update logs of killed tasks. Note that the status is already set to KILLED
         # by HQ.
         for killed_algo in killed_algos:
@@ -872,8 +873,8 @@ class Node:
     def start_processing_threads(self) -> None:
         """
         Start the threads that (1) consumes the queue with the requests produced by HQ,
-        , and (2) polls Kubernetes for finished jobs, collects their output, and sends
-        it to HQ;
+        and (2) polls Kubernetes for finished algorithm runs, collects their output,
+        and sends it to HQ.
         """
         self.log.info("Starting threads")
         # polls for results on completed jobpods using the k8s api, also reports the

@@ -73,6 +73,28 @@ data:
       review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
     {{- end }}
     port: {{ .Values.store.internal.port }}
+    base_url: {{ .Values.store.baseUrl }}
     root_user:
       username: {{ .Values.store.keycloak.adminUsername }}
       v6_hq_uri: {{ .Values.store.vantage6HQUri }}
+    {{- if .Values.store.smtpServer }}
+    smtp_server:
+      host: {{ .Values.store.smtpServer.host }}
+      port: {{ .Values.store.smtpServer.port }}
+      {{- if .Values.store.smtpServer.user }}
+      user: {{ .Values.store.smtpServer.user }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.password }}
+      password: {{ .Values.store.smtpServer.password }}
+      {{- end }}
+      from: {{ .Values.store.smtpServer.from }}
+      {{- if .Values.store.smtpServer.replyTo }}
+      replyTo: {{ .Values.store.smtpServer.replyTo }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.starttls }}
+      starttls: {{ .Values.store.smtpServer.starttls }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.ssl }}
+      ssl: {{ .Values.store.smtpServer.ssl }}
+      {{- end }}
+    {{- end }}

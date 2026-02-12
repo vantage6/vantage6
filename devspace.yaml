@@ -89,19 +89,19 @@ pipelines:
   all-without-populate:
     run: |-
       run_pipelines \
-        hq \
+        hub \
         node \
         --sequential
 
   all-with-populate:
     run: |-
       run_pipelines \
-        hq \
+        hub \
         populate \
         node \
         --sequential
 
-  hq:
+  hub:
     run: |-
       # TODO refactor this section
       run_dependencies --all
@@ -336,6 +336,7 @@ deployments:
         store:
           image: ${STORE_IMAGE}
           imagePullPolicy: IfNotPresent
+          baseUrl: http://localhost:7602
           api_path: /store
           keycloak:
             url: ${KEYCLOAK_URL}

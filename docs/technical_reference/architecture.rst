@@ -10,7 +10,7 @@ more detail what these network actors are responsible for, and which subcomponen
 contain.
 
 Hub
-++++++
++++
 
 The vantage6 hub is the central point of contact for communication in
 vantage6. The following components are considered as a part of the hub:
@@ -25,7 +25,7 @@ vantage6. The following components are considered as a part of the hub:
     users and nodes. It is used to ensure that only authorized users and nodes can
     access the system.
 
-**Docker registry**
+**Image registry**
     Contains algorithms stored in `images <https://en.wikipedia.org/wiki/OS-level_virtualization>`_
     which can be used by clients to request a computation. The node will
     retrieve the algorithm from this registry and execute it.

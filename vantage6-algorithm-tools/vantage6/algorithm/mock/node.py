@@ -60,7 +60,7 @@ class MockNode:
         self.dataframes = {}
 
         # In case a pandas dataframe is provided we assume the user directly wants to
-        # use it rather than running an extraction job first.
+        # use it rather than running an extraction algorithm step first.
         for dataset in self.datasets:
             if isinstance(dataset.database, pd.DataFrame):
                 self.dataframes[dataset.label] = dataset.database

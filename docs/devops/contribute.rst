@@ -286,11 +286,19 @@ containers.
 To test changes to the CLI, make sure that you create an editable installation of the
 CLI, as indicated above with the ``make install-dev`` command.
 
-Changes in the Helm charts are automatically applied when you run the ``v6 dev``
-commands. However, note that for most changes, you will need to restart the development
-environment to apply the changes. If you want to test chart changes together with other
-CLI changes, you can use the ``--local-chart-dir`` flag to test the changes locally.
-For example:
+Changes in the Helm charts often require you to stop your running ``v6 dev`` environment
+and run ``v6 dev start`` again. This is because the Helm charts are deployed as
+Kubernetes resources, and these resources need to be updated to reflect the changes you
+made.
+
+If you made changes in the CLI, these are often not reflected in the development
+environment: the development environment is run by ``v6 dev`` commands and therefore,
+changes in ``v6 node`` or ``v6 hq``, etc., do not impact the development environment.
+Therefore, the ``v6 sandbox`` command can often be used to test changes in the CLI -
+these commands use the commands of individual infrastructure components in ``v6 node``,
+``v6 hq``, etc. under the hood.
+If you have also changed the Helm charts locally, you can use the ``--local-chart-dir``
+flag to test the changes locally. For example:
 
   ::
 

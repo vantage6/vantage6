@@ -17,7 +17,7 @@ from vantage6.cli.globals import (
     InfraComponentName,
 )
 from vantage6.cli.k8s_config import KubernetesConfig
-from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
+from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
 from vantage6.cli.utils_kubernetes import create_kubernetes_apis_with_ssl_handling
 
 
@@ -172,7 +172,7 @@ def cleanup_task_jobs(
         # Use shared cleanup to delete job, pods and related secret
         job_name = job.metadata.name
         info(f"Deleting job '{job_name}' (run_id={run_id})")
-        delete_job_related_pods(
+        delete_run_related_pods(
             run_id=run_id,
             container_name=f"{APPNAME}-run-{run_id}",
             namespace=namespace,

@@ -25,7 +25,7 @@ dependencies = [
     # TODO remove httpx once 1.0.0 is released - atm this is added to prevent 1.0.dev3 is installed
     "httpx==0.28.1",
     "jsonschema==4.21.1",
-    "marshmallow==3.20.2",
+    "marshmallow==3.26.2",
     "python-keycloak==5.5.0",
     "requests==2.32.4",
     "schema==0.7.5",
