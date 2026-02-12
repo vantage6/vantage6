@@ -37,8 +37,8 @@ spec:
 
 ---
 
-# Network policies for central_compute step/jobs
-# These jobs require access to the hq proxy provided by the node
+# Network policies for central_compute part of the algorithm
+# These containers require access to the hq proxy provided by the node
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -100,8 +100,8 @@ spec:
         (hasKey .Values.node.whitelist "data_extraction")
         (hasKey .Values.node.whitelist.data_extraction "egress")
 }}
-# Network policies for data_extraction jobs
-# This kind of jobs may require access to external databases
+# Network policies for data_extraction part of the algorithm
+# These containers may require access to external databases
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -129,8 +129,8 @@ spec:
         (hasKey .Values.node.whitelist "preprocessing")
         (hasKey .Values.node.whitelist.preprocessing "egress")
 }}
-# Network policies for preprocessing jobs
-# This kind of jobs may require access to external databases
+# Network policies for preprocessing part of the algorithm
+# These containers may require access to external databases
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -159,8 +159,8 @@ spec:
         (hasKey .Values.node.whitelist "federated_compute")
         (hasKey .Values.node.whitelist.federated_compute "egress")
 }}
-# Network policies for federated_compute jobs
-# This kind of jobs may require access to external databases
+# Network policies for federated_compute part of the algorithm
+# These containers may require access to external databases
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -189,8 +189,8 @@ spec:
         (hasKey .Values.node.whitelist "postprocessing")
         (hasKey .Values.node.whitelist.postprocessing "egress")
 }}
-# Network policies for postprocessing jobs
-# This kind of jobs may require access to external databases
+# Network policies for postprocessing part of the algorithm
+# These containers may require access to external databases
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

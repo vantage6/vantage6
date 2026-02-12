@@ -34,17 +34,17 @@ from vantage6.common.globals import (
 )
 
 from vantage6.cli.context.node import NodeContext
-from vantage6.cli.node.common.task_cleanup import delete_job_related_pods
+from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
     DATABASE_BASE_PATH,
     DEFAULT_PROXY_PORT,
     ENV_VARS_NOT_SETTABLE_BY_NODE,
-    JOB_POD_INPUT_PATH,
-    JOB_POD_OUTPUT_PATH,
-    JOB_POD_SESSION_FOLDER_PATH,
     K8S_EVENT_STREAM_LOOP_TIMEOUT,
+    TASK_JOB_INPUT_PATH,
+    TASK_JOB_OUTPUT_PATH,
+    TASK_JOB_SESSION_FOLDER_PATH,
     TASK_START_RETRIES,
 )
 from vantage6.node.k8s.data_classes import KilledRun, Result, ToBeKilled
@@ -53,7 +53,7 @@ from vantage6.node.k8s.exceptions import (
     PermanentAlgorithmStartFail,
 )
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
-    compute_job_pod_run_status,
+    compute_run_pod_status,
 )
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.util import get_parent_id
@@ -359,7 +359,7 @@ class ContainerManager:
         init_org_ref = task_info.get("init_org", {})
         init_org_id = init_org_ref.get("id") if init_org_ref else None
         self.log.debug(
-            "[Algorithm job run %s - requested by org %s] Setting up algorithm run",
+            "[Algorithm run %s - requested by org %s] Setting up algorithm run",
             run_id,
             init_org_id,
         )
@@ -379,8 +379,8 @@ class ContainerManager:
         # Verify that an allowed image is used
         if not self.is_image_allowed(image, task_info):
             self.log.critical(
-                "[Algorithm job run %s requested by org %s] Docker image %s is not "
-                "allowed on this Node!",
+                "[Algorithm run %s requested by org %s] Docker image %s is not allowed "
+                "on this Node!",
                 run_id,
                 init_org_id,
                 image,
@@ -390,7 +390,7 @@ class ContainerManager:
         # Check that this task is not already running
         if self.is_running(run_io.container_name):
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Task is already being "
+                "[Algorithm run %s requested by org %s] Task is already being "
                 "executed, discarding task",
                 run_id,
                 init_org_id,
@@ -430,8 +430,8 @@ class ContainerManager:
             secrets[ContainerEnvNames.CONTAINER_TOKEN.value] = token
 
         self.log.debug(
-            "[Algorithm job run %s] Setting V6_PROXY_HOST=%s and "
-            "V6_PROXY_PORT=%s env variables on the job POD",
+            "[Algorithm run %s] Setting V6_PROXY_HOST=%s and V6_PROXY_PORT=%s env "
+            "variables on the algorithm job pod",
             run_id,
             env_vars[ContainerEnvNames.HOST.value],
             env_vars[ContainerEnvNames.PORT.value],
@@ -453,7 +453,7 @@ class ContainerManager:
         for key, value in self.ctx.config.get("algorithm_env", {}).items():
             if key in env_vars or key.upper() in env_vars:
                 self.log.warning(
-                    "[Algorithm job run %s requested by org %s] Environment variable %s"
+                    "[Algorithm run %s requested by org %s] Environment variable %s"
                     " is requested to be set as algorithm environment variable, but it "
                     "vantage6 infrastructure is already setting it.",
                     run_id,
@@ -478,7 +478,7 @@ class ContainerManager:
             self._validate_environment_variables(secrets)
         except PermanentAlgorithmStartFail as e:
             self.log.warning(
-                "[Algorithm job run %s requested by org %s] Validation of environment "
+                "[Algorithm run %s requested by org %s] Validation of environment "
                 "variables failed: %s",
                 run_id,
                 init_org_id,
@@ -526,7 +526,7 @@ class ContainerManager:
             ),
         )
 
-        job_metadata = k8s_client.V1ObjectMeta(
+        task_job_metadata = k8s_client.V1ObjectMeta(
             name=run_io.container_name,
             annotations={
                 "run_id": str(run_io.run_id),
@@ -550,10 +550,10 @@ class ContainerManager:
             ]
 
         # Define the job
-        job = k8s_client.V1Job(
+        task_job = k8s_client.V1Job(
             api_version="batch/v1",
             kind="Job",
-            metadata=job_metadata,
+            metadata=task_job_metadata,
             spec=k8s_client.V1JobSpec(
                 template=k8s_client.V1PodTemplateSpec(
                     metadata=k8s_client.V1ObjectMeta(
@@ -571,13 +571,15 @@ class ContainerManager:
         )
 
         self.log.info(
-            "[Algorithm job run %s requested by org %s] Creating namespaced K8S job for"
+            "[Algorithm run %s requested by org %s] Creating namespaced K8S job for"
             " task_id=%s.",
             run_id,
             init_org_id,
             task_id,
         )
-        self.batch_api.create_namespaced_job(namespace=self.task_namespace, body=job)
+        self.batch_api.create_namespaced_job(
+            namespace=self.task_namespace, body=task_job
+        )
 
         # Kubernetes will automatically retry the job ``backoff_limit`` times. According
         # to the Pod's backoff failure policy, it will have a failed status only after
@@ -707,7 +709,7 @@ class ContainerManager:
 
     def __wait_until_pod_running(self, run_io: RunIO, label: str) -> RunStatus:
         """"
-        This method monitors the status of a Kubernetes POD created by a job and
+        This method monitors the status of a Kubernetes POD created by a task job and
         waits until it transitions to a 'Running' state or another terminal state
         (e.g., 'Failed', 'Succeeded') for up to K8S_EVENT_STREAM_LOOP_TIMEOUT seconds.
         After the timeout, this method will have additional status-event waiting windows
@@ -725,7 +727,7 @@ class ContainerManager:
         run_io: RunIO
             RunIO object that contains information about the run
         label : str
-            Label selector to identify the POD associated with the job.
+            Label selector to identify the POD associated with the task job.
 
         Returns
         -------
@@ -738,7 +740,7 @@ class ContainerManager:
             - RunStatus.CRASHED: If the pod is still in pending status but has reported
               a runtime crash.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
-            - RunStatus.COMPLETED: Not expected to happen but still possible: the job
+            - RunStatus.COMPLETED: Not expected to happen but still possible: the task
               pod is reported as Succeded shortly after being created.
         """
 
@@ -747,12 +749,12 @@ class ContainerManager:
 
         try:
             while True:
-                # Non-busy waiting for status changes on the job POD through K8S' event
+                # Non-busy waiting for status changes on the task pod through K8S' event
                 # stream watch. This inner for loop will process events until a terminal
                 # status is identifed (Running, Failed, Succeded) or timeout_seconds is
                 # reached.
                 #
-                # Given that after the timeout the status would be uncertain, the job
+                # Given that after the timeout the status would be uncertain, the task
                 # pod status is checked (directly) again to decide whether a new
                 # stream-watch iteration is performed (e.g, an image may be too large),
                 # or an error is reported.
@@ -764,7 +766,7 @@ class ContainerManager:
                 ):
                     pod = event["object"]
 
-                    pod_phase: RunStatus = compute_job_pod_run_status(
+                    pod_phase: RunStatus = compute_run_pod_status(
                         pod=pod,
                         label=label,
                         log=self.log,
@@ -776,7 +778,7 @@ class ContainerManager:
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
                 self.log.debug(
-                    "Job (label %s, namespace %s) event stream timeout reached. "
+                    "Task run (label %s, namespace %s) event stream timeout reached. "
                     "Checking the cause...",
                     label,
                     self.task_namespace,
@@ -791,7 +793,7 @@ class ContainerManager:
                     return RunStatus.UNKNOWN_ERROR
                 pod = pod_list[0]
 
-                pod_phase: RunStatus = compute_job_pod_run_status(
+                pod_phase: RunStatus = compute_run_pod_status(
                     pod=pod,
                     label=label,
                     log=self.log,
@@ -805,8 +807,8 @@ class ContainerManager:
                     return pod_phase
 
                 self.log.debug(
-                    "Job (label %s, namespace %s) still pulling the algorithm image. "
-                    "Waiting again for a new status update...",
+                    "Task run (label %s, namespace %s) still pulling the algorithm "
+                    "image. Waiting again for a new status update...",
                     label,
                     self.task_namespace,
                 )
@@ -870,7 +872,7 @@ class ContainerManager:
         dict[str, str],
     ]:
         """
-        Create all volumes and volume mounts required by the algorithm/job.
+        Create all volumes and volume mounts required by the algorithm run.
 
         Parameters
         ----------
@@ -916,7 +918,7 @@ class ContainerManager:
         vol_mounts: list[k8s_client.V1VolumeMount] = []
 
         # Create algorithm's input and output files before creating volume mounts with
-        # them (relative to the node's file system: POD or host)
+        # them (relative to the node's file system: task pod or host)
         input_file_path, output_file_path = run_io.create_files(function_arguments, b"")
 
         # Create the volumes and corresponding volume mounts for the input and output
@@ -924,7 +926,7 @@ class ContainerManager:
         output_volume, output_mount = self._create_run_mount(
             volume_name=run_io.output_volume_name,
             host_path=Path(self.host_data_dir) / output_file_path,
-            mount_path=JOB_POD_OUTPUT_PATH,
+            mount_path=TASK_JOB_OUTPUT_PATH,
             type_="File",
             read_only=False,
         )
@@ -933,7 +935,7 @@ class ContainerManager:
             volume_name=run_io.input_volume_name,
             host_path=Path(self.host_data_dir) / input_file_path,
             type_="File",
-            mount_path=JOB_POD_INPUT_PATH,
+            mount_path=TASK_JOB_INPUT_PATH,
         )
 
         session_volume, session_mount = self._create_run_mount(
@@ -941,7 +943,7 @@ class ContainerManager:
             host_path=Path(self.host_data_dir)
             / run_io.session_file_manager.session_folder,
             type_="Directory",
-            mount_path=JOB_POD_SESSION_FOLDER_PATH,
+            mount_path=TASK_JOB_SESSION_FOLDER_PATH,
         )
 
         volumes.extend([output_volume, input_volume, session_volume])
@@ -950,12 +952,12 @@ class ContainerManager:
         # The environment variables are expected by the algorithm containers in order
         # to access the input and output files.
         environment_variables = {
-            ContainerEnvNames.OUTPUT_FILE.value: JOB_POD_OUTPUT_PATH,
-            ContainerEnvNames.INPUT_FILE.value: JOB_POD_INPUT_PATH,
+            ContainerEnvNames.OUTPUT_FILE.value: TASK_JOB_OUTPUT_PATH,
+            ContainerEnvNames.INPUT_FILE.value: TASK_JOB_INPUT_PATH,
             # TODO we only do not need to pass this when the action is `data extraction`
-            ContainerEnvNames.SESSION_FOLDER.value: JOB_POD_SESSION_FOLDER_PATH,
+            ContainerEnvNames.SESSION_FOLDER.value: TASK_JOB_SESSION_FOLDER_PATH,
             ContainerEnvNames.SESSION_FILE.value: os.path.join(
-                JOB_POD_SESSION_FOLDER_PATH,
+                TASK_JOB_SESSION_FOLDER_PATH,
                 run_io.session_file_manager.session_state_file_name,
             ),
         }
@@ -1371,20 +1373,20 @@ class ContainerManager:
         )
         return True if pods.items else False
 
-    def process_next_completed_job(self) -> Result:
+    def process_next_completed_run(self) -> Result:
         """
-        Wait until a job is completed and process it.
+        Wait until a task run is completed and process it.
 
-        This method is blocking until a job is completed. It checks the status of the
-        kubernetes jobs and returns the results of the first completed job. The results
-        are then sent back to HQ.
+        This method is blocking until a task run is completed. It checks the status of
+        the Kubernetes jobs and returns the results of the first completed task run.
+        The results are then sent back to HQ.
 
         Returns
         -------
         Result
-            Result of the completed job
+            Result of the completed run
         """
-        self.log.info("Waiting for a completed job to process")
+        self.log.info("Waiting for a completed run to process")
         # wait until there is at least one completed job available (successful or
         # failed) other statuses (pending/running/unknown) are ignored
         completed_job = False
@@ -1441,7 +1443,7 @@ class ContainerManager:
 
                 self.num_active_tasks -= 1
 
-                delete_job_related_pods(
+                delete_run_related_pods(
                     run_id=run_io.run_id,
                     container_name=run_io.container_name,
                     namespace=self.task_namespace,
@@ -1558,23 +1560,14 @@ class ContainerManager:
         """
         Cleanup kubernetes resources created by the node
         """
-        # kill all running jobs
-        self._kill_tasks()
+        # kill all running algorithm runs
+        self._kill_algorithm_runs()
 
-    # def login_to_registries(self, registries: list = []) -> None:
-    #     """
-    #     Login to the docker registries
-
-    #     Parameters
-    #     ----------
-    #     registries: list
-    #         list of registries to login to
-    #     """
-    #     pass
-
-    def kill_tasks(self, kill_list: list[ToBeKilled] = None) -> list[KilledRun]:
+    def kill_algorithm_runs(
+        self, kill_list: list[ToBeKilled] = None
+    ) -> list[KilledRun]:
         """
-        Kill tasks currently running on this node.
+        Kill algorithm runs currently running on this node.
 
         Parameters
         ----------
@@ -1593,7 +1586,7 @@ class ContainerManager:
                 "node. Executing that now..."
             )
 
-        killed_runs = self._kill_tasks(kill_list=kill_list)
+        killed_runs = self._kill_algorithm_runs(kill_list=kill_list)
 
         if len(killed_runs) > 0:
             self.log.warning(
@@ -1605,7 +1598,7 @@ class ContainerManager:
 
         return killed_runs
 
-    def _kill_tasks(
+    def _kill_algorithm_runs(
         self,
         kill_list: list[ToBeKilled] = None,
         initiator: KillInitiator = KillInitiator.USER,
@@ -1648,8 +1641,8 @@ class ContainerManager:
         # kill the jobs that should be killed
         killed_list: list[KilledRun] = []
         for job in current_jobs.items:
-            if self._job_should_be_killed(job, kill_list):
-                killed_run = self._kill_job(job, initiator)
+            if self._task_job_should_be_killed(job, kill_list):
+                killed_run = self._kill_task_job(job, initiator)
                 killed_list.append(killed_run)
 
         # log warnings if jobs should be killed but are not found
@@ -1666,11 +1659,11 @@ class ContainerManager:
 
         return killed_list
 
-    def _job_should_be_killed(
+    def _task_job_should_be_killed(
         self, job: k8s_client.V1Job, kill_list: list[ToBeKilled]
     ) -> bool:
         """
-        Check if a job should be killed
+        Check if a task job should be killed
 
         Parameters
         ----------
@@ -1694,7 +1687,7 @@ class ContainerManager:
             for container_to_kill in kill_list
         )
 
-    def _kill_job(
+    def _kill_task_job(
         self, job_to_kill: k8s_client.V1Job, initiator: KillInitiator
     ) -> KilledRun:
         """
@@ -1726,7 +1719,7 @@ class ContainerManager:
         elif initiator == KillInitiator.NODE_SHUTDOWN:
             logs += "\n\nAlgorithm was killed because the node was shut down."
         self.num_active_tasks -= 1
-        delete_job_related_pods(
+        delete_run_related_pods(
             run_id=run_io.run_id,
             container_name=run_io.container_name,
             namespace=self.task_namespace,

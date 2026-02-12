@@ -8,7 +8,7 @@ from vantage6.common import logger_name
 log = logging.getLogger(logger_name(__name__))
 
 
-def delete_job_related_pods(
+def delete_run_related_pods(
     run_id: int,
     container_name: str,
     namespace: str,
