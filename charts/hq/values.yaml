@@ -1,5 +1,3 @@
-# TODO v5+ this nameOverride is required to be present, otherwise the HQ will
-# not work (tested with v6 dev start). It should not be required
 nameOverride: vantage6-hq
 hq:
   description: Vantage6 headquarters version 5

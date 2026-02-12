@@ -420,7 +420,7 @@ by going to the relevant page in the UI and uploading the file.
 Calling your algorithm from vantage6
 ------------------------------------
 
-.. TODO v5+ remove this when implemented
+.. TODO remove this when implemented, see issue #2350
 .. warning::
 
     This does not work yet in v5 - the ``v6 test`` commands are not implemented yet.

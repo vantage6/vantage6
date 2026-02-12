@@ -2,9 +2,9 @@ from typing import Any
 
 import questionary as q
 
+from vantage6.common import info
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
-    MAIN_VERSION_NAME,
     InstanceType,
 )
 
@@ -44,23 +44,7 @@ def hq_configuration_questionaire(
 
     config = add_common_backend_config(config, InstanceType.HQ, instance_name)
 
-    # TODO v5+ these should be removed, latest should usually be used so question is
-    # not needed. However, for now we want to specify alpha/beta images.
-    # === HQ settings ===
-    config["hq"]["image"] = q.text(
-        "HQ Docker image:",
-        default=f"harbor2.vantage6.ai/infrastructure/hq:{MAIN_VERSION_NAME}",
-    ).unsafe_ask()
-
-    # === UI settings ===
-    config["ui"]["image"] = q.text(
-        "UI Docker image:",
-        default=f"harbor2.vantage6.ai/infrastructure/ui:{MAIN_VERSION_NAME}",
-    ).unsafe_ask()
-
-    # TODO v5+ we need to add a question to ask which algorithm stores are allowed, to
-    # set the CSP headers in the UI. This is not done now because it becomes easier when
-    # store and keycloak service can also be setup in the `v6 hq new` command.
+    config = _set_allowed_algorithm_stores(config)
 
     # set directory to store log files on host machine
     config["hq"]["logging"]["volumeHostPath"] = str(log_dir)
@@ -68,4 +52,37 @@ def hq_configuration_questionaire(
     # set strong password for RabbitMQ
     config["rabbitmq"]["password"] = generate_password()
 
+    return config
+
+
+def _set_allowed_algorithm_stores(config: dict) -> dict:
+    """
+    Prompt the user for the allowed algorithm stores on their HQ.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary.
+
+    Returns
+    -------
+    dict
+        Configuration dictionary with allowed algorithm stores.
+    """
+    info(
+        "As security setting in the UI, we only allow traffic from certain external "
+        "domains. These are vantage6 HQ and relevant algorithm stores."
+    )
+    info("Limiting the allowed algorithm stores is recommended.")
+    setup_allowed_stores = q.confirm(
+        "In the UI, do you want to only allow algorithms from specific algorithm "
+        "stores? ",
+        default=True,
+    ).unsafe_ask()
+    if setup_allowed_stores:
+        config["ui"]["allowedAlgorithmStores"] = q.text(
+            "Enter the URLs of all the algorithm stores you want to allow "
+            "(comma-separated). Use * to allow all stores (less secure):",
+            default="https://store.uluru.vantage6.ai",
+        ).unsafe_ask()
     return config
