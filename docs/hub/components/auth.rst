@@ -3,10 +3,11 @@
 Authentication service
 =======================
 
-The authentication service is responsible for authenticating users and nodes. It relies
-on the popular `Keycloak <https://www.keycloak.org/>`_ service to handle authentication
-within the vantage6 infrastructure. Vantage6 relies on Keycloak because it is a mature
-and well-supported authentication service that is easy to deploy and customize.
+The authentication service is responsible for authenticating users and nodes. It uses
+the popular `Keycloak <https://www.keycloak.org/>`_ service to handle authentication
+within the vantage6 infrastructure. Vantage6 uses Keycloak because it is a mature
+and well-supported authentication service that is easy to deploy, customize and
+integrate with existing authentication services.
 
 Install
 -------
@@ -25,7 +26,7 @@ You can install the CRDs using the following command:
 
 .. code-block:: bash
 
-    vantage6 auth install-keycloak
+    v6 auth install-keycloak
 
 Configure
 ---------
