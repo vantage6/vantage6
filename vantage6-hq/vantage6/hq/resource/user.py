@@ -469,7 +469,7 @@ class Users(UserBase):
             )
             keycloak_id = keycloak_service_account.user_id
         else:
-            keycloak_id = self._create_user_in_keycloak(data)
+            keycloak_id = self._create_user_in_keycloak(data, organization_id)
 
         user = db.User(
             username=data["username"],
@@ -491,22 +491,24 @@ class Users(UserBase):
 
         return json_response, HTTPStatus.CREATED
 
-    def _create_user_in_keycloak(self, data):
+    def _create_user_in_keycloak(self, data, organization_id: int):
         try:
             keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
-            return keycloak_admin.create_user(
-                {
-                    "username": data["username"],
-                    "enabled": True,
-                    "credentials": [
-                        {
-                            "type": "password",
-                            "value": data["password"],
-                            "temporary": True,
-                        }
-                    ],
-                }
-            )
+            user_payload = {
+                "username": data["username"],
+                "enabled": True,
+                "credentials": [
+                    {
+                        "type": "password",
+                        "value": data["password"],
+                        "temporary": True,
+                    }
+                ],
+                "attributes": {
+                    "organization_id": [str(organization_id)],
+                },
+            }
+            return keycloak_admin.create_user(user_payload)
         except Exception as exc:
             log.exception(exc)
             raise BadRequestError("User could not be created in Keycloak") from exc
