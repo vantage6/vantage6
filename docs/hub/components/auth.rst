@@ -44,6 +44,12 @@ Once you are logged in, you customize your Keycloak deployment in any way you wa
 care that you don't overwrite the vantage6-specific configuration, such as the backend
 client, as this may cause issues in communicating with vantage6 HQ and store.
 
+.. note::
+
+    With keycloak, it is also possible to use another identity provider. For instance,
+    you could configure a Microsoft or Google login page. It is also possible to
+    configure your own Keycloak instance and link it to the vantage6 keycloak service.
+
 Install and use
 ---------------
 
