@@ -75,7 +75,7 @@ node_config_creation_details = NodeConfigCreationDetails(
 #
 report_populate_hub = populate_hub_dev(
     hq_url="http://localhost:7601/hq",
-    auth_url="http://localhost:8080",
+    auth_url="http://localhost:7680",
     number_of_nodes=number_of_nodes,
     node_config_creation_details=node_config_creation_details,
 )

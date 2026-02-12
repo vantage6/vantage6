@@ -42,7 +42,7 @@ spec:
   {{- else }}
   http:
     httpEnabled: true
-    httpPort: 8080
+    httpPort: 7680
   {{- end }}
   {{- if .Values.keycloak.resources }}
   resources:

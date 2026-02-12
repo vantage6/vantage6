@@ -268,7 +268,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 "keycloak": {
                     "url": (
                         f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
-                        f"{self.k8s_config.namespace}.svc.cluster.local:8080"
+                        f"{self.k8s_config.namespace}.svc.cluster.local:7680"
                     ),
                 },
                 "persistence": {

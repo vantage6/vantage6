@@ -52,10 +52,10 @@ vars:
     default: docker-desktop
   KEYCLOAK_URL:
     source: env
-    default: http://vantage6-auth-kc-service.${CURRENT_NAMESPACE}.svc.cluster.local:8080
+    default: http://vantage6-auth-kc-service.${CURRENT_NAMESPACE}.svc.cluster.local:7680
   KEYCLOAK_PUBLIC_URL:
     source: env
-    default: http://localhost:8080
+    default: http://localhost:7680
   KEYCLOAK_REALM:
     source: env
     default: vantage6
@@ -414,9 +414,9 @@ dev:
     labelSelector:
       app.kubernetes.io/instance: vantage6-auth-kc
     ports:
-      - port: 8080:8080
+      - port: 7680:7680
         bindAddress: localhost
-      - port: 8080:8080
+      - port: 7680:7680
         bindAddress: ${PORTS_BIND_ADDRESS}
 
   # This puts the HQ container in development mode. It syncs the local files with

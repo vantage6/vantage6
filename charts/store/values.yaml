@@ -4,7 +4,7 @@ store:
   api_path: /store
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
+    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
     realm: vantage6
     adminUsername: admin
     adminPassword: admin
