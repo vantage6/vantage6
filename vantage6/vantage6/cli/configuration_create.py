@@ -68,7 +68,7 @@ def add_common_backend_config(
 
     config = add_database_config(config, instance_type)
 
-    config = _add_production_backend_config(config)
+    config = _add_production_backend_config(config, instance_type)
 
     return config
 
@@ -95,7 +95,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     return config
 
 
-def _add_production_backend_config(config: dict) -> dict:
+def _add_production_backend_config(config: dict, instance_type: InstanceType) -> dict:
     """
     Add the production backend configuration to the config
 
@@ -103,6 +103,8 @@ def _add_production_backend_config(config: dict) -> dict:
     ----------
     config : dict
         The config to add the production backend configuration to
+    instance_type : InstanceType
+        Type of backend instance (HQ, algorithm store, or auth)
 
     Returns
     -------
@@ -113,10 +115,17 @@ def _add_production_backend_config(config: dict) -> dict:
     info("Please provide the URI of the external database.")
     info("Example: postgresql://username:password@localhost:5432/vantage6")
 
+    # Set different default URIs based on instance type
+    if instance_type == InstanceType.ALGORITHM_STORE:
+        default_uri = "postgresql://vantage6:vantage6@localhost:5433/vantage6_store"
+    else:
+        # Default for HQ and AUTH
+        default_uri = "postgresql://vantage6:vantage6@localhost:5432/vantage6"
+
     config["database"]["external"] = True
     config["database"]["uri"] = q.text(
         "Database URI:",
-        default="postgresql://vantage6:vantage6@localhost:5432/vantage6",
+        default=default_uri,
     ).unsafe_ask()
 
     return config
