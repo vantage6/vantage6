@@ -20,11 +20,12 @@ version 2.x.y are unlikely to be able to run an algorithm written for version
 **Minor** releases update the second digit, e.g. ``1.2.3`` to ``1.3.0``. This is
 used for releasing new features (e.g. a new endpoint), enhancements and other
 changes that are compatible with all other components. Algorithms written for
-version``1.x.y`` should run on any vantage6 hub of version ``1.z.a``. Also, the
+version ``1.a.b`` should run on any vantage6 hub of version ``1.c.d``. Also, the
 APIs should be compatible with other minor versions - the same
 fields present before will be present in the new version, although new fields
 may be added. However, nodes and hubs of different minor versions may not be
-able to communicate properly.
+able to communicate properly. Therefore, we always recommend restarting the nodes after
+a hub upgrade (then, the nodes will automatically update to the new minor version).
 
 **Patch** releases update the third digit, e.g. ``1.2.3`` to ``1.2.4``. This is
 used for bugfixes and other minor changes. Different patch releases should be
@@ -38,7 +39,7 @@ the actual release is made.
 
 **Post[N]** is used for a rebuild where no code changes have been made, but
 where, for example, a dependency has been updated and a rebuild is required.
-In vantage6, this is only used to version the Docker images that are updated
+We only use this to version the Docker images that are updated
 in these cases.
 
 Testing a release
@@ -50,10 +51,10 @@ the following steps to test a release:
 1. *Create a release candidate*. This process is the same as creating
    the :ref:`actual release <create-release>`, except that the candidate has
    a 'pre' tag (e.g. ``1.2.3rc1`` for release candidate number 1 of version
-   1.2.3). Note that for an RC release, no notifications are sent to Discord.
+   1.2.3). Note that for an RC, no notifications are sent to Discord.
 2. *Install the release*. The release should be tested from a clean environment.
 
-  .. code:: bash
+.. code:: bash
 
     uv venv --python 3.13
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
@@ -62,7 +63,7 @@ the following steps to test a release:
 3. *Start hub and nodes*. Start the hub and the nodes for the
    release candidate using a ``v6 sandbox`` network:
 
-  .. code:: bash
+.. code:: bash
 
     v6 sandbox new \
         --hq-image harbor2.vantage6.ai/infrastructure/hq:<version> \
@@ -75,24 +76,23 @@ the following steps to test a release:
 
 5. *Run test algorithms*. The algorithm `v6-feature-tester` is run and checked.
    This algorithm checks several features to see if they are performing as
-   expected. Additionaly, the `v6-node-to-node-diagnostics` algorithm is run
-   to check the VPN functionality.
+   expected.
 
 6. *Update algorithms*. For some releases, algorithms have to be updated, either because
-   they no longer work in the new version of vantage6, or, less urgently, if the
-   algorithm store is extended so new metadata on the algorithm can be stored. updating
+   they no longer work in the new version of vantage6, because the algorithm tools have
+   received patches or new featuresor, less urgently, if the
+   algorithm store is extended so new metadata on the algorithm can be stored. Updating
    the algorithms is especially important for the algorithms in the community store, as
    these are used by the entire vantage6 community.
 
 7. *Stop the network*. After testing is finished, you can stop the network and clean up:
 
-  .. code:: bash
+.. code:: bash
 
     v6 sandbox stop
     v6 sandbox remove
 
-After these steps, the release is ready. It is executed for both the main
-infrastructure and the UI. The release process is described below.
+After these steps, the final release can be made. This process is described below.
 
 .. note::
 
@@ -101,30 +101,29 @@ infrastructure and the UI. The release process is described below.
 
 .. _create-release:
 
-Create a release
+Start the release process
 ----------------
+
 To create a new release, one should go through the following steps:
 
-* Check out the correct branch of the `vantage6 <https://github.com/vantage6/vantage6>`_ repository and pull the latest version:
+* Check out the correct branch of the
+  `vantage6 <https://github.com/vantage6/vantage6>`_ repository and pull the latest
+  version. *Make sure the branch is up-to-date*.
 
-  ::
+::
 
     git checkout main
     git pull
 
-  *Make sure the branch is up-to-date*. **Patches** are usually directly
-  merged into main, but for **minor** or **major** releases you usually need
-  to execute a pull request from a development branch.
-
 * Create a tag for the release. See :ref:`format` for more details on version names:
 
-  ::
+::
 
     git tag version/x.y.z
 
 * Push the tag to the remote. This will trigger the release pipeline on Github:
 
-  ::
+::
 
     git push origin version/x.y.z
 
@@ -135,18 +134,23 @@ To create a new release, one should go through the following steps:
 
 The release pipeline
 --------------------
+
+If you want to follow the release process, you can go to the
+`Github release actions page <https://github.com/vantage6/vantage6/actions/workflows/release.yml>`_ and select the
+relevant release.
+
 The release pipeline executes the following steps:
 
 1. It checks if the tag contains a valid version specification. If it does not,
    the process it stopped.
 2. Update the version in the repository code to the version specified in the
    tag and commit this back to the main branch.
-3. Install the dependencies and build the Python package.
-4. Upload the package to PyPi.
-5. Build and push the Docker images and Helm charts to `harbor2.vantage6.ai
+3. Build and push the Docker images and Helm charts to `harbor2.vantage6.ai
    <https://harbor2.vantage6.ai>`_.
+4. Create a Github release with the version number and the release notes.
+5. Upload the package to PyPi.
 6. Post a message in Discord to alert the community of the new release. This
-   is not done if the version is a pre-release (e.g. version/x.y.0rc1).
+   is skipped if the version is a pre-release.
 
 .. note::
 
@@ -224,13 +228,13 @@ After a release, there are a few checks that are performed. Most of these are
 only relevant if you are hosting a vantage6 hub yourself that is being automatically
 updated upon new releases, as is for instance the case for the Uluru community service.
 
-For Uluru, the following checks are done:
+For Uluru, the following checks may be performed:
 
 - Check that harbor2.vantage6.ai has updated images, e.g. ``hq:uluru``,
   ``hq:uluru-live`` and ``node:uluru``.
 - Check if the (live) hub version is updated. Go to:
   https://uluru.vantage6.ai/version. Check logs if it is not updated.
-- Release any documentation that may not yet have been released.
+- Release any documentation or blog posts that may not yet have been released.
 - Upgrade issue status to 'Done' in any relevant issue tracker.
 - Check if nodes are online, and restart them to update to the latest version
   if desired.

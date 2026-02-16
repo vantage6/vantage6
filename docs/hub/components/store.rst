@@ -25,21 +25,16 @@ will go through a review process before it is added to the community store.
 
 Linking algorithm store to HQ
 -------------------------------
+
 Algorithm stores can be linked to a vantage6 HQ or to a specific collaboration on an
-HQ. If an algorithm store is linked to an HQ, the algorithms in the store are
-available to all collaborations on that HQ. If an algorithm store is linked to a
-collaboration, the algorithms in the store are only available to that collaboration.
+HQ. That way, the algorithms in the store become easily available to the users - either
+to all users registered on that HQ, or to all users in the specific collaboration.
 
 Users can link algorithm stores to a collaboration if they have permission to modify
 that collaboration. Algorithm stores can only be linked to an HQ by users that have
-permission to modify all collaborations on the HQ.
-
-To link an algorithm store, go to the collaboration settings page on the UI or use the
-Python client function ``client.store.create()``. When linking a store to an HQ, you
-need to provide the algorithm store URL, a name to refer to the store, and the
-collaboration ID of the collaboration you want to link the store to. Alternatively, you
-can link a store to all collaborations on the HQ by not providing a collaboration
-ID.
+permission to modify all collaborations on the HQ. To link an algorithm store, go to
+the collaboration settings page on the UI or use the Python client function
+``client.store.create()``.
 
 .. _algorithm-store-configure:
 
@@ -108,7 +103,8 @@ The directory where to store the configuration file depends on your
 operating system (OS). It is possible to store the configuration file at
 **system** or at **user** level. At the user level, configuration files are only
 available for your user. By default, algorithm store configuration files are
-stored at **system** level.
+stored at **system** level - except if you have created a sandbox environment using the
+``v6 sandbox`` commands.
 
 The default directories per OS are as follows:
 
@@ -146,14 +142,17 @@ Permissions
 Policies
 ^^^^^^^^
 
-Algorithm store policies are defined by the algorithm store administrator and determine
+Algorithm store policies are defined by the algorithm store administrator in the
+configuration file and determine
 the general permission and access rules for the algorithm store. Arguably, the most
 important policy is who is allowed to view the algorithms in the store. For the
 community store, this is set to public, meaning that anyone can view the algorithms. For
 a private store, this can be set to private, meaning that only authorized users can
-view the algorithms. Other examples of policies are e.g. setting how many reviewers
-are required to approve an algorithm, or if reviewers should be from a different
-organization as the algorithm developer.
+view the algorithms.
+
+Other examples of algorithm store policies are e.g. setting how many reviewers
+are required to approve an algorithm, or whether algorithm reviewers should be from a
+different organization as the algorithm developer or not.
 
 Permission management
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -262,14 +261,14 @@ Store processes
 
 The algorithm store manages the lifecycle of vantage6 algorithms, from its initial
 submission by the algorithm developer to the running of the algorithm and finally its
-replacement by a newer version. This page intends to give an overview of these processes.
+replacement by a newer version. Here, we give an overview of these processes.
 
 Algorithm submission
 ^^^^^^^^^^^^^^^^^^^^
 
 The first step in the lifecycle of an algorithm is its submission to the algorithm store.
 An algorithm developer can do this via the algorithm store section of the UI or by using
-the Python client's command `client.algorithm.create()`. The algorithm developer needs
+the Python client's command ``client.algorithm.create()``. The algorithm developer needs
 to provide data such as a name, description, where to find the code and the algorithm
 image, and which functions the algorithm provides and how to call them.
 
@@ -295,6 +294,11 @@ following fields:
   is available. Depending on the visualization type, additional data might be required.
   For instance, for a line graph, the algorithm developer can set the x-axis and y-axis
   columns that should be visualized.
+
+Note that there is a utility command in the CLI ``v6 algorithm generate-store-json`` that
+can be used to generate a JSON file that can be used to import the algorithm into the
+store. This is easier than manually submitting the algorithm, but to be most useful, it
+requires you to have proper docstrings in your algorithm code.
 
 .. _algorithm-store-review-process:
 

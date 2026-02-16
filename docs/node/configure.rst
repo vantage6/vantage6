@@ -3,15 +3,16 @@
 Configure
 ---------
 
-The vantage6-node requires a configuration file to run. This is a
-``yaml`` file with a specific format.
+The vantage6 node requires a configuration file to run. This is a ``yaml`` file with a
+specific format, which is used to start the node using its Helm chart.
 
 The next sections describes how to configure the node. It first provides a few
 quick answers on setting up your node, then shows an example of all
-configuration file options, and finally explains where your vantage6
-configuration files are stored.
+configuration file options. Next, we explain where your vantage6
+configuration files are stored, and finally, we explain how to configure the node so
+that your data is protected optimally.
 
-How to create a configuration file
+How to create a configuration file?
 """"""""""""""""""""""""""""""""""
 
 The easiest way to create an initial
@@ -95,8 +96,10 @@ Security
 
 As a data owner it is important that you take the necessary steps to
 protect your data. Vantage6 allows algorithms to run on your data and
-share the results with other parties. It is important that you review
-the algorithms before allowing them to run on your data.
+share the results with other parties. Vantage6 offers maximum flexibility when it comes
+to algorithms, but this also means that you (or someone you trust) need to validate that
+algorithms do what
+they promise and are secure before allowing them to run on your data.
 
 Once you approved the algorithm, it is important that you can verify
 that the approved algorithm is the algorithm that runs on your data.
@@ -118,15 +121,17 @@ There are two important steps to be taken to accomplish this:
             - https://store.uluru.vantage6.ai
 
    These four examples lead to the following restrictions:
+
    1. ``^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+``: allow all images
-      from the harbor2.vantage6.ai registry
+      from the ``harbor2.vantage6.ai`` registry
    2. ``^harbor2\.vantage6\.ai/algorithms/glm$``: only allow the GLM image, but
       all builds of this image
    3. ``^harbor2\.vantage6\.ai/algorithms/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8``
       ``a1e597d83a47fac21d6af3$``: allows only this specific build from the GLM
       image to run on your data
    4. ``https://store.uluru.vantage6.ai``: allow all algorithms from the
-      Uluru community algorithm store
+      Uluru community algorithm store. Only the most recent version of the algorithm
+      uploaded to the store will be allowed to run on your data.
 
    Note that you can also define regular expressions for the algorithm stores, and that
    you can combine the two policies. The section :ref:`node-configure-algorithm-access`
@@ -140,7 +145,7 @@ There are two important steps to be taken to accomplish this:
 .. warning::
     By enabling ``DOCKER_CONTENT_TRUST`` you might not be able to use
     certain algorithms. You can check this by verifying that the images you want
-    to be used are signed.
+    to use are signed.
 
 .. _node-configure-algorithm-access:
 

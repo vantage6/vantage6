@@ -78,7 +78,7 @@ cli_hq.add_command(cli_hq_version, name="version")
 @click.group(name="server")
 def cli_server() -> None:
     """
-    Manage your vantage6 HQ instances.
+    (DEPRECATED) Manage your vantage6 HQ instances.
     """
     warning(
         "The `v6 server` commands are deprecated: 'server' has been renamed to 'HQ'."

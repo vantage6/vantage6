@@ -14,19 +14,14 @@ as much).
 **Software**
 
 -  Operating system: Ubuntu 20.04+ |requirement-OS|
--  Python
+-  Python v3.13
 -  Helm
-- A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernets Cluster)
+- A Kubernetes environment (e.g. Microk8s, Docker Desktop, Kubernetes Cluster)
+
+Below, we provide more details on the software requirements.
 
 .. note::
-    For the hub, Ubuntu is highly recommended. It is possible to run a
-    vantage6 hub for development on Windows or MacOS, but for production purposes we
-    recommend using Ubuntu.
-
-.. warning::
-    The hardware requirements of the node also depend on the algorithms that
-    the node will run. For example, you probably need less compute power for a
-    descriptive statistical algorithm than for a machine learning model.
+    |installation-note|
 
 .. _python:
 
@@ -38,7 +33,7 @@ For installation instructions, see `python.org <https://python.org>`__ or use th
 package manager native to your OS and/or distribution.
 
 .. note::
-    We recommend you install vantage6 in a new, clean Python environment using uv.
+    We recommend you install vantage6 in a new, clean Python environment.
 
     Higher versions of Python (3.14+) will most likely also work, as might lower
     versions. However, we develop and test vantage6 on version 3.13, so that is the
@@ -57,6 +52,7 @@ A Kubernetes environment is required to run the vantage6 infrastructure. For dev
 environments, we recommend using Microk8s or Docker Desktop. For production environments,
 we recommend using a Kubernetes cluster, or microk8s on a VM. Here are some details on
 the different options:
+
 - **Microk8s**: For Ubuntu, we recommend installing
   `Microk8s <https://microk8s.io/docs/getting-started>`_, which is a lightweight
   Kubernetes distribution that is easy to install and use. We recommend using this for
@@ -70,14 +66,15 @@ the different options:
 - **Kubernetes Cluster**: For production environments, we recommend using a Kubernetes
   cluster. There are numerous cloud providers that offer Kubernetes as a service. An
   example is the `Azure Kubernetes Service <https://azure.microsoft.com/en-us/products/kubernetes-service>`_
-  but there are many others.
+  but there are many others, including those from
+  `European providers <https://european-alternatives.eu/category/managed-kubernetes-services>`_.
 
 
 .. note::
 
-  To use vantage6, you also need to install Kubectl. Usually, though, this comes
-  with your Kubernetes distribution. Kubectl is a command line tool for
-  managing Kubernetes clusters, which is used to manage the vantage6 Kubernetes
+  To use vantage6, you also need to install ``kubectl``. Usually, though, this comes
+  with your Kubernetes distribution. ``kubectl`` is a command line tool for
+  managing Kubernetes clusters. Vantage6 uses it to manage the vantage6 Kubernetes
   resources.
 
 Helm

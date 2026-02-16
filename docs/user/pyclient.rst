@@ -19,8 +19,7 @@ the client has been tested with this version. For higher versions, it may be
 difficult to install the dependencies.
 
 .. warning::
-    If you use a vantage6 version older than 5.0.0, you should use Python 3.10
-    instead of Python 3.13. Before vantage6 v3.8.0, Python 3.7 was used.
+    If you use vantage6 version 4, you should use Python 3.10 instead of Python 3.13.
 
 Install
 ^^^^^^^
@@ -28,20 +27,20 @@ Install
 It is important to install the Python client with the same version as the
 vantage6 hub you are talking to, most importantly the API version of vantage6 HQ. Check
 your HQ version by going to
-``https://<my-v6-HQ>/version`` (e.g. `https://uluru.vantage6.ai/version`
-or `http://localhost:30761/hq/version`) to find its version.
+``https://<my-v6-HQ>/version`` (e.g. ``http://localhost:30761/hq/version``) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 
 ::
 
+   # install the latest version
+   uv pip install vantage6-client
+
+   # install a specific version
    uv pip install vantage6-client==<version>
 
    # or, if you are using conda / pyenv / ...
    pip install vantage6==<version>
-
-where you add the version you want to install. You may also leave out
-the version to install the most recent version.
 
 .. _use-python-client:
 
@@ -64,38 +63,38 @@ the group ``client.user`` has the following commands:
 - ``client.user.get(<id>)``: get a user
 
 You can see how to use these methods by using ``help(...)`` , e.g.
-``help(client.task.create)`` will show you the parameters needed to create a
-new user:
+``help(client.role.create)`` will show you the parameters needed to create a
+new role:
 
 .. code:: python
 
-   help(client.task.create)
-   #Create a new task
+   help(client.role.create)
+   # Register new role
    #
-   #    Parameters
-   #    ----------
-   #    collaboration : int
-   #        Id of the collaboration to which this task belongs
-   #    organizations : list
-   #        Organization ids (within the collaboration) which need
-   #        to execute this task
-   #    name : str
-   #        Human readable name
-   #    image : str
-   #        Container image name which contains the algorithm
-   #    description : str
-   #        Human readable description
-   #    arguments : dict
-   #        Arguments for the algorithm method
-   #    database: str, optional
-   #        Name of the database to use. This should match the key
-   #        in the node configuration files. If not specified the
-   #        default database will be tried.
+   # Parameters
+   # ----------
+   # name : str
+   #     Role name
+   # description : str
+   #     Human readable description of the role.
+   # rules : list
+   #     Rules that this role contains.
+   # organization : int, optional
+   #     Organization to which this role belongs. In case this is
+   #     not provided the users organization is used. By default
+   #     None.
+   # field: str, optional
+   #     Which data field to keep in the returned dict. For instance,
+   #     "field='name'" will only return the name of the role. Default is None.
+   # fields: list[str], optional
+   #     Which data fields to keep in the returned dict. For instance,
+   #     "fields=['name', 'id']" will only return the names and ids of the
+   #     role. Default is None.
    #
-   #    Returns
-   #    -------
-   #    dict
-   #        Containing the task information
+   # Returns
+   # -------
+   # dict
+   #     Containing meta-data of the new role
 
 
 The following groups (related to the :ref:`components`) of methods are
@@ -136,22 +135,23 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   # HQ address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/api
-   # for a local dev HQ
+   # HQ address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/hq
+   # for a local sandbox HQ
    hq_url = "https://<my_hq_url>:<my_port>/<my_api_path>"
    # Authentication service address, e.g. https://auth.uluru.vantage6.ai/, or
-   # http://localhost:8080 for a local development auth service
+   # http://localhost:30764 for a local sandbox auth service
    auth_url = "https://<my_auth_url>:<my_port>"
 
-   # Realm and client id of the authentication service
+   # If your collaboration is encrypted, you need to provide the filepath to the private
+   # key of your organization. If your collaboration is not encrypted, you can leave this
+   # as None.
+   organization_key = None
+
+   # Normally, these are not needed, unless your server admin has configured them
+   # to non-default values
    keycloak_realm = "vantage6"
    keycloak_client = "public_client"
 
-   organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
-
-Note that the ``organization_key`` should be a filepath that points to
-the private key that was generated when the organization to which your
-login belongs was first created (see :ref:`creating-organization`).
 
 Then, we connect to the vantage6 hub by initializing a Client
 object, and authenticating
@@ -238,7 +238,7 @@ Now, we can create an organization
        zipcode = '3472',
        country = 'New Zealand',
        domain = 'the_shire.org',
-       public_key = public_key   # use None if you haven't set up encryption
+       public_key = public_key   # use None if you haven't set up encryption or simply leave it out
    )
 
 Users can now be created for this organization. Any users that are
@@ -248,8 +248,6 @@ now use encryption by running
 .. code:: python
 
    client.setup_encryption('/path/to/private/key')
-   # or, if you don't use encryption
-   client.setup_encryption(None)
 
 after they authenticate.
 
@@ -350,12 +348,12 @@ something like:
 .. code:: yaml
 
      databases:
-        - label: default
-          uri: /path/to/my/example.csv
-          type: csv
-        - label: my_other_database
-          uri: /path/to/my/example2.csv
-          type: excel
+       fileBased:
+       - name: olympic_athletes_db
+         uri: /my/local/path/to/data/olympic_athletes_2016.csv
+         type: csv
+         volumePath: /my/local/path/to/data
+         originalName: olympic_athletes_2016.csv
 
 The third requirement is met when all nodes have the same labels in their
 configuration. As an end-user running the
@@ -394,6 +392,53 @@ collaboration ``1``, run:
 Now we see that this collaboration has three organizations associated with it, of which
 the organization id's are ``2``, ``3`` and ``4``.
 
+**Creating a session and extracting data from a database**
+
+First, we need to create a session. A session is a collection of tasks that are related to each other.
+For example, a session can be used to run a study, or a campaign.
+
+.. code:: python
+
+   session = client.session.create(
+      name="my_session",
+      collaboration=1
+      scope="collaboration",
+      display=True
+   )
+
+This will create a session with the name "my_session" and the scope "collaboration",
+which means that it will be available to everyone in the collaboration.
+
+Next, we need to extract data from a database. We can do this by creating a dataframe.
+
+.. code:: python
+
+   dataframe = client.dataframe.create(
+      label="olympic_athletes_db",
+      method="read_csv",
+      image="harbor2.vantage6.ai/demo/average",
+      arguments={},
+      session=session["id"]
+   )
+   extraction_results = client.wait_for_results(dataframe["last_session_task"]["id"])
+
+This will create a database extraction task that will yield a dataframe. Note that your
+extraction method should match the database type you are using. The ``read_csv`` method
+will only work for CSV files. For a SQL database, you might want to create a task like:
+
+.. code:: python
+
+   dataframe = client.dataframe.create(
+      label="my_database",
+      method="read_sql_database",
+      image="harbor2.vantage6.ai/demo/average",
+      arguments={"query": "SELECT * FROM my_table"},
+      session=session["id"]
+   )
+
+:ref:`This section <algo-functions-provided>` provides more information on the available
+data extraction methods.
+
 .. _pyclient-create-task:
 
 **Creating a task that runs the central algorithm**
@@ -422,9 +467,11 @@ us create a task that runs the central part of the
       description='',
       method='central_average',
       arguments=arguments,
+      session=1,
       databases=[
-         {'label': 'default'}
-      ]
+         {'dataframe_id': dataframe["id"]}
+      ],
+      action="central_compute"
    )
 
 Note that the ``arguments`` we defined are specific to
@@ -436,23 +483,6 @@ Furthermore, note that here we created a task for collaboration with id
 organizations involved in the collaboration. if you run the central task as in the
 example above, it is even very common to only run it on one organization: the central
 part usually creates subtasks that may run on multiple organizations.
-
-Finally, note that you should provide any
-databases that you want to use via the ``databases`` argument. In the example
-above, we use the ``default`` database; using the ``my_other_database`` database
-can be done by simply specifying that label in the dictionary. If you have
-a SQL or SPARQL database, you should also provide a ``query`` argument,
-e.g.
-
-.. code:: python
-
-   databases=[
-      {'label': 'default', 'query': 'SELECT * FROM my_table'}
-   ]
-
-Similarly, you can define a ``sheet_name`` for Excel databases if you want to
-read data from a specific worksheet. Check ``help(client.task.create)`` for
-more information.
 
 **Creating a task that runs the partial algorithm**
 
@@ -474,7 +504,12 @@ central part of the algorithm will normally do:
       image="harbor2.vantage6.ai/demo/average",
       description='',
       method='partial_average',
-      arguments=arguments
+      arguments=arguments,
+      session=1,
+      databases=[
+         {'dataframe_id': dataframe["id"]}
+      ],
+      action="federated_compute"
    )
 
 Note that when running the partial algorithm, you should run it on all organizations

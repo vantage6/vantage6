@@ -24,13 +24,13 @@ Requirements
 
 You need to have the following installed:
 
-  - `devspace <https://www.devspace.sh/docs/getting-started/installation>`_ - to run the
-    development environment
-  - `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`_ - to manage the
-    kubernetes cluster. It usually comes with your kubernetes distribution. Supported
-    distributions for the development environment are `microk8s <https://microk8s.io/>`_,
-    `minikube <https://minikube.sigs.k8s.io/>`_ and
-    `Docker Desktop <https://docs.docker.com/desktop/>`_.
+- `devspace <https://www.devspace.sh/docs/getting-started/installation>`_ - to run the
+  development environment
+- `kubectl <https://kubernetes.io/docs/tasks/tools/#kubectl>`_ - to manage the
+  kubernetes cluster. It usually comes with your kubernetes distribution. Supported
+  distributions for the development environment are `microk8s <https://microk8s.io/>`_,
+  `minikube <https://minikube.sigs.k8s.io/>`_ and
+  `Docker Desktop <https://docs.docker.com/desktop/>`_.
 
 .. warning::
 
@@ -52,7 +52,8 @@ To run the development environment for the first time, execute these commands:
 
     cd /path/to/vantage6/repository
 
-    # Recommended but optional: don't use the default kubernetes namespace.
+    # Recommended but optional: use a specific namespace instead of the default
+    # kubernetes namespace.
     kubectl config set-context --current --namespace=vantage6
 
     # Run the development environment
@@ -62,15 +63,15 @@ The first time you run the development environment, you will be asked to enter a
 of variables to configure the development environment. Take particular note of setting
 up the following variables:
 
-  - ``HOST_URI``: this is the ip address of your host machine. If you are using Docker
-    k8s (which comes with Docker Desktop), this should be ``host.docker.internal``. If
-    you are using Linux, this is usually ``172.17.0.1``. You can also find out the ip
-    with ``hostname -I | awk '{print $1}'`` (Linux) or
-    ``ip route | awk '/default/ {print $3}`` (Mac).
-  - ``NUMBER_OF_NODES``: this is the number of nodes you want to create for the
-    development environment. For some algorithms, you need to have at least 3 nodes.
-  - ``NODE_TEST_DATABASE_NAME``: this is the name of the test database for the nodes.
-    This is used to store the test data for the nodes. Enter a suitable CSV file name.
+- ``HOST_URI``: this is the ip address of your host machine. If you are using Docker
+  k8s (which comes with Docker Desktop), this should be ``host.docker.internal``. If
+  you are using Linux, this is usually ``172.17.0.1``. You can also find out the ip
+  with ``hostname -I | awk '{print $1}'`` (Linux) or
+  ``ip route | awk '/default/ {print $3}`` (Mac).
+- ``NUMBER_OF_NODES``: this is the number of nodes you want to create for the
+  development environment. For some algorithms, you need to have at least 3 nodes.
+- ``NODE_TEST_DATABASE_NAME``: this is the name of the test database for the nodes.
+  This is used to store the test data for the nodes. Enter a suitable CSV file name.
 
 .. warning::
 
@@ -116,9 +117,10 @@ Using the development environment
 Once the development environment is running, it will spin up the following services:
 
 - The vantage6 hub, consisting of:
+
   - User interface (http://localhost:7600)
   - HQ (http://localhost:7601/hq)
-  - Algorithm store (http://localhost:7602)
+  - Algorithm store (http://localhost:7602/store)
   - Authentication (Keycloak), including the admin interface (http://localhost:8080)
   - PostgreSQL databases to support the HQ, store and authentication services
 
