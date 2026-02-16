@@ -344,17 +344,16 @@ keycloak:
 
 
 database:
-  {% if keycloak.production %}
-  external: true
-  hostname: {{ database.host | default('') }}
-  {% else %}
-  external: false
+  external: {{ database.external | default(false) }}
+  host: {{ database.host | default('') }}
+  port: {{ database.port | default(5432) }}
+  username: {{ database.username | default('keycloak') }}
+  password: {{ database.password | default('keycloak') }}
+  name: {{ database.name | default('keycloak') }}
+  {% if not database.external %}
   image:
     repository: postgres
     tag: "13"
-  username: keycloak
-  password: keycloak
-  name: keycloak
   volumePath: {{ database.volumePath | default('/mnt/data_auth') }}
   k8sNodeName: {{ database.k8sNodeName | default('docker-desktop') }}
   storageClass: {{ database.storageClass | default('local-storage') }}

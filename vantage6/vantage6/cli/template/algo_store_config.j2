@@ -277,7 +277,7 @@ database:
 
   #hostpath of the database mount
   volumePath: {{ database.volumePath }}
+  {% endif %}
 
   # The name of the k8s node where the database is running
   k8sNodeName: {{ database.k8sNodeName }}
-  {% endif %}

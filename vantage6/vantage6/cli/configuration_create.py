@@ -68,7 +68,7 @@ def add_common_backend_config(
     backend_config["api_path"] = DEFAULT_API_PATH
 
     config["database"]["external"] = True
-    config["database"]["uri"] = get_production_database_url(instance_type)
+    config["database"]["uri"] = get_external_database_url(instance_type)
 
     return config
 
@@ -95,7 +95,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     return config
 
 
-def get_production_database_url(instance_type: InstanceType) -> dict:
+def get_external_database_url(instance_type: InstanceType) -> dict:
     """
     Add the production backend configuration to the config
 

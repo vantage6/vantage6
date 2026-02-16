@@ -9,12 +9,15 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import create_kubernetes_secret, generate_password
 from vantage6.cli.configuration_create import (
-    get_production_database_url,
+    get_external_database_url,
 )
 from vantage6.cli.globals import APPNAME
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import KubernetesConfig
-from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
+from vantage6.cli.utils_kubernetes import (
+    get_core_api_with_ssl_handling,
+    replace_localhost_for_k8s,
+)
 
 
 def auth_configuration_questionaire(
@@ -43,7 +46,7 @@ def auth_configuration_questionaire(
 
     config["keycloak"]["production"] = True
 
-    config = _add_external_database_config(config)
+    config = _add_external_database_config(config, k8s_node=k8s_cfg.k8s_node)
 
     config = _add_keycloak_admin_secret(config, name, k8s_cfg, credentials)
 
@@ -190,7 +193,7 @@ def _add_smtp_config(config: dict) -> dict:
     return config
 
 
-def _add_external_database_config(config: dict) -> dict:
+def _add_external_database_config(config: dict, k8s_node: str | None = None) -> dict:
     """
     Add external database configuration for Keycloak.
 
@@ -201,6 +204,8 @@ def _add_external_database_config(config: dict) -> dict:
     ----------
     config : dict
         The configuration dictionary
+    k8s_node : str | None
+        The Kubernetes node name. Used to replace localhost with appropriate hostname.
 
     Returns
     -------
@@ -211,10 +216,37 @@ def _add_external_database_config(config: dict) -> dict:
     info("Please provide the URI of the external database.")
     info("Example: postgresql://username:password@localhost:5432/keycloak")
 
-    database_uri = get_production_database_url(InstanceType.AUTH)
+    database_uri = get_external_database_url(InstanceType.AUTH)
 
-    # Parse the URI
+    config["database"] = parse_database_uri_to_config(database_uri, k8s_node=k8s_node)
+
+    return config
+
+
+def parse_database_uri_to_config(
+    database_uri: str, k8s_node: str | None = None
+) -> dict:
+    """
+    Parse a database URI to a configuration dictionary.
+
+    Parameters
+    ----------
+    database_uri : str
+        The database URI to parse
+    k8s_node : str | None
+        The Kubernetes node name. If provided and hostname is 'localhost',
+        it will be replaced with 'host.docker.internal' for Docker Desktop
+        or '172.17.0.1' for Linux.
+
+    Returns
+    -------
+    dict
+        Dictionary with parsed database configuration
+    """
     try:
+        # Replace localhost in URI if needed
+        database_uri = replace_localhost_for_k8s(database_uri, k8s_node)
+
         parsed = urlparse(database_uri)
         username = parsed.username
         password = parsed.password
@@ -222,20 +254,14 @@ def _add_external_database_config(config: dict) -> dict:
         port = parsed.port or 5432
         database_name = parsed.path.lstrip("/") or "vantage6_auth"
 
-        # Keycloak only uses hostname (assumes default PostgreSQL port 5432)
-        # If a different port is specified, we'll include it in the hostname
-        if port != 5432:
-            # For non-standard ports, we need to include it in the hostname
-            # Format: hostname:port
-            host = f"{hostname}:{port}"
-        else:
-            host = hostname
-
-        config["database"]["external"] = True
-        config["database"]["host"] = host
-        config["database"]["name"] = database_name
-        config["database"]["username"] = username
-        config["database"]["password"] = password
+        return {
+            "external": True,
+            "host": hostname,
+            "port": port,
+            "name": database_name,
+            "username": username,
+            "password": password,
+        }
 
     except Exception as e:
         error(f"Failed to parse database URI: {e}")
@@ -243,8 +269,6 @@ def _add_external_database_config(config: dict) -> dict:
             "Please use format: postgresql://username:password@hostname:port/database"
         )
         exit(1)
-
-    return config
 
 
 def _add_keycloak_admin_secret(
