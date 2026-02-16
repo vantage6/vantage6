@@ -59,6 +59,30 @@ service and algorithm store are:
 Of course, you may specify additional flags to the helm commands - see
 the `helm documentation <https://helm.sh/docs/helm/helm_install>`_ for more information.
 
+External databases
+------------------
+
+For production environments, it is recommended to use external PostgreSQL databases
+instead of the databases deployed by the Helm charts. This provides better control over
+database persistence, management, backups, and scaling.
+
+Configuring external databases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When running ``v6 hub new``, you will be prompted for database URIs for the authentication
+service, HQ, and the algorithm store (if enabled). The questionnaire will ask for:
+
+- **Auth Database URI**: The connection string for the Keycloak authentication service database
+- **HQ Database URI**: The connection string for the HQ (server) database
+- **Algorithm Store Database URI**: The connection string for the algorithm store database
+
+You should provide your own database URIs in the format:
+``postgresql://username:password@host:port/database_name``
+
+When deploying the hub, the database URIs must be accessible from within
+the Kubernetes cluster. Use the actual hostname or IP address of your database server.
+Ensure your Kubernetes cluster can access the database server.
+
 Configuring access to the services
 ----------------------------------
 

@@ -1,17 +1,23 @@
 import uuid
 from typing import Any
+from urllib.parse import urlparse
 
 import questionary as q
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import create_kubernetes_secret, generate_password
-from vantage6.cli.configuration_create import add_database_config
+from vantage6.cli.configuration_create import (
+    get_external_database_url,
+)
 from vantage6.cli.globals import APPNAME
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import KubernetesConfig
-from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
+from vantage6.cli.utils_kubernetes import (
+    get_core_api_with_ssl_handling,
+    replace_localhost_for_k8s,
+)
 
 
 def auth_configuration_questionaire(
@@ -40,7 +46,7 @@ def auth_configuration_questionaire(
 
     config["keycloak"]["production"] = True
 
-    config = add_database_config(config, InstanceType.AUTH)
+    config = _add_external_database_config(config, k8s_node=k8s_cfg.k8s_node)
 
     config = _add_keycloak_admin_secret(config, name, k8s_cfg, credentials)
 
@@ -185,6 +191,84 @@ def _add_smtp_config(config: dict) -> dict:
     ).unsafe_ask()
 
     return config
+
+
+def _add_external_database_config(config: dict, k8s_node: str | None = None) -> dict:
+    """
+    Add external database configuration for Keycloak.
+
+    Keycloak uses separate fields (host, database, username, password) instead of a URI.
+    This function prompts for a database URI and parses it to extract the required fields.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration dictionary
+    k8s_node : str | None
+        The Kubernetes node name. Used to replace localhost with appropriate hostname.
+
+    Returns
+    -------
+    dict
+        The configuration dictionary with external database settings added
+    """
+    info("For production environments, it is recommended to use an external database.")
+    info("Please provide the URI of the external database.")
+    info("Example: postgresql://username:password@localhost:5432/keycloak")
+
+    database_uri = get_external_database_url(InstanceType.AUTH)
+
+    config["database"] = parse_database_uri_to_config(database_uri, k8s_node=k8s_node)
+
+    return config
+
+
+def parse_database_uri_to_config(
+    database_uri: str, k8s_node: str | None = None
+) -> dict:
+    """
+    Parse a database URI to a configuration dictionary.
+
+    Parameters
+    ----------
+    database_uri : str
+        The database URI to parse
+    k8s_node : str | None
+        The Kubernetes node name. If provided and hostname is 'localhost',
+        it will be replaced with 'host.docker.internal' for Docker Desktop
+        or '172.17.0.1' for Linux.
+
+    Returns
+    -------
+    dict
+        Dictionary with parsed database configuration
+    """
+    try:
+        # Replace localhost in URI if needed
+        database_uri = replace_localhost_for_k8s(database_uri, k8s_node)
+
+        parsed = urlparse(database_uri)
+        username = parsed.username
+        password = parsed.password
+        hostname = parsed.hostname
+        port = parsed.port or 5432
+        database_name = parsed.path.lstrip("/") or "vantage6_auth"
+
+        return {
+            "external": True,
+            "host": hostname,
+            "port": port,
+            "name": database_name,
+            "username": username,
+            "password": password,
+        }
+
+    except Exception as e:
+        error(f"Failed to parse database URI: {e}")
+        error(
+            "Please use format: postgresql://username:password@hostname:port/database"
+        )
+        exit(1)
 
 
 def _add_keycloak_admin_secret(

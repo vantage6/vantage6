@@ -21,6 +21,9 @@ spec:
     {{- else }}
     host: {{ .Release.Name }}-kc-pgres
     {{- end }}
+    {{- if .Values.database.port }}
+    port: {{ .Values.database.port }}
+    {{- end }}
     database: {{ .Values.database.name }}
     usernameSecret:
       name: {{ .Release.Name }}-kc-db-secret

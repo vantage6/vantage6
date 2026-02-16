@@ -14,6 +14,7 @@ automatically.
 import base64
 import ssl
 from pathlib import Path
+from urllib.parse import urlparse
 
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
@@ -268,3 +269,39 @@ def is_microk8s_context() -> bool:
         return "microk8s" in current_context.lower()
     except Exception:
         return False
+
+
+def replace_localhost_for_k8s(url_or_uri: str, k8s_node: str | None = None) -> str:
+    """
+    Replace localhost in a URL or URI with the appropriate hostname for Kubernetes
+    access.
+
+    This function replaces 'localhost' with:
+    - 'host.docker.internal' for Docker Desktop (when k8s_node == "docker-desktop")
+    - '172.17.0.1' for Linux Kubernetes environments (MicroK8s, etc.)
+
+    Parameters
+    ----------
+    url_or_uri : str
+        The URL or URI that may contain localhost
+    k8s_node : str | None
+        The Kubernetes node name. If None, the URL/URI is returned unchanged.
+        If "docker-desktop", localhost is replaced with "host.docker.internal".
+        Otherwise, localhost is replaced with "172.17.0.1".
+
+    Returns
+    -------
+    str
+        The URL/URI with localhost replaced if applicable, otherwise unchanged
+    """
+    if k8s_node is None:
+        return url_or_uri
+
+    parsed = urlparse(url_or_uri)
+    if parsed.hostname == "localhost":
+        if k8s_node == "docker-desktop":
+            return url_or_uri.replace("localhost", "host.docker.internal")
+        else:
+            return url_or_uri.replace("localhost", "172.17.0.1")
+
+    return url_or_uri

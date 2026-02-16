@@ -6,6 +6,7 @@ from colorama import Fore, Style
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
+from vantage6.cli.configuration_create import get_external_database_url
 from vantage6.cli.context import get_context
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.k8s_config import select_k8s_config
@@ -104,6 +105,13 @@ from vantage6.cli.utils import prompt_config_name
     default=None,
     help="Local chart repository to use.",
 )
+@click.option(
+    "--external-dbs",
+    is_flag=True,
+    default=False,
+    help="Use external databases instead of deploying internal ones. You will be "
+    "prompted for database URIs for auth, HQ, and algorithm store.",
+)
 @click.pass_context
 def cli_new_sandbox(
     click_ctx: click.Context,
@@ -123,6 +131,7 @@ def cli_new_sandbox(
     data_dir: str | None,
     local_chart_dir: Path | None,
     with_prometheus: bool,
+    external_dbs: bool,
 ) -> None:
     """
     Create a sandbox environment.
@@ -142,6 +151,14 @@ def cli_new_sandbox(
         error(f"Configuration {Fore.RED}{hq_name}{Style.RESET_ALL} already exists!")
         exit(1)
 
+    # If using external databases, prompt for database URIs
+    external_db_uris = None
+    if external_dbs:
+        auth_uri = get_external_database_url(InstanceType.AUTH)
+        hq_uri = get_external_database_url(InstanceType.HQ)
+        store_uri = get_external_database_url(InstanceType.ALGORITHM_STORE)
+        external_db_uris = {"auth": auth_uri, "hq": hq_uri, "store": store_uri}
+
     sb_config_manager = SandboxHubConfigManager(
         hq_name=hq_name,
         hq_image=hq_image,
@@ -153,6 +170,7 @@ def cli_new_sandbox(
         k8s_config=k8s_config,
         with_prometheus=with_prometheus,
         custom_data_dir=data_dir,
+        external_db_uris=external_db_uris,
     )
 
     sb_config_manager.generate_hq_configs()

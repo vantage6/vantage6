@@ -2,9 +2,11 @@ from pathlib import Path
 
 from vantage6.common.globals import HTTP_LOCALHOST, InstanceType, Ports
 
+from vantage6.cli.auth.new import parse_database_uri_to_config
 from vantage6.cli.common.new import new
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.sandbox.config.base import BaseSandboxConfigManager
+from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 
 class SandboxHubConfigManager(BaseSandboxConfigManager):
@@ -44,6 +46,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         k8s_config: KubernetesConfig,
         with_prometheus: bool = False,
         custom_data_dir: Path | None = None,
+        external_db_uris: dict[str, str] | None = None,
     ) -> None:
         super().__init__(hq_name, custom_data_dir)
 
@@ -55,6 +58,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         self.extra_auth_config = extra_auth_config
         self.k8s_config = k8s_config
         self.with_prometheus = with_prometheus
+        self.external_db_uris = external_db_uris
 
     def generate_hq_configs(self) -> None:
         """Generates the local sandbox network."""
@@ -152,10 +156,20 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 },
             },
             "rabbitmq": {},
-            "database": {
-                "volumePath": data_dir,
-                "k8sNodeName": self.k8s_config.k8s_node,
-            },
+            "database": (
+                {
+                    "external": True,
+                    "uri": replace_localhost_for_k8s(
+                        self.external_db_uris["hq"], self.k8s_config.k8s_node
+                    ),
+                    "k8sNodeName": self.k8s_config.k8s_node,
+                }
+                if self.external_db_uris
+                else {
+                    "volumePath": data_dir,
+                    "k8sNodeName": self.k8s_config.k8s_node,
+                }
+            ),
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
                 "image": (
@@ -267,10 +281,20 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "local_port_to_expose": Ports.SANDBOX_ALGO_STORE.value,
                 },
             },
-            "database": {
-                "volumePath": data_dir,
-                "k8sNodeName": self.k8s_config.k8s_node,
-            },
+            "database": (
+                {
+                    "external": True,
+                    "uri": replace_localhost_for_k8s(
+                        self.external_db_uris["store"], self.k8s_config.k8s_node
+                    ),
+                    "k8sNodeName": self.k8s_config.k8s_node,
+                }
+                if self.external_db_uris
+                else {
+                    "volumePath": data_dir,
+                    "k8sNodeName": self.k8s_config.k8s_node,
+                }
+            ),
         }
 
         # merge the extra config with the algorithm store config
@@ -281,9 +305,10 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
 
     def _create_auth_config(self) -> None:
         """Create auth configuration file (YAML)."""
+        extra_config = self._read_extra_config_file(self.extra_auth_config)
         new(
             config_producing_func=self.__auth_config_return_func,
-            config_producing_func_args=(self.extra_auth_config,),
+            config_producing_func_args=(extra_config,),
             name=f"{self.hq_name}-auth",
             system_folders=False,
             type_=InstanceType.AUTH,
@@ -298,6 +323,19 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
 
         data_dir = self._create_and_get_data_dir(InstanceType.AUTH)
 
+        # Parse auth database URI to extract host, database name, username, password
+        if self.external_db_uris:
+            auth_uri = self.external_db_uris["auth"]
+            database_config = parse_database_uri_to_config(
+                auth_uri, k8s_node=self.k8s_config.k8s_node
+            )
+            database_config["k8sNodeName"] = self.k8s_config.k8s_node
+        else:
+            database_config = {
+                "volumePath": data_dir,
+                "k8sNodeName": self.k8s_config.k8s_node,
+            }
+
         config = {
             "keycloak": {
                 "production": False,
@@ -307,10 +345,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     f"{HTTP_LOCALHOST}:7681",
                 ],
             },
-            "database": {
-                "volumePath": data_dir,
-                "k8sNodeName": self.k8s_config.k8s_node,
-            },
+            "database": database_config,
         }
 
         # merge the extra config with the auth config
