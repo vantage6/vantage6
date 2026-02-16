@@ -185,4 +185,78 @@ spec:
         {{- end }}
     {{- end }}
     {{- end }}
+    # Define organization_id as a user profile attribute using components (UserProfileProvider)
+    # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
+    components:
+      org.keycloak.userprofile.UserProfileProvider:
+        - id: "26e0e9b3-507f-4fb8-bf2f-77df74d2e78a"
+          providerId: declarative-user-profile
+          subComponents: {}
+          config:
+            kc.user.profile.config:
+              - |
+                {
+                  "attributes": [
+                    {
+                      "name": "username",
+                      "displayName": "${username}",
+                      "validations": {
+                        "length": {"min": 3, "max": 255},
+                        "username-prohibited-characters": {},
+                        "up-username-not-idn-homograph": {}
+                      },
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "email",
+                      "displayName": "${email}",
+                      "validations": {
+                        "email": {},
+                        "length": {"max": 255}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "firstName",
+                      "displayName": "${firstName}",
+                      "validations": {
+                        "length": {"max": 255},
+                        "person-name-prohibited-characters": {}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "lastName",
+                      "displayName": "${lastName}",
+                      "validations": {
+                        "length": {"max": 255},
+                        "person-name-prohibited-characters": {}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "organization_id",
+                      "displayName": "Organization ID",
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin"]
+                      }
+                    }
+                  ]
+                }
 {{- end }}

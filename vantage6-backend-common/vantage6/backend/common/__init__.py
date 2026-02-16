@@ -27,7 +27,10 @@ from vantage6.common.globals import DEFAULT_API_PATH, LOCALHOST
 
 from vantage6.cli.context.base_backend import BaseBackendContext
 
-from vantage6.backend.common.auth import get_keycloak_id_for_user
+from vantage6.backend.common.auth import (
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
+)
 from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
 from vantage6.backend.common.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -350,6 +353,50 @@ class Vantage6App:
             )
             log.error("This means that you cannot login as this user")
             log.exception(exc)
+
+        # Also sync the organization ID of the super user in keycloak
+        self._set_organization_id_in_keycloak(
+            super_user.keycloak_id,
+            super_user.organization_id,
+            super_user.username,
+        )
+
+    def _set_organization_id_in_keycloak(
+        self, keycloak_id: str, organization_id: int, username: str
+    ) -> None:
+        """
+        Set organization_id as an attribute in Keycloak for a user.
+
+        Parameters
+        ----------
+        keycloak_id : str
+            The Keycloak user ID
+        organization_id : int
+            The organization ID to set
+        username : str
+            The username (for logging purposes)
+        """
+        try:
+            keycloak_admin = get_keycloak_admin_client()
+            keycloak_admin.update_user(
+                user_id=keycloak_id,
+                payload={
+                    "attributes": {
+                        "organization_id": [str(organization_id)],
+                    }
+                },
+            )
+            log.debug(
+                "Set organization_id=%s for user %s in Keycloak",
+                organization_id,
+                username,
+            )
+        except Exception as exc:
+            log.warning(
+                "Could not set organization_id attribute for user %s in Keycloak",
+                username,
+            )
+            log.debug("Exception: %s", exc)
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
