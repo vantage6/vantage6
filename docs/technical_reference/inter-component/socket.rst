@@ -1,3 +1,5 @@
+.. _socket:
+
 SocketIO connection
 -------------------
 

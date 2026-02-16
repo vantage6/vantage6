@@ -17,7 +17,8 @@ from vantage6.common.docker.addons import (
 )
 from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 
-from vantage6.backend.common import get_hq_url
+from vantage6.backend.common import get_backend_service_url
+from vantage6.backend.common.auth import get_email_for_keycloak_id
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -683,15 +684,15 @@ class Algorithms(AlgorithmBaseResource):
         store_url : str | None
             URL of the algorithm store
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert "
                 "algorithm managers that reviews have to be assigned."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        reply_to = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get users with the role 'algorithm manager'
         log.info(
@@ -715,16 +716,26 @@ class Algorithms(AlgorithmBaseResource):
             template_vars = {
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
-                "store_url": get_hq_url(config, store_url),
+                "store_url": get_backend_service_url(config, store_url),
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
-                "support_email": support_email,
+                "support_email": reply_to,
             }
+            email_algo_manager = get_email_for_keycloak_id(algo_manager.keycloak_id)
+            if not email_algo_manager:
+                log.warning(
+                    "No email address found for the algorithm manager '%s'. No "
+                    "email will be sent to alert them that they have to assign "
+                    "reviewers for the algorithm '%s'.",
+                    algo_manager.username,
+                    algorithm.name,
+                )
+                continue
             with app.app_context():
                 mail.send_email(
                     subject="New vantage6 algorithm needs reviewer assignment",
                     sender=email_sender,
-                    recipients=[algo_manager.email],
+                    recipients=[email_algo_manager],
                     text_body=render_template(
                         "mail/new_algorithm.txt", **template_vars
                     ),

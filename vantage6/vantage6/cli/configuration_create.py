@@ -87,7 +87,6 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
         raise ValueError(f"Invalid instance type: {instance_type}")
 
     # === Database settings ===
-    # TODO v5+ this should be updated to allow for remote databases.
     config["database"]["volumePath"] = q.text(
         f"Where is your {service_name} database located on the host machine?",
         default=f"{Path.cwd()}/dev/.db/db_pv_{service_name}",

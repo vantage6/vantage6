@@ -26,8 +26,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
       - name: vantage6-node
-        # TODO v5+ change to final v5 image
-        image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:5" }}
+        image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:uluru" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
         - name: V6_PROXY_PORT

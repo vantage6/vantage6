@@ -101,8 +101,8 @@ class WizardTest(unittest.TestCase):
             "postgresql://uri",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
-            "hq-image",  # hq image
-            "ui-image",  # UI image
+            True,  # setup allowed algorithm stores
+            "https://store.uluru.vantage6.ai",  # allowed algorithm stores
         ]
 
         config = hq_configuration_questionaire(
@@ -118,11 +118,10 @@ class WizardTest(unittest.TestCase):
             ["database", "uri"],
             ["database", "volumePath"],
             ["hq", "api_path"],
-            ["hq", "image"],
             ["hq", "keycloak"],
             ["hq", "logging"],
             ["hq", "port"],
-            ["ui", "image"],
+            ["ui", "allowedAlgorithmStores"],
             ["rabbitmq", "password"],
         ]
         for nesting in nested_keys:
