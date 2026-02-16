@@ -1,6 +1,16 @@
 Release notes
 =============
 
+4.13.7
+------
+
+*17 February 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: cryptography, cffi and
+    various UI dependencies (`PR#2502 <https://github.com/vantage6/vantage6/pull/2502>`_).
+
 4.13.6
 ------
 
