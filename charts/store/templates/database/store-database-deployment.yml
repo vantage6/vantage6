@@ -1,3 +1,4 @@
+{{- if not .Values.database.external }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,3 +38,4 @@ spec:
       - name: postgres-storage
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-pgres-pvc
+{{- end }}
