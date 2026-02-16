@@ -1,6 +1,79 @@
 Release notes
 =============
 
+5.0.0
+-----
+
+*?? 2026*
+
+*Release 5.0.0 is the largest release in the history of vantage6. We have only listed
+top-level changes to keep this overview readable. The issues of the major changes offer
+more details regarding the lower-level changes required to accomplish it.*
+
+- **Security**
+
+.. TODO to be added just before release
+
+- **Feature**
+
+  - Algorithm sessions can be created to help running algorithms faster, more easily,
+    and make it easier to write algorithms for different database types
+    (`Issue#1495 <https://github.com/vantage6/vantage6/issues/1495>`_). See also
+    `this blogpost <https://vantage6.ai/news/sessions-in-vantage6/>`_.
+  - Kubernetes support for all components of the vantage6 infrastructure
+    (`Issue#248 <https://github.com/vantage6/vantage6/issues/248>`_). This includes a
+    rewrite of the CLI (`Issue#1672 <https://github.com/vantage6/vantage6/issues/1672>`_)
+    as well as the release of vantage6 Helm charts. See also
+    `this blogpost <https://vantage6.ai/news/from-docker-to-kubernetes/>`_.
+  - Authentication implementation has been replaced by Keycloak authentication service
+    (`Issue#917 <https://github.com/vantage6/vantage6/issues/917>`_).
+  - A new development environment, based on ``devspace``, has been added to the project.
+    This environment features live updates of the components when the code is changed
+    (`Issue#1783 <https://github.com/vantage6/vantage6/issues/1783>`_).
+  - Improved implementation of the mock algorithm client, which has been refactored
+    into a 'mock network' that contains logical vantage6 components like nodes, HQ,
+    and users. This makes it easier to test algorithms and data extraction steps
+    (`PR#2308 <https://github.com/vantage6/vantage6/pull/2308>`_).
+  - New 'update image' button in the UI to update the image of an algorithm in an
+    algorithm store without changing other algorithm metadata
+    (`Issue#2394 <https://github.com/vantage6/vantage6/issues/2394>`_).
+
+- **Change**
+
+  - Renamed ``server`` to ``HQ`` or ``Headquarters`` to better reflect its purpose.
+    Also, the entirety of central components of the vantage6 infrastructure (HQ, store,
+    authentication, UI, etc.) is now called the ``hub``
+    (`Issue#2164 <https://github.com/vantage6/vantage6/issues/2164>`_).
+  - Task method and arguments are no longer in an ``input_`` field, but are specified
+    separately as ``method`` and ``arguments`` fields
+    (`Issue#919 <https://github.com/vantage6/vantage6/issues/919>`_,
+    `Issue#1851 <https://github.com/vantage6/vantage6/issues/1851>`_).
+  - Upgraded Python version to 3.13
+    (`Issue#1315 <https://github.com/vantage6/vantage6/issues/1315>`_).
+  - Updated from outdated ``setup.py`` to modern ``pyproject.toml`` for Python
+    packaging, and use ``uv`` as recommended package manager instead of ``pip``
+    (`Issue#1894 <https://github.com/vantage6/vantage6/issues/1894>`_).
+  - Changed code style from Black to Ruff
+    (`Issue#2249 <https://github.com/vantage6/vantage6/issues/2249>`_).
+  - Updated SQLAlchemy from v1 to v2
+    (`Issue#1605 <https://github.com/vantage6/vantage6/issues/1605>`_).
+  - Remove `authenticatable.ip` field as it was not used
+    (`Issue#2109 <https://github.com/vantage6/vantage6/issues/2109>`_).
+  - Updated ``v6 algorithm create`` to support v5 changes
+    (`Issue#1717 <https://github.com/vantage6/vantage6/issues/1717>`_).
+  - Split up HQ unit tests into smaller files, and make running them 5x faster
+    (`Issue#1066 <https://github.com/vantage6/vantage6/issues/1066>`_).
+  - Separate store URL and API path in database, to allow for custom API paths
+    (`Issue#1668 <https://github.com/vantage6/vantage6/issues/1668>`_).
+  - Added a privacy statement to the UI. This is done because Keycloak uses (functional)
+    cookies to handle authentication
+    (`Issue#1931 <https://github.com/vantage6/vantage6/issues/1931>`_).
+
+- **Bugfix**
+
+  - Check if database labels exist on node startup
+    (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
+
 4.13.6
 ------
 
