@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from pathlib import Path
+from urllib.parse import urlparse
 
 import questionary as q
 
@@ -66,9 +67,8 @@ def add_common_backend_config(
 
     backend_config["api_path"] = DEFAULT_API_PATH
 
-    config = add_database_config(config, instance_type)
-
-    config = _add_production_backend_config(config, instance_type)
+    config["database"]["external"] = True
+    config["database"]["uri"] = get_production_database_url(instance_type)
 
     return config
 
@@ -95,7 +95,7 @@ def add_database_config(config: dict, instance_type: InstanceType) -> dict:
     return config
 
 
-def _add_production_backend_config(config: dict, instance_type: InstanceType) -> dict:
+def get_production_database_url(instance_type: InstanceType) -> dict:
     """
     Add the production backend configuration to the config
 
@@ -118,17 +118,26 @@ def _add_production_backend_config(config: dict, instance_type: InstanceType) ->
     # Set different default URIs based on instance type
     if instance_type == InstanceType.ALGORITHM_STORE:
         default_uri = "postgresql://vantage6:vantage6@localhost:5433/vantage6_store"
-    else:
-        # Default for HQ and AUTH
+    elif instance_type == InstanceType.AUTH:
+        default_uri = "postgresql://vantage6:vantage6@localhost:5434/vantage6_auth"
+    elif instance_type == InstanceType.HQ:
         default_uri = "postgresql://vantage6:vantage6@localhost:5432/vantage6"
+    else:
+        raise ValueError(
+            f"Invalid instance type to set default database URI for: {instance_type}"
+        )
 
-    config["database"]["external"] = True
-    config["database"]["uri"] = q.text(
+    database_uri = q.text(
         "Database URI:",
         default=default_uri,
     ).unsafe_ask()
 
-    return config
+    parsed = urlparse(database_uri)
+    if parsed.scheme not in ["postgresql", "postgres"]:
+        error(f"Unsupported database scheme: {parsed.scheme}. Use postgresql://")
+        exit(1)
+
+    return database_uri
 
 
 def make_configuration(

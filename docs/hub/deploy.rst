@@ -69,9 +69,10 @@ database persistence, management, backups, and scaling.
 Configuring external databases
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When running ``v6 hub new``, you will be prompted for database URIs for both HQ and the
-algorithm store (if enabled). The questionnaire will ask for:
+When running ``v6 hub new``, you will be prompted for database URIs for the authentication
+service, HQ, and the algorithm store (if enabled). The questionnaire will ask for:
 
+- **Auth Database URI**: The connection string for the Keycloak authentication service database
 - **HQ Database URI**: The connection string for the HQ (server) database
 - **Algorithm Store Database URI**: The connection string for the algorithm store database
 

@@ -1,13 +1,16 @@
 import uuid
 from typing import Any
+from urllib.parse import urlparse
 
 import questionary as q
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import create_kubernetes_secret, generate_password
-from vantage6.cli.configuration_create import add_database_config
+from vantage6.cli.configuration_create import (
+    get_production_database_url,
+)
 from vantage6.cli.globals import APPNAME
 from vantage6.cli.hub.utils.enum import AuthCredentials
 from vantage6.cli.k8s_config import KubernetesConfig
@@ -40,7 +43,7 @@ def auth_configuration_questionaire(
 
     config["keycloak"]["production"] = True
 
-    config = add_database_config(config, InstanceType.AUTH)
+    config = _add_external_database_config(config)
 
     config = _add_keycloak_admin_secret(config, name, k8s_cfg, credentials)
 
@@ -183,6 +186,63 @@ def _add_smtp_config(config: dict) -> dict:
         "Do you want to require users to verify their email address?",
         default=True,
     ).unsafe_ask()
+
+    return config
+
+
+def _add_external_database_config(config: dict) -> dict:
+    """
+    Add external database configuration for Keycloak.
+
+    Keycloak uses separate fields (host, database, username, password) instead of a URI.
+    This function prompts for a database URI and parses it to extract the required fields.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration dictionary
+
+    Returns
+    -------
+    dict
+        The configuration dictionary with external database settings added
+    """
+    info("For production environments, it is recommended to use an external database.")
+    info("Please provide the URI of the external database.")
+    info("Example: postgresql://username:password@localhost:5432/keycloak")
+
+    database_uri = get_production_database_url(InstanceType.AUTH)
+
+    # Parse the URI
+    try:
+        parsed = urlparse(database_uri)
+        username = parsed.username
+        password = parsed.password
+        hostname = parsed.hostname
+        port = parsed.port or 5432
+        database_name = parsed.path.lstrip("/") or "vantage6_auth"
+
+        # Keycloak only uses hostname (assumes default PostgreSQL port 5432)
+        # If a different port is specified, we'll include it in the hostname
+        if port != 5432:
+            # For non-standard ports, we need to include it in the hostname
+            # Format: hostname:port
+            host = f"{hostname}:{port}"
+        else:
+            host = hostname
+
+        config["database"]["external"] = True
+        config["database"]["host"] = host
+        config["database"]["name"] = database_name
+        config["database"]["username"] = username
+        config["database"]["password"] = password
+
+    except Exception as e:
+        error(f"Failed to parse database URI: {e}")
+        error(
+            "Please use format: postgresql://username:password@hostname:port/database"
+        )
+        exit(1)
 
     return config
 

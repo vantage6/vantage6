@@ -1,6 +1,7 @@
 # External Databases for vantage6 Hub
 
-This directory contains a Docker Compose configuration to run two PostgreSQL databases for testing vantage6 hub with external databases.
+This directory contains a Docker Compose configuration to run three PostgreSQL databases
+for testing vantage6 hub with external databases.
 
 ## Services
 
@@ -13,6 +14,12 @@ This directory contains a Docker Compose configuration to run two PostgreSQL dat
 - **store-db**: PostgreSQL database for vantage6 algorithm store
   - Port: `5433` (host) → `5432` (container)
   - Database: `vantage6_store`
+  - User: `vantage6`
+  - Password: `vantage6`
+
+- **auth-db**: PostgreSQL database for Keycloak authentication service
+  - Port: `5434` (host) → `5432` (container)
+  - Database: `vantage6_auth`
   - User: `vantage6`
   - Password: `vantage6`
 
@@ -47,6 +54,7 @@ docker compose ps
 
 When running `v6 hub new`, you will be prompted for database URIs. Use the following:
 
+- **Auth Database URI**: `postgresql://vantage6:vantage6@localhost:5434/vantage6_auth`
 - **HQ Database URI**: `postgresql://vantage6:vantage6@localhost:5432/vantage6`
 - **Algorithm Store Database URI**: `postgresql://vantage6:vantage6@localhost:5433/vantage6_store`
 
@@ -54,21 +62,27 @@ When running `v6 hub new`, you will be prompted for database URIs. Use the follo
 
 ### Kubernetes Deployment
 
-When deploying the hub to Kubernetes (using `v6 hub start`), the database URIs need to be accessible from within the Kubernetes cluster:
+When deploying the hub to Kubernetes (using `v6 hub start`), the database URIs need to
+be accessible from within the Kubernetes cluster:
 
 - **For local Kubernetes (e.g., Docker Desktop)**: Replace `localhost` with `host.docker.internal`:
+  - Auth: `postgresql://vantage6:vantage6@host.docker.internal:5434/vantage6_auth`
   - HQ: `postgresql://vantage6:vantage6@host.docker.internal:5432/vantage6`
   - Store: `postgresql://vantage6:vantage6@host.docker.internal:5433/vantage6_store`
 
-- **For production**: Use the actual hostname or IP address of the database server that is reachable from your Kubernetes cluster.
+- **For production**: Use the actual hostname or IP address of the database server that
+  is reachable from your Kubernetes cluster.
 
 ### Database Persistence
 
-The databases use Docker volumes (`hq-db-data` and `store-db-data`) to persist data. These volumes will persist even if you stop the containers. To remove them, use `docker compose down -v`.
+The databases use Docker volumes (`hq-db-data`, `store-db-data`, and `auth-db-data`) to
+persist data. These volumes will persist even if you stop the containers. To remove
+them, use `docker compose down -v`.
 
 ### Health Checks
 
-Both databases include health checks to ensure they are ready before use. You can check the health status with:
+All databases include health checks to ensure they are ready before use. You can check
+the health status with:
 
 ```bash
 docker compose ps
