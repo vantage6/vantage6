@@ -247,7 +247,7 @@ database:
 
 # Settings for enabling monitoring of vantage6 nodes resource usage (e.g. CPU, memory).
 # This is done using Prometheus. There are two components to this:
-# 1. The Prometheus exporter (running as part of the vantage6 server), which collects
+# 1. The Prometheus exporter (running as part of vantage6 HQ), which collects
 #    the metrics from the nodes.
 # 2. The Prometheus server (running as a separate service), which scrapes the
 #     metrics exposed by the Prometheus exporter and stores them.

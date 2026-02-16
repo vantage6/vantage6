@@ -7,6 +7,8 @@ store:
   # The description of the store
   description: {{ store.description | default('Vantage algorithm store version 5') }}
 
+  # The external URL of the algorithm store
+  baseUrl: {{ store.baseUrl | default('http://localhost:7602') }}
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration
@@ -211,6 +213,40 @@ store:
   # cors_allowed_origins:
   #   - https://portal.uluru.vantage6.ai
   #   - http://localhost:7600
+  {% endif %}
+
+  # SMTP server configuration. If given, will be used to send emails to users, e.g. to
+  # alert them that an algorithm review is requested from them.
+  {% if store.smtpServer is defined %}
+  smtpServer:
+    host: {{ store.smtpServer.host }}
+    port: {{ store.smtpServer.port }}
+    {% if store.smtpServer.user is defined %}
+    user: {{ store.smtpServer.user }}
+    {% endif %}
+    {% if store.smtpServer.password is defined %}
+    password: {{ store.smtpServer.password }}
+    {% endif %}
+    from: {{ store.smtpServer.from }}
+    {% if store.smtpServer.replyTo is defined %}
+    replyTo: {{ store.smtpServer.replyTo }}
+    {% endif %}
+    {% if store.smtpServer.starttls is defined %}
+    starttls: {{ store.smtpServer.starttls }}
+    {% endif %}
+    {% if store.smtpServer.ssl is defined %}
+    ssl: {{ store.smtpServer.ssl }}
+    {% endif %}
+  {% else %}
+  # smtpServer:
+  #  host: your-smtp-server-hostname.org
+  #  port: 587                            # usually 587 for STARTTLS, 465 for SSL
+  #  user: your-username                  # only required if using authentication
+  #  password: your-password              # only required if using authentication
+  #  from: your-email@example.com         # Used for the 'From' header in the mails
+  #  replyTo: reply-to-email@example.com  # Optional, reference for 'Reply-To'
+  #  starttls: true                       # true for STARTTLS, false for SSL
+  #  ssl: false                           # true for SSL, false for STARTTLS
   {% endif %}
 
 database:

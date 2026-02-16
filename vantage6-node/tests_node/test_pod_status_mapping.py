@@ -15,7 +15,7 @@ from kubernetes.client import (
 from vantage6.common.enum import RunStatus
 
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
-    compute_job_pod_run_status,
+    compute_run_pod_status,
 )
 
 
@@ -68,7 +68,7 @@ class TestPodStatus(unittest.TestCase):
     def test_running_job_pod(self):
         self.mock_pod.status.phase = "Running"
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.ACTIVE,
@@ -78,7 +78,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.phase = "Pending"
         self.mock_pod.status.container_statuses = None
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.INITIALIZING,
@@ -91,7 +91,7 @@ class TestPodStatus(unittest.TestCase):
             0
         ].state.waiting.reason = "ImagePullBackOff"
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.NO_DOCKER_IMAGE,
@@ -102,7 +102,7 @@ class TestPodStatus(unittest.TestCase):
         self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
         self.mock_pod.status.container_statuses[0].state.waiting = None
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.INITIALIZING,
@@ -115,7 +115,7 @@ class TestPodStatus(unittest.TestCase):
             0
         ].state.waiting.reason = "CrashLoopBackOff"
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.CRASHED,
@@ -124,7 +124,7 @@ class TestPodStatus(unittest.TestCase):
     def test_completed_job(self):
         self.mock_pod.status.phase = "Succeded"
         self.assertEqual(
-            compute_job_pod_run_status(
+            compute_run_pod_status(
                 log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
             ),
             RunStatus.COMPLETED,

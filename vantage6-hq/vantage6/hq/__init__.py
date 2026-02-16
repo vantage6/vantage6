@@ -5,7 +5,6 @@ subsequently interact through the API it hosts. Finally, it also communicates wi
 authenticated nodes and users via the socketIO server that is run here.
 """
 
-import importlib.metadata
 import os
 
 from gevent import monkey
@@ -18,10 +17,12 @@ if not os.environ.get("READTHEDOCS"):
 # pylint: disable=wrong-import-position, wrong-import-order
 import datetime as dt
 import importlib
+import importlib.metadata
 import logging
 import time
 import uuid
 from http import HTTPStatus
+from pathlib import Path
 from threading import Thread
 
 from flask import current_app
@@ -78,7 +79,12 @@ class HQApp(Vantage6App):
     def __init__(self, ctx: HQContext) -> None:
         """Create a vantage6 HQ application."""
 
-        super().__init__(ctx, HQ_MODULE_NAME)
+        super().__init__(
+            ctx,
+            HQ_MODULE_NAME,
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
+        )
 
         self.metrics = Metrics(labels=["node_id", "platform", "os"])
         # Setup websocket channel
@@ -325,7 +331,7 @@ class HQApp(Vantage6App):
         # create root user if it is not in the DB yet
         try:
             admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
-        except Exception:
+        except NoResultFound:
             log.warning("No root user found! Is this the first run?")
             admin_user = self._create_super_user()
 
@@ -349,8 +355,10 @@ class HQApp(Vantage6App):
             pass
 
         log.debug("Creating organization for root user")
-        if not (org := db.Organization.get_by_name("root")):
+        org = db.Organization.get_by_name("root")
+        if not org:
             org = db.Organization(name="root")
+            org.save()
 
         root = db.Role.get_by_name(DefaultRole.ROOT.value)
 

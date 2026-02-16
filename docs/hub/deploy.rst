@@ -74,5 +74,6 @@ will use your own routing solution.
 We recommend that you specify an ``ingress`` or ``LoadBalancer`` service to set up
 routing traffic to the services.
 
-.. TODO v5+ add ingress example
-.. TODO v5+ add LoadBalancer example
+.. TODO add ingress example
+.. TODO add LoadBalancer example
+.. See issues #1686, #1948
