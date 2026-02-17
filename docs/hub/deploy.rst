@@ -59,6 +59,34 @@ service and algorithm store are:
 Of course, you may specify additional flags to the helm commands - see
 the `helm documentation <https://helm.sh/docs/helm/helm_install>`_ for more information.
 
+Configuring secrets
+-------------------
+
+To keep sensitive information secure, vantage6 uses Kubernetes Secrets.
+The vantage6 CLI creates Kubernetes Secrets for credentials. If you don't use the CLI,
+you should create the secrets in this section manually.
+
+.. warning::
+
+  Most Kubernetes secrets are currently created by the Helm chart based on the
+  values.yaml file. This practice is not ideal because the secrets are stored in plain
+  text in the values.yaml file. We will soon provide a way to create these secrets using
+  the CLI as well (see
+  `Issue #2391 <https://github.com/vantage6/vantage6/issues/2391>`_) - so the number of
+  secrets in this section will increase soon.
+
+Authentication chart (``auth``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **Purpose**: Store the keycloak admin username/password. Note that this is a different
+  admin than the vantage6 admin - it is used to manage the Keycloak service.
+- **Created by**: ``v6 auth new``
+- **Reference in Helm values**: ``keycloak.auth.adminUserSecret``
+- **Required keys**:
+
+  - ``username``
+  - ``password``
+
 Configuring access to the services
 ----------------------------------
 
