@@ -48,10 +48,9 @@ from vantage6.cli.sandbox.new import cli_new_sandbox
 from vantage6.cli.sandbox.remove import cli_sandbox_remove
 from vantage6.cli.sandbox.start import cli_sandbox_start
 from vantage6.cli.sandbox.stop import cli_sandbox_stop
-
-# from vantage6.cli.test.client_script import cli_test_client_script
-# from vantage6.cli.test.integration_test import cli_test_integration
+from vantage6.cli.test.client_script import cli_test_client_script
 from vantage6.cli.test.feature_tester import cli_test_features
+from vantage6.cli.test.integration_test import cli_test_integration
 from vantage6.cli.use.context import cli_use_context
 from vantage6.cli.use.namespace import cli_use_namespace
 
@@ -173,8 +172,8 @@ def cli_test() -> None:
 
 # Define the commands for the test group
 cli_test.add_command(cli_test_features, name="feature-test")
-# cli_test.add_command(cli_test_integration, name="integration-test")
-# cli_test.add_command(cli_test_client_script, name="client-script")
+cli_test.add_command(cli_test_integration, name="integration-test")
+cli_test.add_command(cli_test_client_script, name="client-script")
 
 
 # Define the algorithm-store group

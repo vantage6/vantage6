@@ -1827,7 +1827,10 @@ class UserClient(ClientBase):
                 ID of the algorithm store to retrieve the algorithm from
             databases: list[list[dict]] | list[dict], optional
                 Databases to be used at the node. Each dict should look like this:
-                {"type": "dataframe", "dataframe_id": <my_dataframe_id>}
+                {"type": "dataframe", "dataframe_id": <my_dataframe_id>}. If the
+                "'type': 'dataframe'" is missing, it is added automatically. This
+                parameter is optional but necessary if your task uses data (which is
+                usually the case).
             action: str, optional
                 Session action type to be performed by the task. If not provided, the
                 action from the algorithm store will be used, if available. If it is not
@@ -1940,25 +1943,26 @@ class UserClient(ClientBase):
 
         @staticmethod
         def _parse_arg_databases(
-            databases: list[list[dict]] | list[dict] | str,
+            databases: list[list[dict]] | list[dict] | int,
         ) -> list[list[dict]]:
             """Parse the databases argument
 
             Parameters
             ----------
             databases: list[list[dict]] | list[dict] | str
-                Each dict should contain at least a 'label' key. A single str
-                can be passed and will be interpreted as a single database with
-                that label.
+                Each dict should contain at least a 'dataframe_id' key. A single
+                dataframe id can be passed and will be interpreted as a single database
+                with that id.
+
 
             Returns
             -------
-            list[dict]
+            list[list[dict]]
                 The parsed databases argument
 
             Raises
             ------
-            ValueError: if 'label' is missing from the database dict or an
+            ValueError: if 'dataframe_id' is missing from the database dict or an
                         invalid label is provided.
 
             Note
@@ -1967,11 +1971,16 @@ class UserClient(ClientBase):
             catch an exception later on (EAFP) because the task will be created
             on HQ before nodes might even get a chance to complain.
             """
-            if isinstance(databases, str):
+            if isinstance(databases, int):
                 # it is not unlikely that users specify a single database as a
                 # str, in that case we convert it to a list
                 databases = [
-                    [{"label": databases, "type": TaskDatabaseType.SOURCE.value}]
+                    [
+                        {
+                            "dataframe_id": databases,
+                            "type": TaskDatabaseType.DATAFRAME.value,
+                        }
+                    ]
                 ]
 
             # It is common to only specify a single level of databases, we assume
@@ -1986,30 +1995,19 @@ class UserClient(ClientBase):
 
             for db in [db for sublist in databases for db in sublist]:
                 try:
-                    label_input = db.get("label")
+                    db.get("dataframe_id")
                 except AttributeError:
                     # pylint: disable=raise-missing-from
                     raise ValueError(
                         "Each database should be specified as a dict with at least "
-                        "a 'label' key. Alternatively, a single str can be passed "
-                        "and will be interpreted as a single database with that "
-                        "label. These dicts can be nested in a list of lists to "
+                        "a 'dataframe_id' key. Alternatively, a single dataframe id "
+                        "may be passed. The dicts can be nested in a list of lists to "
                         "specify multiple databases for each argument. Example: "
-                        "databases=[[{'label': 'db1'}, {'label': 'db2'}], "
-                        "[{'label': 'db3'}]] or databases='db1'"
+                        "databases=[[{'dataframe_id': 1}, {'dataframe_id': 2}], "
+                        "[{'dataframe_id': 3}]] or databases=1"
                     )
-                if not label_input or not isinstance(label_input, str):
-                    raise ValueError(
-                        "Each database should have a 'label' key with a string value."
-                    )
-                # Labels will become part of env var names in algo container,
-                # some chars are not allowed in some shells.
-                if not label_input.isidentifier():
-                    raise ValueError(
-                        "Database labels should be made up of letters, digits"
-                        " (except first character) and underscores only. "
-                        f"Invalid label: {db.get('label')}"
-                    )
+                # ensure the type is set
+                db["type"] = TaskDatabaseType.DATAFRAME.value
             return databases
 
         def delete(self, id_: int) -> None:
