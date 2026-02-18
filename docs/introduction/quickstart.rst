@@ -79,8 +79,9 @@ browser and log in with the username ``admin`` and password ``admin``. Enjoy!
     files are stored in a WSL folder. Unfortunately, this folder is deleted when you
     restart WSL or your machine itself. This means your sandbox will be lost.
 
-    Also, note that to run the sandbox from WSL, you need to install ``wslview`` so that
-    WSL can initiate the authentication process in your browser. To install it, run:
+    Also, it is helpful to install ``wslview``, which allows you to open the browser
+    from WSL. This makes authenticating from the client easier. You can install
+    it with:
 
     .. code-block:: bash
 

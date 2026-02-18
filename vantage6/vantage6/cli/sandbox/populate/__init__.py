@@ -6,6 +6,8 @@ import time
 import traceback
 from logging import info
 
+import requests
+
 from vantage6.common import error
 from vantage6.common.globals import Ports
 
@@ -126,7 +128,62 @@ def populate_hub_sandbox(
     return report_creation["nodes"]["created"]
 
 
-def _initalize_client(hq_url, auth_url) -> Client:
+def _wait_for_keycloak_realm(
+    auth_url: str, realm_name: str = "vantage6", timeout: int = 120
+) -> None:
+    """
+    Wait for Keycloak realm to be available before attempting authentication.
+
+    This prevents race conditions where authentication is attempted before
+    the realm import job has completed.
+
+    Parameters
+    ----------
+    auth_url : str
+        The URL of the Keycloak auth service.
+    realm_name : str
+        The name of the realm to wait for. Default is "vantage6".
+    timeout : int
+        Maximum time to wait in seconds. Default is 120.
+    """
+    info("Waiting for Keycloak realm to be ready...")
+    well_known_url = f"{auth_url}/realms/{realm_name}/.well-known/openid-configuration"
+    start_time = time.time()
+    attempt = 0
+
+    while time.time() - start_time < timeout:
+        attempt += 1
+        try:
+            resp = requests.get(well_known_url, timeout=5)
+            if resp.status_code == 200:
+                info("Keycloak realm is ready.")
+                return
+            elif resp.status_code == 404:
+                # Realm doesn't exist yet - wait and retry
+                if attempt % 5 == 0:  # Log every 5th attempt
+                    info(f"Realm not ready yet (attempt {attempt})...")
+                time.sleep(2)
+            else:
+                # Other HTTP errors - log and retry
+                if attempt % 10 == 0:  # Log every 10th attempt
+                    info(f"Keycloak returned status {resp.status_code}, retrying...")
+                time.sleep(2)
+        except requests.exceptions.RequestException:
+            # Network errors - wait and retry
+            if attempt % 5 == 0:
+                info(f"Keycloak not reachable yet (attempt {attempt})...")
+            time.sleep(2)
+
+    error(
+        f"Timeout: Keycloak realm '{realm_name}' did not become available "
+        f"within {timeout} seconds. The realm import job may have failed."
+    )
+    raise TimeoutError(
+        f"Keycloak realm '{realm_name}' not ready after {timeout} seconds"
+    )
+
+
+def _initalize_client(hq_url: str, auth_url: str) -> Client:
     """
     Initialize an authenticated client to the HQ.
 
@@ -144,6 +201,9 @@ def _initalize_client(hq_url, auth_url) -> Client:
     Client
         An authenticated client to the vantage6 hub.
     """
+    # Wait for Keycloak realm to be ready before attempting authentication
+    _wait_for_keycloak_realm(auth_url)
+
     client = Client(
         hq_url=hq_url,
         auth_url=auth_url,

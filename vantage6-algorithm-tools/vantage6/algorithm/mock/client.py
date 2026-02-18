@@ -527,6 +527,11 @@ class MockUserClient(MockBaseClient):
                 "setup_collaboration",
                 "User",
                 "Util",
+                "_maybe_open_browser_for_device_flow",
+                "_get_device_flow_endpoints",
+                "_poll_device_token",
+                "_start_device_authorization",
+                "_finalize_successful_authentication",
             ]
         )
 
