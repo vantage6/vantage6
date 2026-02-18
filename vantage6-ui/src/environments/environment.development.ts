@@ -5,7 +5,7 @@ const env: EnvironmentConfig = {
   hq_url: (window as any).env?.hq_url || 'http://localhost:7601',
   api_path: (window as any).env?.api_path || '/hq',
   allowed_algorithm_stores: (window as any).env?.allowed_algorithm_stores || '*',
-  auth_url: (window as any).env?.auth_url || 'http://localhost:8080',
+  auth_url: (window as any).env?.auth_url || 'http://localhost:7680',
   keycloak_realm: (window as any).env?.keycloak_realm || 'vantage6',
   keycloak_client: (window as any).env?.keycloak_client || 'public_client',
   refresh_token_validity_seconds: (window as any).env?.refresh_token_validity_seconds || 1800,

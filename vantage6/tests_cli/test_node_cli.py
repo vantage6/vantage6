@@ -200,7 +200,7 @@ class NodeCLITest(unittest.TestCase):
         """Start node without errors"""
 
         ctx = MagicMock(
-            config={"node": {"proxyPort": 8080, "image": "my-node-image"}},
+            config={"node": {"proxyPort": 7654, "image": "my-node-image"}},
             config_file="/config.yaml",
             data_dir=Path("."),
             log_dir=Path("."),

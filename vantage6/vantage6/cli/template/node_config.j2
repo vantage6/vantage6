@@ -9,7 +9,7 @@ node:
 
   # Keycloak configuration
   keycloak:
-    url: {{ node.keycloak.url | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080') }}
+    url: {{ node.keycloak.url | default('http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680') }}
     realm: {{ node.keycloak.realm | default('vantage6') }}
 
   # Settings for HQ to connect to.

@@ -189,7 +189,7 @@ ui:
   keycloak:
     realm: vantage6
     client: public_client
-    publicUrl: http://localhost:8080
+    publicUrl: http://localhost:7680
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs
