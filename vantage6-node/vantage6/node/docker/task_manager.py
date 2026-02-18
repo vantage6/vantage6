@@ -115,6 +115,7 @@ class DockerTaskManager(DockerBaseManager):
         self.requires_pull = requires_pull
         self.share_algorithm_logs = share_algorithm_logs
         self.container = None
+        self.helper_container = None
         self.status_code = None
         self.docker_input = None
 
@@ -284,8 +285,10 @@ class DockerTaskManager(DockerBaseManager):
 
     def cleanup(self) -> None:
         """Cleanup the containers generated for this task"""
-        remove_container(self.helper_container, kill=True)
-        remove_container(self.container, kill=True)
+        if self.helper_container:
+            remove_container(self.helper_container, kill=True)
+        if self.container:
+            remove_container(self.container, kill=True)
 
     def _run_algorithm(self) -> list[dict] | None:
         """
@@ -315,7 +318,8 @@ class DockerTaskManager(DockerBaseManager):
             docker_client=self.docker, name=helper_container_name
         )
 
-        if self.__vpn_manager:
+        container_network = self.isolated_network_mgr.network_name
+        if self.__vpn_manager and self.__vpn_manager.has_vpn:
             # if VPN is active, network exceptions must be configured
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
@@ -335,6 +339,7 @@ class DockerTaskManager(DockerBaseManager):
             vpn_ports = self.__vpn_manager.forward_vpn_traffic(
                 helper_container=self.helper_container, algo_image_name=self.image
             )
+            container_network = "container:" + self.helper_container.id
 
         # try reading docker input
         # FIXME BvB 2023-02-03: why do we read docker input here? It is never
@@ -360,7 +365,7 @@ class DockerTaskManager(DockerBaseManager):
                 self.image,
                 detach=True,
                 environment=self.environment_variables,
-                network="container:" + self.helper_container.id,
+                network=container_network,
                 volumes=self.volumes,
                 name=container_name,
                 labels=self.labels,
