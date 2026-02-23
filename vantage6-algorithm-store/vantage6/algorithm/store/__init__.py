@@ -23,7 +23,6 @@ from pathlib import Path
 import sqlalchemy
 from flask import current_app
 from flask_principal import Identity, identity_changed
-from sqlalchemy.exc import IntegrityError
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
