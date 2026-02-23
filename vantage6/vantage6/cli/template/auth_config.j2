@@ -236,12 +236,11 @@ keycloak:
     clients:
       - clientId: public_client
         publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
         # redirect URIs are the URIs that keycloak is allowed to redirect to after
-        # authentication. This should be set to the UI URL, and to the Keyloak
-        # service on port 7681. The latter is needed for authentication from outside
-        # the browser - if e.g. the Python client authenticates, it will open a
-        # browser window to authenticate that redirects to the Keycloak service on
-        # port 7681.
+        # authentication. This should normally be set to the UI URL (unless you have
+        # other applications that can use the vantage6 Keycloak instance).
         {% if keycloak.redirectUris %}
         redirectUris:
           {% for uri in keycloak.redirectUris %}
@@ -251,9 +250,6 @@ keycloak:
         redirectUris:
           # allow logging in via a local UI
           - "http://localhost:7600/*"
-          # allow logging in via the Python client (which spins up a local server
-          # on port 7681)
-          - "http://localhost:7681/*"
         {% endif %}
         # By setting webOrigins to "+", we allow the same origins as redirectUris.
         webOrigins:
