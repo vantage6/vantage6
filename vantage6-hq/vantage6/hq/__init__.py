@@ -97,10 +97,6 @@ class HQApp(Vantage6App):
         # Load API resources
         self.load_resources()
 
-        # couple any algoritm stores to HQ if defined in config. This should be
-        # done after the resources are loaded to ensure that rules are set up
-        self.couple_algorithm_stores()
-
         if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(
                 "Results older than %s days will be removed",
@@ -318,17 +314,14 @@ class HQApp(Vantage6App):
             module = importlib.import_module("vantage6.hq.resource." + res)
             module.setup(self.api, self.ctx.config["api_path"], services)
 
-    def start(self) -> None:
+    def ensure_db_initialized(self) -> None:
         """
-        Start HQ.
-
-        Before HQ is really started, some database settings are checked and
-        (re)set where appropriate.
+        Ensure the database contains default roles and the root organization/user.
         """
-        # add default roles (if they don't exist yet)
+        # Always ensure default roles exist and are up to date
         self._add_default_roles(get_default_roles(db), db)
 
-        # create root user if it is not in the DB yet
+        # Ensure root user and organization exist
         try:
             admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
         except NoResultFound:
@@ -338,7 +331,9 @@ class HQApp(Vantage6App):
         if not admin_user.keycloak_id:
             self._add_keycloak_id_to_super_user(admin_user)
 
-        return self
+        # couple any algoritm stores to HQ if defined in config. This should be
+        # done after the resources are loaded to ensure that rules are set up
+        self._couple_algorithm_stores()
 
     def _create_super_user(self) -> None:
         """
@@ -422,7 +417,7 @@ class HQApp(Vantage6App):
             # simple for now: check every hour
             time.sleep(3600)
 
-    def couple_algorithm_stores(self) -> None:
+    def _couple_algorithm_stores(self) -> None:
         """Couple algorithm stores to HQ.
 
         Checks if default algorithm stores are defined in the configuration and if so,
@@ -493,4 +488,4 @@ def run_hq(config: str, system_folders: bool = True) -> HQApp:
     """
     ctx = HQContext.from_external_config_file(config, system_folders, in_container=True)
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
-    return HQApp(ctx).start()
+    return HQApp(ctx)

@@ -10,7 +10,10 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
 fi
 
 
+# initialize the database
+python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
 
+# start HQ
 uwsgi \
     --http :80 \
     --gevent 100 \

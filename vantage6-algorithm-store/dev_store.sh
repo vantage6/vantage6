@@ -12,8 +12,9 @@ if [ -z "$VANTAGE6_STORE_CONFIG_LOCATION" ]; then
 fi
 
 
+python /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/init_db.py "${VANTAGE6_STORE_CONFIG_LOCATION}"
 
-uwsgi \
+exec uwsgi \
     --py-autoreload 1 \
     --reload-mercy 1 \
     --gevent 100 \
