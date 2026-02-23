@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 import questionary as q
 
-from vantage6.common import error, info
+from vantage6.common import error, info, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.common.utils import create_kubernetes_secret, generate_password
@@ -252,7 +252,24 @@ def parse_database_uri_to_config(
         password = parsed.password
         hostname = parsed.hostname
         port = parsed.port or 5432
-        database_name = parsed.path.lstrip("/") or "vantage6_auth"
+        database_name = parsed.path.lstrip("/")
+
+        for required_field in [
+            ("username", username),
+            ("password", password),
+            ("hostname", hostname),
+            ("database name", database_name),
+        ]:
+            if not required_field[1]:
+                error(
+                    f"No {required_field[0]} could be found in the database URI. "
+                    f"Please provide a {required_field[0]}."
+                )
+                exit(1)
+        if not port:
+            warning(
+                "No port could be found in the database URI. Using default port 5432."
+            )
 
         return {
             "external": True,
