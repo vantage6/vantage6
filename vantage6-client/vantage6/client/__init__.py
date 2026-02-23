@@ -168,7 +168,7 @@ class UserClient(ClientBase):
 
         # check if browser can be opened to directly authenticate, otherwise fallback to
         # console output
-        self._maybe_open_browser_for_device_flow(device_data)
+        self._try_open_browser_for_device_flow(device_data)
 
         token = self._poll_device_token(token_endpoint, device_data)
         if not token:
@@ -235,7 +235,7 @@ class UserClient(ClientBase):
 
         return device_data
 
-    def _maybe_open_browser_for_device_flow(self, device_data: dict) -> None:
+    def _try_open_browser_for_device_flow(self, device_data: dict) -> None:
         """Try to open the browser for the device flow; fall back to console output."""
         verification_uri = device_data.get("verification_uri")
         verification_uri_complete = device_data.get("verification_uri_complete")
