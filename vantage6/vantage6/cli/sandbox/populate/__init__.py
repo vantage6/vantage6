@@ -151,7 +151,7 @@ def _wait_for_keycloak_realm(
     start_time = time.time()
     attempt = 0
 
-    while time.time() - start_time < timeout:
+    while (time.time() - start_time) < timeout:
         attempt += 1
         try:
             resp = requests.get(well_known_url, timeout=5)
