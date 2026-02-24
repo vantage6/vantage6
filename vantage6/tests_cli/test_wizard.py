@@ -95,10 +95,9 @@ class WizardTest(unittest.TestCase):
         app_context.instance_folders.return_value = {"log": "/log"}
         q.unsafe_prompt.side_effect = self.prompts
         q_hq_common.unsafe_prompt.side_effect = self.prompts
-        q_hq_common.confirm.return_value.unsafe_ask.side_effect = [
+        q_hq_common.text.return_value.unsafe_ask.side_effect = [
             1234,  # port
-            "/data/db",  # path to database
-            "postgresql://uri",  # URI of database
+            "postgresql://vantage6:vantage6@localhost:5432/vantage6",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
             True,  # setup allowed algorithm stores
@@ -116,7 +115,6 @@ class WizardTest(unittest.TestCase):
         nested_keys = [
             ["database", "external"],
             ["database", "uri"],
-            ["database", "volumePath"],
             ["hq", "api_path"],
             ["hq", "keycloak"],
             ["hq", "logging"],
