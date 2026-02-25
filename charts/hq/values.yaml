@@ -1,18 +1,20 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
 nameOverride: vantage6-hq
 hq:
   description: Vantage6 headquarters version 5
 
   baseUrl: http://localhost:7601
   apiPath: /hq
-  image: harbor2.vantage6.ai/infrastructure/hq:latest
+  image: harbor2.vantage6.ai/infrastructure/hq:uluru
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
-    realm: vantage6
-    adminUsername: admin
-    adminPassword: admin
-    adminClient: backend-admin-client
-    adminClientSecret: myadminclientsecret
+    url: ""
+    realm: ""
+    # adminUsername: ""
+    # adminPassword: ""
+    # adminClient: ""
+    # adminClientSecret: ""
 
   port: 7601
   internal:
@@ -48,39 +50,30 @@ rabbitmq:
     repository: rabbitmq
     tag: 3-management
 
-  username: rabbitmquser
-  password: rabbitmquserpassword
-  vhost: /vantage6
+  # username: rabbitmquser
+  # password: rabbitmquserpassword
+  # vhost: /vantage6
 
 database:
-  external: false
-  image:
-    repository: postgres
-    tag: 13
-  username: vantage6
-  password: vantage6
-  name: vantage6
-  volumePath: /mnt/data_hq
-  k8sNodeName: docker-desktop
+  external: true
+  # username: vantage6
+  # password: vantage6
+  # name: vantage6
+  # volumePath: /mnt/data_hq
+  # k8sNodeName: docker-desktop
 
 ui:
-  image: harbor2.vantage6.ai/infrastructure/ui:latest
+  image: harbor2.vantage6.ai/infrastructure/ui:uluru
   port: 7600
 
   keycloak:
     realm: vantage6
     client: public_client
-    publicUrl: http://localhost:7680
+    # publicUrl: http://localhost:7680
 
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai
-  communityStoreApiPath: /api
+  communityStoreApiPath: /store
 
 prometheus:
   enabled: false
-  exporter_port: 7603
-
-  image: prom/prometheus:latest
-  storageSize: "2Gi"
-  storageClass: "local-storage"
-  volumeHostPath: "/var/lib/prometheus"

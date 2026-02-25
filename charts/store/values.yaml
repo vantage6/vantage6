@@ -1,28 +1,24 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
 store:
   replications: 1
   description: Vantage algorithm store version 5
-  baseUrl: http://localhost:7602
+  baseUrl: ""
   api_path: /store
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
+    url: ""
     realm: vantage6
-    adminUsername: admin
-    adminPassword: admin
-    adminClient: backend-admin-client
-    adminClientSecret: myadminclientsecret
-  vantage6HQUri: http://localhost:7601/hq
+    # adminUsername: ""
+    # adminPassword: ""
+    # adminClient: ""
+    # adminClientSecret: ""
+  vantage6HQUri: ""
 
   policies:
     algorithmView: public
 
-  dev:
-    host_uri: host.docker.internal
-    disable_review: false
-    review_own_algorithm: false
-    forward_ports: true
-
-  image: harbor2.vantage6.ai/infrastructure/store:latest
+  image: harbor2.vantage6.ai/infrastructure/store:uluru
 
   internal:
     port: 7602
@@ -52,15 +48,10 @@ store:
       name: sqlalchemy.engine
 
 database:
-  external: false
+  external: true
 
-  image:
-    repository: postgres
-    tag: 13
-
-  username: vantage6
-  password: vantage6
-  name: vantage6
-
-  volumePath: /mnt/data_store
-  k8sNodeName: docker-desktop
+  # username: vantage6
+  # password: vantage6
+  # name: vantage6
+  # volumePath: /mnt/data_store
+  # k8sNodeName: docker-desktop
