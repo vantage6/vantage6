@@ -15,6 +15,7 @@ from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.common.docker.addons import running_in_docker
 from vantage6.common.configuration_manager import ConfigurationManager
+from vantage6.common.log import OwnershipPreservingRotatingFileHandler
 from vantage6.common._version import __version__
 
 
@@ -529,14 +530,14 @@ class AppContext(metaclass=Singleton):
 
         # Create RotatingFileHandler
         try:
-            rfh = logging.handlers.RotatingFileHandler(
+            rfh = OwnershipPreservingRotatingFileHandler(
                 self.log_file,
                 maxBytes=1024 * log_config["max_size"],
                 backupCount=log_config["backup_count"],
             )
         except PermissionError:
             error(
-                f"Can't write to log dir: "
+                f"Can't write to log dir (permissions error): "
                 f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
             exit(1)
