@@ -77,7 +77,9 @@ class TestUserResource(TestResources):
         """Test the user create."""
         # Mock the keycloak admin client
         get_keycloak_id_for_user_mock.return_value = "test-keycloak-id"
-        get_organization_id_from_keycloak_mock.return_value = None
+        # Simulate that Keycloak user has an organization_id attribute so creation
+        # succeeds
+        get_organization_id_from_keycloak_mock.return_value = 1
 
         self.register_user(authenticate_mock=authenticate_mock)
 
