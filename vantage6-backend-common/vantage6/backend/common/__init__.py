@@ -373,7 +373,7 @@ class Vantage6App:
                 username,
             )
         except Exception as exc:
-            log.warning(
+            log.critical(
                 "Could not set organization_id attribute for user %s in Keycloak",
                 username,
             )
