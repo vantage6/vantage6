@@ -284,7 +284,7 @@ class Users(AlgorithmStoreResources):
         organization_id = get_organization_id_from_keycloak(user_id)
         if organization_id is None:
             msg = "User '%s' does not have organization_id attribute in Keycloak"
-            log.warning(msg, data["username"])
+            log.error(msg, data["username"])
             return {"msg": msg % data["username"]}, HTTPStatus.BAD_REQUEST
 
         # process the required roles. It is only possible to assign roles with

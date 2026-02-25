@@ -1,5 +1,3 @@
-# for more options on the deployment of this chart, see:
-# https://artifacthub.io/packages/helm/bitnami/keycloak
 keycloak:
 
   # Specify the version of the Keycloak Operator to use.
@@ -92,38 +90,93 @@ keycloak:
     passwordPolicy: ""
     {% endif %}
 
-    # do not allow users to edit their username - this would lead to problems with
-    # syncing the user between keycloak and vantage6 HQ+store. This setting
-    # should always be set to false.
-    editUsernameAllowed: false
+    # allow users to reset their password
+    resetPasswordAllowed: {{ keycloak.resetPasswordAllowed | default(false) }}
+
+    # require users to verify their email address. Note that setting this to true should
+    # only be done if you have configured an email SMTP server.
+    verifyEmail: {{ keycloak.verifyEmail | default(false) }}
+
+    # brute force protection settings
+    # - bruteForceProtected: enable brute force protection
+    # - permanentLockout: whether to lock out a user permanently after a certain number
+    #   of failed login attempts.
+    # - failureFactor: the number of failed login attempts before a user is locked out.
+    bruteForceProtected: {{ keycloak.bruteForceProtected | default(false) }}
+    permanentLockout: {{ keycloak.permanentLockout | default(false) }}
+    failureFactor: {{ keycloak.failureFactor | default(5) }}
 
     {% if keycloak.production %}
-    # required actions for users. By setting defaultAction to true for configuring
-    # OTP, the user will be prompted to configure OTP (for two-factor
-    # authentication) on first login.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     requiredActions:
+      # configure OTP for two-factor authentication
       - alias: CONFIGURE_TOTP
         name: Configure OTP
         providerId: CONFIGURE_TOTP
         enabled: true
         defaultAction: true
         priority: 10
+      # update password on first login
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      # update email on first login
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+      # verify email on first login
+      {% if keycloak.verifyEmail %}
+      - alias: VERIFY_EMAIL
+        name: Verify Email
+        providerId: VERIFY_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 40
+      {% endif %}
     {% else %}
-    # If you want to require users to use two-factor authentication on first login,
-    # enable the settings below.
+    # required actions for users. Setting defaultAction to true means that the user will
+    # be prompted to perform the action on first login.
     # requiredActions:
+    # # configure OTP for two-factor authentication
     #  - alias: CONFIGURE_TOTP
     #    name: Configure OTP
     #    providerId: CONFIGURE_TOTP
     #    enabled: true
     #    defaultAction: true
     #    priority: 10
+    # # update password on first login
+    # - alias: UPDATE_PASSWORD
+    #   name: Update Password
+    #   providerId: UPDATE_PASSWORD
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 20
+    # # update email on first login
+    # - alias: UPDATE_EMAIL
+    #   name: Update Email
+    #   providerId: UPDATE_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 30
+    # # verify email on first login
+    # - alias: VERIFY_EMAIL
+    #   name: Verify Email
+    #   providerId: VERIFY_EMAIL
+    #   enabled: true
+    #   defaultAction: true
+    #   priority: 40
     {% endif %}
 
     # users to be created in the realm. This initializes the realm with a default
     # admin user. It also initializes the service account for the backend admin
     # client to give it the necessary permissions to manage the realm.
-    # TODO v5+ configure secrets where necessary
     users:
       # create the vantage6 admin user. The name of this user should also be present
       # in vantage6 HQ and store configuration - it is the user that will be
@@ -183,12 +236,11 @@ keycloak:
     clients:
       - clientId: public_client
         publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
         # redirect URIs are the URIs that keycloak is allowed to redirect to after
-        # authentication. This should be set to the UI URL, and to the Keyloak
-        # service on port 7681. The latter is needed for authentication from outside
-        # the browser - if e.g. the Python client authenticates, it will open a
-        # browser window to authenticate that redirects to the Keycloak service on
-        # port 7681.
+        # authentication. This should normally be set to the UI URL (unless you have
+        # other applications that can use the vantage6 Keycloak instance).
         {% if keycloak.redirectUris %}
         redirectUris:
           {% for uri in keycloak.redirectUris %}
@@ -198,9 +250,6 @@ keycloak:
         redirectUris:
           # allow logging in via a local UI
           - "http://localhost:7600/*"
-          # allow logging in via the Python client (which spins up a local server
-          # on port 7681)
-          - "http://localhost:7681/*"
         {% endif %}
         # By setting webOrigins to "+", we allow the same origins as redirectUris.
         webOrigins:
@@ -227,6 +276,60 @@ keycloak:
         {% endif %}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
+
+    # SMTP server configuration for email sending
+    {% if keycloak.smtpServer is defined %}
+    smtpServer:
+      {% if keycloak.smtpServer.host is defined %}
+      host: {{ keycloak.smtpServer.host }}
+      {% endif %}
+      {% if keycloak.smtpServer.port is defined %}
+      port: "{{ keycloak.smtpServer.port }}"
+      {% endif %}
+      {% if keycloak.smtpServer.from is defined %}
+      from: {{ keycloak.smtpServer.from }}
+      {% endif %}
+      {% if keycloak.smtpServer.fromDisplayName is defined %}
+      fromDisplayName: {{ keycloak.smtpServer.fromDisplayName }}
+      {% endif %}
+      {% if keycloak.smtpServer.replyTo is defined %}
+      replyTo: {{ keycloak.smtpServer.replyTo }}
+      {% endif %}
+      {% if keycloak.smtpServer.replyToDisplayName is defined %}
+      replyToDisplayName: {{ keycloak.smtpServer.replyToDisplayName }}
+      {% endif %}
+      {% if keycloak.smtpServer.ssl is defined %}
+      ssl: "{{ keycloak.smtpServer.ssl }}"
+      {% endif %}
+      {% if keycloak.smtpServer.starttls is defined %}
+      starttls: "{{ keycloak.smtpServer.starttls }}"
+      {% endif %}
+      {% if keycloak.smtpServer.auth is defined %}
+      auth: "{{ keycloak.smtpServer.auth }}"
+      {% endif %}
+      {% if keycloak.smtpServer.authType is defined %}
+      authType: {{ keycloak.smtpServer.authType }}
+      {% endif %}
+      {% if keycloak.smtpServer.user is defined %}
+      user: {{ keycloak.smtpServer.user }}
+      {% endif %}
+      {% if keycloak.smtpServer.password is defined %}
+      password: {{ keycloak.smtpServer.password }}
+      {% endif %}
+    {% else %}
+    # smtpServer:
+    #  host: your-smtp-server-hostname.org
+    #  port: 587                # usually 587 for STARTTLS, 465 for SSL
+    #  from: your-email-address@your-domain.com
+    #  ssl: false                # true for SSL, false for STARTTLS
+    #  starttls: true            # true for STARTTLS, false for SSL
+    #  auth: true                # Usually true, unless running tests on localhost
+    #  authType: basic           # basic for username and password, bearer for bearer token (not supported yet)
+    #  user: your-username       # your username (often the same as the email address)
+    #  password: your-password   # your password
+    #  replyTo: reply-to-email-address@your-domain.com  # optional, may be the same as the from address
+    #  replyToDisplayName: display-name-for-reply-to  # optional
+    {% endif %}
 
 
 database:

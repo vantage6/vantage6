@@ -57,7 +57,7 @@ the following steps to test a release:
 
     uv venv --python 3.13
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    uv pip install vantage6==<version>
+    uv pip install vantage6==<version> --prerelease=allow
 
 3. *Start hub and nodes*. Start the hub and the nodes for the
    release candidate using a ``v6 sandbox`` network:

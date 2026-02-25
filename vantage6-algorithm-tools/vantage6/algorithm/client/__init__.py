@@ -172,9 +172,6 @@ class AlgorithmClient(ClientBase):
     class Run(ClientBase.SubClient):
         """
         Algorithm Run client for the algorithm container.
-
-        This client is used to obtain algorithm runs of tasks with the same
-        job_id from HQ.
         """
 
         def get(self, id_) -> dict:

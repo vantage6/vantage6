@@ -231,6 +231,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         """
         config = {
             "store": {
+                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_ALGO_STORE.value}",
                 "internal": {
                     "port": Ports.SANDBOX_ALGO_STORE.value,
                 },
@@ -303,7 +304,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "no_password_update_required": True,
                 "redirectUris": [
                     f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
-                    f"{HTTP_LOCALHOST}:7681",
                 ],
             },
             "database": {
