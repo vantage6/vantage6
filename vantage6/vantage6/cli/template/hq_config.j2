@@ -246,7 +246,7 @@ ui:
   keycloak:
     realm: {{ ui.keycloak.realm | default('vantage6') }}
     client: {{ ui.keycloak.client | default('public_client') }}
-    publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:8080') }}
+    publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs

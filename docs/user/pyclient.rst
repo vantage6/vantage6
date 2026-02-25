@@ -140,7 +140,7 @@ submitting particular tasks) that you might want to share publicly.
    # for a local dev HQ
    hq_url = "https://<my_hq_url>:<my_port>/<my_api_path>"
    # Authentication service address, e.g. https://auth.uluru.vantage6.ai/, or
-   # http://localhost:8080 for a local development auth service
+   # http://localhost:7680 for a local development auth service
    auth_url = "https://<my_auth_url>:<my_port>"
 
    # Realm and client id of the authentication service
