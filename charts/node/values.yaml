@@ -13,8 +13,7 @@ node:
     port: 7601
     path: /hq
 
-  # TODO v5+ set to v5 image name
-  image: harbor2.vantage6.ai/infrastructure/node:latest
+  image: harbor2.vantage6.ai/infrastructure/node:uluru
 
   taskNamespace: vantage6-tasks
   k8sNodeName: docker-desktop

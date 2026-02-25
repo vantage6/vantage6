@@ -66,15 +66,20 @@ class TestUserResource(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     @patch("vantage6.algorithm.store.resource._authenticate")
+    @patch("vantage6.algorithm.store.resource.user.get_organization_id_from_keycloak")
     @patch("vantage6.algorithm.store.resource.user.get_keycloak_id_for_user")
     def test_user_create(
         self,
         get_keycloak_id_for_user_mock,
+        get_organization_id_from_keycloak_mock,
         authenticate_mock,
     ):
         """Test the user create."""
         # Mock the keycloak admin client
         get_keycloak_id_for_user_mock.return_value = "test-keycloak-id"
+        # Simulate that Keycloak user has an organization_id attribute so creation
+        # succeeds
+        get_organization_id_from_keycloak_mock.return_value = 1
 
         self.register_user(authenticate_mock=authenticate_mock)
 

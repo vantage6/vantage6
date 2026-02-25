@@ -95,14 +95,13 @@ class WizardTest(unittest.TestCase):
         app_context.instance_folders.return_value = {"log": "/log"}
         q.unsafe_prompt.side_effect = self.prompts
         q_hq_common.unsafe_prompt.side_effect = self.prompts
-        q_hq_common.confirm.return_value.unsafe_ask.side_effect = [
+        q_hq_common.text.return_value.unsafe_ask.side_effect = [
             1234,  # port
-            "/data/db",  # path to database
-            "postgresql://uri",  # URI of database
+            "postgresql://vantage6:vantage6@localhost:5432/vantage6",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
-            "hq-image",  # hq image
-            "ui-image",  # UI image
+            True,  # setup allowed algorithm stores
+            "https://store.uluru.vantage6.ai",  # allowed algorithm stores
         ]
 
         config = hq_configuration_questionaire(
@@ -116,13 +115,11 @@ class WizardTest(unittest.TestCase):
         nested_keys = [
             ["database", "external"],
             ["database", "uri"],
-            ["database", "volumePath"],
             ["hq", "api_path"],
-            ["hq", "image"],
             ["hq", "keycloak"],
             ["hq", "logging"],
             ["hq", "port"],
-            ["ui", "image"],
+            ["ui", "allowedAlgorithmStores"],
             ["rabbitmq", "password"],
         ]
         for nesting in nested_keys:

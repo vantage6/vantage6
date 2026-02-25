@@ -60,9 +60,8 @@ def cli_hub_new(
     # create authentication service configuration
     info("Now, let's setup the authentication service...")
     extra_config = {
-        # add http://localhost:7681 as that is used by the Python client
         "keycloak": {
-            "redirectUris": [base_config["ui_url"], "http://localhost:7681"],
+            "redirectUris": [base_config["ui_url"]],
             "k8sNodeName": base_config["k8sNodeName"],
         },
         "database": {
@@ -128,11 +127,38 @@ def cli_hub_new(
                 "logging": {
                     "level": base_config["log_level"],
                 },
+                "baseUrl": base_config["store_url"],
             },
             "database": {
                 "k8sNodeName": base_config["k8sNodeName"],
             },
         }
+        if auth_config["keycloak"].get("smtpServer") is not None:
+            extra_config["store"]["smtpServer"] = {
+                "host": auth_config["keycloak"]["smtpServer"]["host"],
+                "port": auth_config["keycloak"]["smtpServer"]["port"],
+                "from": auth_config["keycloak"]["smtpServer"]["from"],
+            }
+            if auth_config["keycloak"]["smtpServer"].get("user") is not None:
+                extra_config["store"]["smtpServer"]["user"] = auth_config["keycloak"][
+                    "smtpServer"
+                ]["user"]
+            if auth_config["keycloak"]["smtpServer"].get("password") is not None:
+                extra_config["store"]["smtpServer"]["password"] = auth_config[
+                    "keycloak"
+                ]["smtpServer"]["password"]
+            if auth_config["keycloak"]["smtpServer"].get("replyTo") is not None:
+                extra_config["store"]["smtpServer"]["replyTo"] = auth_config[
+                    "keycloak"
+                ]["smtpServer"]["replyTo"]
+            if auth_config["keycloak"]["smtpServer"].get("starttls") is not None:
+                extra_config["store"]["smtpServer"]["starttls"] = auth_config[
+                    "keycloak"
+                ]["smtpServer"]["starttls"]
+            if auth_config["keycloak"]["smtpServer"].get("ssl") is not None:
+                extra_config["store"]["smtpServer"]["ssl"] = auth_config["keycloak"][
+                    "smtpServer"
+                ]["ssl"]
         new(
             config_producing_func=algo_store_configuration_questionaire,
             config_producing_func_args=(store_name, system_folders),
@@ -174,11 +200,11 @@ def _get_base_config() -> dict[str, Any]:
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
-    # if base_config["has_store"]:
-    #     base_config["store_url"] = q.text(
-    #         "On what address will the algorithm store be reachable?",
-    #         default="https://store.vantage6.ai",
-    #     ).unsafe_ask()
+    if base_config["has_store"]:
+        base_config["store_url"] = q.text(
+            "On what address will the algorithm store be reachable?",
+            default="https://store.vantage6.ai",
+        ).unsafe_ask()
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],

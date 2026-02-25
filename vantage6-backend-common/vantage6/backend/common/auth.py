@@ -67,6 +67,74 @@ def get_keycloak_id_for_user(username: str):
     return keycloak_id
 
 
+def get_user_from_keycloak(keycloak_user_id: str) -> dict:
+    """
+    Get user data from Keycloak including attributes.
+
+    Parameters
+    ----------
+    keycloak_user_id : str
+        The Keycloak user ID
+
+    Returns
+    -------
+    dict
+        User representation from Keycloak including attributes
+
+    Raises
+    ------
+    BadRequestError
+        If the user could not be retrieved from Keycloak
+    """
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        user_data = keycloak_admin.get_user(keycloak_user_id)
+    except Exception as exc:
+        log.exception(exc)
+        raise BadRequestError("Could not retrieve user from Keycloak") from exc
+
+    if user_data is None:
+        raise BadRequestError("User does not exist in Keycloak")
+    return user_data
+
+
+def get_organization_id_from_keycloak(keycloak_user_id: str) -> int | None:
+    """
+    Get organization_id from Keycloak user attributes.
+
+    Parameters
+    ----------
+    keycloak_user_id : str
+        The Keycloak user ID
+
+    Returns
+    -------
+    int | None
+        Organization ID if found, None otherwise
+
+    Raises
+    ------
+    BadRequestError
+        If the user could not be retrieved from Keycloak
+    """
+    try:
+        user_data = get_user_from_keycloak(keycloak_user_id)
+        attributes = user_data.get("attributes", {})
+        organization_id_list = attributes.get("organization_id", [])
+
+        if organization_id_list and len(organization_id_list) > 0:
+            # Keycloak attributes are stored as lists of strings
+            return int(organization_id_list[0])
+        return None
+    except (ValueError, TypeError) as exc:
+        log.warning(
+            "Could not parse organization_id from Keycloak attributes for user %s: %s",
+            keycloak_user_id,
+            exc,
+        )
+        return None
+
+
 def create_service_account_in_keycloak(
     client_name: str, is_node: bool = True
 ) -> KeycloakServiceAccount:
@@ -129,3 +197,26 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
         raise BadRequestError(
             f"Service account '{client_id}' could not be deleted from Keycloak"
         ) from exc
+
+
+def get_email_for_keycloak_id(keycloak_id: str) -> str | None:
+    """
+    Get the email for a keycloak id
+
+    Parameters
+    ----------
+    keycloak_id: str
+        The keycloak id of the user
+
+    Returns
+    -------
+    str | None:
+        The email address of the user or None if it was not found
+    """
+    try:
+        keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
+        user_details = keycloak_admin.get_user(keycloak_id)
+        return user_details["email"]
+    except Exception as exc:
+        log.error(exc)
+        return None

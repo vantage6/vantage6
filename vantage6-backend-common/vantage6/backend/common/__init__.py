@@ -27,7 +27,10 @@ from vantage6.common.globals import DEFAULT_API_PATH, LOCALHOST
 
 from vantage6.cli.context.base_backend import BaseBackendContext
 
-from vantage6.backend.common.auth import get_keycloak_id_for_user
+from vantage6.backend.common.auth import (
+    get_keycloak_admin_client,
+    get_keycloak_id_for_user,
+)
 from vantage6.backend.common.base import BaseDatabaseSessionManager, BaseModelBase
 from vantage6.backend.common.globals import (
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
@@ -47,8 +50,27 @@ log = logging.getLogger(module_name)
 class Vantage6App:
     """Base class for all vantage6 backend applications."""
 
-    def __init__(self, ctx: BaseBackendContext, backend_module_name: str) -> None:
-        """Initialize the vantage6 app."""
+    def __init__(
+        self,
+        ctx: BaseBackendContext,
+        backend_module_name: str,
+        template_folder: Path,
+        static_folder: Path,
+    ) -> None:
+        """
+        Initialize the vantage6 app.
+
+        Parameters
+        ----------
+        ctx: BaseBackendContext
+            The context of the backend
+        backend_module_name: str
+            The name of the backend module
+        template_folder: Path
+            The path to the template folder
+        static_folder: Path
+            The path to the static folder
+        """
         self.ctx = ctx
 
         # validate that the required environment variables are set
@@ -58,8 +80,8 @@ class Vantage6App:
         self.app = Flask(
             backend_module_name,
             root_path=Path(__file__),
-            template_folder=Path(__file__).parent / "templates",
-            static_folder=Path(__file__).parent / "static",
+            template_folder=template_folder,
+            static_folder=static_folder,
         )
         self.debug: dict = self.ctx.config.get("debug", {})
 
@@ -164,15 +186,15 @@ class Vantage6App:
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
-        mail_config = self.ctx.config.get("smtp", {})
+        mail_config = self.ctx.config.get("smtp_server", {})
         self.app.config["MAIL_PORT"] = mail_config.get("port", 1025)
-        self.app.config["MAIL_SERVER"] = mail_config.get("server", LOCALHOST)
+        self.app.config["MAIL_SERVER"] = mail_config.get("host", LOCALHOST)
         self.app.config["MAIL_USERNAME"] = mail_config.get(
-            "username", DEFAULT_SUPPORT_EMAIL_ADDRESS
+            "user", DEFAULT_SUPPORT_EMAIL_ADDRESS
         )
         self.app.config["MAIL_PASSWORD"] = mail_config.get("password", "")
-        self.app.config["MAIL_USE_TLS"] = mail_config.get("MAIL_USE_TLS", True)
-        self.app.config["MAIL_USE_SSL"] = mail_config.get("MAIL_USE_SSL", False)
+        self.app.config["MAIL_USE_TLS"] = mail_config.get("starttls", True)
+        self.app.config["MAIL_USE_SSL"] = mail_config.get("ssl", False)
         debug_mode = self.debug.get("flask", False)
         if debug_mode:
             log.debug("Flask debug mode enabled")
@@ -332,6 +354,50 @@ class Vantage6App:
             log.error("This means that you cannot login as this user")
             log.exception(exc)
 
+        # Also sync the organization ID of the super user in keycloak
+        self._set_organization_id_in_keycloak(
+            super_user.keycloak_id,
+            super_user.organization_id,
+            super_user.username,
+        )
+
+    def _set_organization_id_in_keycloak(
+        self, keycloak_id: str, organization_id: int, username: str
+    ) -> None:
+        """
+        Set organization_id as an attribute in Keycloak for a user.
+
+        Parameters
+        ----------
+        keycloak_id : str
+            The Keycloak user ID
+        organization_id : int
+            The organization ID to set
+        username : str
+            The username (for logging purposes)
+        """
+        try:
+            keycloak_admin = get_keycloak_admin_client()
+            keycloak_admin.update_user(
+                user_id=keycloak_id,
+                payload={
+                    "attributes": {
+                        "organization_id": [str(organization_id)],
+                    }
+                },
+            )
+            log.debug(
+                "Set organization_id=%s for user %s in Keycloak",
+                organization_id,
+                username,
+            )
+        except Exception as exc:
+            log.critical(
+                "Could not set organization_id attribute for user %s in Keycloak",
+                username,
+            )
+            log.debug("Exception: %s", exc)
+
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
         """
@@ -362,7 +428,9 @@ class Vantage6App:
                 )
 
 
-def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | None:
+def get_backend_service_url(
+    config: dict, url_from_request: str | None = None
+) -> str | None:
     """ "
     Get the HQ url from the request data, or from the configuration if it is
     not present in the request.
@@ -379,9 +447,9 @@ def get_hq_url(config: dict, hq_url_from_request: str | None = None) -> str | No
     str | None
         The HQ url
     """
-    if hq_url_from_request:
-        return hq_url_from_request
-    hq_url = config.get("hq_url")
+    if url_from_request:
+        return url_from_request
+    hq_url = config.get("base_url")
     # make sure that the HQ url ends with the api path
     api_path = config.get("api_path", DEFAULT_API_PATH)
     if hq_url and not hq_url.endswith(api_path):

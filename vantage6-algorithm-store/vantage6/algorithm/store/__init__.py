@@ -18,6 +18,7 @@ if not os.environ.get("READTHEDOCS"):
 import importlib
 import importlib.metadata
 import logging
+from pathlib import Path
 
 import sqlalchemy
 from flask import current_app
@@ -65,7 +66,12 @@ class AlgorithmStoreApp(Vantage6App):
     def __init__(self, ctx: AlgorithmStoreContext) -> None:
         """Create a vantage6 algorithm store application."""
 
-        super().__init__(ctx, BACKEND_MODULE_NAME)
+        super().__init__(
+            ctx,
+            BACKEND_MODULE_NAME,
+            template_folder=Path(__file__).parent / "templates",
+            static_folder=Path(__file__).parent / "static",
+        )
 
         # setup the permission manager for the API endpoints
         self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
@@ -272,7 +278,6 @@ class AlgorithmStoreApp(Vantage6App):
                 if not root_user.keycloak_id:
                     log.info("Adding keycloak id to root user")
                     self._add_keycloak_id_to_super_user(root_user)
-
             else:
                 default_msg = (
                     "The 'root_user' section of the configuration file is "

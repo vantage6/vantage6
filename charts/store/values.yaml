@@ -1,6 +1,7 @@
 store:
   replications: 1
   description: Vantage algorithm store version 5
+  baseUrl: http://localhost:7602
   api_path: /store
 
   keycloak:
