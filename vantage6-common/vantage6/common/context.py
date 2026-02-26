@@ -346,6 +346,12 @@ class AppContext(metaclass=Singleton):
         assert (
             self.config_manager
         ), "Log file unkown as configuration manager not initialized"
+        # See: https://github.com/vantage6/vantage6/issues/2512
+        # (potential) Python 3.11+ host-side will produce
+        # InstanceType.NODE_user.log instead node_user.log, so we make sure
+        # it's always "node". Same goes for other InstanceTypes.
+        if isinstance(type_, enum.Enum):
+            type_ = type_.value
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
