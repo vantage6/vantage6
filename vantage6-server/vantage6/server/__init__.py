@@ -727,12 +727,19 @@ class ServerApp:
                 new_role.save()
             else:
                 current_role = db.Role.get_by_name(role["name"])
-                # check that the rules are the same. Use set() to compare without order
-                if set(current_role.rules) != set(role["rules"]):
-                    log.warning(
-                        "Updating default role %s with new rules", role["name"].value
-                    )
+                # Check whether any default role properties changed. Use set()
+                # to compare rules without relying on their order.
+                has_rule_changes = set(current_role.rules) != set(role["rules"])
+                has_description_change = current_role.description != role["description"]
+                # If for some reason existing role in db has same name but it
+                # wasn't a "default" role, we make it default
+                is_not_default = not current_role.is_default_role
+
+                if has_rule_changes or has_description_change or is_not_default:
+                    log.warning("Updating default role %s", role["name"].value)
                     current_role.rules = role["rules"]
+                    current_role.description = role["description"]
+                    current_role.is_default_role = True
                     current_role.save()
 
     def start(self) -> None:
