@@ -176,12 +176,18 @@ def _get_base_config() -> dict[str, Any]:
     Get the base configuration for a vantage6 hub's components.
     """
     base_config = {}
+    info(
+        "Logs and prometheus data can currently only be stored on a specific k8s node."
+    )
     k8s_node_names = get_k8s_node_names()
-    base_config["k8sNodeName"] = q.select(
-        "What is the name of the k8s node you are using?",
-        choices=k8s_node_names,
+    no_local_storage = "Don't store logs and prometheus data"
+    k8s_node_name = q.select(
+        "In which k8s node do you want to store logs and prometheus data?",
+        choices=[no_local_storage] + k8s_node_names,
         default=k8s_node_names[0],
     ).unsafe_ask()
+    if k8s_node_name != no_local_storage:
+        base_config["k8sNodeName"] = k8s_node_name
     base_config["hq_url"] = q.text(
         "On what address will the HQ be reachable?",
         default="https://hq.vantage6.ai",

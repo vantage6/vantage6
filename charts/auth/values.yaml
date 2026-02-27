@@ -70,5 +70,4 @@ database:
   username: ""
   password: ""
   name: ""
-  volumePath: ""
-  k8sNodeName: ""
+  # k8sNodeName: ""  # Required when external is false for internal DB. Omit or leave empty only when using external DB.

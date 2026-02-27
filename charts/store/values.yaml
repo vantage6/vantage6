@@ -54,4 +54,4 @@ database:
   # password: vantage6
   # name: vantage6
   # volumePath: /mnt/data_store
-  # k8sNodeName: docker-desktop
+  # k8sNodeName: docker-desktop  # Required to set when external is false.

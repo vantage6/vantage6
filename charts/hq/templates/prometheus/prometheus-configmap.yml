@@ -1,4 +1,4 @@
-{{- if .Values.prometheus.enabled }}
+{{- if and (.Values.prometheus.enabled) (ne (.Values.database.k8sNodeName | default "") "") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

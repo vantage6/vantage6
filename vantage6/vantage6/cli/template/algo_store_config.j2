@@ -279,5 +279,6 @@ database:
   volumePath: {{ database.volumePath }}
   {% endif %}
 
-  # The name of the k8s node where the database is running
-  k8sNodeName: {{ database.k8sNodeName }}
+  # The name of the k8s node where the database is running (required when
+  # database.external is false because the data is then stored on the k8s node)
+  k8sNodeName: {{ database.k8sNodeName | default('') }}

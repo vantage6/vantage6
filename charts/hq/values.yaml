@@ -59,8 +59,7 @@ database:
   # username: vantage6
   # password: vantage6
   # name: vantage6
-  # volumePath: /mnt/data_hq
-  # k8sNodeName: docker-desktop
+  # k8sNodeName: ""  # When external is false: k8sNodeName is required for internal DB
 
 ui:
   image: harbor2.vantage6.ai/infrastructure/ui:uluru

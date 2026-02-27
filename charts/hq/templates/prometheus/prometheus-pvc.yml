@@ -1,4 +1,4 @@
-{{- if .Values.prometheus.enabled }}
+{{- if and (.Values.prometheus.enabled) (ne (.Values.database.k8sNodeName | default "") "") }}
 {{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-prom-pvc" .Release.Name)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
