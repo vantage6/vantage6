@@ -1,0 +1,24 @@
+# Default values for the hub parent chart.
+#
+# The keys below correspond to the subchart names so that their values.yaml
+# structures can be provided from this single hub chart values file.
+hq:
+  enabled: true
+  # Copy or override values from charts/hq/values.yaml here as needed, e.g.:
+
+auth:
+  enabled: true
+  # Copy or override values from charts/auth/values.yaml here as needed.
+
+store:
+  enabled: true
+  # Copy or override values from charts/store/values.yaml here as needed.
+
+hub:
+  ingress:
+    enabled: false
+    className: ""
+    host: ""
+    tls:
+      enabled: false
+      secretName: ""

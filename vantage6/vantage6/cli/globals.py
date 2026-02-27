@@ -61,6 +61,7 @@ HQ_TEMPLATE_FILE = "hq_config.j2"
 NODE_TEMPLATE_FILE = "node_config.j2"
 ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
 AUTH_TEMPLATE_FILE = "auth_config.j2"
+HUB_TEMPLATE_FILE = "hub_config.j2"
 
 
 # datasets included in the nodes of the dev network
@@ -85,6 +86,7 @@ class ChartName(StrEnumBase):
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"
+    HUB = "hub"
 
 
 class CLICommandName(StrEnumBase):

@@ -16,6 +16,7 @@ from vantage6.cli.configuration_manager import (
     AlgorithmStoreConfigurationManager,
     AuthConfigurationManager,
     HQConfigurationManager,
+    HubConfigurationManager,
     NodeConfigurationManager,
 )
 from vantage6.cli.context import select_context_class
@@ -198,6 +199,8 @@ def make_configuration(
         conf_manager = AlgorithmStoreConfigurationManager
     elif type_ == InstanceType.AUTH:
         conf_manager = AuthConfigurationManager
+    elif type_ == InstanceType.HUB:
+        conf_manager = HubConfigurationManager
     else:
         raise ValueError(f"Invalid instance type: {type_}")
 

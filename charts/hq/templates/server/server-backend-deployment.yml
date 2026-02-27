@@ -57,6 +57,9 @@ spec:
       - name: config-file
         configMap:
           name: {{ .Release.Name }}-configmap
-      - name: hq-logs
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-logs-pvc
+      # Note that logs are not stored if no local k8s node is available
+      {{- if ne (.Values.database.k8sNodeName | default "") "" }}
+        - name: hq-logs
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-logs-pvc
+      {{- end }}

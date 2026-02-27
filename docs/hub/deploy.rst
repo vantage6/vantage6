@@ -13,6 +13,7 @@ Helm charts
 The hub consists of several components. The following Helm charts are available to
 deploy them:
 
+- ``harbor2.vantage6.ai/chartrepo/infrastructure/hub``: Parent chart that deploys the entire vantage6 hub together.
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/hq``: Vantage6 HQ, UI, RabbitMQ, Prometheus.
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/auth``: Authentication service
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/algorithm-store``: Algorithm store
@@ -37,23 +38,22 @@ described in the :ref:`use-hub` section.
 Deployment
 ----------
 
-Once you have generated the configuration files, you can deploy the hubusing the
-command ``v6 hub start``. This command will deploy the hub using the Helm charts.
+Once you have generated the configuration files, you can deploy the hub using the
+command ``v6 hub start``. This command installs the ``hub`` Helm chart, which in turn
+deploys HQ, authentication service and algorithm store as subcharts.
 
 In some production environments, it may not be feasible to deploy the hub using the
 CLI, for instance because Python is not available. In these cases, you can deploy the
-hub using the Helm charts directly. The base commands to deploy HQ, authentication
-service and algorithm store are:
+hub using the Helm charts directly. The base commands are:
 
 .. code-block:: bash
 
-    # deploy HQ
+    # deploy full hub (HQ, auth, store)
+    helm install my-hub-release hub --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
+
+    # or deploy the components individually (advanced usage)
     helm install my-hq-release hq --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
-
-    # deploy authentication service
     helm install my-auth-release auth --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
-
-    # deploy algorithm store
     helm install my-store-release algorithm-store --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
 
 Of course, you may specify additional flags to the helm commands - see

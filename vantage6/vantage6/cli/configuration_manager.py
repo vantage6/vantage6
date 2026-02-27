@@ -9,6 +9,7 @@ from vantage6.cli.globals import (
     ALGO_STORE_TEMPLATE_FILE,
     AUTH_TEMPLATE_FILE,
     HQ_TEMPLATE_FILE,
+    HUB_TEMPLATE_FILE,
     NODE_TEMPLATE_FILE,
 )
 
@@ -67,6 +68,10 @@ class NodeConfiguration(Configuration):
 
 
 class AuthConfiguration(Configuration):
+    VALIDATORS = {}
+
+
+class HubConfiguration(Configuration):
     VALIDATORS = {}
 
 
@@ -248,6 +253,31 @@ class AuthConfigurationManager(ConfigurationManager):
         Get the configuration template for the auth.
         """
         return super()._get_config_template(AUTH_TEMPLATE_FILE)
+
+
+class HubConfigurationManager(ConfigurationManager):
+    """
+    Maintains the hub's configuration.
+    """
+
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        super().__init__(conf_class=HubConfiguration, name=name, is_sandbox=is_sandbox)
+
+    @classmethod
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the HubConfigurationManager from a
+        configuration file.
+        """
+        return super().from_file(
+            path, conf_class=HubConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the hub.
+        """
+        return super()._get_config_template(HUB_TEMPLATE_FILE)
 
 
 class TestingConfigurationManager(ConfigurationManager):
