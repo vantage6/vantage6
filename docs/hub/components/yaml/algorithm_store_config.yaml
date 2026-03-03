@@ -27,7 +27,8 @@ store:
   # The port to expose the store on in the cluster
   port: 7602
 
-  # Keycloak configuration
+  # Keycloak configuration. Values here override the global Keycloak settings
+  # in the hub configuration (`global.keycloak`) for the algorithm store.
   keycloak:
     url: https://my-vantage6-auth.org
     realm: vantage6
@@ -37,7 +38,8 @@ store:
     adminClientSecret: myadminclientsecret
 
   # The URI of the vantage6 HQ that provides the admin user that will be admin
-  # user in the store on startup.
+  # user in the store on startup. Note that if set, this overrides the global HQ address
+  # in the hub configuration
   vantage6HQUri: https://my_hq.org/my_api_path
 
   policies:

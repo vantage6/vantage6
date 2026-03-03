@@ -41,7 +41,8 @@ server:
       url: http://localhost:7602/api
       api_path: /api
 
-  # Keycloak configuration
+  # Keycloak configuration. Values here override the global Keycloak settings
+  # in the hub configuration (`global.keycloak`) for HQ.
   keycloak:
     url: https://auth.vantage6.ai
     realm: vantage6
@@ -154,7 +155,8 @@ server:
     host_uri: host.docker.internal
 
     # Address of the algorithm store. This can be provided to the server for
-    # a custom address of the local algorithm store within the k8s cluster.
+    # a custom address of the local algorithm store within the k8s cluster. Note that if
+    # set, this overrides the global algorithm store address in the hub configuration
     store_address: http://vantage6-store-store.service.default.svc.cluster.local
 
     # Whether to forward ports to host locally using kubernetes or not, using the

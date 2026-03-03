@@ -147,19 +147,6 @@ keycloak:
 
     backend_client_secret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
 
-    # clients to be created in the realm. This initializes the realm with a default
-    # public client and a backend admin client. The public client is used by users
-    # to authenticate in the browser. Either the UI or the Python client will
-    # redirect to this client.
-    clients:
-      # create a client that will allow the backend to manage users and clients in
-      # keycloak.
-      - clientId: backend-admin-client
-        publicClient: false
-        secret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
-        serviceAccountsEnabled: true
-        standardFlowEnabled: false
-
     # SMTP server configuration for email sending
     {% if keycloak.smtpServer is defined %}
     smtpServer:
