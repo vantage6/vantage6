@@ -23,6 +23,7 @@ from vantage6.backend.common import test_context
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
 from vantage6.backend.common import session
+from vantage6.server.resource.event import kill_task
 from vantage6.server.model import (
     Rule,
     Role,
@@ -4454,6 +4455,75 @@ class TestResources(unittest.TestCase):
         org.delete()
         org2.delete()
         col.delete()
+
+
+class TestKillTaskSemantics(TestResources):
+    def test_kill_task_includes_all_unfinished_child_runs(self):
+        # Create a parent task with one run and a child task with three child
+        # runs. One of the child runs is already completed and should not be
+        # included in the kill payload.
+        org_parent = Organization(name="kill-org-parent")
+        org_child_1 = Organization(name="kill-org-child-1")
+        org_child_2 = Organization(name="kill-org-child-2")
+        collaboration = Collaboration(
+            name="kill-collaboration",
+            organizations=[org_parent, org_child_1, org_child_2],
+        )
+        collaboration.save()
+
+        parent_task = Task(
+            name="parent-task",
+            image="parent-image",
+            collaboration=collaboration,
+            job_id=90001,
+        )
+        parent_task.save()
+        parent_run = Run(
+            organization=org_parent, task=parent_task, status=TaskStatus.ACTIVE
+        )
+        parent_run.save()
+
+        child_task = Task(
+            name="child-task",
+            image="child-image",
+            collaboration=collaboration,
+            parent=parent_task,
+            job_id=90001,
+        )
+        child_task.save()
+        child_run_1 = Run(
+            organization=org_child_1, task=child_task, status=TaskStatus.ACTIVE
+        )
+        child_run_2 = Run(
+            organization=org_child_2, task=child_task, status=TaskStatus.PENDING
+        )
+        child_run_done = Run(
+            organization=org_parent, task=child_task, status=TaskStatus.COMPLETED
+        )
+        child_run_1.save()
+        child_run_2.save()
+        child_run_done.save()
+
+        socket = MagicMock()
+
+        kill_task(parent_task, socket)
+
+        # The emitted kill payload should contain every unfinished parent/child
+        # run
+        emit_args = socket.emit.call_args.args
+        kill_list = emit_args[1]["kill_list"]
+        self.assertEqual(len(kill_list), 3)
+        self.assertCountEqual(
+            [entry["run_id"] for entry in kill_list],
+            [parent_run.id, child_run_1.id, child_run_2.id],
+        )
+
+        self.assertEqual(parent_task.status, TaskStatus.KILLED.value)
+        self.assertEqual(child_task.status, TaskStatus.KILLED.value)
+        self.assertEqual(parent_run.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_1.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_2.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_done.status, TaskStatus.COMPLETED)
 
 
 if __name__ == "__main__":
