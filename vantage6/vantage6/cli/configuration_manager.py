@@ -279,6 +279,31 @@ class HubConfigurationManager(ConfigurationManager):
         """
         return super()._get_config_template(HUB_TEMPLATE_FILE)
 
+    def render_config(
+        self,
+        auth_config: str | None = None,
+        hq_config: str | None = None,
+        store_config: str | None = None,
+    ) -> str:
+        """
+        Render the configuration to a string.
+        """
+        hub_config = super().render_config()
+        # add the auth, hq and store configurations to the hub configuration
+        if auth_config:
+            hub_config += "\nauth:\n" + self._add_extra_indent(auth_config)
+        if hq_config:
+            hub_config += "\nhq:\n" + self._add_extra_indent(hq_config)
+        if store_config:
+            hub_config += "\nstore:\n" + self._add_extra_indent(store_config)
+        return hub_config
+
+    def _add_extra_indent(self, str_subconfig: str) -> str:
+        """
+        Add extra indent to the subconfiguration.
+        """
+        return "\n".join(["  " + line for line in str_subconfig.split("\n")])
+
 
 class TestingConfigurationManager(ConfigurationManager):
     def __init__(self, name, *args, **kwargs):

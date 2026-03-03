@@ -130,7 +130,9 @@ keycloak:
     # public client configuration. The public client is used by users to authenticate
     # in the browser.
     publicClient:
+      {% if keycloak.publicClient is defined %}
       name: {{ keycloak.publicClient.name | default('public_client') }}
+      {% endif %}
       # redirect URIs are the URIs that keycloak is allowed to redirect to after
       # authentication. This should normally be set to the UI URL. If you have
       # other applications that can use the vantage6 Keycloak instance, those should be

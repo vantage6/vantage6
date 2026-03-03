@@ -59,6 +59,8 @@ ui:
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai
   communityStoreApiPath: /store
+  keycloak:
+
 
 prometheus:
   enabled: false

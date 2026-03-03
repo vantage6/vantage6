@@ -21,7 +21,7 @@ store:
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration
-  if {% store.standalone is defined and store.standalone %}
+  {% if store.standalone is defined and store.standalone %}
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}

@@ -19,6 +19,8 @@ def new(
     type_: InstanceType,
     is_sandbox: bool = False,
     extra_config: dict | None = None,
+    save_config_file: bool = True,
+    extra_configs_to_render: dict[str, str] | None = None,
 ) -> dict | None:
     """
     Create a new configuration.
@@ -40,6 +42,10 @@ def new(
     extra_config: dict | None = None
         Extra configuration to add. Note that this may overwrite the configuration
         produced by the config producing function if the keys overlap.
+    save_config_file: bool = True,
+        Whether to store the configuration on disk or not.
+    extra_configs_to_render: dict[str, str] | None = None
+        Extra configurations to render. These will be added to the configuration file.
 
     Returns
     -------
@@ -83,11 +89,19 @@ def new(
             system_folders=system_folders,
             is_sandbox=is_sandbox,
             extra_config=extra_config,
+            save_config_file=save_config_file,
+            extra_configs_to_render=extra_configs_to_render,
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
         exit(1)
-    info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
+    if save_config_file:
+        info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
+    else:
+        info(
+            "Configuration obtained successfully for "
+            f"{Fore.GREEN}{name}{Style.RESET_ALL}."
+        )
 
     flag = "" if system_folders else "--user"
     info(

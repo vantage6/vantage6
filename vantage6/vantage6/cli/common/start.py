@@ -132,6 +132,11 @@ def helm_install(
     if local_chart_dir and local_chart_dir.rstrip("/").endswith(chart_name.value):
         local_chart_dir = str(Path(local_chart_dir).parent)
 
+    # If we are using a local chart directory, ensure that any chart
+    # dependencies are updated from the local filesystem before install.
+    if local_chart_dir:
+        _helm_dependency_update(local_chart_dir, chart_name)
+
     # Create the command
     if local_chart_dir:
         command = [
@@ -184,5 +189,41 @@ def helm_install(
         error(
             "Helm command not found. Please ensure Helm is installed and available in "
             "the PATH."
+        )
+        exit(1)
+
+
+def _helm_dependency_update(local_chart_dir: str, chart_name: ChartName) -> None:
+    """
+    Run `helm dependency update` for a given local chart.
+
+    Parameters
+    ----------
+    local_chart_dir : str
+        Base directory containing the local charts (e.g. ./charts).
+    chart_name : ChartName
+        The chart to update dependencies for (e.g. ChartName.HUB).
+    """
+    chart_path = Path(local_chart_dir) / chart_name.value
+    try:
+        subprocess.run(
+            ["helm", "dependency", "update", str(chart_path)],
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        info(
+            f"Updated Helm dependencies for chart '{chart_name.value}' "
+            f"in '{chart_path}'."
+        )
+    except subprocess.CalledProcessError:
+        error(
+            f"Failed to update Helm dependencies for chart "
+            f"'{chart_name.value}' in '{chart_path}'."
+        )
+        exit(1)
+    except FileNotFoundError:
+        error(
+            "Helm command not found. Please ensure Helm is installed and "
+            "available in the PATH."
         )
         exit(1)

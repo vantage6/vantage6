@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-hq
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -18,25 +18,90 @@ spec:
 {{ include "vantage6.labels" . | indent 8 }}
         component: vantage6-hq
     spec:
+      # Wait for Auth and Store to be ready (store only if algorithm stores are
+      # configured)
+      {{- $authUrl := .Values.global.urls.internal.auth | default "" }}
+      {{- $storeUrl := .Values.global.urls.internal.store | default "" }}
+      {{- $hasAlgoStores := gt (len .Values.hq.algorithm_stores) 0 }}
+      {{- $waitAuth := and .Values.global.wait.auth.enabled $authUrl }}
+      {{- $waitStore := and .Values.global.wait.store.enabled $storeUrl $hasAlgoStores }}
+      {{- /* Resolve the store API path from the first configured algorithm store, with a sane default. */}}
+      {{- $storeApiPath := "/store" }}
+      {{- if $hasAlgoStores }}
+        {{- $firstStore := index .Values.hq.algorithm_stores 0 }}
+        {{- if $firstStore.api_path }}
+          {{- $storeApiPath = $firstStore.api_path }}
+        {{- end }}
+      {{- end }}
+      {{- if or $waitAuth $waitStore }}
+      initContainers:
+        {{- if $waitAuth }}
+        - name: wait-for-auth
+          image: {{ .Values.global.wait.auth.image | default "curlimages/curl:8.7.1" }}
+          # TODO move the script into a separate file and use it in the initContainer
+          command:
+            - sh
+            - -c
+            - >
+              AUTH_URL="{{ $authUrl }}";
+              ATTEMPTS="{{ .Values.global.wait.auth.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ .Values.global.wait.auth.intervalSeconds | default 5 }}";
+              i=0;
+              echo "Waiting for auth at ${AUTH_URL}...";
+              until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
+                i=$((i+1));
+                if [ "$i" -ge "${ATTEMPTS}" ]; then
+                  echo "Auth not ready after ${i} attempts, giving up.";
+                  exit 1;
+                fi;
+                echo "Auth not ready yet, attempt ${i}/${ATTEMPTS}...";
+                sleep "${SLEEP_SECS}";
+              done;
+              echo "Auth is ready.";
+        {{- end }}
+        {{- if $waitStore }}
+        - name: wait-for-store
+          image: {{ .Values.global.wait.store.image | default "curlimages/curl:8.7.1" }}
+          command:
+            - sh
+            - -c
+            - >
+              STORE_URL="{{ $storeUrl }}{{ $storeApiPath }}/version";
+              ATTEMPTS="{{ .Values.global.wait.store.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ .Values.global.wait.store.intervalSeconds | default 5 }}";
+              i=0;
+              echo "Waiting for store at ${STORE_URL} (algorithm stores configured)...";
+              until curl -fsS "${STORE_URL}" >/dev/null 2>&1; do
+                i=$((i+1));
+                if [ "$i" -ge "${ATTEMPTS}" ]; then
+                  echo "Store not ready after ${i} attempts, giving up.";
+                  exit 1;
+                fi;
+                echo "Store not ready yet, attempt ${i}/${ATTEMPTS}...";
+                sleep "${SLEEP_SECS}";
+              done;
+              echo "Store is ready.";
+        {{- end }}
+      {{- end }}
       containers:
       - name: vantage6-hq
         image: {{ .Values.hq.image }}
         imagePullPolicy: {{ .Values.hq.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.hq.keycloak.url | default .Values.global.keycloak.url }}
+          value: {{ (default .Values.global.keycloak .Values.hq.keycloak).url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.hq.keycloak.realm | default .Values.global.keycloak.realm }}
+          value: {{ (default .Values.global.keycloak .Values.hq.keycloak).realm }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.hq.dev.store_address | quote }}
-{{- else if and .Values.store.enabled (not .Values.store.standalone) }}
+{{- else if not .Values.hq.standalone }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.global.urls.internal.store }}
 {{- end }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-secrets
+            name: {{ .Release.Name }}-hq-secrets
         ports:
         - containerPort: {{ .Values.hq.internal.port }}
         {{- if and .Values.prometheus .Values.prometheus.enabled }}
@@ -59,10 +124,10 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: {{ .Release.Name }}-configmap
+          name: {{ .Release.Name }}-hq-configmap
       # Note that logs are not stored if no local k8s node is available
       {{- if ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "" }}
-        - name: hq-logs
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-logs-pvc
+      - name: hq-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-hq-logs-pvc
       {{- end }}

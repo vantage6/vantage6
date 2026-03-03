@@ -18,22 +18,3 @@ global:
     adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
     adminClientSecret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
     publicClient: {{ keycloak.publicClient | default('public_client') }}
-
-{% set hq = hq or {} %}
-{% set auth = auth or {} %}
-{% set store = store or {} %}
-
-hq:
-{% if hq %}
-{{ hq | to_nice_yaml(indent=2) | indent(2, true) }}
-{% endif %}
-
-auth:
-{% if auth %}
-{{ auth | to_nice_yaml(indent=2) | indent(2, true) }}
-{% endif %}
-
-store:
-{% if store %}
-{{ store | to_nice_yaml(indent=2) | indent(2, true) }}
-{% endif %}

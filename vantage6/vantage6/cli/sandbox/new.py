@@ -8,7 +8,7 @@ from vantage6.common.globals import InstanceType
 
 from vantage6.cli.configuration_create import get_external_database_url
 from vantage6.cli.context import get_context
-from vantage6.cli.context.hq import HQContext
+from vantage6.cli.context.hub import HubContext
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.hub import SandboxHubConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
@@ -112,9 +112,7 @@ from vantage6.cli.utils import prompt_config_name
     help="Use external databases instead of deploying internal ones. You will be "
     "prompted for database URIs for auth, HQ, and algorithm store.",
 )
-@click.pass_context
 def cli_new_sandbox(
-    click_ctx: click.Context,
     name: str,
     num_nodes: int,
     hq_image: str | None,
@@ -146,9 +144,9 @@ def cli_new_sandbox(
             error(f"Data directory {data_dir} does not exist!")
             exit(1)
 
-    hq_name = prompt_config_name(name)
-    if HQContext.config_exists(hq_name, False, is_sandbox=True):
-        error(f"Configuration {Fore.RED}{hq_name}{Style.RESET_ALL} already exists!")
+    hub_name = prompt_config_name(name)
+    if HubContext.config_exists(hub_name, False, is_sandbox=True):
+        error(f"Configuration {Fore.RED}{hub_name}{Style.RESET_ALL} already exists!")
         exit(1)
 
     # If using external databases, prompt for database URIs
@@ -160,7 +158,7 @@ def cli_new_sandbox(
         external_db_uris = {"auth": auth_uri, "hq": hq_uri, "store": store_uri}
 
     sb_config_manager = SandboxHubConfigManager(
-        hq_name=hq_name,
+        hub_name=hub_name,
         hq_image=hq_image,
         ui_image=ui_image,
         store_image=store_image,
@@ -173,19 +171,18 @@ def cli_new_sandbox(
         external_db_uris=external_db_uris,
     )
 
-    sb_config_manager.generate_hq_configs()
+    sb_config_manager.generate_hub_configs()
 
     ctx = get_context(
-        type_=InstanceType.HQ,
-        name=hq_name,
+        type_=InstanceType.HUB,
+        name=hub_name,
         system_folders=False,
         is_sandbox=True,
     )
 
     execute_sandbox_start(
-        click_ctx=click_ctx,
         ctx=ctx,
-        hq_name=hq_name,
+        hub_name=hub_name,
         k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=True,

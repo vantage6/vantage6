@@ -208,7 +208,16 @@ class ConfigurationManager(object):
         conf.load(path)
         return conf
 
-    def save(self, path: Path | str) -> Path:
+    def render_config(self) -> str:
+        """
+        Render the configuration to a string.
+        """
+        template = self.get_config_template()
+        return template.render(self.config)
+
+    def save(
+        self, path: Path | str, extra_configs_to_render: dict[str, str] | None = None
+    ) -> Path:
         """
         Save the configuration to a file.
 
@@ -223,8 +232,9 @@ class ConfigurationManager(object):
             The path to the saved configuration file.
         """
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        template = self.get_config_template()
-        rendered_config = template.render(self.config)
+        if not extra_configs_to_render:
+            extra_configs_to_render = {}
+        rendered_config = self.render_config(**extra_configs_to_render)
         # add .sandbox to the path if it is a sandbox configuration
         if self.is_sandbox:
             name = Path(path).stem + SANDBOX_SUFFIX

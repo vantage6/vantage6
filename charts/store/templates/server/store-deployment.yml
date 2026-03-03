@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-store
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "store.labels" . | indent 4 }}
@@ -18,18 +18,45 @@ spec:
 {{ include "store.labels" . | indent 8 }}
         component: store
     spec:
+      # TODO move the script into a separate file and use it in the initContainer
+      {{- $authUrl := .Values.global.urls.internal.auth | default "" }}
+      {{- if and .Values.global.wait.auth.enabled $authUrl }}
+      initContainers:
+        - name: wait-for-auth
+          image: {{ .Values.global.wait.auth.image | default "curlimages/curl:8.7.1" }}
+          command:
+            - sh
+            - -c
+            - >
+              AUTH_URL="{{ $authUrl }}";
+              ATTEMPTS="{{ .Values.global.wait.auth.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ .Values.global.wait.auth.intervalSeconds | default 5 }}";
+              i=0;
+              echo "Waiting for auth at ${AUTH_URL}...";
+              until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
+                i=$((i+1));
+                if [ "$i" -ge "${ATTEMPTS}" ]; then
+                  echo "Auth not ready after ${i} attempts, giving up.";
+                  exit 1;
+                fi;
+                echo "Auth not ready yet, attempt ${i}/${ATTEMPTS}...";
+                sleep "${SLEEP_SECS}";
+              done;
+              echo "Auth is ready.";
+      {{- end }}
+      {{- $storeKeycloak := default (dict) .Values.store.keycloak }}
       containers:
       - name: vantage6-store-backend
         image: {{ .Values.store.image }}
         imagePullPolicy: {{ .Values.store.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.store.keycloak.url | default .Values.global.keycloak.url }}
+          value: {{ default .Values.global.urls.internal.auth $storeKeycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.store.keycloak.realm | default .Values.global.keycloak.realm }}
+          value: {{ (default .Values.global.keycloak .Values.store.keycloak).realm }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-secrets
+            name: {{ .Release.Name }}-store-secrets
         ports:
         - containerPort: {{ .Values.store.internal.port }}
         command: [
@@ -48,10 +75,10 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: {{ .Release.Name }}-configmap
+          name: {{ .Release.Name }}-store-configmap
       # Note that logs are not stored if no local k8s node is available
       {{- if ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "" }}
       - name: store-logs
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-logs-pvc
+          claimName: {{ .Release.Name }}-store-logs-pvc
       {{- end }}

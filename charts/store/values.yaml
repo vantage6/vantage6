@@ -5,6 +5,9 @@ store:
 
   standalone: true
 
+  keycloak:
+    # keycloak data is often provided by the hub chart
+
   description: Vantage algorithm store version 5
   api_path: /store
 

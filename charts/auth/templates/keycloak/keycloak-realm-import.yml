@@ -104,9 +104,8 @@ spec:
           priority: 40
         {{- end }}
     {{- end }}
-    {{- if .Values.keycloak.realmImport.users }}
     users:
-      - username: {{ .Values.keycloak.admin.username | default .Values.global.keycloak.adminUser }}
+      - username: {{ default .Values.global.keycloak.adminUsername .Values.keycloak.realmImport.admin.username }}
         enabled: true
         {{- if not .Values.production }}
         email: admin@vantage6.org
@@ -115,7 +114,7 @@ spec:
         {{- end }}
         credentials:
         - type: password
-          value: {{ .Values.keycloak.admin.password | default .Values.global.keycloak.adminPassword }}
+          value: {{ default .Values.global.keycloak.adminPassword .Values.keycloak.realmImport.admin.password }}
         {{- if .Values.production }}
         requiredActions:
         - CONFIGURE_TOTP
@@ -136,10 +135,8 @@ spec:
             - view-clients
             - manage-clients
             - create-client
-    {{- end }}
-    {{- if .Values.keycloak.realmImport.clients }}
     clients:
-      - clientId: {{ .Values.keycloak.realmImport.publicClient.name | default .Values.global.keycloak.publicClient }}
+      - clientId: {{ default .Values.global.keycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
         publicClient: true
         attributes:
           oauth2.device.authorization.grant.enabled: "true"
@@ -160,15 +157,14 @@ spec:
             config:
               claim.name: vantage6_client_type
               claim.value: user
-              access.token.claim: true
+              access.token.claim: "true"
       # create a client that will allow the backend to manage users and clients in
       # keycloak.
       - clientId: backend-admin-client
         publicClient: false
-        secret: {{ .Values.keycloak.backend_client_secret | default .Values.global.keycloak.adminClientSecret }}
+        secret: {{ default .Values.global.keycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret  }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
-    {{- end }}
     # Define organization_id as a user profile attribute using components (UserProfileProvider)
     # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
     components:

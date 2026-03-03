@@ -15,7 +15,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
 
     Parameters
     ----------
-    hq_name : str
+    hub_name : str
         Name of the HQ.
     hq_image : str | None
         Image of the HQ.
@@ -36,7 +36,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
 
     def __init__(
         self,
-        hq_name: str,
+        hub_name: str,
         hq_image: str | None,
         store_image: str | None,
         ui_image: str | None,
@@ -48,8 +48,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         custom_data_dir: Path | None = None,
         external_db_uris: dict[str, str] | None = None,
     ) -> None:
-        super().__init__(hq_name, custom_data_dir)
-
+        super().__init__(hub_name, custom_data_dir)
         self.hq_image = hq_image
         self.store_image = store_image
         self.ui_image = ui_image
@@ -60,7 +59,11 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         self.with_prometheus = with_prometheus
         self.external_db_uris = external_db_uris
 
-    def generate_hq_configs(self) -> None:
+        self.auth_config = None
+        self.hq_config = None
+        self.store_config = None
+
+    def generate_hub_configs(self) -> None:
         """Generates the local sandbox network."""
 
         self._create_auth_config()
@@ -68,6 +71,87 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         self._create_hq_config()
 
         self._create_algo_store_config()
+
+        # Additionally create a single hub configuration that combines the
+        # individual auth, HQ and store configurations. This hub values file
+        # is used with the parent "hub" Helm chart to deploy all components.
+        self._create_hub_config()
+
+    def _create_hub_config(self) -> None:
+        """
+        Create a hub configuration file (YAML) that aggregates the auth, HQ
+        and algorithm store configurations, so the sandbox can be deployed
+        via the single hub Helm chart.
+        """
+        # External URLs as seen from the host
+        urls = {
+            "external": {
+                "auth": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_AUTH.value}",
+                "store": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_ALGO_STORE.value}",
+                "ui": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
+                "hq": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_HQ.value}",
+            },
+            # Internal URLs as seen inside the cluster. These match the service
+            # names and ports created by the hub Helm chart.
+            "internal": {
+                "auth": (
+                    f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:"
+                    f"{Ports.SANDBOX_AUTH.value}"
+                ),
+                "store": (
+                    f"http://vantage6-{self.hub_name}-user-hub-store."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:"
+                    f"{Ports.SANDBOX_ALGO_STORE.value}"
+                ),
+                "ui": (
+                    f"http://vantage6-{self.hub_name}-user-hub-ui."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:"
+                    f"{Ports.SANDBOX_UI.value}"
+                ),
+                "hq": (
+                    f"http://vantage6-{self.hub_name}-user-hub-hq."
+                    f"{self.k8s_config.namespace}.svc.cluster.local:"
+                    f"{Ports.SANDBOX_HQ.value}"
+                ),
+            },
+        }
+
+        # Shared Keycloak defaults used by the hub chart. Subcharts can still
+        # override these where needed.
+        keycloak = {
+            "url": urls["external"]["auth"],
+            "realm": "vantage6",
+            "adminUsername": "admin",
+            "adminPassword": "admin",
+            "adminClient": "backend-admin-client",
+            "adminClientSecret": "myadminclientsecret",
+            "publicClient": "public_client",
+        }
+
+        hub_config = {
+            "urls": urls,
+            "keycloak": keycloak,
+            # Pass through the component-specific values so the hub chart's
+            # subcharts receive the same configuration as the standalone charts.
+            "hq": self.hq_config,
+            "auth": self.auth_config,
+            "store": self.store_config,
+        }
+
+        hub_config = new(
+            config_producing_func=lambda: hub_config,
+            config_producing_func_args=(),
+            name=self.hub_name,
+            system_folders=False,
+            type_=InstanceType.HUB,
+            is_sandbox=True,
+            extra_configs_to_render={
+                "hq_config": self.hq_config,
+                "auth_config": self.auth_config,
+                "store_config": self.store_config,
+            },
+        )
 
     def __hq_config_return_func(
         self,
@@ -108,7 +192,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 }
             )
 
-        store_service = f"vantage6-{self.hq_name}-store-user-algorithm-store"
+        store_service = f"vantage6-{self.hub_name}-user-hub-store"
         store_address = (
             f"http://{store_service}.{self.k8s_config.namespace}.svc.cluster.local"
             f":{Ports.SANDBOX_ALGO_STORE.value}"
@@ -148,12 +232,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "local_hub_port_to_expose": Ports.SANDBOX_HQ.value,
                     "local_ui_port_to_expose": Ports.SANDBOX_UI.value,
                 },
-                "keycloak": {
-                    "url": (
-                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
-                        f"{self.k8s_config.namespace}.svc.cluster.local:7680"
-                    ),
-                },
             },
             "rabbitmq": {},
             "database": (
@@ -175,9 +253,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "image": (
                     self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:uluru"
                 ),
-                "keycloak": {
-                    "publicUrl": f"http://localhost:{Ports.SANDBOX_AUTH.value}",
-                },
             },
             "prometheus": prometheus_config,
         }
@@ -203,13 +278,14 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             extra_config["ui"] = ui_config
 
         # Create the HQ config file
-        new(
+        self.hq_config = new(
             config_producing_func=self.__hq_config_return_func,
             config_producing_func_args=(extra_config,),
-            name=self.hq_name,
+            name=self.hub_name,
             system_folders=False,
             type_=InstanceType.HQ,
             is_sandbox=True,
+            save_config_file=False,
         )
 
     def _create_algo_store_config(self) -> None:
@@ -222,13 +298,14 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             InstanceType.ALGORITHM_STORE, is_log_dir=True
         )
 
-        new(
+        self.store_config = new(
             config_producing_func=self.__algo_store_config_return_func,
             config_producing_func_args=(extra_config, data_dir, log_dir),
-            name=f"{self.hq_name}-store",
+            name=f"{self.hub_name}-store",
             system_folders=False,
             type_=InstanceType.ALGORITHM_STORE,
             is_sandbox=True,
+            save_config_file=False,
         )
 
     def __algo_store_config_return_func(
@@ -245,7 +322,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         """
         config = {
             "store": {
-                "baseUrl": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_ALGO_STORE.value}",
                 "internal": {
                     "port": Ports.SANDBOX_ALGO_STORE.value,
                 },
@@ -254,17 +330,10 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "level": "DEBUG",
                     "volumeHostPath": log_dir,
                 },
-                "vantage6HQUri": f"{HTTP_LOCALHOST}:{Ports.SANDBOX_HQ.value}",
                 "image": (
                     self.store_image
                     or "harbor2.vantage6.ai/infrastructure/algorithm-store:uluru"
                 ),
-                "keycloak": {
-                    "url": (
-                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
-                        f"{self.k8s_config.namespace}.svc.cluster.local:7680"
-                    ),
-                },
                 "policies": {
                     "allowLocalhost": True,
                     "assignReviewOwnAlgorithm": True,
@@ -306,13 +375,14 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
     def _create_auth_config(self) -> None:
         """Create auth configuration file (YAML)."""
         extra_config = self._read_extra_config_file(self.extra_auth_config)
-        new(
+        self.auth_config = new(
             config_producing_func=self.__auth_config_return_func,
             config_producing_func_args=(extra_config,),
-            name=f"{self.hq_name}-auth",
+            name=f"{self.hub_name}-auth",
             system_folders=False,
             type_=InstanceType.AUTH,
             is_sandbox=True,
+            save_config_file=False,
         )
 
     def __auth_config_return_func(self, extra_config: dict) -> dict:

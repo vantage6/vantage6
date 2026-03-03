@@ -13,7 +13,7 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import execute_cli_start
 from vantage6.cli.context.auth import AuthContext
-from vantage6.cli.context.hq import HQContext
+from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
@@ -76,11 +76,9 @@ from vantage6.cli.sandbox.populate import populate_hub_sandbox
     "on WSL because of mount issues for default directories. Only used if the "
     "--re-initialize flag is provided.",
 )
-@click_insert_context(type_=InstanceType.HQ, is_sandbox=True)
-@click.pass_context
+@click_insert_context(type_=InstanceType.HUB, is_sandbox=True)
 def cli_sandbox_start(
-    click_ctx: click.Context,
-    ctx: HQContext,
+    ctx: HubContext,
     context: str | None,
     namespace: str | None,
     local_chart_dir: Path | None,
@@ -98,9 +96,8 @@ def cli_sandbox_start(
 
     # TODO if re-initalize is specified, we must remove the existing node configs
     execute_sandbox_start(
-        click_ctx=click_ctx,
         ctx=ctx,
-        hq_name=ctx.name,
+        hub_name=ctx.name,
         k8s_config=k8s_config,
         num_nodes=num_nodes,
         initialize=re_initialize,
@@ -113,9 +110,8 @@ def cli_sandbox_start(
 
 
 def execute_sandbox_start(
-    click_ctx: click.Context,
-    ctx: HQContext,
-    hq_name: str,
+    ctx: HubContext,
+    hub_name: str,
     k8s_config: KubernetesConfig,
     num_nodes: int,
     initialize: bool,
@@ -125,48 +121,29 @@ def execute_sandbox_start(
     custom_data_dir: Path | None = None,
     local_chart_dir: str | None = None,
 ) -> None:
-    with_prometheus = ctx.config.get("prometheus", {}).get("enabled", False)
-
-    # First we need to start the keycloak service
-    execute_cli_start(
-        command_name=CLICommandName.AUTH,
-        name=f"{hq_name}-auth.sandbox",
-        k8s_config=k8s_config,
-        local_chart_dir=local_chart_dir,
-        system_folders=False,
-        is_sandbox=True,
-        extra_args=["--wait-ready"],
+    with_prometheus = (
+        ctx.config.get("hq", {}).get("prometheus", {}).get("enabled", False)
     )
 
-    # run the store. The store is started before HQ so that HQ can
-    # couple to the store on startup.
     execute_cli_start(
-        command_name=CLICommandName.ALGORITHM_STORE,
-        name=f"{hq_name}-store.sandbox",
+        command_name=CLICommandName.HUB,
+        name=hub_name,
         k8s_config=k8s_config,
         local_chart_dir=local_chart_dir,
         system_folders=False,
         is_sandbox=True,
     )
 
-    # Then we need to start HQ
-    execute_cli_start(
-        command_name=CLICommandName.HQ,
-        name=ctx.name,
-        k8s_config=k8s_config,
-        local_chart_dir=local_chart_dir,
-        system_folders=False,
-        is_sandbox=True,
+    hq_url = (
+        f"{ctx.config['global']['urls']['external']['hq']}{ctx.config['hq']['apiPath']}"
     )
-
-    hq_url = f"{ctx.config['hq']['baseUrl']}{ctx.config['hq']['apiPath']}"
     _wait_for_hq_to_be_ready(hq_url)
 
     # Then we need to populate HQ
     if initialize:
         node_config_names = _initialize_sandbox(
             hq_url=hq_url,
-            hq_name=hq_name,
+            hub_name=hub_name,
             num_nodes=num_nodes,
             ctx=ctx,
             node_image=node_image,
@@ -183,7 +160,7 @@ def execute_sandbox_start(
         node_config_names = [
             config.name
             for config in node_configs
-            if config.name.startswith(f"{hq_name}-node-")
+            if config.name.startswith(f"{hub_name}-node-")
         ]
 
     # Then start the nodes
@@ -199,14 +176,14 @@ def execute_sandbox_start(
         )
 
     # Print the authentication credentials
-    _print_auth_credentials(hq_name)
+    _print_auth_credentials(hub_name)
 
 
 def _initialize_sandbox(
     hq_url: str,
-    hq_name: str,
+    hub_name: str,
     num_nodes: int,
-    ctx: HQContext,
+    ctx: HubContext,
     node_image: str | None,
     extra_node_config: Path | None,
     add_dataset: tuple[str, Path] | None,
@@ -235,10 +212,10 @@ def _initialize_sandbox(
 
     # Create node config files from the nodes that were just registered in the HQ
     node_config_manager = NodeSandboxConfigManager(
-        hq_name=hq_name,
+        hub_name=hub_name,
         api_keys=api_keys,
         node_names=node_names,
-        hq_port=ctx.config["hq"]["port"],
+        hq_port=ctx.config["hq"]["hq"]["port"],
         node_image=node_image,
         extra_node_config=extra_node_config,
         extra_dataset=extra_dataset,
@@ -251,17 +228,17 @@ def _initialize_sandbox(
     return node_config_manager.node_config_names
 
 
-def _print_auth_credentials(hq_name: str) -> None:
+def _print_auth_credentials(hub_name: str) -> None:
     """
     Find user credentials to print, from the auth config file
 
     Parameters
     ----------
-    hq_name : str
-        Name of the HQ.
+    hub_name : str
+        Name of the hub.
     """
     auth_ctx = AuthContext(
-        instance_name=f"{hq_name}-auth",
+        instance_name=f"{hub_name}-auth",
         system_folders=False,
         is_sandbox=True,
     )

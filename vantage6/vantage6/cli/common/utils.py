@@ -171,6 +171,8 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
         return CLICommandName.NODE.value
     elif instance_type == InstanceType.AUTH:
         return CLICommandName.AUTH.value
+    elif instance_type == InstanceType.HUB:
+        return CLICommandName.HUB.value
     else:
         raise ValueError(f"Invalid instance type: {instance_type}")
 

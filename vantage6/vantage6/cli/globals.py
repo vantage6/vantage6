@@ -111,3 +111,4 @@ class InfraComponentName(StrEnumBase):
     ALGORITHM_STORE = "store"
     NODE = "node"
     AUTH = "auth"
+    HUB = "hub"

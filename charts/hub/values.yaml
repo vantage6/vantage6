@@ -32,5 +32,22 @@ global:
       auth: ""
       store: ""
       ui: ""
+      hq: ""
   # Optional shared node name for local storage (logs/prometheus)
   k8sNodeName: ""
+
+  # Optional shared wait settings used by initContainers in HQ and Store
+  # when deploying via the hub chart. By default these are disabled so
+  # standalone charts are unaffected; enable them and set internal URLs
+  # to have HQ/Store wait for Auth (and HQ wait for Store).
+  wait:
+    auth:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: "curlimages/curl:8.7.1"
+    store:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: "curlimages/curl:8.7.1"

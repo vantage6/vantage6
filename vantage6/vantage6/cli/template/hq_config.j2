@@ -16,7 +16,7 @@ hq:
   apiPath: {{ hq.apiPath | default('/hq') }}
 
   # Keycloak configuration
-  if {% hq.standalone is defined and hq.standalone %}
+  {% if hq.standalone is defined and hq.standalone %}
   keycloak:
     url: {{ hq.keycloak.url }}
     realm: {{ hq.keycloak.realm | default('vantage6') }}

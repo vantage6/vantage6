@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ .Release.Name }}-hq-configmap
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yaml: |
@@ -29,7 +29,7 @@ data:
     {{- if .Values.database.external }}
     uri: {{ .Values.database.uri }}
     {{- else }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres:5432/{{ .Values.database.name }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-hq-postgres:5432/{{ .Values.database.name }}
     {{- end }}
     {{- if .Values.hq.cors_allowed_origins }}
     cors_allowed_origins:

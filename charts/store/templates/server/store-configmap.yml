@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ .Release.Name }}-store-configmap
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yaml: |
@@ -10,7 +10,7 @@ data:
     {{- if .Values.database.external }}
     uri: {{ .Values.database.uri }}
     {{- else }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres:5432/{{ .Values.database.name }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-store-postgres:5432/{{ .Values.database.name }}
     {{- end }}
     logging:
       backup_count: {{ .Values.store.logging.backup_count }}
@@ -75,8 +75,8 @@ data:
     port: {{ .Values.store.internal.port }}
     base_url: {{ .Values.store.baseUrl | default .Values.global.urls.external.store }}
     root_user:
-      username: {{ .Values.store.keycloak.adminUsername | default .Values.global.keycloak.adminUsername }}
-      v6_hq_uri: {{ .Values.store.vantage6HQUri | default .Values.global.urls.external.hq }}
+      username: {{ (default .Values.global.keycloak .Values.store.keycloak).adminUsername }}
+      v6_hq_uri: {{ default .Values.global.urls.external.hq .Values.store.vantage6HQUri }}
     {{- if .Values.store.smtpServer }}
     smtp_server:
       host: {{ .Values.store.smtpServer.host }}

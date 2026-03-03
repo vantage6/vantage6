@@ -171,18 +171,18 @@ database:
   # the URI of the external database. Only used if external is set to true.
   uri: postgres://vantage6:vantage6@localhost:5432/vantage6
 
-  # The image of the database
+  # The image of the database. Should only be set if external is set to false.
   image:
     repository: postgres
     tag: 13
 
-  # The username of the database
+  # The username of the database. Should only be set if external is set to false.
   username: vantage6
 
-  # The password of the database
+  # The password of the database. Should only be set if external is set to false.
   password: vantage6
 
-  # The name of the database
+  # The name of the database. Should only be set if external is set to false.
   name: vantage6
 
   # Hostpath of the database mount. Only used if external is set to false.
