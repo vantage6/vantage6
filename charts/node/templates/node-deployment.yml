@@ -26,6 +26,14 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
       - name: vantage6-node
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         # TODO v5+ change to final v5 image
         image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:5" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
