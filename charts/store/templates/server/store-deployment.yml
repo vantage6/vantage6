@@ -24,9 +24,9 @@ spec:
         imagePullPolicy: {{ .Values.store.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.store.keycloak.url }}
+          value: {{ .Values.store.keycloak.url | default .Values.global.keycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.store.keycloak.realm }}
+          value: {{ .Values.store.keycloak.realm | default .Values.global.keycloak.realm }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-secrets
@@ -50,7 +50,7 @@ spec:
         configMap:
           name: {{ .Release.Name }}-configmap
       # Note that logs are not stored if no local k8s node is available
-      {{- if ne (.Values.database.k8sNodeName | default "") "" }}
+      {{- if ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "" }}
       - name: store-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-logs-pvc

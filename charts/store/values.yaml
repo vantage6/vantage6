@@ -2,18 +2,11 @@
 # because that would not be secure.
 store:
   replications: 1
-  description: Vantage algorithm store version 5
-  baseUrl: ""
-  api_path: /store
 
-  keycloak:
-    url: ""
-    realm: vantage6
-    # adminUsername: ""
-    # adminPassword: ""
-    # adminClient: ""
-    # adminClientSecret: ""
-  vantage6HQUri: ""
+  standalone: true
+
+  description: Vantage algorithm store version 5
+  api_path: /store
 
   policies:
     algorithmView: public
@@ -54,4 +47,3 @@ database:
   # password: vantage6
   # name: vantage6
   # volumePath: /mnt/data_store
-  # k8sNodeName: docker-desktop  # Required to set when external is false.

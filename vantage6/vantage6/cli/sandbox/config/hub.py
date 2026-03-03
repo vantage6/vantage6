@@ -339,7 +339,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         config = {
             "keycloak": {
                 "production": False,
-                "no_password_update_required": True,
+                "passwordUpdateRequired": False,
                 "redirectUris": [
                     f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
                 ],

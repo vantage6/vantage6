@@ -1,4 +1,4 @@
-{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name))) (ne (.Values.database.k8sNodeName | default "") "") }}
+{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-logs-pv" .Release.Name))) (ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "") }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -24,5 +24,5 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ .Values.database.k8sNodeName }}
+                - {{ .Values.database.k8sNodeName | default .Values.global.k8sNodeName }}
 {{- end }}

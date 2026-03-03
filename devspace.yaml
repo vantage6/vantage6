@@ -232,8 +232,7 @@ deployments:
       chart:
         name: ./charts/auth
       values:
-        service:
-          type: ClusterIP
+        standalone: true
         database:
           volumePath: ${AUTH_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
@@ -290,6 +289,7 @@ deployments:
         name: ./charts/hq
       values:
         hq:
+          standalone: true
           image: ${HQ_IMAGE} # needed for automatic image tag update
           imagePullPolicy: IfNotPresent
           keycloak:
@@ -334,6 +334,7 @@ deployments:
         name: ./charts/store
       values:
         store:
+          standalone: true
           image: ${STORE_IMAGE}
           imagePullPolicy: IfNotPresent
           baseUrl: http://localhost:7602

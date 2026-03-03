@@ -4,14 +4,24 @@ nameOverride: {{ nameOverride | default('vantage6-store') }}
 # namespace: vantage6-store
 store:
 
+  # Whether the store is deployed standalone or as part of a vantage6 hub.
+  standalone: {{ store.standalone | default(false) }}
+
   # The description of the store
   description: {{ store.description | default('Vantage algorithm store version 5') }}
 
   # The external URL of the algorithm store
-  baseUrl: {{ store.baseUrl | default('http://localhost:7602') }}
+  {% if store.baseUrl is defined %}
+  baseUrl: {{ store.baseUrl }}
+  {% else %}
+  # The store base URL is not set here, it should be set in the hub chart config, or
+  # otherwise it should be specified below.
+  # baseUrl: http://localhost:7602
+  {% endif %}
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration
+  if {% store.standalone is defined and store.standalone %}
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
@@ -19,11 +29,14 @@ store:
     adminPassword: {{ store.keycloak.adminPassword | default('admin') }}
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
     adminClientSecret: {{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}
+  {% endif %}
 
-  vantage6HQUri: {{ store.vantage6HQUri | default('http://localhost:7601/hq') }}
+  {% if store.standalone is defined and store.standalone %}
+  vantage6HQUri: {{ store.vantage6HQUri }}
+  {% endif %}
 
   # Which image to use to run the store.
-  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:latest') }}
+  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:uluru') }}
   # Algorithm store image pull policy.
   # Possible values are:
   # - Always: always pull the image from the registry

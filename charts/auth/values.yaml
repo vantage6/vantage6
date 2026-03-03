@@ -1,4 +1,7 @@
 keycloak:
+
+  standalone: true
+
   instances: 1
   hostname: ""
 
@@ -17,7 +20,6 @@ keycloak:
 
   realmImport:
     enabled: true
-    realm: vantage6
     accessTokenLifespan: 300
     ssoSessionIdleTimeout: 1800
     passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
@@ -70,4 +72,3 @@ database:
   username: ""
   password: ""
   name: ""
-  # k8sNodeName: ""  # Required when external is false for internal DB. Omit or leave empty only when using external DB.

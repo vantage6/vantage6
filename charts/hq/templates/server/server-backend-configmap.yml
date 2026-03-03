@@ -25,7 +25,7 @@ data:
       max_size: {{ .Values.hq.logging.max_size }}
       use_console: {{ .Values.hq.logging.use_console }}
     port: {{ .Values.hq.internal.port }}
-    hq_url: {{ .Values.hq.baseUrl }}{{ .Values.hq.apiPath }}
+    hq_url: {{ .Values.hq.baseUrl | default .Values.global.urls.external.hq }}{{ .Values.hq.apiPath }}
     {{- if .Values.database.external }}
     uri: {{ .Values.database.uri }}
     {{- else }}
@@ -44,7 +44,7 @@ data:
     {{- if .Values.hq.dev.host_uri }}
     dev:
       host_uri: {{ .Values.hq.dev.host_uri }}
-      store_address: {{ .Values.hq.dev.store_address }}
+      store_address: {{ .Values.hq.dev.store_address | default .Values.global.urls.internal.store }}
     {{- end }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:

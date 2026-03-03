@@ -4,17 +4,10 @@ nameOverride: vantage6-hq
 hq:
   description: Vantage6 headquarters version 5
 
-  baseUrl: http://localhost:7601
+  standalone: true
+
   apiPath: /hq
   image: harbor2.vantage6.ai/infrastructure/hq:uluru
-
-  keycloak:
-    url: ""
-    realm: ""
-    # adminUsername: ""
-    # adminPassword: ""
-    # adminClient: ""
-    # adminClientSecret: ""
 
   port: 7601
   internal:
@@ -59,17 +52,10 @@ database:
   # username: vantage6
   # password: vantage6
   # name: vantage6
-  # k8sNodeName: ""  # When external is false: k8sNodeName is required for internal DB
 
 ui:
   image: harbor2.vantage6.ai/infrastructure/ui:uluru
   port: 7600
-
-  keycloak:
-    realm: vantage6
-    client: public_client
-    # publicUrl: http://localhost:7680
-
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai
   communityStoreApiPath: /store

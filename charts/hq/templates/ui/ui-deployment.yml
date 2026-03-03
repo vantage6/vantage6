@@ -26,15 +26,15 @@ spec:
         - containerPort: 80
         env:
         - name: HQ_URL
-          value: {{ .Values.hq.baseUrl | quote }}
+          value: {{ .Values.hq.baseUrl | default .Values.global.urls.external.hq | quote }}
         - name: API_PATH
           value: {{ .Values.hq.apiPath | quote }}
         - name: AUTH_URL
-          value: {{ .Values.ui.keycloak.publicUrl | quote }}
+          value: {{ .Values.ui.keycloak.publicUrl | default .Values.global.urls.external.auth | quote }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.ui.keycloak.realm | quote }}
+          value: {{ .Values.ui.keycloak.realm | default .Values.global.keycloak.realm | quote }}
         - name: KEYCLOAK_CLIENT
-          value: {{ .Values.ui.keycloak.client | quote }}
+          value: {{ .Values.ui.keycloak.client | default .Values.global.keycloak.publicClient | quote }}
         # set the length of the refresh token. This is the time before keycloak-angular
         # automatically logs out the user.
         - name: REFRESH_TOKEN_VALIDITY_SECONDS

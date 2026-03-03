@@ -14,11 +14,23 @@ store:
   enabled: true
   # Copy or override values from charts/store/values.yaml here as needed.
 
-hub:
-  ingress:
-    enabled: false
-    className: ""
-    host: ""
-    tls:
-      enabled: false
-      secretName: ""
+global:
+  # Shared Keycloak configuration (used as default if subcharts don't override)
+  keycloak:
+    url: ""
+    realm: "vantage6"
+    adminClient: "backend-admin-client"
+    publicClient: "public_client"
+  # Shared public URLs (used as defaults for HQ and Store)
+  urls:
+    external:
+      auth: ""
+      store: ""
+      ui: ""
+      hq: ""
+    internal:
+      auth: ""
+      store: ""
+      ui: ""
+  # Optional shared node name for local storage (logs/prometheus)
+  k8sNodeName: ""

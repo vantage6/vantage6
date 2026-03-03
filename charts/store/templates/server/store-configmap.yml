@@ -73,10 +73,10 @@ data:
       review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
     {{- end }}
     port: {{ .Values.store.internal.port }}
-    base_url: {{ .Values.store.baseUrl }}
+    base_url: {{ .Values.store.baseUrl | default .Values.global.urls.external.store }}
     root_user:
-      username: {{ .Values.store.keycloak.adminUsername }}
-      v6_hq_uri: {{ .Values.store.vantage6HQUri }}
+      username: {{ .Values.store.keycloak.adminUsername | default .Values.global.keycloak.adminUsername }}
+      v6_hq_uri: {{ .Values.store.vantage6HQUri | default .Values.global.urls.external.hq }}
     {{- if .Values.store.smtpServer }}
     smtp_server:
       host: {{ .Values.store.smtpServer.host }}

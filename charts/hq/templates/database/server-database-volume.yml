@@ -23,5 +23,5 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ .Values.database.k8sNodeName }}
+                - {{ .Values.database.k8sNodeName | default .Values.global.k8sNodeName }}
 {{- end }}

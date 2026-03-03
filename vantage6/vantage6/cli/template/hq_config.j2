@@ -6,11 +6,17 @@ hq:
   # The description of this HQ instance
   description: {{ hq.description | default('Vantage6 HQ version 5') }}
 
+  # Whether the HQ is deployed standalone or as part of a vantage6 hub.
+  standalone: {{ hq.standalone | default(false) }}
+
+  {% if hq.standalone is defined and hq.standalone %}
   # The external URL of the HQ
-  baseUrl: {{ hq.baseUrl | default('http://localhost:7601') }}
+  baseUrl: {{ hq.baseUrl }}
+  {% endif %}
   apiPath: {{ hq.apiPath | default('/hq') }}
 
   # Keycloak configuration
+  if {% hq.standalone is defined and hq.standalone %}
   keycloak:
     url: {{ hq.keycloak.url }}
     realm: {{ hq.keycloak.realm | default('vantage6') }}
@@ -18,13 +24,12 @@ hq:
     adminPassword: {{ hq.keycloak.adminPassword | default('admin') }}
     adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
     adminClientSecret: {{ hq.keycloak.adminClientSecret | default('myadminclientsecret') }}
-
-  {% if hq.internal is defined %}
-  internal:
-    port: {{ hq.internal.port | default(7601) }}
   {% endif %}
-  {% if hq.internal is not defined %}
+
   internal:
+  {% if hq.internal is defined %}
+    port: {{ hq.internal.port | default(7601) }}
+  {% else %}
     port: 7601
   {% endif %}
 
@@ -34,7 +39,7 @@ hq:
   replications: {{ hq.replications | default(1) }}
 
   # The image used to start the hq
-  image: {{ hq.image | default('harbor2.vantage6.ai/infrastructure/hq:latest') }}
+  image: {{ hq.image | default('harbor2.vantage6.ai/infrastructure/hq:uluru') }}
 
   # HQ image pull policy.
   # Possible values are:
@@ -109,9 +114,11 @@ hq:
   {% if hq.dev is defined %}
   dev:
     host_uri: {{ hq.dev.host_uri | default('host.docker.internal') }}
+    {% if hq.standalone is defined and hq.standalone %}
     # store address of the algorithm store. This can be provided to the hq for
     # a custom address of the local algorithm store within the k8s cluster.
-    store_address: {{ hq.dev.store_address | default('http://vantage6-store-store.service.default.svc.cluster.local') }}
+    store_address: {{ hq.dev.store_address }}
+    {% endif %}
     # Whether to forward ports to host locally using kubernetes or not, using the
     # NodePort feature of kubernetes. If set to false, the ports will
     # not be forwarded. In production, this should be false and you are responsible
@@ -238,16 +245,19 @@ database:
 ui:
 
   # The image of the UI
-  image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:latest') }}
+  image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:uluru') }}
   # UI image pull policy. Possible values are: Always (default), IfNotPresent, Never
   imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI
   port: {{ ui.port | default(7600) }}
+
+  {% if ui.standalone is defined and ui.standalone %}
   # keycloak connection settings
   keycloak:
-    realm: {{ ui.keycloak.realm | default('vantage6') }}
-    client: {{ ui.keycloak.client | default('public_client') }}
-    publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
+      realm: {{ ui.keycloak.realm | default('vantage6') }}
+      client: {{ ui.keycloak.client | default('public_client') }}
+      publicUrl: {{ ui.keycloak.publicUrl | default('http://localhost:7680') }}
+  {% endif %}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
   # Use "*" to allow all stores (less secure) or specify specific URLs

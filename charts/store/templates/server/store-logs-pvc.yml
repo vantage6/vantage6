@@ -1,4 +1,4 @@
-{{- if and (not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-logs-pvc" .Release.Name))) (ne (.Values.database.k8sNodeName | default "") "") }}
+{{- if and (not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-logs-pvc" .Release.Name))) (ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "") }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

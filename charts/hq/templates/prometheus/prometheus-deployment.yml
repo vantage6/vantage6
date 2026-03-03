@@ -1,4 +1,4 @@
-{{- if and (.Values.prometheus.enabled) (ne (.Values.database.k8sNodeName | default "") "") }}
+{{- if and (.Values.prometheus.enabled) (ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
