@@ -46,6 +46,13 @@ class OwnershipPreservingRotatingFileHandler(logging.handlers.RotatingFileHandle
             pass
 
     def doRollover(self) -> None:
+        """
+        Rotate the active log file and restore its original ownership and mode.
+
+        Overrides ``logging.handlers.RotatingFileHandler.doRollover()`` so the
+        replacement log file keeps the same uid, gid, and permissions as the
+        pre-rollover file.
+        """
         metadata = self._capture_metadata()
         super().doRollover()
         self._restore_metadata(metadata)

@@ -324,14 +324,15 @@ class AppContext(metaclass=Singleton):
         """
         return self.log_file_name(type_=self.instance_type)
 
-    def log_file_name(self, type_: str) -> Path:
+    def log_file_name(self, type_: str | enum.Enum) -> Path:
         """
         Return a path to a log file for a given log file type
 
         Parameters
         ----------
-        type_: str
-            The type of log file to return.
+        type_: str | enum.Enum
+            The type of log file to return. Enum values are normalized to
+            their underlying value before composing the file name.
 
         Returns
         -------
