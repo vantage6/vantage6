@@ -7,15 +7,12 @@ import click
 from vantage6.common import error, warning
 from vantage6.common.globals import InstanceType
 
-from vantage6.cli.auth.remove import auth_remove
 from vantage6.cli.common.remove import execute_remove
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context import get_context
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import InfraComponentName
-from vantage6.cli.hq.remove import cli_hq_remove
+from vantage6.cli.hub.remove import cli_hub_remove
 
 
 @click.command()
@@ -37,63 +34,20 @@ def cli_sandbox_remove(
 ) -> None:
     """Remove all related demo network files and folders.
 
-    Select an HQ configuration to remove. The related sandbox components will also be
+    Select a hub configuration to remove. The related sandbox components will also be
     removed.
     """
 
     if not name:
         try:
             name = select_configuration_questionnaire(
-                type_=InstanceType.HQ, system_folders=False, is_sandbox=True
+                type_=InstanceType.HUB, system_folders=False, is_sandbox=True
             )
         except Exception:
             error("No configurations could be found!")
             exit()
 
-    ctx = get_context(InstanceType.HQ, name, system_folders=False, is_sandbox=True)
-
-    # remove the store folder
-    store_configs = AlgorithmStoreContext.instance_folders(
-        InstanceType.ALGORITHM_STORE,
-        f"{ctx.name}-store",
-        system_folders=False,
-    )
-    store_folder = store_configs["data"]
-    if store_folder.is_dir():
-        rmtree(store_folder)
-
-    # remove the store config file
-    AlgorithmStoreContext.LOGGING_ENABLED = False
-    store_ctx = AlgorithmStoreContext(
-        instance_name=f"{ctx.name}-store",
-        system_folders=False,
-        is_sandbox=True,
-    )
-    execute_remove(
-        store_ctx,
-        InstanceType.ALGORITHM_STORE,
-        InfraComponentName.ALGORITHM_STORE,
-        f"{ctx.name}-store",
-        system_folders=False,
-        force=True,
-    )
-
-    # remove the auth folder
-    AuthContext.LOGGING_ENABLED = False
-    auth_configs = AuthContext.instance_folders(
-        InstanceType.AUTH, f"{ctx.name}-auth", system_folders=False
-    )
-    auth_folder = auth_configs["data"]
-    if auth_folder.is_dir():
-        rmtree(auth_folder)
-
-    # remove the auth service
-    auth_ctx = AuthContext(
-        instance_name=f"{ctx.name}-auth",
-        system_folders=False,
-        is_sandbox=True,
-    )
-    auth_remove(auth_ctx, f"{ctx.name}-auth", system_folders=False, force=True)
+    ctx = get_context(InstanceType.HUB, name, system_folders=False, is_sandbox=True)
 
     # remove the nodes
     NodeContext.LOGGING_ENABLED = False
@@ -136,14 +90,14 @@ def cli_sandbox_remove(
     except Exception as e:
         warning(f"Failed to delete data directory {data_dirs_nodes / ctx.name}: {e}")
 
-    # remove the HQ last - if anything goes wrong, the HQ is still there so the
+    # remove the hub last - if anything goes wrong, the hub is still there so the
     # user can still retry the removal.
-    # Note that this also checks if the HQ is running. Therefore, it is prevented
+    # Note that this also checks if the hub is running. Therefore, it is prevented
     # that a running sandbox is removed.
     for handler in itertools.chain(ctx.log.handlers, ctx.log.root.handlers):
         handler.close()
     click_ctx.invoke(
-        cli_hq_remove, ctx=ctx, name=name, system_folders=False, force=True
+        cli_hub_remove, ctx=ctx, name=name, system_folders=False, force=True
     )
 
     # remove the right data in the custom data directory if it is provided. If a custom
