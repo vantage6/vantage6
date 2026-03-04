@@ -109,7 +109,7 @@ their relationships.
 -  Each collaboration can contain multiple **sessions** in which data may be analysed.
    A session can contain multiple **dataframes**. A dataframe is a collection of
    data retrieved from the original source database that is stored on the node. A
-   dataframe can be modified by additional user defined preprocessing steps and can
+   dataframe can be modified by additional user defined **preprocessing** steps and can
    be used as input for **tasks**.
 -  Users can create **tasks** for one or more organizations within a collaboration and
    session. Tasks lead to the execution of the algorithms.
