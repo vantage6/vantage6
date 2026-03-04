@@ -254,9 +254,11 @@ HQ's resources whenever a new algorithm needs more resources.
    central algorithm then computes the final result and sends it to HQ, where
    the user can retrieve it.
 
-Note that is also possible for the user to create the subtasks directly, and to compute
-the central part of the algorithm themselves. However, this is not the most common
-approach as it is generally easier to let the central algorithm do the work.
+.. note::
+
+    It is also possible for the user to create the subtasks directly, and to compute
+    the central part of the algorithm themselves. However, this is not the most common
+    approach as it is generally easier to let the central algorithm do the work.
 
 How to run algorithms in vantage6
 ---------------------------------

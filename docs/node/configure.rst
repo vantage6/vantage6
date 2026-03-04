@@ -133,6 +133,10 @@ There are two important steps to be taken to accomplish this:
       Uluru community algorithm store. Only the most recent version of the algorithm
       uploaded to the store will be allowed to run on your data.
 
+   By default, only algorithms are allowed to run that fulfill both the
+   `allowed_algorithms` and `allowed_algorithm_stores` policies. You can change this
+   by setting the `allow_either_whitelist_or_store` policy to `true`.
+
    Note that you can also define regular expressions for the algorithm stores, and that
    you can combine the two policies. The section :ref:`node-configure-algorithm-access`
    below explains the considerations you need to take into account when setting these
