@@ -83,13 +83,14 @@ spec:
               echo "Store is ready.";
         {{- end }}
       {{- end }}
+      {{- $hqKeycloak := default (dict) .Values.hq.keycloak }}
       containers:
       - name: vantage6-hq
         image: {{ .Values.hq.image }}
         imagePullPolicy: {{ .Values.hq.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ (default .Values.global.keycloak .Values.hq.keycloak).url }}
+          value: {{ default .Values.global.urls.internal.auth $hqKeycloak.url }}
         - name: KEYCLOAK_REALM
           value: {{ (default .Values.global.keycloak .Values.hq.keycloak).realm }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}

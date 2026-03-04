@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 from vantage6.common import info, warning
-from vantage6.common.globals import InstanceType, Ports
+from vantage6.common.globals import InstanceType
 
 from vantage6.cli.auth.install import check_and_install_keycloak_operator
 from vantage6.cli.common.decorator import click_insert_context
@@ -76,13 +76,6 @@ def cli_hub_start(
         k8s_config,
     )
     info("Hub services are ready.")
-    info("--------------------------------")
-    info("You may now access your local vantage6 environment:")
-    info("--------------------------------")
-    info(f"UI: http://localhost:{Ports.SANDBOX_UI.value}")
-    info("Username: admin")
-    info("Password: admin")
-    info("--------------------------------")
 
 
 # TODO refactor this, I think something similar is in other file

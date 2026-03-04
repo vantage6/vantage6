@@ -97,7 +97,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "auth": (
                     f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
                     f"{self.k8s_config.namespace}.svc.cluster.local:"
-                    f"{Ports.SANDBOX_AUTH.value}"
+                    f"{Ports.DEV_AUTH.value}"
                 ),
                 "store": (
                     f"http://vantage6-{self.hub_name}-user-hub-store."

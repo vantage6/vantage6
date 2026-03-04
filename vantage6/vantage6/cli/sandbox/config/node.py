@@ -6,7 +6,7 @@ import pandas as pd
 from colorama import Fore, Style
 
 from vantage6.common import error, info
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import InstanceType, Ports
 
 import vantage6.cli.sandbox.data as node_datafiles_dir
 from vantage6.cli.common.new import new
@@ -35,7 +35,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
 
     Parameters
     ----------
-    hq_name : str
+    hub_name : str
         Name of the HQ.
     api_keys : list[str]
         List of API keys.
@@ -60,7 +60,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
 
     def __init__(
         self,
-        hq_name: str,
+        hub_name: str,
         api_keys: list[str],
         node_names: list[str],
         hq_port: int,
@@ -71,7 +71,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         custom_data_dir: Path | None,
         with_prometheus: bool = False,
     ) -> None:
-        super().__init__(hq_name, custom_data_dir)
+        super().__init__(hub_name, custom_data_dir)
         self.api_keys = api_keys
         self.node_names = node_names
         self.num_nodes = len(api_keys)
@@ -142,7 +142,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             self.node_configs.append(full_node_config)
         info(
             f"Created {Fore.GREEN}{len(self.node_configs)}{Style.RESET_ALL} node "
-            f"configuration(s), attaching them to {Fore.GREEN}{self.hq_name}"
+            f"configuration(s), attaching them to {Fore.GREEN}{self.hub_name}"
             f"{Style.RESET_ALL}."
         )
 
@@ -170,7 +170,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         full_df = pd.read_csv(node_dataset.path)
         length_df = len(full_df)
         for i in range(self.num_nodes):
-            node_name = f"{self.hq_name}_node_{i + 1}"
+            node_name = f"{self.hub_name}_node_{i + 1}"
             path_to_dev_dir = self._create_and_get_data_dir(
                 InstanceType.NODE, is_data_folder=False
             )
@@ -210,7 +210,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
             Path to the node configuration file.
         """
         node_name = config["node_name"]
-        config_name = f"{self.hq_name}-{node_name}"
+        config_name = f"{self.hub_name}-{node_name}"
 
         path_to_data_dir = self._create_and_get_data_dir(
             InstanceType.NODE, is_data_folder=True, node_name=node_name
@@ -267,8 +267,9 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloak": {
                     "url": (
-                        f"http://vantage6-{self.hq_name}-auth-user-auth-kc-service."
-                        f"{self.k8s_config.namespace}.svc.cluster.local:7680"
+                        f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
+                        f"{self.k8s_config.namespace}.svc.cluster.local:"
+                        f"{Ports.DEV_AUTH.value}"
                     ),
                 },
                 "persistence": {
@@ -299,9 +300,8 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "hq": {
                     "url": (
-                        f"http://vantage6-{self.hq_name}-user-hq"
-                        f".{self.k8s_config.namespace}.svc.cluster"
-                        ".local"
+                        f"http://vantage6-{self.hub_name}-user-hub-hq."
+                        f"{self.k8s_config.namespace}.svc.cluster.local"
                     ),
                     "port": self.hq_port,
                 },

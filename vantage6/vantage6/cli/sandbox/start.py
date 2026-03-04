@@ -12,7 +12,6 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import execute_cli_start
-from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import CLICommandName
@@ -134,9 +133,9 @@ def execute_sandbox_start(
         is_sandbox=True,
     )
 
-    hq_url = (
-        f"{ctx.config['global']['urls']['external']['hq']}{ctx.config['hq']['apiPath']}"
-    )
+    hq_url = f"{ctx.config['global']['urls']['external']['hq']}{ctx.config['hq']['hq']['apiPath']}"
+    # TODO this wait may not be needed anymore, because the hub charts waits for the
+    # hq to be ready almost
     _wait_for_hq_to_be_ready(hq_url)
 
     # Then we need to populate HQ
@@ -237,17 +236,15 @@ def _print_auth_credentials(hub_name: str) -> None:
     hub_name : str
         Name of the hub.
     """
-    auth_ctx = AuthContext(
-        instance_name=f"{hub_name}-auth",
+    hub_ctx = HubContext(
+        instance_name=hub_name,
         system_folders=False,
         is_sandbox=True,
     )
-    auth_config = auth_ctx.config
-
     try:
-        admin_user = auth_config["keycloak"]["realmImport"]["users"][0]
-        username = admin_user["username"]
-        password = admin_user["credentials"][0]["value"]
+        keycloak_config = hub_ctx.config["global"]["keycloak"]
+        username = keycloak_config["adminUsername"]
+        password = keycloak_config["adminPassword"]
         info("--------------------------------")
         info("Login with the following credentials:")
         info(
