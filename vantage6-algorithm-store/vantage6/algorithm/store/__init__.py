@@ -235,30 +235,24 @@ class AlgorithmStoreApp(Vantage6App):
         ):
             algorithm.approve()
 
-    def start(self) -> None:
+    def ensure_db_initialized(self) -> None:
         """
-        Start the service.
-
-        Before service is really started, some database settings are checked and
-        (re)set where appropriate.
+        Ensure the database contains default roles and the configured root user.
         """
         self._add_default_roles(get_default_roles(), db)
 
         # add root user from config file if they do not exist
-        if root_user := self.ctx.config.get("root_user", {}):
-            root_username = root_user.get("username")
-            root_organization = root_user.get("organization_id")
+        if root_user_config := self.ctx.config.get("root_user", {}):
+            root_username = root_user_config.get("username")
+            root_organization = root_user_config.get("organization_id")
             if root_username:
-                # if the user does not exist already, add it
                 root_user = db.User.get_by_username(root_username)
                 if not root_user:
                     log.warning(
                         "Creating root user. Please note that it cannot be verified at "
                         "this point that the user exists at the given vantage6 HQ."
                     )
-
                     root = db.Role.get_by_name(DefaultRole.ROOT.value)
-
                     root_user = db.User(
                         username=root_username,
                         organization_id=root_organization,
@@ -296,7 +290,6 @@ class AlgorithmStoreApp(Vantage6App):
                 "No root user found in the configuration file, nor are users defined in"
                 " the database. This means no-one can alter resources on this store."
             )
-        return self
 
 
 def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
@@ -319,4 +312,4 @@ def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
         config, system_folders, in_container=True
     )
     Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
-    return AlgorithmStoreApp(ctx).start()
+    return AlgorithmStoreApp(ctx)
