@@ -59,7 +59,7 @@ keycloak:
     # adminPassword: admin
     {% else %}
     adminUser: {{ keycloak.adminUser | default('admin') }}
-    adminPassword: {{ keycloak.adminPassword | default('admin') }}
+    adminPassword: "{{ keycloak.adminPassword | default('admin') }}"
     # for production, we recommend storing the admin password in a secret (which MUST
     # contain the 'username' and 'password' keys).
     # adminPassword: {{ keycloak.adminPassword | default('admin') }}
@@ -123,9 +123,9 @@ keycloak:
       username: {{ keycloak.adminUser | default('admin') }}
       {% endif %}
       {% if keycloak.production %}
-      password: {{ keycloak.adminPassword | default('Admin123!') }}
+      password: "{{ keycloak.adminPassword | default('Admin123!') }}"
       {% else %}
-      password: {{ keycloak.adminPassword | default('admin') }}
+      password: "{{ keycloak.adminPassword | default('admin') }}"
       {% endif %}
 
     # whether to verify email on first login. This should only be enabled if an SMTP
@@ -155,7 +155,7 @@ keycloak:
         - "http://localhost:7600/*"
         {% endif %}
 
-    backend_client_secret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
+    backend_client_secret: "{{ keycloak.adminClientSecret | default('myadminclientsecret') }}"
 
     # SMTP server configuration for email sending
     {% if keycloak.smtpServer is defined %}
@@ -194,7 +194,7 @@ keycloak:
       user: {{ keycloak.smtpServer.user }}
       {% endif %}
       {% if keycloak.smtpServer.password is defined %}
-      password: {{ keycloak.smtpServer.password }}
+      password: "{{ keycloak.smtpServer.password }}"
       {% endif %}
     {% else %}
     # smtpServer:
@@ -217,7 +217,7 @@ database:
   host: {{ database.host | default('') }}
   port: {{ database.port | default(5432) }}
   username: {{ database.username | default('keycloak') }}
-  password: {{ database.password | default('keycloak') }}
+  password: "{{ database.password | default('keycloak') }}"
   name: {{ database.name | default('keycloak') }}
   {% if not database.external %}
   image:

@@ -97,15 +97,15 @@ def new(
         exit(1)
     if save_config_file:
         info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
+        flag = "" if system_folders else "--user"
+        info(
+            f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name}"
+            f" start --name {name} {flag}{Style.RESET_ALL}"
+        )
     else:
         info(
             "Configuration obtained successfully for "
             f"{Fore.GREEN}{name}{Style.RESET_ALL}."
         )
 
-    flag = "" if system_folders else "--user"
-    info(
-        f"You can start the {command_name} by running {Fore.GREEN}v6 {command_name} "
-        f"start {flag}{Style.RESET_ALL}"
-    )
     return config

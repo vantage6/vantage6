@@ -26,9 +26,9 @@ store:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ store.keycloak.adminPassword | default('admin') }}
+    adminPassword: "{{ store.keycloak.adminPassword | default('admin') }}"
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}
+    adminClientSecret: "{{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}"
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}
@@ -204,7 +204,7 @@ store:
     {% for registry in node.private_docker_registries %}
     - registry: {{ registry.registry }}
       username: {{ registry.username }}
-      password: {{ registry.password }}
+      password: "{{ registry.password }}"
     {% endfor %}
   {% else %}
   # private_docker_registries:
@@ -238,7 +238,7 @@ store:
     user: {{ store.smtpServer.user }}
     {% endif %}
     {% if store.smtpServer.password is defined %}
-    password: {{ store.smtpServer.password }}
+    password: "{{ store.smtpServer.password }}"
     {% endif %}
     from: {{ store.smtpServer.from }}
     {% if store.smtpServer.replyTo is defined %}
@@ -283,7 +283,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: {{ database.password | default('vantage6') }}
+  password: "{{ database.password | default('vantage6') }}"
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}

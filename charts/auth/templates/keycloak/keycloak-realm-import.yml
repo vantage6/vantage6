@@ -114,7 +114,7 @@ spec:
         {{- end }}
         credentials:
         - type: password
-          value: {{ default .Values.global.keycloak.adminPassword .Values.keycloak.realmImport.admin.password }}
+          value: {{ default .Values.global.keycloak.adminPassword .Values.keycloak.realmImport.admin.password | quote}}
         {{- if .Values.production }}
         requiredActions:
         - CONFIGURE_TOTP
@@ -162,7 +162,7 @@ spec:
       # keycloak.
       - clientId: backend-admin-client
         publicClient: false
-        secret: {{ default .Values.global.keycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret  }}
+        secret: {{ default .Values.global.keycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
     # Define organization_id as a user profile attribute using components (UserProfileProvider)

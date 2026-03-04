@@ -21,7 +21,10 @@ from vantage6.cli.utils_kubernetes import (
 
 
 def auth_configuration_questionaire(
-    name: str, k8s_cfg: KubernetesConfig, credentials: dict[AuthCredentials, Any]
+    name: str,
+    k8s_cfg: KubernetesConfig,
+    credentials: dict[AuthCredentials, Any],
+    includ_global_auth_settings: bool = True,
 ) -> tuple[dict[str, Any]]:
     """
     Kubernetes-specific questionnaire to generate Helm values for the Keycloak helm
@@ -36,6 +39,9 @@ def auth_configuration_questionaire(
     credentials: dict[AuthCredentials, Any]
         Dictionary with the credentials for the authentication service. This will be
         updated with the new credentials.
+    includ_global_auth_settings: bool
+        Whether to include the global authentication settings. May be set to False
+        if we are using the hub chart.
 
     Returns
     -------
@@ -50,14 +56,26 @@ def auth_configuration_questionaire(
 
     config = _add_keycloak_admin_secret(config, name, k8s_cfg, credentials)
 
-    config["keycloak"]["adminClientSecret"] = _get_admin_client_secret()
-
-    config["keycloak"]["adminPassword"] = _get_admin_password()
+    if includ_global_auth_settings:
+        config["keycloak"].update(global_auth_settings_questionaire())
 
     # Add SMTP configuration if requested
     config = _add_smtp_config(config)
 
     return config
+
+
+def global_auth_settings_questionaire() -> dict[str, Any]:
+    """
+    Questionaire to get the global authentication settings.
+
+    These are the settings that are set in the global settings of the hub chart. They
+    can also be used by the standalone auth chart, which can also use this function
+    """
+    return {
+        "adminClientSecret": _get_admin_client_secret(),
+        "adminPassword": _get_admin_password(),
+    }
 
 
 def _get_admin_client_secret() -> str:

@@ -1,4 +1,6 @@
 import json
+import secrets
+import string
 import subprocess
 from pathlib import Path
 
@@ -279,9 +281,6 @@ def generate_password(password_length: int = 16) -> str:
     str
         The generated password
     """
-    import secrets
-    import string
-
     alphabet = string.ascii_letters + string.digits + string.punctuation
     while True:
         password = "".join(secrets.choice(alphabet) for i in range(password_length))

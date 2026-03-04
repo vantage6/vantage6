@@ -121,12 +121,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         # override these where needed.
         keycloak = {
             "url": urls["external"]["auth"],
-            "realm": "vantage6",
-            "adminUsername": "admin",
-            "adminPassword": "admin",
-            "adminClient": "backend-admin-client",
-            "adminClientSecret": "myadminclientsecret",
-            "publicClient": "public_client",
         }
 
         hub_config = {

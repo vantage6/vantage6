@@ -63,7 +63,7 @@ data:
       {{- range .Values.store.private_docker_registries }}
       - registry: {{ .registry }}
         username: {{ .username }}
-        password: {{ .password }}
+        password: {{ .password | quote }}
       {{- end }}
     {{- end }}
     {{- if .Values.store.dev }}
@@ -85,7 +85,7 @@ data:
       user: {{ .Values.store.smtpServer.user }}
       {{- end }}
       {{- if .Values.store.smtpServer.password }}
-      password: {{ .Values.store.smtpServer.password }}
+      password: {{ .Values.store.smtpServer.password | quote }}
       {{- end }}
       from: {{ .Values.store.smtpServer.from }}
       {{- if .Values.store.smtpServer.replyTo }}

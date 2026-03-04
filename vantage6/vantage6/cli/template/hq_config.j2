@@ -21,9 +21,9 @@ hq:
     url: {{ hq.keycloak.url }}
     realm: {{ hq.keycloak.realm | default('vantage6') }}
     adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ hq.keycloak.adminPassword | default('admin') }}
+    adminPassword: "{{ hq.keycloak.adminPassword | default('admin') }}"
     adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ hq.keycloak.adminClientSecret | default('myadminclientsecret') }}
+    adminClientSecret: "{{ hq.keycloak.adminClientSecret | default('myadminclientsecret') }}"
   {% endif %}
 
   internal:
@@ -203,7 +203,7 @@ rabbitmq:
   username: {{ rabbitmq.username | default('rabbitmquser') }}
 
   # The password of the RabbitMQ server
-  password: {{ rabbitmq.password | default('rabbitmquserpassword') }}
+  password: "{{ rabbitmq.password | default('rabbitmquserpassword') }}"
 
   # The vhost of the RabbitMQ server
   vhost: {{ rabbitmq.vhost | default('/vantage6') }}
@@ -229,7 +229,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: {{ database.password | default('vantage6') }}
+  password: "{{ database.password | default('vantage6') }}"
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}

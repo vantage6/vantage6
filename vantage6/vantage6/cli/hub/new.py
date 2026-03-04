@@ -2,19 +2,28 @@ from typing import Any
 
 import click
 import questionary as q
+import yaml
 
 from vantage6.common import info
 from vantage6.common.globals import (
     InstanceType,
+    Ports,
 )
 
 from vantage6.cli.algostore.new import algo_store_configuration_questionaire
-from vantage6.cli.auth.new import auth_configuration_questionaire
+from vantage6.cli.auth.new import (
+    auth_configuration_questionaire,
+    global_auth_settings_questionaire,
+)
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
 from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.hub.utils.enum import AuthCredentials
-from vantage6.cli.k8s_config import get_k8s_node_names, select_k8s_config
+from vantage6.cli.k8s_config import (
+    KubernetesConfig,
+    get_k8s_node_names,
+    select_k8s_config,
+)
 from vantage6.cli.utils import prompt_config_name
 
 
@@ -57,17 +66,10 @@ def cli_hub_new(
     info("Starting with the basic configuration...")
     base_config = _get_base_config()
 
+    global_hub_config = _create_hub_config(name, base_config, k8s_cfg)
+
     # create authentication service configuration
     info("Now, let's setup the authentication service...")
-    extra_config = {
-        "keycloak": {
-            "redirectUris": [base_config["ui_url"]],
-            "k8sNodeName": base_config["k8sNodeName"],
-        },
-        "database": {
-            "k8sNodeName": base_config["k8sNodeName"],
-        },
-    }
     auth_name = f"{name}-auth"
     auth_credentials = {}
     auth_config = new(
@@ -76,7 +78,7 @@ def cli_hub_new(
         name=auth_name,
         system_folders=system_folders,
         type_=InstanceType.AUTH,
-        extra_config=extra_config,
+        save_config_file=False,
     )
 
     # create hq service configuration
@@ -84,91 +86,88 @@ def cli_hub_new(
     hq_name = name
     extra_config = {
         "hq": {
-            "baseUrl": base_config["hq_url"],
-            "keycloak": {
-                "adminPassword": auth_config["keycloak"]["adminPassword"],
-                "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
-                "url": base_config["auth_url"],
-            },
             "logging": {
                 "level": base_config["log_level"],
             },
         },
-        "database": {
-            "k8sNodeName": base_config["k8sNodeName"],
-        },
-        "ui": {
-            "keycloak": {
-                "publicUrl": base_config["auth_url"],
-            },
-        },
     }
-    new(
+    hq_config = new(
         config_producing_func=hq_configuration_questionaire,
         config_producing_func_args=(hq_name, system_folders),
         name=hq_name,
         system_folders=system_folders,
         type_=InstanceType.HQ,
         extra_config=extra_config,
+        save_config_file=False,
     )
 
     # create algorithm store service configuration
+    store_config = None
+    auth_config_dict = yaml.safe_load(auth_config)
     if base_config["has_store"]:
         info("Finally, let's setup the algorithm store...")
         store_name = f"{name}-store"
         extra_config = {
             "store": {
-                "keycloak": {
-                    "adminPassword": auth_config["keycloak"]["adminPassword"],
-                    "adminClientSecret": auth_config["keycloak"]["adminClientSecret"],
-                    "url": base_config["auth_url"],
-                },
-                "vantage6HQUri": base_config["hq_url"],
                 "logging": {
                     "level": base_config["log_level"],
-                },
-                "baseUrl": base_config["store_url"],
-            },
-            "database": {
-                "k8sNodeName": base_config["k8sNodeName"],
-            },
-        }
-        if auth_config["keycloak"].get("smtpServer") is not None:
-            extra_config["store"]["smtpServer"] = {
-                "host": auth_config["keycloak"]["smtpServer"]["host"],
-                "port": auth_config["keycloak"]["smtpServer"]["port"],
-                "from": auth_config["keycloak"]["smtpServer"]["from"],
+                }
             }
-            if auth_config["keycloak"]["smtpServer"].get("user") is not None:
-                extra_config["store"]["smtpServer"]["user"] = auth_config["keycloak"][
-                    "smtpServer"
-                ]["user"]
-            if auth_config["keycloak"]["smtpServer"].get("password") is not None:
-                extra_config["store"]["smtpServer"]["password"] = auth_config[
+        }
+        if auth_config_dict.get("keycloak", {}).get("smtpServer") is not None:
+            extra_config["store"]["smtpServer"] = {
+                "host": auth_config_dict["keycloak"]["smtpServer"]["host"],
+                "port": auth_config_dict["keycloak"]["smtpServer"]["port"],
+                "from": auth_config_dict["keycloak"]["smtpServer"]["from"],
+            }
+            if auth_config_dict["keycloak"]["smtpServer"].get("user") is not None:
+                extra_config["store"]["smtpServer"]["user"] = auth_config_dict[
+                    "keycloak"
+                ]["smtpServer"]["user"]
+            if auth_config_dict["keycloak"]["smtpServer"].get("password") is not None:
+                extra_config["store"]["smtpServer"]["password"] = auth_config_dict[
                     "keycloak"
                 ]["smtpServer"]["password"]
-            if auth_config["keycloak"]["smtpServer"].get("replyTo") is not None:
-                extra_config["store"]["smtpServer"]["replyTo"] = auth_config[
+            if auth_config_dict["keycloak"]["smtpServer"].get("replyTo") is not None:
+                extra_config["store"]["smtpServer"]["replyTo"] = auth_config_dict[
                     "keycloak"
                 ]["smtpServer"]["replyTo"]
-            if auth_config["keycloak"]["smtpServer"].get("starttls") is not None:
-                extra_config["store"]["smtpServer"]["starttls"] = auth_config[
+            if auth_config_dict["keycloak"]["smtpServer"].get("starttls") is not None:
+                extra_config["store"]["smtpServer"]["starttls"] = auth_config_dict[
                     "keycloak"
                 ]["smtpServer"]["starttls"]
-            if auth_config["keycloak"]["smtpServer"].get("ssl") is not None:
-                extra_config["store"]["smtpServer"]["ssl"] = auth_config["keycloak"][
-                    "smtpServer"
-                ]["ssl"]
-        new(
+            if auth_config_dict["keycloak"]["smtpServer"].get("ssl") is not None:
+                extra_config["store"]["smtpServer"]["ssl"] = auth_config_dict[
+                    "keycloak"
+                ]["smtpServer"]["ssl"]
+        store_config = new(
             config_producing_func=algo_store_configuration_questionaire,
             config_producing_func_args=(store_name, system_folders),
             name=store_name,
             system_folders=system_folders,
             type_=InstanceType.ALGORITHM_STORE,
             extra_config=extra_config,
+            save_config_file=False,
         )
 
-    _print_credentials_one_time(auth_credentials, auth_config["keycloak"])
+    # create the final hub configuration file
+    extra_configs_to_render = {
+        "auth_config": auth_config,
+        "hq_config": hq_config,
+    }
+    if store_config is not None:
+        extra_configs_to_render["store_config"] = store_config
+    new(
+        config_producing_func=lambda: global_hub_config,
+        config_producing_func_args=(),
+        name=name,
+        system_folders=system_folders,
+        type_=InstanceType.HUB,
+        save_config_file=True,
+        extra_configs_to_render=extra_configs_to_render,
+    )
+
+    _print_credentials_one_time(auth_credentials, global_hub_config["keycloak"])
 
 
 def _get_base_config() -> dict[str, Any]:
@@ -217,6 +216,68 @@ def _get_base_config() -> dict[str, Any]:
         default="INFO",
     ).unsafe_ask()
     return base_config
+
+
+def _create_hub_config(
+    name: str, base_config: dict[str, Any], k8s_cfg: KubernetesConfig
+) -> dict[str, Any]:
+    """
+    Create a hub configuration file (YAML) that aggregates the auth, HQ
+    and algorithm store configurations, so the sandbox can be deployed
+    via the single hub Helm chart.
+
+    Parameters
+    ----------
+    name: str
+        The name of the hub.
+    base_config: dict[str, Any]
+        The base configuration for the hub.
+    k8s_cfg: KubernetesConfig
+        The Kubernetes configuration to use.
+
+    Returns
+    -------
+    dict[str, Any]
+        The hub configuration.
+    """
+    urls = {
+        "external": {
+            "auth": base_config["auth_url"],
+            "store": base_config["store_url"],
+            "ui": base_config["ui_url"],
+            "hq": base_config["hq_url"],
+        },
+        "internal": {
+            "auth": (
+                f"http://vantage6-{name}-user-hub-kc-nodeport.{k8s_cfg.namespace}.svc"
+                f".cluster.local:{Ports.DEV_AUTH.value}"
+            ),
+            "store": (
+                f"http://vantage6-{name}-user-hub-store.{k8s_cfg.namespace}.svc"
+                f".cluster.local:{Ports.DEV_ALGO_STORE.value}"
+            ),
+            "ui": (
+                f"http://vantage6-{name}-user-hub-ui.{k8s_cfg.namespace}.svc"
+                f".cluster.local:{Ports.DEV_UI.value}"
+            ),
+            "hq": (
+                f"http://vantage6-{name}-user-hub-hq.{k8s_cfg.namespace}.svc"
+                f".cluster.local:{Ports.DEV_HQ.value}"
+            ),
+        },
+    }
+
+    keycloak = {
+        "url": urls["external"]["auth"],
+    } | global_auth_settings_questionaire()
+
+    global_config = {
+        "urls": urls,
+        "keycloak": keycloak,
+    }
+    if base_config["k8sNodeName"] is not None:
+        global_config["k8sNodeName"] = base_config["k8sNodeName"]
+    return global_config
 
 
 def _print_credentials_one_time(
