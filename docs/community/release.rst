@@ -102,7 +102,7 @@ After these steps, the final release can be made. This process is described belo
 .. _create-release:
 
 Start the release process
-----------------
+-------------------------
 
 To create a new release, one should go through the following steps:
 
