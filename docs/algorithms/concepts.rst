@@ -53,8 +53,8 @@ the model converges.
 In vantage6, it is also possible to run only the partial parts of the analysis on the
 nodes and combine them on your own machine, but it is usually preferable to run
 the central part within vantage6, because then you don't have to keep your machine
-running during the analysis, and the results are stored on the HQ, so they may also be
-accessed by other users.
+running during the analysis, you do not need to run the central part yourself, and the 
+results are stored on the HQ, so they may also be accessed by other users.
 
 .. note::
     Central functions also run at a node and *not* at HQ. For more
