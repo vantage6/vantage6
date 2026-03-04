@@ -394,7 +394,8 @@ the organization id's are ``2``, ``3`` and ``4``.
 
 **Creating a session and extracting data from a database**
 
-First, we need to create a session. A session is a collection of tasks that are related to each other.
+First, we need to create a session. A session is a collection of dataframes and tasks
+that are related to each other.
 For example, a session can be used to run a study, or a campaign.
 
 .. code:: python
