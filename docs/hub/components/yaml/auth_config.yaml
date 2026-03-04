@@ -8,7 +8,9 @@ keycloak:
   # Specify the number of Keycloak instances to deploy.
   instances: 1
 
-  # Whether to use production settings.
+  # Whether to use production settings. Note that this setting impacts many settings.
+  # In case it is false, this causes users and secrets to be set to simple, non-secure
+  # (initial) values. Always set this to true in production environments.
   production: true
 
   # TLS settings - should be enabled for production environments.

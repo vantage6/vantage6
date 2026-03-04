@@ -5,6 +5,8 @@ keycloak:
   instances: 1
   hostname: ""
 
+  # note that dependent on the production setting, the users and secrets that are
+  # set are different - for non-production, they are set to simple, non-secure values.
   production: true
   tls:
     enabled: true
@@ -28,40 +30,6 @@ keycloak:
     bruteForceProtected: true
     permanentLockout: false
     failureFactor: 5
-    requiredActions:
-      - alias: CONFIGURE_TOTP
-        name: Configure OTP
-        providerId: CONFIGURE_TOTP
-        enabled: true
-        defaultAction: true
-        priority: 10
-      - alias: UPDATE_PASSWORD
-        name: Update Password
-        providerId: UPDATE_PASSWORD
-        enabled: true
-        defaultAction: true
-        priority: 20
-      - alias: UPDATE_EMAIL
-        name: Update Email
-        providerId: UPDATE_EMAIL
-        enabled: true
-        defaultAction: true
-        priority: 30
-    users:
-      # Placeholder for users.
-      # Vantage6 requires at least:
-      # - an admin user (the initial vantage6 admin user)
-      # - a service account user for the backend admin client
-      # These users are initialized when constructing a values.yaml through the vantage6
-      # CLI.
-    clients:
-      # Placeholder for clients.
-      # Vantage6 requires at least:
-      # - a public client for users to authenticate in the browser
-      # - a backend admin client for the backend to manage users and clients in
-      # keycloak.
-      # These clients are initialized when constructing a values.yaml through the
-      # vantage6 CLI.
     smtpServer:
       # placeholder for SMTP server configuration
 
