@@ -14,7 +14,7 @@ fi
 python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
 
 # start HQ
-uwsgi \
+exec uwsgi \
     --http :80 \
     --gevent 100 \
     --http-websockets \

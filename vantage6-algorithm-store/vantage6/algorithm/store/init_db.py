@@ -11,15 +11,15 @@ create the same database objects concurrently.
 It reuses the same context and database setup as run_store.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 
-from vantage6.algorithm.store import db  # noqa: F401 - ensure db module is loaded
-from vantage6.algorithm.store.__init__ import AlgorithmStoreApp, Database
+from vantage6.algorithm.store import (
+    AlgorithmStoreApp,
+    Database,
+)
 
 
 def main() -> None:

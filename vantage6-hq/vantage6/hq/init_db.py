@@ -11,14 +11,12 @@ create the same database objects concurrently.
 It reuses the same context and database setup as `run_hq`.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 
 from vantage6.cli.context.hq import HQContext
 
-from vantage6.hq.__init__ import Database, HQApp
+from vantage6.hq import Database, HQApp
 
 
 def main() -> None:
