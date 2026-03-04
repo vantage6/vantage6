@@ -5,7 +5,7 @@ node:
   apiKey: put-your-api-key-here
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
+    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
     realm: vantage6
 
   hq:

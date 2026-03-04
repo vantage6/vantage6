@@ -60,9 +60,8 @@ def cli_hub_new(
     # create authentication service configuration
     info("Now, let's setup the authentication service...")
     extra_config = {
-        # add http://localhost:7681 as that is used by the Python client
         "keycloak": {
-            "redirectUris": [base_config["ui_url"], "http://localhost:7681"],
+            "redirectUris": [base_config["ui_url"]],
             "k8sNodeName": base_config["k8sNodeName"],
         },
         "database": {

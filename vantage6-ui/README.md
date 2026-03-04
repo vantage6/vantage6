@@ -58,7 +58,7 @@ with a command such as:
 
 ```
 docker run --env HQ_URL="<your_url>" --env API_PATH="<your_path>" \
-  -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
+  -p 8888:80 harbor2.vantage6.ai/infrastructure/ui:latest
 ```
 
 This is recommended for v4 deployments, but no longer in v5. Please checkout

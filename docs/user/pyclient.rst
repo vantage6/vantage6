@@ -140,7 +140,7 @@ submitting particular tasks) that you might want to share publicly.
    # for a local dev HQ
    hq_url = "https://<my_hq_url>:<my_port>/<my_api_path>"
    # Authentication service address, e.g. https://auth.uluru.vantage6.ai/, or
-   # http://localhost:8080 for a local development auth service
+   # http://localhost:7680 for a local development auth service
    auth_url = "https://<my_auth_url>:<my_port>"
 
    # Realm and client id of the authentication service
@@ -172,6 +172,9 @@ object, and authenticating
        auth_client=config.keycloak_client,
        log_level='debug'
    )
+   # Authenticate. This will try to open a browser to authenticate. If this is not
+   # possible (e.g. because you are on a VM), it will print a URL that you need to
+   # open in your browser
    client.authenticate()
 
    # Optional: setup the encryption, if you have an organization_key
