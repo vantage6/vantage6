@@ -10,10 +10,13 @@ which is a lightweight Kubernetes distribution that is easy to install and use.
 Helm charts
 -----------
 
-The hub consists of several components. The following Helm charts are available to
-deploy them:
+The hub can be deployed using the helm chart
+``harbor2.vantage6.ai/chartrepo/infrastructure/hub``. This is the easiest way to deploy
+the hub, as it will deploy all the necessary components together.
 
-- ``harbor2.vantage6.ai/chartrepo/infrastructure/hub``: Parent chart that deploys the entire vantage6 hub together.
+The hub chart is a parent of several subcharts. You can also deploy the subcharts
+separately:
+
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/hq``: Vantage6 HQ, UI, RabbitMQ, Prometheus.
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/auth``: Authentication service
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/algorithm-store``: Algorithm store
@@ -32,8 +35,20 @@ installed by vantage6. You have to install and deploy them yourself.
 Configuration
 -------------
 
-To generate the appropriate configuration files, you can use ``v6 hub new``, as
-described in the :ref:`use-hub` section.
+The hub chart configuration file contains the configuration of the subcharts, as well
+as some global configuration.
+
+The configuration file looks as followsand can be downloaded here:
+:download:`hub_config.yaml <components/yaml/hub_config.yaml>`
+
+.. literalinclude :: components/yaml/hub_config.yaml
+    :language: yaml
+
+The configuration of the subcharts is placed under the corresponding subchart key.
+For example, the configuration of the authentication service is placed under the
+``auth`` key. The full configuration options of the subcharts are described elsewhere
+for the :ref:`auth <auth-configuration-file>`, :ref:`HQ <hq-configuration-file>`
+and :ref:`algorithm store <algorithm-store-configuration-file>` components.
 
 Deployment
 ----------
