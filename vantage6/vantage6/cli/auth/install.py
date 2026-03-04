@@ -226,7 +226,7 @@ def _wait_for_operator_ready(
     start_time = time.time()
     deployment_name = "keycloak-operator"
 
-    while time.time() - start_time < timeout:
+    while (time.time() - start_time) < timeout:
         try:
             command = [
                 "kubectl",

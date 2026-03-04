@@ -1,5 +1,3 @@
-# for more options on the deployment of this chart, see:
-# https://artifacthub.io/packages/helm/bitnami/keycloak
 keycloak:
 
   # Specify the version of the Keycloak Operator to use.
@@ -91,11 +89,6 @@ keycloak:
     {% else %}
     passwordPolicy: ""
     {% endif %}
-
-    # do not allow users to edit their username - this would lead to problems with
-    # syncing the user between keycloak and vantage6 HQ+store. This setting
-    # should always be set to false.
-    editUsernameAllowed: false
 
     # allow users to reset their password
     resetPasswordAllowed: {{ keycloak.resetPasswordAllowed | default(false) }}
@@ -243,12 +236,11 @@ keycloak:
     clients:
       - clientId: public_client
         publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
         # redirect URIs are the URIs that keycloak is allowed to redirect to after
-        # authentication. This should be set to the UI URL, and to the Keyloak
-        # service on port 7681. The latter is needed for authentication from outside
-        # the browser - if e.g. the Python client authenticates, it will open a
-        # browser window to authenticate that redirects to the Keycloak service on
-        # port 7681.
+        # authentication. This should normally be set to the UI URL (unless you have
+        # other applications that can use the vantage6 Keycloak instance).
         {% if keycloak.redirectUris %}
         redirectUris:
           {% for uri in keycloak.redirectUris %}
@@ -258,9 +250,6 @@ keycloak:
         redirectUris:
           # allow logging in via a local UI
           - "http://localhost:7600/*"
-          # allow logging in via the Python client (which spins up a local server
-          # on port 7681)
-          - "http://localhost:7681/*"
         {% endif %}
         # By setting webOrigins to "+", we allow the same origins as redirectUris.
         webOrigins:
@@ -344,17 +333,16 @@ keycloak:
 
 
 database:
-  {% if keycloak.production %}
-  external: true
-  hostname: {{ database.host | default('') }}
-  {% else %}
-  external: false
+  external: {{ database.external | default(false) }}
+  host: {{ database.host | default('') }}
+  port: {{ database.port | default(5432) }}
+  username: {{ database.username | default('keycloak') }}
+  password: {{ database.password | default('keycloak') }}
+  name: {{ database.name | default('keycloak') }}
+  {% if not database.external %}
   image:
     repository: postgres
     tag: "13"
-  username: keycloak
-  password: keycloak
-  name: keycloak
   volumePath: {{ database.volumePath | default('/mnt/data_auth') }}
   k8sNodeName: {{ database.k8sNodeName | default('docker-desktop') }}
   storageClass: {{ database.storageClass | default('local-storage') }}

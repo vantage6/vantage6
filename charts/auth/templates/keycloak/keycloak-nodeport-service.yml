@@ -13,8 +13,8 @@ spec:
   type: NodePort
   ports:
     - name: http
-      port: 8080
-      targetPort: 8080
+      port: 7680
+      targetPort: 7680
       protocol: TCP
       nodePort: {{ .Values.keycloak.dev.local_auth_port_to_expose }}
   selector:
