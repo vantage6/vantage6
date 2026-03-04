@@ -119,7 +119,7 @@ Once the development environment is running, it will spin up the following servi
   - User interface (http://localhost:7600)
   - HQ (http://localhost:7601/hq)
   - Algorithm store (http://localhost:7602)
-  - Authentication (Keycloak), including the admin interface (http://localhost:8080)
+  - Authentication (Keycloak), including the admin interface (http://localhost:7680)
   - PostgreSQL databases to support the HQ, store and authentication services
 
 - One or more nodes (as indicated by the ``NUMBER_OF_NODES`` variable)

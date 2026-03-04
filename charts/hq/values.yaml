@@ -7,7 +7,7 @@ hq:
   image: harbor2.vantage6.ai/infrastructure/hq:latest
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:8080
+    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
     realm: vantage6
     adminUsername: admin
     adminPassword: admin
@@ -70,7 +70,7 @@ ui:
   keycloak:
     realm: vantage6
     client: public_client
-    publicUrl: http://localhost:8080
+    publicUrl: http://localhost:7680
 
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai
