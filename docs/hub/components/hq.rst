@@ -18,9 +18,10 @@ Configure
 ---------
 
 Vantage6 HQ requires a configuration file to run. This is a ``yaml`` file with a
-specific format. To create these, see the :ref:`use-hub` section. This will help you
-create a basic configuration file, but will not cover all possible configuration
-options, as that would make a basic setup too complex.
+specific format, designed to be used with the vantage6 HQ Helm chart.
+:ref:`This section <use-hub>` will help you to create a basic configuration file, but
+will not cover all possible configuration options, as that would make a basic setup too
+complex.
 
 Below, we list all possible configuration options. You can download this file here:
 :download:`hq_config.yaml <yaml/hq_config.yaml>`
@@ -47,7 +48,8 @@ The directory where to store the configuration file depends on your
 operating system (OS). It is possible to store the configuration file at
 **system** or at **user** level. At the user level, configuration files are only
 available for your user. By default, HQ configuration files are stored at
-**system** level.
+**system** level - except if you have created a sandbox environment using the
+``v6 sandbox`` commands.
 
 The default directories per OS are as follows:
 
@@ -85,28 +87,12 @@ Permission management
 Almost everything in vantage6 HQ is under role-based access control: not
 everyone is allowed to access everything.
 
-Authentication types
-~~~~~~~~~~~~~~~~~~~~
-
 There are three types of entities that can attempt to use vantage6 HQ: users,
 nodes and algorithm containers. Not every resource is available to all three
-entities. In the vantage6 HQ code, this is ensured by using so-called
-decorators that are placed on the API endpoints. These decorators check if the
-entity that is trying to access the endpoint is allowed to do so. For example,
-you may see the following decorators on an endpoint:
-
-* ``@only_for(('user', 'container'))``: only accessible to users and algorithm
-  containers
-* ``@with_user``: only accessible to users
-
-These decorators ensure that only authenticated entities of the right type can
-enter the endpoint. For example, only users can create new users or
+entities. For example, only users can create new users or
 organizations, and only nodes are allowed to update the results of a task
 (the algorithm itself cannot do this as it exits when it finishes, and users
 are not allowed to meddle with results).
-
-Permission rules
-~~~~~~~~~~~~~~~~
 
 The fact that users are allowed to create new organizations, does not mean that
 all users are allowed to do so. There are permission rules that determine what
@@ -126,7 +112,8 @@ The following rules are defined:
 
    The rules that are available per resource, scope, and operation. For example,
    the first rule with resource 'User', scope 'Own' and operation 'View' will
-   allow a user to view their own user details.
+   allow a user to view their own user details. Note that this figure may become
+   outdated - however, the principles remain the same.
 
 The rules have an operation, a scope, and a resource that they work on. For
 instance, a rule with operation 'View', scope 'Organization' and resource
@@ -154,9 +141,6 @@ A user may be assigned anywhere between zero and all of the rules.
   When you create a new hub, the first time it is started, a new user 'admin'
   is created that has all permissions. This user should be used to create
   the first users and organizations.
-
-Roles
-~~~~~
 
 To make it easier to assign permissions to users, there are roles. A role is
 simply a set of rules. When a user is assigned a role, they are assigned all

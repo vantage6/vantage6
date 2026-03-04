@@ -3,9 +3,9 @@
 Community
 =========
 
-As an open-source platform, we welcome anyone who would like to contribute to the
-vantage6 code and/or documentation. The following sections are meant to clarify our
-processes in development, documentation and releasing.
+As an open-source platform, we welcome anyone who would like to contribute to vantage6.
+The following sections are meant to clarify our processes in development, documentation
+and releasing.
 
 Please note that this project is released with a
 `Contributor Code of Conduct <https://github.com/vantage6/vantage6/blob/main/CODE_OF_CONDUCT.md>`_.

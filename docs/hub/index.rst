@@ -35,7 +35,7 @@ The following components are in principle optional, but recommended to use vanta
 :ref:`Algorithm store <hub-admin-guide-store>`
   The algorithm store is used to store and manage algorithms for your project.
   Managing your algorithms in the store in the store is required if you want to use them
-  in the UI. If your projects only uses algorithms that are available in the
+  in the UI. If your projects only use algorithms that are available in the
   :ref:`community store <community-store>`, you don't need your own algorithm store.
 
 :ref:`docker-registry`

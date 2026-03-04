@@ -22,7 +22,7 @@ Below is a list of interfaces that are available to the algorithm container.
 
 - Vantage6 HQ is available to the algorithm container via a proxy server
   running on the node.
-- Addresses that are explicitly whitelisted by the node owner are made available to the
+- Addresses that are explicitly :ref:`whitelisted <node-whitelisting>` by the node owner are made available to the
   algorithm container.
 
 Note that all of these connections are initiated from the algorithm container.

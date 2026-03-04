@@ -173,12 +173,8 @@ runs is given below.
   and its arguments. You can verify that the input
   set by the client is actually received by the algorithm.
 - **Output file**: Writes 'test' to the output file and reads it back.
-- **Token file**: Prints the contents of the token file. It should contain a JWT that you
-  can decode and verify the payload. The payload contains information like the
-  organization and collaboration ids.
-- **Temporary directory**: Creates a file in the temporary directory. The temporary directory
-  is a directory that is shared between all containers that share the same run id.
-  This checks that the temporary directory is writable.
+- **Token**: Check that central compute tasks receive a token through the environment
+  variables.
 - **Local proxy**: Sends a request to the local proxy. The local proxy is used to reach
   HQ from the algorithm container. This is needed as parent containers
   need to be able to create child containers (=subtasks). The local proxy also
@@ -219,7 +215,5 @@ You can download this file :download:`here <components/yaml/batch_import.yaml>`.
    </details>
 
 .. warning::
-    All users that are imported using ``v6 hq import`` receive the superuser
-    role. We are looking into ways to also be able to import roles. For more
-    background info refer to this
-    `issue <https://github.com/vantage6/vantage6/issues/71>`__.
+    All users that are imported using ``v6 hq import`` receive all permissions.
+    Therefore, this should only be used for testing purposes.

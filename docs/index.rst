@@ -5,8 +5,10 @@ Overview
 
 What is vantage6?
 -----------------
-Vantage6 is a Privacy Enhancing Technology (PET) platform that allows organizations to
-collaborate on data analysis tasks.
+
+Vantage6 is a privacy-enhancing technology (PET) platform that allows organizations to
+collaborate on data analysis tasks without sharing the data itself. Vantage6 is
+open source and completely free to use.
 
 .. raw:: html
 
@@ -16,18 +18,12 @@ collaborate on data analysis tasks.
      allowfullscreen>
    </iframe>
 
-The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
-(PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
-Compatible algorithms are the *trains*, and computation tasks are the *journey*.
-Vantage6 is completely open source under the
-`Apache License <https://github.com/IKNL/vantage6/blob/master/LICENSE>`_.
-
 What vantage6 does:
 
-* delivering algorithms to data stations and collecting their results
-* managing users, organizations, collaborations, computation tasks and their
+* deliver algorithms to data stations and collecting their results
+* manage users, organizations, collaborations, computation tasks and their
   results
-* providing control (security) at the data-stations to their owners
+* provide control (security) at the data stations to the data owners
 
 The vantage6 infrastructure is designed with three fundamental functional
 aspects of federated learning.
@@ -46,15 +42,13 @@ This documentation space consists of the following main sections:
 
 * **Overview** |rarr| *You are here now*
 * :doc:`/introduction/introduction` |rarr| *Introduction to vantage6 concepts*
-* :doc:`/introduction/quickstart` |rarr| *Quickstart guide*
+* :doc:`/introduction/quickstart` |rarr| *Quickstart guide - run vantage6 locally*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
 * :doc:`/hub/index` |rarr| *How to configure and deploy the central vantage6 components*
-* :doc:`/devops/index` |rarr| *How to collaborate on the development of the
-  vantage6 infrastructure*
-* :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
-  vantage6*
-* :doc:`/technical_reference/index` |rarr| *Technical reference of vantage6*
+* :doc:`/community/index` |rarr| *How to collaborate on the development of vantage6*
+* :doc:`/algorithms/index` |rarr| *Develop vantage6 algorithms*
+* :doc:`/technical_reference/index` |rarr| *In-depth documentation of vantage6 features*
 * :doc:`/api-docs/index` |rarr|
   *Documentation of the vantage6 infrastructure code*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
@@ -111,7 +105,7 @@ Index
    node/index
    hub/index
    algorithms/index
-   devops/index
+   community/index
    technical_reference/index
    api-docs/index
    glossary

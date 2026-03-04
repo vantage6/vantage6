@@ -183,7 +183,7 @@ And finally there are some images released for algorithm development:
 We hope to continue developing, improving, and supporting **vantage6** with the help of
 the federated learning community. If you are interested in contributing, first of all,
 thank you! Second, please take a look at our
-[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
+[contributing guidelines](https://docs.vantage6.ai/en/main/community/contribute.html)
 and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">

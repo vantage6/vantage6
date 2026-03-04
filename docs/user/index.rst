@@ -18,10 +18,12 @@ the least amount of effort. If you want to automate your workflow, we recommend
 using the :ref:`python-client`.
 
 .. warning::
-    Depending on your algorithm it *may* be required to use a specific
+    Depending on the algorithm used in your project, it *may* be required to use a specific
     language to post a task and retrieve the results. This could happen when
     the output of an algorithm contains a language specific datatype and or
-    serialization.
+    serialization. For instance, if the algorithm returns a numpy array, you need to use
+    Python to retrieve the results - and thus you will not be able to see the results in
+    the UI.
 
 .. toctree::
     :maxdepth: 3
