@@ -13,7 +13,7 @@ configuration files are stored, and finally, we explain how to configure the nod
 that your data is protected optimally.
 
 How to create a configuration file?
-""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""
 
 The easiest way to create an initial
 configuration file is via: ``v6 node new``. This allows you to configure the
