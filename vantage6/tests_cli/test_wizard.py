@@ -138,8 +138,8 @@ class WizardTest(unittest.TestCase):
         # Configure mocks to return whatever path is passed as argument - this is
         # necessary as it converts the path to a Path object and that generates Mocking
         # issues otherwise
-        node_m.return_value.save.side_effect = lambda path: path
-        hq_m.return_value.save.side_effect = lambda path: path
+        node_m.return_value.save.side_effect = lambda path, **kwargs: path
+        hq_m.return_value.save.side_effect = lambda path, **kwargs: path
 
         _, file_ = make_configuration(
             config_producing_func=node_q,
