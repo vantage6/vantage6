@@ -1,5 +1,6 @@
+{{- $global := .Values.global | default (dict) }}
 {{- if and
-    (eq (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "docker-desktop")
+    (eq (.Values.database.k8sNodeName | default $global.k8sNodeName) "docker-desktop")
     (not (lookup "storage.k8s.io/v1" "StorageClass" "" "local-storage"))
 }}
 {{- if or

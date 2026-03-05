@@ -55,10 +55,10 @@ global:
       intervalSeconds: 5
 
 hq:
-  # any configuration for the headquarters should be placed here
+  # configuration for the headquarters should be placed here
 
 auth:
-  # any configuration for the authentication service should be placed here
+  # configuration for the authentication service should be placed here
 
 store:
-  # any configuration for the algorithm store should be placed here
+  # configuration for the algorithm store should be placed here

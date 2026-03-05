@@ -18,19 +18,24 @@ spec:
 {{ include "store.labels" . | indent 8 }}
         component: store
     spec:
+      {{- $global := .Values.global | default (dict) }}
+      {{- $urls := $global.urls | default (dict) }}
+      {{- $internal := $urls.internal | default (dict) }}
+      {{- $wait := $global.wait | default (dict) }}
+      {{- $waitAuth := $wait.auth | default (dict) }}
       # TODO move the script into a separate file and use it in the initContainer
-      {{- $authUrl := .Values.global.urls.internal.auth | default "" }}
-      {{- if and .Values.global.wait.auth.enabled $authUrl }}
+      {{- $authUrl := $internal.auth | default "" }}
+      {{- if and ($waitAuth.enabled | default false) $authUrl }}
       initContainers:
         - name: wait-for-auth
-          image: {{ .Values.global.wait.auth.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitAuth.image | default "curlimages/curl:8.7.1" }}
           command:
             - sh
             - -c
             - >
               AUTH_URL="{{ $authUrl }}";
-              ATTEMPTS="{{ .Values.global.wait.auth.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ .Values.global.wait.auth.intervalSeconds | default 5 }}";
+              ATTEMPTS="{{ $waitAuth.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ $waitAuth.intervalSeconds | default 5 }}";
               i=0;
               echo "Waiting for auth at ${AUTH_URL}...";
               until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
@@ -51,9 +56,9 @@ spec:
         imagePullPolicy: {{ .Values.store.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ default .Values.global.urls.internal.auth $storeKeycloak.url }}
+          value: {{ default $internal.auth $storeKeycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ (default .Values.global.keycloak .Values.store.keycloak).realm }}
+          value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).realm }}
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-store-secrets
@@ -77,7 +82,7 @@ spec:
         configMap:
           name: {{ .Release.Name }}-store-configmap
       # Note that logs are not stored if no local k8s node is available
-      {{- if ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "" }}
+      {{- if ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "" }}
       - name: store-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-store-logs-pvc

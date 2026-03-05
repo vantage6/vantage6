@@ -13,18 +13,10 @@ node:
     realm: {{ node.keycloak.realm | default('vantage6') }}
 
   # Settings for HQ to connect to.
-  {% if node.hq is defined %}
   hq:
-    url: {{ node.hq.url | default('http://vantage6-hq') }}
+    url: {{ node.hq.url }}
     port: {{ node.hq.port | default(7601) }}
     path: {{ node.hq.path | default('/hq') }}
-  {% else %}
-  hq:
-    url: http://vantage6-hq
-    port: 7601
-    path: /hq
-  {% endif %}
-
 
   {% if node.image is defined %}
   # Fixed image to use to run the node. Note that if specified, the node will not

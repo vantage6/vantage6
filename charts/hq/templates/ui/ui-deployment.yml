@@ -1,4 +1,7 @@
-{{- $uiKeycloak := (default .Values.global.keycloak .Values.ui.keycloak) -}}
+{{- $global := .Values.global | default (dict) -}}
+{{- $urls := $global.urls | default (dict) -}}
+{{- $external := $urls.external | default (dict) -}}
+{{- $uiKeycloak := (default ($global.keycloak | default (dict)) .Values.ui.keycloak) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,11 +30,11 @@ spec:
         - containerPort: 80
         env:
         - name: HQ_URL
-          value: {{ default .Values.global.urls.external.hq .Values.hq.baseUrl | quote }}
+          value: {{ default $external.hq .Values.hq.baseUrl | quote }}
         - name: API_PATH
           value: {{ .Values.hq.apiPath | quote }}
         - name: AUTH_URL
-          value: {{ default .Values.global.urls.external.auth $uiKeycloak.publicUrl | quote }}
+          value: {{ default $external.auth .Values.ui.keycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM
           value: {{ $uiKeycloak.realm | quote }}
         - name: KEYCLOAK_CLIENT

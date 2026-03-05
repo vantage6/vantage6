@@ -1,4 +1,6 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
+{{- $global := .Values.global | default (dict) }}
+{{- $globalKeycloak := $global.keycloak | default (dict) }}
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: KeycloakRealmImport
 metadata:
@@ -9,7 +11,7 @@ metadata:
 spec:
   keycloakCRName: {{ .Release.Name }}-kc
   realm:
-    realm: {{ .Values.keycloak.realmImport.realm | default .Values.global.keycloak.realm }}
+    realm: {{ default $globalKeycloak.realm .Values.keycloak.realmImport.realm }}
     enabled: {{ .Values.keycloak.realmImport.enabled | default true }}
     {{- if .Values.keycloak.realmImport.accessTokenLifespan }}
     accessTokenLifespan: {{ .Values.keycloak.realmImport.accessTokenLifespan }}
@@ -75,7 +77,7 @@ spec:
       password: {{ .Values.keycloak.realmImport.smtpServer.password | quote }}
       {{- end }}
     {{- end }}
-    {{- if .Values.production }}
+    {{- if .Values.keycloak.production }}
     requiredActions:
       - alias: CONFIGURE_TOTP
         name: Configure OTP
@@ -105,17 +107,17 @@ spec:
         {{- end }}
     {{- end }}
     users:
-      - username: {{ default .Values.global.keycloak.adminUsername .Values.keycloak.realmImport.admin.username }}
+      - username: {{ default $globalKeycloak.adminUsername .Values.keycloak.realmImport.admin.username }}
         enabled: true
-        {{- if not .Values.production }}
+        {{- if not .Values.keycloak.production }}
         email: admin@vantage6.org
         firstName: Admin
         lastName: Admin
         {{- end }}
         credentials:
         - type: password
-          value: {{ default .Values.global.keycloak.adminPassword .Values.keycloak.realmImport.admin.password | quote}}
-        {{- if .Values.production }}
+          value: {{ default $globalKeycloak.adminPassword .Values.keycloak.realmImport.admin.password | quote}}
+        {{- if .Values.keycloak.production }}
         requiredActions:
         - CONFIGURE_TOTP
         - UPDATE_PASSWORD
@@ -136,7 +138,7 @@ spec:
             - manage-clients
             - create-client
     clients:
-      - clientId: {{ default .Values.global.keycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
+      - clientId: {{ default $globalKeycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
         publicClient: true
         attributes:
           oauth2.device.authorization.grant.enabled: "true"
@@ -162,7 +164,7 @@ spec:
       # keycloak.
       - clientId: backend-admin-client
         publicClient: false
-        secret: {{ default .Values.global.keycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
+        secret: {{ default $globalKeycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
         serviceAccountsEnabled: true
         standardFlowEnabled: false
     # Define organization_id as a user profile attribute using components (UserProfileProvider)

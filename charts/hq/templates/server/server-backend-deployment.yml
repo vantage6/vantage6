@@ -18,13 +18,19 @@ spec:
 {{ include "vantage6.labels" . | indent 8 }}
         component: vantage6-hq
     spec:
+      {{- $global := .Values.global | default (dict) }}
+      {{- $urls := $global.urls | default (dict) }}
+      {{- $internal := $urls.internal | default (dict) }}
+      {{- $wait := $global.wait | default (dict) }}
+      {{- $waitAuthCfg := $wait.auth | default (dict) }}
+      {{- $waitStoreCfg := $wait.store | default (dict) }}
       # Wait for Auth and Store to be ready (store only if algorithm stores are
       # configured)
-      {{- $authUrl := .Values.global.urls.internal.auth | default "" }}
-      {{- $storeUrl := .Values.global.urls.internal.store | default "" }}
+      {{- $authUrl := $internal.auth | default "" }}
+      {{- $storeUrl := $internal.store | default "" }}
       {{- $hasAlgoStores := gt (len .Values.hq.algorithm_stores) 0 }}
-      {{- $waitAuth := and .Values.global.wait.auth.enabled $authUrl }}
-      {{- $waitStore := and .Values.global.wait.store.enabled $storeUrl $hasAlgoStores }}
+      {{- $waitAuth := and ($waitAuthCfg.enabled | default false) $authUrl }}
+      {{- $waitStore := and ($waitStoreCfg.enabled | default false) $storeUrl $hasAlgoStores }}
       {{- /* Resolve the store API path from the first configured algorithm store, with a sane default. */}}
       {{- $storeApiPath := "/store" }}
       {{- if $hasAlgoStores }}
@@ -37,15 +43,15 @@ spec:
       initContainers:
         {{- if $waitAuth }}
         - name: wait-for-auth
-          image: {{ .Values.global.wait.auth.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitAuthCfg.image | default "curlimages/curl:8.7.1" }}
           # TODO move the script into a separate file and use it in the initContainer
           command:
             - sh
             - -c
             - >
               AUTH_URL="{{ $authUrl }}";
-              ATTEMPTS="{{ .Values.global.wait.auth.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ .Values.global.wait.auth.intervalSeconds | default 5 }}";
+              ATTEMPTS="{{ $waitAuthCfg.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ $waitAuthCfg.intervalSeconds | default 5 }}";
               i=0;
               echo "Waiting for auth at ${AUTH_URL}...";
               until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
@@ -61,14 +67,14 @@ spec:
         {{- end }}
         {{- if $waitStore }}
         - name: wait-for-store
-          image: {{ .Values.global.wait.store.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitStoreCfg.image | default "curlimages/curl:8.7.1" }}
           command:
             - sh
             - -c
             - >
               STORE_URL="{{ $storeUrl }}{{ $storeApiPath }}/version";
-              ATTEMPTS="{{ .Values.global.wait.store.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ .Values.global.wait.store.intervalSeconds | default 5 }}";
+              ATTEMPTS="{{ $waitStoreCfg.maxAttempts | default 60 }}";
+              SLEEP_SECS="{{ $waitStoreCfg.intervalSeconds | default 5 }}";
               i=0;
               echo "Waiting for store at ${STORE_URL} (algorithm stores configured)...";
               until curl -fsS "${STORE_URL}" >/dev/null 2>&1; do
@@ -90,15 +96,15 @@ spec:
         imagePullPolicy: {{ .Values.hq.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ default .Values.global.urls.internal.auth $hqKeycloak.url }}
+          value: {{ default $internal.auth $hqKeycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ (default .Values.global.keycloak .Values.hq.keycloak).realm }}
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).realm }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.hq.dev.store_address | quote }}
 {{- else if not .Values.hq.standalone }}
         - name: LOCAL_STORE_URL
-          value: {{ .Values.global.urls.internal.store }}
+          value: {{ $internal.store }}
 {{- end }}
         envFrom:
         - secretRef:
@@ -127,7 +133,7 @@ spec:
         configMap:
           name: {{ .Release.Name }}-hq-configmap
       # Note that logs are not stored if no local k8s node is available
-      {{- if ne (.Values.database.k8sNodeName | default .Values.global.k8sNodeName) "" }}
+      {{- if ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "" }}
       - name: hq-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-hq-logs-pvc

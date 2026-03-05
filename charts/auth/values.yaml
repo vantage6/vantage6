@@ -32,6 +32,9 @@ keycloak:
     failureFactor: 5
     smtpServer:
       # placeholder for SMTP server configuration
+    publicClient:
+      name: public_client
+
 
 # PostgreSQL configuration for Keycloak
 database:
