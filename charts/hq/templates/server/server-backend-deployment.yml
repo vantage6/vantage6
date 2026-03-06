@@ -44,49 +44,38 @@ spec:
         {{- if $waitAuth }}
         - name: wait-for-auth
           image: {{ $waitAuthCfg.image | default "curlimages/curl:8.7.1" }}
-          # TODO move the script into a separate file and use it in the initContainer
           command:
-            - sh
-            - -c
-            - >
-              AUTH_URL="{{ $authUrl }}";
-              ATTEMPTS="{{ $waitAuthCfg.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ $waitAuthCfg.intervalSeconds | default 5 }}";
-              i=0;
-              echo "Waiting for auth at ${AUTH_URL}...";
-              until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
-                i=$((i+1));
-                if [ "$i" -ge "${ATTEMPTS}" ]; then
-                  echo "Auth not ready after ${i} attempts, giving up.";
-                  exit 1;
-                fi;
-                echo "Auth not ready yet, attempt ${i}/${ATTEMPTS}...";
-                sleep "${SLEEP_SECS}";
-              done;
-              echo "Auth is ready.";
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ $authUrl | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitAuthCfg.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitAuthCfg.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Auth"
         {{- end }}
         {{- if $waitStore }}
         - name: wait-for-store
           image: {{ $waitStoreCfg.image | default "curlimages/curl:8.7.1" }}
           command:
-            - sh
-            - -c
-            - >
-              STORE_URL="{{ $storeUrl }}{{ $storeApiPath }}/version";
-              ATTEMPTS="{{ $waitStoreCfg.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ $waitStoreCfg.intervalSeconds | default 5 }}";
-              i=0;
-              echo "Waiting for store at ${STORE_URL} (algorithm stores configured)...";
-              until curl -fsS "${STORE_URL}" >/dev/null 2>&1; do
-                i=$((i+1));
-                if [ "$i" -ge "${ATTEMPTS}" ]; then
-                  echo "Store not ready after ${i} attempts, giving up.";
-                  exit 1;
-                fi;
-                echo "Store not ready yet, attempt ${i}/${ATTEMPTS}...";
-                sleep "${SLEEP_SECS}";
-              done;
-              echo "Store is ready.";
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ printf "%s%s/version" $storeUrl $storeApiPath | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitStoreCfg.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitStoreCfg.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Store"
         {{- end }}
       {{- end }}
       {{- $hqKeycloak := default (dict) .Values.hq.keycloak }}

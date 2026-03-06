@@ -23,31 +23,25 @@ spec:
       {{- $internal := $urls.internal | default (dict) }}
       {{- $wait := $global.wait | default (dict) }}
       {{- $waitAuth := $wait.auth | default (dict) }}
-      # TODO move the script into a separate file and use it in the initContainer
       {{- $authUrl := $internal.auth | default "" }}
       {{- if and ($waitAuth.enabled | default false) $authUrl }}
       initContainers:
         - name: wait-for-auth
           image: {{ $waitAuth.image | default "curlimages/curl:8.7.1" }}
           command:
-            - sh
-            - -c
-            - >
-              AUTH_URL="{{ $authUrl }}";
-              ATTEMPTS="{{ $waitAuth.maxAttempts | default 60 }}";
-              SLEEP_SECS="{{ $waitAuth.intervalSeconds | default 5 }}";
-              i=0;
-              echo "Waiting for auth at ${AUTH_URL}...";
-              until curl -fsS "${AUTH_URL}" >/dev/null 2>&1; do
-                i=$((i+1));
-                if [ "$i" -ge "${ATTEMPTS}" ]; then
-                  echo "Auth not ready after ${i} attempts, giving up.";
-                  exit 1;
-                fi;
-                echo "Auth not ready yet, attempt ${i}/${ATTEMPTS}...";
-                sleep "${SLEEP_SECS}";
-              done;
-              echo "Auth is ready.";
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ $authUrl | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitAuth.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitAuth.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Auth"
       {{- end }}
       {{- $storeKeycloak := default (dict) .Values.store.keycloak }}
       containers:
