@@ -45,7 +45,7 @@ data:
     rabbitmq:
       uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost }}
     {{- end }}
-    {{- if .Values.hq.dev.host_uri }}
+    {{- if and .Values.hq.dev .Values.hq.dev.host_uri }}
     dev:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address | default $internal.store }}

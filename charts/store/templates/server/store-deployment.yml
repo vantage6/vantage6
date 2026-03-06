@@ -24,7 +24,7 @@ spec:
       {{- $wait := $global.wait | default (dict) }}
       {{- $waitAuth := $wait.auth | default (dict) }}
       {{- $authUrl := $internal.auth | default "" }}
-      {{- if and ($waitAuth.enabled | default false) $authUrl }}
+      {{- if and ($waitAuth.enabled | default false) (ne (trim $authUrl) "") }}
       initContainers:
         - name: wait-for-auth
           image: {{ $waitAuth.image | default "curlimages/curl:8.7.1" }}

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+spec:
+  {{- $dev := .Values.keycloak.dev | default (dict) }}
+  {{- $hasNodePort := and $dev.forward_ports $dev.local_auth_port_to_expose }}
+  type: {{ if $hasNodePort }}NodePort{{ else }}ClusterIP{{ end }}
+  ports:
+    {{- $behindIngress := and .Values.keycloak.behindIngress (.Values.keycloak.behindIngress.enabled | default false) }}
+    {{- if or $behindIngress (not (.Values.keycloak.production | default true)) }}
+    - name: http
+      port: 7680
+      targetPort: 7680
+      protocol: TCP
+    {{- else }}
+    - name: https
+      port: 8443
+      targetPort: 8443
+      protocol: TCP
+    {{- end }}
+    {{- if $hasNodePort }}
+      nodePort: {{ $dev.local_auth_port_to_expose }}
+    {{- end }}
+  selector:
+    app: keycloak
+    app.kubernetes.io/instance: {{ .Release.Name }}-kc
+    app.kubernetes.io/managed-by: keycloak-operator

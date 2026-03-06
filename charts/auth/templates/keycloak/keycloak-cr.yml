@@ -6,10 +6,20 @@ metadata:
   labels:
 {{ include "auth.labels" . | indent 4 }}
 spec:
+  {{- $global := .Values.global | default (dict) }}
+  {{- $urls := $global.urls | default (dict) }}
+  {{- $external := $urls.external | default (dict) }}
+  {{- $externalAuth := $external.auth | default "" }}
+  {{- $behindIngress := and .Values.keycloak.behindIngress (.Values.keycloak.behindIngress.enabled | default false) }}
+  {{- $proxyHeaders := (default "xforwarded" (.Values.keycloak.behindIngress.proxyHeaders | default "")) }}
   instances: {{ .Values.keycloak.instances }}
-  {{- if .Values.keycloak.hostname }}
+  {{- $hostname := .Values.keycloak.hostname | default "" }}
+  {{- if and (eq (trim $hostname) "") (ne (trim $externalAuth) "") }}
+    {{- $hostname = $externalAuth }}
+  {{- end }}
+  {{- if ne (trim $hostname) "" }}
   hostname:
-    hostname: {{ .Values.keycloak.hostname }}
+    hostname: {{ $hostname | quote }}
   {{- else if not .Values.keycloak.production }}
   hostname:
     strict: false
@@ -31,7 +41,14 @@ spec:
     passwordSecret:
       name: {{ .Release.Name }}-kc-db-secret
       key: password
-  {{- if .Values.keycloak.production }}
+  {{- if $behindIngress }}
+  http:
+    httpEnabled: true
+    httpPort: {{ .Values.keycloak.behindIngress.httpPort | default 7680 }}
+  additionalOptions:
+    - name: proxy-headers
+      value: {{ $proxyHeaders | quote }}
+  {{- else if .Values.keycloak.production }}
   http:
     httpEnabled: false
     httpsPort: 8443

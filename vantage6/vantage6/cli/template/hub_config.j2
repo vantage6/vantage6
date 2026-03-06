@@ -1,15 +1,38 @@
+{% set hi = hubIngress | default({}) %}
+{% set hi_hosts = hi.hosts | default({}) %}
+{% set hi_tls = hi.tls | default({}) %}
+{% set hi_tls_existing = hi_tls.existingSecrets | default({}) %}
+{% set hi_cm = hi.certManager | default({}) %}
+hubIngress:
+  enabled: {{ hi.enabled | default(false) }}
+  hosts:
+    auth: {{ hi_hosts.auth | default('') }}
+    hq: {{ hi_hosts.hq | default('') }}
+    portal: {{ hi_hosts.portal | default('') }}
+    store: {{ hi_hosts.store | default('') }}
+  tls:
+    mode: {{ hi_tls.mode | default('cert-manager') }}
+    existingSecrets:
+      auth: {{ hi_tls_existing.auth | default('') }}
+      hq: {{ hi_tls_existing.hq | default('') }}
+      portal: {{ hi_tls_existing.portal | default('') }}
+      store: {{ hi_tls_existing.store | default('') }}
+  certManager:
+    enabled: {{ hi_cm.enabled | default(true) }}
+    clusterIssuer: {{ hi_cm.clusterIssuer | default('letsencrypt-prod') }}
+
 global:
   urls:
     external:
-        auth: {{ urls.external.auth }}
-        store: {{ urls.external.store }}
-        ui: {{ urls.external.ui }}
-        hq: {{ urls.external.hq }}
+      auth: {{ urls.external.auth }}
+      store: {{ urls.external.store }}
+      ui: {{ urls.external.ui }}
+      hq: {{ urls.external.hq }}
     internal:
-        auth: {{ urls.internal.auth }}
-        store: {{ urls.internal.store }}
-        ui: {{ urls.internal.ui }}
-        hq: {{ urls.internal.hq }}
+      auth: {{ urls.internal.auth }}
+      store: {{ urls.internal.store }}
+      ui: {{ urls.internal.ui }}
+      hq: {{ urls.internal.hq }}
   keycloak:
     url: {{ keycloak.url }}
     realm: {{ keycloak.realm | default('vantage6') }}

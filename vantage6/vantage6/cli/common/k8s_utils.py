@@ -35,7 +35,6 @@ def run_kubectl_command(
     if k8s_config.namespace:
         command.extend(["--namespace", k8s_config.namespace])
 
-    info(f"Running command: {' '.join(command)}")
     try:
         result = subprocess.run(
             command,
@@ -43,8 +42,6 @@ def run_kubectl_command(
             capture_output=True,
             text=True,
         )
-        if result.stdout:
-            info(result.stdout.strip())
         return result
     except subprocess.CalledProcessError as e:
         error(f"Command failed: {' '.join(command)}")

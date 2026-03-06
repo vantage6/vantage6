@@ -95,7 +95,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             # names and ports created by the hub Helm chart.
             "internal": {
                 "auth": (
-                    f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
+                    f"http://vantage6-{self.hub_name}-user-hub-kc-service."
                     f"{self.k8s_config.namespace}.svc.cluster.local:"
                     f"{Ports.DEV_AUTH.value}"
                 ),
@@ -407,6 +407,10 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "redirectUris": [
                     f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
                 ],
+                "dev": {
+                    "forward_ports": True,
+                    "local_auth_port_to_expose": Ports.SANDBOX_AUTH.value,
+                },
             },
             "database": database_config,
         }

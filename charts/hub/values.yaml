@@ -14,6 +14,35 @@ store:
   enabled: true
   # Copy or override values from charts/store/values.yaml here as needed.
 
+hubIngress:
+  enabled: false
+
+  # Public hostnames per component (subdomain routing).
+  # Example: auth.example.com, hq.example.com, portal.example.com, store.example.com
+  hosts:
+    auth: ""
+    hq: ""
+    portal: ""
+    store: ""
+
+  # TLS configuration for all ingresses.
+  tls:
+    # Use cert-manager by default, or reference an existing secret.
+    mode: cert-manager # or: existingSecret
+
+    # Optional per-component secret name overrides.
+    # - In cert-manager mode, Certificates will be created for these secrets.
+    # - In existingSecret mode, these secrets must already exist.
+    existingSecrets:
+      auth: ""
+      hq: ""
+      portal: ""
+      store: ""
+
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
+
 global:
   # Shared Keycloak configuration (used as default if subcharts don't override)
   keycloak:

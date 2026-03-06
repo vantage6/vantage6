@@ -107,7 +107,8 @@ spec:
         {{- end }}
     {{- end }}
     users:
-      - username: {{ default $globalKeycloak.adminUsername .Values.keycloak.realmImport.admin.username }}
+      {{- $realmImportAdmin := .Values.keycloak.realmImport.admin | default (dict) }}
+      - username: {{ default $globalKeycloak.adminUsername $realmImportAdmin.username }}
         enabled: true
         {{- if not .Values.keycloak.production }}
         email: admin@vantage6.org
@@ -116,7 +117,7 @@ spec:
         {{- end }}
         credentials:
         - type: password
-          value: {{ default $globalKeycloak.adminPassword .Values.keycloak.realmImport.admin.password | quote}}
+          value: {{ default $globalKeycloak.adminPassword $realmImportAdmin.password | quote}}
         {{- if .Values.keycloak.production }}
         requiredActions:
         - CONFIGURE_TOTP

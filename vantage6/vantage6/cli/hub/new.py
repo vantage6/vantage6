@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import urlparse
 
 import click
 import questionary as q
@@ -72,12 +73,24 @@ def cli_hub_new(
     info("Now, let's setup the authentication service...")
     auth_name = f"{name}-auth"
     auth_credentials = {}
+    extra_config = {
+        "keycloak": {
+            # Keycloak is exposed via Ingress (TLS terminated at Ingress)
+            "behindIngress": {
+                "enabled": True,
+                "proxyHeaders": "xforwarded",
+                "httpPort": 7680,
+            },
+            "hostname": base_config["auth_url"],
+        }
+    }
     auth_config = new(
         config_producing_func=auth_configuration_questionaire,
         config_producing_func_args=(auth_name, k8s_cfg, auth_credentials),
         name=auth_name,
         system_folders=system_folders,
         type_=InstanceType.AUTH,
+        extra_config=extra_config,
         save_config_file=False,
     )
 
@@ -198,7 +211,7 @@ def _get_base_config() -> dict[str, Any]:
 
     base_config["ui_url"] = q.text(
         "On what address will the UI be reachable?",
-        default="https://ui.vantage6.ai",
+        default="https://portal.vantage6.ai",
     ).unsafe_ask()
 
     base_config["has_store"] = q.confirm(
@@ -240,10 +253,16 @@ def _create_hub_config(
     dict[str, Any]
         The hub configuration.
     """
+
+    def _hostname_from_url(url: str) -> str:
+        parsed = urlparse(url)
+        return parsed.hostname or ""
+
     urls = {
         "external": {
             "auth": base_config["auth_url"],
-            "store": base_config["store_url"],
+            "store": base_config.get("store_url", ""),
+            # The UI is typically exposed on portal.<domain>
             "ui": base_config["ui_url"],
             "hq": base_config["hq_url"],
         },
@@ -267,11 +286,35 @@ def _create_hub_config(
         },
     }
 
+    hub_ingress = {
+        "enabled": True,
+        "hosts": {
+            "auth": _hostname_from_url(urls["external"]["auth"]),
+            "hq": _hostname_from_url(urls["external"]["hq"]),
+            "portal": _hostname_from_url(urls["external"]["ui"]),
+            "store": _hostname_from_url(urls["external"]["store"]),
+        },
+        "tls": {
+            "mode": "cert-manager",
+            "existingSecrets": {
+                "auth": "",
+                "hq": "",
+                "portal": "",
+                "store": "",
+            },
+        },
+        "certManager": {
+            "enabled": True,
+            "clusterIssuer": "letsencrypt-prod",
+        },
+    }
+
     keycloak = {
         "url": urls["external"]["auth"],
     } | global_auth_settings_questionaire()
 
     global_config = {
+        "hubIngress": hub_ingress,
         "urls": urls,
         "keycloak": keycloak,
     }

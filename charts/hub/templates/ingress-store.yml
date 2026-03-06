@@ -1,0 +1,28 @@
+{{- $hi := .Values.hubIngress | default (dict) -}}
+{{- $hosts := $hi.hosts | default (dict) -}}
+{{- $storeHost := get $hosts "store" | default "" -}}
+{{- if and ($hi.enabled | default false) (ne (trim $storeHost) "") -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-store
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ $storeHost | quote }}
+      secretName: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "store") }}
+  rules:
+    - host: {{ $storeHost | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-store
+                port:
+                  name: store-backend
+{{- end }}
+
