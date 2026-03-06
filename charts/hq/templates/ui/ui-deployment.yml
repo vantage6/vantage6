@@ -34,7 +34,7 @@ spec:
         - name: API_PATH
           value: {{ .Values.hq.apiPath | quote }}
         - name: AUTH_URL
-          value: {{ default $external.auth .Values.ui.keycloak.publicUrl | quote }}
+          value: {{ default $external.auth $uiKeycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM
           value: {{ $uiKeycloak.realm | quote }}
         - name: KEYCLOAK_CLIENT
