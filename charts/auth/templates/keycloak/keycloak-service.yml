@@ -11,19 +11,23 @@ spec:
   type: {{ if $hasNodePort }}NodePort{{ else }}ClusterIP{{ end }}
   ports:
     {{- $behindIngress := and .Values.keycloak.behindIngress (.Values.keycloak.behindIngress.enabled | default false) }}
-    {{- if or $behindIngress (not (.Values.keycloak.production | default true)) }}
+    {{- if or $hasNodePort (or $behindIngress (not (.Values.keycloak.production | default true))) }}
+    # Use HTTP (7680) when:
+    # - running with NodePort (sandbox/dev), or
+    # - behind an ingress, or
+    # - not in production mode.
     - name: http
       port: 7680
       targetPort: 7680
       protocol: TCP
+      {{- if $hasNodePort }}
+      nodePort: {{ $dev.local_auth_port_to_expose }}
+      {{- end }}
     {{- else }}
     - name: https
       port: 8443
       targetPort: 8443
       protocol: TCP
-    {{- end }}
-    {{- if $hasNodePort }}
-      nodePort: {{ $dev.local_auth_port_to_expose }}
     {{- end }}
   selector:
     app: keycloak
