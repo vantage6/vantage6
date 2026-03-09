@@ -268,7 +268,7 @@ def _create_hub_config(
         },
         "internal": {
             "auth": (
-                f"http://vantage6-{name}-user-hub-kc-nodeport.{k8s_cfg.namespace}.svc"
+                f"http://vantage6-{name}-user-hub-kc-service.{k8s_cfg.namespace}.svc"
                 f".cluster.local:{Ports.DEV_AUTH.value}"
             ),
             "store": (
