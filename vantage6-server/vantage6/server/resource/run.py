@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import Union
 import sqlalchemy as sa
@@ -9,6 +10,7 @@ from http import HTTPStatus
 from sqlalchemy import desc
 
 from vantage6.common import logger_name
+from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.server import db
 from vantage6.server.permission import (
     RuleCollection,
@@ -687,6 +689,30 @@ class Run(SingleRunBase):
         run.log = data.get("log")
         run.status = data.get("status", run.status)
         run.save()
+
+        # Fail-fast on sibling runs that have not started yet. This prevents
+        # delayed pickup/replay after one run already failed.
+        if has_task_failed(run.status):
+            siblings = (
+                g.session.query(db_Run)
+                .filter(db_Run.task_id == run.task_id)
+                .filter(db_Run.id != run.id)
+                .filter(db_Run.started_at.is_(None))
+                .filter(db_Run.finished_at.is_(None))
+                .all()
+            )
+            if siblings:
+                now = datetime.datetime.now(datetime.timezone.utc)
+                reason = (
+                    f"Marked as failed because sibling run id={run.id} "
+                    f"failed with status '{run.status}'."
+                )
+                for sibling in siblings:
+                    sibling.status = TaskStatus.FAILED.value
+                    sibling.finished_at = now
+                    if not sibling.log:
+                        sibling.log = reason
+                    sibling.save()
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
 
