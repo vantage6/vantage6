@@ -45,9 +45,8 @@ spec:
   http:
     httpEnabled: true
     httpPort: {{ .Values.keycloak.behindIngress.httpPort | default 7680 }}
-  additionalOptions:
-    - name: proxy-headers
-      value: {{ $proxyHeaders | quote }}
+  proxy:
+    headers: {{ $proxyHeaders | quote }}
   {{- else if .Values.keycloak.production }}
   http:
     httpEnabled: false
