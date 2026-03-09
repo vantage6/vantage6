@@ -287,6 +287,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
         Path("../charts/store/Chart.yaml"),
         Path("../charts/hq/Chart.yaml"),
         Path("../charts/auth/Chart.yaml"),
+        Path("../charts/hub/Chart.yaml"),
     ]
     new_version = build_version_string(version, spec, build, with_dash=True)
 
@@ -310,9 +311,9 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
             flags=re.MULTILINE,
         )
 
-        # Update common dependency version if it exists
+        # Update common and hub chart dependency versions if they exist
         content = re.sub(
-            r'(name: common\n\s+version: )"[\d.]+(-\w+(\.\d+)?)?"',
+            r'(name: (common|hq|auth|store)\n\s+version: )"[\d.]+(-\w+(\.\d+)?)?"',
             f'\\1"{new_version}"',
             content,
         )
