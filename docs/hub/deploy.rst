@@ -101,18 +101,53 @@ Ensure your Kubernetes cluster can access the database server.
 Configuring access to the services
 ----------------------------------
 
-For production environments, you still need to configure routing traffic to the
-hub. The helm charts do not include this configuration, as it is expected that you
-will use your own routing solution.
+For production environments, you still need to configure how traffic reaches the
+hub components from the outside world. The hub chart provides an
+Ingress configuration, but you can also bring your own routing solution.
 
 .. note::
 
-    For a local environment (using ``v6 sandbox``) or a development environment (using
-    ``v6 dev``), access is configured automatically on your local machine.
+    For a local environment (using ``v6 sandbox``) or a development environment
+    (using ``v6 dev``), access is configured automatically on your local machine.
 
-We recommend that you specify an ``ingress`` or ``LoadBalancer`` service to set up
-routing traffic to the services.
+Using the built-in Ingress
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. TODO add ingress example
-.. TODO add LoadBalancer example
-.. See issues #1686, #1948
+The hub chart can create four ``Ingress`` resources - one for each public
+endpoint:
+
+* ``auth`` (Keycloak)
+* ``hq`` (HQ API)
+* ``portal`` (UI)
+* ``store`` (algorithm store)
+
+These are controlled via the ``hubIngress`` section in your hub values file
+(:ref:`hub_config.yaml <hub-configuration-file>`). A minimal
+example:
+
+.. code-block:: yaml
+
+   hubIngress:
+     enabled: true
+     hosts:
+       auth: auth.example.org
+       hq: hq.example.org
+       portal: portal.example.org
+       store: store.example.org
+     tls:
+       mode: cert-manager        # or: existingSecret
+     certManager:
+       enabled: true
+       clusterIssuer: letsencrypt-prod
+
+When ``hubIngress.enabled`` is ``true``, the hub chart:
+
+* Creates ``Ingress`` resources for the components with the given hostnames.
+* Terminates TLS at the Ingress (HTTP is used inside the cluster).
+* Optionally provisions certificates using `cert-manager
+  <https://cert-manager.io>`_ (``mode: cert-manager``), or reuses existing
+  Kubernetes TLS secrets (``mode: existingSecret``).
+
+If you already have an ingress controller and certificate management in place,
+you can disable ``hubIngress`` and instead configure your own ``Ingress`` or
+``LoadBalancer`` resources that route to the services exposed by the hub chart.
