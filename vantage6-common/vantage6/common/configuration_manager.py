@@ -208,9 +208,20 @@ class ConfigurationManager(object):
         conf.load(path)
         return conf
 
-    def render_config(self) -> str:
+    def render_config(self, **_kwargs: Any) -> str:
         """
         Render the configuration to a string.
+
+        Parameters
+        ----------
+        **_kwargs: Any
+            Extra configurations to render. These are ignored in the base
+            implementation, but some subclasses use them.
+
+        Returns
+        -------
+        str
+            The rendered configuration.
         """
         template = self.get_config_template()
         return template.render(self.config)
@@ -225,6 +236,8 @@ class ConfigurationManager(object):
         ----------
         path: Path | str
             The path to the file to save the configuration to.
+        extra_configs_to_render: dict[str, str] | None
+            Extra configurations to render.
 
         Returns
         -------
