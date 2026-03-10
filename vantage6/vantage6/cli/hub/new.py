@@ -200,29 +200,25 @@ def _get_base_config() -> dict[str, Any]:
     ).unsafe_ask()
     if k8s_node_name != no_local_storage:
         base_config["k8sNodeName"] = k8s_node_name
-    base_config["hq_url"] = q.text(
-        "On what address will the HQ be reachable?",
-        default="https://hq.vantage6.ai",
+    info("We need you to provide a domain where you will deploy the hub services.")
+    info("For instance, the domain 'example.com' will lead to the following URLs:")
+    info("Authentication:  https://auth.example.com")
+    info("HQ:              https://hq.example.com")
+    info("UI:              https://portal.example.com")
+    info("Algorithm store: https://store.example.com")
+    url_domain = q.text(
+        "On what domain will the services be reachable?",
+        default="vantage6.ai",
     ).unsafe_ask()
-    base_config["auth_url"] = q.text(
-        "On what address will the auth service be reachable?",
-        default="https://auth.vantage6.ai",
-    ).unsafe_ask()
-
-    base_config["ui_url"] = q.text(
-        "On what address will the UI be reachable?",
-        default="https://portal.vantage6.ai",
-    ).unsafe_ask()
-
+    base_config["hq_url"] = f"https://hq.{url_domain}"
+    base_config["auth_url"] = f"https://auth.{url_domain}"
+    base_config["ui_url"] = f"https://portal.{url_domain}"
     base_config["has_store"] = q.confirm(
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
     if base_config["has_store"]:
-        base_config["store_url"] = q.text(
-            "On what address will the algorithm store be reachable?",
-            default="https://store.vantage6.ai",
-        ).unsafe_ask()
+        base_config["store_url"] = f"https://store.{url_domain}"
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -318,7 +314,7 @@ def _create_hub_config(
         "urls": urls,
         "keycloak": keycloak,
     }
-    if base_config["k8sNodeName"] is not None:
+    if base_config.get("k8sNodeName") is not None:
         global_config["k8sNodeName"] = base_config["k8sNodeName"]
     return global_config
 
