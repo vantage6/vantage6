@@ -75,6 +75,12 @@ databases:
   - label: default
     uri: C:\data\datafile.csv
     type: csv
+    # OPTIONAL: controls how file/folder databases are exposed to algorithm
+    # containers.
+    # - copy (default): copy file data into the node data volume
+    # - ro: bind-mount host path read-only into algorithm containers
+    # Use 'ro' only for file/folder-backed data sources.
+    mount_mode: copy
 
   - label: omop
     uri: jdbc:postgresql://host.docker.internal:5454/postgres
@@ -101,6 +107,9 @@ databases:
   - label: persistent
     type: folder
     uri: /path/to/share/with/container
+    # Optional. Set to `ro` to mount this host folder read-only in algorithm
+    # containers.
+    mount_mode: ro
 
 
 # end-to-end encryption settings

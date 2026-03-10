@@ -326,6 +326,8 @@ something like:
         - label: default
           uri: /path/to/my/example.csv
           type: csv
+          # optional: `copy` (default) or `ro`
+          mount_mode: copy
         - label: my_other_database
           uri: /path/to/my/example2.csv
           type: excel
@@ -490,4 +492,3 @@ while for the partial algorithms, dispatched to two nodes, the results would be:
 
    >>> result_info
    [{'sum': 253, 'count': 4}, {'sum': 173, 'count': 4}]
-

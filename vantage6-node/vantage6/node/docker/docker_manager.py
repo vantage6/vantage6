@@ -47,6 +47,8 @@ from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
 log = logging.getLogger(logger_name(__name__))
 
+SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
+
 
 class Result(NamedTuple):
     """
@@ -204,8 +206,22 @@ class DockerManager(DockerBaseManager):
         for label in db_labels:
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
+            # we default to 'copy' mode to preserve current/previous behavior
+            mount_mode = str(db_config.get("mount_mode", "copy")).lower()
+
+            # we check again container-side (aside from host-running cli)
+            if mount_mode not in SUPPORTED_DATABASE_MOUNT_MODES:
+                raise ValueError(
+                    f"Invalid mount_mode '{mount_mode}' for database '{label}'. "
+                    "Supported values are 'copy' and 'ro'."
+                )
 
             if running_in_docker():
+                # `v6 node start` sets:
+                #    env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
+                #    mounts.append((f"/mnt/{label}{suffix}", str(uri)))
+                # So uri will get assigned to something like `default.csv` now
+                # It's not a "path" per se yet (not 'universal')
                 uri = os.environ[f"{label_upper}_DATABASE_URI"]
             else:
                 uri = db_config["uri"]
@@ -219,16 +235,38 @@ class DockerManager(DockerBaseManager):
                 )
 
                 if db_is_file:
+                    # because `v6 node start` did
+                    # `mounts.append((f"/mnt/{label}{suffix}", str(uri)))` now
+                    # uri points to the dataset that has been bind-mounted from
+                    # the host. This is still in the node filesystem namespace
                     uri = f"/mnt/{uri}"
             else:
                 db_is_file = Path(uri).exists() and Path(uri).is_file()
                 db_is_dir = Path(uri).exists() and Path(uri).is_dir()
 
             if db_is_file:
-                # We'll copy the file to the folder `data` in our task_dir.
-                self.log.info(f"Copying {uri} to {self.__tasks_dir}")
-                shutil.copy(uri, self.__tasks_dir)
-                uri = self.__tasks_dir / os.path.basename(uri)
+                if mount_mode == "ro":
+                    self.log.info(
+                        "Using read-only bind mount for database '%s' from '%s'",
+                        label,
+                        # keep in mind: db_config["uri"] is uri in host filesystem namespace
+                        db_config["uri"],
+                    )
+                    # we don't just overwrite uri with `db_config["uri"]` like
+                    # we do below for dirs because, in the node, we might still
+                    # check the dataset (e.g. get_column_names()). We'll end up
+                    # passing a host_uri so task manager knows what to tell
+                    # host-side-running docker engine what to mount
+                else:
+                    # We'll copy the file to the folder `data` in our task_dir.
+                    self.log.info(f"Copying {uri} to {self.__tasks_dir}")
+                    # task_dir at the moment is just the data volume (dockerized)
+                    # See: https://github.com/vantage6/vantage6/issues/2533
+                    # But this named volume will be shared with the algorithm
+                    shutil.copy(uri, self.__tasks_dir)
+                    # after the below line, uri will point to path in (still)
+                    # node filesystem namespace, the copy we've just made
+                    uri = self.__tasks_dir / os.path.basename(uri)
 
             if db_is_dir:
                 self.log.info(
@@ -236,9 +274,30 @@ class DockerManager(DockerBaseManager):
                     db_config["uri"],
                     uri,
                 )
-                # Ignore all previouscomments about file locations: folders
+                # Ignore all previous comments about file locations: folders
                 # need to be mounted from the host.
                 uri = db_config["uri"]
+
+            db_suffix = "".join(Path(str(db_config["uri"])).suffix)
+            mount_target = None
+            if db_is_file:
+                # used for ro mode. With copy we don't mount the file itself
+                mount_target = f"/mnt/{label}{db_suffix}"
+            elif db_is_dir:
+                # will be used for ro dir mount
+                mount_target = f"/mnt/{label}"
+
+            if mount_mode == "ro":
+                if not (db_is_file or db_is_dir):
+                    raise ValueError(
+                        f"Database '{label}' uses mount_mode 'ro' but does not resolve "
+                        "to a file/folder database."
+                    )
+                if not db_config.get("uri") or not mount_target:
+                    raise ValueError(
+                        f"Database '{label}' uses mount_mode 'ro' but missing host "
+                        "uri or mount target."
+                    )
 
             self.databases[label] = {
                 "uri": uri,
@@ -246,6 +305,10 @@ class DockerManager(DockerBaseManager):
                 "is_dir": db_is_dir,
                 "type": db_config["type"],
                 "env": db_config.get("env", {}),
+                "mount_mode": mount_mode,
+                # host_uri and mount_target are only used in 'ro' mount mode
+                "host_uri": db_config["uri"],
+                "mount_target": mount_target,
             }
         self.log.debug("Databases: %s", self.databases)
 
