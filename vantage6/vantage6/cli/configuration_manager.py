@@ -261,6 +261,16 @@ class HubConfigurationManager(ConfigurationManager):
     """
 
     def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        """
+        Maintains the hub's configuration.
+
+        Parameters
+        ----------
+        name : str
+            Name of the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+        """
         super().__init__(conf_class=HubConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
@@ -268,6 +278,18 @@ class HubConfigurationManager(ConfigurationManager):
         """
         Create a new instance of the HubConfigurationManager from a
         configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+
+        Returns
+        -------
+        HubConfigurationManager
+            A new instance of the HubConfigurationManager.
         """
         return super().from_file(
             path, conf_class=HubConfiguration, is_sandbox=is_sandbox
@@ -276,6 +298,11 @@ class HubConfigurationManager(ConfigurationManager):
     def get_config_template(self) -> str:
         """
         Get the configuration template for the hub.
+
+        Returns
+        -------
+        str
+            The configuration template for the hub.
         """
         return super()._get_config_template(HUB_TEMPLATE_FILE)
 
@@ -287,6 +314,23 @@ class HubConfigurationManager(ConfigurationManager):
     ) -> str:
         """
         Render the configuration to a string.
+
+        Extra configurations of subcharts can be provided to render the configuration
+        with.
+
+        Parameters
+        ----------
+        auth_config : str | None
+            The authentication configuration.
+        hq_config : str | None
+            The HQ configuration.
+        store_config : str | None
+            The algorithm store configuration.
+
+        Returns
+        -------
+        str
+            The rendered configuration.
         """
         hub_config = super().render_config()
         # add the auth, hq and store configurations to the hub configuration
@@ -301,6 +345,16 @@ class HubConfigurationManager(ConfigurationManager):
     def _add_extra_indent(self, str_subconfig: str) -> str:
         """
         Add extra indent to the subconfiguration.
+
+        Parameters
+        ----------
+        str_subconfig : str
+            The subconfiguration to add extra indent to.
+
+        Returns
+        -------
+        str
+            The subconfiguration with extra indent.
         """
         return "\n".join(["  " + line for line in str_subconfig.split("\n")])
 
