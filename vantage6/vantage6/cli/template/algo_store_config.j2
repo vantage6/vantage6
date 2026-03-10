@@ -1,3 +1,5 @@
+{% from "_yaml_macros.j2" import yaml_sq %}
+
 # Override the chart name
 nameOverride: {{ nameOverride | default('vantage6-store') }}
 # Optional, by default the Release.Namespace is used
@@ -26,9 +28,9 @@ store:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: "{{ store.keycloak.adminPassword | default('admin') }}"
+    adminPassword: {{ yaml_sq(store.keycloak.adminPassword | default('admin')) }}
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: "{{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}"
+    adminClientSecret: {{ yaml_sq(store.keycloak.adminClientSecret | default('myadminclientsecret')) }}
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}
@@ -204,7 +206,7 @@ store:
     {% for registry in node.private_docker_registries %}
     - registry: {{ registry.registry }}
       username: {{ registry.username }}
-      password: "{{ registry.password }}"
+      password: {{ yaml_sq(registry.password) }}
     {% endfor %}
   {% else %}
   # private_docker_registries:
@@ -283,7 +285,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: "{{ database.password | default('vantage6') }}"
+  password: {{ yaml_sq(database.password | default('vantage6')) }}
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}
