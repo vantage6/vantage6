@@ -5,8 +5,6 @@ keycloak:
   instances: 1
   hostname: ""
 
-  # note that dependent on the production setting, the users and secrets that are
-  # set are different - for non-production, they are set to simple, non-secure values.
   production: true
   tls:
     enabled: true

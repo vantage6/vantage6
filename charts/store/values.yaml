@@ -45,8 +45,3 @@ store:
 
 database:
   external: true
-
-  # username: vantage6
-  # password: vantage6
-  # name: vantage6
-  # volumePath: /mnt/data_store
