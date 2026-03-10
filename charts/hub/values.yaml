@@ -4,7 +4,7 @@
 # structures can be provided from this single hub chart values file.
 hq:
   enabled: true
-  # Copy or override values from charts/hq/values.yaml here as needed, e.g.:
+  # Copy or override values from charts/hq/values.yaml here as needed.
 
 auth:
   enabled: true
