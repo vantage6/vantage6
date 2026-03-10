@@ -262,7 +262,7 @@ ui:
   {% endif %}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai"
   allowedAlgorithmStores: "{{ ui.allowedAlgorithmStores | default('*') }}"
   # Community algorithm store URL.

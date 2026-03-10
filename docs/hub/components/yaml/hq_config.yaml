@@ -197,7 +197,7 @@ ui:
     publicUrl: http://localhost:7680
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai".
   # If you don't want to run tasks via the UI, you can also set this to an empty string
   # for the strictest CSP policy.
