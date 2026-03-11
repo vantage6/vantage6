@@ -27,6 +27,10 @@ def cli_hub_remove(
     ----------
     ctx : HubContext
         Hub context object
+    name : str
+        Name of the hub
+    system_folders : bool
+        Whether to use system folders or user folders
     force : bool
         Whether to ask for confirmation before removing or not
     """
