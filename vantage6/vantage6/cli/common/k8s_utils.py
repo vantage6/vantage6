@@ -27,6 +27,11 @@ def run_kubectl_command(
     -------
     subprocess.CompletedProcess
         The result of the subprocess call.
+
+    Raises
+    ------
+    subprocess.CalledProcessError
+        If the command fails and check is True.
     """
     command = ["kubectl"] + args
     if k8s_config.context:
@@ -72,7 +77,9 @@ def wait_for_pod_ready(
     """
 
     info(f"Waiting for {description} pod(s) to be created...")
-    while True:
+    attempt = 0
+    max_attempts = 20
+    while attempt < max_attempts:
         result = run_kubectl_command(
             ["get", "pod", "-l", selector, "-o", "name"],
             k8s_config,
@@ -81,6 +88,10 @@ def wait_for_pod_ready(
         if result.stdout.strip():
             break
         time.sleep(2)
+        attempt += 1
+        if attempt == max_attempts:
+            error(f"Timeout while waiting for {description} pod(s) to be created.")
+            exit(1)
 
     info(f"{description} pod(s) created, waiting for them to become Ready...")
     try:
