@@ -183,6 +183,9 @@ def create_node_config(
     """
     Create a node configuration file.
 
+    Note that this function only creates node configuration files for the `v6 dev` CLI.
+    For other environments, the `v6 node new` procedure is followed.
+
     Returns
     -------
     dict
