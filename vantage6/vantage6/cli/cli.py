@@ -38,6 +38,7 @@ from vantage6.cli.hub.new import cli_hub_new
 from vantage6.cli.hub.remove import cli_hub_remove
 from vantage6.cli.hub.start import cli_hub_start
 from vantage6.cli.hub.stop import cli_hub_stop
+from vantage6.cli.hub.install import cli_hub_install
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.files import cli_node_files
@@ -243,6 +244,7 @@ def cli_hub() -> None:
 cli_hub.add_command(cli_hub_new, name="new")
 cli_hub.add_command(cli_hub_files, name="files")
 cli_hub.add_command(cli_hub_configuration_list, name="list")
+cli_hub.add_command(cli_hub_install, name="install")
 cli_hub.add_command(cli_hub_start, name="start")
 cli_hub.add_command(cli_hub_stop, name="stop")
 cli_hub.add_command(cli_hub_remove, name="remove")

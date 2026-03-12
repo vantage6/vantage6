@@ -12,6 +12,7 @@ from vantage6.cli.common.k8s_utils import wait_for_pod_ready
 from vantage6.cli.common.start import helm_install, prestart_checks
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import ChartName
+from vantage6.cli.hub.install import check_and_install_cert_manager_crds
 from vantage6.cli.k8s_config import select_k8s_config
 
 
@@ -52,8 +53,15 @@ def cli_hub_start(
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
-    # before starting the hub, we need to install the keycloak operator (if not already
-    # installed)
+    # Before starting the hub, ensure required operators / CRDs are installed.
+    # 1) cert-manager CRDs are needed for Certificate resources used by the hub chart,
+    #    but only when ingress is enabled and configured to use cert-manager.
+    hub_ingress = ctx.config.get("hubIngress", {})
+    tls_cfg = hub_ingress.get("tls", {})
+    if hub_ingress.get("enabled") and tls_cfg.get("mode") == "cert-manager":
+        check_and_install_cert_manager_crds(k8s_config)
+
+    # 2) Keycloak operator (and its CRDs) are needed for the auth subchart.
     check_and_install_keycloak_operator(k8s_config)
 
     helm_install(
