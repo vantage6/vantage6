@@ -32,6 +32,7 @@ from vantage6.cli.hq.remove import cli_hq_remove
 from vantage6.cli.hq.start import cli_hq_start
 from vantage6.cli.hq.stop import cli_hq_stop
 from vantage6.cli.hq.version import cli_hq_version
+from vantage6.cli.hub.files import cli_hub_files
 from vantage6.cli.hub.list import cli_hub_configuration_list
 from vantage6.cli.hub.new import cli_hub_new
 from vantage6.cli.hub.remove import cli_hub_remove
@@ -240,6 +241,7 @@ def cli_hub() -> None:
 
 # Define the commands for the hub group
 cli_hub.add_command(cli_hub_new, name="new")
+cli_hub.add_command(cli_hub_files, name="files")
 cli_hub.add_command(cli_hub_configuration_list, name="list")
 cli_hub.add_command(cli_hub_start, name="start")
 cli_hub.add_command(cli_hub_stop, name="stop")
