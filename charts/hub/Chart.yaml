@@ -17,4 +17,6 @@ dependencies:
     version: "5.0.0-b4"
     repository: file://../store
     condition: store.enabled
-
+  - name: common
+    version: "5.0.0-b4"
+    repository: file://../common
