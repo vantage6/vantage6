@@ -163,6 +163,13 @@ dependencies of the hub are installed and configured:
 
      kubectl get svc ingress-nginx-controller -n ingress-nginx
 
+* When ``hubIngress.enabled`` is ``true`` and ``hubIngress.tls.mode`` is set to
+  ``cert-manager``, ensure that the cert-manager CRDs are installed so that the
+  ``Certificate`` resources rendered by the hub chart can be created. The
+  cert-manager controller itself is expected to be managed by the platform or
+  cluster administrator; if it is not detected, ``v6 hub start`` will emit a
+  warning rather than attempting to install it automatically.
+
 You can disable the automatic ingress controller installation using the
 ``--no-auto-install-ingress`` flag of ``v6 hub start`` and install/configure
 your own ingress controller instead. The ``--ingress-class-name`` flag can be
@@ -173,3 +180,75 @@ your hub endpoints to be publicly accessible.
 If you already have an ingress controller and certificate management in place,
 you can disable ``hubIngress`` and instead configure your own ``Ingress`` or
 ``LoadBalancer`` resources that route to the services exposed by the hub chart.
+
+When using ``mode: cert-manager``, the hub chart will create ``Certificate``
+resources for each public endpoint, and ``v6 hub start`` will ensure that the
+cert-manager CRDs are present. The ClusterIssuer and cert-manager controller
+that reconcile these Certificates should be provided by the cluster platform
+or installed separately, according to your organization's standards.
+
+Enabling TLS with cert-manager on AKS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The steps below summarize how to enable browser-trusted HTTPS for the hub
+endpoints on AKS using cert-manager and Let's Encrypt.
+
+1. **Install cert-manager (cluster admin action)**:
+
+   .. code-block:: bash
+
+      # Install CRDs (idempotent)
+      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.crds.yaml
+
+      # Install controller, webhook and cainjector (client-side apply)
+      kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
+
+   Verify that the cert-manager pods are running:
+
+   .. code-block:: bash
+
+      kubectl -n cert-manager get deploy
+      kubectl -n cert-manager get pods
+
+2. **Create a ClusterIssuer** that matches the hub configuration. An example
+   manifest is provided in this repository and can be downloaded here:
+   :download:`clusterissuer-letsencrypt-prod.yaml <hub/clusterissuer-letsencrypt-prod.yaml>`.
+   Adapt the ``email`` field and apply it:
+
+   .. code-block:: bash
+
+      kubectl apply -f /path/to/clusterissuer-letsencrypt-prod.yaml
+
+   The issuer name (by default ``letsencrypt-prod``) must match
+   ``hubIngress.certManager.clusterIssuer`` in your hub values file.
+
+3. **Configure the hub to use cert-manager** by setting in your hub values:
+
+   .. code-block:: yaml
+
+      hubIngress:
+        enabled: true
+        tls:
+          mode: cert-manager
+        certManager:
+          enabled: true
+          clusterIssuer: letsencrypt-prod
+
+   Ensure that the hostnames under ``hubIngress.hosts`` resolve publicly to the
+   IP address of the ingress-nginx load balancer so that HTTP-01 challenges can
+   succeed.
+
+4. **Deploy or restart the hub**:
+
+   .. code-block:: bash
+
+      v6 hub start --name <your_hub> --user --local-chart-dir ./charts/
+
+   The hub chart will create ``Certificate`` resources for the configured
+   endpoints; cert-manager will obtain and renew the corresponding TLS
+   certificates automatically. You can monitor progress with:
+
+   .. code-block:: bash
+
+      kubectl -n default get certificate
+      kubectl -n default describe certificate <certificate-name>

@@ -117,6 +117,41 @@ def check_and_install_cert_manager_crds(
         )
 
 
+def cert_manager_seems_installed(k8s_config: KubernetesConfig) -> bool:
+    """
+    Heuristically check whether cert-manager (or an equivalent controller)
+    appears to be installed.
+
+    We do not attempt to install cert-manager automatically from the hub CLI
+    because clusters may already have a controller that owns the
+    'webhook.cert-manager.io' ValidatingWebhookConfiguration (for example via a
+    platform component such as 'admissionsenforcer').
+    """
+    # Primary check: a cert-manager deployment in the cert-manager namespace.
+    try:
+        result = run_kubectl_command(
+            ["get", "deployment", "cert-manager", "-n", "cert-manager"],
+            k8s_config=k8s_config,
+            check=False,
+        )
+        if result.returncode == 0:
+            return True
+    except Exception:
+        pass
+
+    # Fallback: presence of the webhook configuration is a strong indicator
+    # that something is already managing cert-manager-style webhooks.
+    try:
+        result = run_kubectl_command(
+            ["get", "validatingwebhookconfiguration", "webhook.cert-manager.io"],
+            k8s_config=k8s_config,
+            check=False,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 @click.command()
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")

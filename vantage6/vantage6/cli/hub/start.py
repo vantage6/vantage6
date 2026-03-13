@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from vantage6.common import info
+from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.auth.install import check_and_install_keycloak_operator
@@ -12,7 +12,10 @@ from vantage6.cli.common.k8s_utils import wait_for_pod_ready
 from vantage6.cli.common.start import helm_install, prestart_checks
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import ChartName
-from vantage6.cli.hub.install import check_and_install_cert_manager_crds
+from vantage6.cli.hub.install import (
+    cert_manager_seems_installed,
+    check_and_install_cert_manager_crds,
+)
 from vantage6.cli.hub.utils.ingress import ensure_ingress_controller
 from vantage6.cli.k8s_config import select_k8s_config
 
@@ -93,6 +96,13 @@ def cli_hub_start(
     #    cert-manager.
     if hub_ingress.get("enabled") and tls_cfg.get("mode") == "cert-manager":
         check_and_install_cert_manager_crds(k8s_config)
+        if not cert_manager_seems_installed(k8s_config):
+            warning(
+                "⚠️  hubIngress.tls.mode is set to 'cert-manager', but cert-manager "
+                "does not appear to be installed. No automatic installation will "
+                "be attempted; please install and configure cert-manager (or "
+                "switch hubIngress.tls.mode to 'existingSecret')."
+            )
 
     # 2) Ensure an ingress controller is available when hub ingress is enabled.
     if hub_ingress.get("enabled"):

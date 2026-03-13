@@ -42,6 +42,16 @@ hubIngress:
   certManager:
     enabled: true
     clusterIssuer: letsencrypt-prod
+    # When set to true and an email is provided, the hub chart will create a
+    # ClusterIssuer resource using cert-manager. Leave this false if your
+    # cluster already has a suitable ClusterIssuer.
+    createClusterIssuer: false
+    # Email address to register with the ACME server (required when
+    # createClusterIssuer is true).
+    email: ""
+    # ACME server URL for the ClusterIssuer. Defaults to Let's Encrypt
+    # production endpoint if left empty.
+    server: ""
 
 global:
   # Shared Keycloak configuration (used as default if subcharts don't override)
