@@ -148,6 +148,28 @@ When ``hubIngress.enabled`` is ``true``, the hub chart:
   <https://cert-manager.io>`_ (``mode: cert-manager``), or reuses existing
   Kubernetes TLS secrets (``mode: existingSecret``).
 
+When deploying via ``v6 hub start``, the CLI will do the following to ensure that
+dependencies of the hub are installed and configured:
+
+* Ensure the Keycloak operator (and its CRDs) are installed. This is required to deploy
+  the Keycloak authentication service.
+* When ``hubIngress.enabled`` is ``true``, ensure that a Kubernetes ingress
+  controller is available. If no suitable controller is detected, ``v6 hub
+  start`` will automatically install an `ingress-nginx
+  <https://kubernetes.github.io/ingress-nginx/>`_ controller with a
+  ``LoadBalancer`` service. You can find its public IP or hostname with:
+
+  .. code-block:: bash
+
+     kubectl get svc ingress-nginx-controller -n ingress-nginx
+
+You can disable the automatic ingress controller installation using the
+``--no-auto-install-ingress`` flag of ``v6 hub start`` and install/configure
+your own ingress controller instead. The ``--ingress-class-name`` flag can be
+used to override the ingress class name that should be used by the hub
+ingresses. A situation in which you might want to do this is when you don't want
+your hub endpoints to be publicly accessible.
+
 If you already have an ingress controller and certificate management in place,
 you can disable ``hubIngress`` and instead configure your own ``Ingress`` or
 ``LoadBalancer`` resources that route to the services exposed by the hub chart.
