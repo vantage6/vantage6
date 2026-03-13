@@ -68,7 +68,13 @@ spec:
         - name: config-file
           mountPath: /mnt/config.yaml
           subPath: config.yaml
-        - name: store-logs
+        {{- if and
+        (eq .Values.store.logging.storageClass "local-storage")
+        (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
+        }}
+          - name: store-logs
+            mountPath: /mnt/log
+        {{- end }}
           mountPath: /mnt/log
 
       volumes:

@@ -1,5 +1,9 @@
 {{- $global := .Values.global | default (dict) }}
-{{- if and (not (lookup "v1" "PersistentVolume" "" (printf "%s-hq-logs-pv" .Release.Name))) (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "") }}
+{{- if and
+ (not (lookup "v1" "PersistentVolume" "" (printf "%s-hq-logs-pv" .Release.Name)))
+ (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
+ (eq .Values.hq.logging.storageClass "local-storage")
+}}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
