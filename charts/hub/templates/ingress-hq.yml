@@ -23,6 +23,5 @@ spec:
               service:
                 name: {{ .Release.Name }}-hq
                 port:
-                  name: vantage6-hq-backend
+                  name: v6-hq-backend
 {{- end }}
-
