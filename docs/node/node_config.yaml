@@ -296,6 +296,16 @@ share_config: true
 # NOTE: It's recommented to set this to false when using real data
 share_algorithm_logs: false
 
+# EXPERIMENTAL: current scope is intentionally minimal.
+# Whether or not to write a run context file for each algorithm run and
+# expose its path as RUN_CONTEXT_FILE inside the algorithm container.
+# At the moment, run context does not model several node runtime features
+# (e.g. VPN, SSH tunnels, whitelist/Squid proxy policy, etc).
+# Also, run context currently supports only file-based databases. If a task
+# requests a non-file database while this feature is enabled, task startup fails.
+# Default is false.
+run_context_file: false
+
 # Prometheus settings, for sending system metadata to the server.
 prometheus:
   # Whether or not to enable Prometheus reporting. Default is false.
