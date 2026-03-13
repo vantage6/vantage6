@@ -72,11 +72,9 @@ spec:
         (eq .Values.store.logging.storageClass "local-storage")
         (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
         }}
-          - name: store-logs
-            mountPath: /mnt/log
-        {{- end }}
+        - name: store-logs
           mountPath: /mnt/log
-
+        {{- end }}
       volumes:
       - name: config-file
         configMap:

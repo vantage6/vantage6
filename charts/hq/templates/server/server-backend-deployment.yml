@@ -118,8 +118,8 @@ spec:
         (eq .Values.hq.logging.storageClass "local-storage")
         (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
         }}
-          - name: hq-logs
-            mountPath: /mnt/log
+        - name: hq-logs
+          mountPath: /mnt/log
         {{- end }}
 
       volumes:
