@@ -193,6 +193,7 @@ def ensure_ingress_controller(
     k8s_config: KubernetesConfig,
     ingress_class_name: str = _DEFAULT_INGRESS_CLASS_NAME,
     auto_install: bool = True,
+    azure: bool = True,
 ) -> IngressControllerStatus:
     """
     Ensure that a suitable NGINX ingress controller is available.
@@ -266,6 +267,18 @@ def ensure_ingress_controller(
             "--set",
             "controller.service.type=LoadBalancer",
         ]
+        if azure:
+            # These settings are necessary with Azure Kubernetes, as otherwise external
+            # IP is not reachable (see also
+            # https://stackoverflow.com/a/79144660/5398197).
+            cmd.extend(
+                [
+                    "--set",
+                    'controller.service.annotations."service\\.beta\\.kubernetes\\.io/azure-load-balancer-health-probe-request-path"=/healthz',
+                    "--set",
+                    "controller.service.externalTrafficPolicy=Local",
+                ]
+            )
         if k8s_config.context:
             cmd.extend(["--kube-context", k8s_config.context])
 

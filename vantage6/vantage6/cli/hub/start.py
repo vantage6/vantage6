@@ -39,6 +39,15 @@ from vantage6.cli.k8s_config import select_k8s_config
     ),
 )
 @click.option(
+    "--azure/--no-azure",
+    "azure",
+    default=True,
+    help=(
+        "Optimize ingress controller installation for Azure load balancers "
+        "(health probe path, externalTrafficPolicy=Local)."
+    ),
+)
+@click.option(
     "--ingress-class-name",
     default=None,
     help=(
@@ -64,6 +73,7 @@ def cli_hub_start(
     wait_ready: bool,
     auto_install_ingress: bool,
     ingress_class_name: str | None,
+    azure: bool,
 ) -> None:
     """
     Start a hub environment.
@@ -95,6 +105,7 @@ def cli_hub_start(
             k8s_config,
             ingress_class_name=desired_ingress_class,
             auto_install=auto_install_ingress,
+            azure=azure,
         )
 
     # 3) Keycloak operator (and its CRDs) are needed for the auth subchart.
