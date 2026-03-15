@@ -1996,7 +1996,9 @@ class UserClient(ClientBase):
 
     class Run(ClientBase.SubClient):
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_task: bool = False) -> dict:
+        def get(
+            self, id_: int, include_task: bool = False, decrypt_input: bool = True
+        ) -> dict:
             """View a specific run
 
             Parameters
@@ -2005,6 +2007,8 @@ class UserClient(ClientBase):
                 id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            decrypt_input : bool, optional
+                Whether to attempt decryption of the run input, by default True
             field: str, optional
                 Which data field to keep in the result. For instance, "field='name'"
                 will only return the name of the run. Default is None.
@@ -2018,14 +2022,13 @@ class UserClient(ClientBase):
             dict
                 Containing the run data
             """
-            self.parent.log.info("--> Attempting to decrypt results!")
-
             # get run from the API
             params = {"include": "task"} if include_task else {}
             run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
-            # decrypt input
-            run = self._decrypt_input(run_data=run, is_single_run=True)
+            if decrypt_input:
+                self.parent.log.info("--> Attempting to decrypt run input!")
+                run = self._decrypt_input(run_data=run, is_single_run=True)
 
             return run
 
