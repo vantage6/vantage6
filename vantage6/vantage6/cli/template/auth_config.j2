@@ -129,6 +129,7 @@ keycloak:
     failureFactor: {{ keycloak.failureFactor | default(5) }}
 
     # Define the vantage6 admin user.
+    {% if keycloak.standalone is defined and keycloak.standalone %}
     admin:
       {% if keycloak.adminUser is defined %}
       username: {{ keycloak.adminUser | default('admin') }}
@@ -138,6 +139,7 @@ keycloak:
       {% else %}
       password: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
       {% endif %}
+    {% endif %}
 
     # whether to verify email on first login. This should only be enabled if an SMTP
     # server is configured to send emails.
@@ -166,7 +168,9 @@ keycloak:
         - "http://localhost:7600/*"
         {% endif %}
 
+    {% if keycloak.standalone is defined and keycloak.standalone %}
     backend_client_secret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
+    {% endif %}
 
     # SMTP server configuration for email sending
     {% if keycloak.smtpServer is defined %}

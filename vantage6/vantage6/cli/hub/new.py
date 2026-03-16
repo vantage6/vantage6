@@ -98,7 +98,7 @@ def cli_hub_new(
     }
     auth_config = new(
         config_producing_func=auth_configuration_questionaire,
-        config_producing_func_args=(auth_name, k8s_cfg, auth_credentials),
+        config_producing_func_args=(auth_name, k8s_cfg, auth_credentials, False),
         name=auth_name,
         system_folders=system_folders,
         type_=InstanceType.AUTH,
