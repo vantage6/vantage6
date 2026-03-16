@@ -82,6 +82,11 @@ def cli_hub_new(
                 "httpPort": 7680,
             },
             "hostname": base_config["auth_url"],
+            "publicClient": {
+                "redirectUris": [
+                    f"{base_config['ui_url']}",
+                ],
+            },
         }
     }
     auth_config = new(

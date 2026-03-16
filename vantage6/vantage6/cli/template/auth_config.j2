@@ -157,8 +157,8 @@ keycloak:
       # other applications that can use the vantage6 Keycloak instance, those should be
       # added as well.
       redirectUris:
-        {% if keycloak.redirectUris %}
-        {% for uri in keycloak.redirectUris %}
+        {% if keycloak.publicClient.redirectUris %}
+        {% for uri in keycloak.publicClient.redirectUris %}
         - "{{ uri }}/*"
         {% endfor %}
         {% else %}

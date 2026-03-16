@@ -404,9 +404,11 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             "keycloak": {
                 "production": False,
                 "passwordUpdateRequired": False,
-                "redirectUris": [
-                    f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
-                ],
+                "publicClient": {
+                    "redirectUris": [
+                        f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
+                    ],
+                },
                 "dev": {
                     "forward_ports": True,
                     "local_auth_port_to_expose": Ports.SANDBOX_AUTH.value,
