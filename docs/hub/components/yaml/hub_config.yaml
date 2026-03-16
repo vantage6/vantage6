@@ -11,10 +11,13 @@ hubIngress:
     hq: hq.uluru.vantage6.ai
     portal: portal.uluru.vantage6.ai
     store: store.uluru.vantage6.ai
+  # How to manage certificates for the ingress of your hub.
   tls:
-    # Default: cert-manager issues/renews certs. Alternative: `existingSecret`.
+    # Default: cert-manager issues/renews certs. Recommended to let cert-manager
+    # handle the certificates for you.
     mode: cert-manager
     # If you want to use existing TLS certificates, you can specify the secrets here.
+    # This is useful if you want to use your own certificates.
     existingSecrets:
       auth: ""
       hq: ""
@@ -25,6 +28,16 @@ hubIngress:
   certManager:
     enabled: true
     clusterIssuer: letsencrypt-prod
+    # When set to true and an email is provided, the hub chart can create a
+    # ClusterIssuer resource for you. Leave this false if your cluster already
+    # has a suitable ClusterIssuer.
+    createClusterIssuer: false
+    # Email address to register with the ACME server (required when
+    # createClusterIssuer is true).
+    email: you@example.org
+    # ACME server URL for the ClusterIssuer. If left empty, the chart will
+    # default to Let's Encrypt production.
+    server: ""
 
 # Global settings shared between HQ, auth and algorithm store. Values here act
 # as defaults and can be overridden in the subcharts below.

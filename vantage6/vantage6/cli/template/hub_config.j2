@@ -5,40 +5,88 @@
 {% set hi_tls_existing = hi_tls.existingSecrets | default({}) %}
 {% set hi_cm = hi.certManager | default({}) %}
 hubIngress:
+  # Enable or disable the built‑in Ingress resources for Auth, HQ, Portal and Store.
   enabled: {{ hi.enabled | default(false) }}
+
+  # Public hostnames per component (subdomain routing).
+  # Example: auth.example.com, hq.example.com, portal.example.com, store.example.com
   hosts:
     auth: {{ hi_hosts.auth | default('') }}
     hq: {{ hi_hosts.hq | default('') }}
     portal: {{ hi_hosts.portal | default('') }}
     store: {{ hi_hosts.store | default('') }}
+
+  # TLS configuration for all ingresses.
   tls:
+    # Use cert-manager by default, or reference an existing secret.
+    # We recommend letting cert-manager handle the certificates for you.
+    # Valid values: "cert-manager" or "existingSecret".
     mode: {{ hi_tls.mode | default('cert-manager') }}
+
+    # If you specified existingSecrets above, you must specify the secrets here.
     existingSecrets:
       auth: {{ hi_tls_existing.auth | default('') }}
       hq: {{ hi_tls_existing.hq | default('') }}
       portal: {{ hi_tls_existing.portal | default('') }}
       store: {{ hi_tls_existing.store | default('') }}
+
+  # cert-manager related settings used when tls.mode == "cert-manager".
   certManager:
+    # Whether the hub chart should create Certificate resources and expect
+    # cert-manager CRDs to be installed.
     enabled: {{ hi_cm.enabled | default(true) }}
+
+    # Name of the ClusterIssuer that should be used by the Certificates.
     clusterIssuer: {{ hi_cm.clusterIssuer | default('letsencrypt-prod') }}
 
+    # When set to true and an email is provided, the hub chart will create a
+    # ClusterIssuer resource using cert-manager. Leave this false if your
+    # cluster already has a suitable ClusterIssuer.
+    createClusterIssuer: {{ hi_cm.createClusterIssuer | default(false) }}
+
+    # Email address to register with the ACME server (required when
+    # createClusterIssuer is true).
+    email: {{ hi_cm.email | default('') }}
+
+    # ACME server URL for the ClusterIssuer. Defaults to Let's Encrypt
+    # production endpoint if left empty.
+    server: {{ hi_cm.server | default('') }}
+
 global:
+  # Shared public and internal URLs for all components. These are used as defaults
+  # in the subcharts (HQ, Auth, Store).
   urls:
     external:
+      # Public URLs as seen by end users (typically via ingress).
       auth: {{ urls.external.auth }}
       store: {{ urls.external.store }}
       ui: {{ urls.external.ui }}
       hq: {{ urls.external.hq }}
     internal:
+      # Internal URLs used for service-to-service communication inside the cluster.
       auth: {{ urls.internal.auth }}
       store: {{ urls.internal.store }}
       ui: {{ urls.internal.ui }}
       hq: {{ urls.internal.hq }}
+
+  # Shared Keycloak configuration used by the hub and subcharts.
   keycloak:
+    # Base URL of the Keycloak instance (usually the internal service URL).
     url: {{ keycloak.url }}
+
+    # Name of the Keycloak realm used by vantage6.
     realm: {{ keycloak.realm | default('vantage6') }}
+
+    # Name of the client that is allowed to manage users/clients in the realm.
+    adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
+
+    # Name of the public client used by users (e.g. the portal).
+    publicClient: {{ keycloak.publicClient | default('public_client') }}
+
+    # Credentials for the Vantage6 admin user. For production deployments you
+    # should override these with secure values, preferably from a secret.
     adminUsername: {{ keycloak.adminUsername | default('admin') }}
     adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
-    adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
+
+    # Secret for the admin client that is used by backend services.
     adminClientSecret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
-    publicClient: {{ keycloak.publicClient | default('public_client') }}
