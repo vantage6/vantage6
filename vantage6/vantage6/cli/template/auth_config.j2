@@ -119,10 +119,6 @@ keycloak:
     # allow users to reset their password
     resetPasswordAllowed: {{ keycloak.resetPasswordAllowed | default(false) }}
 
-    # require users to verify their email address. Note that setting this to true should
-    # only be done if you have configured an email SMTP server.
-    verifyEmail: {{ keycloak.verifyEmail | default(false) }}
-
     # brute force protection settings
     # - bruteForceProtected: enable brute force protection
     # - permanentLockout: whether to lock out a user permanently after a certain number
