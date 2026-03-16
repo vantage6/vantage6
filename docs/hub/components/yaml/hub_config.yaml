@@ -28,16 +28,6 @@ hubIngress:
   certManager:
     enabled: true
     clusterIssuer: letsencrypt-prod
-    # When set to true and an email is provided, the hub chart can create a
-    # ClusterIssuer resource for you. Leave this false if your cluster already
-    # has a suitable ClusterIssuer.
-    createClusterIssuer: false
-    # Email address to register with the ACME server (required when
-    # createClusterIssuer is true).
-    email: you@example.org
-    # ACME server URL for the ClusterIssuer. If left empty, the chart will
-    # default to Let's Encrypt production.
-    server: ""
 
 # Global settings shared between HQ, auth and algorithm store. Values here act
 # as defaults and can be overridden in the subcharts below.

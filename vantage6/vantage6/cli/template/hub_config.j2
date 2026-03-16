@@ -39,19 +39,6 @@ hubIngress:
     # Name of the ClusterIssuer that should be used by the Certificates.
     clusterIssuer: {{ hi_cm.clusterIssuer | default('letsencrypt-prod') }}
 
-    # When set to true and an email is provided, the hub chart will create a
-    # ClusterIssuer resource using cert-manager. Leave this false if your
-    # cluster already has a suitable ClusterIssuer.
-    createClusterIssuer: {{ hi_cm.createClusterIssuer | default(false) }}
-
-    # Email address to register with the ACME server (required when
-    # createClusterIssuer is true).
-    email: {{ hi_cm.email | default('') }}
-
-    # ACME server URL for the ClusterIssuer. Defaults to Let's Encrypt
-    # production endpoint if left empty.
-    server: {{ hi_cm.server | default('') }}
-
 global:
   # Shared public and internal URLs for all components. These are used as defaults
   # in the subcharts (HQ, Auth, Store).

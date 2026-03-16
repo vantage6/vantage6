@@ -28,9 +28,6 @@ hubIngress:
   certManager:
     enabled: true
     clusterIssuer: letsencrypt-prod
-    createClusterIssuer: false
-    email: ""
-    server: ""
 
 global:
   keycloak:
