@@ -98,6 +98,11 @@ When deploying the hub, the database URIs must be accessible from within
 the Kubernetes cluster. Use the actual hostname or IP address of your database server.
 Ensure your Kubernetes cluster can access the database server.
 
+.. note::
+
+  You should create databases for the hub components before deploying the hub. The
+  components will NOT create the databases for you.
+
 Configuring access to the services
 ----------------------------------
 
