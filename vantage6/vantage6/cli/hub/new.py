@@ -117,6 +117,9 @@ def cli_hub_new(
                 "api_path": "/store",
             }
         ]
+        extra_config["ui"] = {
+            "communityStoreApiPath": "/store",
+        }
     hq_config = new(
         config_producing_func=hq_configuration_questionaire,
         config_producing_func_args=(hq_name, system_folders),
@@ -137,7 +140,8 @@ def cli_hub_new(
             "store": {
                 "logging": {
                     "level": base_config["log_level"],
-                }
+                },
+                "api_path": "/store",
             }
         }
         if auth_config_dict.get("keycloak", {}).get("smtpServer") is not None:
