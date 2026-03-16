@@ -1,3 +1,4 @@
+{% from "_yaml_macros.j2" import yaml_sq %}
 {% set hi = hubIngress | default({}) %}
 {% set hi_hosts = hi.hosts | default({}) %}
 {% set hi_tls = hi.tls | default({}) %}
@@ -37,7 +38,7 @@ global:
     url: {{ keycloak.url }}
     realm: {{ keycloak.realm | default('vantage6') }}
     adminUsername: {{ keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ keycloak.adminPassword | default('admin') }}
+    adminPassword: {{ yaml_sq(keycloak.adminPassword | default('admin')) }}
     adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
+    adminClientSecret: {{ yaml_sq(keycloak.adminClientSecret | default('myadminclientsecret')) }}
     publicClient: {{ keycloak.publicClient | default('public_client') }}
