@@ -96,7 +96,6 @@ class WizardTest(unittest.TestCase):
         q.unsafe_prompt.side_effect = self.prompts
         q_hq_common.unsafe_prompt.side_effect = self.prompts
         q_hq_common.text.return_value.unsafe_ask.side_effect = [
-            1234,  # port
             "postgresql://vantage6:vantage6@localhost:5432/vantage6",  # URI of database
         ]
         q.confirm.return_value.unsafe_ask.side_effect = [
@@ -118,7 +117,6 @@ class WizardTest(unittest.TestCase):
             ["hq", "api_path"],
             ["hq", "keycloak"],
             ["hq", "logging"],
-            ["hq", "port"],
             ["ui", "allowedAlgorithmStores"],
             ["rabbitmq", "password"],
         ]
