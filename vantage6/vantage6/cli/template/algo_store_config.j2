@@ -234,23 +234,23 @@ store:
   # alert them that an algorithm review is requested from them.
   {% if store.smtpServer is defined %}
   smtpServer:
-    host: {{ store.smtpServer.host }}
-    port: {{ store.smtpServer.port }}
+    host: '{{ store.smtpServer.host }}'
+    port: '{{ store.smtpServer.port }}'
     {% if store.smtpServer.user is defined %}
-    user: {{ store.smtpServer.user }}
+    user: '{{ store.smtpServer.user }}'
     {% endif %}
     {% if store.smtpServer.password is defined %}
-    password: "{{ store.smtpServer.password }}"
+    password: '{{ store.smtpServer.password }}'
     {% endif %}
-    from: {{ store.smtpServer.from }}
+    from: '{{ store.smtpServer.from }}'
     {% if store.smtpServer.replyTo is defined %}
-    replyTo: {{ store.smtpServer.replyTo }}
+    replyTo: '{{ store.smtpServer.replyTo }}'
     {% endif %}
     {% if store.smtpServer.starttls is defined %}
-    starttls: {{ store.smtpServer.starttls }}
+    starttls: '{{ store.smtpServer.starttls }}'
     {% endif %}
     {% if store.smtpServer.ssl is defined %}
-    ssl: {{ store.smtpServer.ssl }}
+    ssl: '{{ store.smtpServer.ssl }}'
     {% endif %}
   {% else %}
   # smtpServer:

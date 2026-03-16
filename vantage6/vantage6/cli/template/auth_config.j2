@@ -172,37 +172,37 @@ keycloak:
     {% if keycloak.smtpServer is defined %}
     smtpServer:
       {% if keycloak.smtpServer.host is defined %}
-      host: {{ keycloak.smtpServer.host }}
+      host: '{{ keycloak.smtpServer.host }}'
       {% endif %}
       {% if keycloak.smtpServer.port is defined %}
-      port: "{{ keycloak.smtpServer.port }}"
+      port: '{{ keycloak.smtpServer.port }}'
       {% endif %}
       {% if keycloak.smtpServer.from is defined %}
-      from: {{ keycloak.smtpServer.from }}
+      from: '{{ keycloak.smtpServer.from }}'
       {% endif %}
       {% if keycloak.smtpServer.fromDisplayName is defined %}
-      fromDisplayName: {{ keycloak.smtpServer.fromDisplayName }}
+      fromDisplayName: '{{ keycloak.smtpServer.fromDisplayName }}'
       {% endif %}
       {% if keycloak.smtpServer.replyTo is defined %}
-      replyTo: {{ keycloak.smtpServer.replyTo }}
+      replyTo: '{{ keycloak.smtpServer.replyTo }}'
       {% endif %}
       {% if keycloak.smtpServer.replyToDisplayName is defined %}
-      replyToDisplayName: {{ keycloak.smtpServer.replyToDisplayName }}
+      replyToDisplayName: '{{ keycloak.smtpServer.replyToDisplayName }}'
       {% endif %}
       {% if keycloak.smtpServer.ssl is defined %}
-      ssl: "{{ keycloak.smtpServer.ssl }}"
+      ssl: '{{ keycloak.smtpServer.ssl }}'
       {% endif %}
       {% if keycloak.smtpServer.starttls is defined %}
-      starttls: "{{ keycloak.smtpServer.starttls }}"
+      starttls: '{{ keycloak.smtpServer.starttls }}'
       {% endif %}
       {% if keycloak.smtpServer.auth is defined %}
-      auth: "{{ keycloak.smtpServer.auth }}"
+      auth: '{{ keycloak.smtpServer.auth }}'
       {% endif %}
       {% if keycloak.smtpServer.authType is defined %}
-      authType: {{ keycloak.smtpServer.authType }}
+      authType: '{{ keycloak.smtpServer.authType }}'
       {% endif %}
       {% if keycloak.smtpServer.user is defined %}
-      user: {{ keycloak.smtpServer.user }}
+      user: '{{ keycloak.smtpServer.user }}'
       {% endif %}
       {% if keycloak.smtpServer.password is defined %}
       password: {{ yaml_sq(keycloak.smtpServer.password) }}
