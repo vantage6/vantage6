@@ -4,8 +4,9 @@ from urllib.parse import urlparse
 import click
 import questionary as q
 import yaml
+from colorama import Fore, Style
 
-from vantage6.common import info
+from vantage6.common import error, info
 from vantage6.common.globals import (
     InstanceType,
     Ports,
@@ -17,6 +18,7 @@ from vantage6.cli.auth.new import (
     global_auth_settings_questionaire,
 )
 from vantage6.cli.common.new import new
+from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
 from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.hub.utils.enum import AuthCredentials
@@ -61,6 +63,11 @@ def cli_hub_new(
     and Prometheus.
     """
     name = prompt_config_name(name)
+
+    if HubContext.config_exists(name, system_folders):
+        error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
+        exit(1)
+
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
 
     # get basic general configuration (e.g. URLs for the services)
