@@ -44,11 +44,8 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option(
     "--azure/--no-azure",
     "azure",
-    default=True,
-    help=(
-        "Optimize ingress controller installation for Azure load balancers "
-        "(health probe path, externalTrafficPolicy=Local)."
-    ),
+    default=False,
+    help="Optimize ingress controller installation for Azure load balancers.",
 )
 @click.option(
     "--ingress-class-name",
