@@ -43,7 +43,7 @@ data:
     {{- end }}
     {{- if .Values.rabbitmq }}
     rabbitmq:
-      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost }}
+      uri: amqp://{{ .Values.rabbitmq.username | urlquery }}:{{ .Values.rabbitmq.password | urlquery }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost | urlquery }}
     {{- end }}
     {{- if and .Values.hq.dev .Values.hq.dev.host_uri }}
     dev:
