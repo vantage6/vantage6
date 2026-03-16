@@ -7,7 +7,7 @@ auth:
 store:
   enabled: true
 
-hubIngress:
+hubGateway:
   enabled: false
 
   hosts:

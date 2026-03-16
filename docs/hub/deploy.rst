@@ -107,32 +107,33 @@ Configuring access to the services
 ----------------------------------
 
 For production environments, you still need to configure how traffic reaches the
-hub components from the outside world. The hub chart provides an
-Ingress configuration, but you can also bring your own routing solution.
+hub components from the outside world. The hub chart provides a built-in
+Gateway API configuration (managed by an Envoy Gateway controller), but you
+can also bring your own routing solution.
 
 .. note::
 
     For a local environment (using ``v6 sandbox``) or a development environment
     (using ``v6 dev``), access is configured automatically on your local machine.
 
-Using the built-in Ingress
+Using the built-in Gateway
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The hub chart can create four ``Ingress`` resources - one for each public
-endpoint:
+The hub chart can create one ``Gateway`` resource and four ``HTTPRoute``
+resources - one for each public endpoint:
 
 * ``auth`` (Keycloak)
 * ``hq`` (HQ API)
 * ``portal`` (UI)
 * ``store`` (algorithm store)
 
-These are controlled via the ``hubIngress`` section in your hub values file
+These are controlled via the ``hubGateway`` section in your hub values file
 (:ref:`hub_config.yaml <hub-configuration-file>`). A minimal
 example:
 
 .. code-block:: yaml
 
-   hubIngress:
+   hubGateway:
      enabled: true
      hosts:
        auth: auth.example.org
@@ -145,10 +146,12 @@ example:
        enabled: true
        clusterIssuer: letsencrypt-prod
 
-When ``hubIngress.enabled`` is ``true``, the hub chart:
+When ``hubGateway.enabled`` is ``true``, the hub chart:
 
-* Creates ``Ingress`` resources for the components with the given hostnames.
-* Terminates TLS at the Ingress (HTTP is used inside the cluster).
+* Creates a ``Gateway`` resource that listens on port 443 for the configured hostnames.
+* Creates ``HTTPRoute`` resources that route traffic for each hostname to the
+  appropriate service (auth, hq, portal, store).
+* Terminates TLS at the Gateway (HTTP is used inside the cluster).
 * Optionally provisions certificates using `cert-manager
   <https://cert-manager.io>`_ (``mode: cert-manager``), or reuses existing
   Kubernetes TLS secrets (``mode: existingSecret``).
@@ -158,33 +161,21 @@ dependencies of the hub are installed and configured:
 
 * Ensure the Keycloak operator (and its CRDs) are installed. This is required to deploy
   the Keycloak authentication service.
-* When ``hubIngress.enabled`` is ``true``, ensure that a Kubernetes ingress
-  controller is available. If no suitable controller is detected, ``v6 hub
-  start`` will automatically install an `ingress-nginx
-  <https://kubernetes.github.io/ingress-nginx/>`_ controller with a
-  ``LoadBalancer`` service. You can find its public IP or hostname with:
-
-  .. code-block:: bash
-
-     kubectl get svc ingress-nginx-controller -n ingress-nginx
-
-* When ``hubIngress.enabled`` is ``true`` and ``hubIngress.tls.mode`` is set to
+* When ``hubGateway.enabled`` is ``true``, ensure that an Envoy Gateway
+  installation is available. If no suitable installation is detected,
+  ``v6 hub start`` will automatically install Envoy Gateway (including the
+  required Gateway API CRDs) into the cluster.
+* When ``hubGateway.enabled`` is ``true`` and ``hubGateway.tls.mode`` is set to
   ``cert-manager``, ensure that the cert-manager CRDs are installed so that the
   ``Certificate`` resources rendered by the hub chart can be created. The
   cert-manager controller itself is expected to be managed by the platform or
   cluster administrator; if it is not detected, ``v6 hub start`` will emit a
   warning rather than attempting to install it automatically.
 
-You can disable the automatic ingress controller installation using the
-``--no-auto-install-ingress`` flag of ``v6 hub start`` and install/configure
-your own ingress controller instead. The ``--ingress-class-name`` flag can be
-used to override the ingress class name that should be used by the hub
-ingresses. A situation in which you might want to do this is when you don't want
-your hub endpoints to be publicly accessible.
-
-If you already have an ingress controller and certificate management in place,
-you can disable ``hubIngress`` and instead configure your own ``Ingress`` or
-``LoadBalancer`` resources that route to the services exposed by the hub chart.
+If you already have your own Gateway API controller and certificate management
+in place, you can disable ``hubGateway`` and instead configure your own
+``Gateway``/``HTTPRoute``, ``Ingress`` or ``LoadBalancer`` resources that route to the
+services exposed by the hub chart.
 
 When using ``mode: cert-manager``, the hub chart will create ``Certificate``
 resources for each public endpoint, and ``v6 hub start`` will ensure that the
@@ -192,6 +183,7 @@ cert-manager CRDs are present. The ClusterIssuer and cert-manager controller
 that reconcile these Certificates should be provided by the cluster platform
 or installed separately, according to your organization's standards.
 
+.. TODO v5+ check that this is still relevant
 Enabling TLS with cert-manager on AKS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -225,13 +217,13 @@ endpoints on AKS using cert-manager and Let's Encrypt.
       kubectl apply -f /path/to/clusterissuer-letsencrypt-prod.yaml
 
    The issuer name (by default ``letsencrypt-prod``) must match
-   ``hubIngress.certManager.clusterIssuer`` in your hub values file.
+   ``hubGateway.certManager.clusterIssuer`` in your hub values file.
 
 3. **Configure the hub to use cert-manager** by setting in your hub values:
 
    .. code-block:: yaml
 
-      hubIngress:
+      hubGateway:
         enabled: true
         tls:
           mode: cert-manager
@@ -239,8 +231,8 @@ endpoints on AKS using cert-manager and Let's Encrypt.
           enabled: true
           clusterIssuer: letsencrypt-prod
 
-   Ensure that the hostnames under ``hubIngress.hosts`` resolve publicly to the
-   IP address of the ingress-nginx load balancer so that HTTP-01 challenges can
+   Ensure that the hostnames under ``hubGateway.hosts`` resolve publicly to the
+   IP address of the Gateway load balancer so that HTTP-01 challenges can
    succeed.
 
 4. **Deploy or restart the hub**:

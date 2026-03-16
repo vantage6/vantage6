@@ -10,8 +10,8 @@ spec:
   {{- $urls := $global.urls | default (dict) }}
   {{- $external := $urls.external | default (dict) }}
   {{- $externalAuth := $external.auth | default "" }}
-  {{- $behindIngress := and .Values.keycloak.behindIngress (.Values.keycloak.behindIngress.enabled | default false) }}
-  {{- $proxyHeaders := (default "xforwarded" (.Values.keycloak.behindIngress.proxyHeaders | default "")) }}
+  {{- $behindGateway := and .Values.keycloak.behindGateway (.Values.keycloak.behindGateway.enabled | default false) }}
+  {{- $proxyHeaders := (default "xforwarded" .Values.keycloak.behindGateway.proxyHeaders) }}
   instances: {{ .Values.keycloak.instances }}
   {{- $hostname := .Values.keycloak.hostname | default "" }}
   {{- if and (eq (trim $hostname) "") (ne (trim $externalAuth) "") }}
@@ -41,10 +41,10 @@ spec:
     passwordSecret:
       name: {{ .Release.Name }}-kc-db-secret
       key: password
-  {{- if $behindIngress }}
+  {{- if $behindGateway }}
   http:
     httpEnabled: true
-    httpPort: {{ .Values.keycloak.behindIngress.httpPort | default 7680 }}
+    httpPort: {{ .Values.keycloak.behindGateway.httpPort | default 7680 }}
   proxy:
     headers: {{ $proxyHeaders | quote }}
   {{- else if .Values.keycloak.production }}

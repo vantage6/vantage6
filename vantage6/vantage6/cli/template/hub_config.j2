@@ -1,50 +1,50 @@
 {% from "_yaml_macros.j2" import yaml_sq %}
-{% set hi = hubIngress | default({}) %}
-{% set hi_hosts = hi.hosts | default({}) %}
-{% set hi_tls = hi.tls | default({}) %}
-{% set hi_tls_existing = hi_tls.existingSecrets | default({}) %}
-{% set hi_cm = hi.certManager | default({}) %}
-hubIngress:
-  # Enable or disable the built‑in Ingress resources for Auth, HQ, Portal and Store.
-  enabled: {{ hi.enabled | default(false) }}
+{% set hg = hubGateway | default({}) %}
+{% set hg_hosts = hg.hosts | default({}) %}
+{% set hg_tls = hg.tls | default({}) %}
+{% set hg_tls_existing = hg_tls.existingSecrets | default({}) %}
+{% set hg_cm = hg.certManager | default({}) %}
+hubGateway:
+  # Enable or disable the built‑in Gateway resources for Auth, HQ, Portal and Store.
+  enabled: {{ hg.enabled | default(false) }}
 
   # Public hostnames per component (subdomain routing).
   # Example: auth.example.com, hq.example.com, portal.example.com, store.example.com
   hosts:
-    auth: {{ hi_hosts.auth | default('') }}
-    hq: {{ hi_hosts.hq | default('') }}
-    portal: {{ hi_hosts.portal | default('') }}
-    store: {{ hi_hosts.store | default('') }}
+    auth: {{ hg_hosts.auth | default('') }}
+    hq: {{ hg_hosts.hq | default('') }}
+    portal: {{ hg_hosts.portal | default('') }}
+    store: {{ hg_hosts.store | default('') }}
 
-  # TLS configuration for all ingresses.
+  # TLS configuration for all Gateway listeners.
   tls:
     # Use cert-manager by default, or reference an existing secret.
     # We recommend letting cert-manager handle the certificates for you.
     # Valid values: "cert-manager" or "existingSecret".
-    mode: {{ hi_tls.mode | default('cert-manager') }}
+    mode: {{ hg_tls.mode | default('cert-manager') }}
 
     # If you specified existingSecrets above, you must specify the secrets here.
     existingSecrets:
-      auth: {{ hi_tls_existing.auth | default('') }}
-      hq: {{ hi_tls_existing.hq | default('') }}
-      portal: {{ hi_tls_existing.portal | default('') }}
-      store: {{ hi_tls_existing.store | default('') }}
+      auth: {{ hg_tls_existing.auth | default('') }}
+      hq: {{ hg_tls_existing.hq | default('') }}
+      portal: {{ hg_tls_existing.portal | default('') }}
+      store: {{ hg_tls_existing.store | default('') }}
 
   # cert-manager related settings used when tls.mode == "cert-manager".
   certManager:
     # Whether the hub chart should create Certificate resources and expect
     # cert-manager CRDs to be installed.
-    enabled: {{ hi_cm.enabled | default(true) }}
+    enabled: {{ hg_cm.enabled | default(true) }}
 
     # Name of the ClusterIssuer that should be used by the Certificates.
-    clusterIssuer: {{ hi_cm.clusterIssuer | default('letsencrypt-prod') }}
+    clusterIssuer: {{ hg_cm.clusterIssuer | default('letsencrypt-prod') }}
 
 global:
   # Shared public and internal URLs for all components. These are used as defaults
   # in the subcharts (HQ, Auth, Store).
   urls:
     external:
-      # Public URLs as seen by end users (typically via ingress).
+      # Public URLs as seen by end users (typically via ingress, gateway or load balancer).
       auth: {{ urls.external.auth }}
       store: {{ urls.external.store }}
       ui: {{ urls.external.ui }}

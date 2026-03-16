@@ -165,7 +165,7 @@ server:
     # Whether to forward ports to host locally using kubernetes or not, using the
     # NodePort feature of kubernetes. If set to false, the ports will
     # not be forwarded. In production, this should be false and you are responsible
-    # for forwarding the ports with your own ingress or load balancer.
+    # for forwarding the ports with your own ingress, gateway or load balancer.
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: true
     # If forward_ports is true, this is the port that will be exposed on the host.

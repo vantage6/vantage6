@@ -16,7 +16,7 @@ from vantage6.cli.hub.install import (
     cert_manager_seems_installed,
     check_and_install_cert_manager_crds,
 )
-from vantage6.cli.hub.utils.ingress import ensure_ingress_controller
+from vantage6.cli.hub.utils.gateway import ensure_envoy_gateway
 from vantage6.cli.k8s_config import select_k8s_config
 
 
@@ -33,28 +33,10 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click.option("--wait-ready/--no-wait-ready", "wait_ready", default=True)
 @click.option(
-    "--auto-install-ingress/--no-auto-install-ingress",
-    "auto_install_ingress",
+    "--auto-install-gateway/--no-auto-install-gateway",
+    "auto_install_gateway",
     default=True,
-    help=(
-        "Automatically install an NGINX ingress controller when hub ingress is "
-        "enabled and no suitable controller is detected."
-    ),
-)
-@click.option(
-    "--azure/--no-azure",
-    "azure",
-    default=False,
-    help="Optimize ingress controller installation for Azure load balancers.",
-)
-@click.option(
-    "--ingress-class-name",
-    default=None,
-    help=(
-        "IngressClass name to use for hub ingresses. "
-        "Defaults to the value from hubIngress.ingressClassName in the "
-        "configuration, or 'nginx' if not set."
-    ),
+    help="Automatically install Envoy Gateway if it is not detected in the cluster.",
 )
 @click_insert_context(
     type_=InstanceType.HUB,
@@ -71,9 +53,7 @@ def cli_hub_start(
     local_chart_dir: Path | None,
     chart_version: str | None,
     wait_ready: bool,
-    auto_install_ingress: bool,
-    ingress_class_name: str | None,
-    azure: bool,
+    auto_install_gateway: bool = True,
 ) -> None:
     """
     Start a hub environment.
@@ -85,35 +65,25 @@ def cli_hub_start(
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     # Before starting the hub, ensure required operators / CRDs are installed.
-    hub_ingress = ctx.config.get("hubIngress", {})
-    tls_cfg = hub_ingress.get("tls", {})
+    hub_gateway = ctx.config.get("hubGateway", {})
+    tls_cfg = hub_gateway.get("tls", {})
 
     # 1) cert-manager CRDs are needed for Certificate resources used by the hub
-    #    chart, but only when ingress is enabled and configured to use
-    #    cert-manager.
-    if hub_ingress.get("enabled") and tls_cfg.get("mode") == "cert-manager":
+    #    chart, but only when ingress/gateway exposure is enabled and configured
+    #    to use cert-manager.
+    if hub_gateway.get("enabled") and tls_cfg.get("mode") == "cert-manager":
         check_and_install_cert_manager_crds(k8s_config)
         if not cert_manager_seems_installed(k8s_config):
             warning(
-                "⚠️  hubIngress.tls.mode is set to 'cert-manager', but cert-manager "
+                "⚠️  hubGateway.tls.mode is set to 'cert-manager', but cert-manager "
                 "does not appear to be installed. No automatic installation will "
                 "be attempted; please install and configure cert-manager (or "
-                "switch hubIngress.tls.mode to 'existingSecret')."
+                "switch hubGateway.tls.mode to 'existingSecret')."
             )
 
-    # 2) Ensure an ingress controller is available when hub ingress is enabled.
-    if hub_ingress.get("enabled"):
-        # Determine which ingress class to use: CLI flag, then config, then
-        # sensible default.
-        desired_ingress_class = (
-            ingress_class_name or hub_ingress.get("ingressClassName") or "nginx"
-        )
-        ensure_ingress_controller(
-            k8s_config,
-            ingress_class_name=desired_ingress_class,
-            auto_install=auto_install_ingress,
-            azure=azure,
-        )
+    # 2) Ensure an Envoy Gateway installation is available when hub gateway is enabled.
+    if hub_gateway.get("enabled"):
+        ensure_envoy_gateway(k8s_config, auto_install=auto_install_gateway)
 
     # 3) Keycloak operator (and its CRDs) are needed for the auth subchart.
     check_and_install_keycloak_operator(k8s_config)

@@ -1,9 +1,9 @@
-{{- $hi := .Values.hubIngress | default (dict) -}}
-{{- $hosts := $hi.hosts | default (dict) -}}
+{{- $hg := .Values.hubGateway | default (dict) -}}
+{{- $hosts := $hg.hosts | default (dict) -}}
 {{- $hqHost := get $hosts "hq" | default "" -}}
-{{- $tls := $hi.tls | default (dict) -}}
-{{- $cm := $hi.certManager | default (dict) -}}
-{{- if and ($hi.enabled | default false) (eq ($tls.mode | default "cert-manager") "cert-manager") ($cm.enabled | default true) (ne (trim $hqHost) "") -}}
+{{- $tls := $hg.tls | default (dict) -}}
+{{- $cm := $hg.certManager | default (dict) -}}
+{{- if and ($hg.enabled | default false) (eq ($tls.mode | default "cert-manager") "cert-manager") ($cm.enabled | default true) (ne (trim $hqHost) "") -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:

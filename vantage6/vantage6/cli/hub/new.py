@@ -82,8 +82,8 @@ def cli_hub_new(
     auth_credentials = {}
     extra_config = {
         "keycloak": {
-            # Keycloak is exposed via Ingress (TLS terminated at Ingress)
-            "behindIngress": {
+            # Keycloak is exposed via a Gateway (TLS terminated at the Gateway)
+            "behindGateway": {
                 "enabled": True,
                 "proxyHeaders": "xforwarded",
                 "httpPort": 7680,
@@ -311,7 +311,7 @@ def _create_hub_config(
         },
     }
 
-    hub_ingress = {
+    hub_gateway = {
         "enabled": True,
         "hosts": {
             "auth": _hostname_from_url(urls["external"]["auth"]),
@@ -339,7 +339,7 @@ def _create_hub_config(
     } | global_auth_settings_questionaire()
 
     global_config = {
-        "hubIngress": hub_ingress,
+        "hubGateway": hub_gateway,
         "urls": urls,
         "keycloak": keycloak,
     }

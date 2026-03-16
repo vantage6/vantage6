@@ -21,8 +21,8 @@ Usage: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "auth") }}
 {{- define "hub.tlsSecretName" -}}
 {{- $ctx := .ctx -}}
 {{- $component := .component -}}
-{{- $hi := $ctx.Values.hubIngress | default (dict) -}}
-{{- $tls := $hi.tls | default (dict) -}}
+{{- $hg := $ctx.Values.hubGateway | default (dict) -}}
+{{- $tls := $hg.tls | default (dict) -}}
 {{- $existing := $tls.existingSecrets | default (dict) -}}
 {{- $override := (get $existing $component) | default "" -}}
 {{- if ne (trim $override) "" -}}

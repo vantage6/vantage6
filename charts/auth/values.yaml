@@ -5,12 +5,8 @@ keycloak:
   instances: 1
   hostname: ""
 
-  # When Keycloak is exposed through an Ingress that terminates TLS, Keycloak
-  # should run HTTP inside the cluster and trust proxy headers.
-  behindIngress:
+  behindGateway:
     enabled: false
-    # How the proxy communicates original scheme/host.
-    # See Keycloak reverse proxy docs: 'xforwarded' (X-Forwarded-*) or 'forwarded' (Forwarded).
     proxyHeaders: xforwarded
     httpPort: 7680
 
