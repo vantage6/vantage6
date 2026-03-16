@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-hq
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "vantage6.labels" . | indent 4 }}
@@ -18,22 +18,86 @@ spec:
 {{ include "vantage6.labels" . | indent 8 }}
         component: vantage6-hq
     spec:
+      {{- $global := .Values.global | default (dict) }}
+      {{- $urls := $global.urls | default (dict) }}
+      {{- $internal := $urls.internal | default (dict) }}
+      {{- $wait := $global.wait | default (dict) }}
+      {{- $waitAuthCfg := $wait.auth | default (dict) }}
+      {{- $waitStoreCfg := $wait.store | default (dict) }}
+      # Wait for Auth and Store to be ready (store only if algorithm stores are
+      # configured)
+      {{- $authUrl := $internal.auth | default "" }}
+      {{- $storeUrl := $internal.store | default "" }}
+      {{- $hasAlgoStores := gt (len .Values.hq.algorithm_stores) 0 }}
+      {{- $waitAuth := and ($waitAuthCfg.enabled | default false) $authUrl }}
+      {{- $waitStore := and ($waitStoreCfg.enabled | default false) $storeUrl $hasAlgoStores }}
+      {{- /* Resolve the store API path from the first configured algorithm store, with a sane default. */}}
+      {{- $storeApiPath := "/store" }}
+      {{- if $hasAlgoStores }}
+        {{- $firstStore := index .Values.hq.algorithm_stores 0 }}
+        {{- if $firstStore.api_path }}
+          {{- $storeApiPath = $firstStore.api_path }}
+        {{- end }}
+      {{- end }}
+      {{- if or $waitAuth $waitStore }}
+      initContainers:
+        {{- if $waitAuth }}
+        - name: wait-for-auth
+          image: {{ $waitAuthCfg.image | default "curlimages/curl:8.7.1" }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ $authUrl | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitAuthCfg.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitAuthCfg.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Auth"
+        {{- end }}
+        {{- if $waitStore }}
+        - name: wait-for-store
+          image: {{ $waitStoreCfg.image | default "curlimages/curl:8.7.1" }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ printf "%s%s/version" $storeUrl $storeApiPath | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitStoreCfg.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitStoreCfg.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Store"
+        {{- end }}
+      {{- end }}
+      {{- $hqKeycloak := default (dict) .Values.hq.keycloak }}
       containers:
       - name: vantage6-hq
         image: {{ .Values.hq.image }}
         imagePullPolicy: {{ .Values.hq.imagePullPolicy | default "Always" }}
         env:
         - name: KEYCLOAK_URL
-          value: {{ .Values.hq.keycloak.url }}
+          value: {{ default $internal.auth $hqKeycloak.url }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.hq.keycloak.realm }}
+          value: {{ (default ($global.keycloak | default (dict)) .Values.hq.keycloak).realm }}
 {{- if and .Values.hq.dev .Values.hq.dev.store_address }}
         - name: LOCAL_STORE_URL
           value: {{ .Values.hq.dev.store_address | quote }}
+{{- else if not .Values.hq.standalone }}
+        - name: LOCAL_STORE_URL
+          value: {{ $internal.store }}
 {{- end }}
         envFrom:
         - secretRef:
-            name: {{ .Release.Name }}-secrets
+            name: {{ .Release.Name }}-hq-secrets
         ports:
         - containerPort: {{ .Values.hq.internal.port }}
         {{- if and .Values.prometheus .Values.prometheus.enabled }}
@@ -56,7 +120,10 @@ spec:
       volumes:
       - name: config-file
         configMap:
-          name: {{ .Release.Name }}-configmap
+          name: {{ .Release.Name }}-hq-configmap
+      # Note that logs are not stored if no local k8s node is available
+      {{- if ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "" }}
       - name: hq-logs
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-logs-pvc
+          claimName: {{ .Release.Name }}-hq-logs-pvc
+      {{- end }}

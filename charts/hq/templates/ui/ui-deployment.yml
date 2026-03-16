@@ -1,3 +1,7 @@
+{{- $global := .Values.global | default (dict) -}}
+{{- $urls := $global.urls | default (dict) -}}
+{{- $external := $urls.external | default (dict) -}}
+{{- $uiKeycloak := (default ($global.keycloak | default (dict)) .Values.ui.keycloak) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,15 +30,15 @@ spec:
         - containerPort: 80
         env:
         - name: HQ_URL
-          value: {{ .Values.hq.baseUrl | quote }}
+          value: {{ default $external.hq .Values.hq.baseUrl | quote }}
         - name: API_PATH
           value: {{ .Values.hq.apiPath | quote }}
         - name: AUTH_URL
-          value: {{ .Values.ui.keycloak.publicUrl | quote }}
+          value: {{ default $external.auth $uiKeycloak.publicUrl | quote }}
         - name: KEYCLOAK_REALM
-          value: {{ .Values.ui.keycloak.realm | quote }}
+          value: {{ $uiKeycloak.realm | quote }}
         - name: KEYCLOAK_CLIENT
-          value: {{ .Values.ui.keycloak.client | quote }}
+          value: {{ $uiKeycloak.publicClient | quote }}
         # set the length of the refresh token. This is the time before keycloak-angular
         # automatically logs out the user.
         - name: REFRESH_TOKEN_VALIDITY_SECONDS

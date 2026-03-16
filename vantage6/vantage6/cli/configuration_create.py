@@ -16,6 +16,7 @@ from vantage6.cli.configuration_manager import (
     AlgorithmStoreConfigurationManager,
     AuthConfigurationManager,
     HQConfigurationManager,
+    HubConfigurationManager,
     NodeConfigurationManager,
 )
 from vantage6.cli.context import select_context_class
@@ -148,6 +149,8 @@ def make_configuration(
     system_folders: bool,
     is_sandbox: bool = False,
     extra_config: dict | None = None,
+    save_config_file: bool = True,
+    extra_configs_to_render: dict[str, str] | None = None,
 ) -> tuple[dict, Path]:
     """
     Create a configuration file for a vantage6 infrastructure component.
@@ -169,6 +172,10 @@ def make_configuration(
     extra_config: dict | None = None
         Extra configuration to add. Note that this may overwrite the configuration
         produced by the config producing function if the keys overlap.
+    save_config_file: bool = True,
+        Whether to store the configuration on disk or not.
+    extra_configs_to_render: dict[str, str] | None = None
+        Extra configurations to render. These will be added to the configuration file.
 
     Returns
     -------
@@ -198,6 +205,8 @@ def make_configuration(
         conf_manager = AlgorithmStoreConfigurationManager
     elif type_ == InstanceType.AUTH:
         conf_manager = AuthConfigurationManager
+    elif type_ == InstanceType.HUB:
+        conf_manager = HubConfigurationManager
     else:
         raise ValueError(f"Invalid instance type: {type_}")
 
@@ -207,9 +216,12 @@ def make_configuration(
         config_manager = conf_manager(instance_name, is_sandbox=is_sandbox)
 
     config_manager.put(config)
-    config_file = config_manager.save(config_file)
+    if save_config_file:
+        config_file = config_manager.save(
+            config_file, extra_configs_to_render=extra_configs_to_render
+        )
 
-    return config, config_file
+    return config_manager.render_config(), config_file
 
 
 def select_configuration_questionnaire(

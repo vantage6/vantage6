@@ -1,0 +1,20 @@
+global:
+  urls:
+    external:
+        auth: {{ urls.external.auth }}
+        store: {{ urls.external.store }}
+        ui: {{ urls.external.ui }}
+        hq: {{ urls.external.hq }}
+    internal:
+        auth: {{ urls.internal.auth }}
+        store: {{ urls.internal.store }}
+        ui: {{ urls.internal.ui }}
+        hq: {{ urls.internal.hq }}
+  keycloak:
+    url: {{ keycloak.url }}
+    realm: {{ keycloak.realm | default('vantage6') }}
+    adminUsername: {{ keycloak.adminUsername | default('admin') }}
+    adminPassword: {{ keycloak.adminPassword | default('admin') }}
+    adminClient: {{ keycloak.adminClient | default('backend-admin-client') }}
+    adminClientSecret: {{ keycloak.adminClientSecret | default('myadminclientsecret') }}
+    publicClient: {{ keycloak.publicClient | default('public_client') }}

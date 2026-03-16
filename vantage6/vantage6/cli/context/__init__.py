@@ -17,6 +17,7 @@ from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.hq import HQContext
+from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
 
 
@@ -49,6 +50,8 @@ def select_context_class(
         return NodeContext
     elif type_ == InstanceType.AUTH:
         return AuthContext
+    elif type_ == InstanceType.HUB:
+        return HubContext
     else:
         raise NotImplementedError
 

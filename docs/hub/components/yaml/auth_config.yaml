@@ -1,11 +1,16 @@
 keycloak:
+  # Whether the Keycloak is deployed standalone or as part of a vantage6 hub.
+  standalone: false
+
   # Specify the version of the Keycloak Operator to use.
   operatorVersion: "26.0.0"
 
   # Specify the number of Keycloak instances to deploy.
   instances: 1
 
-  # Whether to use production settings.
+  # Whether to use production settings. Note that this setting impacts many settings.
+  # In case it is false, this causes users and secrets to be set to simple, non-secure
+  # (initial) values. Always set this to true in production environments.
   production: true
 
   # TLS settings - should be enabled for production environments.
@@ -17,10 +22,10 @@ keycloak:
   # Keycloak is initialized and can be used to login to the Keycloak admin UI and
   # manage Keycloak settings.
   auth:
-    # For production environments, we recommend storing the admin password in a secret (which MUST
-    # contain the 'username' and 'password' keys).
+    # For production environments, we recommend storing the admin password in a secret
+    # (which MUST contain the 'username' and 'password' keys).
     adminUserSecret: admin-user-secret
-    # for development environments, you can set the username and password directly:
+    # For development environments, you can set the username and password directly:
     # adminUser: admin
     # adminPassword: admin
 
@@ -42,12 +47,13 @@ keycloak:
       memory: 1Gi
       cpu: 500m
 
-  # The following configuration initializes the Keycloak realm upon startup. It creates
-  # a number of users, roles and secrets that are required for vantage6. It is important
-  # to create this realm upon startup to work correctly with the vantage6 hub.
+  # The following configuration initializes the Keycloak realm upon startup. Doing so
+  # ensures that Keycloak is ready to be used by vantage6 services.
   realmImport:
     enabled: true
-    # Keycloak realm name
+
+    # Keycloak realm name. If used as not standalone, not that this overwrites the
+    # global hub setting.
     realm: vantage6
 
     # access token lifespan in seconds
@@ -55,46 +61,54 @@ keycloak:
 
     # sso session idle timeout in seconds. This is the time before the refresh token
     # expires. With default settings, this value controls the time before the refresh
-    # token expires. Note that this should not be set to a value greater than 3600
-    # seconds, as the refresh token will then expire before the session timeout.
+    # token expires. If set to a value greater than 3600 seconds, you should also set
+    # ssoSessionMaxLifespan and/or clientSessionIdleTimeout and/or clientSessionMaxLifespan
+    # to higher values to effectively lengthen the session.
     ssoSessionIdleTimeout: 1800
 
     # password policy configuration. If you prefer not to have a password policy,
-    # you can set this to an empty string.
+    # you can set this to an empty string. In production we recommend a strong policy.
     passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
 
-    # required actions for users. Setting defaultAction to true means that the user will
-    # be prompted to perform the action on first login.
-    requiredActions:
-      # configure OTP for two-factor authentication
-      - alias: CONFIGURE_TOTP
-        name: Configure OTP
-        providerId: CONFIGURE_TOTP
-        enabled: true
-        defaultAction: true
-        priority: 10
-      # update password on first login
-      - alias: UPDATE_PASSWORD
-        name: Update Password
-        providerId: UPDATE_PASSWORD
-        enabled: true
-        defaultAction: true
-        priority: 20
-      # update email on first login
-      - alias: UPDATE_EMAIL
-        name: Update Email
-        providerId: UPDATE_EMAIL
-        enabled: true
-        defaultAction: true
-        priority: 30
-      # verify email on first login - this should only be enable if an SMTP server is
-      # configured to send emails.
-      - alias: VERIFY_EMAIL
-        name: Verify Email
-        providerId: VERIFY_EMAIL
-        enabled: true
-        defaultAction: true
-        priority: 40
+    # Allow users to reset their password via email.
+    resetPasswordAllowed: false
+
+    # Brute force protection settings.
+    # - bruteForceProtected: enable brute force protection
+    # - permanentLockout: whether to lock out a user permanently after a certain number
+    #   of failed login attempts.
+    # - failureFactor: the number of failed login attempts before a user is locked out.
+    bruteForceProtected: true
+    permanentLockout: false
+    failureFactor: 5
+
+    # Define the vantage6 admin user. This user will be created in the realm.
+    admin:
+      username: admin
+      # In production, use a strong password here.
+      password: Admin123!
+
+    # Whether to verify email on first login. This should only be enabled if an SMTP
+    # server is configured to send emails.
+    verifyEmail: true
+
+    # Whether to require users to update their password on first login.
+    passwordUpdateRequired: true
+
+    # Public client configuration. The public client is used by users to authenticate
+    # in the browser.
+    publicClient:
+      name: public_client
+      # Redirect URIs are the URIs that Keycloak is allowed to redirect to after
+      # authentication. This should normally be set to the UI URL. If you have
+      # other applications that can use the vantage6 Keycloak instance, those should be
+      # added as well.
+      redirectUris:
+        - "http://localhost:7600/*"
+
+    # Secret used for the backend admin client. Note that if this is defined, it will
+    # override the hub's global backend admin client secret.
+    backend_client_secret: myadminclientsecret
 
     # SMTP server configuration. This is used to send emails to users.
     smtpServer:
@@ -103,113 +117,37 @@ keycloak:
       from: your-email-address@your-domain.com
       ssl: false                # true for SSL, false for STARTTLS
       starttls: true            # true for STARTTLS, false for SSL
-      # authentication settings - should usually be used, unless you are running tests
+      # Authentication settings - should usually be used, unless you are running tests
       # with a local SMTP server.
       auth: true
       authType: basic           # always use 'basic' for username and password
       user: your-username       # your username (often the same as the email address)
       password: your-password   # your password
-      # optional settings for the reply-to address
+      # Optional settings for the reply-to address.
       replyTo: reply-to-email-address@your-domain.com
       replyToDisplayName: display-name-for-reply-to
 
-    # users to be created in the realm. This initializes the realm with a default
-    # admin user. It also initializes the service account for the backend admin
-    # client to give it the necessary permissions to manage the realm.
-    users:
-      # create the vantage6 admin user. The name of this user should also be present
-      # in vantage6 HQ and store configuration - it is the user that will be
-      # assigned admin permissions on initial startup.
-      - username: admin
-        enabled: true
-        # Setting firstname, last name and email should only be done for development
-        # environments. In production, the admin should be prompted to update this on
-        # first login.
-        email: admin@vantage6.org
-        firstName: Admin
-        lastName: Admin
-        # Initial password - admin user will be prompted to update this on first login
-        # in production, provided the right required actions are set.
-        credentials:
-          - type: password
-            value: Admin123!
-        # required actions for the admin user. This ensures that the admin user will
-        # be prompted to configure 2FA and update their password on first login.
-        requiredActions:
-          - CONFIGURE_TOTP
-          - UPDATE_PASSWORD
-      # create the service account for the backend admin client. The
-      # serviceAccountClientId should match the value set in the client section below.
-      # The vantage6 HQ and store will use this user to create new accounts for users
-      # and nodes in keycloak - that is why it gets assigned some realm-management
-      # permissions.
-      # NOTE: this user should *always* be created - HQ and store rely on it to create
-      # new accounts for users and nodes.
-      - username: service-account-backend-admin-client
-        enabled: true
-        serviceAccountClientId: backend-admin-client
-        clientRoles:
-          realm-management:
-            - view-users
-            - manage-users
-            - view-clients
-            - manage-clients
-            - create-client
-
-    # clients to be created in the realm. This initializes the realm with a default
-    # public client and a backend admin client.
-    # NOTE: vantage6 relies on both the public and backend admin client to be created.
-    clients:
-      # The public client is used by users to authenticate in the browser. Either the
-      # UI or the Python client will redirect to this client.
-      - clientId: public_client
-        publicClient: true
-        # redirect URIs are the URIs that keycloak is allowed to redirect to after
-        # authentication. This should be set to the UI URL, and to the Keyloak
-        # service on port 7681. The latter is needed for authentication from outside
-        # the browser - if e.g. the Python client authenticates, it will open a
-        # browser window to authenticate that redirects to the Keycloak service on
-        # port 7681.
-        redirectUris:
-          - "http://localhost:7600/*"
-          - "http://localhost:7681/*"
-        # By setting webOrigins to "+", we allow the same origins as redirectUris.
-        webOrigins:
-          - "+"
-        # The public client is only for users, not for nodes. Therefore, map a
-        # constant claim to indicate the that the client is a user. The vantage6 hub
-        # relies on this claim to determine if the client is a user or a node.
-        protocolMappers:
-          - name: vantage6_client_type
-            protocol: openid-connect
-            protocolMapper: oidc-hardcoded-claim-mapper
-            consentRequired: false
-            config:
-              claim.name: vantage6_client_type
-              claim.value: user
-              access.token.claim: true
-      # create a client that will allow the backend to manage users and clients in
-      # keycloak. The secret should be modified to a secure value in production - the
-      # rest should be left as is.
-      - clientId: backend-admin-client
-        publicClient: false
-        secret: myadminclientsecret
-        serviceAccountsEnabled: true
-        standardFlowEnabled: false
-
 database:
-  # For production environments, we recommend using an external database
+  # For production environments, we recommend using an external database.
   external: true
-  # the hostname of the external database, required if external is set to true.
-  hostname: your-database-hostname.org
 
-  # Development settings - needed if external is set to false.
-  image:
-    repository: postgres
-    tag: 13
+  # Hostname and port of the external database, required if external is set to true.
+  host: your-database-hostname.org
+  port: 5432
+
+  # Credentials and database name.
   username: keycloak
   password: keycloak
   name: keycloak
-  volumePath: /mnt/data_auth
-  k8sNodeName: docker-desktop
-  storageClass: local-storage
+
+  # Development settings - only used if external is set to false.
+  # Specify the image to use for the database.
+  # image:
+  #   repository: postgres
+  #   tag: "13"
+  # Specify the path to the volume where the database is stored.
+  # volumePath: /mnt/data_auth
+  # Specify the name of the k8s node where the database is running.
+  # k8sNodeName: docker-desktop
+  # Specify the storage class to use for the database.
+  # storageClass: local-storage

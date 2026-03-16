@@ -1,11 +1,9 @@
-# Keycloak Operator configuration
 keycloak:
+
+  standalone: true
+
   instances: 1
   hostname: ""
-
-  auth:
-    adminUser: admin
-    adminPassword: admin
 
   production: true
   tls:
@@ -22,7 +20,6 @@ keycloak:
 
   realmImport:
     enabled: true
-    realm: vantage6
     accessTokenLifespan: 300
     ssoSessionIdleTimeout: 1800
     passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
@@ -31,79 +28,16 @@ keycloak:
     bruteForceProtected: true
     permanentLockout: false
     failureFactor: 5
-    requiredActions:
-      - alias: CONFIGURE_TOTP
-        name: Configure OTP
-        providerId: CONFIGURE_TOTP
-        enabled: true
-        defaultAction: true
-        priority: 10
-      - alias: UPDATE_PASSWORD
-        name: Update Password
-        providerId: UPDATE_PASSWORD
-        enabled: true
-        defaultAction: true
-        priority: 20
-      - alias: UPDATE_EMAIL
-        name: Update Email
-        providerId: UPDATE_EMAIL
-        enabled: true
-        defaultAction: true
-        priority: 30
-    users:
-      - username: admin
-        enabled: true
-        credentials:
-          - type: password
-            value: Admin123!
-        requiredActions:
-          - CONFIGURE_TOTP
-          - UPDATE_PASSWORD
-      - username: service-account-backend-admin-client
-        enabled: true
-        serviceAccountClientId: backend-admin-client
-        clientRoles:
-          realm-management:
-            - view-users
-            - manage-users
-            - view-clients
-            - manage-clients
-            - create-client
-    clients:
-      - clientId: public_client
-        publicClient: true
-        redirectUris:
-          - "http://localhost:7600/*"
-        webOrigins:
-          - "+"
-        attributes:
-          oauth2.device.authorization.grant.enabled: "true"
-        protocolMappers:
-          - name: vantage6_client_type
-            protocol: openid-connect
-            protocolMapper: oidc-hardcoded-claim-mapper
-            consentRequired: false
-            config:
-              claim.name: vantage6_client_type
-              claim.value: user
-              access.token.claim: "true"
-      - clientId: backend-admin-client
-        publicClient: false
-        secret: myadminclientsecret
-        serviceAccountsEnabled: true
-        standardFlowEnabled: false
     smtpServer:
       # placeholder for SMTP server configuration
+    publicClient:
+      name: public_client
+
 
 # PostgreSQL configuration for Keycloak
 database:
-  external: false
+  external: true
   host: ""
-  image:
-    repository: postgres
-    tag: "13"
-  username: keycloak
-  password: keycloak
-  name: keycloak
-  volumePath: /mnt/data_auth
-  k8sNodeName: docker-desktop
+  username: ""
+  password: ""
+  name: ""

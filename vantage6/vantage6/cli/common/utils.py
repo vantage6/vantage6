@@ -1,4 +1,6 @@
 import json
+import secrets
+import string
 import subprocess
 from pathlib import Path
 
@@ -171,6 +173,8 @@ def get_main_cli_command_name(instance_type: InstanceType) -> str:
         return CLICommandName.NODE.value
     elif instance_type == InstanceType.AUTH:
         return CLICommandName.AUTH.value
+    elif instance_type == InstanceType.HUB:
+        return CLICommandName.HUB.value
     else:
         raise ValueError(f"Invalid instance type: {instance_type}")
 
@@ -265,7 +269,8 @@ def generate_password(password_length: int = 16) -> str:
     Generate a strong password that meets the password policy requirements.
 
     This ensures that the password has at least 8 characters, one uppercase letter,
-    one lowercase letter, one number and one special character.
+    one lowercase letter, one number and one special character. We are avoiding
+    quotes in the password to avoid issues with escaping in YAML.
 
     Parameters
     ----------
@@ -277,10 +282,9 @@ def generate_password(password_length: int = 16) -> str:
     str
         The generated password
     """
-    import secrets
-    import string
-
     alphabet = string.ascii_letters + string.digits + string.punctuation
+    # Avoid quotes to prevent YAML escaping issues
+    alphabet = "".join(set(alphabet) - {"'", '"'})
     while True:
         password = "".join(secrets.choice(alphabet) for i in range(password_length))
         if (

@@ -1,0 +1,12 @@
+dependencies:
+- name: hq
+  repository: file://../hq
+  version: 5.0.0-b2
+- name: auth
+  repository: file://../auth
+  version: 5.0.0-b2
+- name: store
+  repository: file://../store
+  version: 5.0.0-b2
+digest: sha256:285fec6dceb66233f50f118996e8234724a5854c7216dab1095acb131a6ce39b
+generated: "2026-02-27T16:18:48.818456044+01:00"

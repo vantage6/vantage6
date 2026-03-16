@@ -4,6 +4,9 @@ namespace: vantage6-store
 
 store:
 
+  # Whether the algorithm store is deployed standalone or as part of a vantage6 hub.
+  standalone: false
+
   # Human readable description of the algorithm store instance. This is to help
   # your peers to identify the store
   description: Vantage algorithm store version 5
@@ -27,7 +30,8 @@ store:
   # The port to expose the store on in the cluster
   port: 7602
 
-  # Keycloak configuration
+  # Keycloak configuration. Values here override the global Keycloak settings
+  # in the hub configuration (`global.keycloak`) for the algorithm store.
   keycloak:
     url: https://my-vantage6-auth.org
     realm: vantage6
@@ -37,7 +41,8 @@ store:
     adminClientSecret: myadminclientsecret
 
   # The URI of the vantage6 HQ that provides the admin user that will be admin
-  # user in the store on startup.
+  # user in the store on startup. Note that if set, this overrides the global HQ address
+  # in the hub configuration
   vantage6HQUri: https://my_hq.org/my_api_path
 
   policies:
@@ -169,18 +174,18 @@ database:
   # the URI of the external database. Only used if external is set to true.
   uri: postgres://vantage6:vantage6@localhost:5432/vantage6
 
-  # The image of the database
+  # The image of the database. Should only be set if external is set to false.
   image:
     repository: postgres
     tag: 13
 
-  # The username of the database
+  # The username of the database. Should only be set if external is set to false.
   username: vantage6
 
-  # The password of the database
+  # The password of the database. Should only be set if external is set to false.
   password: vantage6
 
-  # The name of the database
+  # The name of the database. Should only be set if external is set to false.
   name: vantage6
 
   # Hostpath of the database mount. Only used if external is set to false.

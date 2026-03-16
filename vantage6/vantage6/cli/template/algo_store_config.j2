@@ -4,26 +4,39 @@ nameOverride: {{ nameOverride | default('vantage6-store') }}
 # namespace: vantage6-store
 store:
 
+  # Whether the store is deployed standalone or as part of a vantage6 hub.
+  standalone: {{ store.standalone | default(false) }}
+
   # The description of the store
   description: {{ store.description | default('Vantage algorithm store version 5') }}
 
   # The external URL of the algorithm store
-  baseUrl: {{ store.baseUrl | default('http://localhost:7602') }}
+  {% if store.baseUrl is defined %}
+  baseUrl: {{ store.baseUrl }}
+  {% else %}
+  # The store base URL is not set here, it should be set in the hub chart config, or
+  # otherwise it should be specified below.
+  # baseUrl: http://localhost:7602
+  {% endif %}
   api_path: {{ store.api_path | default('/store') }}
 
   # Keycloak configuration
+  {% if store.standalone is defined and store.standalone %}
   keycloak:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: {{ store.keycloak.adminPassword | default('admin') }}
+    adminPassword: "{{ store.keycloak.adminPassword | default('admin') }}"
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: {{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}
+    adminClientSecret: "{{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}"
+  {% endif %}
 
-  vantage6HQUri: {{ store.vantage6HQUri | default('http://localhost:7601/hq') }}
+  {% if store.standalone is defined and store.standalone %}
+  vantage6HQUri: {{ store.vantage6HQUri }}
+  {% endif %}
 
   # Which image to use to run the store.
-  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:latest') }}
+  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:uluru') }}
   # Algorithm store image pull policy.
   # Possible values are:
   # - Always: always pull the image from the registry
@@ -191,7 +204,7 @@ store:
     {% for registry in node.private_docker_registries %}
     - registry: {{ registry.registry }}
       username: {{ registry.username }}
-      password: {{ registry.password }}
+      password: "{{ registry.password }}"
     {% endfor %}
   {% else %}
   # private_docker_registries:
@@ -225,7 +238,7 @@ store:
     user: {{ store.smtpServer.user }}
     {% endif %}
     {% if store.smtpServer.password is defined %}
-    password: {{ store.smtpServer.password }}
+    password: "{{ store.smtpServer.password }}"
     {% endif %}
     from: {{ store.smtpServer.from }}
     {% if store.smtpServer.replyTo is defined %}
@@ -270,7 +283,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: {{ database.password | default('vantage6') }}
+  password: "{{ database.password | default('vantage6') }}"
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}
@@ -279,5 +292,6 @@ database:
   volumePath: {{ database.volumePath }}
   {% endif %}
 
-  # The name of the k8s node where the database is running
-  k8sNodeName: {{ database.k8sNodeName }}
+  # The name of the k8s node where the database is running (required when
+  # database.external is false because the data is then stored on the k8s node)
+  k8sNodeName: {{ database.k8sNodeName | default('') }}

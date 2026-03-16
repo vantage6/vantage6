@@ -1,7 +1,11 @@
+{{- $global := .Values.global | default (dict) }}
+{{- $urls := $global.urls | default (dict) }}
+{{- $external := $urls.external | default (dict) }}
+{{- $internal := $urls.internal | default (dict) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ .Release.Name }}-hq-configmap
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   config.yaml: |
@@ -25,11 +29,11 @@ data:
       max_size: {{ .Values.hq.logging.max_size }}
       use_console: {{ .Values.hq.logging.use_console }}
     port: {{ .Values.hq.internal.port }}
-    hq_url: {{ .Values.hq.baseUrl }}{{ .Values.hq.apiPath }}
+    hq_url: {{ .Values.hq.baseUrl | default $external.hq }}{{ .Values.hq.apiPath }}
     {{- if .Values.database.external }}
     uri: {{ .Values.database.uri }}
     {{- else }}
-    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-postgres:5432/{{ .Values.database.name }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-hq-postgres:5432/{{ .Values.database.name }}
     {{- end }}
     {{- if .Values.hq.cors_allowed_origins }}
     cors_allowed_origins:
@@ -44,7 +48,7 @@ data:
     {{- if .Values.hq.dev.host_uri }}
     dev:
       host_uri: {{ .Values.hq.dev.host_uri }}
-      store_address: {{ .Values.hq.dev.store_address }}
+      store_address: {{ .Values.hq.dev.store_address | default $internal.store }}
     {{- end }}
     {{- if .Values.hq.algorithm_stores }}
     algorithm_stores:

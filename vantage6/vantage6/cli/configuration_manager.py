@@ -9,6 +9,7 @@ from vantage6.cli.globals import (
     ALGO_STORE_TEMPLATE_FILE,
     AUTH_TEMPLATE_FILE,
     HQ_TEMPLATE_FILE,
+    HUB_TEMPLATE_FILE,
     NODE_TEMPLATE_FILE,
 )
 
@@ -67,6 +68,10 @@ class NodeConfiguration(Configuration):
 
 
 class AuthConfiguration(Configuration):
+    VALIDATORS = {}
+
+
+class HubConfiguration(Configuration):
     VALIDATORS = {}
 
 
@@ -248,6 +253,110 @@ class AuthConfigurationManager(ConfigurationManager):
         Get the configuration template for the auth.
         """
         return super()._get_config_template(AUTH_TEMPLATE_FILE)
+
+
+class HubConfigurationManager(ConfigurationManager):
+    """
+    Maintains the hub's configuration.
+    """
+
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        """
+        Maintains the hub's configuration.
+
+        Parameters
+        ----------
+        name : str
+            Name of the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+        """
+        super().__init__(conf_class=HubConfiguration, name=name, is_sandbox=is_sandbox)
+
+    @classmethod
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the HubConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+
+        Returns
+        -------
+        HubConfigurationManager
+            A new instance of the HubConfigurationManager.
+        """
+        return super().from_file(
+            path, conf_class=HubConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the hub.
+
+        Returns
+        -------
+        str
+            The configuration template for the hub.
+        """
+        return super()._get_config_template(HUB_TEMPLATE_FILE)
+
+    def render_config(
+        self,
+        auth_config: str | None = None,
+        hq_config: str | None = None,
+        store_config: str | None = None,
+    ) -> str:
+        """
+        Render the configuration to a string.
+
+        Extra configurations of subcharts can be provided to render the configuration
+        with.
+
+        Parameters
+        ----------
+        auth_config : str | None
+            The authentication configuration.
+        hq_config : str | None
+            The HQ configuration.
+        store_config : str | None
+            The algorithm store configuration.
+
+        Returns
+        -------
+        str
+            The rendered configuration.
+        """
+        hub_config = super().render_config()
+        # add the auth, hq and store configurations to the hub configuration
+        if auth_config:
+            hub_config += "\nauth:\n" + self._add_extra_indent(auth_config)
+        if hq_config:
+            hub_config += "\nhq:\n" + self._add_extra_indent(hq_config)
+        if store_config:
+            hub_config += "\nstore:\n" + self._add_extra_indent(store_config)
+        return hub_config
+
+    def _add_extra_indent(self, str_subconfig: str) -> str:
+        """
+        Add extra indent to the subconfiguration.
+
+        Parameters
+        ----------
+        str_subconfig : str
+            The subconfiguration to add extra indent to.
+
+        Returns
+        -------
+        str
+            The subconfiguration with extra indent.
+        """
+        return "\n".join(["  " + line for line in str_subconfig.split("\n")])
 
 
 class TestingConfigurationManager(ConfigurationManager):

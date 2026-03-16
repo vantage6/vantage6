@@ -6,6 +6,10 @@ nameOverride: vantage6-hq
 namespace: vantage6-hq
 
 server:
+
+  # Whether the HQ is deployed standalone or as part of a vantage6 hub.
+  standalone: false
+
   # The description of the server
   description: Vantage6 server version 5
 
@@ -41,7 +45,8 @@ server:
       url: http://localhost:7602/api
       api_path: /api
 
-  # Keycloak configuration
+  # Keycloak configuration. Values here override the global Keycloak settings
+  # in the hub configuration (`global.keycloak`) for HQ.
   keycloak:
     url: https://auth.vantage6.ai
     realm: vantage6

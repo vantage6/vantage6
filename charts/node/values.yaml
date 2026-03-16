@@ -1,15 +1,17 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
 node:
   createSecrets: true
 
-  name: put-your-node-name-here
-  apiKey: put-your-api-key-here
+  name: ""
+  # apiKey: "put-your-api-key-here"
 
   keycloak:
-    url: http://vantage6-auth-kc-service.vantage6.svc.cluster.local:7680
+    url: ""
     realm: vantage6
 
   hq:
-    url: http://vantage6-hq
+    url: ""
     port: 7601
     path: /hq
 
@@ -52,13 +54,12 @@ node:
 
   policies:
     require_algorithm_pull: true
-    allow_either_whitelist_or_store: false
 
   persistence:
     tasks:
       storageClass: local-storage
       size: 10Gi
-      hostPath: /path/to/where/task/files/are/stored
+      # hostPath: /path/to/where/task/files/are/stored
     database:
       storageClass: local-storage
       size: 5Gi

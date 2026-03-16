@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-postgres
+  name: {{ .Release.Name }}-store-postgres
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
 {{ include "store.labels" . | indent 4 }}
@@ -37,5 +37,5 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-pgres-pvc
+          claimName: {{ .Release.Name }}-store-pgres-pvc
 {{- end }}

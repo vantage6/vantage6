@@ -1,0 +1,64 @@
+# Global settings shared between HQ, auth and algorithm store. Values here act
+# as defaults and can be overridden in the subcharts below.
+
+global:
+  # Shared URLs for the vantage6 services. `external` are the public-facing URLs;
+  # `internal` are the in-cluster service URLs other components should use.
+  urls:
+    external:
+      auth: https://auth.vantage6.org
+      store: https://store.vantage6.org
+      ui: https://ui.vantage6.org
+      hq: https://hq.vantage6.org
+    internal:
+      # In many cases you can leave these empty and let the charts derive them
+      # from the release name and namespace. Override only if you have custom
+      # in-cluster routing.
+      auth: ""
+      store: ""
+      ui: ""
+      hq: ""
+
+  # Shared Keycloak configuration used as default for HQ and Store. The auth
+  # chart itself uses this for defaults as well, but can override everything
+  # in its own section.
+  keycloak:
+    url: https://auth.vantage6.org
+    realm: vantage6
+    adminClient: backend-admin-client
+    publicClient: public_client
+    # These admin credentials are used to bootstrap HQ and Store and should be
+    # overridden in production.
+    adminUsername: admin
+    adminPassword: change-me
+    adminClientSecret: change-me-too
+
+  # Optional shared node name for local-storage based volumes (logs, prometheus).
+  # If set, HQ and Store can inherit this when they use hostPath PVs.
+  k8sNodeName: linux-node-1
+
+  # Optional wait settings used by initContainers when deploying via the hub
+  # chart. When enabled, Store and HQ will wait for Auth (and HQ can wait for
+  # Store) before starting their main containers.
+  wait:
+    auth:
+      enabled: true
+      # If left empty, the chart will derive an internal auth URL from the
+      # release name and namespace.
+      url: ""
+      maxAttempts: 60
+      intervalSeconds: 5
+    store:
+      enabled: true
+      url: ""
+      maxAttempts: 60
+      intervalSeconds: 5
+
+hq:
+  # configuration for the headquarters should be placed here
+
+auth:
+  # configuration for the authentication service should be placed here
+
+store:
+  # configuration for the algorithm store should be placed here

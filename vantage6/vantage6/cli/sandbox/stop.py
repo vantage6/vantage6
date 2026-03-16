@@ -19,9 +19,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option("-n", "--name", default=None, help="Name of the configuration.")
 @click.option("--context", default=None, help="Kubernetes context to use")
 @click.option("--namespace", default=None, help="Kubernetes namespace to use")
-@click.pass_context
 def cli_sandbox_stop(
-    click_ctx: click.Context,
     name: str | None,
     context: str | None,
     namespace: str | None,
@@ -32,7 +30,7 @@ def cli_sandbox_stop(
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
     running_services = find_running_service_names(
-        instance_type=InstanceType.HQ,
+        instance_type=InstanceType.HUB,
         only_system_folders=False,
         only_user_folders=False,
         k8s_config=k8s_config,
@@ -43,10 +41,10 @@ def cli_sandbox_stop(
         return
 
     if not name:
-        selected_service = select_running_service(running_services, InstanceType.HQ)
+        selected_service = select_running_service(running_services, InstanceType.HUB)
         name = get_config_name_from_helm_release_name(selected_service)
     else:
-        ctx = get_context(InstanceType.HQ, name, False, is_sandbox=True)
+        ctx = get_context(InstanceType.HUB, name, False, is_sandbox=True)
         name = ctx.name
 
     # stop the sandbox nodes
@@ -62,21 +60,7 @@ def cli_sandbox_stop(
             )
 
     execute_cli_stop(
-        command_name=CLICommandName.AUTH,
-        name=f"{name}-auth.sandbox",
-        k8s_config=k8s_config,
-        system_folders=False,
-        is_sandbox=True,
-    )
-    execute_cli_stop(
-        command_name=CLICommandName.ALGORITHM_STORE,
-        name=f"{name}-store.sandbox",
-        k8s_config=k8s_config,
-        system_folders=False,
-        is_sandbox=True,
-    )
-    execute_cli_stop(
-        command_name=CLICommandName.HQ,
+        command_name=CLICommandName.HUB,
         name=name,
         k8s_config=k8s_config,
         system_folders=False,

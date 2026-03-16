@@ -179,6 +179,7 @@ jobs:
           helm dependency update charts/node
           helm dependency update charts/store
           helm dependency update charts/hq
+          helm dependency update charts/hub
 
       - name: Package Helm charts
         run: |
@@ -187,7 +188,7 @@ jobs:
           helm package charts/node
           helm package charts/store
           helm package charts/hq
-
+          helm package charts/hub
       - name: Push Helm charts
         run: |
           helm cm-push auth-*.tgz v6-harbor-infrastructure
@@ -195,7 +196,7 @@ jobs:
           helm cm-push node-*.tgz v6-harbor-infrastructure
           helm cm-push store-*.tgz v6-harbor-infrastructure
           helm cm-push hq-*.tgz v6-harbor-infrastructure
-
+          helm cm-push hub-*.tgz v6-harbor-infrastructure
   support-images:
     name: Build support images
     runs-on: ubuntu-latest

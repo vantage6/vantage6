@@ -10,8 +10,12 @@ which is a lightweight Kubernetes distribution that is easy to install and use.
 Helm charts
 -----------
 
-The hub consists of several components. The following Helm charts are available to
-deploy them:
+The hub can be deployed using the helm chart
+``harbor2.vantage6.ai/chartrepo/infrastructure/hub``. This is the easiest way to deploy
+the hub, as it will deploy all the necessary components together.
+
+The hub chart is a parent of several subcharts. You can also deploy the subcharts
+separately:
 
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/hq``: Vantage6 HQ, UI, RabbitMQ, Prometheus.
 - ``harbor2.vantage6.ai/chartrepo/infrastructure/auth``: Authentication service
@@ -31,29 +35,40 @@ installed by vantage6. You have to install and deploy them yourself.
 Configuration
 -------------
 
-To generate the appropriate configuration files, you can use ``v6 hub new``, as
-described in the :ref:`use-hub` section.
+The hub chart configuration file contains the configuration of the subcharts, as well
+as some global configuration.
+
+The configuration file looks as followsand can be downloaded here:
+:download:`hub_config.yaml <components/yaml/hub_config.yaml>`
+
+.. literalinclude :: components/yaml/hub_config.yaml
+    :language: yaml
+
+The configuration of the subcharts is placed under the corresponding subchart key.
+For example, the configuration of the authentication service is placed under the
+``auth`` key. The full configuration options of the subcharts are described elsewhere
+for the :ref:`auth <auth-configuration-file>`, :ref:`HQ <hq-configuration-file>`
+and :ref:`algorithm store <algorithm-store-configuration-file>` components.
 
 Deployment
 ----------
 
-Once you have generated the configuration files, you can deploy the hubusing the
-command ``v6 hub start``. This command will deploy the hub using the Helm charts.
+Once you have generated the configuration files, you can deploy the hub using the
+command ``v6 hub start``. This command installs the ``hub`` Helm chart, which in turn
+deploys HQ, authentication service and algorithm store as subcharts.
 
 In some production environments, it may not be feasible to deploy the hub using the
 CLI, for instance because Python is not available. In these cases, you can deploy the
-hub using the Helm charts directly. The base commands to deploy HQ, authentication
-service and algorithm store are:
+hub using the Helm charts directly. The base commands are:
 
 .. code-block:: bash
 
-    # deploy HQ
+    # deploy full hub (HQ, auth, store)
+    helm install my-hub-release hub --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
+
+    # or deploy the components individually (advanced usage)
     helm install my-hq-release hq --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
-
-    # deploy authentication service
     helm install my-auth-release auth --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
-
-    # deploy algorithm store
     helm install my-store-release algorithm-store --repo https://harbor2.vantage6.ai/chartrepo/infrastructure
 
 Of course, you may specify additional flags to the helm commands - see

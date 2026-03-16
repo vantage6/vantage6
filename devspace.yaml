@@ -241,9 +241,14 @@ deployments:
       chart:
         name: ./charts/auth
       values:
-        service:
-          type: ClusterIP
         database:
+          external: false
+          image:
+            repository: postgres
+            tag: "13"
+          username: keycloak
+          password: keycloak
+          name: keycloak
           volumePath: ${AUTH_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         keycloak:
@@ -252,43 +257,23 @@ deployments:
           production: false
           tls:
             enabled: false
+          auth:
+            adminUser: admin
+            adminPassword: admin
           realmImport:
             enabled: true
+            realm: vantage6
             # overwrite password policy - we don't need to enforce a password policy
             # for dev environment
             passwordPolicy: ""
-            # turn off TOTP / MFA in dev environment
-            requiredActions:
-              - alias: CONFIGURE_TOTP
-                name: Configure OTP
-                providerId: CONFIGURE_TOTP
-                enabled: true
-                defaultAction: false
-            # Overwrite users: for dev environment, initialize admin user fully and
-            # turn off MFA, so we don't need to configure OTP and setup account on
-            # first login.
-            users:
-              - username: admin
-                enabled: true
-                emailVerified: true
-                email: admin@vantage6.org
-                firstName: Admin
-                lastName: Admin
-                credentials:
-                  - type: password
-                    # note that for the dev env, we also overwrite the password in
-                    # the values.yaml file (this pw is easier)
-                    value: admin
-              - username: service-account-backend-admin-client
-                enabled: true
-                serviceAccountClientId: backend-admin-client
-                clientRoles:
-                  realm-management:
-                    - view-users
-                    - manage-users
-                    - view-clients
-                    - manage-clients
-                    - create-client
+            admin:
+              username: admin
+              password: admin
+            backend_client_secret: myadminclientsecret
+            publicClient:
+              redirectUris:
+                - "http://localhost:7600/*"
+
 
   # The HQ deployment contains the HQ, database, rabbit mq and the UI. The
   # store is deployed separately as it can have an many-to-many relationship with the
@@ -299,6 +284,7 @@ deployments:
         name: ./charts/hq
       values:
         hq:
+          standalone: true
           image: ${HQ_IMAGE} # needed for automatic image tag update
           imagePullPolicy: IfNotPresent
           keycloak:
@@ -316,11 +302,11 @@ deployments:
           dev:
             host_uri: ${HOST_URI}
             allow_drop_all: true
-            store_address: http://vantage6-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+            store_address: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
             forward_ports: false
           algorithm_stores:
             - name: Local store
-              url: http://vantage6-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+              url: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
               api_path: /store
         ui:
           image: ${UI_IMAGE}
@@ -331,10 +317,21 @@ deployments:
             client: ${KEYCLOAK_FRONTEND_CLIENT}
 
         database:
+          external: false
+          image:
+            repository: postgres
+            tag: "13"
+          username: vantage6
+          password: vantage6
+          name: vantage6
           volumePath: ${HQ_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         prometheus:
           enabled: false
+        rabbitmq:
+          username: rabbitmquser
+          password: rabbitmquserpassword
+          vhost: /vantage6
 
   # The store deployment contains the store and the database.
   vantage6-store:
@@ -343,6 +340,7 @@ deployments:
         name: ./charts/store
       values:
         store:
+          standalone: true
           image: ${STORE_IMAGE}
           imagePullPolicy: IfNotPresent
           baseUrl: http://localhost:7602
@@ -366,16 +364,14 @@ deployments:
             disable_review: true
             review_own_algorithm: true
             forward_ports: false
-
-        # This is the location of the database on the host system. In case you are using
-        # Windows in combination with WSL, you should put a path here that is accessible
-        # by the Docker daemon. For example you can use the following path:
-        #
-        #   volumePath: /run/desktop/mnt/host/wsl/[SOME_PATH]
-        #
-        # This creates a mount to the `/mnt/wsl/[SOME_PATH]` directory. Note that this
-        # directory is emptied when the WSL2 instance is restarted.
         database:
+          external: false
+          image:
+            repository: postgres
+            tag: "13"
+          username: vantage6
+          password: vantage6
+          name: vantage6
           volumePath: ${STORE_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
 
@@ -394,6 +390,8 @@ deployments:
       # are set.
       values:
         node:
+          name: dummy-node-name  # will be overridden by the environment variables
+          apiKey: dummy-api-key  # will be overridden by the environment variables
           image: ${NODE_IMAGE}
           imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}
@@ -419,7 +417,6 @@ deployments:
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
-  # This starts keycloak in development mode.
   vantage6-auth:
     labelSelector:
       app.kubernetes.io/instance: vantage6-auth-kc

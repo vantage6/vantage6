@@ -1,12 +1,10 @@
-import subprocess
-import time
-
 import click
 
-from vantage6.common import info, warning
+from vantage6.common import info
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.auth.install import check_and_install_keycloak_operator
+from vantage6.cli.auth.k8s_utils import wait_for_keycloak_ready
 from vantage6.cli.common.attach import attach_logs
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.common.start import (
@@ -73,7 +71,7 @@ def cli_auth_start(
 
     # Note that we also wait in case of attach - if not ready, we cannot attach
     if wait_ready or attach:
-        _wait_for_keycloak_ready(ctx.helm_release_name, k8s_config)
+        wait_for_keycloak_ready(ctx.helm_release_name, k8s_config)
 
     if attach:
         attach_logs(
@@ -84,83 +82,3 @@ def cli_auth_start(
             k8s_config=k8s_config,
             is_sandbox=ctx.is_sandbox,
         )
-
-
-def _kubectl(
-    args: list[str], k8s_config, check: bool = True
-) -> subprocess.CompletedProcess:
-    """
-    Run a kubectl command with optional context/namespace from k8s_config.
-
-    Parameters
-    ----------
-    args : list[str]
-        Arguments to pass to kubectl
-    k8s_config
-        Kubernetes configuration with context and namespace
-    check : bool
-        Whether to raise exception on non-zero exit code (default: True)
-
-    Returns
-    -------
-    subprocess.CompletedProcess
-        The result of the subprocess call
-    """
-    cmd = ["kubectl"] + args
-    if k8s_config.context:
-        cmd.extend(["--context", k8s_config.context])
-    if k8s_config.namespace:
-        cmd.extend(["--namespace", k8s_config.namespace])
-    return subprocess.run(
-        cmd, check=check, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
-
-
-def _wait_for_keycloak_ready(release_name: str, k8s_config) -> None:
-    """
-    Ensure Keycloak pod is ready and realm import job finished.
-    """
-    selector = f"app.kubernetes.io/instance={release_name}-kc"
-    job_name = f"{release_name}-realm-import"
-
-    info("Waiting for Keycloak pod to be created...")
-    while True:
-        result = _kubectl(["get", "pod", "-l", selector], k8s_config)
-        if result.returncode == 0:
-            break
-        else:
-            time.sleep(1)
-    info("Keycloak pod was created, waiting for it to be ready...")
-    _kubectl(
-        ["wait", "--for=condition=ready", "pod", "-l", selector, "--timeout", "300s"],
-        k8s_config,
-    )
-
-    info("Waiting for Keycloak realm import job to be created...")
-    while True:
-        result = _kubectl(["get", "job", job_name], k8s_config, check=False)
-        if result.returncode == 0:
-            break
-        else:
-            time.sleep(1)
-    info("Keycloak realm import job was created, waiting for it to finish...")
-    # Check if the job exists first (don't raise exception if it doesn't)
-    job_check = _kubectl(["get", "job", job_name], k8s_config, check=False)
-    if job_check.returncode == 0:
-        # Job exists, wait for it to complete
-        try:
-            _kubectl(
-                [
-                    "wait",
-                    "--for=condition=complete",
-                    f"job/{job_name}",
-                    "--timeout",
-                    "120s",
-                ],
-                k8s_config,
-            )
-            info("Realm import job completed successfully.")
-        except subprocess.CalledProcessError:
-            warning("Realm import job did not complete in time; continuing startup.")
-    else:
-        info("No realm import job found (realm import may be disabled).")

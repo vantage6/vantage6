@@ -1,4 +1,6 @@
 {{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
+{{- $global := .Values.global | default (dict) }}
+{{- $globalKeycloak := $global.keycloak | default (dict) }}
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: KeycloakRealmImport
 metadata:
@@ -9,7 +11,7 @@ metadata:
 spec:
   keycloakCRName: {{ .Release.Name }}-kc
   realm:
-    realm: {{ .Values.keycloak.realmImport.realm | default "vantage6" }}
+    realm: {{ default $globalKeycloak.realm .Values.keycloak.realmImport.realm }}
     enabled: {{ .Values.keycloak.realmImport.enabled | default true }}
     {{- if .Values.keycloak.realmImport.accessTokenLifespan }}
     accessTokenLifespan: {{ .Values.keycloak.realmImport.accessTokenLifespan }}
@@ -75,120 +77,96 @@ spec:
       password: {{ .Values.keycloak.realmImport.smtpServer.password | quote }}
       {{- end }}
     {{- end }}
-    {{- if .Values.keycloak.realmImport.requiredActions }}
+    {{- if .Values.keycloak.production }}
     requiredActions:
-    {{- range .Values.keycloak.realmImport.requiredActions }}
-      - alias: {{ .alias }}
-        name: {{ .name }}
-        providerId: {{ .providerId }}
-        enabled: {{ .enabled | default true }}
-        {{- if hasKey . "defaultAction" }}
-        defaultAction: {{ .defaultAction }}
-        {{- end }}
-        {{- if hasKey . "priority" }}
-        priority: {{ .priority }}
+      - alias: CONFIGURE_TOTP
+        name: Configure OTP
+        providerId: CONFIGURE_TOTP
+        enabled: true
+        defaultAction: true
+        priority: 10
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+        {{- if .Values.keycloak.realmImport.verifyEmail }}
+        - alias: VERIFY_EMAIL
+          name: Verify Email
+          providerId: VERIFY_EMAIL
+          enabled: true
+          defaultAction: true
+          priority: 40
         {{- end }}
     {{- end }}
-    {{- end }}
-    {{- if .Values.keycloak.realmImport.users }}
     users:
-    {{- range .Values.keycloak.realmImport.users }}
-      - username: {{ .username }}
-        enabled: {{ .enabled | default true }}
-        {{- if hasKey . "emailVerified" }}
-        emailVerified: {{ .emailVerified }}
+      - username: {{ default $globalKeycloak.adminUsername .Values.keycloak.realmImport.admin.username }}
+        enabled: true
+        {{- if not .Values.keycloak.production }}
+        email: admin@vantage6.org
+        firstName: Admin
+        lastName: Admin
         {{- end }}
-        {{- if hasKey . "email" }}
-        email: {{ .email }}
-        {{- end }}
-        {{- if hasKey . "firstName" }}
-        firstName: {{ .firstName }}
-        {{- end }}
-        {{- if hasKey . "lastName" }}
-        lastName: {{ .lastName }}
-        {{- end }}
-        {{- if .credentials }}
         credentials:
-        {{- range .credentials }}
-          - type: {{ .type }}
-            value: {{ .value }}
-        {{- end }}
-        {{- end }}
-        {{- if .requiredActions }}
+        - type: password
+          value: {{ default $globalKeycloak.adminPassword .Values.keycloak.realmImport.admin.password | quote}}
+        {{- if .Values.keycloak.production }}
         requiredActions:
-        {{- range .requiredActions }}
-          - {{ . }}
-        {{- end }}
-        {{- end }}
-        {{- if hasKey . "serviceAccountClientId" }}
-        serviceAccountClientId: {{ .serviceAccountClientId }}
-        {{- end }}
-        {{- if .clientRoles }}
-        clientRoles:
-        {{- range $clientId, $roles := .clientRoles }}
-          {{ $clientId }}:
-          {{- range $roles }}
-            - {{ . }}
-          {{- end }}
-        {{- end }}
+        - CONFIGURE_TOTP
+        - UPDATE_PASSWORD
+        {{- else if .Values.keycloak.realmImport.passwordUpdateRequired }}
+        requiredActions:
+        - UPDATE_PASSWORD
         {{- end }}
         realmRoles:
-          - default-roles-{{ $.Values.keycloak.realmImport.realm | default "vantage6" }}
-    {{- end }}
-    {{- end }}
-    {{- if .Values.keycloak.realmImport.clients }}
+          - default-roles-{{ .Values.keycloak.realmImport.realm | default "vantage6" }}
+      - username: service-account-backend-admin-client
+        enabled: true
+        serviceAccountClientId: backend-admin-client
+        clientRoles:
+          realm-management:
+            - view-users
+            - manage-users
+            - view-clients
+            - manage-clients
+            - create-client
     clients:
-    {{- range .Values.keycloak.realmImport.clients }}
-      - clientId: {{ .clientId }}
-        {{- if hasKey . "publicClient" }}
-        publicClient: {{ .publicClient }}
-        {{- end }}
-        {{- if hasKey . "secret" }}
-        secret: {{ .secret }}
-        {{- end }}
-        {{- if hasKey . "serviceAccountsEnabled" }}
-        serviceAccountsEnabled: {{ .serviceAccountsEnabled }}
-        {{- end }}
-        {{- if hasKey . "standardFlowEnabled" }}
-        standardFlowEnabled: {{ .standardFlowEnabled }}
-        {{- end }}
-        {{- if .attributes }}
+      - clientId: {{ default $globalKeycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
+        publicClient: true
         attributes:
-        {{- range $key, $value := .attributes }}
-          {{ $key }}: {{ $value | quote }}
-        {{- end }}
-        {{- end }}
-        {{- if .redirectUris }}
+          oauth2.device.authorization.grant.enabled: "true"
         redirectUris:
-        {{- range .redirectUris }}
+        {{- range .Values.keycloak.realmImport.publicClient.redirectUris }}
           - {{ . | quote }}
         {{- end }}
-        {{- end }}
-        {{- if .webOrigins }}
+        # By setting webOrigins to "+", we allow the same origins as redirectUris.
         webOrigins:
-        {{- range .webOrigins }}
-          - {{ . | quote }}
-        {{- end }}
-        {{- end }}
-        {{- if .protocolMappers }}
+        - "+"
+        # The public client is only for users, not for nodes. Therefore, map a
+        # constant claim to indicate the that the client is a user.
         protocolMappers:
-        {{- range .protocolMappers }}
-          - name: {{ .name }}
-            protocol: {{ .protocol }}
-            protocolMapper: {{ .protocolMapper }}
-            {{- if hasKey . "consentRequired" }}
-            consentRequired: {{ .consentRequired }}
-            {{- end }}
-            {{- if .config }}
+          - name: vantage6_client_type
+            protocol: openid-connect
+            protocolMapper: oidc-hardcoded-claim-mapper
+            consentRequired: false
             config:
-            {{- range $key, $value := .config }}
-              {{ $key }}: {{ $value | quote }}
-            {{- end }}
-            {{- end }}
-        {{- end }}
-        {{- end }}
-    {{- end }}
-    {{- end }}
+              claim.name: vantage6_client_type
+              claim.value: user
+              access.token.claim: "true"
+      # create a client that will allow the backend to manage users and clients in
+      # keycloak.
+      - clientId: backend-admin-client
+        publicClient: false
+        secret: {{ default $globalKeycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
+        serviceAccountsEnabled: true
+        standardFlowEnabled: false
     # Define organization_id as a user profile attribute using components (UserProfileProvider)
     # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
     components:

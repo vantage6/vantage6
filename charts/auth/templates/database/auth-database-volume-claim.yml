@@ -1,3 +1,4 @@
+{{- $global := .Values.global | default (dict) }}
 {{- if not .Values.database.external }}
 apiVersion: v1
 kind: PersistentVolume
@@ -23,5 +24,5 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - {{ .Values.database.k8sNodeName }}
+                - {{ .Values.database.k8sNodeName | default $global.k8sNodeName }}
 {{- end }}

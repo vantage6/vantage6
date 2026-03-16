@@ -183,6 +183,9 @@ def create_node_config(
     """
     Create a node configuration file.
 
+    Note that this function only creates node configuration files for the `v6 dev` CLI.
+    For other environments, the `v6 node new` procedure is followed.
+
     Returns
     -------
     dict
@@ -205,7 +208,7 @@ def create_node_config(
         {
             "logging": {"file": f"node_{node_number}.log"},
             "port": 7601,
-            "hq_url": "http://vantage6-hq",
+            "hq_url": "http://vantage6-hq-hq",  # Note this is the internal k8s address
             "task_dir": f"{task_directory}/node_{node_number}",
             "task_dir_extension": f"node_{node_number}",
             "api_path": "/hq",

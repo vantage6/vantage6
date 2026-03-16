@@ -8,6 +8,7 @@ import requests
 
 from vantage6.common import error, info, warning
 
+from vantage6.cli.common.k8s_utils import run_kubectl_command
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 
 
@@ -114,17 +115,16 @@ def cli_auth_install_operator(
         info("Installing Keycloak CRDs...")
         for crd_file in crd_files_to_install:
             crd_url = f"{base_url}/{crd_file}"
-            _run_kubectl_command(
-                ["kubectl", "apply", "-f", crd_url],
+            run_kubectl_command(
+                ["apply", "-f", crd_url],
                 k8s_config,
             )
         info("CRDs installed successfully.")
 
     # Adapt the clusterrolebinding to use the correct namespace (see
     # https://www.keycloak.org/operator/installation)
-    _run_kubectl_command(
+    run_kubectl_command(
         [
-            "kubectl",
             "patch",
             "clusterrolebinding",
             "keycloak-operator-clusterrole-binding",
@@ -136,9 +136,8 @@ def cli_auth_install_operator(
     )
     info("Clusterrolebinding adapted to use the correct namespace.")
 
-    _run_kubectl_command(
+    run_kubectl_command(
         [
-            "kubectl",
             "rollout",
             "restart",
             "Deployment/keycloak-operator",
@@ -155,55 +154,6 @@ def cli_auth_install_operator(
         "Keycloak Operator installed successfully in namespace "
         f"'{k8s_config.namespace}'."
     )
-
-
-def _run_kubectl_command(
-    command: list[str],
-    k8s_config: KubernetesConfig,
-    check: bool = True,
-) -> subprocess.CompletedProcess:
-    """
-    Run a kubectl command with the appropriate context and namespace.
-
-    Parameters
-    ----------
-    command : list[str]
-        The kubectl command to run (without 'kubectl' prefix if already included).
-    k8s_config: KubernetesConfig
-        Kubernetes configuration object with context and namespace.
-    check : bool
-        Whether to raise an exception on non-zero exit code.
-
-    Returns
-    -------
-    subprocess.CompletedProcess
-        The result of the subprocess call.
-    """
-    # Add context if specified
-    if k8s_config.context:
-        command.extend(["--context", k8s_config.context])
-
-    if k8s_config.namespace:
-        command.extend(["--namespace", k8s_config.namespace])
-
-    info(f"Running command: {' '.join(command)}")
-    try:
-        result = subprocess.run(
-            command,
-            check=check,
-            capture_output=True,
-            text=True,
-        )
-        if result.stdout:
-            info(result.stdout.strip())
-        return result
-    except subprocess.CalledProcessError as e:
-        error(f"Command failed: {' '.join(command)}")
-        if e.stderr:
-            error(f"Error: {e.stderr}")
-        if check:
-            raise
-        return e
 
 
 def _wait_for_operator_ready(
