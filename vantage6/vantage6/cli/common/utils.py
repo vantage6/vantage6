@@ -269,7 +269,8 @@ def generate_password(password_length: int = 16) -> str:
     Generate a strong password that meets the password policy requirements.
 
     This ensures that the password has at least 8 characters, one uppercase letter,
-    one lowercase letter, one number and one special character.
+    one lowercase letter, one number and one special character. We are avoiding
+    quotes in the password to avoid issues with escaping in YAML.
 
     Parameters
     ----------
@@ -282,6 +283,8 @@ def generate_password(password_length: int = 16) -> str:
         The generated password
     """
     alphabet = string.ascii_letters + string.digits + string.punctuation
+    # Avoid quotes to prevent YAML escaping issues
+    alphabet = "".join(set(alphabet) - {"'", '"'})
     while True:
         password = "".join(secrets.choice(alphabet) for i in range(password_length))
         if (

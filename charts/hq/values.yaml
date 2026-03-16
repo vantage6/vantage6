@@ -43,15 +43,8 @@ rabbitmq:
     repository: rabbitmq
     tag: 3-management
 
-  # username: rabbitmquser
-  # password: rabbitmquserpassword
-  # vhost: /vantage6
-
 database:
   external: true
-  # username: vantage6
-  # password: vantage6
-  # name: vantage6
 
 ui:
   image: harbor2.vantage6.ai/infrastructure/ui:uluru
