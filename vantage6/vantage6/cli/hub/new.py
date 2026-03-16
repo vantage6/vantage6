@@ -104,6 +104,14 @@ def cli_hub_new(
             },
         },
     }
+    if base_config["has_store"]:
+        extra_config["hq"]["algorithm_stores"] = [
+            {
+                "name": base_config["store_name"],
+                "url": base_config["store_url"],
+                "api_path": "/store",
+            }
+        ]
     hq_config = new(
         config_producing_func=hq_configuration_questionaire,
         config_producing_func_args=(hq_name, system_folders),
@@ -219,6 +227,11 @@ def _get_base_config() -> dict[str, Any]:
     ).unsafe_ask()
     if base_config["has_store"]:
         base_config["store_url"] = f"https://store.{url_domain}"
+        base_config["store_name"] = q.text(
+            "What is the name of the algorithm store?",
+            default="",
+            validate=lambda x: x != "",
+        ).unsafe_ask()
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
