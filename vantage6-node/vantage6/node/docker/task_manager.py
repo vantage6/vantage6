@@ -47,6 +47,7 @@ class DockerTaskManager(DockerBaseManager):
         docker_client: DockerClient,
         vpn_manager: VPNManager,
         node_name: str,
+        node_id: int,
         run_id: int,
         task_info: dict,
         tasks_dir: Path,
@@ -75,6 +76,8 @@ class DockerTaskManager(DockerBaseManager):
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
             Name of the node, to track running algorithms
+        node_id: int
+            Numeric identifier of the node in the server
         run_id: int
             Algorithm run identifier
         task_info: dict
@@ -113,6 +116,7 @@ class DockerTaskManager(DockerBaseManager):
         self.databases = databases
         self.data_volume_name = docker_volume_name
         self.node_name = node_name
+        self.node_id = node_id
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
@@ -789,7 +793,7 @@ class DockerTaskManager(DockerBaseManager):
                 "named": input_data.get("kwargs", {}),
             },
             "executor": {
-                "id": str(self.node_name),
+                "id": self.node_id,
                 "kind": "vantage6-node",
             },
             "inputs": inputs,

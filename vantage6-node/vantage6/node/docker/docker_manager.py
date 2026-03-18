@@ -649,6 +649,7 @@ class DockerManager(DockerBaseManager):
             task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
+            node_id=self.client.whoami.id_,
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
