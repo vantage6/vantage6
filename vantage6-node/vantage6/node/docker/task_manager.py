@@ -769,15 +769,26 @@ class DockerTaskManager(DockerBaseManager):
 
             if database.get("parameters"):
                 try:
-                    parameters = json.loads(database["parameters"])
+                    # The server stores all non-label database request fields
+                    # in TaskDatabase.parameters, including `query`,
+                    # `sheet_name` and `arguments`.
+                    database_parameters = json.loads(database["parameters"])
                 except Exception:
                     self.log.warning(
                         "Unable to parse parameters for database '%s' in run context",
                         label,
                     )
                 else:
-                    if isinstance(parameters, dict) and parameters:
-                        input_item["parameters"] = parameters
+                    # For run context, only surface the nested per-input `arguments`
+                    # object, not the other database request fields.
+                    # As we mature this run context idea, this might change.
+                    arguments = (
+                        database_parameters.get("arguments")
+                        if isinstance(database_parameters, dict)
+                        else None
+                    )
+                    if isinstance(arguments, dict):
+                        input_item["arguments"] = arguments
 
             inputs.append(input_item)
 
