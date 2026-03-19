@@ -4456,8 +4456,6 @@ class TestResources(unittest.TestCase):
         org2.delete()
         col.delete()
 
-
-class TestKillTaskSemantics(TestResources):
     def test_kill_task_includes_all_unfinished_child_runs(self):
         # Create a parent task with one run and a child task with three child
         # runs. One of the child runs is already completed and should not be
