@@ -6,6 +6,7 @@ import uuid
 import random
 import string
 import yaml
+import datetime
 
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -407,6 +408,91 @@ class TestResources(unittest.TestCase):
 
         result3 = self.app.get("/api/run?task_id=1", headers=headers)
         self.assertEqual(result3.status_code, 200)
+
+    def test_run_patch_fails_pending_siblings(self):
+        org1 = Organization(name=str(uuid.uuid1()))
+        org2 = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org1, org2])
+        col.save()
+
+        node1, api_key1 = self.create_node(organization=org1, collaboration=col)
+        node2, _ = self.create_node(organization=org2, collaboration=col)
+
+        task = Task(
+            image="localhost/algorithms/test:local",
+            collaboration=col,
+            init_org=org1,
+        )
+        task.save()
+
+        failing_run = Run(
+            task=task,
+            organization=org1,
+            status=TaskStatus.PENDING.value,
+        )
+        pending_sibling = Run(
+            task=task,
+            organization=org2,
+            status=TaskStatus.PENDING.value,
+        )
+        started_sibling = Run(
+            task=task,
+            organization=org2,
+            status=TaskStatus.PENDING.value,
+            started_at=datetime.datetime.now(datetime.timezone.utc),
+        )
+        finished_sibling = Run(
+            task=task,
+            organization=org2,
+            status=TaskStatus.COMPLETED.value,
+            finished_at=datetime.datetime.now(datetime.timezone.utc),
+        )
+        failing_run.save()
+        pending_sibling.save()
+        started_sibling.save()
+        finished_sibling.save()
+
+        try:
+            headers = self.login_node(api_key1)
+            response = self.app.patch(
+                f"/api/run/{failing_run.id}",
+                headers=headers,
+                json={"status": TaskStatus.FAILED.value},
+            )
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+
+            pending_sibling = Run.get(pending_sibling.id)
+            started_sibling = Run.get(started_sibling.id)
+            finished_sibling = Run.get(finished_sibling.id)
+
+            # Sibling runs not yet started shouldn't be in a state that would
+            # make it be picked up later (i.e. we want finished_at set)
+            self.assertEqual(pending_sibling.status, TaskStatus.FAILED.value)
+            self.assertIsNone(pending_sibling.started_at)
+            self.assertIsNotNone(pending_sibling.finished_at)
+            self.assertIn(
+                f"sibling run id={failing_run.id} failed",
+                pending_sibling.log,
+            )
+
+            # Started/finished siblings should not be touched by fail-fast update.
+            self.assertEqual(started_sibling.status, TaskStatus.PENDING.value)
+            self.assertIsNotNone(started_sibling.started_at)
+            self.assertIsNone(started_sibling.finished_at)
+
+            self.assertEqual(finished_sibling.status, TaskStatus.COMPLETED.value)
+            self.assertIsNotNone(finished_sibling.finished_at)
+        finally:
+            failing_run.delete()
+            pending_sibling.delete()
+            started_sibling.delete()
+            finished_sibling.delete()
+            task.delete()
+            node1.delete()
+            node2.delete()
+            col.delete()
+            org1.delete()
+            org2.delete()
 
     def test_task_with_id(self):
         headers = self.login("root")
