@@ -47,7 +47,7 @@ pure-eval==0.2.2
 pycparser==2.21
 pyfiglet==1.0.4
 Pygments==2.15.0
-pyjwt==2.9.0
+pyjwt==2.12.1
 pyotp==2.8.0
 pyparsing==3.0.9
 pyrsistent==0.19.3

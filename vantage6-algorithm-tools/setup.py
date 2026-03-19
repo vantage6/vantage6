@@ -34,14 +34,14 @@ setup(
     install_requires=[
         "openpyxl>=3.0.0",
         "pandas>=1.5.3",
-        "pyjwt==2.9.0",
+        "pyjwt==2.12.1",
         "pyfiglet==1.0.4",
         # psycopg2-binary is not used directly in algorithm tools, but is necessary when
         # running SQL queries on a postgres database.
         "psycopg2-binary==2.9.10",
         "SPARQLWrapper>=2.0.0",
         "sqlalchemy==1.4.46",
-        f'vantage6-common=={version_ns["__version__"]}',
+        f"vantage6-common=={version_ns['__version__']}",
     ],
     extras_require={
         "dev": [
