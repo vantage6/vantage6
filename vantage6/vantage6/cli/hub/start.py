@@ -38,6 +38,15 @@ from vantage6.cli.k8s_config import select_k8s_config
     default=True,
     help="Automatically install Envoy Gateway if it is not detected in the cluster.",
 )
+@click.option(
+    "--envoy-gateway-version",
+    default=None,
+    help=(
+        "Envoy Gateway version tag to use for installation. "
+        "If omitted, the latest release is looked up from GitHub; "
+        "if that lookup fails, provide this flag explicitly."
+    ),
+)
 @click_insert_context(
     type_=InstanceType.HUB,
     include_name=True,
@@ -54,6 +63,7 @@ def cli_hub_start(
     chart_version: str | None,
     wait_ready: bool,
     auto_install_gateway: bool = True,
+    envoy_gateway_version: str | None = None,
 ) -> None:
     """
     Start a hub environment.
@@ -83,7 +93,11 @@ def cli_hub_start(
 
     # 2) Ensure an Envoy Gateway installation is available when hub gateway is enabled.
     if hub_gateway.get("enabled"):
-        ensure_envoy_gateway(k8s_config, auto_install=auto_install_gateway)
+        ensure_envoy_gateway(
+            k8s_config,
+            auto_install=auto_install_gateway,
+            version=envoy_gateway_version,
+        )
 
     # 3) Keycloak operator (and its CRDs) are needed for the auth subchart.
     check_and_install_keycloak_operator(k8s_config)

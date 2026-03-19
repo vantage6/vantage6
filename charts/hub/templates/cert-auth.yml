@@ -6,7 +6,7 @@
 {{- $authCfg := .Values.auth | default (dict) -}}
 {{- $authKeycloak := $authCfg.keycloak | default (dict) -}}
 {{- $behindGateway := and ($authKeycloak.behindGateway | default (dict)) (($authKeycloak.behindGateway | default (dict)).enabled | default false) -}}
-{{- if and ($hi.enabled | default false) (eq ($tls.mode | default "cert-manager") "cert-manager") ($cm.enabled | default true) (ne (trim $authHost) "") $behindGateway -}}
+{{- if and ($hg.enabled | default false) (eq ($tls.mode | default "cert-manager") "cert-manager") ($cm.enabled | default true) (ne (trim $authHost) "") $behindGateway -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -20,4 +20,3 @@ spec:
     kind: ClusterIssuer
     name: {{ $cm.clusterIssuer | default "letsencrypt-prod" | quote }}
 {{- end }}
-

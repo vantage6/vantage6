@@ -1,6 +1,9 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
 {{- $hqHost := get $hosts "hq" | default "" -}}
+{{- $hqValues := .Values.hq | default (dict) -}}
+{{- $hqCfg := $hqValues.hq | default (dict) -}}
+{{- $hqPort := $hqCfg.port | default 7601 -}}
 {{- if and ($hg.enabled | default false) (ne (trim $hqHost) "") -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -20,5 +23,5 @@ spec:
             value: /
       backendRefs:
         - name: {{ .Release.Name }}-hq
-          port: {{ .Values.hq.port }}
+          port: {{ $hqPort }}
 {{- end }}

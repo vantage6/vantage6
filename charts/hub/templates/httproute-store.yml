@@ -1,6 +1,9 @@
 {{- $hg := .Values.hubGateway | default (dict) -}}
 {{- $hosts := $hg.hosts | default (dict) -}}
 {{- $storeHost := get $hosts "store" | default "" -}}
+{{- $storeValues := .Values.store | default (dict) -}}
+{{- $storeCfg := $storeValues.store | default (dict) -}}
+{{- $storePort := $storeCfg.port | default 7602 -}}
 {{- if and ($hg.enabled | default false) (ne (trim $storeHost) "") -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -20,6 +23,5 @@ spec:
             value: /
       backendRefs:
         - name: {{ .Release.Name }}-store
-          port: {{ .Values.store.port }}
+          port: {{ $storePort }}
 {{- end }}
-

@@ -133,6 +133,8 @@ def cert_manager_seems_installed(k8s_config: KubernetesConfig) -> bool:
             ["get", "deployment", "cert-manager", "-n", "cert-manager"],
             k8s_config=k8s_config,
             check=False,
+            # intentionally not using the namespace from the Kubernetes configuration
+            use_k8s_config_namespace=False,
         )
         if result.returncode == 0:
             return True
