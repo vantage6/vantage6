@@ -22,6 +22,7 @@ from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import test_context
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
+from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
 from vantage6.server.model import (
     Rule,
@@ -729,6 +730,53 @@ class TestResources(unittest.TestCase):
         for resource in Role.get():
             if resource.name == ROLE_TO_CREATE_NAME:
                 resource.delete()
+
+    def test_default_role_sync_skips_custom_role_with_same_name(self):
+        org = Organization(name=str(uuid.uuid1()))
+        org.save()
+        custom_rule = Rule.get_by_("organization", Scope.ORGANIZATION, Operation.VIEW)
+        default_rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
+        # A user creating an "Organization Admin" themselves scenario
+        role = Role(
+            name=DefaultRole.ORG_ADMIN,
+            description="Custom org admin role",
+            rules=[custom_rule],
+            organization=org,
+            is_default_role=False,
+        )
+        role.save()
+
+        default_role = {
+            "name": DefaultRole.ORG_ADMIN,
+            "description": "Default org admin role",
+            "rules": [default_rule],
+        }
+
+        try:
+            with patch(
+                "vantage6.server.get_default_roles", return_value=[default_role]
+            ), patch("vantage6.server.log.warning") as mock_warning:
+                ServerApp._add_default_roles()
+
+            updated_role = Role.get(role.id)
+            same_name_roles = [
+                role_
+                for role_ in Role.get()
+                if role_.name == DefaultRole.ORG_ADMIN.value
+            ]
+
+            # we check it wasn't updated
+            self.assertEqual(updated_role.description, role.description)
+            self.assertEqual(set(updated_role.rules), set(role.rules))
+            self.assertFalse(updated_role.is_default_role)
+            self.assertEqual(len(same_name_roles), 1)
+            mock_warning.assert_called_once()
+            warning_msg, role_name = mock_warning.call_args.args
+            self.assertIn("role by that name is already present", warning_msg.lower())
+            self.assertEqual(role_name, DefaultRole.ORG_ADMIN.value)
+        finally:
+            role.delete()
+            org.delete()
 
     def test_create_role_as_root_for_different_organization(self):
         headers = self.login("root")

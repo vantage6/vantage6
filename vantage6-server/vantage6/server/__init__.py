@@ -716,30 +716,42 @@ class ServerApp:
     @staticmethod
     def _add_default_roles() -> None:
         for role in get_default_roles(db):
-            if not db.Role.get_by_name(role["name"]):
-                log.warning("Creating new default role %s...", role["name"].value)
+            # Normalize role name for logging and DB lookups: default-role
+            # definitions use enum members, and this keeps the code robust if
+            # plain strings are ever provided
+            role_name = (
+                role["name"].value
+                if isinstance(role["name"], enum.Enum)
+                else role["name"]
+            )
+            if not db.Role.get_by_name(role_name):
+                log.warning("Creating new default role %s...", role_name)
                 new_role = db.Role(
-                    name=role["name"],
+                    name=role_name,
                     description=role["description"],
                     rules=role["rules"],
                     is_default_role=True,
                 )
                 new_role.save()
             else:
-                current_role = db.Role.get_by_name(role["name"])
+                current_role = db.Role.get_by_name(role_name, is_default_role=True)
+                if not current_role:
+                    log.warning(
+                        "'%s' is a default (built-in) role name. "
+                        "A role by that name is already present in the database. "
+                        "Will skip creating the default role by the same name.",
+                        role_name,
+                    )
+                    continue
                 # Check whether any default role properties changed. Use set()
                 # to compare rules without relying on their order.
                 has_rule_changes = set(current_role.rules) != set(role["rules"])
                 has_description_change = current_role.description != role["description"]
-                # If for some reason existing role in db has same name but it
-                # wasn't a "default" role, we make it default
-                is_not_default = not current_role.is_default_role
 
-                if has_rule_changes or has_description_change or is_not_default:
-                    log.warning("Updating default role %s", role["name"].value)
+                if has_rule_changes or has_description_change:
+                    log.warning("Updating default role %s", role_name)
                     current_role.rules = role["rules"]
                     current_role.description = role["description"]
-                    current_role.is_default_role = True
                     current_role.save()
 
     def start(self) -> None:
