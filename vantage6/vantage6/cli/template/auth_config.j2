@@ -1,4 +1,4 @@
-{% from "_yaml_macros.j2" import yaml_sq %}
+{% from "_yaml_macros.j2" import yaml_sq, yaml_optional_sq_field %}
 
 keycloak:
   # Whether the Keycloak is deployed standalone or as part of a vantage6 hub.
@@ -175,42 +175,18 @@ keycloak:
     # SMTP server configuration for email sending
     {% if keycloak.smtpServer is defined %}
     smtpServer:
-      {% if keycloak.smtpServer.host is defined %}
-      host: '{{ keycloak.smtpServer.host }}'
-      {% endif %}
-      {% if keycloak.smtpServer.port is defined %}
-      port: '{{ keycloak.smtpServer.port }}'
-      {% endif %}
-      {% if keycloak.smtpServer.from is defined %}
-      from: '{{ keycloak.smtpServer.from }}'
-      {% endif %}
-      {% if keycloak.smtpServer.fromDisplayName is defined %}
-      fromDisplayName: '{{ keycloak.smtpServer.fromDisplayName }}'
-      {% endif %}
-      {% if keycloak.smtpServer.replyTo is defined %}
-      replyTo: '{{ keycloak.smtpServer.replyTo }}'
-      {% endif %}
-      {% if keycloak.smtpServer.replyToDisplayName is defined %}
-      replyToDisplayName: '{{ keycloak.smtpServer.replyToDisplayName }}'
-      {% endif %}
-      {% if keycloak.smtpServer.ssl is defined %}
-      ssl: '{{ keycloak.smtpServer.ssl }}'
-      {% endif %}
-      {% if keycloak.smtpServer.starttls is defined %}
-      starttls: '{{ keycloak.smtpServer.starttls }}'
-      {% endif %}
-      {% if keycloak.smtpServer.auth is defined %}
-      auth: '{{ keycloak.smtpServer.auth }}'
-      {% endif %}
-      {% if keycloak.smtpServer.authType is defined %}
-      authType: '{{ keycloak.smtpServer.authType }}'
-      {% endif %}
-      {% if keycloak.smtpServer.user is defined %}
-      user: '{{ keycloak.smtpServer.user }}'
-      {% endif %}
-      {% if keycloak.smtpServer.password is defined %}
-      password: {{ yaml_sq(keycloak.smtpServer.password) }}
-      {% endif %}
+{{ yaml_optional_sq_field('host', keycloak.smtpServer.host, 6) -}}
+{{ yaml_optional_sq_field('port', keycloak.smtpServer.port, 6) -}}
+{{ yaml_optional_sq_field('from', keycloak.smtpServer.from, 6) -}}
+{{ yaml_optional_sq_field('fromDisplayName', keycloak.smtpServer.fromDisplayName, 6) -}}
+{{ yaml_optional_sq_field('replyTo', keycloak.smtpServer.replyTo, 6) -}}
+{{ yaml_optional_sq_field('replyToDisplayName', keycloak.smtpServer.replyToDisplayName, 6) -}}
+{{ yaml_optional_sq_field('ssl', keycloak.smtpServer.ssl, 6) -}}
+{{ yaml_optional_sq_field('starttls', keycloak.smtpServer.starttls, 6) -}}
+{{ yaml_optional_sq_field('auth', keycloak.smtpServer.auth, 6) -}}
+{{ yaml_optional_sq_field('authType', keycloak.smtpServer.authType, 6) -}}
+{{ yaml_optional_sq_field('user', keycloak.smtpServer.user, 6) -}}
+{{ yaml_optional_sq_field('password', keycloak.smtpServer.password, 6) -}}
     {% else %}
     # smtpServer:
     #  host: your-smtp-server-hostname.org

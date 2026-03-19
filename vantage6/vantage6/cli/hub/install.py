@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 from typing import Optional
 
@@ -53,17 +52,11 @@ def _check_cert_manager_crds_installed(k8s_config: KubernetesConfig) -> bool:
     the hub chart requires to create Certificate resources.
     """
     try:
-        cmd = ["kubectl", "get", "crd", "certificates.cert-manager.io"]
-        if k8s_config.context:
-            cmd.extend(["--context", k8s_config.context])
-        if k8s_config.namespace:
-            cmd.extend(["--namespace", k8s_config.namespace])
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
+        result = run_kubectl_command(
+            ["get", "crd", "certificates.cert-manager.io"],
+            k8s_config=k8s_config,
             check=False,
+            use_k8s_config_namespace=False,
         )
         return result.returncode == 0
     except Exception:

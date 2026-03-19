@@ -159,6 +159,8 @@ def _wait_for_envoy_gateway_ready(
 ) -> None:
     """
     Wait for the Envoy Gateway controller deployment to be available.
+
+    Exits if the controller does not become available within the given timeout.
     """
 
     info("Waiting for Envoy Gateway to become ready...")
@@ -182,10 +184,17 @@ def _wait_for_envoy_gateway_ready(
             use_k8s_config_namespace=False,
         )
         if result.stdout.strip() == "True":
-            break
+            info("Envoy Gateway controller is available.")
+            return
+
         time.sleep(5)
 
-    info("Envoy Gateway controller is available.")
+    error(
+        "❌ Timed out waiting for Envoy Gateway controller to become available. "
+        "Please check the Envoy Gateway installation (pods, events, and logs) "
+        "and try again."
+    )
+    exit(1)
 
 
 def ensure_envoy_gateway(
