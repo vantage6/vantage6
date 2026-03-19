@@ -73,6 +73,9 @@ more details regarding the lower-level changes required to accomplish it.*
 
   - Check if database labels exist on node startup
     (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
+  - Prevent issues in database initialization due to racing conditions when there
+    are multiple concurrent services start at the same time
+    (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
 
 4.13.6
 ------
