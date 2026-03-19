@@ -33,12 +33,12 @@ from vantage6.cli.hq.start import cli_hq_start
 from vantage6.cli.hq.stop import cli_hq_stop
 from vantage6.cli.hq.version import cli_hq_version
 from vantage6.cli.hub.files import cli_hub_files
+from vantage6.cli.hub.install import cli_hub_install
 from vantage6.cli.hub.list import cli_hub_configuration_list
 from vantage6.cli.hub.new import cli_hub_new
 from vantage6.cli.hub.remove import cli_hub_remove
 from vantage6.cli.hub.start import cli_hub_start
 from vantage6.cli.hub.stop import cli_hub_stop
-from vantage6.cli.hub.install import cli_hub_install
 from vantage6.cli.node.attach import cli_node_attach
 from vantage6.cli.node.create_private_key import cli_node_create_private_key
 from vantage6.cli.node.files import cli_node_files
