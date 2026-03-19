@@ -124,20 +124,29 @@ pipelines:
       echo "Keycloak is ready, starting dev mode..."
       start_dev \
         vantage6-auth
-      echo "Starting other components..."
+      # Note that store is started before HQ so that HQ can couple to the store on
+      # startup.
+      # TODO alternative solution is to make the store coupling a process that waits
+      # until it is successful.
+      echo "Starting store..."
       create_deployments \
-        vantage6-hq \
         vantage6-store
+      echo "Waiting for store pod to be ready..."
+      wait_for_pod_ready app=store,component=postgres 300s
+      echo "Store pod is ready, starting dev mode..."
+      start_dev \
+        vantage6-store \
+        vantage6-store-db
+      echo "Starting HQ..."
+      create_deployments \
+        vantage6-hq
       echo "Waiting for database pods to be ready..."
       wait_for_pod_ready app=vantage6-hq,component=postgres 300s
-      wait_for_pod_ready app=store,component=postgres 300s
       echo "Database pods are ready, starting dev mode..."
       start_dev \
         vantage6-hq \
         vantage6-hq-db \
-        vantage6-ui \
-        vantage6-store \
-        vantage6-store-db
+        vantage6-ui
 
   node:
     run: |-

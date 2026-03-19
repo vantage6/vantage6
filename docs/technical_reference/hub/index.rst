@@ -1,13 +1,12 @@
-HQ features
+Hub features
 ---------------
 
-The following pages each describe one feature of the vantage6 HQ.
+The following pages each describe one feature of the vantage6 hub.
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
-   2fa
    api_structure
 
 

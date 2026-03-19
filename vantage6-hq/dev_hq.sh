@@ -11,9 +11,11 @@ if [ -z "$VANTAGE6_HQ_CONFIG_LOCATION" ]; then
     VANTAGE6_HQ_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+# initialize the database
+python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_HQ_CONFIG_LOCATION}"
 
-
-uwsgi \
+# start HQ
+exec uwsgi \
     --py-autoreload 1 \
     --reload-mercy 1 \
     --http :7601 \

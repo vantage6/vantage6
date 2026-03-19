@@ -105,7 +105,7 @@ class PostUpdates(commands.Cog):
             "[Latest release notes](https://docs.vantage6.ai/en/main/"
             "release_notes.html)\n"
             "[Documentation](https://docs.vantage6.ai/en/main/index.html)\n"
-            "[How to contribute](https://docs.vantage6.ai/en/main/devops/"
+            "[How to contribute](https://docs.vantage6.ai/en/main/community/"
             "contribute.html)\n"
         )
 

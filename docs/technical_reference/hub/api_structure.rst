@@ -18,3 +18,7 @@ same way, loosely following HATEOAS rules. An example is detailed below:
 The response for this task includes a link to the results that are attached to
 this task. More detail on the results are provided when collecting the response
 for that link.
+
+Almost all API endpoints of vantage6 HQ and algorithm store are structured in this way.
+An exception is, for instance, the version endpoint, which returns a simple JSON
+response.

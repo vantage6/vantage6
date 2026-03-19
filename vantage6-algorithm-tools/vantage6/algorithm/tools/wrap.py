@@ -135,6 +135,8 @@ def _run_algorithm_method(
         exit(1)
 
     # try to run the method
+    if not arguments:
+        arguments = {}
     try:
         result = method_fn(**arguments)
     except Exception as exc:

@@ -12,6 +12,7 @@ node:
 
   # The image to use for the node.
   image: harbor2.vantage6.ai/infrastructure/node:latest
+
   # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
   imagePullPolicy: Always
 
@@ -264,5 +265,5 @@ node:
     # Set extension for the task directory. In the development environment, the task
     # directory is mounted as a volume and shared by multiple nodes. This extension is
     # added to the task directory to avoid conflicts in storing the task results for
-    # this node.
+    # this node. It should not be used outside of the ``v6 dev`` environment.
     task_dir_extension: my_node_1

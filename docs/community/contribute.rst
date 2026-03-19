@@ -13,6 +13,7 @@ code changes.
 
 Reporting issues
 ----------------
+
 Issues can be posted at our `Github issue page <https://github.com/vantage6/vantage6/issues>`_.
 
 We distinguish between the following types of issues:
@@ -32,7 +33,7 @@ us to manage them.
     as they should not be publically visible. To see how we deal with security
     vulnerabilities read our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
 
-    See the :ref:`security-vulnerabilities` section when you want to release a
+    The :ref:`security-vulnerabilities` section describes how to release a
     security patch yourself.
 
 We distibute the open issues in sprints and hotfixes.
@@ -63,9 +64,8 @@ If you are a member of the vantage6 Github organization, you can create an
 security advisory in the `Security <https://github.com/vantage6/vantage6/security/
 advisories>`_ tab. See :numref:`advisory` on what to fill in.
 
-If you are not a member, please reach out directly to Frank Martin and/or Bart
-van Beusekom, or any other project member. They can then create a security
-advisory for you.
+If you are not a member, please reach out to a vantage6 project member.
+They can create a security advisory for you.
 
 .. list-table:: Advisory details
    :name: advisory
@@ -111,17 +111,17 @@ there (Look for the button ``Start a temporary private fork``). This private
 fork should be used to solve the issue.
 
 From the same page you should request a CVE number so we can alert dependent
-software projects. Github will review the request. We are not sure what this
-entails, but so far they approved all advisories.
+software projects. Github will review the request - it is not clear what this
+entails, but they have approved all advisories so far.
 
 Community sprints
 -----------------
 
 We organize community sprints to work on new features and bug fixes. In cycles of four
-weeks, we work across multiple organizations to improve the vantage6 infrastructure.
-We work [sprint boards](https://github.com/orgs/vantage6/projects/1) where we track
+weeks, we work across multiple organizations to improve vantage6.
+We work on `sprint boards <https://github.com/orgs/vantage6/projects/1>`_ where we track
 the progress of the issues that are scheduled for the sprint. Each sprint starts with a
-planning meeting where we decide which issues we will work on. At the end of the sprint,
+planning meeting, where we decide which issues we will work on. At the end of the sprint,
 we have a review meeting where we discuss the progress.
 
 The sprints are open to any developer who wants to contribute significantly to the
@@ -136,8 +136,8 @@ Community Meetings
 
 We host bi-monthly community meetings intended for aligning development
 efforts. Anyone is welcome to join although they are mainly intended for
-infrastructure and algorithm developers. There is an opportunity to present
-what your team is working on an find collaboration partners.
+infrastructure and algorithm developers. You can present what your team is working on
+and find collaboration partners.
 
 Community meetings are usually held on the third Thursday of the month at 11:00
 AM CET on Microsoft Teams. Reach out on `Discord <https://discord.gg/yAyFf6Y>`_
@@ -157,9 +157,9 @@ your contribution is added to the repository.
 
 The workflow below is specific to the
 `vantage6 infrastructure repository <https://github.com/vantage6/vantage6>`_.
-However, the concepts for our other repositories are the same. Then, modify
-the links below and ignore steps that may be irrelevant to that particular
-repository.
+However, the concepts for our other repositories (such as algorithm repositories) are
+the same. Then, modify the links below and ignore steps that may be irrelevant to that
+particular repository.
 
 Setup your environment
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -179,6 +179,11 @@ Setup your environment
 
     git remote add fork https://github.com/{username}/vantage6
 
+  .. note::
+
+    If you are a member of the vantage6 Github organization, you do not need to create a
+    fork but you can simply create a new branch and push your work to that branch.
+
 * Create a virtual environment to work in using uv:
 
   ::
@@ -195,33 +200,35 @@ Setup your environment
 
 Coding
 ^^^^^^
+
 First, create a branch you can work on. Make sure you branch of the latest
 ``main`` branch:
 
-  ::
+.. code::
 
     git fetch origin
     git checkout -b your-branch-name origin/main
+
 
 Then you can create your bugfix, change or feature. Make sure to commit
 frequently. Preferably include tests that cover your changes.
 
 Finally, push your commits to your fork on Github and create a pull request.
 
-  ::
+::
 
     git push --set-upstream fork your-branch-name
 
 Code style
 ^^^^^^^^^^
 
-We use `black <https://black.readthedocs.io/en/stable/index.html>`_ to format
+We use `Ruff <https://docs.astral.sh/ruff/>`_ to format
 our code. It is important that you use this style so make sure that your
 contribution will be easily incorporated into the code base.
 
-Black is automatically installed into your python environment
-when you run ``make install-dev``. To automatically enable black, we recommend
-that you install the `Black Formatter` extension from Microsoft in the VSCode
+Ruff is automatically installed into your python environment
+when you run ``make install-dev``. To automatically enable Ruff, we recommend
+that you install the `Ruff` extension from Charlie R Marsh in the VSCode
 marketplace. By enabling the option 'format on save' you can then automatically
 format your code in the proper style when you save a file.
 
@@ -229,43 +236,24 @@ Alternatively, or additionally, you may install a pre-commit hook that will
 automatically format your code when you commit it. To do so, run the following
 command:
 
-  ::
+::
 
     pre-commit install
 
 You may need to run ``pre-commit autoupdate`` to update the pre-commit hook.
 
-
-
-Code style - Ruff [WIP]
-^^^^^^^^^^^^^^^^^^^^^^^
-
-We use `Ruff <https://docs.astral.sh/ruff/>`_ to lint and format our code. As
-described by Ruff, it is a `drop-in replacement <https://docs.astral.sh/ruff/
-faq/#is-the-ruff-linter-compatible-with-black>`_ for Black.
-
-You can install Ruff by running ``uv add ruff`` in your virtual environment.
-To automatically enable Ruff, we recommend that you install the `Ruff` extension
-from Astral Software in the VSCode marketplace. By enabling the option
-'format on save' you can then automatically format your code in the proper style
-when you save a file.
-
-The configuration for Ruff is located in the file ``.ruff.toml`` in the root of
-the repository.
-
-
 Unit tests & coverage
 ^^^^^^^^^^^^^^^^^^^^^
 You can execute unit tests using the ``test`` command in the Makefile:
 
-  ::
+::
 
     make test
 
 If you want to execute a specific unit test (e.g. the one you just created or
 one that is failing), you can use a command like:
 
-  ::
+::
 
     python -m unittest tests_folder.test_filename.TestClassName.test_name
 
@@ -281,7 +269,8 @@ changes to verify that it does what you expect it to do. The ``v6 dev``
 vantage6 network can be run that immediately syncs code changes that you make. It also
 restarts those infrastructure components affected by your changes. Note
 that this only works for changes that you make to code running *within* vantage6
-containers.
+containers. If you make changes to the images, make sure to run ``v6 dev rebuild`` to
+rebuild the images.
 
 To test changes to the CLI, make sure that you create an editable installation of the
 CLI, as indicated above with the ``make install-dev`` command.
@@ -300,7 +289,7 @@ these commands use the commands of individual infrastructure components in ``v6 
 If you have also changed the Helm charts locally, you can use the ``--local-chart-dir``
 flag to test the changes locally. For example:
 
-  ::
+::
 
     v6 sandbox new --local-chart-dir /path/to/vantage6/charts
 
@@ -314,7 +303,7 @@ Pull Request
 
 Please consider first which branch you want to merge your contribution into.
 **Patches** are usually directly merged into ``main``, but **features** are
-usually merged into a release branch (e.g. ``release/4.1`` for version 4.1.0)
+usually merged into a release branch (e.g. ``release/4.1`` for versions 4.1.x)
 before being merged into the ``main`` branch.
 
 Before the PR is merged, it should pass the following requirements:
@@ -330,11 +319,13 @@ Before the PR is merged, it should pass the following requirements:
 * `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage
   analysis - should not decrease
 
+Code owners may diverge from the above requirements, for instance in case of false
+positives in the CodeQL check.
 
 Documentation
 ^^^^^^^^^^^^^
-Depending on the changes you made, you may need to add a little (or a lot) of
-documentation. For more information on how and where to edit the documentation,
+Depending on the changes you made, you may need to add documentation. For more
+information on how and where to edit the documentation,
 see the section :doc:`documentation`.
 
 Consider which documentation you need to update:

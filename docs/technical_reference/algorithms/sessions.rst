@@ -47,7 +47,7 @@ Sessions are related to the other entities in the following way:
     Task "0" - "1" DataFrame
 
 Dataframes are the representation of the data that will eventually be used in the most
-important tasks: computation tasks that produces the research results. Dataframes
+important tasks: computation tasks that produce the research results. Dataframes
 provide the following features:
 
 - The data is loaded in the dataframes once and can then be used multiple times. This
@@ -138,7 +138,7 @@ source data.
 .. note::
 
   The user interface does not require you to know how these actions are triggered, but
-  the API endpoints used are as follows: ``compute`` tasks can be triggered ``/task``
+  the API endpoints used are as follows: ``compute`` tasks can be triggered using the ``/task``
   endpoint, and ``data extraction`` and ``preprocessing`` actions are triggered with the
   ``/session`` endpoints. In the Python client, the three actions are represented by
   ``client.task.create()``, ``client.dataframe.create()`` and
