@@ -153,8 +153,6 @@ def helm_install(
             chart_name,
             "--repo",
             DEFAULT_CHART_REPO,
-            # TODO v5+ remove this flag when we have a stable release, see #2213
-            "--devel",
         ]
         if chart_version:
             command.extend(["--version", chart_version])
