@@ -77,7 +77,7 @@ spec:
             "❌ Failed to create or update GatewayClass for Envoy Gateway. "
             "Please create a GatewayClass manually."
         )
-        raise SystemExit(1)
+        exit(1)
 
 
 def _detect_envoy_gateway(
@@ -267,7 +267,7 @@ def ensure_envoy_gateway(
             "Please install Envoy Gateway manually following the official "
             "documentation."
         )
-        raise SystemExit(exc.returncode)
+        exit(exc.returncode)
 
     _wait_for_envoy_gateway_ready(
         k8s_config, namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE

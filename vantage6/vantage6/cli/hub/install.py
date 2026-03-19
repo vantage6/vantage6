@@ -180,10 +180,10 @@ def cli_hub_install(
     # Ensure Keycloak operator (and its CRDs) are present.
     try:
         check_and_install_keycloak_operator(k8s_config)
-    except SystemExit as exc:
+    except SystemExit:
         # Bubble up a clear error instead of a silent exit.
         error(
             "Failed to install the Keycloak operator while running 'v6 hub install'. "
             "Please inspect the logs above and try again."
         )
-        raise exc
+        exit(1)

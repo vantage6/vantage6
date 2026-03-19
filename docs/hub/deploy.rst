@@ -74,6 +74,25 @@ hub using the Helm charts directly. The base commands are:
 Of course, you may specify additional flags to the helm commands - see
 the `helm documentation <https://helm.sh/docs/helm/helm_install>`_ for more information.
 
+
+When deploying via ``v6 hub start``, the CLI carries out another set of checks and
+installations to ensure that the hub is deployed correctly. This includes:
+
+* Ensure the Keycloak operator (and its CRDs) are installed. This is required to deploy
+  the Keycloak authentication service.
+* When using the built-in gateway, ensure that an Envoy Gateway
+  installation is available. If no suitable installation is detected,
+  ``v6 hub start`` will automatically install Envoy Gateway (including the
+  required Gateway API CRDs) into the cluster.
+* When using the built-in gateway and ``hubGateway.tls.mode`` is set to
+  ``cert-manager``, ensure that the cert-manager CRDs are installed so that the
+  ``Certificate`` resources rendered by the hub chart can be created. The
+  cert-manager controller itself is expected to be managed by the platform or
+  cluster administrator; if it is not detected, ``v6 hub start`` will emit a
+  warning rather than attempting to install it automatically.
+
+For more details on the gateway and TLS configuration, see :ref:`gateway-configuration`.
+
 External databases
 ------------------
 
@@ -100,14 +119,16 @@ Ensure your Kubernetes cluster can access the database server.
 
 .. note::
 
-  You should create databases for the hub components before deploying the hub. The
-  components will NOT create the databases for you.
+  You should create databases for the hub components before deploying the hub. Vantage6
+  will NOT create the databases for you when using external databases.
+
+.. _gateway-configuration:
 
 Configuring access to the services
 ----------------------------------
 
-For production environments, you still need to configure how traffic reaches the
-hub components from the outside world. The hub chart provides a built-in
+For production environments, you still need to configure how your hub can be accessed
+from the internet. The hub chart provides a built-in
 Gateway API configuration (managed by an Envoy Gateway controller), but you
 can also bring your own routing solution.
 
@@ -119,85 +140,45 @@ can also bring your own routing solution.
 Using the built-in Gateway
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The hub chart can create one ``Gateway`` resource and four ``HTTPRoute``
-resources - one for each public endpoint:
+If the gateway is enabled, the hub chart will create one ``Gateway`` resource and four
+``HTTPRoute`` resources - one for each public component:
 
-* ``auth`` (Keycloak)
-* ``hq`` (HQ API)
+* ``auth`` (Keycloak authentication service)
+* ``hq`` (HQ)
 * ``portal`` (UI)
 * ``store`` (algorithm store)
 
-These are controlled via the ``hubGateway`` section in your hub values file
+These settings are controlled via the ``hubGateway`` section in your hub values file
 (:ref:`hub_config.yaml <hub-configuration-file>`). A minimal
 example:
 
-.. code-block:: yaml
-
-   hubGateway:
-     enabled: true
-     hosts:
-       auth: auth.example.org
-       hq: hq.example.org
-       portal: portal.example.org
-       store: store.example.org
-     tls:
-       mode: cert-manager        # or: existingSecret
-     certManager:
-       enabled: true
-       clusterIssuer: letsencrypt-prod
-
-When ``hubGateway.enabled`` is ``true``, the hub chart:
-
-* Creates a ``Gateway`` resource that listens on port 443 for the configured hostnames.
-* Creates ``HTTPRoute`` resources that route traffic for each hostname to the
-  appropriate service (auth, hq, portal, store).
-* Terminates TLS at the Gateway (HTTP is used inside the cluster).
-* Optionally provisions certificates using `cert-manager
-  <https://cert-manager.io>`_ (``mode: cert-manager``), or reuses existing
-  Kubernetes TLS secrets (``mode: existingSecret``).
-
-When deploying via ``v6 hub start``, the CLI will do the following to ensure that
-dependencies of the hub are installed and configured:
-
-* Ensure the Keycloak operator (and its CRDs) are installed. This is required to deploy
-  the Keycloak authentication service.
-* When ``hubGateway.enabled`` is ``true``, ensure that an Envoy Gateway
-  installation is available. If no suitable installation is detected,
-  ``v6 hub start`` will automatically install Envoy Gateway (including the
-  required Gateway API CRDs) into the cluster.
-* When ``hubGateway.enabled`` is ``true`` and ``hubGateway.tls.mode`` is set to
-  ``cert-manager``, ensure that the cert-manager CRDs are installed so that the
-  ``Certificate`` resources rendered by the hub chart can be created. The
-  cert-manager controller itself is expected to be managed by the platform or
-  cluster administrator; if it is not detected, ``v6 hub start`` will emit a
-  warning rather than attempting to install it automatically.
-
 If you already have your own Gateway API controller and certificate management
 in place, you can disable ``hubGateway`` and instead configure your own
-``Gateway``/``HTTPRoute``, ``Ingress`` or ``LoadBalancer`` resources that route to the
+``Gateway``/ ``HTTPRoute``, ``Ingress`` or ``LoadBalancer`` resources that route to the
 services exposed by the hub chart.
 
-When using ``mode: cert-manager``, the hub chart will create ``Certificate``
-resources for each public endpoint, and ``v6 hub start`` will ensure that the
+Enabling TLS with cert-manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The gateway can be configured to use cert-manager to issue and renew certificates. The
+hub chart will then create ``Certificate``
+resources for each public endpoint. In such cases, ``v6 hub start`` will ensure that the
 cert-manager CRDs are present. The ClusterIssuer and cert-manager controller
 that reconcile these Certificates should be provided by the cluster platform
 or installed separately, according to your organization's standards.
 
-.. TODO v5+ check that this is still relevant
-Enabling TLS with cert-manager on AKS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 The steps below summarize how to enable browser-trusted HTTPS for the hub
-endpoints on AKS using cert-manager and Let's Encrypt.
+endpoints on your Kubernetes cluster using cert-manager and Let's Encrypt.
 
-1. **Install cert-manager (cluster admin action)**:
+1. **Install cert-manager controller (cluster admin action)**:
 
    .. code-block:: bash
 
-      # Install CRDs (idempotent)
+      # Ensure CRDs are present. You can do this manually, or let
+      # ``v6 hub start`` apply them automatically when configured.
       kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.crds.yaml
 
-      # Install controller, webhook and cainjector (client-side apply)
+      # Install controller, webhook and cainjector
       kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.5/cert-manager.yaml
 
    Verify that the cert-manager pods are running:

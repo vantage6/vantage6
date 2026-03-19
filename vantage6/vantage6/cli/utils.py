@@ -166,6 +166,8 @@ def validate_input_cmd_args(
     """
     Validate input for subprocess commands.
 
+    Exit with error if the input is invalid.
+
     Parameters
     ----------
     value : str | None
@@ -174,11 +176,6 @@ def validate_input_cmd_args(
         The name of the field being validated, used for error messages.
     allow_none : bool, optional
         Whether None is allowed as a valid value. Defaults to False.
-
-    Raises
-    ------
-    SystemExit
-        If the input is invalid.
     """
     if allow_none and value is None:
         return
