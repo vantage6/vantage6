@@ -323,6 +323,12 @@ class ServerApp:
         # patch where to obtain token
         self.app.config["JWT_AUTH_URL_RULE"] = "/api/token"
 
+        # PyJWT 2.10+ enforces that `sub` is a string. Vantage6 historically
+        # used non-string subjects (e.g. ints and container dicts), which
+        # breaks protected endpoints after the PyJWT bump.
+        # Disabling this validation keeps compatibility
+        self.app.config["JWT_VERIFY_SUB"] = False
+
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
         self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
@@ -434,7 +440,7 @@ class ServerApp:
             log.exception("Exception occured during request")
             DatabaseSessionManager.clear_session()
             return {
-                "msg": f"An unexpected error occurred on the server!"
+                "msg": "An unexpected error occurred on the server!"
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
         @self.app.route("/robots.txt")
