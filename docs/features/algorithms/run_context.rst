@@ -21,7 +21,7 @@ etc.) is conveyed by the node to the algorithm container is through a mix of
 coupling between the algorithm wrapper (``vantage6-algorithm-tools``) and the
 platform. This means using other languages to write algorithms for vantage6 is
 harder. It also means reusing algorithms written for vantage6 for other
-platforms can be trickier too.
+platforms can be trickier.
 
 Apart from other platforms and languages, some potential new features like
 allowing the researcher to specify the role of a dataset for an algorithm or
