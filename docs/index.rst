@@ -10,14 +10,6 @@ Vantage6 is a privacy-enhancing technology (PET) platform that allows organizati
 collaborate on data analysis tasks without sharing the data itself. Vantage6 is
 open source and completely free to use.
 
-.. raw:: html
-
-   <iframe width="750" height="420" src="https://youtube.com/embed/HVHvlkAeuD0"
-     frameborder="0"
-     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-     allowfullscreen>
-   </iframe>
-
 What vantage6 does:
 
 * deliver algorithms to data stations and collecting their results
@@ -83,6 +75,22 @@ This is a - non-exhaustive - list of vantage6 resources.
 * :ref:`Community meetings <community-meetings>` |rarr| *Bi-monthly developer
   community meeting*
 
+Video overview
+--------------
+
+This video provides an overview of the vantage6 project. The video is from 2020 and
+therefore does not reflect the latest features and developments, but the core
+concepts are still valid. The architecture of the vantage6 infrastructure is also still
+valid, however, many new components have been added and terminology has changed
+since the video was recorded.
+
+.. raw:: html
+
+   <iframe width="750" height="420" src="https://youtube.com/embed/HVHvlkAeuD0"
+     frameborder="0"
+     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+     allowfullscreen>
+   </iframe>
 
 -------------------------------------------------------------------------------
 
