@@ -120,15 +120,14 @@ How this relates to the current vantage6 runtime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As mentioned, vantage6 algorithms already receive runtime context through the
-existing vantage6-specific mechanism of written files and environment
-variables. For example, the node provides paths and connection details such as:
+existing vantage6-specific mechanism of written files and environment variables.
+For example, some of the input/output paths and connection details that the node
+shares with the algorithm container via environment variables as of version
+v4.13.7 look something like this:
 
 - ``INPUT_FILE``
 - ``OUTPUT_FILE``
-- ``TOKEN_FILE``
 - ``HOST``
-- ``PORT``
-- ``API_PATH``
 - ``USER_REQUESTED_DATABASE_LABELS``
 - ``<DB_LABEL>_DATABASE_URI``
 
@@ -165,3 +164,6 @@ In addition, the current ``run_context`` implementation only supports
 file-based databases. If the feature is enabled and a task requests a non-file
 database, the task start fails. This is done for security reasons as we want to
 avoid potential for secrets living in the file.
+
+We have opened a discussion on this topic where more information can be found:
+https://github.com/orgs/vantage6/discussions/2556
