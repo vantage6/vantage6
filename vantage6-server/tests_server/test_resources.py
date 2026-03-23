@@ -3458,6 +3458,111 @@ class TestResources(unittest.TestCase):
         # delete the 1 task that was created in this unit test
         Task.get()[::-1][0].delete()
 
+    def test_create_task_with_database_arguments(self):
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        headers = self.create_user_and_login(org, rules=[rule])
+        input_ = bytes_to_base64s(serialize({"method": "dummy"}))
+
+        task_json = {
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id, "input": input_}],
+            "image": "some-image.invalid/invalid:invalid",
+            "databases": [
+                {
+                    "label": "default",
+                    "query": "SELECT * FROM records",
+                    "arguments": {
+                        "bind": "input_dataset",
+                        "group": "example",
+                    },
+                }
+            ],
+        }
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        first_task = Task.get(results.json["id"])
+        self.assertEqual(first_task.databases[0].database, "default")
+        self.assertEqual(
+            json.loads(first_task.databases[0].parameters),
+            {
+                "query": "SELECT * FROM records",
+                "arguments": {
+                    "bind": "input_dataset",
+                    "group": "example",
+                },
+            },
+        )
+
+        # arguments must be a dict
+        task_json["databases"] = [{"label": "default", "arguments": "dataset"}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # empty arguments are allowed
+        task_json["databases"] = [{"label": "default", "arguments": {}}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        empty_arguments_task = Task.get(results.json["id"])
+        self.assertEqual(
+            json.loads(empty_arguments_task.databases[0].parameters),
+            {"arguments": {}},
+        )
+
+        # omitting arguments is also allowed
+        task_json["databases"] = [{"label": "default"}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        no_arguments_task = Task.get(results.json["id"])
+        self.assertEqual(
+            json.loads(no_arguments_task.databases[0].parameters),
+            {},
+        )
+
+        # multiple databases can each carry their own arguments
+        task_json["databases"] = [
+            {
+                "label": "treatment",
+                "arguments": {"bind": "treatment_data"},
+            },
+            {
+                "label": "diagnosis",
+                "arguments": {"bind": "diagnosis_data"},
+            }
+        ]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        second_task = Task.get(results.json["id"])
+        databases_by_label = {db.database: db for db in second_task.databases}
+        self.assertIn("treatment", databases_by_label)
+        self.assertIn("diagnosis", databases_by_label)
+        self.assertEqual(
+            json.loads(databases_by_label["treatment"].parameters),
+            {"arguments": {"bind": "treatment_data"}},
+        )
+        self.assertEqual(
+            json.loads(databases_by_label["diagnosis"].parameters),
+            {"arguments": {"bind": "diagnosis_data"}},
+        )
+
+        first_task.delete()
+        empty_arguments_task.delete()
+        no_arguments_task.delete()
+        second_task.delete()
+        node.delete()
+        org.delete()
+        col.delete()
+
     def test_delete_task_permissions(self):
         # test non-existing task
         headers = self.create_user_and_login()

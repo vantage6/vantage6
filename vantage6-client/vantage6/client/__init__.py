@@ -1802,10 +1802,13 @@ class UserClient(ClientBase):
                 not contain its own URL in the configuration (you will be alerted of
                 this in an error message).
             databases: list[dict], optional
-                Databases to be used at the node. Each dict should contain
-                at least a 'label' key. Additional keys are 'query' (if using
-                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
-                and 'preprocessing' information.
+                Databases to be used at the node. Each dict should contain at
+                least a 'label' key. Additional optional keys are 'query' (if
+                using SQL/SPARQL databases), 'sheet_name' (if using Excel
+                databases), 'preprocessing' information, and 'arguments'. When
+                a node enables the experimental `run_context_file` feature,
+                these arguments are exposed to the algorithm via the run
+                context input entry under `inputs[*].arguments`.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.

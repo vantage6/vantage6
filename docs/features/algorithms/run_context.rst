@@ -80,7 +80,7 @@ explanatory only and are not part of the actual JSON file.
       // Minimal runtime identity of the executing node. Provides some extra
       // context that the algorithm might need to use for its operation
       "executor": {
-        "id": "some-node-id",
+        "id": 17,
         "kind": "vantage6-node"
       },
       // Data sources the algorithm should use
@@ -88,9 +88,25 @@ explanatory only and are not part of the actual JSON file.
         {
           "id": "default",
           "uri": "/mnt/data/default.csv",
-          "type": "csv"
+          "type": "csv",
+          // Eventually it might be better to move 'arguments'.* a level up
+          "arguments": {
+            "bind": "dataset"
+          }
+        },
+        {
+          // For example, a config file for the dataset itself
+          "id": "default_config",
+          "uri": "/mnt/data/default.yaml",
+          "type": "other",
+          // Eventually it might be better to move 'arguments'.* a level up
+          "arguments": {
+            "bind": "config"
+          }
         }
       ],
+      // For example, the researcher could have selected this input with:
+      // {"label": "somelabel", "arguments": {"bind": "dataset"}}
       // Locations where results should be written
       "outputs": [
         {
@@ -118,6 +134,12 @@ explanatory only and are not part of the actual JSON file.
 
 How this relates to the current vantage6 runtime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the researcher supplied ``arguments`` for a selected database when
+creating the task, those values are included in the corresponding
+``inputs[*].arguments`` object. Other top-level selector fields such as ``query``,
+``sheet_name`` and ``preprocessing`` are not currently copied into run
+context.
 
 As mentioned, vantage6 algorithms already receive runtime context through the
 existing vantage6-specific mechanism of written files and environment variables.
