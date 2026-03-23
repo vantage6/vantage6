@@ -5,16 +5,19 @@ import time
 from dataclasses import dataclass
 
 import requests
+from jinja2 import Environment, FileSystemLoader
 
 from vantage6.common import error, info
 
 from vantage6.cli.common.k8s_utils import run_kubectl_command
+from vantage6.cli.globals import TEMPLATE_FOLDER
 from vantage6.cli.k8s_config import KubernetesConfig
 
 _DEFAULT_ENVOY_GATEWAY_NAMESPACE = "envoy-gateway-system"
 _DEFAULT_ENVOY_GATEWAY_RELEASE = "eg"
 _DEFAULT_ENVOY_GATEWAY_CLASS_NAME = "envoy-gateway"
 _ENVOY_GATEWAY_CONTROLLER = "gateway.envoyproxy.io/gatewayclass-controller"
+_ENVOY_GATEWAY_CLASS_TEMPLATE_FILE = "envoy_gatewayclass.yaml.j2"
 
 
 @dataclass
@@ -58,13 +61,14 @@ def _ensure_envoy_gateway_class(k8s_config: KubernetesConfig) -> None:
     """
     Ensure an Envoy GatewayClass exists so Gateway resources can be accepted.
     """
-    manifest = f"""apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: {_DEFAULT_ENVOY_GATEWAY_CLASS_NAME}
-spec:
-  controllerName: {_ENVOY_GATEWAY_CONTROLLER}
-"""
+    environment = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER), autoescape=False)
+    template = environment.get_template(_ENVOY_GATEWAY_CLASS_TEMPLATE_FILE)
+    manifest = template.render(
+        {
+            "gateway_class_name": _DEFAULT_ENVOY_GATEWAY_CLASS_NAME,
+            "controller_name": _ENVOY_GATEWAY_CONTROLLER,
+        }
+    )
     result = run_kubectl_command(
         ["apply", "-f", "-"],
         k8s_config,
