@@ -60,8 +60,12 @@ def _get_latest_envoy_gateway_version() -> str:
 def _ensure_envoy_gateway_class(k8s_config: KubernetesConfig) -> None:
     """
     Ensure an Envoy GatewayClass exists so Gateway resources can be accepted.
+
+    Exit if the GatewayClass cannot be created.
     """
-    environment = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER), autoescape=False)
+    environment = Environment(
+        loader=FileSystemLoader(TEMPLATE_FOLDER), autoescape=False
+    )
     template = environment.get_template(_ENVOY_GATEWAY_CLASS_TEMPLATE_FILE)
     manifest = template.render(
         {
@@ -207,7 +211,8 @@ def ensure_envoy_gateway(
     version: str | None = None,
 ) -> EnvoyGatewayStatus:
     """
-    Ensure that an Envoy Gateway installation is available in the cluster.
+    Ensure that an Envoy Gateway installation is available in the cluster. Exit if
+    no suitable installation is found and `auto_install` is False.
 
     If an appropriate GatewayClass already exists, it is reused. Otherwise, if
     `auto_install` is True, this function attempts to install Envoy Gateway via
