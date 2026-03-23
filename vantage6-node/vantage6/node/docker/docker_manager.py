@@ -134,6 +134,7 @@ class DockerManager(DockerBaseManager):
         self.ctx = ctx
         config = ctx.config
         self.algorithm_env = config.get("algorithm_env", {})
+        self.write_run_context_file = config.get("run_context_file", False)
         self.vpn_manager = vpn_manager
         self.client = client
         self.__tasks_dir = tasks_dir
@@ -594,10 +595,10 @@ class DockerManager(DockerBaseManager):
         run_id: int,
         task_info: dict,
         image: str,
-        docker_input: bytes,
+        docker_input: bytes | str,
         tmp_vol_name: str,
         token: str,
-        databases_to_use: list[str],
+        databases_to_use: list[dict],
         socketIO: SocketIO,
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
@@ -612,14 +613,14 @@ class DockerManager(DockerBaseManager):
             Dictionary with task information
         image: str
             Docker image name
-        docker_input: bytes
+        docker_input: bytes | str
             Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        databases_to_use: list[str]
-            Labels of the databases to use
+        databases_to_use: list[dict]
+            Database selection objects to use
 
         Returns
         -------
@@ -648,6 +649,7 @@ class DockerManager(DockerBaseManager):
             task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
+            node_id=self.client.whoami.id_,
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
@@ -661,6 +663,7 @@ class DockerManager(DockerBaseManager):
             socketIO=socketIO,
             collaboration_id=self.client.collaboration_id,
             share_algorithm_logs=self.share_algorithm_logs,
+            write_run_context_file=self.write_run_context_file,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try
