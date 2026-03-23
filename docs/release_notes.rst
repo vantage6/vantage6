@@ -8,7 +8,7 @@ Release notes
 
 - **Security**
 
-  - Security/update dependencies for 4.14 (`PR#2555
+  - Update PyJWT and several UI dependencies to fix security vulnerabilities (`PR#2555
     <https://github.com/vantage6/vantage6/pull/2555>`_).
 
 - **Feature**
@@ -22,28 +22,28 @@ Release notes
 
 - **Change**
 
-  - Skip VPN helper container when VPN is inactive (
-    `Issue#2506 <https://github.com/vantage6/vantage6/issues/2506>`_,
+  - Skip VPN helper container when VPN is inactive
+    (`Issue#2506 <https://github.com/vantage6/vantage6/issues/2506>`_,
     `PR#2507 <https://github.com/vantage6/vantage6/pull/2507>`_).
-  - Preserve log ownership and avoid `--config` logging side effects
+  - Preserve log ownership and avoid ``--config`` logging side effects
     (`Issue#1551 <https://github.com/vantage6/vantage6/issues/1551>`_,
     `PR#2511 <https://github.com/vantage6/vantage6/pull/2511>`_).
   - Remove task execution permissions for Organization Admin role
     (`Issue#2312 <https://github.com/vantage6/vantage6/issues/2312>`_,
     `PR#2513 <https://github.com/vantage6/vantage6/pull/2513>`_).
-  - Allow skipping input decryption in `UserClient.Run.get()` (
-    `Issue#2549 <https://github.com/vantage6/vantage6/issues/2549>`_,
+  - Allow skipping input decryption in ``UserClient.Run.get()``
+    (`Issue#2549 <https://github.com/vantage6/vantage6/issues/2549>`_,
     `PR#2550 <https://github.com/vantage6/vantage6/pull/2550>`_).
 
 - **Bugfix**
 
-  - Fix algorithm client result pagination loop (
-    `Issue#2516 <https://github.com/vantage6/vantage6/issues/2516>`_,
+  - Fix algorithm client result pagination loop
+    (`Issue#2516 <https://github.com/vantage6/vantage6/issues/2516>`_,
     `PR#2517 <https://github.com/vantage6/vantage6/pull/2517>`_).
   - Fail pending sibling runs immediately when run fails (`PR#2529
     <https://github.com/vantage6/vantage6/pull/2529>`_).
-  - Kill all child runs on task kill (
-    `Issue#2519 <https://github.com/vantage6/vantage6/issues/2519>`_,
+  - Kill all child runs on task kill (`Issue#2519
+    <https://github.com/vantage6/vantage6/issues/2519>`_,
     `PR#2520 <https://github.com/vantage6/vantage6/pull/2520>`_).
   - Explicit ordering for task databases to prevent unpredictable results
     (`Issue#2383 <https://github.com/vantage6/vantage6/issues/2383>`_,
