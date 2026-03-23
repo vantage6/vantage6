@@ -18,8 +18,8 @@ def run_kubectl_command(
 
     Parameters
     ----------
-    command : list[str]
-        The kubectl command to run (without 'kubectl' prefix if already included).
+    args : list[str]
+        The kubectl arguments to run.
     k8s_config: KubernetesConfig
         Kubernetes configuration object with context and namespace.
     check : bool
