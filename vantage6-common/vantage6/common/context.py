@@ -146,9 +146,8 @@ class AppContext(metaclass=Singleton):
         self.log.info(" Welcome to")
         for line in pyfiglet.figlet_format(APPNAME, font="big").split("\n"):
             self.log.info(line)
-        self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
-        self.log.info(" --> Blog: https://vantage6.ai")
+        self.log.info(" --> General website: https://vantage6.ai")
         self.log.info("-" * 60)
         self.log.info("Cite us!")
         self.log.info("If you publish your findings obtained using vantage6, ")
