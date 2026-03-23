@@ -1,0 +1,77 @@
+sequenceDiagram
+    participant ST as Smoke Test Script
+    participant EA as Egress Auto-Approver
+    participant V6S as v6 Server
+    participant RN as Relay Node<br/>(TesRelayManager)
+    participant KC as Keycloak
+    participant DARE as DARE Submission API
+    participant MIO as MinIO
+    participant TRE as TRE Agent
+    participant FNL as Funnel<br/>(TES executor)
+    participant EG as Data Egress API
+
+    ST->>EA: Start as subprocess
+    activate EA
+
+    ST->>V6S: POST /api/task (create task)
+    V6S-->>ST: task_id=1, status=pending
+
+    V6S--)RN: WebSocket: new_task event
+    activate RN
+
+    RN->>KC: Password-grant token (Dare-Control realm)
+    KC-->>RN: access_token
+
+    RN->>DARE: GET /api/Project/GetProject?projectId=1
+    DARE-->>RN: project (submissionBucket=...)
+
+    RN->>MIO: POST /api/Project/UploadToMinio (algorithm input)
+    MIO-->>RN: 200 OK
+
+    RN->>DARE: POST /v1/tasks (TES task creation)
+    DARE-->>RN: submission_id=15
+
+    RN->>V6S: PATCH /api/run/1 (status=ACTIVE)
+
+    Note over DARE: Camunda workflow starts
+
+    rect rgb(240, 248, 255)
+        Note over DARE,FNL: DARE 5 Safes Pipeline (~40s)
+        DARE->>DARE: Parent status: 0 (WaitingForChildren)<br/>Child status: 1 (WaitingForAgent)
+        TRE->>DARE: GET GetWaitingSubmissionsForTre
+        DARE-->>TRE: child submission
+        TRE->>FNL: Submit task to Funnel
+        FNL->>FNL: Pull algorithm image<br/>Run container with base32-encoded env vars
+        FNL-->>TRE: Execution complete
+        TRE->>DARE: Update child status: 38 (DataOutRequested)
+        DARE->>EG: Create egress request
+    end
+
+    loop Poll every 3s
+        EA->>KC: Password-grant token (Data-Egress realm)
+        KC-->>EA: access_token
+        EA->>EG: GET GetAllEgresses?unprocessedonly=true
+        EG-->>EA: pending egress (status=0)
+        EA->>EG: POST CompleteEgress (approve all files)
+        EG-->>EA: 200 OK
+    end
+
+    Note over DARE: Egress approved -> child status: 11 (Completed)<br/>-> parent status: 11 (Completed)
+
+    loop Poll every 5s
+        RN->>DARE: GET /api/Submission/GetAllSubmissions
+        DARE-->>RN: dare_status=11
+        Note over RN: Maps dare_status=11 -> COMPLETE
+    end
+
+    RN->>V6S: PATCH /api/run/1 (status=completed, result=TES metadata)
+    deactivate RN
+
+    loop Poll every 5s
+        ST->>V6S: GET /api/task/1
+        V6S-->>ST: status=completed
+    end
+
+    ST->>EA: SIGINT (stop)
+    deactivate EA
+    Note over ST: === SMOKE TEST PASSED ===

@@ -53,25 +53,29 @@ class NodeConfiguration(Configuration):
         Optional("node_extra_mounts"): [str],
         Optional("node_extra_hosts"): dict,
         Optional("share_algorithm_logs"): Use(bool),
-        Optional("tes_forwarding"): {
+        Optional("tes_relay"): {
             "enabled": Use(bool),
-            "endpoint": Use(str),
+            "tes_endpoint": Use(str),
+            "tags": {
+                "project": Use(str),
+                Optional("tres"): Use(str),
+            },
+            "dare": {
+                Optional("project_id"): Use(int),
+                Optional("submission_bucket"): Use(str),
+            },
             "keycloak": {
                 "token_url": Use(str),
                 "client_id": Use(str),
                 "client_secret": Use(str),
-                Optional("audience"): Use(str),
+                "username": Use(str),
+                "password": Use(str),
             },
-            "project": Use(str),
-            Optional("tres"): Use(str),
-            Optional("minio"): {
-                "bucket": Use(str),
-            },
-            Optional("resources"): {
-                Optional("cpu_cores"): Use(int),
-                Optional("ram_gb"): Or(Use(float), Use(int)),
-                Optional("disk_gb"): Or(Use(float), Use(int)),
-            },
+            "databases_map": {str: Use(str)},
+            Optional("command"): list,
+            Optional("data_dir"): Use(str),
+            Optional("temporary_folder"): Use(str),
+            Optional("poll_interval_seconds"): Use(int),
         },
     }
 

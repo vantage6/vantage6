@@ -66,6 +66,7 @@ from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
+from vantage6.node.tes_relay.manager import TesRelayManager
 from vantage6.node.docker.ssh_tunnel import SSHTunnel
 from vantage6.node.docker.squid import Squid
 
@@ -114,13 +115,9 @@ class Node:
         self.queue = queue.Queue()
         self._using_encryption = None
 
-        self._tes_forwarder = None
-        tes_config = self.config.get("tes_forwarding", {})
-        if tes_config.get("enabled", False):
-            from vantage6.node.tes import TesForwarder
-
-            self.log.info("TES forwarding is enabled")
-            self._tes_forwarder = TesForwarder(self.config)
+        self._tes_relay_mode = bool(
+            self.config.get("tes_relay", {}).get("enabled", False)
+        )
 
         # initialize Node connection to the server
         self.client = NodeClient(
@@ -139,7 +136,22 @@ class Node:
         # Setup encryption
         self.setup_encryption()
 
-        if not self._tes_forwarder:
+        if self._tes_relay_mode:
+            self.log.warning(
+                "TES relay mode enabled: skipping proxy/VPN/SSH-tunnels/"
+                "squid and local Docker execution."
+            )
+            self._set_task_dir(self.ctx)
+
+            self.__docker = TesRelayManager(
+                ctx=self.ctx,
+                isolated_network_mgr=None,
+                vpn_manager=None,
+                tasks_dir=self.__tasks_dir,
+                client=self.client,
+                proxy=None,
+            )
+        else:
             # check if docker is running, otherwise exit with error
             check_docker_running()
 
@@ -186,7 +198,7 @@ class Node:
         self.log.debug("Creating websocket connection with the server")
         self.connect_to_socket()
 
-        if not self._tes_forwarder:
+        if not self._tes_relay_mode:
             # Connect the node to the isolated algorithm network *only* if
             # we're running in a docker container.
             if self.ctx.running_in_docker:
@@ -199,11 +211,11 @@ class Node:
             # file to the node container
             self.link_docker_services()
 
-            # Thread for sending results to the server when they come
-            # available.
-            self.log.debug("Start thread for sending messages (results)")
-            t = Thread(target=self.__speaking_worker, daemon=True)
-            t.start()
+        # Thread for sending results to the server when they come
+        # available.
+        self.log.debug("Start thread for sending messages (results)")
+        t = Thread(target=self.__speaking_worker, daemon=True)
+        t.start()
 
         # listen forever for incoming messages, tasks are stored in
         # the queue.
@@ -413,9 +425,7 @@ class Node:
         """
         for task_result in task_results:
             try:
-                if self._tes_forwarder or not self.__docker.is_running(
-                    task_result["id"]
-                ):
+                if not self.__docker.is_running(task_result["id"]):
                     self.queue.put(task_result)
                 else:
                     self.log.info(
@@ -425,54 +435,6 @@ class Node:
                     )
             except Exception:
                 self.log.exception("Error while syncing task queue")
-
-    def _forward_to_tes(self, task_incl_run: dict) -> None:
-        task = task_incl_run["task"]
-        self.log.info(
-            "Forwarding task %s - %s to TES",
-            task["id"],
-            task.get("name", ""),
-        )
-
-        self.client.set_task_start_time(task_incl_run["id"])
-
-        try:
-            tes_task_id = self._tes_forwarder.forward_task(task_incl_run)
-        except Exception:
-            self.log.exception("Failed to forward task to TES")
-            self.client.run.patch(
-                id_=task_incl_run["id"],
-                data={
-                    "status": TaskStatus.FAILED,
-                    "log": "Failed to forward task to external TES endpoint",
-                    "finished_at": datetime.datetime.now(
-                        datetime.timezone.utc
-                    ).isoformat(),
-                },
-            )
-            return
-
-        self.client.run.patch(
-            id_=task_incl_run["id"],
-            data={
-                "status": TaskStatus.ACTIVE,
-                "log": f"Forwarded to TES, tes_task_id={tes_task_id}",
-            },
-        )
-
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": TaskStatus.ACTIVE,
-                "run_id": task_incl_run["id"],
-                "task_id": task["id"],
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
-            },
-            namespace="/tasks",
-        )
 
     def __start_task(self, task_incl_run: dict) -> None:
         """
@@ -815,7 +777,7 @@ class Node:
         # may contain the private key, which which we don't want to share.
         # We'll only do this if we're running outside docker, otherwise we
         # would create '/data' on the data volume.
-        if not ctx.running_in_docker:
+        if not getattr(ctx, "running_in_docker", False):
             self.__tasks_dir = ctx.data_dir / "data"
             os.makedirs(self.__tasks_dir, exist_ok=True)
             self.__vpn_dir = ctx.data_dir / "vpn"
@@ -1182,10 +1144,7 @@ class Node:
 
                 # if task becomes available, attempt to execute it
                 try:
-                    if self._tes_forwarder:
-                        self._forward_to_tes(taskresult)
-                    else:
-                        self.__start_task(taskresult)
+                    self.__start_task(taskresult)
                 except Exception as e:
                     self.log.exception(e)
 
@@ -1241,6 +1200,9 @@ class Node:
         This helps the other parties in a collaboration to see e.g. which
         algorithms they are allowed to run on this node.
         """
+        if self._tes_relay_mode:
+            return
+
         # check if node allows to share node details, otherwise return
         if not self.config.get("share_config", True):
             self.log.debug(

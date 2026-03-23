@@ -1,0 +1,91 @@
+graph TB
+    subgraph v6["Vantage6 Infrastructure"]
+        Client["v6 Client / UI<br/><i>creates tasks, polls results</i>"]
+        Server["v6 Server<br/><i>REST API + WebSocket</i>"]
+        RelayNode["v6 Relay Node"]
+
+        subgraph node_internals["Relay Node Internals"]
+            direction TB
+            Queue["Task Queue"]
+            TRM["TesRelayManager<br/><i>drop-in for DockerManager</i>"]
+            PollThread["Background Poll Thread<br/><i>every 5s</i>"]
+            SpeakingWorker["Speaking Worker Thread<br/><i>uploads results to server</i>"]
+            ResultQueue["Result Queue"]
+        end
+    end
+
+    subgraph dare["DARE TREvolution Platform (5 Safes)"]
+        subgraph control["Control Layer"]
+            KC["Keycloak<br/><i>Auth (password-grant)</i>"]
+            SubAPI["Submission API<br/><i>TES endpoint + project mgmt</i>"]
+            MinioSub["MinIO<br/><i>Submission storage</i>"]
+            Camunda["Camunda<br/><i>Workflow orchestration</i>"]
+            RabbitMQ["RabbitMQ<br/><i>Async messaging</i>"]
+            PostgreSQL["PostgreSQL<br/><i>Submission state</i>"]
+        end
+
+        subgraph tre["TRE Layer"]
+            TREAgent["TRE Agent<br/><i>Polls for submissions</i>"]
+            MinioTRE["MinIO<br/><i>TRE storage</i>"]
+            Funnel["Funnel<br/><i>GA4GH TES executor</i>"]
+            AlgoContainer["Algorithm Container<br/><i>pulled from registry</i>"]
+        end
+
+        subgraph egress["Egress Layer (5th Safe)"]
+            EgressAPI["Data Egress API<br/><i>Output approval gate</i>"]
+            EgressApprover["Egress Auto-Approver<br/><i>standalone script</i>"]
+        end
+    end
+
+    Registry["Docker Registry"]
+
+    %% v6 internal flow
+    Client -->|"1. POST /api/task"| Server
+    Server -.->|"2. WebSocket notification"| Queue
+    Queue -->|"3. dequeue task"| TRM
+    TRM -->|"results"| ResultQueue
+    PollThread -->|"poll state"| ResultQueue
+    ResultQueue -->|"4. dequeue result"| SpeakingWorker
+    SpeakingWorker -->|"10. PATCH /api/run<br/>(status=completed)"| Server
+    Server -->|"11. result available"| Client
+
+    %% Relay to DARE
+    TRM -->|"3a. token request"| KC
+    TRM -->|"3b. upload input"| MinioSub
+    TRM -->|"3c. POST /v1/tasks"| SubAPI
+
+    %% DARE internal workflow
+    SubAPI --> RabbitMQ
+    SubAPI --> PostgreSQL
+    RabbitMQ --> Camunda
+    Camunda --> SubAPI
+
+    %% TRE execution
+    TREAgent -->|"5. fetch waiting subs"| SubAPI
+    TREAgent -->|"6. submit to executor"| Funnel
+    Funnel -->|"7. pull image"| Registry
+    Funnel -->|"7. read input"| MinioTRE
+    Funnel -->|"8. run"| AlgoContainer
+    AlgoContainer -->|"output"| MinioTRE
+
+    %% Egress flow
+    TREAgent -->|"8. request egress"| EgressAPI
+    EgressApprover -->|"9. auto-approve"| EgressAPI
+    EgressAPI -->|"9. approved"| TREAgent
+    TREAgent -->|"9. update status"| SubAPI
+
+    %% Poll loop
+    PollThread -->|"poll GetAllSubmissions"| SubAPI
+
+    %% Styling
+    classDef v6Style fill:#e8f4fd,stroke:#2196F3,stroke-width:2px
+    classDef dareStyle fill:#fff3e0,stroke:#FF9800,stroke-width:2px
+    classDef treStyle fill:#e8f5e9,stroke:#4CAF50,stroke-width:2px
+    classDef egressStyle fill:#fce4ec,stroke:#E91E63,stroke-width:2px
+    classDef infra fill:#f3e5f5,stroke:#9C27B0,stroke-width:1px
+
+    class Client,Server,RelayNode,Queue,TRM,PollThread,SpeakingWorker,ResultQueue v6Style
+    class KC,SubAPI,MinioSub,Camunda,RabbitMQ,PostgreSQL dareStyle
+    class TREAgent,MinioTRE,Funnel,AlgoContainer treStyle
+    class EgressAPI,EgressApprover egressStyle
+    class Registry infra
