@@ -278,7 +278,7 @@ class DockerManager(DockerBaseManager):
                 # need to be mounted from the host.
                 uri = db_config["uri"]
 
-            db_suffix = "".join(Path(str(db_config["uri"])).suffix)
+            db_suffix = Path(str(db_config["uri"])).suffix
             mount_target = None
             if db_is_file:
                 # used for ro mode. With copy we don't mount the file itself

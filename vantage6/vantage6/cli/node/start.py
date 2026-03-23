@@ -280,7 +280,7 @@ def cli_node_start(
             env[f"{label_capitals}_DATABASE_URI"] = uri
         else:
             debug("  - file-based database added")
-            suffix = "".join(Path(str(uri)).suffix)
+            suffix = Path(str(uri)).suffix
             env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
             mount_access_mode = "ro" if db_mount_mode == "ro" else "rw"
             mounts.append((f"/mnt/{label}{suffix}", str(uri), mount_access_mode))
