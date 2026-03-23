@@ -154,7 +154,7 @@ def cli_node_start(
         ("/mnt/vpn", vpn_volume.name, "rw"),
         ("/mnt/ssh", ssh_volume.name, "rw"),
         ("/mnt/squid", squid_volume.name, "rw"),
-        ("/mnt/config", str(ctx.config_dir), "rw"),
+        ("/mnt/config", str(ctx.config_dir), "ro"),
         ("/var/run/docker.sock", "/var/run/docker.sock", "rw"),
     ]
 
@@ -178,8 +178,7 @@ def cli_node_start(
     fullpath = Path(ctx.get_data_file(filename))
     if fullpath:
         if Path(fullpath).exists():
-            # TODO: do we need this to be "rw"?
-            mounts.append(("/mnt/private_key.pem", str(fullpath), "rw"))
+            mounts.append(("/mnt/private_key.pem", str(fullpath), "ro"))
         else:
             warning(f"Private key file is provided {fullpath}, but does not exist")
 
