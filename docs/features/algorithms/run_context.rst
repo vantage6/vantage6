@@ -50,6 +50,21 @@ make use of it. The current json file tries to describe, in a compact way:
 This feature is intentionally minimal and still under development. The exact
 field names and contents may change.
 
+Early example
+^^^^^^^^^^^^^
+
+A very small demo algorithm using this approach is available here:
+https://github.com/mdw-nl/average-py
+
+It uses a lightweight Python helper library for reading and dispatching
+``run_context.json`` here:
+https://github.com/mdw-nl/run-context-py
+
+This is conceptually similar to what ``vantage6-algorithm-tools`` does for the
+current vantage6 runtime, but with the algorithm reading from
+``RUN_CONTEXT_FILE`` instead of depending on the current vantage6-specific
+environment-variable and file conventions.
+
 Ideally, in the future, information necessary to communicate with other nodes
 needed for the aggregator component of an algorithm could also be "standardized"
 and included here.
@@ -162,8 +177,9 @@ several existing features, including:
 
 In addition, the current ``run_context`` implementation only supports
 file-based databases. If the feature is enabled and a task requests a non-file
-database, the task start fails. This is done for security reasons as we want to
-avoid potential for secrets living in the file.
+database, the task start fails. This is done for security reasons, e.g. to
+prevent database secrets from being present in additional files that may persist
+for some time.
 
 We have opened a discussion on this topic where more information can be found:
 https://github.com/orgs/vantage6/discussions/2556
