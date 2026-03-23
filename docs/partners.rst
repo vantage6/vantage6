@@ -40,5 +40,4 @@ a significant contribution to the design and implementation of vantage6.
 * Tim Hendriks
 
 **Would you like to contribute?** Check out
-:ref:`how to contribute! <Contribute>` Find and chat with us via the
-`Discord <https://discord.gg/yAyFf6Y>`_ chat!
+:ref:`how to contribute! <Contribute>` and reach out!

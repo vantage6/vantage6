@@ -338,9 +338,7 @@ Here we assume that
 -  you have a Python session with an authenticated Client object, as
    created in :ref:`authentication`.
 -  you already have the algorithm you want to run available as a
-   container in a container registry (see
-   `here <https://vantage6.discourse.group/t/developing-a-new-algorithm/31>`__
-   for more details on developing your own algorithm)
+   container in a container registry
 -  the nodes are configured to look at the right database
 
 In this manual, we'll use the averaging algorithm from

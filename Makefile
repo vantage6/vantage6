@@ -50,7 +50,6 @@ help:
 	@echo "  support-image        : build the supporing images"
 	@echo "  rebuild              : rebuild all python packages"
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
-	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
 	@echo "  install-docs         : install documentation dependencies"
 	@echo "  devdocs              : run documentation locally with live reload"
@@ -63,9 +62,6 @@ help:
 
 set-version:
 	cd tools && python update-version.py ${FLAGS}
-
-community:
-	cd tools && python update-discord.py ${FLAGS}
 
 uninstall:
 	uv remove vantage6

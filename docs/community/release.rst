@@ -51,7 +51,7 @@ the following steps to test a release:
 1. *Create a release candidate*. This process is the same as creating
    the :ref:`actual release <create-release>`, except that the candidate has
    a 'pre' tag (e.g. ``1.2.3rc1`` for release candidate number 1 of version
-   1.2.3). Note that for an RC, no notifications are sent to Discord.
+   1.2.3).
 2. *Install the release*. The release should be tested from a clean environment.
 
 .. code:: bash
@@ -149,8 +149,6 @@ The release pipeline executes the following steps:
    <https://harbor2.vantage6.ai>`_.
 4. Create a Github release with the version number and the release notes.
 5. Upload the package to PyPi.
-6. Post a message in Discord to alert the community of the new release. This
-   is skipped if the version is a pre-release.
 
 .. note::
 
@@ -158,7 +156,7 @@ The release pipeline executes the following steps:
     at the same time, with the same version number.
 
 The release pipeline uses a number of environment variables to, for instance,
-authenticate to PyPi and Discord. These variables are listed and explained
+to authenticate to PyPi. These variables are listed and explained
 in the table below.
 
 .. list-table:: Environment variables
@@ -184,9 +182,6 @@ in the table below.
      - See ``DOCKER_TOKEN``.
    * - ``PYPI_TOKEN``
      - Token used to upload the Python packages to PyPi.
-   * - ``DISCORD_RELEASE_TOKEN``
-     - Token to post a message to the Discord community when a new release is
-       published.
 
 .. _release-strategy:
 

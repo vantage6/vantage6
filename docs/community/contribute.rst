@@ -5,11 +5,13 @@ Contribute
 
 Support questions
 -----------------
-If you have questions, you can find us on `Discord <https://discord.gg/yAyFf6Y>`_.
 
-We prefer that you ask questions via Discord instead of creating Github
-issues. The issue tracker is intended to address bugs, feature requests, and
-code changes.
+If you have questions, please reach out on
+`Github Discussions <https://github.com/vantage6/vantage6/discussions>`_ .
+If you want to report a bug or request a new feature, please create a
+`new issue <https://github.com/vantage6/vantage6/issues/new/choose>`_. If you are not
+sure whether to create an issue or a discussion, please create a discussion first - we
+can always create an issue from a discussion.
 
 Reporting issues
 ----------------
@@ -126,8 +128,9 @@ we have a review meeting where we discuss the progress.
 
 The sprints are open to any developer who wants to contribute significantly to the
 infrastructure during that period. It is possible to decide per sprint whether you want
-to participate or not. Please reach out on `Discord <https://discord.gg/yAyFf6Y>`_ if
-you want to join one or more sprints.
+to participate or not. Please reach out to one of the owners of the vantage6
+[Github organization](https://github.com/orgs/vantage6/people) if you want to join one
+or more sprints.
 
 .. _community-meetings:
 
@@ -140,7 +143,7 @@ infrastructure and algorithm developers. You can present what your team is worki
 and find collaboration partners.
 
 Community meetings are usually held on the third Thursday of the month at 11:00
-AM CET on Microsoft Teams. Reach out on `Discord <https://discord.gg/yAyFf6Y>`_
+AM CET on Microsoft Teams. Reach out to community members or leaders
 if you want to join the community meeting.
 
 For more information and slides from previous meetings, check our
@@ -151,9 +154,8 @@ For more information and slides from previous meetings, check our
 Submitting patches
 ------------------
 If there is not an open issue for what you want to submit, please open one for
-discussion before submitting the PR. We encourage you to reach out to us on
-`Discord <https://discord.gg/yAyFf6Y>`_, so that we can work together to ensure
-your contribution is added to the repository.
+discussion before submitting the PR. This helps to avoid duplicate work and to get
+feedback on your idea before you start working on it.
 
 The workflow below is specific to the
 `vantage6 infrastructure repository <https://github.com/vantage6/vantage6>`_.

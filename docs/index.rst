@@ -78,8 +78,8 @@ This is a - non-exhaustive - list of vantage6 resources.
 
 **Community**
 
-* `Discord <https://discord.gg/yAyFf6Y>`_  |rarr| *Chat with the vantage6
-  community*
+* `Github Discussions <https://github.com/vantage6/vantage6/discussions>`_  |rarr| *Ask
+  questions or share your ideas with the vantage6 community*
 * :ref:`Community meetings <community-meetings>` |rarr| *Bi-monthly developer
   community meeting*
 

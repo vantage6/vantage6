@@ -9,7 +9,8 @@ using. If you are using the Uluru community service, go to
 https://portal.uluru.vantage6.ai and login with your user account.
 
 Using the UI should be relatively straightforward. If anything is unclear, please
-contact us via `Discord <https://discord.com/invite/yAyFf6Y>`__.
+contact us via `Github Discussions <https://github.com/vantage6/vantage6/discussions>`_
+so that we may clarify any questions you have.
 
 .. figure:: /images/ui-screenshot.png
 
