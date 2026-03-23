@@ -437,7 +437,16 @@ class TaskInputSchema(_NameValidationSchema):
                             f"Database preprocessing {prepro} is missing a "
                             "'function'"
                         )
-            allowed_keys = {"label", "preprocessing", "query", "sheet_name"}
+            if "arguments" in database:
+                if not isinstance(database["arguments"], dict):
+                    raise ValidationError("Database arguments must be a dict")
+            allowed_keys = {
+                "label",
+                "arguments",
+                "preprocessing",
+                "query",
+                "sheet_name",
+            }
             if not set(database.keys()).issubset(set(allowed_keys)):
                 raise ValidationError(
                     f"Database {database} contains unknown keys. Allowed keys "

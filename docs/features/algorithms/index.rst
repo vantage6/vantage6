@@ -7,5 +7,6 @@ The following pages each describe one feature of vantage6 algorithms.
    :maxdepth: 1
    :caption: Contents:
 
+   run_context
    wrapper
    isolated_network
