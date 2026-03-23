@@ -147,8 +147,9 @@ Ensure your Kubernetes cluster can access the database server.
 
 .. note::
 
-  You should create databases for the hub components before deploying the hub. Vantage6
-  will NOT create the databases for you when using external databases.
+  You should create databases for the hub components that you specified in the hub
+  configuration file before deploying the hub. Vantage6 will NOT create the databases
+  for you when using external databases.
 
 .. _gateway-configuration:
 
