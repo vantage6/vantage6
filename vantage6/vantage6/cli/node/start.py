@@ -12,6 +12,7 @@ from vantage6.cli.common.start import pull_infra_image
 from vantage6.common import warning, error, info, debug, get_database_config
 from vantage6.common.globals import (
     APPNAME,
+    DEFAULT_DB_MOUNT_MODE,
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
@@ -231,7 +232,7 @@ def cli_node_start(
         db_config = get_database_config(ctx.databases, label)
         uri = db_config["uri"]
         db_type = db_config["type"]
-        db_mount_mode = str(db_config.get("mount_mode", "copy")).lower()
+        db_mount_mode = str(db_config.get("mount_mode", DEFAULT_DB_MOUNT_MODE)).lower()
 
         if db_mount_mode not in SUPPORTED_DATABASE_MOUNT_MODES:
             error(

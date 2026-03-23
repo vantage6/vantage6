@@ -27,7 +27,12 @@ from vantage6.common.docker.addons import (
     get_image_name_wo_tag,
     running_in_docker,
 )
-from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
+from vantage6.common.globals import (
+    APPNAME,
+    BASIC_PROCESSING_IMAGE,
+    DEFAULT_DB_MOUNT_MODE,
+    NodePolicy,
+)
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
@@ -207,7 +212,7 @@ class DockerManager(DockerBaseManager):
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
             # we default to 'copy' mode to preserve current/previous behavior
-            mount_mode = str(db_config.get("mount_mode", "copy")).lower()
+            mount_mode = str(db_config.get("mount_mode", DEFAULT_DB_MOUNT_MODE)).lower()
 
             # we check again container-side (aside from host-running cli)
             if mount_mode not in SUPPORTED_DATABASE_MOUNT_MODES:
