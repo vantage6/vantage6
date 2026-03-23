@@ -79,7 +79,9 @@ databases:
     # containers.
     # - copy (default): copy file data into the node data volume
     # - ro: bind-mount host path read-only into algorithm containers
-    # Use 'ro' only for file/folder-backed data sources.
+    # NOTE: For now, `ro` has tested support for Linux hosts only. On
+    # Windows/macOS hosts, use `copy` (default).
+    # Use `ro` only for file/folder-backed data sources.
     mount_mode: copy
 
   - label: omop
@@ -107,8 +109,9 @@ databases:
   - label: persistent
     type: folder
     uri: /path/to/share/with/container
-    # Optional. Set to `ro` to mount this host folder read-only in algorithm
-    # containers.
+    # OPTIONAL: set to `ro` to mount this host folder read-only in algorithm
+    # containers. For now, `ro` has tested support for Linux hosts only. On
+    # Windows/macOS hosts, use `copy` (default).
     mount_mode: ro
 
 

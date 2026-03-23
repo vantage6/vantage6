@@ -326,7 +326,9 @@ something like:
         - label: default
           uri: /path/to/my/example.csv
           type: csv
-          # optional: `copy` (default) or `ro`
+          # OPTIONAL: `copy` (default), or `ro`.
+          # For now, `ro` has tested support for Linux hosts only. On
+          # Windows/macOS hosts, use `copy` (default).
           mount_mode: copy
         - label: my_other_database
           uri: /path/to/my/example2.csv
