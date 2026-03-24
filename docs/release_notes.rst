@@ -74,6 +74,16 @@ more details regarding the lower-level changes required to accomplish it.*
   - Check if database labels exist on node startup
     (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
 
+4.13.7
+------
+
+*17 February 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: cryptography, cffi and
+    various UI dependencies (`PR#2502 <https://github.com/vantage6/vantage6/pull/2502>`_).
+
 4.13.6
 ------
 
