@@ -23,11 +23,14 @@ def wait_for_keycloak_ready(release_name: str, k8s_config: KubernetesConfig) -> 
 
     info("Waiting for Keycloak pod to be created...")
     while True:
-        result = run_kubectl_command(["get", "pod", "-l", selector], k8s_config)
-        if result.returncode == 0:
+        result = run_kubectl_command(
+            ["get", "pod", "-l", selector, "-o", "name"],
+            k8s_config,
+            check=False,
+        )
+        if result.stdout.strip():
             break
-        else:
-            time.sleep(1)
+        time.sleep(1)
     info("Keycloak pod was created, waiting for it to be ready...")
     run_kubectl_command(
         ["wait", "--for=condition=ready", "pod", "-l", selector, "--timeout", "300s"],

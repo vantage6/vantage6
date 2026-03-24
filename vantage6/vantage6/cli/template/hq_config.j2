@@ -1,3 +1,5 @@
+{% from "_yaml_macros.j2" import yaml_sq %}
+
 # Override the chart name
 nameOverride: {{ nameOverride | default('vantage6-hq') }}
 # Optional, by default the Release.Namespace is used
@@ -21,9 +23,9 @@ hq:
     url: {{ hq.keycloak.url }}
     realm: {{ hq.keycloak.realm | default('vantage6') }}
     adminUsername: {{ hq.keycloak.adminUsername | default('admin') }}
-    adminPassword: "{{ hq.keycloak.adminPassword | default('admin') }}"
+    adminPassword: {{ yaml_sq(hq.keycloak.adminPassword | default('admin')) }}
     adminClient: {{ hq.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: "{{ hq.keycloak.adminClientSecret | default('myadminclientsecret') }}"
+    adminClientSecret: {{ yaml_sq(hq.keycloak.adminClientSecret | default('myadminclientsecret')) }}
   {% endif %}
 
   internal:
@@ -122,7 +124,7 @@ hq:
     # Whether to forward ports to host locally using kubernetes or not, using the
     # NodePort feature of kubernetes. If set to false, the ports will
     # not be forwarded. In production, this should be false and you are responsible
-    # for forwarding the ports with your own ingress or load balancer.
+    # for forwarding the ports with your own ingress, gateway or load balancer.
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: {{ hq.dev.forward_ports | default(false) }}
     # If forward_ports is true, these are the ports that will be exposed on the host.
@@ -203,7 +205,7 @@ rabbitmq:
   username: {{ rabbitmq.username | default('rabbitmquser') }}
 
   # The password of the RabbitMQ server
-  password: "{{ rabbitmq.password | default('rabbitmquserpassword') }}"
+  password: {{ yaml_sq(rabbitmq.password | default('rabbitmquserpassword')) }}
 
   # The vhost of the RabbitMQ server
   vhost: {{ rabbitmq.vhost | default('/vantage6') }}
@@ -229,7 +231,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: "{{ database.password | default('vantage6') }}"
+  password: {{ yaml_sq(database.password | default('vantage6')) }}
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}
@@ -260,7 +262,7 @@ ui:
   {% endif %}
 
   # Allowed algorithm stores for Bearer token inclusion (comma-separated URLs)
-  # Use "*" to allow all stores (less secure) or specify specific URLs
+  # Use "*" to allow all stores (less secure) or specify specific URLs, e.g.
   # allowedAlgorithmStores: "http://localhost:7602 https://store.uluru.vantage6.ai"
   allowedAlgorithmStores: "{{ ui.allowedAlgorithmStores | default('*') }}"
   # Community algorithm store URL.

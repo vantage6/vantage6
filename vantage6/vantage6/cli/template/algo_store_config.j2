@@ -1,3 +1,5 @@
+{% from "_yaml_macros.j2" import yaml_sq %}
+
 # Override the chart name
 nameOverride: {{ nameOverride | default('vantage6-store') }}
 # Optional, by default the Release.Namespace is used
@@ -26,9 +28,9 @@ store:
     url: {{ store.keycloak.url }}
     realm: {{ store.keycloak.realm | default('vantage6') }}
     adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
-    adminPassword: "{{ store.keycloak.adminPassword | default('admin') }}"
+    adminPassword: {{ yaml_sq(store.keycloak.adminPassword | default('admin')) }}
     adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
-    adminClientSecret: "{{ store.keycloak.adminClientSecret | default('myadminclientsecret') }}"
+    adminClientSecret: {{ yaml_sq(store.keycloak.adminClientSecret | default('myadminclientsecret')) }}
   {% endif %}
 
   {% if store.standalone is defined and store.standalone %}
@@ -126,7 +128,7 @@ store:
     # Whether to forward ports to host locally using kubernetes or not, using the
     # NodePort feature of kubernetes. If set to false, the ports will
     # not be forwarded. In production, this should be false and you are responsible
-    # for forwarding the ports with your own ingress or load balancer.
+    # for forwarding the ports with your own ingress, gateway or load balancer.
     # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
     forward_ports: {{ store.dev.forward_ports | default(false) }}
     # If forward_ports is true, this is the port that will be exposed on the host.
@@ -204,7 +206,7 @@ store:
     {% for registry in node.private_docker_registries %}
     - registry: {{ registry.registry }}
       username: {{ registry.username }}
-      password: "{{ registry.password }}"
+      password: {{ yaml_sq(registry.password) }}
     {% endfor %}
   {% else %}
   # private_docker_registries:
@@ -232,23 +234,23 @@ store:
   # alert them that an algorithm review is requested from them.
   {% if store.smtpServer is defined %}
   smtpServer:
-    host: {{ store.smtpServer.host }}
-    port: {{ store.smtpServer.port }}
+    host: '{{ store.smtpServer.host }}'
+    port: '{{ store.smtpServer.port }}'
     {% if store.smtpServer.user is defined %}
-    user: {{ store.smtpServer.user }}
+    user: '{{ store.smtpServer.user }}'
     {% endif %}
     {% if store.smtpServer.password is defined %}
-    password: "{{ store.smtpServer.password }}"
+    password: '{{ store.smtpServer.password }}'
     {% endif %}
-    from: {{ store.smtpServer.from }}
+    from: '{{ store.smtpServer.from }}'
     {% if store.smtpServer.replyTo is defined %}
-    replyTo: {{ store.smtpServer.replyTo }}
+    replyTo: '{{ store.smtpServer.replyTo }}'
     {% endif %}
     {% if store.smtpServer.starttls is defined %}
-    starttls: {{ store.smtpServer.starttls }}
+    starttls: '{{ store.smtpServer.starttls }}'
     {% endif %}
     {% if store.smtpServer.ssl is defined %}
-    ssl: {{ store.smtpServer.ssl }}
+    ssl: '{{ store.smtpServer.ssl }}'
     {% endif %}
   {% else %}
   # smtpServer:
@@ -283,7 +285,7 @@ database:
   username: {{ database.username | default('vantage6') }}
 
   # The password of the database
-  password: "{{ database.password | default('vantage6') }}"
+  password: {{ yaml_sq(database.password | default('vantage6')) }}
 
   # The name of the database
   name: {{ database.name | default('vantage6') }}

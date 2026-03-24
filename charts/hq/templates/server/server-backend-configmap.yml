@@ -43,9 +43,9 @@ data:
     {{- end }}
     {{- if .Values.rabbitmq }}
     rabbitmq:
-      uri: amqp://{{ .Values.rabbitmq.username }}:{{ .Values.rabbitmq.password }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost }}
+      uri: amqp://{{ .Values.rabbitmq.username | urlquery }}:{{ .Values.rabbitmq.password | urlquery }}@{{ .Release.Name }}-rabbitmq:5672/{{ .Values.rabbitmq.vhost | urlquery }}
     {{- end }}
-    {{- if .Values.hq.dev.host_uri }}
+    {{- if and .Values.hq.dev .Values.hq.dev.host_uri }}
     dev:
       host_uri: {{ .Values.hq.dev.host_uri }}
       store_address: {{ .Values.hq.dev.store_address | default $internal.store }}

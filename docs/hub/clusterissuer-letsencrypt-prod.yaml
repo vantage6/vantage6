@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Change this to a valid email address for your organization. It will be
+    # used by Let's Encrypt to send expiry and problem notifications.
+    email: you@example.org
+    # Use the Let's Encrypt production ACME endpoint. For testing, you can
+    # temporarily switch this to the staging endpoint.
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret that stores the ACME account private key.
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            # Ingress class that should be used for HTTP-01 challenges. This
+            # should match the class used by your nginx ingress controller.
+            class: nginx
+

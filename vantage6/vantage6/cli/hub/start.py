@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from vantage6.common import info
+from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType
 
 from vantage6.cli.auth.install import check_and_install_keycloak_operator
@@ -12,6 +12,11 @@ from vantage6.cli.common.k8s_utils import wait_for_pod_ready
 from vantage6.cli.common.start import helm_install, prestart_checks
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import ChartName
+from vantage6.cli.hub.install import (
+    cert_manager_seems_installed,
+    check_and_install_cert_manager_crds,
+)
+from vantage6.cli.hub.utils.gateway import ensure_envoy_gateway
 from vantage6.cli.k8s_config import select_k8s_config
 
 
@@ -27,6 +32,21 @@ from vantage6.cli.k8s_config import select_k8s_config
 @click.option("--chart-version", default=None, help="Chart version to use")
 @click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click.option("--wait-ready/--no-wait-ready", "wait_ready", default=True)
+@click.option(
+    "--auto-install-gateway/--no-auto-install-gateway",
+    "auto_install_gateway",
+    default=True,
+    help="Automatically install Envoy Gateway if it is not detected in the cluster.",
+)
+@click.option(
+    "--envoy-gateway-version",
+    default=None,
+    help=(
+        "Envoy Gateway version tag to use for installation. "
+        "If omitted, the latest release is looked up from GitHub; "
+        "if that lookup fails, provide this flag explicitly."
+    ),
+)
 @click_insert_context(
     type_=InstanceType.HUB,
     include_name=True,
@@ -42,6 +62,8 @@ def cli_hub_start(
     local_chart_dir: Path | None,
     chart_version: str | None,
     wait_ready: bool,
+    auto_install_gateway: bool = True,
+    envoy_gateway_version: str | None = None,
 ) -> None:
     """
     Start a hub environment.
@@ -52,8 +74,32 @@ def cli_hub_start(
 
     k8s_config = select_k8s_config(context=context, namespace=namespace)
 
-    # before starting the hub, we need to install the keycloak operator (if not already
-    # installed)
+    # Before starting the hub, ensure required operators / CRDs are installed.
+    hub_gateway = ctx.config.get("hubGateway", {})
+    tls_cfg = hub_gateway.get("tls", {})
+
+    # 1) cert-manager CRDs are needed for Certificate resources used by the hub
+    #    chart, but only when ingress/gateway exposure is enabled and configured
+    #    to use cert-manager.
+    if hub_gateway.get("enabled") and tls_cfg.get("mode") == "cert-manager":
+        check_and_install_cert_manager_crds(k8s_config)
+        if not cert_manager_seems_installed(k8s_config):
+            warning(
+                "⚠️  hubGateway.tls.mode is set to 'cert-manager', but cert-manager "
+                "does not appear to be installed. No automatic installation will "
+                "be attempted; please install and configure cert-manager (or "
+                "switch hubGateway.tls.mode to 'existingSecret')."
+            )
+
+    # 2) Ensure an Envoy Gateway installation is available when hub gateway is enabled.
+    if hub_gateway.get("enabled"):
+        ensure_envoy_gateway(
+            k8s_config,
+            auto_install=auto_install_gateway,
+            version=envoy_gateway_version,
+        )
+
+    # 3) Keycloak operator (and its CRDs) are needed for the auth subchart.
     check_and_install_keycloak_operator(k8s_config)
 
     helm_install(

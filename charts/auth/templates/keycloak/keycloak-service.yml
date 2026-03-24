@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+spec:
+  {{- $dev := .Values.keycloak.dev | default (dict) }}
+  {{- $hasNodePort := and $dev.forward_ports $dev.local_auth_port_to_expose }}
+  type: {{ if $hasNodePort }}NodePort{{ else }}ClusterIP{{ end }}
+  ports:
+    {{- $behindGateway := and .Values.keycloak.behindGateway (.Values.keycloak.behindGateway.enabled | default false) }}
+    {{- if or $hasNodePort (or $behindGateway (not (.Values.keycloak.production | default true))) }}
+    # Use HTTP (7680) when:
+    # - running with NodePort (sandbox/dev), or
+    # - behind a Gateway/load balancer/ingress, or
+    # - not in production mode.
+    - name: http
+      port: 7680
+      targetPort: 7680
+      protocol: TCP
+      {{- if $hasNodePort }}
+      nodePort: {{ $dev.local_auth_port_to_expose }}
+      {{- end }}
+    {{- else }}
+    - name: https
+      port: 8443
+      targetPort: 8443
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: keycloak
+    app.kubernetes.io/instance: {{ .Release.Name }}-kc
+    app.kubernetes.io/managed-by: keycloak-operator

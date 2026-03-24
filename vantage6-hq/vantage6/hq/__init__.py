@@ -9,6 +9,8 @@ import os
 
 from gevent import monkey
 
+from vantage6.backend.common.globals import RequiredBackendEnvVars
+
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -51,7 +53,6 @@ from vantage6.hq.globals import (
     HQ_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
-    SUPER_USER_INFO,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -323,7 +324,9 @@ class HQApp(Vantage6App):
 
         # Ensure root user and organization exist
         try:
-            admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
+            admin_user = db.User.get_by_username(
+                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
+            )
         except NoResultFound:
             log.warning("No root user found! Is this the first run?")
             admin_user = self._create_super_user()
@@ -344,7 +347,9 @@ class HQApp(Vantage6App):
         # sanity check, this function should never be called in any other
         # context than the first run of HQ
         try:
-            db.User.get_by_username(SUPER_USER_INFO["username"])
+            root_username = db.User.get_by_username(
+                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
+            )
             raise Exception("Attempted to create super user when it already existed!")
         except NoResultFound:
             pass
@@ -357,14 +362,8 @@ class HQApp(Vantage6App):
 
         root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
-        # TODO no longer use any default root username / password
-        log.warning(
-            f"Creating super user ({SUPER_USER_INFO['username']})"
-            " with default password!"
-        )
-
         user = db.User(
-            username=SUPER_USER_INFO["username"],
+            username=root_username,
             roles=[root],
             organization=org,
         )

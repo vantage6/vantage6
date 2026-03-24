@@ -1,0 +1,61 @@
+{{- $hg := .Values.hubGateway | default (dict) -}}
+{{- $hosts := $hg.hosts | default (dict) -}}
+{{- $tls := $hg.tls | default (dict) -}}
+{{- if $hg.enabled | default false -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-gateway
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    {{- $authHost := get $hosts "auth" | default "" -}}
+    {{- if ne (trim $authHost) "" }}
+    - name: auth
+      protocol: HTTPS
+      port: 443
+      hostname: {{ $authHost | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "auth") }}
+    {{- end }}
+    {{- $hqHost := get $hosts "hq" | default "" -}}
+    {{- if ne (trim $hqHost) "" }}
+    - name: hq
+      protocol: HTTPS
+      port: 443
+      hostname: {{ $hqHost | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "hq") }}
+    {{- end }}
+    {{- $portalHost := get $hosts "portal" | default "" -}}
+    {{- if ne (trim $portalHost) "" }}
+    - name: portal
+      protocol: HTTPS
+      port: 443
+      hostname: {{ $portalHost | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "portal") }}
+    {{- end }}
+    {{- $storeHost := get $hosts "store" | default "" -}}
+    {{- if ne (trim $storeHost) "" }}
+    - name: store
+      protocol: HTTPS
+      port: 443
+      hostname: {{ $storeHost | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "store") }}
+    {{- end }}
+{{- end }}

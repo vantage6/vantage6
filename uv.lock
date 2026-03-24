@@ -2283,7 +2283,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.0b2"
+version = "5.0.0b4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
