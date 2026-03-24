@@ -1,7 +1,6 @@
 import os
 import stat
 import tempfile
-
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
