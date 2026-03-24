@@ -87,13 +87,7 @@ class Task(Base):
     results = relationship("Run", back_populates="task", viewonly=True)
     init_org = relationship("Organization", back_populates="tasks")
     init_user = relationship("User", back_populates="created_tasks")
-    # Keep database label order deterministic for algorithms relying on
-    # positional database selection
-    databases = relationship(
-        "TaskDatabase",
-        back_populates="task",
-        order_by="TaskDatabase.id",
-    )
+    databases = relationship("TaskDatabase", back_populates="task")
     study = relationship("Study", back_populates="tasks")
     algorithm_store = relationship("AlgorithmStore", back_populates="tasks")
 

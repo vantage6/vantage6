@@ -47,7 +47,6 @@ class DockerTaskManager(DockerBaseManager):
         docker_client: DockerClient,
         vpn_manager: VPNManager,
         node_name: str,
-        node_id: int,
         run_id: int,
         task_info: dict,
         tasks_dir: Path,
@@ -61,7 +60,6 @@ class DockerTaskManager(DockerBaseManager):
         device_requests: list | None = None,
         requires_pull: bool = False,
         share_algorithm_logs: bool = False,
-        write_run_context_file: bool = False,
     ):
         """
         Initialization creates DockerTaskManager instance
@@ -76,8 +74,6 @@ class DockerTaskManager(DockerBaseManager):
             VPN manager required to set up traffic forwarding via VPN
         node_name: str
             Name of the node, to track running algorithms
-        node_id: int
-            Numeric identifier of the node in the server
         run_id: int
             Algorithm run identifier
         task_info: dict
@@ -100,8 +96,6 @@ class DockerTaskManager(DockerBaseManager):
             event if a local image is available
         share_algorithm_logs: bool
             If true, share algorithm logs with the server
-        write_run_context_file: bool
-            If true, write a run context file and expose RUN_CONTEXT_FILE
         """
         self.task_id = task_info["id"]
         self.log = logging.getLogger(f"task ({self.task_id})")
@@ -116,14 +110,11 @@ class DockerTaskManager(DockerBaseManager):
         self.databases = databases
         self.data_volume_name = docker_volume_name
         self.node_name = node_name
-        self.node_id = node_id
         self.alpine_image = ALPINE_IMAGE if alpine_image is None else alpine_image
         self.proxy = proxy
         self.requires_pull = requires_pull
         self.share_algorithm_logs = share_algorithm_logs
-        self.write_run_context_file = write_run_context_file
         self.container = None
-        self.helper_container = None
         self.status_code = None
         self.docker_input = None
 
@@ -137,7 +128,6 @@ class DockerTaskManager(DockerBaseManager):
 
         # FIXME: these values should be retrieved from DockerNodeContext
         #   in some way.
-        # these paths are for algorithm container filesystem namespace
         self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
 
@@ -244,11 +234,11 @@ class DockerTaskManager(DockerBaseManager):
 
     def run(
         self,
-        docker_input: bytes | str,
+        docker_input: bytes,
         tmp_vol_name: str,
         token: str,
         algorithm_env: dict,
-        databases_to_use: list[dict],
+        databases_to_use: list[str],
     ) -> list[dict] | None:
         """
         Runs the docker-image in detached mode.
@@ -258,7 +248,7 @@ class DockerTaskManager(DockerBaseManager):
 
         Parameters
         ----------
-        docker_input: bytes | str
+        docker_input: bytes
             Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
@@ -266,8 +256,8 @@ class DockerTaskManager(DockerBaseManager):
             Bearer token that the container can use
         algorithm_env: dict
             Dictionary with additional environment variables to set
-        databases_to_use: list[dict]
-            List of database selection objects to use in the task
+        databases_to_use: list[str]
+            List of labels of databases to use in the task
 
         Returns
         -------
@@ -279,29 +269,13 @@ class DockerTaskManager(DockerBaseManager):
         self._make_task_folders()
 
         # prepare volumes
-        # NOTE: `docker_input` is used consistently in this class for now.
-        # `run_input` may be a clearer name in a future focused refactor.
-        # The run-context helper already uses `run_input` terminology.
         self.docker_input = docker_input
         self.volumes = self._prepare_volumes(tmp_vol_name, token)
         self.log.debug("volumes: %s", self.volumes)
 
-        proxy_host = self._get_proxy_host()
-        if self.write_run_context_file:
-            # create run context file for algorithm run
-            # `method`, `args` and `kwargs` live in docker/run_input
-            deserialized_input = self._deserialize_run_input(docker_input)
-            self._write_run_context_file(
-                input_data=deserialized_input,
-                databases_to_use=databases_to_use,
-                proxy_host=proxy_host,
-            )
-
         # setup environment variables
         self.environment_variables = self._setup_environment_vars(
-            algorithm_env=algorithm_env,
-            databases_to_use=databases_to_use,
-            proxy_host=proxy_host,
+            algorithm_env=algorithm_env, databases_to_use=databases_to_use
         )
 
         # run the algorithm as docker container
@@ -310,10 +284,8 @@ class DockerTaskManager(DockerBaseManager):
 
     def cleanup(self) -> None:
         """Cleanup the containers generated for this task"""
-        if self.helper_container:
-            remove_container(self.helper_container, kill=True)
-        if self.container:
-            remove_container(self.container, kill=True)
+        remove_container(self.helper_container, kill=True)
+        remove_container(self.container, kill=True)
 
     def _run_algorithm(self) -> list[dict] | None:
         """
@@ -343,8 +315,7 @@ class DockerTaskManager(DockerBaseManager):
             docker_client=self.docker, name=helper_container_name
         )
 
-        container_network = self.isolated_network_mgr.network_name
-        if self.__vpn_manager and self.__vpn_manager.has_vpn:
+        if self.__vpn_manager:
             # if VPN is active, network exceptions must be configured
             # First, start a container that runs indefinitely. The algorithm
             # container will run in the same network and network exceptions
@@ -364,7 +335,6 @@ class DockerTaskManager(DockerBaseManager):
             vpn_ports = self.__vpn_manager.forward_vpn_traffic(
                 helper_container=self.helper_container, algo_image_name=self.image
             )
-            container_network = "container:" + self.helper_container.id
 
         # try reading docker input
         # FIXME BvB 2023-02-03: why do we read docker input here? It is never
@@ -390,7 +360,7 @@ class DockerTaskManager(DockerBaseManager):
                 self.image,
                 detach=True,
                 environment=self.environment_variables,
-                network=container_network,
+                network="container:" + self.helper_container.id,
                 volumes=self.volumes,
                 name=container_name,
                 labels=self.labels,
@@ -490,11 +460,7 @@ class DockerTaskManager(DockerBaseManager):
         }
 
         for db_label, db in self.databases.items():
-            if db.get("mount_mode") == "ro":
-                # both ro dirs and ro files are mounted here
-                self.log.debug(f"Adding read-only database mount '{db_label}'")
-                volumes[db["host_uri"]] = {"bind": db["mount_target"], "mode": "ro"}
-            elif db["is_dir"]:
+            if db["is_dir"]:
                 self.log.debug(f"Adding folder as database '{db_label}'")
                 volumes[db["uri"]] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
 
@@ -506,10 +472,7 @@ class DockerTaskManager(DockerBaseManager):
         return volumes
 
     def _setup_environment_vars(
-        self,
-        algorithm_env: dict,
-        databases_to_use: list[dict],
-        proxy_host: str | None = None,
+        self, algorithm_env: dict, databases_to_use: list[str]
     ) -> dict:
         """ "
         Set environment variables required to run the algorithm
@@ -518,19 +481,21 @@ class DockerTaskManager(DockerBaseManager):
         ----------
         algorithm_env: dict
             Dictionary with additional environment variables to set
-        databases_to_use: list[dict]
-            Database selection objects to use
-        proxy_host: str | None
-            Proxy host to expose to the algorithm container. If None, this is
-            determined from the environment.
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
         dict:
             Environment variables required to run algorithm
         """
-        if proxy_host is None:
-            proxy_host = self._get_proxy_host()
+        try:
+            proxy_host = os.environ["PROXY_SERVER_HOST"]
+
+        except Exception:
+            self.log.warn("PROXY_SERVER_HOST not set, using host.docker.internal")
+            self.log.debug("environment: %s", os.environ)
+            proxy_host = "host.docker.internal"
 
         # define environment variables for the docker-container, the
         # host, port and api_path are from the local proxy server to
@@ -546,13 +511,6 @@ class DockerTaskManager(DockerBaseManager):
             "PORT": os.environ.get("PROXY_SERVER_PORT", 8080),
             "API_PATH": "",
         }
-        safe_environment_variables = {}
-        if self.write_run_context_file:
-            safe_environment_variables["RUN_CONTEXT_FILE"] = (
-                f"{self.data_folder}/{self.task_folder_name}/run_context.json"
-            )
-            # Keep this path plain for algorithms that read RUN_CONTEXT_FILE
-            # directly. It is node-generated, not task input.
 
         # Add squid proxy environment variables
         if self.proxy:
@@ -620,9 +578,14 @@ class DockerTaskManager(DockerBaseManager):
             db = self.databases[label]
 
             uri_var_name = f"{label.upper()}_DATABASE_URI"
-            environment_variables[uri_var_name] = self._database_uri_in_container(
-                label, db
-            )
+            if db["is_file"]:
+                environment_variables[uri_var_name] = (
+                    f"{self.data_folder}/{os.path.basename(db['uri'])}"
+                )
+            elif db["is_dir"]:
+                environment_variables[uri_var_name] = f"/mnt/{label}"
+            else:
+                environment_variables[uri_var_name] = db["uri"]
 
             type_var_name = f"{label.upper()}_DATABASE_TYPE"
             environment_variables[type_var_name] = db["type"]
@@ -645,17 +608,13 @@ class DockerTaskManager(DockerBaseManager):
             self.log.info("Custom environment variables are loaded!")
             self.log.debug(f"custom environment: {algorithm_env}")
 
-        all_environment_variables = {
-            **environment_variables,
-            **safe_environment_variables,
-        }
         # validate whether environment variables don't contain any illegal
         # characters
-        self._validate_environment_variables(all_environment_variables)
+        self._validate_environment_variables(environment_variables)
 
         # print the environment before encoding it so that the user can see
         # what is passed to the container
-        self.log.debug(f"environment: {all_environment_variables}")
+        self.log.debug(f"environment: {environment_variables}")
 
         # encode environment variables to prevent special characters from being
         # possibly code injection
@@ -663,191 +622,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables
         )
 
-        return {**environment_variables, **safe_environment_variables}
-
-    def _get_proxy_host(self) -> str:
-        """
-        Determine host for local proxy service used by algorithm containers.
-
-        Returns
-        -------
-        str
-            Proxy host name for algorithm run.
-        """
-        try:
-            return os.environ["PROXY_SERVER_HOST"]
-        except Exception:
-            self.log.warning("PROXY_SERVER_HOST not set, using host.docker.internal")
-            self.log.debug("environment: %s", os.environ)
-            return "host.docker.internal"
-
-    # NOTE: we use `run_input` here, though the same value is called
-    # `docker_input` elsewhere for now
-    def _deserialize_run_input(self, run_input: bytes | str | None) -> dict:
-        """
-        Deserialize run input into a dictionary.
-
-        Parameters
-        ----------
-        run_input: bytes | str | None
-            Run input payload passed to algorithm container.
-
-        Returns
-        -------
-        dict
-            Deserialized input dictionary, or empty dict on failure.
-        """
-        if not run_input:
-            return {}
-        try:
-            parsed = json.loads(run_input)
-        except Exception:
-            self.log.warning(
-                "Unable to deserialize task input for run context file; using defaults"
-            )
-            return {}
-        return parsed if isinstance(parsed, dict) else {}
-
-    def _database_uri_in_container(self, label: str, db: dict) -> str:
-        """
-        Compute the URI that should be used inside the algorithm container.
-
-        Parameters
-        ----------
-        label: str
-            Database label.
-        db: dict
-            Database metadata as stored in this task manager.
-
-        Returns
-        -------
-        str
-            Database URI visible from inside the algorithm container.
-        """
-        if db.get("mount_mode") == "ro":
-            return db["mount_target"]
-        if db["is_file"]:
-            # In dockerized mode, DockerManager._set_database() copied file
-            # databases to __task_dir (the node data volume).
-            # That volume is mounted at self.data_folder in the algorithm
-            # container, so this URI points to the copied file.
-            return f"{self.data_folder}/{os.path.basename(db['uri'])}"
-        if db["is_dir"]:
-            return f"/mnt/{label}"
-        return db["uri"]
-
-    def _write_run_context_file(
-        self, input_data: dict, databases_to_use: list[dict], proxy_host: str
-    ) -> None:
-        """
-        Write minimal run context file for algorithm run.
-
-        Parameters
-        ----------
-        input_data: dict
-            Deserialized task input.
-        databases_to_use: list[dict]
-            Databases selected for this task.
-        proxy_host: str
-            Proxy host used by algorithm containers.
-        """
-        run_context_path = os.path.join(self.task_folder_path, "run_context.json")
-
-        inputs = []
-        for database in databases_to_use:
-            label = database.get("label")
-            if not label:
-                continue
-            db = self.databases.get(label)
-            if not db:
-                self.log.warning(
-                    "Database '%s' was requested but is unavailable for run context file",
-                    label,
-                )
-                continue
-            if not db.get("is_file"):
-                msg = (
-                    "run_context_file currently supports only file-based databases. "
-                    f"Requested database '{label}' is configured as a non-file source. "
-                    "Disable run_context_file for this node or switch this database "
-                    "to a file-based source."
-                )
-                self.status = TaskStatus.START_FAILED
-                self.log.error(msg)
-                raise PermanentAlgorithmStartFail(msg)
-
-            input_item = {
-                "id": label,
-                "uri": self._database_uri_in_container(label, db),
-            }
-            if db.get("type"):
-                input_item["type"] = db["type"]
-
-            if database.get("parameters"):
-                try:
-                    # The server stores all non-label database request fields
-                    # in TaskDatabase.parameters, including `query`,
-                    # `sheet_name` and `arguments`.
-                    database_parameters = json.loads(database["parameters"])
-                except Exception:
-                    self.log.warning(
-                        "Unable to parse parameters for database '%s' in run context",
-                        label,
-                    )
-                else:
-                    # For run context, only surface the nested per-input `arguments`
-                    # object, not the other database request fields.
-                    # As we mature this run context idea, this might change.
-                    arguments = (
-                        database_parameters.get("arguments")
-                        if isinstance(database_parameters, dict)
-                        else None
-                    )
-                    if isinstance(arguments, dict):
-                        input_item["arguments"] = arguments
-
-            inputs.append(input_item)
-
-        output_uri = f"{self.data_folder}/{self.task_folder_name}/output"
-        token_file = f"{self.data_folder}/{self.task_folder_name}/token"
-        run_context = {
-            "schema_version": "0.1",
-            "entrypoint": {
-                "name": input_data.get("method", ""),
-            },
-            "arguments": {
-                "positional": input_data.get("args", []),
-                "named": input_data.get("kwargs", {}),
-            },
-            "executor": {
-                "id": self.node_id,
-                "kind": "vantage6-node",
-            },
-            "inputs": inputs,
-            "outputs": [
-                {
-                    "id": "result",
-                    "uri": output_uri,
-                }
-            ],
-            "x-vantage6": {
-                "run_id": self.run_id,
-                "task_id": self.task_id,
-                "collaboration_id": self.collaboration_id,
-                "token_file": token_file,
-                "api_proxy": {
-                    "host": f"http://{proxy_host}",
-                    "port": str(os.environ.get("PROXY_SERVER_PORT", 8080)),
-                    "api_path": "",
-                },
-                "temporary_directory": self.tmp_folder,
-            },
-        }
-
-        with open(run_context_path, "w", encoding="utf-8") as fp:
-            json.dump(run_context, fp, indent=2)
-            fp.write("\n")
-        self.log.debug("Wrote run context file to '%s'", run_context_path)
+        return environment_variables
 
     def _validate_environment_variables(self, environment_variables: dict) -> None:
         """

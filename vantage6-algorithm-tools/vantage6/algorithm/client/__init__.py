@@ -157,8 +157,7 @@ class AlgorithmClient(ClientBase):
         endpoint: str
             Endpoint to which the request should be made.
         params: dict
-            Parameters to be passed to the request. If 'page' is present, it
-            will be ignored.
+            Parameters to be passed to the request.
 
         Returns
         -------
@@ -169,18 +168,18 @@ class AlgorithmClient(ClientBase):
             params = {}
         # get first page
         page = 1
-        response = self.request(endpoint, params={**params, "page": page})
-        data = response["data"]
+        params["page"] = page
+        response = self.request(endpoint, params=params)
 
         # append next pages (if any)
         links = response.get("links")
         while links and links.get("next"):
             page += 1
-            response = self.request(endpoint, params={**params, "page": page})
-            data += response["data"]
+            params["page"] = page
+            response["data"] += self.request(endpoint, params=params)["data"]
             links = response.get("links")
 
-        return data
+        return response["data"]
 
     class Run(ClientBase.SubClient):
         """

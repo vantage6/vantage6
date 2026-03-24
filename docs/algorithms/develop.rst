@@ -111,16 +111,6 @@ The environment variables that you specify in the node configuration file
 can be used in the exact same manner. You can view all environment variables
 that are available to your algorithm by ``print(os.environ)``.
 
-If the **experimental** node configuration option ``run_context_file`` is
-enabled, the algorithm container also receives ``RUN_CONTEXT_FILE``. This points
-to a JSON file with run context details such as input/output URIs, entrypoint
-name, arguments and selected platform-specific metadata.
-
-The exact contents and field names of this file may change while the feature is
-under development. Treat the current file/spec as in-developement, not yet as a
-stable public schema. For a more detailed explanation of what the run context is
-trying to provide, see :ref:`algo-run-context`.
-
 Returning results
 -----------------
 
