@@ -137,6 +137,7 @@ class DockerTaskManager(DockerBaseManager):
 
         # FIXME: these values should be retrieved from DockerNodeContext
         #   in some way.
+        # these paths are for algorithm container filesystem namespace
         self.tmp_folder = "/mnt/tmp"
         self.data_folder = "/mnt/data"
 
@@ -489,7 +490,11 @@ class DockerTaskManager(DockerBaseManager):
         }
 
         for db_label, db in self.databases.items():
-            if db["is_dir"]:
+            if db.get("mount_mode") == "ro":
+                # both ro dirs and ro files are mounted here
+                self.log.debug(f"Adding read-only database mount '{db_label}'")
+                volumes[db["host_uri"]] = {"bind": db["mount_target"], "mode": "ro"}
+            elif db["is_dir"]:
                 self.log.debug(f"Adding folder as database '{db_label}'")
                 volumes[db["uri"]] = {"bind": f"/mnt/{db_label}", "mode": "rw"}
 
@@ -719,7 +724,13 @@ class DockerTaskManager(DockerBaseManager):
         str
             Database URI visible from inside the algorithm container.
         """
+        if db.get("mount_mode") == "ro":
+            return db["mount_target"]
         if db["is_file"]:
+            # In dockerized mode, DockerManager._set_database() copied file
+            # databases to __task_dir (the node data volume).
+            # That volume is mounted at self.data_folder in the algorithm
+            # container, so this URI points to the copied file.
             return f"{self.data_folder}/{os.path.basename(db['uri'])}"
         if db["is_dir"]:
             return f"/mnt/{label}"
