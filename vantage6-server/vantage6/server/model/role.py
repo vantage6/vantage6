@@ -39,7 +39,9 @@ class Role(Base):
     users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
-    def get_by_name(cls, name: str) -> Role | None:
+    def get_by_name(
+        cls, name: str, is_default_role: bool | None = None
+    ) -> Role | None:
         """
         Get a role by its name.
 
@@ -47,6 +49,9 @@ class Role(Base):
         ----------
         name : str
             Name of the role
+        is_default_role : bool | None
+            Optional filter for default-role status. When set, only roles
+            matching this status are considered.
 
         Returns
         -------
@@ -56,7 +61,10 @@ class Role(Base):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.query(cls).filter_by(name=name).first()
+            query = session.query(cls).filter_by(name=name)
+            if is_default_role is not None:
+                query = query.filter_by(is_default_role=is_default_role)
+            result = query.first()
             session.commit()
             return result
         except NoResultFound:

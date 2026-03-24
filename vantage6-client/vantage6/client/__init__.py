@@ -1802,10 +1802,13 @@ class UserClient(ClientBase):
                 not contain its own URL in the configuration (you will be alerted of
                 this in an error message).
             databases: list[dict], optional
-                Databases to be used at the node. Each dict should contain
-                at least a 'label' key. Additional keys are 'query' (if using
-                SQL/SPARQL databases), 'sheet_name' (if using Excel databases),
-                and 'preprocessing' information.
+                Databases to be used at the node. Each dict should contain at
+                least a 'label' key. Additional optional keys are 'query' (if
+                using SQL/SPARQL databases), 'sheet_name' (if using Excel
+                databases), 'preprocessing' information, and 'arguments'. When
+                a node enables the experimental `run_context_file` feature,
+                these arguments are exposed to the algorithm via the run
+                context input entry under `inputs[*].arguments`.
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.
@@ -1996,7 +1999,9 @@ class UserClient(ClientBase):
 
     class Run(ClientBase.SubClient):
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_task: bool = False) -> dict:
+        def get(
+            self, id_: int, include_task: bool = False, decrypt_input: bool = True
+        ) -> dict:
             """View a specific run
 
             Parameters
@@ -2005,6 +2010,8 @@ class UserClient(ClientBase):
                 id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            decrypt_input : bool, optional
+                Whether to attempt decryption of the run input, by default True
             field: str, optional
                 Which data field to keep in the result. For instance, "field='name'"
                 will only return the name of the run. Default is None.
@@ -2018,14 +2025,13 @@ class UserClient(ClientBase):
             dict
                 Containing the run data
             """
-            self.parent.log.info("--> Attempting to decrypt results!")
-
             # get run from the API
             params = {"include": "task"} if include_task else {}
             run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
-            # decrypt input
-            run = self._decrypt_input(run_data=run, is_single_run=True)
+            if decrypt_input:
+                self.parent.log.info("--> Attempting to decrypt run input!")
+                run = self._decrypt_input(run_data=run, is_single_run=True)
 
             return run
 

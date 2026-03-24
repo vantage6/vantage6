@@ -90,7 +90,8 @@ set up a server. These roles are, in descending order of permissions:
 * Collaboration Admin: can do almost everything for all organizations in
   collaborations that they are a member of, e.g. create new users but not
   delete the entire collaboration
-* Organization Admin: can do everything for their own organization
+* Organization Admin: can manage users, roles, and nodes in their own
+  organization, and view organization resources
 * Researcher: can view the organization's resources and create tasks
 * Viewer: can only view the organization's resources
 
