@@ -63,9 +63,7 @@ def _ensure_envoy_gateway_class(k8s_config: KubernetesConfig) -> None:
 
     Exit if the GatewayClass cannot be created.
     """
-    environment = Environment(
-        loader=FileSystemLoader(TEMPLATE_FOLDER), autoescape=False
-    )
+    environment = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER), autoescape=True)
     template = environment.get_template(_ENVOY_GATEWAY_CLASS_TEMPLATE_FILE)
     manifest = template.render(
         {
