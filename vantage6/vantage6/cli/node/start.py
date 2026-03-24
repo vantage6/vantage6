@@ -12,7 +12,6 @@ from vantage6.cli.common.start import pull_infra_image
 from vantage6.common import warning, error, info, debug, get_database_config
 from vantage6.common.globals import (
     APPNAME,
-    DEFAULT_DB_MOUNT_MODE,
     DEFAULT_DOCKER_REGISTRY,
     DEFAULT_NODE_IMAGE,
     DEFAULT_NODE_IMAGE_WO_TAG,
@@ -29,9 +28,6 @@ from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils import check_config_name_allowed
 from vantage6.cli import __version__
-
-FILE_BASED_DATABASE_TYPES = {"folder", "csv", "parquet", "excel"}
-SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
 
 
 @click.command()
@@ -149,20 +145,20 @@ def cli_node_start(
     info("Creating file & folder mounts")
     # FIXME: should obtain mount points from DockerNodeContext
     mounts = [
-        # (target, source, mode)
-        ("/mnt/log", str(ctx.log_dir), "rw"),
-        ("/mnt/data", data_volume.name, "rw"),
-        ("/mnt/vpn", vpn_volume.name, "rw"),
-        ("/mnt/ssh", ssh_volume.name, "rw"),
-        ("/mnt/squid", squid_volume.name, "rw"),
-        ("/mnt/config", str(ctx.config_dir), "ro"),
-        ("/var/run/docker.sock", "/var/run/docker.sock", "rw"),
+        # (target, source)
+        ("/mnt/log", str(ctx.log_dir)),
+        ("/mnt/data", data_volume.name),
+        ("/mnt/vpn", vpn_volume.name),
+        ("/mnt/ssh", ssh_volume.name),
+        ("/mnt/squid", squid_volume.name),
+        ("/mnt/config", str(ctx.config_dir)),
+        ("/var/run/docker.sock", "/var/run/docker.sock"),
     ]
 
     if mount_src:
         # If mount_src is a relative path, docker will consider it a volume.
         mount_src = os.path.abspath(mount_src)
-        mounts.append(("/vantage6", mount_src, "rw"))
+        mounts.append(("/vantage6", mount_src))
 
     # FIXME: Code duplication: Node.__init__() (vantage6/node/__init__.py)
     #   uses a lot of the same logic. Suggest moving this to
@@ -179,7 +175,7 @@ def cli_node_start(
     fullpath = Path(ctx.get_data_file(filename))
     if fullpath:
         if Path(fullpath).exists():
-            mounts.append(("/mnt/private_key.pem", str(fullpath), "ro"))
+            mounts.append(("/mnt/private_key.pem", str(fullpath)))
         else:
             warning(f"Private key file is provided {fullpath}, but does not exist")
 
@@ -207,7 +203,7 @@ def cli_node_start(
         # mounted in a volume mount point. Somehow the file is than empty in
         # the volume but not for the node instance. By removing the .tmp we
         # make sure that the file is not empty in the volume.
-        mounts.append((f"/mnt/ssh/{hostname}.pem.tmp", str(key_path), "rw"))
+        mounts.append((f"/mnt/ssh/{hostname}.pem.tmp", str(key_path)))
 
     env = {
         "DATA_VOLUME_NAME": data_volume.name,
@@ -215,8 +211,7 @@ def cli_node_start(
         "PRIVATE_KEY": "/mnt/private_key.pem",
     }
 
-    # For file/folder host paths we mount into the node; non-file DB URIs are
-    # passed as env only.
+    # only mount the DB if it is a file
     info("Setting up databases")
     db_labels = [db["label"] for db in ctx.databases]
     for label in db_labels:
@@ -232,21 +227,6 @@ def cli_node_start(
         db_config = get_database_config(ctx.databases, label)
         uri = db_config["uri"]
         db_type = db_config["type"]
-        db_mount_mode = str(db_config.get("mount_mode", DEFAULT_DB_MOUNT_MODE)).lower()
-
-        if db_mount_mode not in SUPPORTED_DATABASE_MOUNT_MODES:
-            error(
-                f"Database mount_mode {Fore.RED}{db_mount_mode}{Style.RESET_ALL} is "
-                "invalid. Supported values are 'copy' and 'ro'."
-            )
-            exit(1)
-
-        if db_mount_mode == "ro" and db_type not in FILE_BASED_DATABASE_TYPES:
-            error(
-                f"Database mount_mode {Fore.RED}ro{Style.RESET_ALL} is only supported "
-                "for file/folder based databases."
-            )
-            exit(1)
 
         info(
             f"  Processing {Fore.GREEN}{db_type}{Style.RESET_ALL} database "
@@ -255,11 +235,7 @@ def cli_node_start(
         label_capitals = label.upper()
 
         try:
-            candidate_path = Path(uri)
-            db_file_exists = candidate_path.exists()
-            if db_file_exists:
-                # Normalize existing host paths to absolute bind sources.
-                uri = str(candidate_path.resolve())
+            db_file_exists = Path(uri).exists()
         except Exception:
             # If the database uri cannot be parsed, it is definitely not a
             # file. In case of http servers or sql servers, checking the path
@@ -267,7 +243,7 @@ def cli_node_start(
             # we catch all exceptions here.
             db_file_exists = False
 
-        if db_type in FILE_BASED_DATABASE_TYPES and not db_file_exists:
+        if db_type in ["folder", "csv", "parquet", "excel"] and not db_file_exists:
             error(
                 f"Database {Fore.RED}{uri}{Style.RESET_ALL} not found. Databases of "
                 f"type '{db_type}' must be present on the harddrive. Please update "
@@ -280,10 +256,9 @@ def cli_node_start(
             env[f"{label_capitals}_DATABASE_URI"] = uri
         else:
             debug("  - file-based database added")
-            suffix = Path(str(uri)).suffix
+            suffix = Path(uri).suffix
             env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
-            mount_access_mode = "ro" if db_mount_mode == "ro" else "rw"
-            mounts.append((f"/mnt/{label}{suffix}", str(uri), mount_access_mode))
+            mounts.append((f"/mnt/{label}{suffix}", str(uri)))
 
     system_folders_option = "--system" if system_folders else "--user"
     cmd = (
@@ -293,11 +268,7 @@ def cli_node_start(
 
     volumes = []
     for mount in mounts:
-        target, source, mode = mount
-        if mode == "rw":
-            volumes.append(f"{source}:{target}")
-        else:
-            volumes.append(f"{source}:{target}:{mode}")
+        volumes.append(f"{mount[1]}:{mount[0]}")
 
     extra_mounts = ctx.config.get("node_extra_mounts", [])
     for mount in extra_mounts:

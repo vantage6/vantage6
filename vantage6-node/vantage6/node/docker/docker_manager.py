@@ -27,12 +27,7 @@ from vantage6.common.docker.addons import (
     get_image_name_wo_tag,
     running_in_docker,
 )
-from vantage6.common.globals import (
-    APPNAME,
-    BASIC_PROCESSING_IMAGE,
-    DEFAULT_DB_MOUNT_MODE,
-    NodePolicy,
-)
+from vantage6.common.globals import APPNAME, BASIC_PROCESSING_IMAGE, NodePolicy
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.algorithm.tools.wrappers import get_column_names
@@ -51,8 +46,6 @@ from vantage6.node.docker.exceptions import (
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
 log = logging.getLogger(logger_name(__name__))
-
-SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
 
 
 class Result(NamedTuple):
@@ -141,7 +134,6 @@ class DockerManager(DockerBaseManager):
         self.ctx = ctx
         config = ctx.config
         self.algorithm_env = config.get("algorithm_env", {})
-        self.write_run_context_file = config.get("run_context_file", False)
         self.vpn_manager = vpn_manager
         self.client = client
         self.__tasks_dir = tasks_dir
@@ -212,22 +204,8 @@ class DockerManager(DockerBaseManager):
         for label in db_labels:
             label_upper = label.upper()
             db_config = get_database_config(databases, label)
-            # we default to 'copy' mode to preserve current/previous behavior
-            mount_mode = str(db_config.get("mount_mode", DEFAULT_DB_MOUNT_MODE)).lower()
-
-            # we check again container-side (aside from host-running cli)
-            if mount_mode not in SUPPORTED_DATABASE_MOUNT_MODES:
-                raise ValueError(
-                    f"Invalid mount_mode '{mount_mode}' for database '{label}'. "
-                    "Supported values are 'copy' and 'ro'."
-                )
 
             if running_in_docker():
-                # `v6 node start` sets:
-                #    env[f"{label_capitals}_DATABASE_URI"] = f"{label}{suffix}"
-                #    mounts.append((f"/mnt/{label}{suffix}", str(uri)))
-                # So uri will get assigned to something like `default.csv` now
-                # It's not a "path" per se yet (not 'universal')
                 uri = os.environ[f"{label_upper}_DATABASE_URI"]
             else:
                 uri = db_config["uri"]
@@ -241,38 +219,16 @@ class DockerManager(DockerBaseManager):
                 )
 
                 if db_is_file:
-                    # because `v6 node start` did
-                    # `mounts.append((f"/mnt/{label}{suffix}", str(uri)))` now
-                    # uri points to the dataset that has been bind-mounted from
-                    # the host. This is still in the node filesystem namespace
                     uri = f"/mnt/{uri}"
             else:
                 db_is_file = Path(uri).exists() and Path(uri).is_file()
                 db_is_dir = Path(uri).exists() and Path(uri).is_dir()
 
             if db_is_file:
-                if mount_mode == "ro":
-                    self.log.info(
-                        "Using read-only bind mount for database '%s' from '%s'",
-                        label,
-                        # keep in mind: db_config["uri"] is uri in host filesystem namespace
-                        db_config["uri"],
-                    )
-                    # we don't just overwrite uri with `db_config["uri"]` like
-                    # we do below for dirs because, in the node, we might still
-                    # check the dataset (e.g. get_column_names()). We'll end up
-                    # passing a host_uri so task manager knows what to tell
-                    # host-side-running docker engine what to mount
-                else:
-                    # We'll copy the file to the folder `data` in our task_dir.
-                    self.log.info(f"Copying {uri} to {self.__tasks_dir}")
-                    # task_dir at the moment is just the data volume (dockerized)
-                    # See: https://github.com/vantage6/vantage6/issues/2533
-                    # But this named volume will be shared with the algorithm
-                    shutil.copy(uri, self.__tasks_dir)
-                    # after the below line, uri will point to path in (still)
-                    # node filesystem namespace, the copy we've just made
-                    uri = self.__tasks_dir / os.path.basename(uri)
+                # We'll copy the file to the folder `data` in our task_dir.
+                self.log.info(f"Copying {uri} to {self.__tasks_dir}")
+                shutil.copy(uri, self.__tasks_dir)
+                uri = self.__tasks_dir / os.path.basename(uri)
 
             if db_is_dir:
                 self.log.info(
@@ -280,30 +236,9 @@ class DockerManager(DockerBaseManager):
                     db_config["uri"],
                     uri,
                 )
-                # Ignore all previous comments about file locations: folders
+                # Ignore all previouscomments about file locations: folders
                 # need to be mounted from the host.
                 uri = db_config["uri"]
-
-            db_suffix = Path(str(db_config["uri"])).suffix
-            mount_target = None
-            if db_is_file:
-                # used for ro mode. With copy we don't mount the file itself
-                mount_target = f"/mnt/{label}{db_suffix}"
-            elif db_is_dir:
-                # will be used for ro dir mount
-                mount_target = f"/mnt/{label}"
-
-            if mount_mode == "ro":
-                if not (db_is_file or db_is_dir):
-                    raise ValueError(
-                        f"Database '{label}' uses mount_mode 'ro' but does not resolve "
-                        "to a file/folder database."
-                    )
-                if not db_config.get("uri") or not mount_target:
-                    raise ValueError(
-                        f"Database '{label}' uses mount_mode 'ro' but missing host "
-                        "uri or mount target."
-                    )
 
             self.databases[label] = {
                 "uri": uri,
@@ -311,10 +246,6 @@ class DockerManager(DockerBaseManager):
                 "is_dir": db_is_dir,
                 "type": db_config["type"],
                 "env": db_config.get("env", {}),
-                "mount_mode": mount_mode,
-                # host_uri and mount_target are only used in 'ro' mount mode
-                "host_uri": db_config["uri"],
-                "mount_target": mount_target,
             }
         self.log.debug("Databases: %s", self.databases)
 
@@ -663,10 +594,10 @@ class DockerManager(DockerBaseManager):
         run_id: int,
         task_info: dict,
         image: str,
-        docker_input: bytes | str,
+        docker_input: bytes,
         tmp_vol_name: str,
         token: str,
-        databases_to_use: list[dict],
+        databases_to_use: list[str],
         socketIO: SocketIO,
     ) -> tuple[TaskStatus, list[dict] | None]:
         """
@@ -681,14 +612,14 @@ class DockerManager(DockerBaseManager):
             Dictionary with task information
         image: str
             Docker image name
-        docker_input: bytes | str
+        docker_input: bytes
             Input that can be read by docker container
         tmp_vol_name: str
             Name of temporary docker volume assigned to the algorithm
         token: str
             Bearer token that the container can use
-        databases_to_use: list[dict]
-            Database selection objects to use
+        databases_to_use: list[str]
+            Labels of the databases to use
 
         Returns
         -------
@@ -717,7 +648,6 @@ class DockerManager(DockerBaseManager):
             task_info=task_info,
             vpn_manager=self.vpn_manager,
             node_name=self.node_name,
-            node_id=self.client.whoami.id_,
             tasks_dir=self.__tasks_dir,
             isolated_network_mgr=self.isolated_network_mgr,
             databases=self.databases,
@@ -731,7 +661,6 @@ class DockerManager(DockerBaseManager):
             socketIO=socketIO,
             collaboration_id=self.client.collaboration_id,
             share_algorithm_logs=self.share_algorithm_logs,
-            write_run_context_file=self.write_run_context_file,
         )
 
         # attempt to kick of the task. If it fails do to unknown reasons we try

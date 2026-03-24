@@ -6,7 +6,6 @@ import uuid
 import random
 import string
 import yaml
-import datetime
 
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -23,9 +22,7 @@ from vantage6.common import bytes_to_base64s
 from vantage6.backend.common import test_context
 from vantage6.server.globals import PACKAGE_FOLDER
 from vantage6.server import ServerApp
-from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
-from vantage6.server.resource.event import kill_task
 from vantage6.server.model import (
     Rule,
     Role,
@@ -410,91 +407,6 @@ class TestResources(unittest.TestCase):
         result3 = self.app.get("/api/run?task_id=1", headers=headers)
         self.assertEqual(result3.status_code, 200)
 
-    def test_run_patch_fails_pending_siblings(self):
-        org1 = Organization(name=str(uuid.uuid1()))
-        org2 = Organization(name=str(uuid.uuid1()))
-        col = Collaboration(name=str(uuid.uuid1()), organizations=[org1, org2])
-        col.save()
-
-        node1, api_key1 = self.create_node(organization=org1, collaboration=col)
-        node2, _ = self.create_node(organization=org2, collaboration=col)
-
-        task = Task(
-            image="localhost/algorithms/test:local",
-            collaboration=col,
-            init_org=org1,
-        )
-        task.save()
-
-        failing_run = Run(
-            task=task,
-            organization=org1,
-            status=TaskStatus.PENDING.value,
-        )
-        pending_sibling = Run(
-            task=task,
-            organization=org2,
-            status=TaskStatus.PENDING.value,
-        )
-        started_sibling = Run(
-            task=task,
-            organization=org2,
-            status=TaskStatus.PENDING.value,
-            started_at=datetime.datetime.now(datetime.timezone.utc),
-        )
-        finished_sibling = Run(
-            task=task,
-            organization=org2,
-            status=TaskStatus.COMPLETED.value,
-            finished_at=datetime.datetime.now(datetime.timezone.utc),
-        )
-        failing_run.save()
-        pending_sibling.save()
-        started_sibling.save()
-        finished_sibling.save()
-
-        try:
-            headers = self.login_node(api_key1)
-            response = self.app.patch(
-                f"/api/run/{failing_run.id}",
-                headers=headers,
-                json={"status": TaskStatus.FAILED.value},
-            )
-            self.assertEqual(response.status_code, HTTPStatus.OK)
-
-            pending_sibling = Run.get(pending_sibling.id)
-            started_sibling = Run.get(started_sibling.id)
-            finished_sibling = Run.get(finished_sibling.id)
-
-            # Sibling runs not yet started shouldn't be in a state that would
-            # make it be picked up later (i.e. we want finished_at set)
-            self.assertEqual(pending_sibling.status, TaskStatus.FAILED.value)
-            self.assertIsNone(pending_sibling.started_at)
-            self.assertIsNotNone(pending_sibling.finished_at)
-            self.assertIn(
-                f"sibling run id={failing_run.id} failed",
-                pending_sibling.log,
-            )
-
-            # Started/finished siblings should not be touched by fail-fast update.
-            self.assertEqual(started_sibling.status, TaskStatus.PENDING.value)
-            self.assertIsNotNone(started_sibling.started_at)
-            self.assertIsNone(started_sibling.finished_at)
-
-            self.assertEqual(finished_sibling.status, TaskStatus.COMPLETED.value)
-            self.assertIsNotNone(finished_sibling.finished_at)
-        finally:
-            failing_run.delete()
-            pending_sibling.delete()
-            started_sibling.delete()
-            finished_sibling.delete()
-            task.delete()
-            node1.delete()
-            node2.delete()
-            col.delete()
-            org1.delete()
-            org2.delete()
-
     def test_task_with_id(self):
         headers = self.login("root")
         result = self.app.get("/api/task/1", headers=headers)
@@ -817,53 +729,6 @@ class TestResources(unittest.TestCase):
         for resource in Role.get():
             if resource.name == ROLE_TO_CREATE_NAME:
                 resource.delete()
-
-    def test_default_role_sync_skips_custom_role_with_same_name(self):
-        org = Organization(name=str(uuid.uuid1()))
-        org.save()
-        custom_rule = Rule.get_by_("organization", Scope.ORGANIZATION, Operation.VIEW)
-        default_rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.VIEW)
-        # A user creating an "Organization Admin" themselves scenario
-        role = Role(
-            name=DefaultRole.ORG_ADMIN,
-            description="Custom org admin role",
-            rules=[custom_rule],
-            organization=org,
-            is_default_role=False,
-        )
-        role.save()
-
-        default_role = {
-            "name": DefaultRole.ORG_ADMIN,
-            "description": "Default org admin role",
-            "rules": [default_rule],
-        }
-
-        try:
-            with patch(
-                "vantage6.server.get_default_roles", return_value=[default_role]
-            ), patch("vantage6.server.log.warning") as mock_warning:
-                ServerApp._add_default_roles()
-
-            updated_role = Role.get(role.id)
-            same_name_roles = [
-                role_
-                for role_ in Role.get()
-                if role_.name == DefaultRole.ORG_ADMIN.value
-            ]
-
-            # we check it wasn't updated
-            self.assertEqual(updated_role.description, role.description)
-            self.assertEqual(set(updated_role.rules), set(role.rules))
-            self.assertFalse(updated_role.is_default_role)
-            self.assertEqual(len(same_name_roles), 1)
-            mock_warning.assert_called_once()
-            warning_msg, role_name = mock_warning.call_args.args
-            self.assertIn("role by that name is already present", warning_msg.lower())
-            self.assertEqual(role_name, DefaultRole.ORG_ADMIN.value)
-        finally:
-            role.delete()
-            org.delete()
 
     def test_create_role_as_root_for_different_organization(self):
         headers = self.login("root")
@@ -3458,111 +3323,6 @@ class TestResources(unittest.TestCase):
         # delete the 1 task that was created in this unit test
         Task.get()[::-1][0].delete()
 
-    def test_create_task_with_database_arguments(self):
-        org = Organization()
-        org.save()
-        col = Collaboration(organizations=[org], encrypted=False)
-        col.save()
-        node = Node(organization=org, collaboration=col)
-        node.save()
-
-        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
-        headers = self.create_user_and_login(org, rules=[rule])
-        input_ = bytes_to_base64s(serialize({"method": "dummy"}))
-
-        task_json = {
-            "collaboration_id": col.id,
-            "organizations": [{"id": org.id, "input": input_}],
-            "image": "some-image.invalid/invalid:invalid",
-            "databases": [
-                {
-                    "label": "default",
-                    "query": "SELECT * FROM records",
-                    "arguments": {
-                        "bind": "input_dataset",
-                        "group": "example",
-                    },
-                }
-            ],
-        }
-        results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.CREATED)
-
-        first_task = Task.get(results.json["id"])
-        self.assertEqual(first_task.databases[0].database, "default")
-        self.assertEqual(
-            json.loads(first_task.databases[0].parameters),
-            {
-                "query": "SELECT * FROM records",
-                "arguments": {
-                    "bind": "input_dataset",
-                    "group": "example",
-                },
-            },
-        )
-
-        # arguments must be a dict
-        task_json["databases"] = [{"label": "default", "arguments": "dataset"}]
-        results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
-
-        # empty arguments are allowed
-        task_json["databases"] = [{"label": "default", "arguments": {}}]
-        results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.CREATED)
-
-        empty_arguments_task = Task.get(results.json["id"])
-        self.assertEqual(
-            json.loads(empty_arguments_task.databases[0].parameters),
-            {"arguments": {}},
-        )
-
-        # omitting arguments is also allowed
-        task_json["databases"] = [{"label": "default"}]
-        results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.CREATED)
-
-        no_arguments_task = Task.get(results.json["id"])
-        self.assertEqual(
-            json.loads(no_arguments_task.databases[0].parameters),
-            {},
-        )
-
-        # multiple databases can each carry their own arguments
-        task_json["databases"] = [
-            {
-                "label": "treatment",
-                "arguments": {"bind": "treatment_data"},
-            },
-            {
-                "label": "diagnosis",
-                "arguments": {"bind": "diagnosis_data"},
-            }
-        ]
-        results = self.app.post("/api/task", headers=headers, json=task_json)
-        self.assertEqual(results.status_code, HTTPStatus.CREATED)
-
-        second_task = Task.get(results.json["id"])
-        databases_by_label = {db.database: db for db in second_task.databases}
-        self.assertIn("treatment", databases_by_label)
-        self.assertIn("diagnosis", databases_by_label)
-        self.assertEqual(
-            json.loads(databases_by_label["treatment"].parameters),
-            {"arguments": {"bind": "treatment_data"}},
-        )
-        self.assertEqual(
-            json.loads(databases_by_label["diagnosis"].parameters),
-            {"arguments": {"bind": "diagnosis_data"}},
-        )
-
-        first_task.delete()
-        empty_arguments_task.delete()
-        no_arguments_task.delete()
-        second_task.delete()
-        node.delete()
-        org.delete()
-        col.delete()
-
     def test_delete_task_permissions(self):
         # test non-existing task
         headers = self.create_user_and_login()
@@ -4694,73 +4454,6 @@ class TestResources(unittest.TestCase):
         org.delete()
         org2.delete()
         col.delete()
-
-    def test_kill_task_includes_all_unfinished_child_runs(self):
-        # Create a parent task with one run and a child task with three child
-        # runs. One of the child runs is already completed and should not be
-        # included in the kill payload.
-        org_parent = Organization(name="kill-org-parent")
-        org_child_1 = Organization(name="kill-org-child-1")
-        org_child_2 = Organization(name="kill-org-child-2")
-        collaboration = Collaboration(
-            name="kill-collaboration",
-            organizations=[org_parent, org_child_1, org_child_2],
-        )
-        collaboration.save()
-
-        parent_task = Task(
-            name="parent-task",
-            image="parent-image",
-            collaboration=collaboration,
-            job_id=90001,
-        )
-        parent_task.save()
-        parent_run = Run(
-            organization=org_parent, task=parent_task, status=TaskStatus.ACTIVE
-        )
-        parent_run.save()
-
-        child_task = Task(
-            name="child-task",
-            image="child-image",
-            collaboration=collaboration,
-            parent=parent_task,
-            job_id=90001,
-        )
-        child_task.save()
-        child_run_1 = Run(
-            organization=org_child_1, task=child_task, status=TaskStatus.ACTIVE
-        )
-        child_run_2 = Run(
-            organization=org_child_2, task=child_task, status=TaskStatus.PENDING
-        )
-        child_run_done = Run(
-            organization=org_parent, task=child_task, status=TaskStatus.COMPLETED
-        )
-        child_run_1.save()
-        child_run_2.save()
-        child_run_done.save()
-
-        socket = MagicMock()
-
-        kill_task(parent_task, socket)
-
-        # The emitted kill payload should contain every unfinished parent/child
-        # run
-        emit_args = socket.emit.call_args.args
-        kill_list = emit_args[1]["kill_list"]
-        self.assertEqual(len(kill_list), 3)
-        self.assertCountEqual(
-            [entry["run_id"] for entry in kill_list],
-            [parent_run.id, child_run_1.id, child_run_2.id],
-        )
-
-        self.assertEqual(parent_task.status, TaskStatus.KILLED.value)
-        self.assertEqual(child_task.status, TaskStatus.KILLED.value)
-        self.assertEqual(parent_run.status, TaskStatus.KILLED)
-        self.assertEqual(child_run_1.status, TaskStatus.KILLED)
-        self.assertEqual(child_run_2.status, TaskStatus.KILLED)
-        self.assertEqual(child_run_done.status, TaskStatus.COMPLETED)
 
 
 if __name__ == "__main__":

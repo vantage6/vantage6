@@ -323,12 +323,6 @@ class ServerApp:
         # patch where to obtain token
         self.app.config["JWT_AUTH_URL_RULE"] = "/api/token"
 
-        # PyJWT 2.10+ enforces that `sub` is a string. Vantage6 historically
-        # used non-string subjects (e.g. ints and container dicts), which
-        # breaks protected endpoints after the PyJWT bump.
-        # Disabling this validation keeps compatibility
-        self.app.config["JWT_VERIFY_SUB"] = False
-
         # If no secret is set in the config file, one is generated. This
         # implies that all (even refresh) tokens will be invalidated on restart
         self.app.config["JWT_SECRET_KEY"] = self.ctx.config.get(
@@ -440,7 +434,7 @@ class ServerApp:
             log.exception("Exception occured during request")
             DatabaseSessionManager.clear_session()
             return {
-                "msg": "An unexpected error occurred on the server!"
+                "msg": f"An unexpected error occurred on the server!"
             }, HTTPStatus.INTERNAL_SERVER_ERROR
 
         @self.app.route("/robots.txt")
@@ -722,42 +716,23 @@ class ServerApp:
     @staticmethod
     def _add_default_roles() -> None:
         for role in get_default_roles(db):
-            # Normalize role name for logging and DB lookups: default-role
-            # definitions use enum members, and this keeps the code robust if
-            # plain strings are ever provided
-            role_name = (
-                role["name"].value
-                if isinstance(role["name"], enum.Enum)
-                else role["name"]
-            )
-            if not db.Role.get_by_name(role_name):
-                log.warning("Creating new default role %s...", role_name)
+            if not db.Role.get_by_name(role["name"]):
+                log.warning("Creating new default role %s...", role["name"].value)
                 new_role = db.Role(
-                    name=role_name,
+                    name=role["name"],
                     description=role["description"],
                     rules=role["rules"],
                     is_default_role=True,
                 )
                 new_role.save()
             else:
-                current_role = db.Role.get_by_name(role_name, is_default_role=True)
-                if not current_role:
+                current_role = db.Role.get_by_name(role["name"])
+                # check that the rules are the same. Use set() to compare without order
+                if set(current_role.rules) != set(role["rules"]):
                     log.warning(
-                        "'%s' is a default (built-in) role name. "
-                        "A role by that name is already present in the database. "
-                        "Will skip creating the default role by the same name.",
-                        role_name,
+                        "Updating default role %s with new rules", role["name"].value
                     )
-                    continue
-                # Check whether any default role properties changed. Use set()
-                # to compare rules without relying on their order.
-                has_rule_changes = set(current_role.rules) != set(role["rules"])
-                has_description_change = current_role.description != role["description"]
-
-                if has_rule_changes or has_description_change:
-                    log.warning("Updating default role %s", role_name)
                     current_role.rules = role["rules"]
-                    current_role.description = role["description"]
                     current_role.save()
 
     def start(self) -> None:

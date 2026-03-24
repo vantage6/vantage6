@@ -30,9 +30,6 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 VPN_CONFIG_FILE = "vpn-config.ovpn.conf"
 
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
-# Default when database.mount_mode is omitted. Keep "copy" unless default "ro"
-# behavior for non-file databases is explicitly handled.
-DEFAULT_DB_MOUNT_MODE = "copy"
 
 PING_INTERVAL_SECONDS = 60
 

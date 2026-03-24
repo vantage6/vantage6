@@ -74,8 +74,6 @@ def click_insert_context(
             ctx_class = select_context_class(type_)
             # path to configuration file always overrides name
             if config:
-                # match get_context() behavior, we take care of logging inside the container
-                ctx_class.LOGGING_ENABLED = False
                 ctx = ctx_class.from_external_config_file(config, system_folders)
             elif "ctx" in kwargs:
                 # if ctx is already in kwargs (typically when one click command

@@ -134,7 +134,7 @@ algorithm-omop-base-image:
 
 support-image:
 	@echo "Building support images"
-	@echo "All support images are also tagged with 'latest'"
+	@echo "All support images are also tagged with `latest`"
 	make support-alpine-image
 	make support-vpn-client-image
 	make support-vpn-configurator-image
