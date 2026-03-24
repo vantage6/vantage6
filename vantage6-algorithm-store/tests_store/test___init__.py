@@ -1,14 +1,14 @@
 import unittest
 from unittest.mock import patch
 
-from vantage6.algorithm.store.model.rule import Rule
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
-from vantage6.algorithm.store.default_roles import DefaultRole
+
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
-from vantage6.algorithm.store.default_roles import get_default_roles
 
 from .base.unittest_base import TestResources
 
@@ -24,15 +24,13 @@ class TestAlgorithmStoreApp(TestResources):
         # Create a mock configuration
         config = {
             "policies": {
-                StorePolicies.ALGORITHM_VIEW: AlgorithmViewPolicies.PUBLIC,
-                StorePolicies.ALLOWED_SERVERS: ["server1", "server2"],
-                StorePolicies.ALLOW_LOCALHOST: True,
+                StorePolicies.ALGORITHM_VIEW.value: AlgorithmViewPolicies.PUBLIC.value,
                 "non_existing_policy": "value",
             },
         }
 
         # Call the setup_policies method
-        self.server.setup_policies(config)
+        self.backend.setup_policies(config)
 
         # Check that the Policy objects are created with the correct values, and that
         # the non-existing policy is ignored and existing policies were deleted
@@ -44,42 +42,38 @@ class TestAlgorithmStoreApp(TestResources):
                     StorePolicies.ALGORITHM_VIEW.value,
                     AlgorithmViewPolicies.PUBLIC.value,
                 ),
-                (StorePolicies.ALLOWED_SERVERS.value, "server1"),
-                (StorePolicies.ALLOWED_SERVERS.value, "server2"),
-                (StorePolicies.ALLOW_LOCALHOST.value, "1"),
             ],
         )
 
     @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_default_roles")
-    def test_server_startup(self, mock_add_default_roles):
-        """Test that the server is started correctly"""
+    @patch("vantage6.algorithm.store.AlgorithmStoreApp._add_keycloak_id_to_super_user")
+    def test_store_db_initialized(self, mock_add_keycloak_id, mock_add_default_roles):
+        """Test that the store is started correctly"""
 
         # ensure root role is present - this role will be assigned to the root user
-        # that is created on server startup
-        root_role = Role(name=DefaultRole.ROOT, rules=Rule.get())
+        # that is created on store startup
+        root_role = Role(name=DefaultRole.ROOT.value, rules=Rule.get())
         root_role.save()
 
-        self.server.ctx.config["root_user"] = {
-            "v6_server_uri": "https://v6-server.com",
+        self.backend.ctx.config["root_user"] = {
             "username": "superuser",
         }
 
-        self.server.start()
+        self.backend.ensure_db_initialized()
 
         mock_add_default_roles.assert_called_once()
+        mock_add_keycloak_id.assert_called_once()
 
-        server = Vantage6Server.get_by_url("https://v6-server.com")
-        self.assertIsNotNone(server)
-        root_user = User.get_by_server(username="superuser", v6_server_id=server.id)
+        root_user = User.get_by_username("superuser")
         self.assertIsNotNone(root_user)
         self.assertEqual(len(root_user.roles), 1)
-        self.assertEqual(root_user.roles[0].name, DefaultRole.ROOT)
+        self.assertEqual(root_user.roles[0].name, DefaultRole.ROOT.value)
 
     def test_add_default_roles(self):
         """Test that the default roles are added to the database"""
 
         # pylint: disable=protected-access
-        self.server._add_default_roles()
+        self.backend._add_default_roles(get_default_roles(), db)
 
         roles = Role.get()
         role_names = [role.value for role in DefaultRole]
@@ -88,7 +82,7 @@ class TestAlgorithmStoreApp(TestResources):
             self.assertIn(role.name, role_names)
 
         # run function again to ensure that the roles are not duplicated
-        self.server._add_default_roles()
+        self.backend._add_default_roles(get_default_roles(), db)
         self.assertEqual(len(Role.get()), len(role_names))
 
         # verify that function to get the default roles includes all default roles
@@ -97,14 +91,14 @@ class TestAlgorithmStoreApp(TestResources):
 
         # test that when removing rules from a role, they are re-added when
         # _add_default_roles is run again
-        role = Role.get_by_name(DefaultRole.VIEWER)
+        role = Role.get_by_name(DefaultRole.VIEWER.value)
         role.rules = []
         role.save()
-        self.server._add_default_roles()
-        role = Role.get_by_name(DefaultRole.VIEWER)
+        self.backend._add_default_roles(get_default_roles(), db)
+        role = Role.get_by_name(DefaultRole.VIEWER.value)
         self.assertNotEqual(len(role.rules), 0)
         for r in default_role_list_dict:
-            if r["name"] == DefaultRole.VIEWER:
+            if r["name"] == DefaultRole.VIEWER.value:
                 self.assertEqual(len(role.rules), len(r["rules"]))
 
 

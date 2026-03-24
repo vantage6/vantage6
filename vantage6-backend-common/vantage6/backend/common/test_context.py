@@ -1,16 +1,17 @@
 from __future__ import annotations
-from vantage6.common.globals import APPNAME, InstanceType
 
 from vantage6.common.context import AppContext
+from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli.configuration_manager import TestingConfigurationManager
 
 
 class TestContext(AppContext):
     """
-    Server context for testing purposes.
+    Backend context for testing purposes.
 
-    Note that this context is specific to the server: for nodes, there is a
-    separate test context.
+    This context is used to test the backend applications, i.e. the HQ and the
+    algorithm store.
     """
 
     INST_CONFIG_MANAGER = TestingConfigurationManager
@@ -29,7 +30,7 @@ class TestContext(AppContext):
             Context object
         """
         return super().from_external_config_file(
-            cls.test_config_location(package_folder, instance_type), "unittest", True
+            cls.test_config_location(package_folder, instance_type), instance_type, True
         )
 
     @staticmethod
@@ -42,10 +43,8 @@ class TestContext(AppContext):
         str
             Path to the unittest configuration file
         """
-        if instance_type == InstanceType.SERVER:
-            return (
-                package_folder / APPNAME / "server" / "_data" / "unittest_config.yaml"
-            )
+        if instance_type == InstanceType.HQ:
+            return package_folder / APPNAME / "hq" / "_data" / "unittest_config.yaml"
         elif instance_type == InstanceType.ALGORITHM_STORE:
             return (
                 package_folder

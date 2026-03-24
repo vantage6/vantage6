@@ -1,13 +1,14 @@
 import logging
 
-from vantage6.algorithm.store.model.rule import Rule, Operation
-from vantage6.backend.common.permission import RuleCollectionBase, PermissionManagerBase
 from vantage6.common import logger_name
-from vantage6.algorithm.store.model.role import Role
 
+from vantage6.backend.common.permission import PermissionManagerBase, RuleCollectionBase
 from vantage6.backend.common.resource.error_handling import (
     UnauthorizedError,
 )
+
+from vantage6.algorithm.store.model.role import Role
+from vantage6.algorithm.store.model.rule import Operation, Rule
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -19,13 +20,13 @@ class RuleCollection(RuleCollectionBase):
     permissions of the algorithm store
     """
 
-    def has_permission(self, operation: Operation) -> bool:
+    def has_permission(self, operation: str) -> bool:
         """
         Check if the user has the permission fo a certain operation
 
         Parameters
         ----------
-        operation: Operation
+        operation: str
             Operation to check
 
         Returns
@@ -33,7 +34,7 @@ class RuleCollection(RuleCollectionBase):
         bool
             True if the entity has at least the scope, False otherwise
         """
-        perm = getattr(self, f"{operation}", None)
+        perm = getattr(self, operation, None)
 
         if perm and perm.can():
             return True
@@ -63,6 +64,7 @@ class PermissionManager(PermissionManagerBase):
             role = Role(
                 name=fixedrole, description=f"{fixedrole} role", is_default_role=True
             )
+            role.save()
 
         rule = Rule.get_by_(name=resource, operation=operation)
         rule_params = f"{resource},{operation}"
@@ -72,7 +74,8 @@ class PermissionManager(PermissionManagerBase):
 
         if rule not in role.rules:
             role.rules.append(rule)
-            log.info(f"Rule ({rule_params}) added to " f"{fixedrole} role!")
+            role.save()
+            log.info(f"Rule ({rule_params}) added to {fixedrole} role!")
 
     def register_rule(
         self, resource: str, operation: Operation, description=None
@@ -99,17 +102,20 @@ class PermissionManager(PermissionManagerBase):
         # roles and users
         rule = Rule.get_by_(name=resource, operation=operation)
         if not rule:
-            rule = Rule(name=resource, operation=operation, description=description)
+            rule = Rule(
+                name=resource, operation=operation.value, description=description
+            )
             rule.save()
             log.debug(
-                f"New auth rule '{resource}' with"
-                f" operation={operation} is stored in the DB"
+                "New auth rule '%s' with operation=%s is stored in the DB",
+                resource,
+                operation,
             )
 
         # assign all new rules to root user
         self.assign_rule_to_root(resource, operation)
 
-        self.collection(resource).add(rule.operation)
+        self.collection(resource).add(operation=rule.operation, shorten=False)
 
     def check_user_rules(self, rules: list[Rule]):
         """
@@ -133,6 +139,7 @@ class PermissionManager(PermissionManagerBase):
     def get_new_collection(self, name: str) -> RuleCollection:
         """
         Initialize and return a new StoreRuleCollection.
+
         Parameters
         ----------
         name: str

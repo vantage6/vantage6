@@ -1,0 +1,47 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
+store:
+  replications: 1
+
+  standalone: true
+
+  keycloak:
+    # keycloak data is often provided by the hub chart
+
+  description: Vantage algorithm store version 5
+  api_path: /store
+
+  policies:
+    algorithmView: public
+
+  image: harbor2.vantage6.ai/infrastructure/store:uluru
+
+  internal:
+    port: 7602
+  port: 7602
+
+  logging:
+    level: DEBUG
+    file: store.log
+    max_size: 1024
+    use_console: true
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    storageSize: "128M"
+    storageClass: "local-storage"
+    volumeHostPath: "/var/log/vantage6-store"
+    backup_count: 5
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+database:
+  external: true

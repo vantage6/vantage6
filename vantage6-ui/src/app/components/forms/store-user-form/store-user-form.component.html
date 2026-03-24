@@ -3,7 +3,7 @@
     <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
       <mat-label>{{ "user.username" | translate }}</mat-label>
       <mat-select formControlName="username">
-        <mat-option *ngFor="let user of serverUsers" [value]="user.username">
+        <mat-option *ngFor="let user of hqUsers" [value]="user.username">
           {{ user.username }}
         </mat-option>
       </mat-select>

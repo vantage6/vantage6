@@ -1,21 +1,13 @@
-from http import HTTPStatus
 import unittest
+from http import HTTPStatus
 from unittest.mock import patch
 
-from tests_store.base.unittest_base import MockResponse, TestResources
-from vantage6.common.globals import Ports, DEFAULT_API_PATH
-from vantage6.algorithm.store.model.common.enums import (
-    BooleanPolicies,
-    ListPolicies,
-    PublicPolicies,
-)
-from vantage6.algorithm.store.model.policy import Policy
-from vantage6.algorithm.store.resource.policy import PoliciesBase
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
-ALLOWED_SERVER = f"http://localhost:{Ports.DEV_SERVER.value}"
-HEADERS = {"server_url": ALLOWED_SERVER, "Authorization": "Mock"}
-USERNAME = "test_user"
+from tests_store.base.unittest_base import TestResources
+from vantage6.algorithm.store.model.common.enums import PublicPolicies
+from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.resource.policy import PoliciesBase
 
 
 class TestPolicyResources(TestResources):
@@ -26,84 +18,64 @@ class TestPolicyResources(TestResources):
         # Create policies
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(key=StorePolicies.ALLOWED_SERVERS, value=ALLOWED_SERVER),
-            Policy(key=StorePolicies.ALLOW_LOCALHOST, value="True"),
-            Policy(key=StorePolicies.MIN_REVIEWERS, value="2"),
-            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM, value="False"),
+            Policy(key=StorePolicies.MIN_REVIEWERS.value, value="2"),
+            Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
         ]
         # pylint: disable=expression-not-assigned
         [p.save() for p in policies]
 
     # note that the policies are already deleted in super().tearDown()
-
-    @patch("vantage6.algorithm.store.resource.request_validate_server_token")
-    def test_private_policies_view(self, mock_validate):
+    @patch("vantage6.algorithm.store.resource._authenticate")
+    def test_private_policies_view(self, authenticate_mock):
         """Test /api/policy"""
         self.create_policies()
 
-        # check that getting policies without authentication fails with forbidden if
-        # server is not whitelisted
-        response = self.app.get("/api/policy", headers=HEADERS)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.register_user(authenticate_mock=authenticate_mock, auth=False)
 
-        # check 401 if server is whitelisted but no authentication is provided
-        mock_validate.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.UNAUTHORIZED,
-        )
-        server = self.register_server()
-        response = self.app.get("/api/policy", headers=HEADERS)
+        # check 401 if no authentication is provided
+        response = self.app.get("/api/policy")
         self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         # check that getting policies with authentication succeeds
-        mock_validate.return_value = (
-            MockResponse({"username": USERNAME}),
-            HTTPStatus.OK,
-        )
-        self.register_user(server.id)
-        response = self.app.get("/api/policy", headers=HEADERS)
+        self.register_user(authenticate_mock=authenticate_mock)
+        response = self.app.get("/api/policy")
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # Check that the policies are present and correct
         policies = response.json
         self.assertEqual(
-            policies[StorePolicies.ALGORITHM_VIEW], AlgorithmViewPolicies.PUBLIC
+            policies[StorePolicies.ALGORITHM_VIEW.value],
+            AlgorithmViewPolicies.PUBLIC.value,
         )
-        self.assertEqual(policies[StorePolicies.ALLOWED_SERVERS], [ALLOWED_SERVER])
-        self.assertEqual(policies[StorePolicies.ALLOW_LOCALHOST], True)
 
     def test_public_policies_view(self):
         """Test /api/policy/public"""
         self.create_policies()
         # Get the policies
         response = self.app.get("/api/policy/public")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         # Check that the public policies are present and correct
         policies = response.json
         self.assertEqual(
-            policies[PublicPolicies.ALGORITHM_VIEW], AlgorithmViewPolicies.PUBLIC
+            policies[PublicPolicies.ALGORITHM_VIEW.value],
+            AlgorithmViewPolicies.PUBLIC.value,
         )
-        self.assertEqual(policies[PublicPolicies.ALLOWED_SERVERS], [ALLOWED_SERVER])
 
         # check that non-public policies are not present
         for policy in StorePolicies:
-            if policy not in [p.value for p in PublicPolicies]:
+            if policy not in PublicPolicies.list():
                 self.assertNotIn(policy, policies)
 
     def test_policies_to_dict(self):
         policies = [
             Policy(
                 key=StorePolicies.ALGORITHM_VIEW.value,
-                value=AlgorithmViewPolicies.PUBLIC,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(
-                key=StorePolicies.ALLOWED_SERVERS.value,
-                value=ALLOWED_SERVER + DEFAULT_API_PATH,
-            ),
-            Policy(key=StorePolicies.ALLOW_LOCALHOST.value, value="1"),
         ]
         include_defaults = True
         include_private = False
@@ -115,8 +87,6 @@ class TestPolicyResources(TestResources):
 
         expected_dict = {
             "algorithm_view": "public",
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
-            "allow_localhost": True,
         }
         self.assertEqual(response_dict, expected_dict)
 
@@ -124,11 +94,7 @@ class TestPolicyResources(TestResources):
         policies = [
             Policy(
                 key=StorePolicies.ALGORITHM_VIEW.value,
-                value=AlgorithmViewPolicies.PUBLIC,
-            ),
-            Policy(
-                key=StorePolicies.ALLOWED_SERVERS.value,
-                value=ALLOWED_SERVER + DEFAULT_API_PATH,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
@@ -145,8 +111,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -161,9 +126,7 @@ class TestPolicyResources(TestResources):
             policies, include_defaults, include_private
         )
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
-            "allow_localhost": False,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -175,13 +138,9 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_private_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(
-                key=StorePolicies.ALLOWED_SERVERS,
-                value=ALLOWED_SERVER + DEFAULT_API_PATH,
-            ),
-            Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
             Policy(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value, value=2),
@@ -197,9 +156,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
-            "allow_localhost": True,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "min_reviewing_organizations": 2,
@@ -212,13 +169,9 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_boolean_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(
-                key=StorePolicies.ALLOWED_SERVERS,
-                value=ALLOWED_SERVER + DEFAULT_API_PATH,
-            ),
-            Policy(key=BooleanPolicies.ALLOW_LOCALHOST, value="1"),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="0"),
             Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
@@ -233,9 +186,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
-            "allow_localhost": True,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "allowed_review_assigners": 1,
@@ -247,13 +198,9 @@ class TestPolicyResources(TestResources):
     def test_policies_to_dict_with_list_policies(self):
         policies = [
             Policy(
-                key=StorePolicies.ALGORITHM_VIEW, value=AlgorithmViewPolicies.PUBLIC
+                key=StorePolicies.ALGORITHM_VIEW.value,
+                value=AlgorithmViewPolicies.PUBLIC.value,
             ),
-            Policy(
-                key=ListPolicies.ALLOWED_SERVERS,
-                value=ALLOWED_SERVER + DEFAULT_API_PATH,
-            ),
-            Policy(key=StorePolicies.ALLOW_LOCALHOST, value="1"),
             Policy(key=StorePolicies.MIN_REVIEWERS.value, value=2),
             Policy(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value, value="False"),
             Policy(key=StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value, value=1),
@@ -268,9 +215,7 @@ class TestPolicyResources(TestResources):
         )
 
         expected_dict = {
-            "algorithm_view": AlgorithmViewPolicies.PUBLIC,
-            "allowed_servers": [ALLOWED_SERVER + DEFAULT_API_PATH],
-            "allow_localhost": True,
+            "algorithm_view": AlgorithmViewPolicies.PUBLIC.value,
             "min_reviewers": 2,
             "assign_review_own_algorithm": False,
             "allowed_review_assigners": 1,

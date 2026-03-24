@@ -60,9 +60,8 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement in our
-[Discord](https://discord.gg/yAyFf6Y). Please send a direct message to one of the
-users with an `@Administrators` role.
+reported to the community leaders. Please contact one of the owners of the vantage6
+[Github organization](https://github.com/orgs/vantage6/people).
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the

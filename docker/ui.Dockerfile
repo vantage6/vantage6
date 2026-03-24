@@ -1,5 +1,4 @@
 ARG TAG=latest
-ARG BASE=4.3
 FROM node:20-alpine as node
 
 LABEL version=${TAG}

@@ -1,4 +1,5 @@
-@import "/src/app/styles/config.scss";
+@use "sass:map";
+@use "/src/app/styles/config.scss" as *;
 
 .roles-table {
   border-collapse: collapse;
@@ -34,7 +35,7 @@
     padding-bottom: $spacing-px-4;
   }
 
-  @media only screen and (max-width: map-get($breakpoints, lt-md)) {
+  @media only screen and (max-width: map.get($breakpoints, lt-md)) {
     &__operation-header {
       width: 5em;
       transform: rotate(270deg) translate(0px, 32px);

@@ -4,11 +4,11 @@ roles. Each line contains a rule_id that is a member of a certain role_id. Each
 role will usually have multiple rules assigned to it.
 """
 
-from sqlalchemy import Column, Integer, ForeignKey, Table
+from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from .base import Base
 
-# TODO: refactor to use the server model
+# TODO: refactor to use the HQ model
 role_rule_association = Table(
     "role_rule_association",
     Base.metadata,

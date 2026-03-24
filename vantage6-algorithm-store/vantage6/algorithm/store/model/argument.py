@@ -1,5 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey, Integer, Boolean
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
@@ -88,8 +89,8 @@ class Argument(Base):
             The argument with the given name
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls).filter_by(name=name, function_id=function_id).first()
-        )
+        result = session.scalars(
+            select(cls).filter_by(name=name, function_id=function_id)
+        ).first()
         session.commit()
         return result

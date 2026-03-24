@@ -1,9 +1,10 @@
 import unittest
 import uuid
+from unittest.mock import MagicMock, patch
 
-from unittest.mock import patch, MagicMock
-from vantage6.client import UserClient
 from vantage6.common.encryption import DummyCryptor
+
+from vantage6.client import UserClient
 
 
 class TestUserClient(unittest.TestCase):

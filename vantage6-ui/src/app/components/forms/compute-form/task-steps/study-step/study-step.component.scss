@@ -1,0 +1,16 @@
+.form {
+  .field-description {
+    margin-bottom: 1rem;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.875rem;
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  button[matStepperNext] {
+    margin-top: 1rem;
+  }
+}

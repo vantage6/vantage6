@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-store-configmap
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+data:
+  config.yaml: |
+    api_path: {{ .Values.store.api_path }}
+    description: {{ .Values.store.description }}
+    {{- if .Values.database.external }}
+    uri: {{ .Values.database.uri }}
+    {{- else }}
+    uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-store-postgres:5432/{{ .Values.database.name }}
+    {{- end }}
+    logging:
+      backup_count: {{ .Values.store.logging.backup_count }}
+      datefmt: {{ .Values.store.logging.datefmt | quote }}
+      file: {{ .Values.store.logging.file }}
+      format: {{ .Values.store.logging.format | quote }}
+      level: {{ .Values.store.logging.level }}
+      loggers:
+      {{- range .Values.store.logging.loggers }}
+      - level: {{ .level }}
+        name: {{ .name }}
+      {{- end }}
+      max_size: {{ .Values.store.logging.max_size }}
+      use_console: {{ .Values.store.logging.use_console }}
+    {{- if .Values.store.policies }}
+    policies:
+      {{- if .Values.store.policies.algorithmView }}
+      algorithm_view: {{ .Values.store.policies.algorithmView }}
+      {{- end }}
+      {{- if .Values.store.policies.minReviewers }}
+      min_reviewers: {{ .Values.store.policies.minReviewers }}
+      {{- end }}
+      {{- if .Values.store.policies.minReviewingOrganizations }}
+      min_reviewing_organizations: {{ .Values.store.policies.minReviewingOrganizations }}
+      {{- end }}
+      {{- if .Values.store.policies.assignReviewOwnAlgorithm }}
+      assign_review_own_algorithm: {{ .Values.store.policies.assignReviewOwnAlgorithm }}
+      {{- end }}
+      {{- if .Values.store.policies.allowedReviewers }}
+      allowed_reviewers:
+        {{- range .Values.store.policies.allowedReviewers }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.store.policies.allowedReviewAssigners }}
+      allowed_review_assigners:
+        {{- range .Values.store.policies.allowedReviewAssigners }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.store.cors_allowed_origins }}
+    cors_allowed_origins:
+      {{- range .Values.store.cors_allowed_origins }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.store.private_docker_registries }}
+    private_docker_registries:
+      {{- range .Values.store.private_docker_registries }}
+      - registry: {{ .registry }}
+        username: {{ .username }}
+        password: {{ .password | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.store.dev }}
+    dev:
+      host_uri: {{ .Values.store.dev.host_uri }}
+      disable_review: {{ .Values.store.dev.disable_review }}
+      review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
+    {{- end }}
+    port: {{ .Values.store.internal.port }}
+    {{- $global := .Values.global | default (dict) }}
+    {{- $urls := $global.urls | default (dict) }}
+    {{- $external := $urls.external | default (dict) }}
+    base_url: {{ .Values.store.baseUrl | default $external.store }}
+    root_user:
+      username: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).adminUsername }}
+      v6_hq_uri: {{ default $external.hq .Values.store.vantage6HQUri }}
+    {{- if .Values.store.smtpServer }}
+    smtp_server:
+      host: {{ .Values.store.smtpServer.host }}
+      port: {{ .Values.store.smtpServer.port }}
+      {{- if .Values.store.smtpServer.user }}
+      user: {{ .Values.store.smtpServer.user }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.password }}
+      password: {{ .Values.store.smtpServer.password | quote }}
+      {{- end }}
+      from: {{ .Values.store.smtpServer.from }}
+      {{- if .Values.store.smtpServer.replyTo }}
+      replyTo: {{ .Values.store.smtpServer.replyTo }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.starttls }}
+      starttls: {{ .Values.store.smtpServer.starttls }}
+      {{- end }}
+      {{- if .Values.store.smtpServer.ssl }}
+      ssl: {{ .Values.store.smtpServer.ssl }}
+      {{- end }}
+    {{- end }}

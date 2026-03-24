@@ -1,8 +1,8 @@
 import logging
-
 from threading import Thread
-from flask_mail import Message, Mail
+
 from flask import Flask
+from flask_mail import Mail, Message
 
 from vantage6.common import logger_name
 

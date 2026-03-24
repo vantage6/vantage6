@@ -83,9 +83,9 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
 
   protected async initData(): Promise<void> {
     if (!this.store) return;
-    this.role = await this.storeRoleService.getRole(this.store?.url, this.id, [StoreRoleLazyProperties.Users]);
-    this.allRules = await this.storeRuleService.getRules(this.store?.url);
-    this.roleRules = await this.storeRuleService.getRules(this.store?.url, { role_id: this.id });
+    this.role = await this.storeRoleService.getRole(this.store, this.id, [StoreRoleLazyProperties.Users]);
+    this.allRules = await this.storeRuleService.getRules(this.store);
+    this.roleRules = await this.storeRuleService.getRules(this.store, { role_id: this.id });
     this.setPermissions();
     this.setUpUserTable();
     this.enterEditMode(false);
@@ -114,7 +114,7 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
         if (!this.role) return;
         if (!this.store) return;
         this.isLoading = true;
-        await this.storeRoleService.deleteRole(this.store?.url, this.role.id);
+        await this.storeRoleService.deleteRole(this.store, this.role.id);
         this.router.navigate([routePaths.storeRoles]);
       }
     );
@@ -142,19 +142,16 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   }
 
   public handleChangedSelection(rules: Rule_[]): void {
-    console.log('handleChangedSelection called with rules:', rules);
     this.changedRules = rules as StoreRule[];
-    console.log('changedRules updated to:', this.changedRules);
   }
 
   public async handleSubmitEdit(): Promise<void> {
     if (!this.role || !this.changedRules) return;
-    console.log('handleSubmitEdit called with role:', this.role, 'and changedRules:', this.changedRules);
     const store = this.chosenStoreService.store$.value;
     if (!store) return;
     this.isLoading = true;
     const role: StoreRole = { ...this.role, rules: this.changedRules };
-    await this.storeRoleService.patchRole(store.url, role);
+    await this.storeRoleService.patchRole(store, role);
     this.changedRules = [];
     this.initData();
   }
@@ -162,15 +159,11 @@ export class StoreRoleReadComponent extends BaseReadComponent implements OnInit,
   private setUpUserTable(): void {
     if (!this.role || !this.role.users) return;
     this.userTable = {
-      columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'serverurl', label: this.translateService.instant('store-user.server') }
-      ],
+      columns: [{ id: 'username', label: this.translateService.instant('user.username') }],
       rows: this.role?.users?.map((user) => ({
         id: user.id.toString(),
         columnData: {
-          username: user.username,
-          serverurl: user.server.url
+          username: user.username
         }
       }))
     };

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-store
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "store.labels" . | indent 4 }}
+    component: store
+spec:
+  replicas: {{ .Values.store.replications }}
+  selector:
+    matchLabels:
+{{ include "store.matchLabels" . | indent 6 }}
+      component: store
+  template:
+    metadata:
+      labels:
+{{ include "store.labels" . | indent 8 }}
+        component: store
+    spec:
+      {{- $global := .Values.global | default (dict) }}
+      {{- $urls := $global.urls | default (dict) }}
+      {{- $internal := $urls.internal | default (dict) }}
+      {{- $wait := $global.wait | default (dict) }}
+      {{- $waitAuth := $wait.auth | default (dict) }}
+      {{- $authUrl := $internal.auth | default "" }}
+      {{- if and ($waitAuth.enabled | default false) (ne (trim $authUrl) "") }}
+      initContainers:
+        - name: wait-for-auth
+          image: {{ $waitAuth.image | default "curlimages/curl:8.7.1" }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
+          env:
+            - name: TARGET_URL
+              value: {{ $authUrl | quote }}
+            - name: MAX_ATTEMPTS
+              value: {{ $waitAuth.maxAttempts | default 60 | quote }}
+            - name: INTERVAL_SECONDS
+              value: {{ $waitAuth.intervalSeconds | default 5 | quote }}
+            - name: WAIT_LABEL
+              value: "Auth"
+      {{- end }}
+      {{- $storeKeycloak := default (dict) .Values.store.keycloak }}
+      containers:
+      - name: vantage6-store-backend
+        image: {{ .Values.store.image }}
+        imagePullPolicy: {{ .Values.store.imagePullPolicy | default "Always" }}
+        env:
+        - name: KEYCLOAK_URL
+          value: {{ default $internal.auth $storeKeycloak.url }}
+        - name: KEYCLOAK_REALM
+          value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).realm }}
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-store-secrets
+        ports:
+        - containerPort: {{ .Values.store.internal.port }}
+        command: [
+          "uwsgi", "--http", ":{{ .Values.store.internal.port }}", "--gevent", "1000", "--http-websockets",
+          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
+          "/vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py",
+          "--pyargv", "/mnt/config.yaml",
+        ]
+        volumeMounts:
+        - name: config-file
+          mountPath: /mnt/config.yaml
+          subPath: config.yaml
+        {{- if and
+        (eq .Values.store.logging.storageClass "local-storage")
+        (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
+        }}
+        - name: store-logs
+          mountPath: /mnt/log
+        {{- end }}
+      volumes:
+      - name: config-file
+        configMap:
+          name: {{ .Release.Name }}-store-configmap
+      # Note that logs are not stored if no local k8s node is available
+      {{- if ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "" }}
+      - name: store-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-store-logs-pvc
+      {{- end }}

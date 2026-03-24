@@ -34,13 +34,13 @@
               </button>
             </div>
 
-            <app-permissions-matrix-server
+            <app-permissions-matrix-hq
               [fixedSelectedPrimary]="fixedSelectedRules"
               [preselected]="preselectedRules"
               [selectable]="selectableRules"
               (changed)="handleChangedSelection($event)"
             >
-            </app-permissions-matrix-server>
+            </app-permissions-matrix-hq>
 
             <app-role-submit-buttons
               *ngIf="isEditing"

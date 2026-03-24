@@ -1,10 +1,12 @@
+from vantage6.common.client.client_base import ClientBase
+from vantage6.common.globals import DEFAULT_API_PATH
+
 from vantage6.client.filter import post_filtering
+from vantage6.client.subclients.store.policy import PolicySubClient
 from vantage6.client.subclients.store.review import ReviewSubClient
 from vantage6.client.subclients.store.role import StoreRoleSubClient
 from vantage6.client.subclients.store.rule import StoreRuleSubClient
 from vantage6.client.subclients.store.user import StoreUserSubClient
-from vantage6.client.subclients.store.policy import PolicySubClient
-from vantage6.common.client.client_base import ClientBase
 
 
 class AlgorithmStoreSubClient(ClientBase.SubClient):
@@ -39,7 +41,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         """
         store = self.get(id_)
         try:
-            self.url = f"{store['url']}/api"
+            self.url = f"{store['url']}{store['api_path']}"
             self.store_id = id_
         except KeyError:
             self.parent.log.error("Algorithm store URL could not be set.")
@@ -73,7 +75,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         self,
         name: str = None,
         url: str = None,
-        collaboration: int = None,
+        collaboration: int | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[dict]:
@@ -120,21 +122,23 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def create(
         self,
-        algorithm_store_url: str,
         name: str,
+        algorithm_store_url: str,
+        api_path: str = DEFAULT_API_PATH,
         collaboration: int | None = None,
         all_collaborations: bool = False,
-        force: bool = False,
     ) -> dict:
         """
         Link an algorithm store to one or more collaborations.
 
         Parameters
         ----------
-        algorithm_store_url : str
-            The url of the algorithm store, including the API path.
         name : str
             The name of the algorithm store.
+        algorithm_store_url : str
+            The url of the algorithm store, excluding the API path.
+        api_path : str, optional
+            The API path of the algorithm store. Default is "/api".
         collaboration : int, optional
             The id of the collaboration to link the algorithm store to. If not given
             and client.setup_collaboration() was called, the collaboration id from the
@@ -143,10 +147,6 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         all_collaborations : bool, optional
             If True, the algorithm store is linked to all collaborations. If False,
             the collaboration_id must be given.
-        force : bool, optional
-            If True, the algorithm store will be linked to the collaboration even for
-            localhost urls - which is not recommended in production scenarios for
-            security reasons.
         field : str, optional
             Which data field to keep in the returned dict. For instance, "field='name'"
             will only return the name of the algorithm store. Default is None.
@@ -175,8 +175,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         data = {
             "algorithm_store_url": algorithm_store_url,
             "name": name,
-            "force": force,
-            "server_url": self.parent.base_path,
+            "api_path": api_path,
         }
         if collaboration is not None:
             data["collaboration_id"] = (collaboration,)
@@ -242,19 +241,16 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
         res = self.parent.request(
             f"algorithmstore/{id_}",
             method="delete",
-            params={
-                "server_url": self.parent.base_path,
-            },
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
-    def __get_store_id(self, id_: int = None) -> int:
+    def __get_store_id(self, id_: int | None = None) -> int:
         """
         Get the algorithm store id.
 
         Parameters
         ----------
-        id_ : int
+        id_ : int | None
             The id of the algorithm store. If not given, the algorithm store must be
             set with client.store.set().
 

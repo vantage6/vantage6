@@ -1,0 +1,72 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
+node:
+  createSecrets: true
+
+  name: ""
+  # apiKey: "put-your-api-key-here"
+
+  keycloak:
+    url: ""
+    realm: vantage6
+
+  hq:
+    url: ""
+    port: 7601
+    path: /hq
+
+  image: harbor2.vantage6.ai/infrastructure/node:uluru
+
+  taskNamespace: vantage6-tasks
+  k8sNodeName: docker-desktop
+
+  databases:
+    fileBased: []
+    serviceBased: []
+
+  logging:
+    level: DEBUG
+    file: node.log
+    max_size: 1024
+    use_console: true
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    storageSize: "128M"
+    storageClass: "local-storage"
+    volumeHostPath: "/var/log/vantage6-node"
+    backup_count: 5
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+  encryption:
+    enabled: false
+
+  proxyPort: 7654
+
+  policies:
+    require_algorithm_pull: true
+
+  persistence:
+    tasks:
+      storageClass: local-storage
+      size: 10Gi
+      # hostPath: /path/to/where/task/files/are/stored
+    database:
+      storageClass: local-storage
+      size: 5Gi
+
+  share_config: true
+
+  share_algorithm_logs: true
+
+  prometheus:
+    enabled: false

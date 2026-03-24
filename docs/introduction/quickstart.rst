@@ -1,74 +1,105 @@
+.. _quickstart:
+
 Quickstart
 ==========
 
-This quickstart section will show you how to run a vantage6 network, comprising of a
-central server, three nodes, an algorithm store and a user interface, on your local
-machine.
+This quickstart section will show you how to run a vantage6 network, comprising of
+three nodes and a vantage6 hub (consisting of HQ, authentication service, algorithm
+store and user interface), on your local machine.
 
 Requirements
 ------------
 
-Make sure you have installed Docker and Python. These are required for all vantage6
-components. Installation instructions are present, for instance, in the
-:ref:`server requirements <server-requirements>` section.
+Make sure you have installed the requirements for vantage6: Python and Kubernetes. These
+are required for all vantage6 components. Installation instructions are present, for
+instance, in the :ref:`hub requirements <hub-requirements>` section.
+
+If you are using Docker Desktop, you can simply
+`switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
+Otherwise, we recommend installing `microk8s <https://microk8s.io/>`_.
 
 Installation
 ------------
 
-Create a virtual Python environment. We recommend installing
-`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. If you are using
-miniconda, you can create and activate a Python environment called 'vantage6_env' with:
+Create a virtual Python environment. We recommend using
+`uv <https://docs.astral.sh/uv/>`_ for package management. You can create and activate
+a Python environment with:
 
 .. code-block:: bash
 
-    conda create -n vantage6_env python=3.10
-    conda activate vantage6_env
+    uv venv --python 3.13
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 Then, install the vantage6 command line interface (CLI) by running:
 
 .. code-block:: bash
 
-    pip install vantage6
+    uv pip install vantage6
+
+.. TODO v5+ remove note below, see #2213
+
+.. note::
+
+    While vantage6 5.0.0 has not yet been released, you can install the latest version of the CLI
+    by running:
+
+    .. code-block:: bash
+
+        uv pip install vantage6 --prerelease=allow
 
 .. _create-dev-network:
 
 Start a local vantage6 network
 ------------------------------
 
-Before starting a local vantage6 network, make sure Docker is running. Then, in the
-Python environment where you installed the vantage6 CLI, you can easily set up a local
-vantage6 network by running the following command:
+In the Python environment where you installed the `vantage6` package, you can easily set up a
+local vantage6 network by running the following command:
 
 .. code-block:: bash
 
-    v6 dev create-demo-network
+    v6 sandbox new
 
 This will start an interactive dialog that will ask you to provide a name for the
 network. Note that default settings are used - you can view custom options with
-``v6 dev create-demo-network --help``.
+``v6 sandbox new --help``.
+
+The network is automatically started. Using the default settings, this will start up
+all hub components (HQ, authentication service, algorithm store and user interface) and
+three nodes. The nodes contain some
+`test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/sandbox/data/olympic_athletes_2016.csv>`_
+about olympic medal winners. Note also that HQ is coupled automatically to the
+community algorithm store, thereby making the community algorithms directly available to
+you in your local setup.
+
+You can now access the user interface by navigating to http://localhost:30760 in your
+browser and log in with the username ``admin`` and password ``admin``. Enjoy!
 
 .. note::
 
-    If you are using Linux without Docker Desktop, you should set the default Docker
-    host URL. You can do this by running
-    ``v6 dev create-demo-network --server-url http://172.17.0.1``. By default, the
-    host URL is assumed to be ``http://host.docker.internal`` (Docker desktop's default).
+    If you are using Windows or WSL with Docker Desktop to run your sandbox, the sandbox
+    files are stored in a WSL folder. Unfortunately, this folder is deleted when you
+    restart WSL or your machine itself. This means your sandbox will be lost.
 
-Next, you can start the network by running:
+    Also, it is helpful to install ``wslview``, which allows you to open the browser
+    from WSL. This makes authenticating from the client easier. You can install
+    it with:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    v6 dev start-demo-network
+        sudo apt-get install wslview
 
-Using the default settings, this will start up a server, three nodes, an algorithm store
-and a user interface. The nodes contain some
-`test data <https://github.com/vantage6/vantage6/blob/main/vantage6/vantage6/cli/dev/data/olympic_athletes_2016.csv>`_
-about olympic medal winners. Note also that the server is coupled automatically to the
-community algorithm store, thereby making the community algorithms directly available to
-you.
+.. note::
 
-You can now access the user interface by navigating to http://localhost:7600 in your
-browser and log in with the username ``dev_admin`` and password ``password``. Enjoy!
+    If you are using microk8s, we have seen networking issues when you move your machine
+    to a different network, e.g. from home to work. What we found helped is to reset the
+    certificates of your microk8s cluster, so that they no longer depend on an outdated
+    IP address. To do this, run:
+
+    .. code-block:: bash
+
+        microk8s config > ~/.kube/config
+        kubectl config use-context microk8s
+        sudo microk8s refresh-certs --cert ca.crt
 
 Stopping the network
 --------------------
@@ -78,7 +109,10 @@ Once you are done, you can stop and remove the network by running:
 .. code-block:: bash
 
     # Stop the network
-    v6 dev stop-demo-network
+    v6 sandbox stop
 
     # Remove the network permanently (clean up logs, configuration files, etc)
-    v6 dev remove-demo-network
+    v6 sandbox remove
+
+Note that you after stopping the network, you can always run ``v6 sandbox start`` to
+start the network again (but not if you removed the network!).

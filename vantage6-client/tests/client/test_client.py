@@ -1,16 +1,15 @@
 import base64
 import json
-
-from unittest import TestCase
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
-from vantage6.client import UserClient
 from vantage6.common.globals import STRING_ENCODING
 
+from vantage6.client import UserClient
 
-# Mock server
-HOST = "mock_server"
+# Mock HQ
+HOST = "mock_hq"
 PORT = 1234
 
 # Mock credentials

@@ -1,7 +1,18 @@
-@import "/src/app/styles/config.scss";
+@use "sass:map";
+@use "/src/app/styles/config.scss" as *;
 
 .layout-container {
   margin: $spacing-px-4;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+
+  @media only screen and (min-width: 600px) {
+    height: calc(100vh - 64px);
+  }
+
+  &.fixed-sidenav {
+    margin-left: 16px;
+  }
 }
 
 mat-toolbar {
@@ -12,11 +23,39 @@ mat-toolbar {
 
 mat-sidenav {
   max-width: 285px;
+  height: calc(100vh - 56px);
+  top: 56px;
+
+  @media only screen and (min-width: 600px) {
+    height: calc(100vh - 64px);
+    top: 64px;
+  }
+
+  &.fixed-sidenav {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    z-index: 1000;
+    height: calc(100vh - 56px);
+
+    @media only screen and (min-width: 600px) {
+      top: 64px;
+      height: calc(100vh - 64px);
+    }
+  }
 
   button {
     width: calc(100% - ($spacing-px-4 * 2));
     margin: 0 $spacing-px-4 $spacing-px-2 $spacing-px-4;
     box-sizing: border-box;
+  }
+
+  .sidenav-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    overflow-y: auto;
   }
 
   mat-list-item {
@@ -29,10 +68,11 @@ mat-sidenav {
 }
 
 mat-sidenav-container {
-  min-height: calc(100% - 56px);
+  height: calc(100vh - 56px);
+  position: relative;
 
   @media only screen and (min-width: 600px) {
-    min-height: calc(100% - 64px);
+    height: calc(100vh - 64px);
   }
 }
 
@@ -61,8 +101,21 @@ mat-toolbar {
   height: auto;
 }
 
+.privacy-link {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+
+  mat-icon {
+    color: #666;
+  }
+
+  a {
+    color: #666;
+    font-size: 0.9rem;
+  }
+}
+
 .choice-alert {
-  background-color: map-get($vantage-primary, 900);
+  background-color: map.get($vantage-primary, 900);
   margin-bottom: $spacing-px-2;
 
   mat-card-content {
@@ -81,12 +134,12 @@ mat-toolbar {
   }
 
   span {
-    color: map-get($vantage-primary, 50);
+    color: map.get($vantage-primary, 50);
     display: flex;
     align-items: center;
 
     &.low-importance {
-      color: map-get($vantage-primary, 200);
+      color: map.get($vantage-primary, 200);
     }
   }
 }

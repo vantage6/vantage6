@@ -1,5 +1,5 @@
 ARG TAG=latest
-ARG BASE=4.0
+ARG BASE=5.0
 # TODO FM 17-10-2023: We should pin the python OHDSI package versions.
 # We could do this by supplying an environment var or store a requirements.txt
 # file in the repo.however for now lets always use the latest in a build.
@@ -40,14 +40,16 @@ RUN Rscript -e "remotes::install_github('ohdsi/CirceR')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortDiagnostics')"
 RUN Rscript -e "remotes::install_github('OHDSI/CohortGenerator')"
 
-# Install python OHDSI packages
-RUN pip install ohdsi-database-connector
-RUN pip install ohdsi-feature-extraction
-RUN pip install ohdsi-circe
-RUN pip install ohdsi-cohort-diagnostics
-RUN pip install ohdsi-cohort-generator
 
-RUN pip install psycopg2-binary
+
+# Install python OHDSI packages
+RUN uv pip install --system ohdsi-database-connector
+RUN uv pip install --system ohdsi-feature-extraction
+RUN uv pip install --system ohdsi-circe
+RUN uv pip install --system ohdsi-cohort-diagnostics
+RUN uv pip install --system ohdsi-cohort-generator
+
+RUN uv pip install --system psycopg2-binary
 
 # Required for OHDSI R package to find the correct shared libs for Java.
 # FIXME FM 5-9-2023: This is a bit to broad, it would be better to figure out

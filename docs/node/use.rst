@@ -31,10 +31,10 @@ Finally, a node can be stopped again with:
 
 .. note::
 
-   Before the node is started, it is attempted to obtain the server version.
-   For a server of version ``x.y.z``, a node of version ``x.y.<latest>`` is
-   started - this is the latest available node version for the server version.
-   If no server version can be obtained, the latest node of the same major
+   Before the node is started, it is attempted to obtain the HQ version.
+   If HQ has version ``x.y.z``, a node of version ``x.y.<latest>`` is
+   started - this is the latest available node version for the HQ version.
+   If no HQ version can be obtained, the latest node of the same major
    version as the command-line interface installation is started.
 
 Available commands
@@ -42,7 +42,7 @@ Available commands
 
 Below is a list of all commands you can run for your node(s). To see all
 available options per command use the ``--help`` flag,
-i.e. ``v6 node start --help`` .
+e.g. ``v6 node start --help`` .
 
 +---------------------+------------------------------------------------+
 | **Command**         | **Description**                                |
@@ -72,7 +72,5 @@ i.e. ``v6 node start --help`` .
 Local test setup
 """"""""""""""""
 
-Check the section on :ref:`use-server-local` of the server if
-you want to run both the node and server on the same machine.
-
-.. _node-security:
+Check out :ref:`this section <local-test>` if you want to run an entire test network
+locally.

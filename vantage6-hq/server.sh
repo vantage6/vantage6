@@ -1,0 +1,28 @@
+#!/bin/sh
+
+echo "[server.sh start]"
+
+# check if environment variable is set
+if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
+    echo "VANTAGE6_CONFIG_LOCATION is not set"
+    echo "  using default location /mnt/config.yaml"
+    VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
+fi
+
+
+# initialize the database
+python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
+
+# start HQ
+exec uwsgi \
+    --http :80 \
+    --gevent 100 \
+    --http-websockets \
+    --http-chunked-input \
+    --http-keepalive \
+    --post-buffering 0 \
+    --master --callable app --disable-logging \
+    --wsgi-file /vantage6/vantage6-hq/vantage6/hq/wsgi.py \
+    --pyargv "${VANTAGE6_CONFIG_LOCATION}"
+
+echo "[server.sh exit]"

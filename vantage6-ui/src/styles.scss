@@ -1,11 +1,11 @@
 @use "@angular/material" as mat;
-@import "./app/styles/config.scss";
-@import "./app/styles/material.scss";
-@import "./app/styles/card.scss";
-@import "./app/styles/chip.scss";
-@import "./app/styles/data-list.scss";
-@import "./app/styles/table.scss";
-@import "./app/styles/other.scss";
+@use "./app/styles/config.scss" as *;
+@use "./app/styles/material.scss" as *;
+@use "./app/styles/card.scss" as *;
+@use "./app/styles/chip.scss" as *;
+@use "./app/styles/data-list.scss" as *;
+@use "./app/styles/table.scss" as *;
+@use "./app/styles/other.scss" as *;
 
 html,
 body {

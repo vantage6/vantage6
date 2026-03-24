@@ -1,4 +1,4 @@
-<app-page-header title="Task">
+<app-page-header title="{{ 'resources.task' | translate }}">
   <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="task && (canDelete || canCreate)">
     <mat-icon>more_vert</mat-icon>
   </button>
@@ -32,9 +32,7 @@
           <button actions mat-raised-button (click)="openLog(run)">
             {{ "task-run.show-log" | translate }}
           </button>
-          <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
-            "task-run.alert-node-offline" | translate
-          }}</span>
+          <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run)">{{ "task-run.alert-node-offline" | translate }}</span>
         </app-status-info>
       </div>
       <div *ngIf="childTasks.length > 0">
@@ -57,9 +55,7 @@
             <button actions mat-raised-button (click)="openLog(run)">
               {{ "task-run.show-log" | translate }}
             </button>
-            <span actionText *ngIf="run.node.status !== 'online' && isActive(run.status)">{{
-              "task-run.alert-node-offline" | translate
-            }}</span>
+            <span actionText *ngIf="run.node.status !== 'online' && isActiveRun(run)">{{ "task-run.alert-node-offline" | translate }}</span>
           </app-status-info>
         </div>
         <button
@@ -71,7 +67,7 @@
           {{ (showAllChildTasks ? "general.show_less" : "general.show_more") | translate }}
         </button>
       </div>
-      <mat-card-actions *ngIf="canKill && isActive(task.status)">
+      <mat-card-actions *ngIf="canKill && isActiveTask()">
         <button mat-flat-button color="warn" (click)="handleTaskKill()">
           {{ "task-read.card-status.actions.kill" | translate }}
         </button>
@@ -92,8 +88,8 @@
     </mat-card-header>
     <mat-card-content>
       <div *ngFor="let result of task.results">
-        <ng-container *ngIf="result.decoded_result && task.input; else resultDownload">
-          <b *ngIf="function?.type === functionType.Federated">{{ getRunForResult(result.id)?.node?.name }}</b>
+        <ng-container *ngIf="result.decoded_result && task.arguments; else resultDownload">
+          <b *ngIf="function?.step_type !== algorithmStepType.CentralCompute">{{ getRunForResult(result.id)?.node?.name }}</b>
           <app-visualize-result
             [result]="result.decoded_result"
             [visualization]="selectedVisualization"
@@ -108,11 +104,16 @@
         <ng-template #resultDownload>
           <ng-container *ngIf="result.result">
             <div *ngIf="result.decoded_result">
-              <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-input-visualization' | translate }}"> </app-alert>
+              <app-alert *ngIf="result.decoded_result" label="{{ 'task.alert-failed-read-arguments-visualization' | translate }}">
+              </app-alert>
               <p>{{ displayTextResult(result.decoded_result) }}</p>
             </div>
             <app-alert *ngIf="result.blob_storage_used" label="{{ 'task.alert-blob-read-result' | translate }}"> </app-alert>
-            <app-alert *ngIf="!result.blob_storage_used && !result.decoded_result" label="{{ 'task.alert-failed-read-result' | translate }}"> </app-alert>
+            <app-alert
+              *ngIf="!result.blob_storage_used && !result.decoded_result"
+              label="{{ 'task.alert-failed-read-result' | translate }}"
+            >
+            </app-alert>
             <br />
             <button mat-flat-button color="primary" (click)="downloadResult(result)">
               {{ "task-read.card-results.actions.download-result" | translate }}
@@ -156,6 +157,14 @@
           <b>{{ "task.created-at" | translate }}</b>
           <span>{{ printDate(task.created_at) }}</span>
         </div>
+        <div class="data-list__item">
+          <b>{{ "task.session" | translate }}</b>
+          <span>{{ session?.name ?? "-" }}</span>
+        </div>
+        <div class="data-list__item" *ngIf="study">
+          <b>{{ "resources.study" | translate }}</b>
+          <span>{{ study.name }}</span>
+        </div>
         <div class="data-list__item" *ngIf="task.parent">
           <b>{{ "task.parent" | translate }}</b>
           <app-chip
@@ -177,10 +186,6 @@
             ></app-chip>
           </div>
         </div>
-        <div class="data-list__item" *ngIf="study">
-          <b>{{ "resources.study" | translate }}</b>
-          <span>{{ study.name }}</span>
-        </div>
       </div>
     </mat-card-content>
   </mat-card>
@@ -194,25 +199,29 @@
           <b>{{ "task.algorithm" | translate }}</b>
           <span>{{ algorithm?.name || "-" }}</span>
         </div>
-        <div class="data-list__item" *ngIf="task.input">
+        <div class="data-list__item" *ngIf="task.arguments">
           <b>{{ "task.function" | translate }}</b>
-          <span>{{ (function?.display_name ?? task.input.method) || "-" }}</span>
+          <span>{{ (function?.display_name ?? task.method) || "-" }}</span>
         </div>
       </div>
-      <ng-container *ngIf="task.input?.parameters">
+      <ng-container *ngIf="task.arguments">
         <h4 class="data-list__header">{{ "task.parameters" | translate }}</h4>
         <div class="data-list">
-          <div class="data-list__item" *ngFor="let parameter of task?.input?.parameters">
+          <div class="data-list__item" *ngFor="let parameter of task?.arguments">
             <b>{{ getParameterDisplayName(parameter) }}</b>
             <span>{{ getParameterValueAsString(parameter) }}</span>
           </div>
         </div>
       </ng-container>
-      <app-alert *ngIf="!task.runs[0]?.blob_storage_used && !task.input" label="{{ 'task.alert-failed-read-input-function' | translate }}"> </app-alert>
-      <app-alert *ngIf="task.runs[0]?.blob_storage_used" label="{{ 'task.alert-blob-read-input' | translate }}"> </app-alert>
+      <app-alert
+        *ngIf="!task.runs[0]?.blob_storage_used && !task.arguments"
+        label="{{ 'task.alert-failed-read-arguments-function' | translate }}"
+      >
+      </app-alert>
+      <app-alert *ngIf="task.runs[0]?.blob_storage_used" label="{{ 'task.alert-blob-read-arguments' | translate }}"> </app-alert>
       <br />
-      <button *ngIf="!task.input && task.runs[0]?.input" mat-flat-button color="primary" (click)="downloadInput(task.runs[0])">
-        {{ "task-read.card-results.actions.download-input" | translate }}
+      <button *ngIf="!task.arguments && task.runs[0]?.arguments" mat-flat-button color="primary" (click)="downloadArguments(task.runs[0])">
+        {{ "task-read.card-results.actions.download-arguments" | translate }}
       </button>
     </mat-card-content>
   </mat-card>

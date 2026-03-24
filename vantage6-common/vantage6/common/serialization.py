@@ -1,10 +1,8 @@
 import json
-
 import logging
 
-from vantage6.common.globals import STRING_ENCODING
 from vantage6.common import logger_name
-
+from vantage6.common.globals import STRING_ENCODING
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)

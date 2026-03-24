@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vantage6-algorithm-tools"
+version = "5.0.0rc1"
+description = "Vantage6 algorithm tools"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Vantage6 Team"}
+]
+maintainers = [
+    {name = "Frank Martin", email = "f.martin@iknl.nl"},
+    {name = "Bart van Beusekom", email = "b.vanbeusekom@iknl.nl"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "openpyxl>=3.0.0",
+    "pandas>=2.2.3",
+    # psycopg2-binary is not used directly in algorithm tools, but is necessary when
+    # running SQL queries on a postgres database.
+    "psycopg2-binary==2.9.10",
+    "pyarrow>=16.1.0",
+    "pyjwt==2.9.0",
+    "pyfiglet==1.0.4",
+    "SPARQLWrapper>=2.0.0",
+    "sqlalchemy>=1.4.46",
+    "vantage6-common==5.0.0rc1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage==7.10.2",
+    "black",
+    "pre-commit",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["vantage6"]
+
+[tool.hatch.build.targets.wheel.sources]
+"vantage6" = "vantage6"

@@ -2,21 +2,20 @@
 Common functionality used in multiple vantage6 components.
 """
 
-import os
 import base64
-import click
-import appdirs
-import ipaddress
+import importlib.metadata
+import os
 import typing
 import uuid
 
-from colorama import init, Fore, Style
+import appdirs
+import click
+from colorama import Fore, Style, init
 
+from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME, STRING_ENCODING
 
-# make sure the version is available
-from vantage6.common._version import __version__  # noqa: F401
-
+__version__ = importlib.metadata.version(__package__)
 
 # init colorstuff
 init()
@@ -318,47 +317,6 @@ def get_config_path(dirs: appdirs.AppDirs, system_folders: bool = False) -> str:
         return dirs.user_config_dir
 
 
-def is_ip_address(ip: str) -> bool:
-    """
-    Test if input IP address is a valid IP address
-
-    Parameters
-    ----------
-    ip: str
-        IP address to validate
-
-    Returns
-    -------
-    bool: whether or not IP address is valid
-    """
-    try:
-        _ = ipaddress.ip_address(ip)
-        return True
-    except Exception:
-        return False
-
-
-def get_database_config(databases: list, label: str) -> dict | None:
-    """Get database configuration from config file
-
-    Parameters
-    ----------
-    databases: list[dict]
-        List of database configurations
-    label: str
-        Label of database configuration to retrieve
-
-    Returns
-    -------
-    Dict | None
-        Database configuration, or None if not found
-    """
-    for database in databases:
-        if database["label"] == label:
-            return database
-    return None
-
-
 def generate_apikey() -> str:
     """Creates random api_key using uuid.
 
@@ -395,3 +353,10 @@ def split_rabbitmq_uri(rabbit_uri: str) -> dict:
         "port": port,
         "vhost": vhost,
     }
+
+
+def validate_required_env_vars(env_vars: StrEnumBase) -> None:
+    """Validate that the required environment variables are set."""
+    for env_var in env_vars.list():
+        if not os.environ.get(env_var):
+            raise ValueError(f"Required environment variable '{env_var}' is not set")

@@ -1,23 +1,299 @@
-allow_drop_all: true
-description: 'default_algorithm_store'
-ip: 0.0.0.0
-logging:
-  backup_count: 5
-  datefmt: '%Y-%m-%d %H:%M:%S'
-  file: test-server.log
-  format: '%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s'
-  level: DEBUG
-  max_size: 1024
-  use_console: true
-port: {{ port }}
-uri: sqlite:///default.sqlite
-root_user:
-  v6_server_uri: http://localhost:{{ server_port }}/api
-  username: dev_admin
-dev:
-  host_uri: {{ host_uri }}
-  disable_review: true
-policies:
-  algorithm_view: public
-  allow_localhost: true
-{{ user_provided_config }}
+{% from "_yaml_macros.j2" import yaml_sq %}
+
+# Override the chart name
+nameOverride: {{ nameOverride | default('vantage6-store') }}
+# Optional, by default the Release.Namespace is used
+# namespace: vantage6-store
+store:
+
+  # Whether the store is deployed standalone or as part of a vantage6 hub.
+  standalone: {{ store.standalone | default(false) }}
+
+  # The description of the store
+  description: {{ store.description | default('Vantage algorithm store version 5') }}
+
+  # The external URL of the algorithm store
+  {% if store.baseUrl is defined %}
+  baseUrl: {{ store.baseUrl }}
+  {% else %}
+  # The store base URL is not set here, it should be set in the hub chart config, or
+  # otherwise it should be specified below.
+  # baseUrl: http://localhost:7602
+  {% endif %}
+  api_path: {{ store.api_path | default('/store') }}
+
+  # Keycloak configuration
+  {% if store.standalone is defined and store.standalone %}
+  keycloak:
+    url: {{ store.keycloak.url }}
+    realm: {{ store.keycloak.realm | default('vantage6') }}
+    adminUsername: {{ store.keycloak.adminUsername | default('admin') }}
+    adminPassword: {{ yaml_sq(store.keycloak.adminPassword | default('admin')) }}
+    adminClient: {{ store.keycloak.adminClient | default('backend-admin-client') }}
+    adminClientSecret: {{ yaml_sq(store.keycloak.adminClientSecret | default('myadminclientsecret')) }}
+  {% endif %}
+
+  {% if store.standalone is defined and store.standalone %}
+  vantage6HQUri: {{ store.vantage6HQUri }}
+  {% endif %}
+
+  # Which image to use to run the store.
+  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:uluru') }}
+  # Algorithm store image pull policy.
+  # Possible values are:
+  # - Always: always pull the image from the registry
+  # - IfNotPresent: pull the image from the registry if it is not present on the node
+  # - Never: never pull the image from the registry
+  imagePullPolicy: {{ store.imagePullPolicy | default('Always') }}
+
+  replications: {{ store.replications | default(1) }}
+
+  policies:
+    # Set who is allowed to view the algorithms in the store. Possible values are:
+    # - "public": everyone can view the algorithms
+    # - "authenticated": users with a token valid for this store can view the algorithms
+    # - "private": only users with explicit permission in the algorithm store can view the
+    #   algorithms
+    {% if store.policies is defined %}
+    algorithmView: {{ store.policies.algorithmView | default('public') }}
+    {% else %}
+    algorithmView: public
+    {% endif %}
+
+    # Set the minimum number of reviewers that need to approve an algorithm before it
+    # is available in the store. In case this number is lower than min_reviewing_organizations,
+    # the min_reviewing_organizations still has to be met to proceed with the review process.
+    {% if store.policies is defined %}
+    minReviewers: {{ store.policies.minReviewers | default(2) }}
+    {% else %}
+    minReviewers: 2
+    {% endif %}
+
+    # Define whether or not developers are able to assign reviewers to their own algorithms.
+    {% if store.policies is defined %}
+    assignReviewOwnAlgorithm: {{ store.policies.assignReviewOwnAlgorithm | default(false) }}
+    {% else %}
+    assignReviewOwnAlgorithm: false
+    {% endif %}
+
+    # Define the minimum amount of organizations that must be involved in the review process.
+    {% if store.policies is defined %}
+    minReviewingOrganizations: {{ store.policies.minReviewingOrganizations | default(2) }}
+    {% else %}
+    minReviewingOrganizations: 2
+    {% endif %}
+
+    # Specify the users that are allowed to review algorithms. This is a list of usernames
+    # that identify unique users. This policy works in combination with the permission
+    # system. If this policy is not set, all users with the right permissions are allowed
+    # to review algorithms.
+    {% if store.policies is defined and store.policies.allowedReviewers is defined %}
+    allowedReviewers:
+      {% for reviewer in store.policies.allowedReviewers %}
+      - {{ reviewer }}
+      {% endfor %}
+    {% else %}
+    # allowedReviewers:
+    #   - some_username
+    {% endif %}
+
+    # Specify the users that are allowed to assign reviews. This is a list of usernames
+    # that identify unique users. This policy works in combination with the permission
+    # system. If this policy is not set, all users with the right permissions are allowed
+    # to assign reviews.
+    {% if store.policies is defined and store.policies.allowedReviewAssigners is defined %}
+    allowedReviewAssigners:
+      {% for assigner in store.policies.allowedReviewAssigners %}
+      - {{ assigner }}
+      {% endfor %}
+    {% else %}
+    # allowedReviewAssigners:
+    #   - some_username
+    {% endif %}
+
+  {% if store.dev is defined %}
+  dev:
+    # Specify the URI to the host. This is used to generate the correct URIs to
+    # communicate with HQ. On Windows and Mac, when using Docker Desktop, you
+    # can use the special hostname `host.docker.internal` to refer to the host machine.
+    # On Linux, you should normally use http://172.17.0.1.
+    host_uri: {{ store.dev.host_uri | default('host.docker.internal') }}
+    # disable review process - all submitted algorithms are automatically accepted,
+    # which can be useful while developing algorithms locally.
+    disable_review: {{ store.dev.disable_review | default(false) }}
+    # Define whether or not developers are able to review their own algorithms. For
+    # production, this is not recommended, but it can facilitate development.
+    review_own_algorithm: {{ store.dev.review_own_algorithm | default(false) }}
+
+    # Whether to forward ports to host locally using kubernetes or not, using the
+    # NodePort feature of kubernetes. If set to false, the ports will
+    # not be forwarded. In production, this should be false and you are responsible
+    # for forwarding the ports with your own ingress, gateway or load balancer.
+    # In `v6 dev`, this is also set to false as ports are forwarded by devspace.
+    forward_ports: {{ store.dev.forward_ports | default(false) }}
+    # If forward_ports is true, this is the port that will be exposed on the host.
+    local_port_to_expose: {{ store.dev.local_port_to_expose | default(30762) }}
+  {% endif %}
+
+  {% if store.internal is defined %}
+  internal:
+    port: {{ store.internal.port | default(7602) }}
+  {% endif %}
+  {% if store.internal is not defined %}
+  internal:
+    port: 7602
+  {% endif %}
+
+  # The port to expose the store on in the cluster
+  port: {{ store.port | default(7602) }}
+
+  logging:
+    # Controls the logging output level. Could be one of the following
+    # levels: CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    level: {{ store.logging.level | default('INFO') }}
+
+    # Location to the log file
+    file: {{ store.logging.file | default('store.log') }}
+
+    # Size of the kubernetes persistent volume claim for logs
+    storageSize: {{ store.logging.storageSize | default('1Gi') }}
+
+    # Storage class to use for the kubernetes persistent volume claim for logs
+    storageClass: {{ store.logging.storageClass | default('local-storage') }}
+
+    # Host path for storing the logs (required for local-storage PV)
+    volumeHostPath: {{ store.logging.volumeHostPath | default('/var/log/vantage6-store') }}
+
+    # Size in kb of a single log file
+    max_size: {{ store.logging.max_size | default(1024) }}
+    use_console: {{ store.logging.use_console | default(true) }}
+
+    # Date format for the log file
+    datefmt: "{{ store.logging.datefmt | default('%Y-%m-%d %H:%M:%S') }}"
+
+    # Format for the log file
+    format: "{{ store.logging.format | default('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s') }}"
+
+    # Maximum number of log files to keep. Log files are rotated when the size of the
+    # current log file exceeds `max_size`.
+    backup_count: {{ store.logging.backup_count | default(5) }}
+
+    # Loggers to include in the log file
+    loggers:
+    {% if store.logging.loggers is defined %}
+    {% for logger in store.logging.loggers %}
+    - level: {{ logger.level }}
+      name: {{ logger.name }}
+    {% endfor %}
+    {% endif %}
+    {% if store.logging.loggers is not defined %}
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+    {% endif %}
+
+  # Specify private Docker registries so that the store can login and interact with
+  # private algorithms to retrieve the digests.
+  {% if store.private_docker_registries is defined %}
+  private_docker_registries:
+    {% for registry in node.private_docker_registries %}
+    - registry: {{ registry.registry }}
+      username: {{ registry.username }}
+      password: {{ yaml_sq(registry.password) }}
+    {% endfor %}
+  {% else %}
+  # private_docker_registries:
+  #   - registry: my-private-registry.com
+  #     username: my-username
+  #     password: my-password
+  {% endif %}
+
+  # set up with which origins the store should allow CORS requests. The default
+  # is to allow all origins. If you want to restrict this, you can specify a list
+  # of origins here. Below are examples to allow requests from the Uluru UI, and
+  # port 7600 on localhost. Usually, only the UI and HQ need to access the store.
+  {% if store.cors_allowed_origins is defined %}
+  cors_allowed_origins:
+    {% for origin in store.cors_allowed_origins %}
+    - {{ origin }}
+    {% endfor %}
+  {% else %}
+  # cors_allowed_origins:
+  #   - https://portal.uluru.vantage6.ai
+  #   - http://localhost:7600
+  {% endif %}
+
+  # SMTP server configuration. If given, will be used to send emails to users, e.g. to
+  # alert them that an algorithm review is requested from them.
+  {% if store.smtpServer is defined %}
+  smtpServer:
+    host: '{{ store.smtpServer.host }}'
+    port: '{{ store.smtpServer.port }}'
+    {% if store.smtpServer.user is defined %}
+    user: '{{ store.smtpServer.user }}'
+    {% endif %}
+    {% if store.smtpServer.password is defined %}
+    password: '{{ store.smtpServer.password }}'
+    {% endif %}
+    from: '{{ store.smtpServer.from }}'
+    {% if store.smtpServer.replyTo is defined %}
+    replyTo: '{{ store.smtpServer.replyTo }}'
+    {% endif %}
+    {% if store.smtpServer.starttls is defined %}
+    starttls: '{{ store.smtpServer.starttls }}'
+    {% endif %}
+    {% if store.smtpServer.ssl is defined %}
+    ssl: '{{ store.smtpServer.ssl }}'
+    {% endif %}
+  {% else %}
+  # smtpServer:
+  #  host: your-smtp-server-hostname.org
+  #  port: 587                            # usually 587 for STARTTLS, 465 for SSL
+  #  user: your-username                  # only required if using authentication
+  #  password: your-password              # only required if using authentication
+  #  from: your-email@example.com         # Used for the 'From' header in the mails
+  #  replyTo: reply-to-email@example.com  # Optional, reference for 'Reply-To'
+  #  starttls: true                       # true for STARTTLS, false for SSL
+  #  ssl: false                           # true for SSL, false for STARTTLS
+  {% endif %}
+
+database:
+  # whether or not to use an external database
+  external: {{ database.external | default(false) }}
+  {% if database.external is defined and database.external %}
+  # the URI of the external database
+  uri: {{ database.uri | default('postgresql://vantage6:vantage6@localhost:5432/vantage6') }}
+  {% else %}
+  # The image of the database
+  image:
+    {% if database.image is defined %}
+    repository: {{ database.image.repository | default('postgres') }}
+    tag: {{ database.image.tag | default('13') }}
+    {% else %}
+    repository: postgres
+    tag: 13
+    {% endif %}
+
+  # The username of the database
+  username: {{ database.username | default('vantage6') }}
+
+  # The password of the database
+  password: {{ yaml_sq(database.password | default('vantage6')) }}
+
+  # The name of the database
+  name: {{ database.name | default('vantage6') }}
+
+  #hostpath of the database mount
+  volumePath: {{ database.volumePath }}
+  {% endif %}
+
+  # The name of the k8s node where the database is running (required when
+  # database.external is false because the data is then stored on the k8s node)
+  k8sNodeName: {{ database.k8sNodeName | default('') }}

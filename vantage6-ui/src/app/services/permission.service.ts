@@ -4,9 +4,9 @@ import { Pagination } from 'src/app/models/api/pagination.model';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { BaseUser } from 'src/app/models/api/user.model';
 import { ApiService } from './api.service';
-import { USER_ID } from 'src/app/models/constants/sessionStorage';
-import { TokenStorageService } from './token-storage.service';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { RuleService } from './rule.service';
+import { AuthService } from './auth.service';
 
 const requiredScopeLevel: Record<ScopeType, ScopeType[]> = {
   [ScopeType.ANY]: [ScopeType.OWN, ScopeType.ORGANIZATION, ScopeType.COLLABORATION, ScopeType.GLOBAL],
@@ -26,9 +26,11 @@ export class PermissionService {
 
   constructor(
     private apiService: ApiService,
-    private tokenStorageService: TokenStorageService
+    private rulesService: RuleService,
+    private authService: AuthService
   ) {
-    this.tokenStorageService.loginObservable().subscribe((loggedIn: boolean) => {
+    this.rulesService.getRules();
+    this.authService.authenticatedObservable().subscribe((loggedIn: boolean) => {
       if (loggedIn) this.initData();
     });
   }
@@ -50,7 +52,7 @@ export class PermissionService {
     return this.initialized$.asObservable();
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.activeRules = null;
     this.activeUser = null;
   }
@@ -112,17 +114,15 @@ export class PermissionService {
   }
 
   private async getUserRules() {
-    const userId = sessionStorage.getItem(USER_ID);
     const result = await this.apiService.getForApi<Pagination<Rule>>('/rule', {
-      user_id: userId,
+      current_user: 1,
       no_pagination: 1
     });
     return result.data;
   }
 
   private async getUser() {
-    const userId = sessionStorage.getItem(USER_ID);
-    return await this.apiService.getForApi<BaseUser>(`/user/${userId}`, {
+    return await this.apiService.getForApi<BaseUser>(`/user/me`, {
       include_permissions: true
     });
   }

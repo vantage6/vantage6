@@ -1,0 +1,14 @@
+{#-
+  Common YAML-related Jinja macros.
+
+  We intentionally prefer single-quoted scalars for secrets/passwords to avoid
+  YAML double-quote escape issues (e.g. values containing backslashes like "\!").
+-#}
+
+{% macro yaml_sq(v) -%}'{{ (v | string) | replace("'", "''") }}'{%- endmacro %}
+
+{% macro yaml_optional_sq_field(key, value, indent=0) -%}
+{%- if value is defined and value is not none and (value | string | trim) != '' -%}
+{{ (' ' * indent) ~ key ~ ': ' ~ yaml_sq(value) ~ '\n' -}}
+{%- endif -%}
+{%- endmacro -%}

@@ -27,10 +27,10 @@ enum TableRows {
 }
 
 @Component({
-    selector: 'app-algorithm-in-review-list',
-    templateUrl: './algorithm-in-review-list.component.html',
-    styleUrl: './algorithm-in-review-list.component.scss',
-    imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
+  selector: 'app-algorithm-in-review-list',
+  templateUrl: './algorithm-in-review-list.component.html',
+  styleUrl: './algorithm-in-review-list.component.scss',
+  imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
 })
 export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -73,7 +73,7 @@ export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
 
   private async setStoreUsers(): Promise<void> {
     if (!this.store) return;
-    this.storeUsers = await this.storeUserService.getUsers(this.store.url);
+    this.storeUsers = await this.storeUserService.getUsers(this.store);
   }
 
   private async initData(pageInReview: number, pageToBeReviewed: number): Promise<void> {

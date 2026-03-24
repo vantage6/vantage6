@@ -52,7 +52,7 @@ export class StoreRoleCreateComponent extends BaseCreateComponent implements OnI
     this.isSubmitting = true;
     if (!this.store) return;
     try {
-      await this.roleService.createRole(this.store.url, roleForm as StoreRoleForm);
+      await this.roleService.createRole(this.store, roleForm as StoreRoleForm);
     } catch (error) {
       /* TODO Error handling */
     } finally {
@@ -70,6 +70,6 @@ export class StoreRoleCreateComponent extends BaseCreateComponent implements OnI
   private async initData(): Promise<void> {
     this.store = this.chosenStoreService.store$.value;
     if (!this.store) return;
-    this.selectableRules = await this.ruleService.getRules(this.store.url);
+    this.selectableRules = await this.ruleService.getRules(this.store);
   }
 }

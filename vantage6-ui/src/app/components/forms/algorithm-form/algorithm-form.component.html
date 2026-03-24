@@ -86,10 +86,10 @@
                   <input matInput type="text" formControlName="description" />
                 </mat-form-field>
                 <mat-form-field subscriptSizing="dynamic">
-                  <mat-label>{{ "algorithm.function.type" | translate }}</mat-label>
-                  <mat-select formControlName="type">
-                    <mat-option *ngFor="let functionType of functionTypes" [value]="functionType">
-                      {{ functionType | titlecase }}
+                  <mat-label>{{ "algorithm.function.step-type" | translate }}</mat-label>
+                  <mat-select formControlName="step_type">
+                    <mat-option *ngFor="let functionStepType of functionStepTypes" [value]="functionStepType">
+                      {{ functionStepType | titlecase }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
@@ -308,6 +308,9 @@
                           <mat-label>{{ "general.description" | translate }}</mat-label>
                           <input matInput type="text" formControlName="description" />
                         </mat-form-field>
+                        <mat-checkbox formControlName="multiple">
+                          {{ "algorithm.function.databases.multiple" | translate }}
+                        </mat-checkbox>
                         <div class="button-container button-container-separate">
                           <button mat-flat-button color="warn" (click)="deleteDatabase(functionFormGroup, dbIdx)">
                             {{ "algorithm-create.function.database.delete" | translate }}
@@ -401,8 +404,13 @@
         <div class="button-container button-container-separate">
           <button mat-flat-button color="primary" (click)="addFunction()">{{ "algorithm-create.function.add" | translate }}</button>
         </div>
+        <ng-container *ngIf="formErrorMessages.length > 0">
+          <h3>{{ "general.errors" | translate }}</h3>
+          <p>{{ "algorithm-create.errors-explanation" | translate }}</p>
+          <app-alert *ngFor="let error of formErrorMessages" class="node-alert" [label]="error"></app-alert>
+        </ng-container>
         <div class="button-container">
-          <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+          <button mat-flat-button type="submit" color="primary" disabled="{{ !form.valid }}">{{ "general.submit" | translate }}</button>
           <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
         </div>
       </form>

@@ -1,26 +1,30 @@
-import os
-import sys
+import enum
 import logging
 import logging.handlers
-import enum
-import pyfiglet
-
+import os
+import sys
+from abc import abstractmethod
 from pathlib import Path
-from typing import Tuple
+from typing import Self, Tuple
 
 import appdirs
+import pyfiglet
 
-from vantage6.common import Singleton, error, Fore, Style, get_config_path, logger_name
+from vantage6.common import Fore, Singleton, Style, __version__, error, get_config_path
 from vantage6.common.colors import ColorStreamHandler
-from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.common.docker.addons import running_in_docker
 from vantage6.common.configuration_manager import ConfigurationManager
-from vantage6.common._version import __version__
+from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
+from vantage6.common.kubernetes.utils import (
+    running_in_pod,
+    running_in_wsl,
+    running_on_windows,
+)
 
 
 class AppContext(metaclass=Singleton):
     """
-    Base class from which to create Node and Server context classes.
+    Base class from which to create context classes for specific infrastructure
+    components.
     """
 
     # FIXME: drop the prefix "INST_": a *class* is assigned.
@@ -29,6 +33,7 @@ class AppContext(metaclass=Singleton):
     #        I think the same applies to LOGGING_ENABLED
     INST_CONFIG_MANAGER = ConfigurationManager
     LOGGING_ENABLED = True
+    LOGGER_PREFIX = ""
 
     def __init__(
         self,
@@ -37,6 +42,9 @@ class AppContext(metaclass=Singleton):
         system_folders: bool = False,
         config_file: Path | str = None,
         print_log_header: bool = True,
+        logger_prefix: str = "",
+        in_container: bool = False,
+        is_sandbox: bool = False,
     ) -> None:
         """
         Create a new AppContext instance.
@@ -55,26 +63,39 @@ class AppContext(metaclass=Singleton):
             `instance_name`.
         print_log_header: bool
             Print a banner to the log file.
+        in_container: bool
+            Whether the application is running inside a container, by default False
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         """
+        self.LOGGER_PREFIX = logger_prefix
         self.initialize(
-            instance_type, instance_name, system_folders, config_file, print_log_header
+            instance_type,
+            instance_name,
+            system_folders,
+            config_file,
+            print_log_header,
+            in_container,
+            is_sandbox,
         )
 
     def initialize(
         self,
-        instance_type: str,
+        instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
         config_file: str | None = None,
         print_log_header: bool = True,
+        in_container: bool = False,
+        is_sandbox: bool = False,
     ) -> None:
         """
         Initialize the AppContext instance.
 
         Parameters
         ----------
-        instance_type: str
-            'server' or 'node'
+        instance_type: InstanceType
+            InstanceType enum
         instance_name: str
             Name of the configuration
         system_folders: bool
@@ -85,22 +106,28 @@ class AppContext(metaclass=Singleton):
             `instance_name`.
         print_log_header: bool
             Print a banner to the log file.
+        in_container: bool
+            Whether the application is running inside a container, by default False
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         """
         self.scope: str = "system" if system_folders else "user"
         self.name: str = instance_name
-        self.instance_type = instance_type
-        # if config_file is None:
-        #     config_file = f"{instance_name}.yaml"
+        if is_sandbox:
+            self.name = self.name.replace(SANDBOX_SUFFIX, "")
+        self.instance_type: InstanceType = instance_type
+        self.in_container = in_container
         self.config_file = self.find_config_file(
-            instance_type, self.name, system_folders, config_file
+            instance_type, self.name, system_folders, config_file, is_sandbox=is_sandbox
         )
+        self.is_sandbox = is_sandbox
 
         # look up system / user directories. This way we can check if the
         # config file container custom directories
         self.set_folders(instance_type, self.name, system_folders)
 
         # after the folders have been set, we can start logging!
-        if self.LOGGING_ENABLED:
+        if self.in_container and self.LOGGING_ENABLED:
             self.setup_logging()
 
         # Log some history
@@ -119,27 +146,29 @@ class AppContext(metaclass=Singleton):
         self.log.info(" Welcome to")
         for line in pyfiglet.figlet_format(APPNAME, font="big").split("\n"):
             self.log.info(line)
-        self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
-        self.log.info(" --> Blog: https://vantage6.ai")
+        self.log.info(" --> Project website: https://vantage6.ai")
         self.log.info("-" * 60)
         self.log.info("Cite us!")
         self.log.info("If you publish your findings obtained using vantage6, ")
         self.log.info("please cite the proper sources as mentioned in:")
         self.log.info("https://vantage6.ai/vantage6/references")
         self.log.info("-" * 60)
-        self.log.info(f"Started application {APPNAME}")
-        self.log.info("Current working directory is '%s'" % os.getcwd())
-        self.log.info(
-            f"Successfully loaded configuration from " f"'{self.config_file}'"
-        )
-        self.log.info("Logging to '%s'" % self.log_file)
-        self.log.info(f"Common package version '{__version__}'")
+        self.log.info("Started application %s", APPNAME)
+        self.log.info("Current working directory is '%s'", os.getcwd())
+        self.log.info("Successfully loaded configuration from '%s'", self.config_file)
+        self.log.info("Logging to '%s'", self.log_file)
+        self.log.info("Common package version '%s'", __version__)
 
     @classmethod
     def from_external_config_file(
-        cls, path: Path | str, instance_type: InstanceType, system_folders: bool = False
-    ) -> "AppContext":
+        cls,
+        path: Path | str,
+        instance_type: InstanceType,
+        system_folders: bool = False,
+        in_container: bool = False,
+        is_sandbox: bool = False,
+    ) -> Self:
         """
         Create a new AppContext instance from an external config file.
 
@@ -151,25 +180,48 @@ class AppContext(metaclass=Singleton):
             Type of instance for which the config file is used
         system_folders: bool
             Use system folders rather than user folders
-
+        in_container: bool
+            Whether the application is running inside a container, by default False
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         AppContext
             A new AppContext instance
         """
         instance_name = Path(path).stem
+        if is_sandbox:
+            instance_name = instance_name.replace(SANDBOX_SUFFIX, "")
 
         self_ = cls.__new__(cls)
-        self_.initialize(instance_type, instance_name, system_folders, path)
+        self_.initialize(
+            instance_type,
+            instance_name,
+            system_folders,
+            path,
+            in_container=in_container,
+            is_sandbox=is_sandbox,
+        )
 
         return self_
 
     @classmethod
+    @abstractmethod
     def config_exists(
+        cls,
+        instance_name: str,
+        system_folders: bool,
+        is_sandbox: bool,
+    ) -> None:
+        """Remove the config file if it exists."""
+
+    @classmethod
+    def base_config_exists(
         cls,
         instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
+        is_sandbox: bool = False,
     ) -> bool:
         """Check if a config file exists for the given instance type and name.
 
@@ -181,7 +233,8 @@ class AppContext(metaclass=Singleton):
             Name of the configuration
         system_folders: bool
             Use system folders rather than user folders
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
@@ -189,15 +242,48 @@ class AppContext(metaclass=Singleton):
         """
         try:
             config_file = cls.find_config_file(
-                instance_type, instance_name, system_folders, verbose=False
+                instance_type,
+                instance_name,
+                system_folders,
+                verbose=False,
+                is_sandbox=is_sandbox,
             )
 
-        except Exception:
+        except FileNotFoundError:
             return False
 
         # check that configuration is present in config-file
-        config = cls.INST_CONFIG_MANAGER.from_file(config_file)
+        config = cls.INST_CONFIG_MANAGER.from_file(config_file, is_sandbox=is_sandbox)
         return bool(config)
+
+    @classmethod
+    def remove_config_file_if_exists(
+        cls,
+        instance_type: InstanceType,
+        instance_name: str,
+        system_folders: bool,
+        is_sandbox: bool,
+    ) -> None:
+        """
+        Remove the config file if it exists.
+
+        Parameters
+        ----------
+        instance_type: InstanceType
+            Type of instance that is checked
+        instance_name: str
+            Name of the configuration
+        system_folders: bool
+            Use system folders rather than user folders
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
+        """
+        if cls.config_exists(instance_name, system_folders, is_sandbox):
+            os.remove(
+                cls.find_config_file(
+                    instance_type, instance_name, system_folders, is_sandbox=is_sandbox
+                )
+            )
 
     @staticmethod
     def type_data_folder(instance_type: InstanceType, system_folders: bool) -> Path:
@@ -252,11 +338,22 @@ class AppContext(metaclass=Singleton):
         if isinstance(instance_type, enum.Enum):
             instance_type = instance_type.value
 
-        if running_in_docker():
+        if running_in_pod():
             return {
                 "log": Path("/mnt/log"),
                 "data": Path("/mnt/data"),
                 "config": Path("/mnt/config"),
+            }
+        elif (in_wsl := running_in_wsl()) or (in_windows := running_on_windows()):
+            if in_wsl:
+                mount_path = Path("/mnt/wsl/vantage6")
+            elif in_windows:
+                mount_path = Path(r"\\wsl$\Ubuntu\mnt\wsl\vantage6")
+            return {
+                "log": mount_path / "log",
+                "data": mount_path / "data",
+                "config": mount_path / "config",
+                "dev": mount_path / "dev",
             }
         elif system_folders:
             return {
@@ -274,7 +371,7 @@ class AppContext(metaclass=Singleton):
 
     @classmethod
     def available_configurations(
-        cls, instance_type: InstanceType, system_folders: bool
+        cls, instance_type: InstanceType, system_folders: bool, is_sandbox: bool = False
     ) -> tuple[list[ConfigurationManager], list[Path]]:
         """
         Returns a list of configuration managers and a list of paths to
@@ -286,6 +383,9 @@ class AppContext(metaclass=Singleton):
             Type of instance that is checked
         system_folders: bool
             Use system folders rather than user folders
+        is_sandbox: bool
+            When True, instead of showing the regular configurations, show the sandbox
+            configurations.
 
         Returns
         -------
@@ -294,20 +394,24 @@ class AppContext(metaclass=Singleton):
             configuration files that could not be loaded.
         """
         folders = cls.instance_folders(instance_type, "", system_folders)
-
         # potential configuration files
-        config_files = Path(folders["config"]).glob("*.yaml")
-
+        config_files = Path(folders["config"]).glob(
+            "*.yaml" if not is_sandbox else "*.sandbox.yaml"
+        )
         configs = []
         failed = []
         for file_ in config_files:
             try:
-                conf_manager = cls.INST_CONFIG_MANAGER.from_file(file_)
+                conf_manager = cls.INST_CONFIG_MANAGER.from_file(
+                    file_, is_sandbox=is_sandbox
+                )
                 if conf_manager.is_empty:
                     failed.append(file_)
                 else:
                     configs.append(conf_manager)
-            except Exception:
+            except Exception as e:
+                print(f"Error loading configuration file: {e}")
+
                 failed.append(file_)
 
         return configs, failed
@@ -321,7 +425,7 @@ class AppContext(metaclass=Singleton):
         Path
             Path to the log file
         """
-        return self.log_file_name(type_=self.instance_type)
+        return self.log_file_name(type_=self.instance_type.value)
 
     def log_file_name(self, type_: str) -> Path:
         """
@@ -342,11 +446,17 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert (
-            self.config_manager
-        ), "Log file unkown as configuration manager not initialized"
+        assert self.config_manager, "Log file unkown. Initialize configuration manager"
+
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
+
+    @property
+    def helm_release_name(self) -> str:
+        """
+        Get the name of the Helm release for a vantage6 component.
+        """
+        return f"{APPNAME}-{self.name}-{self.scope}-{self.instance_type.value}"
 
     @property
     def config_file_name(self) -> str:
@@ -398,6 +508,7 @@ class AppContext(metaclass=Singleton):
         system_folders: bool,
         config_file: str | None = None,
         verbose: bool = True,
+        is_sandbox: bool = False,
     ) -> str:
         """
         Find a configuration file.
@@ -415,7 +526,8 @@ class AppContext(metaclass=Singleton):
             configuration is used.
         verbose: bool
             Print the directories that are searched for the configuration file.
-
+        is_sandbox: bool
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         str
@@ -423,12 +535,15 @@ class AppContext(metaclass=Singleton):
 
         Raises
         ------
-        Exception
+        FileNotFoundError
             If the configuration file is not found
         """
-
         if config_file is None:
-            config_file = f"{instance_name}.yaml"
+            config_file = (
+                f"{instance_name}.yaml"
+                if not is_sandbox
+                else f"{instance_name}.sandbox.yaml"
+            )
 
         config_dir = cls.instance_folders(
             instance_type, instance_name, system_folders
@@ -447,14 +562,14 @@ class AppContext(metaclass=Singleton):
             if os.path.exists(fullpath):
                 return fullpath
 
+        msg = f'Could not find configuration file "{config_file}"!?'
         if verbose:
-            msg = f'Could not find configuration file "{config_file}"!?'
             print(msg)
             print("Tried the following directories:")
             for d in dirs:
                 print(f" * {d}")
 
-        raise Exception(msg)
+        raise FileNotFoundError(msg)  # type: ignore
 
     def get_data_file(self, filename: str) -> str:
         """
@@ -518,7 +633,7 @@ class AppContext(metaclass=Singleton):
         # loggers in vantage6.common.log
         log_config = self.config["logging"]
 
-        format_ = log_config["format"]
+        format_ = self.LOGGER_PREFIX + log_config["format"]
         datefmt = log_config.get("datefmt", "")
 
         # make sure the log-file exists
@@ -536,8 +651,7 @@ class AppContext(metaclass=Singleton):
             )
         except PermissionError:
             error(
-                f"Can't write to log dir: "
-                f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
+                f"Can't write to log dir: {Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
             exit(1)
 

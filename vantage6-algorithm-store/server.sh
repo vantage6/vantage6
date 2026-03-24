@@ -9,13 +9,19 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
-uwsgi \
+
+# initialize the database
+python /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
+
+# start the algorithm store
+exec uwsgi \
     --http :80 \
-    --gevent 1000 \
+    --gevent 100 \
     --http-websockets \
-    --master --callable app --disable-logging \
-    --wsgi-file \
-        /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
+    --master \
+    --callable app \
+    --disable-logging \
+    --wsgi-file /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
     --pyargv "${VANTAGE6_CONFIG_LOCATION}"
 
 echo "[server.sh exit]"

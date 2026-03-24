@@ -1,19 +1,23 @@
 from pathlib import Path
+
 import click
 from colorama import Fore, Style
 
 from vantage6.common import (
-    warning,
+    bytes_to_base64s,
+    debug,
     error,
     info,
-    debug,
-    bytes_to_base64s,
+    warning,
 )
-
 from vantage6.common.encryption import RSACryptor
+from vantage6.common.globals import InstanceType
+
+from vantage6.cli.common.utils import extract_name_and_is_sandbox
+from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import select_node, create_client_and_authenticate
+from vantage6.cli.node.common import create_client_and_authenticate
 
 
 @click.command()
@@ -28,7 +32,7 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",
@@ -43,7 +47,7 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     "upload",
     flag_value=False,
     default=True,
-    help="Don't upload the public key to the server",
+    help="Don't upload the public key to HQ",
 )
 @click.option(
     "-o",
@@ -59,21 +63,15 @@ from vantage6.cli.node.common import select_node, create_client_and_authenticate
     default=False,
     help="Overwrite existing private key if present",
 )
-@click.option(
-    "--mfa",
-    "ask_mfa",
-    flag_value=True,
-    default=False,
-    help="Ask for multi-factor authentication code. Use this if MFA is enabled on the server.",
-)
+@click.option("--sandbox/--no-sandbox", "is_sandbox", default=False)
 def cli_node_create_private_key(
     name: str,
     config: str,
     system_folders: bool,
     upload: bool,
-    organization_name: str,
+    organization_name: str | None,
     overwrite: bool,
-    ask_mfa: bool,
+    is_sandbox: bool,
 ) -> None:
     """
     Create and upload a new private key
@@ -83,21 +81,33 @@ def cli_node_create_private_key(
     will no longer be able to read the results of tasks encrypted with current
     key.
     """
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
+
     NodeContext.LOGGING_ENABLED = False
     if config:
         name = Path(config).stem
-        ctx = NodeContext(name, system_folders, config)
-    else:
-        # retrieve context
-        name = select_node(name, system_folders)
+        ctx = NodeContext(
+            name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
+            config_file=config,
+        )
+    elif not name:
+        try:
+            name = select_configuration_questionnaire(
+                InstanceType.NODE, system_folders, is_sandbox
+            )
+        except Exception:
+            error("No configurations could be found!")
+            exit(1)
+    ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
-        # Create node context
-        ctx = NodeContext(name, system_folders)
-
-    # Authenticate with the server to obtain organization name if it wasn't
+    # Authenticate with the hq to obtain organization name if it wasn't
     # provided
     if organization_name is None:
-        client = create_client_and_authenticate(ctx, ask_mfa)
+        client = create_client_and_authenticate(ctx, use_sandbox_port=ctx.is_sandbox)
         organization_name = client.whoami.organization_name
 
     # create directory where private key goes if it doesn't exist yet
@@ -145,19 +155,20 @@ def cli_node_create_private_key(
 
     # update config file
     info("Updating configuration")
-    ctx.config["encryption"]["private_key"] = str(file_)
+    ctx.config["node"]["encryption"]["private_key"] = str(file_)
     ctx.config_manager.put(ctx.config)
     ctx.config_manager.save(ctx.config_file)
 
-    # upload key to the server
+    # upload key to the hq
     if upload:
         info(
-            "Uploading public key to the server. "
-            "This will overwrite any previously existing key!"
+            "Uploading public key to HQ. This will overwrite previously existing keys!"
         )
 
         if "client" not in locals():
-            client = create_client_and_authenticate(ctx)
+            client = create_client_and_authenticate(
+                ctx, use_sandbox_port=ctx.is_sandbox
+            )
 
         # TODO what happens if the user doesn't have permission to upload key?
         # Does that lead to an exception or not?

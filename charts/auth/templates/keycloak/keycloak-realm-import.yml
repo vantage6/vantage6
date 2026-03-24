@@ -1,0 +1,246 @@
+{{- if and .Values.keycloak.realmImport (ne .Values.keycloak.realmImport.enabled false) }}
+{{- $global := .Values.global | default (dict) }}
+{{- $globalKeycloak := $global.keycloak | default (dict) }}
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: {{ .Release.Name }}-realm-import
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+spec:
+  keycloakCRName: {{ .Release.Name }}-kc
+  realm:
+    realm: {{ default $globalKeycloak.realm .Values.keycloak.realmImport.realm }}
+    enabled: {{ .Values.keycloak.realmImport.enabled | default true }}
+    {{- if .Values.keycloak.realmImport.accessTokenLifespan }}
+    accessTokenLifespan: {{ .Values.keycloak.realmImport.accessTokenLifespan }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.ssoSessionIdleTimeout }}
+    ssoSessionIdleTimeout: {{ .Values.keycloak.realmImport.ssoSessionIdleTimeout }}
+    {{- end }}
+    {{- if .Values.keycloak.realmImport.passwordPolicy }}
+    passwordPolicy: {{ .Values.keycloak.realmImport.passwordPolicy | quote }}
+    {{- end }}
+    editUsernameAllowed: false
+    {{- if hasKey .Values.keycloak.realmImport "resetPasswordAllowed" }}
+    resetPasswordAllowed: {{ .Values.keycloak.realmImport.resetPasswordAllowed }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "verifyEmail" }}
+    verifyEmail: {{ .Values.keycloak.realmImport.verifyEmail }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "bruteForceProtected" }}
+    bruteForceProtected: {{ .Values.keycloak.realmImport.bruteForceProtected }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "permanentLockout" }}
+    permanentLockout: {{ .Values.keycloak.realmImport.permanentLockout }}
+    {{- end }}
+    {{- if hasKey .Values.keycloak.realmImport "failureFactor" }}
+    failureFactor: {{ .Values.keycloak.realmImport.failureFactor }}
+    {{- end }}
+    {{- $smtp := .Values.keycloak.realmImport.smtpServer | default (dict) }}
+    {{- if or $smtp.host $smtp.port $smtp.from (hasKey $smtp "fromDisplayName") (hasKey $smtp "replyTo") (hasKey $smtp "replyToDisplayName") (hasKey $smtp "ssl") (hasKey $smtp "starttls") (hasKey $smtp "auth") (hasKey $smtp "authType") $smtp.user $smtp.password }}
+    smtpServer:
+      {{- if $smtp.host }}
+      host: {{ $smtp.host | quote }}
+      {{- end }}
+      {{- if $smtp.port }}
+      port: {{ $smtp.port | quote }}
+      {{- end }}
+      {{- if $smtp.from }}
+      from: {{ $smtp.from | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "fromDisplayName" }}
+      fromDisplayName: {{ $smtp.fromDisplayName | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "replyTo" }}
+      replyTo: {{ $smtp.replyTo | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "replyToDisplayName" }}
+      replyToDisplayName: {{ $smtp.replyToDisplayName | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "ssl" }}
+      ssl: {{ $smtp.ssl | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "starttls" }}
+      starttls: {{ $smtp.starttls | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "auth" }}
+      auth: {{ $smtp.auth | quote }}
+      {{- end }}
+      {{- if hasKey $smtp "authType" }}
+      authType: {{ $smtp.authType | quote }}
+      {{- end }}
+      {{- if $smtp.user }}
+      user: {{ $smtp.user | quote }}
+      {{- end }}
+      {{- if $smtp.password }}
+      password: {{ $smtp.password | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.keycloak.production }}
+    requiredActions:
+      - alias: CONFIGURE_TOTP
+        name: Configure OTP
+        providerId: CONFIGURE_TOTP
+        enabled: true
+        defaultAction: true
+        priority: 10
+      - alias: UPDATE_PASSWORD
+        name: Update Password
+        providerId: UPDATE_PASSWORD
+        enabled: true
+        defaultAction: true
+        priority: 20
+      - alias: UPDATE_EMAIL
+        name: Update Email
+        providerId: UPDATE_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 30
+{{- if .Values.keycloak.realmImport.verifyEmail }}
+      - alias: VERIFY_EMAIL
+        name: Verify Email
+        providerId: VERIFY_EMAIL
+        enabled: true
+        defaultAction: true
+        priority: 40
+{{- end }}
+    {{- end }}
+    users:
+      {{- $realmImportAdmin := .Values.keycloak.realmImport.admin | default (dict) }}
+      - username: {{ default $globalKeycloak.adminUsername $realmImportAdmin.username }}
+        enabled: true
+        {{- if not .Values.keycloak.production }}
+        email: admin@vantage6.org
+        firstName: Admin
+        lastName: Admin
+        {{- end }}
+        credentials:
+        - type: password
+          value: {{ default $globalKeycloak.adminPassword $realmImportAdmin.password | quote}}
+        {{- if .Values.keycloak.production }}
+        requiredActions:
+        - CONFIGURE_TOTP
+        - UPDATE_PASSWORD
+        {{- else if .Values.keycloak.realmImport.passwordUpdateRequired }}
+        requiredActions:
+        - UPDATE_PASSWORD
+        {{- end }}
+        realmRoles:
+          - default-roles-{{ .Values.keycloak.realmImport.realm | default "vantage6" }}
+      - username: service-account-backend-admin-client
+        enabled: true
+        serviceAccountClientId: backend-admin-client
+        clientRoles:
+          realm-management:
+            - view-users
+            - manage-users
+            - view-clients
+            - manage-clients
+            - create-client
+    clients:
+      - clientId: {{ default $globalKeycloak.publicClient .Values.keycloak.realmImport.publicClient.name }}
+        publicClient: true
+        attributes:
+          oauth2.device.authorization.grant.enabled: "true"
+        redirectUris:
+        {{- range .Values.keycloak.realmImport.publicClient.redirectUris }}
+          - {{ . | quote }}
+        {{- end }}
+        # By setting webOrigins to "+", we allow the same origins as redirectUris.
+        webOrigins:
+        - "+"
+        # The public client is only for users, not for nodes. Therefore, map a
+        # constant claim to indicate the that the client is a user.
+        protocolMappers:
+          - name: vantage6_client_type
+            protocol: openid-connect
+            protocolMapper: oidc-hardcoded-claim-mapper
+            consentRequired: false
+            config:
+              claim.name: vantage6_client_type
+              claim.value: user
+              access.token.claim: "true"
+      # create a client that will allow the backend to manage users and clients in
+      # keycloak.
+      - clientId: backend-admin-client
+        publicClient: false
+        secret: {{ default $globalKeycloak.adminClientSecret .Values.keycloak.realmImport.backend_client_secret | quote }}
+        serviceAccountsEnabled: true
+        standardFlowEnabled: false
+    # Define organization_id as a user profile attribute using components (UserProfileProvider)
+    # Unfortunately, this also requires redefining default user profile attributes: username, email, firstName, lastName.
+    components:
+      org.keycloak.userprofile.UserProfileProvider:
+        - id: "26e0e9b3-507f-4fb8-bf2f-77df74d2e78a"
+          providerId: declarative-user-profile
+          subComponents: {}
+          config:
+            kc.user.profile.config:
+              - |
+                {
+                  "attributes": [
+                    {
+                      "name": "username",
+                      "displayName": "${username}",
+                      "validations": {
+                        "length": {"min": 3, "max": 255},
+                        "username-prohibited-characters": {},
+                        "up-username-not-idn-homograph": {}
+                      },
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "email",
+                      "displayName": "${email}",
+                      "validations": {
+                        "email": {},
+                        "length": {"max": 255}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "firstName",
+                      "displayName": "${firstName}",
+                      "validations": {
+                        "length": {"max": 255},
+                        "person-name-prohibited-characters": {}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "lastName",
+                      "displayName": "${lastName}",
+                      "validations": {
+                        "length": {"max": 255},
+                        "person-name-prohibited-characters": {}
+                      },
+                      "required": {"roles": ["user"]},
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin", "user"]
+                      }
+                    },
+                    {
+                      "name": "organization_id",
+                      "displayName": "Organization ID",
+                      "permissions": {
+                        "view": ["admin", "user"],
+                        "edit": ["admin"]
+                      }
+                    }
+                  ]
+                }
+{{- end }}

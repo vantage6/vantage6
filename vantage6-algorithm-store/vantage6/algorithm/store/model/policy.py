@@ -1,9 +1,10 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, select
+
+from vantage6.common.enum import StorePolicies
 
 from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
-from vantage6.algorithm.store.model.user import User
 from vantage6.algorithm.store.model.common.enums import DefaultStorePolicies
-from vantage6.common.enum import StorePolicies
+from vantage6.algorithm.store.model.user import User
 
 
 class Policy(Base):
@@ -32,60 +33,9 @@ class Policy(Base):
             Dictionary of policies
         """
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).all()
+        result = session.scalars(select(cls)).all()
         session.commit()
         return {r.key: r.value for r in result}
-
-    @classmethod
-    def get_servers_allowed_to_be_whitelisted(cls) -> list[str]:
-        """
-        Get the servers that are allowed to be whitelisted.
-
-        Returns
-        -------
-        list[str]
-            List of servers that are allowed to be whitelisted
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
-        session.commit()
-        return [r.value for r in result]
-
-    @classmethod
-    def is_localhost_allowed_to_be_whitelisted(cls) -> bool:
-        """
-        Check if localhost is allowed to be whitelisted.
-
-        Returns
-        -------
-        bool
-            True if localhost is allowed to be whitelisted, False otherwise
-        """
-        session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ALLOW_LOCALHOST)
-            .one_or_none()
-        )
-        session.commit()
-        if result is None:
-            return False
-        return result.value.lower() == "true" or result.value == "1"
-
-    @classmethod
-    def get_servers_with_edit_permission(cls) -> list[str]:
-        """
-        Get the servers that have edit permission.
-
-        Returns
-        -------
-        list[str]
-            List of servers that have edit permission
-        """
-        session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=StorePolicies.ALLOWED_SERVERS).all()
-        session.commit()
-        return [r.value for r in result]
 
     @classmethod
     def get_minimum_reviewers(cls) -> int:
@@ -98,9 +48,9 @@ class Policy(Base):
             Minimum number of reviewers
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls).filter_by(key=StorePolicies.MIN_REVIEWERS).one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWERS.value)
+        ).one_or_none()
         session.commit()
         if result is None:
             return DefaultStorePolicies.MIN_REVIEWERS.value
@@ -118,11 +68,9 @@ class Policy(Base):
             False otherwise
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value)
+        ).one_or_none()
         session.commit()
         if result is None:
             return DefaultStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM.value
@@ -131,7 +79,8 @@ class Policy(Base):
     @classmethod
     def get_minimum_reviewing_orgs(cls) -> int:
         """
-        Get the minimum number of organizations that have to be involved in the review process.
+        Get the minimum number of organizations that have to be involved in the review
+        process.
 
         Returns
         -------
@@ -139,28 +88,26 @@ class Policy(Base):
             Minimum number of reviewers
         """
         session = DatabaseSessionManager.get_session()
-        result = (
-            session.query(cls)
-            .filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS)
-            .one_or_none()
-        )
+        result = session.scalars(
+            select(cls).filter_by(key=StorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
+        ).one_or_none()
         session.commit()
         if result is None:
-            return DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value
+            return int(DefaultStorePolicies.MIN_REVIEWING_ORGANIZATIONS.value)
         return int(result.value)
 
     @classmethod
-    def search_user_in_policy(cls, user: User, policy: str) -> bool:
+    def search_user_in_policy(cls, user: User, policy: StorePolicies) -> bool:
         """
         Search a user in a policy where specific users are indicated.
-        The users have to be saved in the policy as "username|server_url".
+        The users have to be saved in the policy with their username.
 
         Parameters
         ----------
         user : User
             User to search for
-        policy : str
-            Policy to search in
+        policy : StorePolicies
+            Member of StorePolicies enum
 
         Returns
         -------
@@ -169,7 +116,7 @@ class Policy(Base):
         """
 
         session = DatabaseSessionManager.get_session()
-        result = session.query(cls).filter_by(key=policy).all()
+        result = session.scalars(select(cls).filter_by(key=policy.value)).all()
         session.commit()
 
         if result is None or result == []:
@@ -179,7 +126,7 @@ class Policy(Base):
             if not isinstance(result, list):
                 result = [result]
             result = next(
-                (r for r in result if r.value == f"{user.username}|{user.server.url}"),
+                (r for r in result if r.value == user.username),
                 None,
             )
 

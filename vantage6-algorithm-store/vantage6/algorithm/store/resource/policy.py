@@ -1,22 +1,24 @@
 import logging
-
 from http import HTTPStatus
-from flask.globals import request
+
 from flask import g
+from flask.globals import request
 from flask_restful import Api
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
+
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.common.enums import (
+    BooleanPolicies,
+    DefaultStorePolicies,
+    ListPolicies,
+    PublicPolicies,
+)
 from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
     with_authentication,
-)
-from vantage6.algorithm.store.model.common.enums import (
-    BooleanPolicies,
-    PublicPolicies,
-    DefaultStorePolicies,
-    ListPolicies,
 )
 
 module_name = logger_name(__name__)
@@ -91,15 +93,8 @@ class PoliciesBase(AlgorithmStoreResources):
         # reshape the policies to a more readable format
         # e.g. from
         #   {'value': 'public', 'key': 'algorithm_view'},
-        #   {'value': 'http://localhost:7601/api', 'key': 'allowed_servers'},
-        #   {'value': 'https://cotopaxi.vantage6.ai', 'key': 'allowed_servers'},
-        #   {'value': '1', 'key': 'allow_localhost'}
         # to
-        #   {'algorithm_view': 'public',
-        #    'allowed_servers': [
-        #      'http://localhost:7601/api', 'https://cotopaxi.vantage6.ai'
-        #     ],
-        #    'allow_localhost': 1}
+        #   {'algorithm_view': 'public'}
         response_dict = {}
         for policy in policies:
             policy_name = policy.key
@@ -116,14 +111,14 @@ class PoliciesBase(AlgorithmStoreResources):
                 response_dict[policy_name] = policy.value
 
         # convert policies where necessary
-        for boolean_policy in [p.value for p in BooleanPolicies]:
+        for boolean_policy in BooleanPolicies.list():
             if boolean_policy in response_dict:
                 response_dict[boolean_policy] = (
                     response_dict[boolean_policy] == "1"
                     or response_dict[boolean_policy].lower() == "true"
                     or response_dict[boolean_policy] is True
                 )
-        for list_policy in [p.value for p in ListPolicies]:
+        for list_policy in ListPolicies.list():
             if list_policy in response_dict and isinstance(
                 response_dict[list_policy], str
             ):
@@ -132,7 +127,7 @@ class PoliciesBase(AlgorithmStoreResources):
         # add default values for policies that are not in the response
         if include_defaults:
             all_policies = StorePolicies if include_private else PublicPolicies
-            for policy in [p.value for p in all_policies]:
+            for policy in all_policies.list():
                 if policy not in response_dict:
                     response_dict[policy] = DefaultStorePolicies[policy.upper()].value
 
@@ -169,7 +164,7 @@ class PrivatePoliciesAPI(PoliciesBase):
 
         tags: ["Policy"]
         """
-        q = g.session.query(db.Policy)
+        q = select(db.Policy)
 
         args = request.args
 
@@ -177,13 +172,13 @@ class PrivatePoliciesAPI(PoliciesBase):
         # not in the PolicyInputSchema
         if "name" in args:
             q = q.filter(db.Policy.name == args["name"])
-            if "name" not in [p.value for p in StorePolicies]:
+            if "name" not in StorePolicies.list():
                 return {
                     "msg": f"The policy '{args['name']}' does not exist!"
                 }, HTTPStatus.BAD_REQUEST
 
         policies_dict = self.policies_to_dict(
-            q.all(), include_defaults=True, include_private=True
+            g.session.scalars(q).all(), include_defaults=True, include_private=True
         )
 
         return policies_dict, HTTPStatus.OK
@@ -215,9 +210,7 @@ class PublicPoliciesAPI(PoliciesBase):
 
         tags: ["Policy"]
         """
-        q = g.session.query(db.Policy).filter(
-            db.Policy.key.in_([p.value for p in PublicPolicies])
-        )
+        q = select(db.Policy).filter(db.Policy.key.in_(PublicPolicies.list()))
 
         args = request.args
 
@@ -225,18 +218,18 @@ class PublicPoliciesAPI(PoliciesBase):
         # not in the PolicyInputSchema
         if "name" in args:
             q = q.filter(db.Policy.name == args["name"])
-            if "name" not in [p.value for p in StorePolicies]:
+            if "name" not in StorePolicies.list():
                 return {
                     "msg": f"The policy '{args['name']}' does not exist!"
                 }, HTTPStatus.BAD_REQUEST
-            elif "name" not in [p.value for p in PublicPolicies]:
+            elif "name" not in PublicPolicies.list():
                 return {
                     "msg": f"The policy '{args['name']}' is not public! You need to "
                     "be authenticated to view it."
                 }, HTTPStatus.UNAUTHORIZED
 
         policies_dict = self.policies_to_dict(
-            q.all(), include_defaults=True, include_private=False
+            g.session.scalars(q).all(), include_defaults=True, include_private=False
         )
 
         return policies_dict, HTTPStatus.OK

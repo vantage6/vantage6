@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "node.labels" . | indent 4 }}
+    name: {{ .Values.namespace | default .Release.Namespace }}
+    app: v6-node-hq-proxy
+    component: node
+spec:
+  selector:
+    matchLabels:
+{{ include "node.matchLabels" . | indent 6 }}
+      component: node
+  template:
+    metadata:
+      labels:
+{{ include "node.labels" . | indent 8 }}
+        component: node
+    spec:
+    #   hostAliases:
+    #   - ip: "172.17.0.1" # Default bridge network gateway for docker/k8s
+    #     hostnames:
+    #     - "host.docker.internal" # Defining it explicitly for environments where Docker is not installed
+      serviceAccountName: {{ .Release.Name }}-sa
+      containers:
+      - name: vantage6-node
+        image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:uluru" }}
+        imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
+        env:
+        - name: V6_PROXY_PORT
+          value: "{{ .Values.node.proxyPort }}"
+        - name: V6_PROXY_HOST
+          value: http://{{ .Release.Name }}.{{ .Values.namespace | default .Release.Namespace }}.svc.cluster.local
+        - name: KEYCLOAK_URL
+          value: {{ .Values.node.keycloak.url | quote }}
+        - name: KEYCLOAK_REALM
+          value: {{ .Values.node.keycloak.realm | quote }}
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-secrets
+        command: ["vnode-local", "start", "-c", "/app/config/config.yml"]
+        volumeMounts:
+        - name: task-files-root
+          mountPath: /app/tasks
+        - name: config-volume
+          mountPath: /app/config
+        - name: node-logs
+          mountPath: /mnt/log
+        {{- range .Values.node.databases.fileBased }}
+        - name: database-volume-{{ .name }}
+          mountPath: /app/databases/{{ .name }}.{{ .type }}
+          subPath: {{ .originalName }}
+        {{- end }}
+      volumes:
+      - name: task-files-root
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-task-pvc
+      - name: config-volume
+        configMap:
+          name: {{ .Release.Name }}-configmap
+      - name: node-logs
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-logs-pvc
+      {{- range default (list) .Values.node.databases.fileBased }}
+      - name: database-volume-{{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ $.Release.Name }}-db-pvc
+      {{- end }}

@@ -2,7 +2,7 @@
 # this Makefile
 
 # docker image tag
-TAG ?= cotopaxi
+TAG ?= uluru
 REGISTRY ?= harbor2.vantage6.ai
 PLATFORMS ?= linux/arm64,linux/amd64
 # Example for local development
@@ -42,7 +42,7 @@ help:
 	@echo "  uninstall            : uninstall all vantage6 packages"
 	@echo "  install              : do a regular install of all vantage6 packages"
 	@echo "  install-dev          : do an editable install of all vantage6 packages"
-	@echo "  image                : build the node/server docker image"
+	@echo "  image                : build the node/hq docker image"
 	@echo "  algorithm-store-image: build the algorithm store docker image"
 	@echo "  ui-image             : build the user interface docker image"
 	@echo "  base-image           : build the infrastructure base image"
@@ -50,9 +50,9 @@ help:
 	@echo "  support-image        : build the supporing images"
 	@echo "  rebuild              : rebuild all python packages"
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
-	@echo "  community            : notify community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'""
 	@echo "  test                 : run all unittests and compute coverage"
-	@echo "  devdocs              : run a documentation development server"
+	@echo "  install-docs         : install documentation dependencies"
+	@echo "  devdocs              : run documentation locally with live reload"
 	@echo ""
 	@echo "Using "
 	@echo "  tag:       ${TAG}"
@@ -61,53 +61,38 @@ help:
 	@echo "  platforms: ${PLATFORMS}"
 
 set-version:
-	# --version --build --spec --post
-	cd tools && ls
 	cd tools && python update-version.py ${FLAGS}
 
-community:
-	#  make community FLAGS="--version 99.99.88 --notes 'I should have done more!' --post-notes 'Oh.. Maybe not'"
-	cd tools && python update-discord.py ${FLAGS}
-
 uninstall:
-	pip uninstall -y vantage6
-	pip uninstall -y vantage6-client
-	pip uninstall -y vantage6-algorithm-tools
-	pip uninstall -y vantage6-common
-	pip uninstall -y vantage6-node
-	pip uninstall -y vantage6-backend-common
-	pip uninstall -y vantage6-server
-	pip uninstall -y vantage6-algorithm-store
+	uv remove vantage6
+	uv remove vantage6-client
+	uv remove vantage6-algorithm-tools
+	uv remove vantage6-common
+	uv remove vantage6-node
+	uv remove vantage6-backend-common
+	uv remove vantage6-hq
+	uv remove vantage6-algorithm-store
 
 install:
-	cd vantage6-common && pip install .
-	cd vantage6-client && pip install .
-	cd vantage6-algorithm-tools && pip install .
-	cd vantage6 && pip install .
-	cd vantage6-node && pip install .
-	cd vantage6-backend-common && pip install .
-	cd vantage6-server && pip install .
-	cd vantage6-algorithm-store && pip install .
+	uv add vantage6-common
+	uv add vantage6-client
+	uv add vantage6-algorithm-tools
+	uv add vantage6
+	uv add vantage6-node
+	uv add vantage6-backend-common
+	uv add vantage6-hq
+	uv add vantage6-algorithm-store
 
 install-dev:
-	cd vantage6-common && pip install -e .
-	cd vantage6-client && pip install -e .
-	cd vantage6-algorithm-tools && pip install -e .
-	cd vantage6 && pip install -e .[dev]
-	cd vantage6-node && pip install -e .[dev]
-	cd vantage6-backend-common && pip install -e .[dev]
-	cd vantage6-server && pip install -e .[dev]
-	cd vantage6-algorithm-store && pip install -e .[dev]
-
-base-image:
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/infrastructure-base:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/infrastructure-base.Dockerfile \
-		$(if ${_condition_push},--push .,.)
+	uv pip install -e vantage6-common
+	uv pip install -e vantage6-client
+	uv pip install -e vantage6-algorithm-tools
+	uv pip install -e vantage6[dev]
+	uv pip install -e vantage6-node[dev]
+	uv pip install -e vantage6-backend-common[dev]
+	uv pip install -e vantage6-hq[dev]
+	uv pip install -e vantage6-algorithm-store[dev]
+	uv pip install -e .[dev,docs]
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
@@ -136,19 +121,6 @@ support-image:
 	@echo "Building support images"
 	@echo "All support images are also tagged with `latest`"
 	make support-alpine-image
-	make support-vpn-client-image
-	make support-vpn-configurator-image
-	make support-ssh-tunnel-image
-	make support-squid-image
-
-support-squid-image:
-	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/squid:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/squid.Dockerfile \
-		$(if ${_condition_push},--push .,.)
 
 support-alpine-image:
 	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
@@ -159,45 +131,18 @@ support-alpine-image:
 		-f ./docker/alpine.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
-support-vpn-client-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-client:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/vpn-client.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
-support-vpn-configurator-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-configurator:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/vpn-configurator.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
-support-ssh-tunnel-image:
-	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
-	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest) \
-		--platform ${PLATFORMS} \
-		-f ./docker/ssh-tunnel.Dockerfile \
-		$(if ${_condition_push},--push .,.)
-
 image:
 	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/server:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure/hq:${TAG}"
 	docker buildx build \
 		--tag ${REGISTRY}/infrastructure/node:${TAG} \
-		--tag ${REGISTRY}/infrastructure/server:${TAG} \
+		--tag ${REGISTRY}/infrastructure/hq:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/node:latest) \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/server:latest) \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/hq:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
-		-f ./docker/node-and-server.Dockerfile \
+		-f ./docker/node-and-hq.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
@@ -217,7 +162,6 @@ ui-image:
 		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ui:latest) \
 		--build-arg TAG=${TAG} \
-		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -251,9 +195,9 @@ rebuild:
 	@echo "------------------------------------"
 	cd vantage6-backend-common && make rebuild
 	@echo "------------------------------------"
-	@echo "         VANTAGE6 SERVER            "
+	@echo "         VANTAGE6 HQ                "
 	@echo "------------------------------------"
-	cd vantage6-server && make rebuild
+	cd vantage6-hq && make rebuild
 	@echo "------------------------------------"
 	@echo "         VANTAGE6 ALGORITHM STORE   "
 	@echo "------------------------------------"
@@ -266,15 +210,29 @@ publish:
 	cd vantage6 && make publish
 	cd vantage6-node && make publish
 	cd vantage6-backend-common && make publish
-	cd vantage6-server && make publish
+	cd vantage6-hq && make publish
 	cd vantage6-algorithm-store && make publish
 
+# Default test subpackages if none specified
+TEST_SUBPACKAGES ?= common,cli,algorithm-store,hq,algorithm-tools
+
 test:
-	coverage run --source=vantage6 --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py
+	export TEST_ARGS=$(echo $(TEST_SUBPACKAGES) | tr ',' ' ' | sed 's/^/--/;s/ / --/g')
+	coverage run --source=./vantage6-$(subst ,/,$(TEST_SUBPACKAGES)) --omit="utest.py","*.html","*.htm","*.txt","*.yml","*.yaml" utest.py $(TEST_ARGS)
+
+install-docs:
+	uv sync --extra docs
 
 # the READTHEDOCS envvar is set for this target to circumvent a monkey patch
 # that would get stuck indefinitely when running the sphinx-autobuild package.
 # Note that the value of the envvar does not matter, just that it is set.
+# Also, note that --ignore option is used to ignore directories that are not
+# relevant for the documentation build.
 devdocs: export READTHEDOCS = Yes
 devdocs:
-	sphinx-autobuild docs docs/_build/html --watch . ${_autosummary_flags}
+	sphinx-autobuild docs docs/_build/html \
+		--ignore dev/ \
+		--ignore .github/ \
+		--ignore .devspace/ \
+		--ignore .venv/ \
+		${_autosummary_flags}

@@ -1,0 +1,22 @@
+apiVersion: v2
+name: hub
+description: A Helm chart to deploy the complete vantage6 hub (HQ, auth, algorithm store)
+type: application
+version: "5.0.0-rc1"
+appVersion: "5.0.0-rc1"
+dependencies:
+  - name: hq
+    version: "5.0.0-rc1"
+    repository: file://../hq
+    condition: hq.enabled
+  - name: auth
+    version: "5.0.0-rc1"
+    repository: file://../auth
+    condition: auth.enabled
+  - name: store
+    version: "5.0.0-rc1"
+    repository: file://../store
+    condition: store.enabled
+  - name: common
+    version: "5.0.0-rc1"
+    repository: file://../common

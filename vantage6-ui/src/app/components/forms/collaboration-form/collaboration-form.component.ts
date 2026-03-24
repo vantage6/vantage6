@@ -18,22 +18,23 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-collaboration-form',
-    templateUrl: './collaboration-form.component.html',
-    imports: [
-        NgIf,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatCheckbox,
-        MatSelect,
-        NgFor,
-        MatOption,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-collaboration-form',
+  templateUrl: './collaboration-form.component.html',
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatCheckbox,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ],
+  styleUrls: ['./collaboration-form.component.scss']
 })
 export class CollaborationFormComponent implements OnInit {
   @Input() collaboration?: Collaboration;
@@ -44,6 +45,7 @@ export class CollaborationFormComponent implements OnInit {
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     encrypted: false,
+    session_restrict_to_same_image: false,
     organizations: [[] as BaseOrganization[], [Validators.required]],
     registerNodes: true
   });
@@ -67,6 +69,7 @@ export class CollaborationFormComponent implements OnInit {
     if (this.collaboration) {
       this.form.controls.name.setValue(this.collaboration.name);
       this.form.controls.encrypted.setValue(this.collaboration.encrypted);
+      this.form.controls.session_restrict_to_same_image.setValue(this.collaboration.session_restrict_to_same_image);
       this.form.controls.organizations.setValue(this.collaboration.organizations);
     }
     await this.initData();
