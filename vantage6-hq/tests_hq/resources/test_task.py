@@ -1,8 +1,11 @@
+import json
 import logging
 from http import HTTPStatus
+from unittest.mock import MagicMock
 
-from vantage6.common import logger_name
+from vantage6.common import bytes_to_base64s, logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
+from vantage6.common.serialization import serialize
 
 from vantage6.hq.model import (
     Collaboration,
@@ -15,6 +18,7 @@ from vantage6.hq.model import (
     Task,
 )
 from vantage6.hq.model.rule import Operation, Scope
+from vantage6.hq.resource.event import kill_task
 
 from .test_resource_base import TestResourceBase
 
@@ -637,3 +641,175 @@ class TestResources(TestResourceBase):
         org.delete()
         org2.delete()
         col.delete()
+
+    def test_create_task_with_database_arguments(self):
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+
+        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        headers = self.create_user_and_login(org, rules=[rule])
+        input_ = bytes_to_base64s(serialize({"method": "dummy"}))
+
+        task_json = {
+            "collaboration_id": col.id,
+            "organizations": [{"id": org.id, "input": input_}],
+            "image": "some-image.invalid/invalid:invalid",
+            "databases": [
+                {
+                    "label": "default",
+                    "query": "SELECT * FROM records",
+                    "arguments": {
+                        "bind": "input_dataset",
+                        "group": "example",
+                    },
+                }
+            ],
+        }
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        first_task = Task.get(results.json["id"])
+        self.assertEqual(first_task.databases[0].database, "default")
+        self.assertEqual(
+            json.loads(first_task.databases[0].parameters),
+            {
+                "query": "SELECT * FROM records",
+                "arguments": {
+                    "bind": "input_dataset",
+                    "group": "example",
+                },
+            },
+        )
+
+        # arguments must be a dict
+        task_json["databases"] = [{"label": "default", "arguments": "dataset"}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
+
+        # empty arguments are allowed
+        task_json["databases"] = [{"label": "default", "arguments": {}}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        empty_arguments_task = Task.get(results.json["id"])
+        self.assertEqual(
+            json.loads(empty_arguments_task.databases[0].parameters),
+            {"arguments": {}},
+        )
+
+        # omitting arguments is also allowed
+        task_json["databases"] = [{"label": "default"}]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        no_arguments_task = Task.get(results.json["id"])
+        self.assertEqual(
+            json.loads(no_arguments_task.databases[0].parameters),
+            {},
+        )
+
+        # multiple databases can each carry their own arguments
+        task_json["databases"] = [
+            {
+                "label": "treatment",
+                "arguments": {"bind": "treatment_data"},
+            },
+            {
+                "label": "diagnosis",
+                "arguments": {"bind": "diagnosis_data"},
+            },
+        ]
+        results = self.app.post("/api/task", headers=headers, json=task_json)
+        self.assertEqual(results.status_code, HTTPStatus.CREATED)
+
+        second_task = Task.get(results.json["id"])
+        databases_by_label = {db.database: db for db in second_task.databases}
+        self.assertIn("treatment", databases_by_label)
+        self.assertIn("diagnosis", databases_by_label)
+        self.assertEqual(
+            json.loads(databases_by_label["treatment"].parameters),
+            {"arguments": {"bind": "treatment_data"}},
+        )
+        self.assertEqual(
+            json.loads(databases_by_label["diagnosis"].parameters),
+            {"arguments": {"bind": "diagnosis_data"}},
+        )
+
+        first_task.delete()
+        empty_arguments_task.delete()
+        no_arguments_task.delete()
+        second_task.delete()
+        node.delete()
+        org.delete()
+        col.delete()
+
+    def test_kill_task_includes_all_unfinished_child_runs(self):
+        # Create a parent task with one run and a child task with three child
+        # runs. One of the child runs is already completed and should not be
+        # included in the kill payload.
+        org_parent = Organization(name="kill-org-parent")
+        org_child_1 = Organization(name="kill-org-child-1")
+        org_child_2 = Organization(name="kill-org-child-2")
+        collaboration = Collaboration(
+            name="kill-collaboration",
+            organizations=[org_parent, org_child_1, org_child_2],
+        )
+        collaboration.save()
+
+        parent_task = Task(
+            name="parent-task",
+            image="parent-image",
+            collaboration=collaboration,
+            job_id=90001,
+        )
+        parent_task.save()
+        parent_run = Run(
+            organization=org_parent, task=parent_task, status=TaskStatus.ACTIVE
+        )
+        parent_run.save()
+
+        child_task = Task(
+            name="child-task",
+            image="child-image",
+            collaboration=collaboration,
+            parent=parent_task,
+            job_id=90001,
+        )
+        child_task.save()
+        child_run_1 = Run(
+            organization=org_child_1, task=child_task, status=TaskStatus.ACTIVE
+        )
+        child_run_2 = Run(
+            organization=org_child_2, task=child_task, status=TaskStatus.PENDING
+        )
+        child_run_done = Run(
+            organization=org_parent, task=child_task, status=TaskStatus.COMPLETED
+        )
+        child_run_1.save()
+        child_run_2.save()
+        child_run_done.save()
+
+        socket = MagicMock()
+
+        kill_task(parent_task, socket)
+
+        # The emitted kill payload should contain every unfinished parent/child
+        # run
+        emit_args = socket.emit.call_args.args
+        kill_list = emit_args[1]["kill_list"]
+        self.assertEqual(len(kill_list), 3)
+        self.assertCountEqual(
+            [entry["run_id"] for entry in kill_list],
+            [parent_run.id, child_run_1.id, child_run_2.id],
+        )
+
+        self.assertEqual(parent_task.status, TaskStatus.KILLED.value)
+        self.assertEqual(child_task.status, TaskStatus.KILLED.value)
+        self.assertEqual(parent_run.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_1.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_2.status, TaskStatus.KILLED)
+        self.assertEqual(child_run_done.status, TaskStatus.COMPLETED)

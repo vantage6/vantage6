@@ -71,6 +71,14 @@ node:
       type: csv
       volumePath: /my/local/path/to/data
       originalName: olympic_athletes_2016.csv
+      # OPTIONAL: controls how file/folder databases are exposed to algorithm
+      # containers.
+      # - copy (default): copy file data into the node data volume
+      # - ro: bind-mount host path read-only into algorithm containers
+      # NOTE: For now, `ro` has tested support for Linux hosts only. On
+      # Windows/macOS hosts, use `copy` (default).
+      # Use `ro` only for file/folder-backed data sources.
+      mount_mode: copy
     # Service-based databases - these are databases that are running on the node
     # machine. They will be accessed using the URI.
     serviceBased:
@@ -258,6 +266,16 @@ node:
     # Set to `true` to set the Flask app used for the LOCAL proxy service
     # into debug mode
     proxy_server: false
+
+  # EXPERIMENTAL: current scope is intentionally minimal.
+  # Whether or not to write a run context file for each algorithm run and
+  # expose its path as RUN_CONTEXT_FILE inside the algorithm container.
+  # At the moment, run context does not model several node runtime features
+  # (e.g. VPN, SSH tunnels, whitelist/Squid proxy policy, etc).
+  # Also, run context currently supports only file-based databases. If a task
+  # requests a non-file database while this feature is enabled, task startup fails.
+  # Default is false.
+  run_context_file: false
 
   # Development settings - these should ONLY be used when running `v6 dev` environment,
   # which will use these settings automatically.

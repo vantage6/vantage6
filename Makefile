@@ -119,7 +119,7 @@ algorithm-omop-base-image:
 
 support-image:
 	@echo "Building support images"
-	@echo "All support images are also tagged with `latest`"
+	@echo "All support images are also tagged with 'latest'"
 	make support-alpine-image
 
 support-alpine-image:

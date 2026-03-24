@@ -313,6 +313,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
             "organization_id": run.organization_id,
         }
         for run in all_runs
+        if not RunStatus.has_finished(run.status)
     ]
 
     # emit socket event to the node to execute the container kills

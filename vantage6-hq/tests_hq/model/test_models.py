@@ -14,6 +14,7 @@ from vantage6.hq.model import (
     Rule,
     Run,
     Task,
+    TaskDatabase,
     User,
 )
 from vantage6.hq.model.rule import Operation, Scope
@@ -293,6 +294,14 @@ class TestTaskModel(TestModelBase):
             self.assertIsInstance(task.collaboration, Collaboration)
             for run in task.runs:
                 self.assertIsInstance(run, Run)
+
+    def test_task_databases_relationship_has_explicit_ordering(self):
+        # Read configured relationship ORDER BY clauses.
+        order_by = tuple(Task.databases.property.order_by)
+        # Keep exactly one explicit sort key.
+        self.assertEqual(len(order_by), 1)
+        # Ensure ordering is by TaskDatabase.id.
+        self.assertEqual(str(order_by[0]), str(TaskDatabase.id.expression))
 
 
 class TestRuleModel(TestModelBase):

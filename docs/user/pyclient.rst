@@ -355,6 +355,10 @@ something like:
          type: csv
          volumePath: /my/local/path/to/data
          originalName: olympic_athletes_2016.csv
+         # OPTIONAL: `copy` (default), or `ro`.
+         # For now, `ro` has tested support for Linux hosts only. On
+         # Windows/macOS hosts, use `copy` (default).
+         mount_mode: copy
 
 The third requirement is met when all nodes have the same labels in their
 configuration. As an end-user running the

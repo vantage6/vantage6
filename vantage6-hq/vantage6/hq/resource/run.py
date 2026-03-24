@@ -1,3 +1,4 @@
+import datetime
 import logging
 from http import HTTPStatus
 
@@ -712,14 +713,13 @@ class Run(SingleRunBase):
         run.status = data.get("status", run.status)
         run.save()
 
-        # In case there are dependent tasks and the current task has failed,
-        # we should mark the dependent tasks as failed as well.
         if RunStatus.has_failed(run.status):
+            # In case there are dependent tasks and the current task has failed,
+            # we should mark the dependent tasks as failed as well.
             dependent_tasks = run.task.required_by
             # add dependent tasks recursively
             if dependent_tasks:
                 dependent_tasks = self._add_dependent_tasks(dependent_tasks)
-
             for dependent_task in dependent_tasks:
                 log.debug(f"Marking dependent task {dependent_task.id} runs as failed.")
                 # Also mark all dependent runs as failed
@@ -727,6 +727,29 @@ class Run(SingleRunBase):
                     dependent_run.status = RunStatus.DEPENDED_ON_FAILED_TASK.value
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
+
+            # Fail-fast on sibling runs that have not started yet. This prevents
+            # delayed pickup/replay after one run already failed.
+            stmt = (
+                select(db_Run)
+                .where(db_Run.task_id == run.task_id)
+                .where(db_Run.id != run.id)
+                .where(db_Run.started_at.is_(None))
+                .where(db_Run.finished_at.is_(None))
+            )
+            siblings = g.session.scalars(stmt).all()
+            if siblings:
+                now = datetime.datetime.now(datetime.timezone.utc)
+                reason = (
+                    f"Marked as failed because sibling run id={run.id} "
+                    f"failed with status '{run.status}'."
+                )
+                for sibling in siblings:
+                    sibling.status = RunStatus.FAILED.value
+                    sibling.finished_at = now
+                    if not sibling.log:
+                        sibling.log = reason
+                    sibling.save()
 
         # notify collaboration nodes/users that the task has an update
         # TODO refactor it shouldn't be necessary to send two events.
