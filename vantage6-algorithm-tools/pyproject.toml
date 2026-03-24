@@ -23,7 +23,7 @@ dependencies = [
     # running SQL queries on a postgres database.
     "psycopg2-binary==2.9.10",
     "pyarrow>=16.1.0",
-    "pyjwt==2.9.0",
+    "pyJWT==2.12.1",
     "pyfiglet==1.0.4",
     "SPARQLWrapper>=2.0.0",
     "sqlalchemy>=1.4.46",

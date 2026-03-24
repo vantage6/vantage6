@@ -222,6 +222,12 @@ class HQApp(Vantage6App):
             "jwt_secret_key", str(uuid.uuid4())
         )
 
+        # PyJWT 2.10+ enforces that `sub` is a string. Vantage6 historically
+        # used non-string subjects (e.g. ints and container dicts), which
+        # breaks protected endpoints after the PyJWT bump.
+        # Disabling this validation keeps compatibility
+        self.app.config["JWT_VERIFY_SUB"] = False
+
     def configure_api(self) -> None:
         """Define global API output and its structure."""
         self._configure_api_base(HATEOASModelSchema, db.Base)

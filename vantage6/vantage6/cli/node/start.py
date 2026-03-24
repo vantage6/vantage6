@@ -22,6 +22,9 @@ from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
+FILE_BASED_DATABASE_TYPES = {"folder", "csv", "parquet", "excel"}
+SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
+
 
 @click.command()
 @click.option("--context", default=None, help="Kubernetes context to use")

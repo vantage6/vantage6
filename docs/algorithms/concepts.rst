@@ -53,7 +53,7 @@ the model converges.
 In vantage6, it is also possible to run only the partial parts of the analysis on the
 nodes and combine them on your own machine, but it is usually preferable to run
 the central part within vantage6, because then you don't have to keep your machine
-running during the analysis, you do not need to run the central part yourself, and the 
+running during the analysis, you do not need to run the central part yourself, and the
 results are stored on the HQ, so they may also be accessed by other users.
 
 .. note::
@@ -93,6 +93,48 @@ The file mounts are mapped to environment variables that are described in the
 
 .. TODO v5+ the above statement is not correct anymore, that section contains info
 .. on the env vars that node config file can set.
+
+.. _algo-env-vars:
+
+Environment variables
+---------------------
+
+The algorithms have access to several environment variables. You can also
+specify additional environment variables via the ``algorithm_env`` option
+in the node configuration files (see the
+:ref:`example node configuration file <node-configure-structure>`).
+
+Environment variables provided by the vantage6 infrastructure are used
+to locate certain files or to add local configuration settings into the
+container. These are usually used in the Python wrapper and you don't normally
+need them in your functions. However, you can access them in your functions
+as follows:
+
+.. code:: python
+
+   def my_function():
+       # environment variable that specifies the input file
+       input_file = os.environ["INPUT_FILE"]
+       # environment variable that specifies the database URI for the database with
+       # the 'default' label
+       default_database_uri = os.environ["DEFAULT_DATABASE_URI"]
+
+       # do something with the input file and database URI
+       pass
+
+The environment variables that you specify in the node configuration file
+can be used in the exact same manner. You can view all environment variables
+that are available to your algorithm by ``print(os.environ)``.
+
+If the **experimental** node configuration option ``run_context_file`` is
+enabled, the algorithm container also receives ``RUN_CONTEXT_FILE``. This points
+to a JSON file with run context details such as input/output URIs, entrypoint
+name, arguments and selected platform-specific metadata.
+
+The exact contents and field names of this file may change while the feature is
+under development. Treat the current file/spec as in-developement, not yet as a
+stable public schema. For a more detailed explanation of what the run context is
+trying to provide, see :ref:`algo-run-context`.
 
 .. _wrapper-concepts:
 

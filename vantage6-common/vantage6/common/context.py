@@ -19,6 +19,7 @@ from vantage6.common.kubernetes.utils import (
     running_in_wsl,
     running_on_windows,
 )
+from vantage6.common.log import OwnershipPreservingRotatingFileHandler
 
 
 class AppContext(metaclass=Singleton):
@@ -427,14 +428,15 @@ class AppContext(metaclass=Singleton):
         """
         return self.log_file_name(type_=self.instance_type.value)
 
-    def log_file_name(self, type_: str) -> Path:
+    def log_file_name(self, type_: str | enum.Enum) -> Path:
         """
         Return a path to a log file for a given log file type
 
         Parameters
         ----------
-        type_: str
-            The type of log file to return.
+        type_: str | enum.Enum
+            The type of log file to return. Enum values are normalized to
+            their underlying value before composing the file name.
 
         Returns
         -------
@@ -446,8 +448,15 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert self.config_manager, "Log file unkown. Initialize configuration manager"
-
+        assert self.config_manager, (
+            "Log file unkown as configuration manager not initialized"
+        )
+        # See: https://github.com/vantage6/vantage6/issues/2512
+        # (potential) Python 3.11+ host-side will produce
+        # InstanceType.NODE_user.log instead node_user.log, so we make sure
+        # it's always "node". Same goes for other InstanceTypes.
+        if isinstance(type_, enum.Enum):
+            type_ = type_.value
         file_ = f"{type_}_{self.scope}.log"
         return self.log_dir / file_
 
@@ -644,14 +653,15 @@ class AppContext(metaclass=Singleton):
 
         # Create RotatingFileHandler
         try:
-            rfh = logging.handlers.RotatingFileHandler(
+            rfh = OwnershipPreservingRotatingFileHandler(
                 self.log_file,
                 maxBytes=1024 * log_config["max_size"],
                 backupCount=log_config["backup_count"],
             )
         except PermissionError:
             error(
-                f"Can't write to log dir: {Fore.RED}{self.log_file}{Style.RESET_ALL}!"
+                f"Can't write to log dir (permissions error): "
+                f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
             exit(1)
 
