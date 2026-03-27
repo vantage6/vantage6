@@ -7,6 +7,10 @@ imports:
 
 # TODO using tags isnt safe with the devspace build stuff
 vars:
+  # On WSL + Docker Desktop, hostPath mounts need to use the /mnt/wsl path.
+  # On other systems, we keep using the regular workspace path.
+  DEV_MOUNT_BASE_PATH:
+    command: if [ -n "${WSL_DISTRO_NAME}" ] || [ -n "${WSL_INTEROP}" ]; then echo "/run/desktop/mnt/host/wsl/vantage6/dev"; else echo "${PWD}/dev"; fi
   CURRENT_NAMESPACE:
     command: kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null | grep -v "^null$" | grep -v "^$" || echo "default"
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
@@ -17,13 +21,13 @@ vars:
   NODE_PROXY_STARTING_PORT_NUMBER: 7654
   NODE_TEST_DATABASE_MOUNT_PATH:
     question: "Where is the parent folder where the node test data is located on the host machine?"
-    default: ${PWD}/dev
+    default: ${DEV_MOUNT_BASE_PATH}
   NODE_TEST_DATABASE_NAME:
     question: "What is the name of your node test data file?"
     default: olympic_athletes_2016.csv
   TASK_DIRECTORY:
     question: "Where is your task directory located on the host machine?"
-    default: ${PWD}/dev/.tasks
+    default: ${DEV_MOUNT_BASE_PATH}/.tasks
   HOST_URI:
     question: "What is the ip address of your host machine?"
     default: host.docker.internal
@@ -37,16 +41,16 @@ vars:
   TASK_NAMESPACE: vantage6-tasks
   HQ_DATABASE_MOUNT_PATH:
     question: "Where is your HQ database located on the host machine?"
-    default: ${PWD}/dev/.db/db_pv_hq
+    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_hq
   STORE_DATABASE_MOUNT_PATH:
     question: "Where is your store database located on the host machine?"
-    default: ${PWD}/dev/.db/db_pv_store
+    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_store
   AUTH_DATABASE_MOUNT_PATH:
     question: "Where is your auth database located on the host machine?"
-    default: ${PWD}/dev/.db/db_pv_auth
+    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_auth
   LOG_MOUNT_PATH:
     question: "Where should your logs be saved on the host machine?"
-    default: ${PWD}/dev/.log
+    default: ${DEV_MOUNT_BASE_PATH}/.log
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running? You can find this by running 'kubectl get nodes' and looking at the name column."
     default: docker-desktop
