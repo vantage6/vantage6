@@ -344,12 +344,16 @@ class HQApp(Vantage6App):
 
         This method is used when HQ is started for the first time.
         """
+        root_username = os.environ.get(
+            RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value
+        )
+        if not root_username:
+            raise Exception("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
+
         # sanity check, this function should never be called in any other
         # context than the first run of HQ
         try:
-            root_username = db.User.get_by_username(
-                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
-            )
+            db.User.get_by_username(root_username)
             raise Exception("Attempted to create super user when it already existed!")
         except NoResultFound:
             pass

@@ -11,8 +11,11 @@ if [ -z "$VANTAGE6_HQ_CONFIG_LOCATION" ]; then
     VANTAGE6_HQ_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
+# Run from repo root so module imports don't shadow stdlib modules such as `resource`.
+cd /vantage6
+
 # initialize the database
-python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_HQ_CONFIG_LOCATION}"
+python -m vantage6.hq.init_db "${VANTAGE6_HQ_CONFIG_LOCATION}"
 
 # start HQ
 exec uwsgi \
@@ -24,7 +27,7 @@ exec uwsgi \
     --master \
     --callable app \
     --disable-logging \
-    --wsgi-file /vantage6/vantage6-hq/vantage6/hq/wsgi.py \
+    --module vantage6.hq.wsgi:app \
     --pyargv "${VANTAGE6_HQ_CONFIG_LOCATION}"
 
 echo "exit dev_hq.sh"
