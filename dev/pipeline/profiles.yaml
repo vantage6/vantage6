@@ -79,10 +79,10 @@ profiles:
     path: hooks/2/command
     value: |
       echo "Creating log folder"
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/hq
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
-      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/prometheus
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/hq --k8s-node-name ${K8S_NODE_NAME}
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store --k8s-node-name ${K8S_NODE_NAME}
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node --k8s-node-name ${K8S_NODE_NAME}
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/prometheus --k8s-node-name ${K8S_NODE_NAME}
   # Enable Prometheus in the HQ Helm values
   - op: replace
     path: deployments.vantage6-hq.helm.values.prometheus.enabled
