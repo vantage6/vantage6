@@ -21,6 +21,7 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.kubernetes.utils import running_in_wsl
 from vantage6.common.serialization import serialize
 
 from vantage6.client.filter import post_filtering
@@ -248,10 +249,7 @@ class UserClient(ClientBase):
         self.log.info("Opening browser for authentication...")
         try:
             # Check if we're in WSL - then use wslview to open the browser
-            if (
-                os.path.exists("/proc/version")
-                and "microsoft" in open("/proc/version").read().lower()
-            ):
+            if running_in_wsl():
                 try:
                     subprocess.run(["wslview", url_to_open], check=True)
                 except (subprocess.SubprocessError, FileNotFoundError):
