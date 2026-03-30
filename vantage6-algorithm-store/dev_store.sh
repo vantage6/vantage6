@@ -13,6 +13,11 @@ fi
 
 
 python /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/init_db.py "${VANTAGE6_STORE_CONFIG_LOCATION}"
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "ERROR: failed to initialize algorithm store database" >&2
+    exit "$status"
+fi
 
 exec uwsgi \
     --py-autoreload 1 \
