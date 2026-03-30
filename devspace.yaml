@@ -7,7 +7,7 @@ imports:
 
 # TODO using tags isnt safe with the devspace build stuff
 vars:
-  # On WSL + Docker Desktop, hostPath mounts need to use the /mnt/wsl path.
+  # On WSL + Docker Desktop, hostPath mounts need to use the /run/desktop/mnt/host/wsl/ path.
   # On other systems, we keep using the regular workspace path.
   DEV_MOUNT_BASE_PATH:
     command: if [ -n "${WSL_DISTRO_NAME}" ] || [ -n "${WSL_INTEROP}" ]; then echo "/run/desktop/mnt/host/wsl/vantage6/dev"; else echo "${PWD}/dev"; fi
