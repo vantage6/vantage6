@@ -188,6 +188,11 @@ hooks:
       echo "Creating tasks folder"
       python dev/create_mount_directory.py ${TASK_DIRECTORY}
     events: ["before:deploy:vantage6-node"]
+  - name: "ensure-tasks-namespace"
+    command: |
+      echo "Ensuring tasks namespace '${TASK_NAMESPACE}' exists"
+      kubectl get namespace "${TASK_NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${TASK_NAMESPACE}"
+    events: ["before:deploy:vantage6-node"]
   - name: "create-hq-database-folder"
     command: |
       echo "Creating HQ database folder"
