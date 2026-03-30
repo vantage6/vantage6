@@ -1,16 +1,21 @@
+import abc
 import itertools
+import json as json_lib
 import logging
 import time
-import requests
-import json as json_lib
+from collections.abc import Callable
 from pathlib import Path
 
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING
-from vantage6.common.client.utils import print_qr_code
-from vantage6.common.task_status import has_task_finished
+import requests
+
 from vantage6.common.client.blob_storage import BlobStorageMixin
+from vantage6.common.encryption import DummyCryptor, RSACryptor
+from vantage6.common.enum import TaskStatus
+from vantage6.common.globals import (
+    INTERVAL_MULTIPLIER,
+    MAX_INTERVAL,
+    STRING_ENCODING,
+)
 
 module_name = __name__.split(".")[1]
 
@@ -66,37 +71,33 @@ def _log_progress(
 
 
 class ClientBase(BlobStorageMixin):
-    """Common interface to the central server.
+    """Base class for all client implementations.
 
     Contains the basis for all other clients, e.g. UserClient, NodeClient and
     AlgorithmClient. This includes a basic interface to authenticate, send
     generic requests, create tasks and retrieve results.
     """
 
-    def __init__(self, host: str, port: int, path: str = "/api") -> None:
+    def __init__(self, hq_url: str, auth_url: str | None = None) -> None:
         """Basic setup for the client
 
         Parameters
         ----------
-        host : str
-            Adress (including protocol, e.g. `https://`) of the vantage6 server
-        port : int
-            port numer to which the server listens
-        path : str, optional
-            path of the api, by default '/api'
+        hq_url : str
+            URL of the vantage6 HQ you want to connect to
+        auth_url : str
+            URL of the vantage6 authentication service you want to authenticate with
         """
 
         self.log = logging.getLogger(module_name)
 
-        # server settings
-        self.__host = host
-        self.__port = port
-        self.__api_path = path
+        # HQ settings
+        self.__hq_url = hq_url
+        self.__auth_url = auth_url
 
         # tokens
         self._access_token = None
-        self.__refresh_token = None
-        self.__refresh_url = None
+        self._refresh_token = None
 
         self.cryptor = None
         self.whoami = None
@@ -142,55 +143,23 @@ class ClientBase(BlobStorageMixin):
         return self._access_token
 
     @property
-    def host(self) -> str:
+    def hq_url(self) -> str:
         """
-        Host including protocol (HTTP/HTTPS)
+        URL of the vantage6 HQ
 
         Returns
         -------
         str
-            Host address of the vantage6 server
+            Host address of the vantage6 HQ
         """
-        return self.__host
+        return self.__hq_url
 
     @property
-    def port(self) -> int:
+    def auth_url(self) -> str:
         """
-        Port on which vantage6 server listens
-
-        Returns
-        -------
-        int
-            Port number
+        URL of the vantage6 authentication service
         """
-        return self.__port
-
-    @property
-    def path(self) -> str:
-        """
-        Path/endpoint at the server where the api resides
-
-        Returns
-        -------
-        str
-            Path to the api
-        """
-        return self.__api_path
-
-    @property
-    def base_path(self) -> str:
-        """
-        Full path to the server URL. Combination of host, port and api-path
-
-        Returns
-        -------
-        str
-            Server URL
-        """
-        if self.__port:
-            return f"{self.host}:{self.port}{self.__api_path}"
-
-        return f"{self.host}{self.__api_path}"
+        return self.__auth_url
 
     def generate_path_to(self, endpoint: str, is_for_algorithm_store: bool) -> str:
         """Generate URL to endpoint using host, port and endpoint
@@ -198,7 +167,7 @@ class ClientBase(BlobStorageMixin):
         Parameters
         ----------
         endpoint : str
-            endpoint to which a fullpath needs to be generated
+            Endpoint to which a fullpath needs to be generated
         is_for_algorithm_store : bool
             Whether the request is for the algorithm store or not
 
@@ -208,7 +177,7 @@ class ClientBase(BlobStorageMixin):
             URL to the endpoint
         """
         if not is_for_algorithm_store:
-            base_path = self.base_path
+            base_path = self.hq_url
         else:
             try:
                 base_path = self.store.url
@@ -235,13 +204,14 @@ class ClientBase(BlobStorageMixin):
         retry: bool = True,
         attempts_on_timeout: int = None,
         is_for_algorithm_store: bool = False,
+        silent_on_connection_error: bool = False,
     ) -> dict:
-        """Create http(s) request to the vantage6 server
+        """Create http(s) request to vantage6 HQ or algorithm store
 
         Parameters
         ----------
         endpoint : str
-            Endpoint of the server
+            API endpoint to call
         json : dict, optional
             payload, by default None
         method : str, optional
@@ -259,11 +229,13 @@ class ClientBase(BlobStorageMixin):
             which leads to unlimited amount of attempts.
         is_for_algorithm_store: bool, optional
             Whether the request is for the algorithm store. Default False.
+        silent_on_connection_error: bool, optional
+            Whether to suppress errors on generic connection errors. Default is False.
 
         Returns
         -------
         dict
-            Response of the server
+            Dictionary containing response from HQ or algorithm store
         """
         store_valid = self.__check_algorithm_store_valid(is_for_algorithm_store)
         if not store_valid:
@@ -278,7 +250,7 @@ class ClientBase(BlobStorageMixin):
             "delete": requests.delete,
         }.get(method.lower(), requests.get)
 
-        # send request to server
+        # send request
         url = self.generate_path_to(endpoint, is_for_algorithm_store)
         self.log.debug(f"Making request: {method.upper()} | {url} | {params}")
 
@@ -299,13 +271,14 @@ class ClientBase(BlobStorageMixin):
                     and timeout_attempts > attempts_on_timeout
                 ):
                     return {"msg": "Connection error"}
-                self.log.error("Connection error... Retrying")
-                self.log.info(exc)
+                if not silent_on_connection_error:
+                    self.log.error("Connection error... Retrying")
+                    self.log.info(exc)
                 time.sleep(1)
 
         # TODO: should check for a non 2xx response
         if response.status_code > 210:
-            self.log.error(f"Server responded with error code: {response.status_code}")
+            self.log.error(f"Received response with error code: {response.status_code}")
             try:
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
@@ -316,12 +289,15 @@ class ClientBase(BlobStorageMixin):
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
             except json_lib.JSONDecodeError:
-                self.log.error("Did not find a message from the server")
+                hq_or_algo_store = (
+                    "HQ" if not is_for_algorithm_store else "algorithm store"
+                )
+                self.log.error(f"Did not find a message from {hq_or_algo_store}")
                 self.log.error(response.content)
 
             if retry:
                 if first_try:
-                    self.refresh_token()
+                    self.obtain_new_token()
                     return self.request(
                         endpoint,
                         json,
@@ -345,9 +321,9 @@ class ClientBase(BlobStorageMixin):
         collaborations to ensure that the client can read and write encrypted data.
 
         A Cryptor object that handles encryption and decryption will be attached to the
-        client, after verifying that the public key at the server matches the provided
-        private key. In case the server's public key does not match with the local
-        public key, the local one is uploaded to the server.
+        client, after verifying that the public key at HQ matches the provided
+        private key. In case the HQ's public key does not match with the local
+        public key, the local one is uploaded to HQ.
 
         Parameters
         ----------
@@ -360,9 +336,9 @@ class ClientBase(BlobStorageMixin):
             If the client is not authenticated
         """
         assert self._access_token, "Encryption can only be setup after authentication"
-        assert (
-            self.whoami.organization_id
-        ), "Organization unknown... Did you authenticate?"
+        assert self.whoami.organization_id, (
+            "Organization unknown... Did you authenticate?"
+        )
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
@@ -373,22 +349,22 @@ class ClientBase(BlobStorageMixin):
 
         cryptor = RSACryptor(private_key_file)
 
-        # check if the public-key is the same on the server. If this is
+        # check if the public-key is the same on HQ. If this is
         # not the case, this node will not be able to read any messages
         # that are send to him! If this is the case, the new public_key
-        # will be uploaded to the central server
+        # will be uploaded to HQ.
         organization = self.request(f"organization/{self.whoami.organization_id}")
         pub_key = organization.get("public_key")
         upload_pub_key = False
 
         if pub_key:
             if cryptor.verify_public_key(pub_key):
-                self.log.info("Public key matches the server key! Good to go!")
+                self.log.info("Public key matches HQ's public key! Good to go!")
 
             else:
                 self.log.critical(
-                    "Local public key does not match server public key. "
-                    "You will not able to read any messages that are intended "
+                    "Local public key does not match HQ's public key. "
+                    "You will not beable to read any messages that are intended "
                     "for you!"
                 )
                 upload_pub_key = True
@@ -402,118 +378,22 @@ class ClientBase(BlobStorageMixin):
                 method="patch",
                 json={"public_key": cryptor.public_key_str},
             )
-            self.log.info("The public key on the server is updated!")
+            self.log.info("The public key on HQ is updated!")
 
         self.cryptor = cryptor
 
-    def authenticate(self, credentials: dict, path: str = "token/user") -> bool:
-        """Authenticate to the vantage6-server
+    @abc.abstractmethod
+    def authenticate(self) -> None:
+        """Authenticate to vantage6 via keycloak."""
+        return
 
-        It allows users, nodes and containers to sign in. Credentials can
-        either be a username/password combination or a JWT authorization
-        token.
+    @abc.abstractmethod
+    def obtain_new_token(self) -> None:
+        """Obtain a new token.
 
-        Parameters
-        ----------
-        credentials : dict
-            Credentials used to authenticate
-        path : str, optional
-            Endpoint used for authentication. This differs for users, nodes and
-            containers, by default "token/user"
-
-        Raises
-        ------
-        Exception
-            Failed to authenticate
-
-        Returns
-        -------
-        Bool
-            Whether or not user is authenticated. Alternative is that user is
-            redirected to set up two-factor authentication
+        Depending on the type of entity authenticating, this may use a refresh token
         """
-        if "username" in credentials:
-            self.log.debug(f"Authenticating user {credentials['username']}...")
-        elif "api_key" in credentials:
-            self.log.debug("Authenticating node...")
-
-        # authenticate to the central server
-        url = self.generate_path_to(path, is_for_algorithm_store=False)
-        response = requests.post(url, json=credentials)
-        if response.status_code == 404:
-            self.log.error(
-                "Server not found at %s. Please check the address and whether the "
-                "server is running!",
-                url,
-            )
-            self.log.info(
-                "If the server is running and reachable, %s/health should give a "
-                "response.",
-                self.base_path,
-            )
-            return False
-
-        # handle negative responses
-        data = response.json()
-        if response.status_code > 200:
-            self.log.critical(f"Failed to authenticate: {data.get('msg')}")
-            if response.status_code == 401:
-                raise AuthenticationException("Failed to authenticate")
-            else:
-                raise Exception("Failed to authenticate")
-
-        if "qr_uri" in data:
-            print_qr_code(data)
-            return False
-        else:
-            # Check if there is an access token. If not, there is a problem
-            # with authenticating
-            if "access_token" not in data:
-                if "msg" in data:
-                    raise Exception(data["msg"])
-                else:
-                    raise Exception("No access token in authentication response!")
-
-            # store tokens in object
-            self.log.info("Successfully authenticated")
-            self._access_token = data.get("access_token")
-            self.__refresh_token = data.get("refresh_token")
-            self.__refresh_url = data.get("refresh_url")
-            return True
-
-    def refresh_token(self) -> None:
-        """Refresh an expired token using the refresh token
-
-        Raises
-        ------
-        Exception
-            Authentication Error!
-        AssertionError
-            Refresh URL not found
-        """
-        self.log.info("Refreshing token")
-        assert self.__refresh_url, "Refresh URL not found, did you authenticate?"
-
-        # if no port is specified explicit, then it should be omit the
-        # colon : in the path. Similar (but different) to the property
-        # base_path
-        if self.__port:
-            url = f"{self.__host}:{self.__port}{self.__refresh_url}"
-        else:
-            url = f"{self.__host}{self.__refresh_url}"
-
-        # send request to server
-        response = requests.post(
-            url, headers={"Authorization": "Bearer " + self.__refresh_token}
-        )
-
-        # server says no!
-        if response.status_code != 200:
-            self.log.critical("Could not refresh token")
-            raise Exception("Authentication Error!")
-
-        self._access_token = response.json()["access_token"]
-        self.__refresh_token = response.json()["refresh_token"]
+        return
 
     def _fetch_and_decrypt_run_data(
         self,
@@ -553,7 +433,7 @@ class ClientBase(BlobStorageMixin):
                 uuid = uuid.decode(STRING_ENCODING)
             uuid = uuid.strip("'\"")
             try:
-                run_data = self._download_run_data_from_server(uuid)
+                run_data = self._download_run_data_from_hq(uuid)
             except ValueError as e:
                 self.log.error(f"Not a valid UUID: {uuid}")
                 raise ValueError(f"Not a valid UUID: {uuid}", e)
@@ -599,7 +479,7 @@ class ClientBase(BlobStorageMixin):
         Wrapper function to decrypt and deserialize the a field of one or more
         resources
 
-        This can be used to decrypt and deserialize input and results of
+        This can be used to decrypt and deserialize data of algorithm runs.
         algorithm runs.
 
         Parameters
@@ -614,14 +494,14 @@ class ClientBase(BlobStorageMixin):
         Returns
         -------
         dict
-            Data on the algorithm run(s) with decrypted input
+            Decrypted data on the algorithm run(s)
         """
 
         def _decrypt_and_decode(value: str, field: str, blob_storage_used: bool) -> str:
             decrypted = self._fetch_and_decrypt_run_data(value, blob_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
-                    "The field %s is not properly encoded. Expected bytes, got" " %s.",
+                    "The field %s is not properly encoded. Expected bytes, got %s.",
                     field,
                     type(decrypted),
                 )
@@ -683,7 +563,7 @@ class ClientBase(BlobStorageMixin):
 
     def wait_for_task_completion(
         self,
-        request_func,
+        request_func: Callable,
         task_id: int,
         interval: float = 1,
         log_animation: bool = True,
@@ -694,7 +574,7 @@ class ClientBase(BlobStorageMixin):
         Parameters
         ----------
         request_func : Callable
-            Function to make requests to the server.
+            Function to make requests to HQ.
         task_id : int
             ID of the task to wait for.
         interval : float
@@ -710,7 +590,7 @@ class ClientBase(BlobStorageMixin):
             response = request_func(f"task/{task_id}/status")
             status = response.get("status")
 
-            if has_task_finished(status):
+            if TaskStatus.has_finished(status):
                 _log_completion(task_id, start_time, log_animation)
                 break
 
@@ -721,6 +601,10 @@ class ClientBase(BlobStorageMixin):
     class SubClient:
         """
         Create sub groups of commands using this SubClient
+
+        For example, the class `vantage6.client.subclients.study.Study` defines the
+        commands that can be run on studies. These are accessible for the user as
+        subclient: `client.study`.
 
         Parameters
         ----------
@@ -733,9 +617,9 @@ class ClientBase(BlobStorageMixin):
             # grandparents and so on.
             # TODO maybe this should ideally get a name of 'main_client' or something
             if hasattr(parent, "parent"):
-                self.parent = parent.parent
+                self.parent: ClientBase = parent.parent
             else:
-                self.parent = parent
+                self.parent: ClientBase = parent
 
         @staticmethod
         def _clean_update_data(data: dict) -> dict:

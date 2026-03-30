@@ -3,43 +3,44 @@
 Python client
 -------------
 
-The Python client is the recommended way to interact with the vantage6 server
+The Python client is the recommended way to interact with the vantage6 hub
 for tasks that you want to automate. It is a Python library that facilitates
-communication with the vantage6 server, e.g. by encrypting and decrypting data
-for tasks for you.
-
-The Python client aims to completely cover the vantage6 server communication.
-It can create computation tasks and collect their
-results, manage organizations, collaborations, users, etc. Under the hood,
-the Python client talks to the server API to achieve this.
+communication with the vantage6 hub, e.g. by encrypting and decrypting data
+for tasks for you. It can create computation tasks and collect their
+results, manage organizations, collaborations, users, etc. Everything you can do
+with the UI, you can also do with the Python client, making it a powerful tool for
+automation.
 
 Requirements
 ^^^^^^^^^^^^
 
-You need Python to use the Python client. We recommend using Python 3.10, as
+You need Python to use the Python client. We recommend using Python 3.13, as
 the client has been tested with this version. For higher versions, it may be
 difficult to install the dependencies.
 
 .. warning::
-    If you use a vantage6 version older than 3.8.0, you should use Python 3.7
-    instead of Python 3.10.
+    If you use vantage6 version 4, you should use Python 3.10 instead of Python 3.13.
 
 Install
 ^^^^^^^
 
 It is important to install the Python client with the same version as the
-vantage6 server you are talking to. Check your server version by going to
-``https://<server_url>/version`` (e.g. `https://cotopaxi.vantage6.ai/version`
-or `http://localhost:7601/api/version`) to find its version.
+vantage6 hub you are talking to, most importantly the API version of vantage6 HQ. Check
+your HQ version by going to
+``https://<my-v6-HQ>/version`` (e.g. ``http://localhost:30761/hq/version``) to find its version.
 
 Then you can install the ``vantage6-client`` with:
 
 ::
 
-   pip install vantage6==<version>
+   # install the latest version
+   uv pip install vantage6-client
 
-where you add the version you want to install. You may also leave out
-the version to install the most recent version.
+   # install a specific version
+   uv pip install vantage6-client==<version>
+
+   # or, if you are using conda / pyenv / ...
+   pip install vantage6==<version>
 
 .. _use-python-client:
 
@@ -62,38 +63,38 @@ the group ``client.user`` has the following commands:
 - ``client.user.get(<id>)``: get a user
 
 You can see how to use these methods by using ``help(...)`` , e.g.
-``help(client.task.create)`` will show you the parameters needed to create a
-new user:
+``help(client.role.create)`` will show you the parameters needed to create a
+new role:
 
 .. code:: python
 
-   help(client.task.create)
-   #Create a new task
+   help(client.role.create)
+   # Register new role
    #
-   #    Parameters
-   #    ----------
-   #    collaboration : int
-   #        Id of the collaboration to which this task belongs
-   #    organizations : list
-   #        Organization ids (within the collaboration) which need
-   #        to execute this task
-   #    name : str
-   #        Human readable name
-   #    image : str
-   #        Docker image name which contains the algorithm
-   #    description : str
-   #        Human readable description
-   #    input : dict
-   #        Algorithm input
-   #    database: str, optional
-   #        Name of the database to use. This should match the key
-   #        in the node configuration files. If not specified the
-   #        default database will be tried.
+   # Parameters
+   # ----------
+   # name : str
+   #     Role name
+   # description : str
+   #     Human readable description of the role.
+   # rules : list
+   #     Rules that this role contains.
+   # organization : int, optional
+   #     Organization to which this role belongs. In case this is
+   #     not provided the users organization is used. By default
+   #     None.
+   # field: str, optional
+   #     Which data field to keep in the returned dict. For instance,
+   #     "field='name'" will only return the name of the role. Default is None.
+   # fields: list[str], optional
+   #     Which data fields to keep in the returned dict. For instance,
+   #     "fields=['name', 'id']" will only return the names and ids of the
+   #     role. Default is None.
    #
-   #    Returns
-   #    -------
-   #    dict
-   #        Containing the task information
+   # Returns
+   # -------
+   # dict
+   #     Containing meta-data of the new role
 
 
 The following groups (related to the :ref:`components`) of methods are
@@ -112,7 +113,7 @@ example, a rule that gives a certain permission cannot be deleted).
 -  ``client.node``
 
 Finally, the class ``client.util`` contains some utility functions, for example
-to check if the server is up and running or to change your own password.
+to check if HQ is up and running or to change your own password.
 
 .. _authentication:
 
@@ -124,10 +125,9 @@ administrative tasks that you can perform with our
 :ref:`Python client <use-python-client>`. We start by authenticating.
 
 To authenticate, we create a config file to store our login information.
-We do this so we do not have to define the ``server_url``,
-``server_port`` and so on every time we want to use the client.
-Moreover, it enables us to separate the sensitive information (login
-details, organization key) that you do not want to make publicly
+We do this so we do not have to define the ``hq_url``, ``auth_url`` and so on every
+time we want to use the client. Moreover, it enables us to separate the sensitive
+information (login details, organization key) that you do not want to make publicly
 available, from other parts of the code you might write later (e.g. on
 submitting particular tasks) that you might want to share publicly.
 
@@ -135,21 +135,25 @@ submitting particular tasks) that you might want to share publicly.
 
    # config.py
 
-   server_url = "https://MY VANTAGE6 SERVER" # e.g. https://cotopaxi.vantage6.ai or
-                                             # http://localhost for a local dev server
-   server_port = 443 # This is specified when you first created the server
-   server_api = "" # This is specified when you first created the server
+   # HQ address, e.g. https://uluru.vantage6.ai/api, or http://localhost:7601/hq
+   # for a local sandbox HQ
+   hq_url = "https://<my_hq_url>:<my_port>/<my_api_path>"
+   # Authentication service address, e.g. https://auth.uluru.vantage6.ai/, or
+   # http://localhost:30764 for a local sandbox auth service
+   auth_url = "https://<my_auth_url>:<my_port>"
 
-   username = "MY USERNAME"
-   password = "MY PASSWORD"
+   # If your collaboration is encrypted, you need to provide the filepath to the private
+   # key of your organization. If your collaboration is not encrypted, you can leave this
+   # as None.
+   organization_key = None
 
-   organization_key = "FILEPATH TO MY PRIVATE KEY" # This can be empty if you do not want to set up encryption
+   # Normally, these are not needed, unless your server admin has configured them
+   # to non-default values
+   keycloak_realm = "vantage6"
+   keycloak_client = "public_client"
 
-Note that the ``organization_key`` should be a filepath that points to
-the private key that was generated when the organization to which your
-login belongs was first created (see :ref:`creating-organization`).
 
-Then, we connect to the vantage 6 server by initializing a Client
+Then, we connect to the vantage6 hub by initializing a Client
 object, and authenticating
 
 .. code:: python
@@ -161,12 +165,38 @@ object, and authenticating
    import config
 
    # Initialize the client object, and run the authentication
-   client = Client(config.server_url, config.server_port, config.server_api,
-                   log_level='debug')
-   client.authenticate(config.username, config.password)
+   client = Client(
+       hq_url=config.hq_url,
+       auth_url=config.auth_url,
+       auth_realm=config.keycloak_realm,
+       auth_client=config.keycloak_client,
+       log_level='debug'
+   )
+   # Authenticate. This will try to open a browser to authenticate. If this is not
+   # possible (e.g. because you are on a VM), it will print a URL that you need to
+   # open in your browser
+   client.authenticate()
 
    # Optional: setup the encryption, if you have an organization_key
    client.setup_encryption(config.organization_key)
+
+.. note::
+
+   If you are using a service account, the authentication process is a bit different:
+
+   .. code:: python
+
+      # instead of client.authenticate(), you need to initialize the service account
+      # and then authenticate with it
+      client.initialize_service_account(
+         client_secret="<my-client-secret>",
+         username="<my-username>"
+      )
+      client.authenticate_service_account()
+
+   You get the client secret in a downloaded file when you create a service account in
+   the User Interface. If you create a service account via the Python client or API,
+   the client secret is returned in the JSON response.
 
 .. _creating-organization:
 
@@ -174,7 +204,7 @@ Creating an organization
 """"""""""""""""""""""""
 
 After you have authenticated, you can start generating resources. The following
-also assumes that you have a login on the Vantage6 server that has the
+also assumes that you have a login on the vantage6 hub that has the
 permissions to create a new organization. Regular end-users typically do
 not have these permissions (typically only administrators do); they may skip
 this part.
@@ -211,7 +241,7 @@ Now, we can create an organization
        zipcode = '3472',
        country = 'New Zealand',
        domain = 'the_shire.org',
-       public_key = public_key   # use None if you haven't set up encryption
+       public_key = public_key   # use None if you haven't set up encryption or simply leave it out
    )
 
 Users can now be created for this organization. Any users that are
@@ -221,8 +251,6 @@ now use encryption by running
 .. code:: python
 
    client.setup_encryption('/path/to/private/key')
-   # or, if you don't use encryption
-   client.setup_encryption(None)
 
 after they authenticate.
 
@@ -231,7 +259,7 @@ Creating a collaboration
 
 Here, we assume that you have a Python session with an authenticated
 Client object, as created in :ref:`authentication`. We
-also assume that you have a login on the Vantage6 server that has the
+also assume that you have a login on the vantage6 hub that has the
 permissions to create a new collaboration (regular end-users typically
 do not have these permissions, this is typically only for
 administrators).
@@ -310,9 +338,7 @@ Here we assume that
 -  you have a Python session with an authenticated Client object, as
    created in :ref:`authentication`.
 -  you already have the algorithm you want to run available as a
-   container in a docker registry (see
-   `here <https://vantage6.discourse.group/t/developing-a-new-algorithm/31>`__
-   for more details on developing your own algorithm)
+   container in a container registry
 -  the nodes are configured to look at the right database
 
 In this manual, we'll use the averaging algorithm from
@@ -323,12 +349,12 @@ something like:
 .. code:: yaml
 
      databases:
-        - label: default
-          uri: /path/to/my/example.csv
-          type: csv
-        - label: my_other_database
-          uri: /path/to/my/example2.csv
-          type: excel
+       fileBased:
+       - name: olympic_athletes_db
+         uri: /my/local/path/to/data/olympic_athletes_2016.csv
+         type: csv
+         volumePath: /my/local/path/to/data
+         originalName: olympic_athletes_2016.csv
 
 The third requirement is met when all nodes have the same labels in their
 configuration. As an end-user running the
@@ -367,6 +393,54 @@ collaboration ``1``, run:
 Now we see that this collaboration has three organizations associated with it, of which
 the organization id's are ``2``, ``3`` and ``4``.
 
+**Creating a session and extracting data from a database**
+
+First, we need to create a session. A session is a collection of dataframes and tasks
+that are related to each other.
+For example, a session can be used to run a study, or a campaign.
+
+.. code:: python
+
+   session = client.session.create(
+      name="my_session",
+      collaboration=1
+      scope="collaboration",
+      display=True
+   )
+
+This will create a session with the name "my_session" and the scope "collaboration",
+which means that it will be available to everyone in the collaboration.
+
+Next, we need to extract data from a database. We can do this by creating a dataframe.
+
+.. code:: python
+
+   dataframe = client.dataframe.create(
+      label="olympic_athletes_db",
+      method="read_csv",
+      image="harbor2.vantage6.ai/demo/average",
+      arguments={},
+      session=session["id"]
+   )
+   extraction_results = client.wait_for_results(dataframe["last_session_task"]["id"])
+
+This will create a database extraction task that will yield a dataframe. Note that your
+extraction method should match the database type you are using. The ``read_csv`` method
+will only work for CSV files. For a SQL database, you might want to create a task like:
+
+.. code:: python
+
+   dataframe = client.dataframe.create(
+      label="my_database",
+      method="read_sql_database",
+      image="harbor2.vantage6.ai/demo/average",
+      arguments={"query": "SELECT * FROM my_table"},
+      session=session["id"]
+   )
+
+:ref:`This section <algo-functions-provided>` provides more information on the available
+data extraction methods.
+
 .. _pyclient-create-task:
 
 **Creating a task that runs the central algorithm**
@@ -383,9 +457,8 @@ us create a task that runs the central part of the
 
 .. code:: python
 
-   input_ = {
-       'method': 'central_average',
-       'kwargs': {'column_name': 'age'}
+   arguments = {
+       'column_name': 'age'
    }
 
    average_task = client.task.create(
@@ -394,13 +467,16 @@ us create a task that runs the central part of the
       name="an-awesome-task",
       image="harbor2.vantage6.ai/demo/average",
       description='',
-      input_=input_,
+      method='central_average',
+      arguments=arguments,
+      session=1,
       databases=[
-         {'label': 'default'}
-      ]
+         {'dataframe_id': dataframe["id"]}
+      ],
+      action="central_compute"
    )
 
-Note that the ``kwargs`` we specified in the ``input_`` are specific to
+Note that the ``arguments`` we defined are specific to
 this algorithm: this algorithm expects an argument ``column_name`` to be
 defined, and will compute the average over the column with that name.
 Furthermore, note that here we created a task for collaboration with id
@@ -409,23 +485,6 @@ Furthermore, note that here we created a task for collaboration with id
 organizations involved in the collaboration. if you run the central task as in the
 example above, it is even very common to only run it on one organization: the central
 part usually creates subtasks that may run on multiple organizations.
-
-Finally, note that you should provide any
-databases that you want to use via the ``databases`` argument. In the example
-above, we use the ``default`` database; using the ``my_other_database`` database
-can be done by simply specifying that label in the dictionary. If you have
-a SQL or SPARQL database, you should also provide a ``query`` argument,
-e.g.
-
-.. code:: python
-
-   databases=[
-      {'label': 'default', 'query': 'SELECT * FROM my_table'}
-   ]
-
-Similarly, you can define a ``sheet_name`` for Excel databases if you want to
-read data from a specific worksheet. Check ``help(client.task.create)`` for
-more information.
 
 **Creating a task that runs the partial algorithm**
 
@@ -436,17 +495,24 @@ central part of the algorithm will normally do:
 
 .. code:: python
 
-   input_ = {
-       'method': 'partial_average',
-       'kwargs': {'column_name': 'age'},
+   arguments = {
+       'column_name': 'age'
    }
 
-   average_task = client.task.create(collaboration=1,
-                                     organizations=[2,3],
-                                     name="an-awesome-task",
-                                     image="harbor2.vantage6.ai/demo/average",
-                                     description='',
-                                     input_=input_)
+   average_task = client.task.create(
+      collaboration=1,
+      organizations=[2,3],
+      name="an-awesome-task",
+      image="harbor2.vantage6.ai/demo/average",
+      description='',
+      method='partial_average',
+      arguments=arguments,
+      session=1,
+      databases=[
+         {'dataframe_id': dataframe["id"]}
+      ],
+      action="federated_compute"
+   )
 
 Note that when running the partial algorithm, you should run it on all organizations
 that you want to get the results from. In this example, we run the partial algorithm
@@ -454,9 +520,9 @@ on both organizations ``2`` and ``3``.
 
 **Inspecting the results**
 
-Of course, it will take a little while to run your algorithm. You can
-use the following code snippet to run a loop that checks the server
-every 3 seconds to see if the task has been completed:
+Of course, it will take a little while to run your algorithm. You can use the following
+code snippet to run a loop that checks HQ every 3 seconds to see if the task has been
+completed:
 
 .. code:: python
 
@@ -490,4 +556,3 @@ while for the partial algorithms, dispatched to two nodes, the results would be:
 
    >>> result_info
    [{'sum': 253, 'count': 4}, {'sum': 173, 'count': 4}]
-

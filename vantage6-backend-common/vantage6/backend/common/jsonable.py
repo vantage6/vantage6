@@ -4,7 +4,6 @@ import enum
 import sqlalchemy as sql
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
-
 from vantage6.common import STRING_ENCODING
 from vantage6.common.serialization import log
 

@@ -17,51 +17,52 @@ import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/for
 import { MatInput } from '@angular/material/input';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
-import { PermissionsMatrixServerComponent } from '../../permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixHQComponent } from '../../permissions-matrix/hq/permissions-matrix-hq.component';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-user-form',
-    templateUrl: './user-form.component.html',
-    styleUrls: ['./user-form.component.scss'],
-    imports: [
-        NgIf,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatError,
-        MatSelect,
-        NgFor,
-        MatOption,
-        MatHint,
-        PermissionsMatrixServerComponent,
-        AlertComponent,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-user-form',
+  templateUrl: './user-form.component.html',
+  styleUrls: ['./user-form.component.scss'],
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatError,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatHint,
+    PermissionsMatrixHQComponent,
+    AlertComponent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class UserFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
   @Input() user?: User;
+  @Input() isServiceAccount: boolean = false;
   organizations: (BaseOrganization | Organization)[] = [];
+  setPasswords: boolean = true;
 
   form = this.fb.nonNullable.group(
     {
       username: ['', [Validators.required]],
-      email: ['', [Validators.required]],
       password: ['', [Validators.required, ...PASSWORD_VALIDATORS]],
       passwordRepeat: ['', [Validators.required]],
-      firstname: '',
-      lastname: '',
       organization_id: [NaN as number, [Validators.required]],
       roles: [{ value: [] as number[], disabled: true }],
       rules: [{ value: [] as number[], disabled: true }]
     },
-    { validators: [createCompareValidator('password', 'passwordRepeat')] }
+    {
+      validators: [createCompareValidator('password', 'passwordRepeat')]
+    }
   );
 
   organizationRoles: Role[] = [];
@@ -96,9 +97,6 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     await this.initData();
     if (this.isEdit && this.user) {
       this.form.controls.username.setValue(this.user.username);
-      this.form.controls.email.setValue(this.user.email);
-      this.form.controls.firstname.setValue(this.user.firstname);
-      this.form.controls.lastname.setValue(this.user.lastname);
       this.form.controls.organization_id.setValue(this.user.organization?.id || NaN);
       this.form.controls.roles.setValue(this.userRoles.map((role) => role.id));
     }
@@ -108,6 +106,16 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
     }
 
     this.isLoading = false;
+  }
+
+  private togglePasswordValidators(needsPassword: boolean): void {
+    if (needsPassword) {
+      this.form.controls.password.enable();
+      this.form.controls.passwordRepeat.enable();
+    } else {
+      this.form.controls.password.disable();
+      this.form.controls.passwordRepeat.disable();
+    }
   }
 
   private setupForm(): void {
@@ -140,6 +148,10 @@ export class UserFormComponent extends BaseFormComponent implements OnInit, OnDe
       // we only need to collect organizations when creating a new user
       this.organizations = await this.organizationService.getAllowedOrganizations(ResourceType.USER, OperationType.CREATE);
     }
+
+    this.setPasswords = !this.isServiceAccount;
+    this.togglePasswordValidators(this.setPasswords);
+
     // TODO these should depend on the logged-in user's permissions
     this.selectableRules = await this.ruleService.getRules();
 

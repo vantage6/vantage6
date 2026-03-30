@@ -1,0 +1,10 @@
+Dear {{username}},
+
+To reset your {{reset_type}} use the following token:
+
+{{token}}
+
+If you have not requested a {{reset_type}} reset, {{what_to_do}}.
+
+Sincerely
+vantage6 Support Team

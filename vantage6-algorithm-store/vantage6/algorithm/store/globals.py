@@ -1,6 +1,6 @@
 from pathlib import Path
-from enum import Enum
 
+from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME
 
 #
@@ -8,7 +8,7 @@ from vantage6.common.globals import APPNAME
 #
 PACKAGE_FOLDER = Path(__file__).parent.parent.parent.parent
 
-SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
+BACKEND_MODULE_NAME = APPNAME + "-algorithm-store"
 
 # TODO: this should be done differently
 # Which resources should be initialized. These names correspond to the
@@ -16,7 +16,6 @@ SERVER_MODULE_NAME = APPNAME + "-algorithm-store"
 RESOURCES = [
     "version",
     "algorithm",
-    "vantage6_server",
     "role",
     "rule",
     "user",
@@ -28,7 +27,7 @@ RESOURCES = [
 RESOURCES_PATH = "vantage6.algorithm.store.resource"
 
 
-class ConditionalArgComparator(str, Enum):
+class ConditionalArgComparator(StrEnumBase):
     """Enum containing allowed comparators for conditional arguments"""
 
     EQUALS = "=="

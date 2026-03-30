@@ -15,7 +15,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../vantage6"))
 sys.path.insert(0, os.path.abspath("../vantage6-node"))
-sys.path.insert(0, os.path.abspath("../vantage6-server"))
+sys.path.insert(0, os.path.abspath("../vantage6-hq"))
 sys.path.insert(0, os.path.abspath("../vantage6-client"))
 sys.path.insert(0, os.path.abspath("../vantage6-algorithm-tools"))
 sys.path.insert(0, os.path.abspath("../vantage6-common"))
@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath("../vantage6-backend-common"))
 
 project = "vantage6"
 
-copyright = "2022 vantage6"
+copyright = "2024 vantage6"
 author = (
     "A. van Gestel, "
     "B. van Beusekom, "
@@ -64,7 +64,6 @@ templates_path = ["_templates"]
 # We also include the files in the `common` folder, since these are included
 # in other files, and excluding them here prevents duplicate errors.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "common/*.rst"]
-
 
 # -- Options for HTML output -------------------------------------------------
 

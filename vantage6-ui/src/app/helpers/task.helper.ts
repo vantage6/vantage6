@@ -13,6 +13,8 @@ export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' |
     case TaskStatus.NoDockerImage:
     case TaskStatus.Crashed:
     case TaskStatus.Killed:
+    case TaskStatus.NotAllowed:
+    case TaskStatus.Unknown:
       return 'error';
     default:
       return 'default';
@@ -42,6 +44,7 @@ export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
     case TaskStatus.Crashed:
     case TaskStatus.NotAllowed:
     case TaskStatus.Killed:
+    case TaskStatus.Unknown:
       return TaskStatusGroup.Error;
     default:
       return TaskStatusGroup.Pending;

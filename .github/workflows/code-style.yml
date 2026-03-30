@@ -7,8 +7,13 @@ on:
   pull_request:
 
 jobs:
-  check-black-formatting:
+  check-ruff-formatting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: psf/black@stable
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff check
+        run: ruff check .
+      - name: Run Ruff format check
+        run: ruff format --check .

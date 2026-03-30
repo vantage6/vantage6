@@ -21,21 +21,21 @@ import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-review-submit',
-    templateUrl: './review-submit.component.html',
-    styleUrl: './review-submit.component.scss',
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatCard,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatRadioGroup,
-        MatRadioButton,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-review-submit',
+  templateUrl: './review-submit.component.html',
+  styleUrl: './review-submit.component.scss',
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatRadioGroup,
+    MatRadioButton,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 // extends BaseEditComponent
 export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, OnDestroy {
@@ -78,8 +78,8 @@ export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, 
   protected async initData(): Promise<void> {
     this.store = this.chosenStoreService.store$.value;
     if (!this.store) return;
-    this.review = await this.reviewService.getReview(this.store.url, this.id);
-    this.algorithm = await this.algorithmService.getAlgorithm(this.store.url, this.review?.algorithm_id.toString());
+    this.review = await this.reviewService.getReview(this.store, this.id);
+    this.algorithm = await this.algorithmService.getAlgorithm(this.store, this.review?.algorithm_id.toString());
     this.isLoading = false;
   }
 
@@ -110,7 +110,7 @@ export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, 
       'primary',
       () => {
         if (!this.store || !this.review) return;
-        this.reviewService.approveReview(this.store.url, this.review.id, comment).then(() => {
+        this.reviewService.approveReview(this.store, this.review.id, comment).then(() => {
           if (!this.review) return;
           this.router.navigate([routePaths.algorithmManage, this.review.algorithm_id]);
         });
@@ -126,7 +126,7 @@ export class ReviewSubmitComponent extends BaseEditComponent implements OnInit, 
       'warn',
       () => {
         if (!this.store || !this.review) return;
-        this.reviewService.rejectReview(this.store.url, this.review.id, comment).then(() => {
+        this.reviewService.rejectReview(this.store, this.review.id, comment).then(() => {
           if (!this.review) return;
           this.router.navigate([routePaths.algorithmManage, this.review.algorithm_id]);
         });

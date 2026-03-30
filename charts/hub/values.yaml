@@ -1,0 +1,61 @@
+hq:
+  enabled: true
+
+auth:
+  enabled: true
+
+store:
+  enabled: true
+
+hubGateway:
+  enabled: false
+
+  hosts:
+    auth: ""
+    hq: ""
+    portal: ""
+    store: ""
+
+  tls:
+    mode: cert-manager
+
+    existingSecrets:
+      auth: ""
+      hq: ""
+      portal: ""
+      store: ""
+
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
+
+global:
+  keycloak:
+    url: ""
+    realm: "vantage6"
+    adminClient: "backend-admin-client"
+    publicClient: "public_client"
+  urls:
+    external:
+      auth: ""
+      store: ""
+      ui: ""
+      hq: ""
+    internal:
+      auth: ""
+      store: ""
+      ui: ""
+      hq: ""
+  k8sNodeName: ""
+
+  wait:
+    auth:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: "curlimages/curl:8.7.1"
+    store:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: "curlimages/curl:8.7.1"

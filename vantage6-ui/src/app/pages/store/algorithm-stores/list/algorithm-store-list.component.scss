@@ -1,4 +1,4 @@
-@import "src/app/styles/config.scss";
+@use "src/app/styles/config.scss" as *;
 
 // TODO this is copied from chooseCollaboration component - we should not duplicate
 .tile-grid {

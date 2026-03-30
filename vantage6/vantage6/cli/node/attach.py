@@ -1,74 +1,39 @@
-import time
-from threading import Thread
 import click
-import questionary as q
-import docker
 
-from colorama import Fore, Style
+from vantage6.common import info
 
-from vantage6.common import warning, error, info
-from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import check_docker_running
-
-from vantage6.cli.common.utils import print_log_worker
-from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli.node.common import find_running_node_names
+from vantage6.cli.common.attach import attach_logs
+from vantage6.cli.context import InstanceType
+from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
-@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option("-n", "--name", default=None, help="Name of the configuration")
+@click.option("--system", "system_folders", flag_value=True, help="Use system folders")
+@click.option("--user", "system_folders", flag_value=False, help="Use user folders")
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
-    "--system",
-    "system_folders",
-    flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    "--sandbox", "is_sandbox", flag_value=True, help="Attach to a sandbox environment"
 )
-@click.option(
-    "--user",
-    "system_folders",
-    flag_value=False,
-    default=N_FOL,
-    help="Search for configuration in user folders rather than "
-    "system folders. This is the default",
-)
-def cli_node_attach(name: str, system_folders: bool) -> None:
+def cli_node_attach(
+    name: str | None,
+    system_folders: bool,
+    context: str,
+    namespace: str,
+    is_sandbox: bool,
+) -> None:
     """
     Show the node logs in the current console.
     """
-    check_docker_running()
-    client = docker.from_env()
-
-    running_node_names = find_running_node_names(client)
-
-    if not running_node_names:
-        warning("No nodes are currently running. Cannot show any logs!")
-        return
-
-    if not name:
-        try:
-            name = q.select(
-                "Select the node you wish to attach:", choices=running_node_names
-            ).unsafe_ask()
-        except KeyboardInterrupt:
-            error("Aborted by user!")
-            return
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
-
-    if name in running_node_names:
-        container = client.containers.get(name)
-        logs = container.attach(stream=True, logs=True)
-        Thread(target=print_log_worker, args=(logs,), daemon=True).start()
-        while True:
-            try:
-                time.sleep(1)
-            except KeyboardInterrupt:
-                info("Closing log file. Keyboard Interrupt.")
-                info(
-                    "Note that your node is still running! Shut it down with "
-                    f"'{Fore.RED}v6 node stop{Style.RESET_ALL}'"
-                )
-                exit(0)
-    else:
-        error(f"{Fore.RED}{name}{Style.RESET_ALL} was not running!?")
+    info("Attaching to node logs...")
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
+    attach_logs(
+        name=name,
+        instance_type=InstanceType.NODE,
+        infra_component=InfraComponentName.NODE,
+        system_folders=system_folders,
+        k8s_config=k8s_config,
+        is_sandbox=is_sandbox,
+    )

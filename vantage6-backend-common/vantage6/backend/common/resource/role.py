@@ -1,15 +1,16 @@
 import logging
 from typing import Any, List
-from sqlalchemy import or_
 
 from requests import Session
+from sqlalchemy import or_
+
+from vantage6.common import logger_name
 
 from vantage6.backend.common.permission import PermissionManagerBase
 from vantage6.backend.common.resource.error_handling import (
     BadRequestError,
     NotFoundError,
 )
-from vantage6.common import logger_name
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -62,7 +63,7 @@ def get_role(db, role_id):
 
 
 def check_default_role(role, default_roles):
-    if role.name in [role for role in default_roles]:
+    if role.name in default_roles:
         raise BadRequestError(
             f"Role {role.name} is a default role and cannot be edited or deleted."
         )

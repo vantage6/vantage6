@@ -1,4 +1,4 @@
-@import "src/app/styles/config.scss";
+@use "src/app/styles/config.scss" as *;
 
 .space-left {
   margin-left: $spacing-px-2;

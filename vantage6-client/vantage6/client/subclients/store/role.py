@@ -1,6 +1,8 @@
 from typing import Any, List
-from vantage6.client.filter import post_filtering
+
 from vantage6.common.client.client_base import ClientBase
+
+from vantage6.client.filter import post_filtering
 
 
 class StoreRoleSubClient(ClientBase.SubClient):
@@ -61,7 +63,6 @@ class StoreRoleSubClient(ClientBase.SubClient):
         return self.parent.request(
             "role",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )
 
@@ -93,7 +94,6 @@ class StoreRoleSubClient(ClientBase.SubClient):
             "role",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=data,
         )
 
@@ -139,7 +139,6 @@ class StoreRoleSubClient(ClientBase.SubClient):
             f"role/{role_id}",
             method="patch",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=data,
         )
 
@@ -160,5 +159,4 @@ class StoreRoleSubClient(ClientBase.SubClient):
             f"role/{role_id}",
             method="delete",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )

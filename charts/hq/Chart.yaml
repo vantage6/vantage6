@@ -1,0 +1,10 @@
+apiVersion: v2
+name: hq
+description: A Helm chart for deploying the vantage6 headquarters
+type: application
+version: "5.0.0-rc2"
+appVersion: "5.0.0-rc2"
+dependencies:
+  - name: common
+    version: "5.0.0-rc2"
+    repository: file://../common

@@ -11,7 +11,11 @@ export enum RunStatus {
   Active = 'active',
   Initializing = 'initializing',
   Pending = 'pending',
-  Completed = 'completed'
+  Completed = 'completed',
+  UnknownError = 'unknown error',
+  DataFrameNotFound = 'dataframe not found',
+  DependedOnFailedTask = 'depended on failed task',
+  UnexpectedOutput = 'unexpected output'
 }
 
 @Pipe({

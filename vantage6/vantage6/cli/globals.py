@@ -2,14 +2,21 @@
 This module contains global variables that are used throughout the CLI.
 """
 
-from enum import Enum
 from pathlib import Path
+
+from vantage6.common.enum import StrEnumBase
 from vantage6.common.globals import APPNAME
 
 #
-#   SERVER SETTINGS
+#  CLI SETTINGS
 #
-DEFAULT_SERVER_SYSTEM_FOLDERS = True
+
+DEFAULT_CLI_CONFIG_FILE = "kubernetes_config.yaml"
+
+#
+#   BACKEND SETTINGS
+#
+DEFAULT_API_SERVICE_SYSTEM_FOLDERS = True
 
 #
 #   NODE SETTINGS
@@ -23,7 +30,9 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 
 # FIXME BvB 22-06-28 think this is also defined in the node globals, and this
 # one appears not to be used
-NODE_PROXY_SERVER_HOSTNAME = "proxyserver"
+# TODO Check and remove
+# HCR: This constants is indeed not used, as well as the other defined in node/globals.py
+# NODE_V6_PROXY_HOSTNAME = "proxyserver"
 
 DATA_FOLDER = PACKAGE_FOLDER / APPNAME / "_data"
 
@@ -37,40 +46,69 @@ RABBIT_TIMEOUT = 300
 ALGORITHM_TEMPLATE_REPO = "gh:vantage6/v6-algorithm-template.git"
 
 # image to use for diagnostics in `v6 test` commands
-DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic"
+DIAGNOSTICS_IMAGE = "harbor2.vantage6.ai/algorithms/diagnostic:uluru"
 
 # Address of community algorithm store
-COMMUNITY_STORE = "https://store.cotopaxi.vantage6.ai/api"
+COMMUNITY_STORE = "https://store.uluru.vantage6.ai/api"
 
 DEFAULT_PROMETHEUS_IMAGE = "prom/prometheus"
 PROMETHEUS_CONFIG = "prometheus.yml"
 PROMETHEUS_DIR = "prometheus"
 
+# template configuration files
+TEMPLATE_FOLDER = PACKAGE_FOLDER / APPNAME / "cli" / "template"
+HQ_TEMPLATE_FILE = "hq_config.j2"
+NODE_TEMPLATE_FILE = "node_config.j2"
+ALGO_STORE_TEMPLATE_FILE = "algo_store_config.j2"
+AUTH_TEMPLATE_FILE = "auth_config.j2"
+HUB_TEMPLATE_FILE = "hub_config.j2"
+
 
 # datasets included in the nodes of the dev network
-class DefaultDatasets(str, Enum):
+class DefaultDatasets(StrEnumBase):
     """Enum containing default datasets"""
 
     OLYMPIC_ATHLETES = "olympic_athletes_2016.csv"
     KAPLAN_MEIER_TEST = "km_dataset.csv"
 
 
-class ServerType(str, Enum):
-    """Enum containing server types"""
+class BackendType(StrEnumBase):
+    """Enum containing backend types"""
 
-    V6SERVER = "server"
+    HQ = "hq"
     ALGORITHM_STORE = "algorithm-store"
 
 
-class ServerGlobals(str, Enum):
-    """Enum containing server environment variables"""
+class ChartName(StrEnumBase):
+    """Enum containing chart names"""
 
-    DB_URI_ENV_VAR = "VANTAGE6_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
+    HQ = "hq"
+    ALGORITHM_STORE = "store"
+    NODE = "node"
+    AUTH = "auth"
+    HUB = "hub"
 
 
-class AlgoStoreGlobals(str, Enum):
-    """Enum containing algorithm store environment variables"""
+class CLICommandName(StrEnumBase):
+    """Enum containing CLI command names"""
 
-    DB_URI_ENV_VAR = "VANTAGE6_ALGO_STORE_DB_URI"
-    CONFIG_NAME_ENV_VAR = "VANTAGE6_ALGO_STORE_CONFIG_NAME"
+    HQ = "hq"
+    ALGORITHM_STORE = "algorithm-store"
+    NODE = "node"
+    ALGORITHM = "algorithm"
+    TEST = "test"
+    SANDBOX = "sandbox"
+    DEV = "dev"
+    USE = "use"
+    AUTH = "auth"
+    HUB = "hub"
+
+
+class InfraComponentName(StrEnumBase):
+    """Enum containing infrastructure components"""
+
+    HQ = "hq"
+    ALGORITHM_STORE = "store"
+    NODE = "node"
+    AUTH = "auth"
+    HUB = "hub"

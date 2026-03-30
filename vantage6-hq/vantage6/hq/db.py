@@ -1,0 +1,27 @@
+# TODO this file is awkward...
+# ruff: noqa: F401
+from vantage6.hq.model import (
+    AlgorithmStore,
+    Authenticatable,
+    Base,
+    Collaboration,
+    Column,
+    Dataframe,
+    Member,
+    Node,
+    NodeConfig,
+    Organization,
+    Permission,
+    Role,
+    Rule,
+    Run,
+    Session,
+    Study,
+    StudyMember,
+    Task,
+    TaskDatabase,
+    User,
+    UserPermission,
+    role_rule_association,
+    task_depends_on,
+)

@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import datetime
-from sqlalchemy import Column, Text, Integer, ForeignKey, DateTime
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base

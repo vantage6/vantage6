@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vantage6-docs"
+version = "0.1.0"
+description = "Documentation dependencies for vantage6"
+requires-python = ">=3.13"
+dependencies = [
+    "sphinx==8.2.3",
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinx-click",
+    "sphinxcontrib-plantuml",
+    "furo",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Add any additional development dependencies here if needed
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["docs"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/docs",
+]

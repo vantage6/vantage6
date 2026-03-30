@@ -1,50 +1,55 @@
-import logging
 import datetime
+import logging
 from http import HTTPStatus
 from threading import Thread
 
-from flask import g, render_template, request, current_app, Flask
+from flask import Flask, current_app, g, render_template, request
 from flask_mail import Mail
 from flask_restful import Api
-from sqlalchemy import or_
+from marshmallow import ValidationError
+from sqlalchemy import or_, select
 
 from vantage6.common import logger_name
-from vantage6.backend.common.globals import (
-    DEFAULT_EMAIL_FROM_ADDRESS,
-    DEFAULT_SUPPORT_EMAIL_ADDRESS,
-)
-from vantage6.backend.common import get_server_url
-from vantage6.algorithm.store import db
-from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.model.ui_visualization import UIVisualization
-from vantage6.algorithm.store.resource.schema.input_schema import (
-    AlgorithmInputSchema,
-    AlgorithmPatchInputSchema,
-)
-from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
-from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
-from vantage6.algorithm.store.model.argument import Argument
-from vantage6.algorithm.store.model.database import Database
-from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
-from vantage6.algorithm.store.model.function import Function
-from vantage6.algorithm.store.resource import (
-    with_permission,
-    with_permission_to_view_algorithms,
-)
-
-# TODO move to common / refactor
-from vantage6.algorithm.store.resource import AlgorithmStoreResources
-from vantage6.algorithm.store.permission import (
-    PermissionManager,
-    Operation as P,
-)
-from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.common.docker.addons import (
     get_digest,
     get_image_name_wo_tag,
     parse_image_name,
 )
+from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
+
+from vantage6.backend.common import get_backend_service_url
+from vantage6.backend.common.auth import get_email_for_keycloak_id
+from vantage6.backend.common.globals import (
+    DEFAULT_EMAIL_FROM_ADDRESS,
+    DEFAULT_SUPPORT_EMAIL_ADDRESS,
+)
+from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
+from vantage6.algorithm.store.model.argument import Argument
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
+from vantage6.algorithm.store.model.database import Database
+from vantage6.algorithm.store.model.function import Function
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.ui_visualization import UIVisualization
+from vantage6.algorithm.store.permission import (
+    Operation as P,
+    PermissionManager,
+)
+
+# TODO move to common / refactor
+from vantage6.algorithm.store.resource import (
+    AlgorithmStoreResources,
+    with_permission,
+    with_permission_to_view_algorithms,
+)
+from vantage6.algorithm.store.resource.schema.input_schema import (
+    AlgorithmInputSchema,
+    AlgorithmPatchInputSchema,
+)
+from vantage6.algorithm.store.resource.schema.output_schema import AlgorithmOutputSchema
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -147,10 +152,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             raise ValueError(f"Invalid image name: {image_name}") from e
 
         # if tag is not a digest, set it in the image name
-        # TODO v5+ consider including "latest" also in the image name in the database
-        # for consistency. This is not possible in v4 due to backwards compatibility
-        # with <4.5 where tags were not included unless explicitly provided.
-        if not tag.startswith("sha256:") and not tag == "latest":
+        if not tag.startswith("sha256:"):
             image_and_tag = f"{image_wo_tag}:{tag}"
         else:
             image_and_tag = image_wo_tag
@@ -159,21 +161,33 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
         digest = get_digest(image_name)
 
         # If getting digest failed, try to use authentication
-        if not digest:
-            docker_registries = self.config.get("docker_registries", [])
-            registry_user = None
-            registry_password = None
-            for reg in docker_registries:
-                if reg["registry"] == registry:
-                    registry_user = reg.get("username")
-                    registry_password = reg.get("password")
-                    break
-            if registry_user and registry_password:
-                digest = get_digest(
-                    full_image=image_name,
-                    docker_username=registry_user,
-                    docker_password=registry_password,
-                )
+        if digest:
+            log.info("Digest obtained succesfully!")
+            return image_and_tag, digest
+        else:
+            log.debug("Failed to get digest without authentication...")
+
+        docker_registries = self.config.get("private_docker_registries", [])
+        registry_user = None
+        registry_password = None
+        for reg in docker_registries:
+            if reg["registry"] == registry:
+                registry_user = reg.get("username")
+                registry_password = reg.get("password")
+                break
+        if registry_user and registry_password:
+            log.info("Retrying to get digest with authentication...")
+            digest = get_digest(
+                full_image=image_name,
+                registry_username=registry_user,
+                registry_password=registry_password,
+            )
+            if digest:
+                log.info("Digest obtained succesfully!")
+            else:
+                log.error("Failed to get digest with authentication!")
+        else:
+            log.error("Failed to get digest!")
 
         return image_and_tag, digest
 
@@ -265,7 +279,7 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        q = g.session.query(db_Algorithm)
+        q = select(db_Algorithm)
 
         # filter on properties
         for field in [
@@ -331,15 +345,15 @@ class Algorithms(AlgorithmBaseResource):
             # if image with that digest does not exist, check if another image with
             # different digest but same name exists. If it does, throw
             # more specific error
-            if q_with_digest.first():
+            if g.session.scalars(q_with_digest).first():
                 q = q_with_digest
-            elif q.first():
+            elif not_digest_match := g.session.scalars(q).first():
                 return {
                     "msg": f"The image '{image}' that you provided has digest "
                     f"'{digest}'. This algorithm version is not approved by the "
                     "store. The currently approved version of this algorithm has "
-                    f"digest '{q.first().digest}'. Please include this digest if you"
-                    f"want to use that image."
+                    f"digest '{not_digest_match.digest}'. Please include this digest if"
+                    " you want to use that image."
                 }, HTTPStatus.BAD_REQUEST
 
         # paginate results
@@ -406,13 +420,15 @@ class Algorithms(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        type:
+                        step_type:
                           type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
+                          description: Step type of the function. Can be 'data
+                            extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
-                          description: Whether this function produces useful results when running it by itself
+                          description: Whether this function produces useful results
+                            when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -426,6 +442,10 @@ class Algorithms(AlgorithmBaseResource):
                               description:
                                 type: string
                                 description: Description of the database
+                              multiple:
+                                type: boolean
+                                description: Whether more than one database can be
+                                  supplied.
                         arguments:
                           type: array
                           description: List of arguments that this function
@@ -516,14 +536,15 @@ class Algorithms(AlgorithmBaseResource):
 
         tags: ["Algorithm"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_post_schema.validate(data)
-        if errors:
+        try:
+            data = algorithm_input_post_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # validate that the algorithm image exists and retrieve the digest
@@ -543,7 +564,7 @@ class Algorithms(AlgorithmBaseResource):
             code_url=data["code_url"],
             documentation_url=data.get("documentation_url", None),
             digest=digest,
-            developer=g.user,
+            developer_id=g.user.id,
             submission_comments=data.get("submission_comments", None),
         )
         algorithm.save()
@@ -561,7 +582,7 @@ class Algorithms(AlgorithmBaseResource):
                 name=function["name"],
                 display_name=function.get("display_name", ""),
                 description=function.get("description", ""),
-                type_=function["type"],
+                step_type=function["step_type"],
                 standalone=function.get("standalone", True),
                 algorithm_id=algorithm.id,
             )
@@ -573,7 +594,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=argument["name"],
                     display_name=argument.get("display_name", ""),
                     description=argument.get("description", ""),
-                    type_=argument["type"],
+                    type_=argument["type_"],
                     has_default_value=argument.get("has_default_value", False),
                     default_value=argument.get("default_value", None),
                     conditional_operator=argument.get("conditional_operator", None),
@@ -604,6 +625,7 @@ class Algorithms(AlgorithmBaseResource):
                     name=database["name"],
                     description=database.get("description", ""),
                     function_id=func.id,
+                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                 )
                 db_.save()
             # create the visualizations
@@ -611,7 +633,7 @@ class Algorithms(AlgorithmBaseResource):
                 vis = UIVisualization(
                     name=visualization["name"],
                     description=visualization.get("description", ""),
-                    type_=visualization["type"],
+                    type_=visualization["type_"],
                     schema=visualization.get("schema", {}),
                     function_id=func.id,
                 )
@@ -662,15 +684,15 @@ class Algorithms(AlgorithmBaseResource):
         store_url : str | None
             URL of the algorithm store
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert "
                 "algorithm managers that reviews have to be assigned."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        reply_to = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get users with the role 'algorithm manager'
         log.info(
@@ -678,8 +700,6 @@ class Algorithms(AlgorithmBaseResource):
             "assigned."
         )
         algorithm_managers = db.User.get_by_permission("review", Operation.CREATE)
-        # TODO v5+ email is always present for all users, so remove this check
-        algorithm_managers = [am for am in algorithm_managers if am.email]
         if not algorithm_managers:
             log.warning(
                 "No users with known email addresses found that can assign "
@@ -696,17 +716,26 @@ class Algorithms(AlgorithmBaseResource):
             template_vars = {
                 "admin_username": algo_manager.username,
                 "algorithm_name": algorithm.name,
-                "store_url": get_server_url(config, store_url),
-                "server_url": algo_manager.server.url,
+                "store_url": get_backend_service_url(config, store_url),
                 "dev_username": submitting_user_name,
                 "other_admins": other_admins_msg,
-                "support_email": support_email,
+                "support_email": reply_to,
             }
+            email_algo_manager = get_email_for_keycloak_id(algo_manager.keycloak_id)
+            if not email_algo_manager:
+                log.warning(
+                    "No email address found for the algorithm manager '%s'. No "
+                    "email will be sent to alert them that they have to assign "
+                    "reviewers for the algorithm '%s'.",
+                    algo_manager.username,
+                    algorithm.name,
+                )
+                continue
             with app.app_context():
                 mail.send_email(
                     subject="New vantage6 algorithm needs reviewer assignment",
                     sender=email_sender,
-                    recipients=[algo_manager.email],
+                    recipients=[email_algo_manager],
                     text_body=render_template(
                         "mail/new_algorithm.txt", **template_vars
                     ),
@@ -858,13 +887,15 @@ class Algorithm(AlgorithmBaseResource):
                         description:
                           type: string
                           description: Description of the function
-                        type:
+                        step_type:
                           type: string
-                          description: Type of function. Can be 'central' or
-                            'federated'
+                          description: Step type of the function. Can be
+                            'data_extraction', 'preprocessing', 'federated_compute',
+                            'central_compute', or 'postprocessing'
                         standalone:
                           type: boolean
-                          description: Whether this function produces useful results when running it by itself
+                          description: Whether this function produces useful results
+                            when running it by itself
                         databases:
                           type: array
                           description: List of databases that this function
@@ -971,14 +1002,15 @@ class Algorithm(AlgorithmBaseResource):
         if not algorithm:
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate the request body
-        errors = algorithm_input_patch_schema.validate(data, partial=True)
-        if errors:
+        try:
+            data = algorithm_input_patch_schema.load(data, partial=True)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
 
         # algorithms can no longer be edited if they are in the review process or have
@@ -1045,7 +1077,7 @@ class Algorithm(AlgorithmBaseResource):
                     name=new_function["name"],
                     description=new_function.get("description", ""),
                     display_name=new_function.get("display_name", ""),
-                    type_=new_function["type"],
+                    step_type=new_function["step_type"],
                     standalone=new_function.get("standalone", True),
                     algorithm_id=id,
                 )
@@ -1059,7 +1091,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=argument["name"],
                         display_name=argument.get("display_name", ""),
                         description=argument.get("description", ""),
-                        type_=argument["type"],
+                        type_=argument["type_"],
                         has_default_value=argument.get("has_default_value", False),
                         default_value=argument.get("default_value", None),
                         conditional_operator=argument.get("conditional_operator", None),
@@ -1090,6 +1122,7 @@ class Algorithm(AlgorithmBaseResource):
                         name=database["name"],
                         description=database.get("description", ""),
                         function_id=func.id,
+                        multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
                     )
                     db.save()
                 for visualization in new_function.get("ui_visualizations", []):

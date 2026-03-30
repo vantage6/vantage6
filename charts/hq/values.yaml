@@ -1,0 +1,59 @@
+# Note that commented-out values should be provided. No default values are provided
+# because that would not be secure.
+nameOverride: vantage6-hq
+hq:
+  description: Vantage6 headquarters version 5
+
+  standalone: true
+
+  apiPath: /hq
+  image: harbor2.vantage6.ai/infrastructure/hq:uluru
+
+  port: 7601
+  internal:
+    port: 7601
+
+  replications: 1
+
+  logging:
+    level: DEBUG
+    file: hq.log
+    max_size: 1024
+    use_console: true
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    format: "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    storageSize: "128M"
+    storageClass: "local-storage"
+    volumeHostPath: "/var/log/vantage6-hq"
+    backup_count: 5
+    loggers:
+    - level: warning
+      name: urllib3
+    - level: warning
+      name: socketIO-client
+    - level: warning
+      name: socketio.server
+    - level: warning
+      name: engineio.server
+    - level: warning
+      name: sqlalchemy.engine
+
+rabbitmq:
+  image:
+    repository: rabbitmq
+    tag: 3-management
+
+database:
+  external: true
+
+ui:
+  image: harbor2.vantage6.ai/infrastructure/ui:uluru
+  port: 7600
+  allowedAlgorithmStores: "*"
+  communityStoreUrl: https://store.uluru.vantage6.ai
+  communityStoreApiPath: /store
+  keycloak:
+
+
+prometheus:
+  enabled: false

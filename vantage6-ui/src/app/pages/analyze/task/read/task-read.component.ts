@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
-import { Algorithm, AlgorithmFunction, Argument, ArgumentType, FunctionType } from 'src/app/models/api/algorithm.model';
+import { Algorithm, AlgorithmFunction, Argument, ArgumentType } from 'src/app/models/api/algorithm.model';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import {
   Task,
@@ -24,7 +24,7 @@ import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confi
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { Subject, Subscription, takeUntil, timer } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription, takeUntil, timer } from 'rxjs';
 import { FileService } from 'src/app/services/file.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
@@ -63,6 +63,9 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { OrderByPipe } from '../../../../pipes/order-by.pipe';
 import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
+import { AlgorithmStepType, Session } from 'src/app/models/api/session.models';
+import { SessionService } from 'src/app/services/session.service';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-task-read',
@@ -109,16 +112,18 @@ import { OrderByTaskStatusPipe } from '../../../../pipes/order-by-status.pipe';
 export class TaskReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
   @Input() id = '';
-  functionType = FunctionType;
+  algorithmStepType = AlgorithmStepType;
   printDate = printDate;
 
   destroy$ = new Subject();
   waitTaskComplete$ = new Subject();
   routes = routePaths;
+  algorithmStatusUpdateQueue = new BehaviorSubject<AlgorithmStatusChangeMsg[]>([]);
 
   visualization = new FormControl(0);
 
   task: Task | null = null;
+  session: Session | null = null;
   childTasks: BaseTask[] = [];
   study: Study | null = null;
   algorithm: Algorithm | null = null;
@@ -142,6 +147,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private translateService: TranslateService,
     private taskService: TaskService,
+    private sessionService: SessionService,
     private studyService: StudyService,
     private algorithmService: AlgorithmService,
     private algorithmStoreService: AlgorithmStoreService,
@@ -168,7 +174,15 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     this.taskStatusUpdateSubscription = this.socketioConnectService
       .getAlgorithmStatusUpdates()
       .subscribe((statusUpdate: AlgorithmStatusChangeMsg | null) => {
-        if (statusUpdate) this.onAlgorithmStatusUpdate(statusUpdate);
+        if (statusUpdate) {
+          // while loading, build up a queue of status updates so that they are executed
+          // in order. If no longer loading, execute the status update immediately.
+          if (this.isLoading || this.algorithmStatusUpdateQueue.value.length > 0) {
+            this.algorithmStatusUpdateQueue.next([...this.algorithmStatusUpdateQueue.value, statusUpdate]);
+          } else {
+            this.onAlgorithmStatusUpdate(statusUpdate);
+          }
+        }
       });
 
     // subscribe to new tasks
@@ -199,14 +213,16 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     if (!this.task || sync_tasks) {
       this.task = await this.getMainTask();
       this.childTasks = await this.getChildTasks();
+      if (this.task.session) this.session = await this.sessionService.getSession(this.task.session.id);
       if (this.task.study) this.study = await this.studyService.getStudy(this.task.study.id.toString());
     }
     try {
       if (this.task.algorithm_store) {
         const store = await this.algorithmStoreService.getAlgorithmStore(this.task.algorithm_store?.id.toString());
         this.algorithm = await this.algorithmService.getAlgorithmByUrl(this.task.image, store);
-        // Please note, the function cannot be set if the input cannot be decoded. This will result in NO visualization and information about the function.
-        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.input?.method) || null;
+        // Please note, the function cannot be set if the input arguments cannot be decoded. This will result in NO
+        // visualization and information about the function.
+        this.function = this.algorithm?.functions.find((_) => _.name === this.task?.method) || null;
         if (!this.selectedVisualization) {
           // by checking in if statement whether visualization was already set, we prevent
           // the visualization from being reset to the first one when the task is reloaded
@@ -220,6 +236,14 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       // here.
       this.algorithmNotFoundInStore = true;
     }
+    // Now that everything is initialized, empty the queue of status updates
+    // and process all updates. Wait 50 ms in between to allow the UI to update.
+    this.algorithmStatusUpdateQueue.value.forEach((statusUpdate) => {
+      this.onAlgorithmStatusUpdate(statusUpdate);
+      setTimeout(() => {
+        this.algorithmStatusUpdateQueue.next(this.algorithmStatusUpdateQueue.value.slice(1));
+      }, 50);
+    });
     this.isLoading = false;
   }
 
@@ -288,8 +312,12 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     );
   }
 
-  isActive(status: TaskStatus): boolean {
-    return status === TaskStatus.Pending || status === TaskStatus.Initializing || status === TaskStatus.Active;
+  isActiveRun(run: TaskRun): boolean {
+    return run.status === TaskStatus.Pending || run.status === TaskStatus.Initializing || run.status === TaskStatus.Active;
+  }
+
+  isActiveTask(): boolean {
+    return this.task?.runs.some((run) => this.isActiveRun(run)) || false;
   }
 
   openLog(run: TaskRun): void {
@@ -334,7 +362,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.task) return;
           this.isLoading = true;
           await this.taskService.deleteTask(this.task.id);
@@ -344,8 +372,20 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   handleRepeat(): void {
-    if (!this.task) return;
-    this.router.navigate([routePaths.taskCreateRepeat, this.task.id]);
+    if (!this.task || this.task.runs.length === 0) return;
+    const taskType = this.task.runs[0].action;
+    if (taskType === AlgorithmStepType.FederatedCompute || taskType === AlgorithmStepType.CentralCompute) {
+      this.router.navigate([routePaths.taskCreateRepeat, this.task.id]);
+    } else if (taskType === AlgorithmStepType.DataExtraction) {
+      this.router.navigate([routePaths.dataframeCreateRepeat.replace(':sessionId', this.task.session.id.toString()), this.task.id]);
+    } else if (taskType === AlgorithmStepType.Preprocessing) {
+      this.router.navigate([
+        routePaths.sessionDataframePreprocessRepeat
+          .replace(':dfId', (this.task.databases[0].dataframe_id || -1).toString())
+          .replace(':sessionId', this.task.session.id.toString()),
+        this.task.id
+      ]);
+    }
   }
 
   handleTaskKill(): void {
@@ -366,7 +406,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.task) return;
           await this.taskService.killTask(this.task.id);
           this.task.status == TaskStatus.Killed;
@@ -405,10 +445,10 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     return parameter_str;
   }
 
-  downloadInput(run: TaskRun): void {
-    const filename = `vantage6_input_${run.id}.txt`;
-    const textInput = run.input || '';
-    this.fileService.downloadTxtFile(textInput, filename);
+  downloadArguments(run: TaskRun): void {
+    const filename = `vantage6_arguments_${run.id}.txt`;
+    const textArguments = JSON.stringify(run.arguments) || '';
+    this.fileService.downloadTxtFile(textArguments, filename);
   }
 
   downloadResult(result: TaskResult): void {
@@ -437,7 +477,6 @@ export class TaskReadComponent implements OnInit, OnDestroy {
   }
 
   private async onAlgorithmStatusUpdate(statusUpdate: AlgorithmStatusChangeMsg): Promise<void> {
-    await this.waitUntilInitialized();
     // Update status of child tasks
     this.childTasks.forEach((task: BaseTask) => {
       if (task.id === statusUpdate.task_id) {
@@ -472,7 +511,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
     // Also, if the task crashes, we should reload the task to get the logs.
     if ([TaskStatusGroup.Error, TaskStatusGroup.Success].includes(getStatusType(statusUpdate.status as TaskStatus))) {
       // Task is no longer running but we need to wait for the results to be available
-      // on the server. Poll every two seconds until the results are available.
+      // on HQ. Poll every two seconds until the results are available.
       timer(0, 2000)
         .pipe(takeUntil(this.waitTaskComplete$))
         .subscribe({
@@ -480,7 +519,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
             if (!this.task) return;
             const renewed_task = await this.getMainTask([]);
             // keep statuses of the task and the runs - these are updated by the socket
-            // and are likely more up-to-date than the statuses at the central server
+            // and are likely more up-to-date than the statuses at HQ
             renewed_task.status = this.task.status;
             renewed_task.init_org = this.task.init_org;
             renewed_task.init_user = this.task.init_user;

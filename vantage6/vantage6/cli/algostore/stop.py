@@ -1,60 +1,60 @@
 import click
-import docker
-from colorama import Fore, Style
 
-from vantage6.common import info, warning, error
-from vantage6.common.docker.addons import (
-    check_docker_running,
-    remove_container_if_exists,
-)
-from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.common.decorator import click_insert_context
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
+from vantage6.common import info
+from vantage6.common.globals import InstanceType
+
+from vantage6.cli.common.stop import execute_stop, helm_uninstall
+from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS, InfraComponentName
+from vantage6.cli.k8s_config import KubernetesConfig
 
 
 @click.command()
-@click_insert_context(InstanceType.ALGORITHM_STORE)
+@click.option("-n", "--name", default=None, help="Configuration name")
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--system",
+    "system_folders",
+    flag_value=True,
+    default=DEFAULT_API_SERVICE_SYSTEM_FOLDERS,
+    help="Search for configuration in system folders instead of user folders. "
+    "This is the default.",
+)
+@click.option(
+    "--user",
+    "system_folders",
+    flag_value=False,
+    help="Search for configuration in the user folders instead of system folders.",
+)
+@click.option("--sandbox/--no-sandbox", "sandbox", default=False)
 @click.option("--all", "all_stores", flag_value=True, help="Stop all algorithm stores")
-def cli_algo_store_stop(ctx: AlgorithmStoreContext, all_stores: bool):
+def cli_algo_store_stop(
+    name: str,
+    context: str,
+    namespace: str,
+    system_folders: bool,
+    all_stores: bool,
+    sandbox: bool,
+):
     """
-    Stop one or all running server(s).
+    Stop one or all running algorithm store(s).
     """
-    check_docker_running()
-    client = docker.from_env()
-
-    running_stores = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
+    execute_stop(
+        stop_function=_stop_store,
+        instance_type=InstanceType.ALGORITHM_STORE,
+        infra_component=InfraComponentName.ALGORITHM_STORE,
+        stop_all=all_stores,
+        to_stop=name,
+        namespace=namespace,
+        context=context,
+        system_folders=system_folders,
+        is_sandbox=sandbox,
     )
 
-    if not running_stores:
-        warning("No algorithm stores are currently running.")
-        return
 
-    running_store_names = [server.name for server in running_stores]
+def _stop_store(store_name: str, k8s_config: KubernetesConfig) -> None:
+    info(f"Stopping store {store_name}...")
 
-    if all_stores:
-        for container_name in running_store_names:
-            _stop_algorithm_store(client, container_name)
-        return
+    helm_uninstall(release_name=store_name, k8s_config=k8s_config)
 
-    container_name = ctx.docker_container_name
-    if container_name not in running_store_names:
-        error(f"{Fore.RED}{ctx.name}{Style.RESET_ALL} is not running!")
-        return
-
-    _stop_algorithm_store(client, container_name)
-
-
-def _stop_algorithm_store(client, container_name) -> None:
-    """
-    Stop the algorithm store server.
-
-    Parameters
-    ----------
-    client : DockerClient
-        The docker client
-    container_name : str
-        The name of the container to stop
-    """
-    remove_container_if_exists(client, name=container_name)
-    info(f"Stopped the {Fore.GREEN}{container_name}{Style.RESET_ALL} server.")
+    info(f"Store {store_name} stopped successfully.")

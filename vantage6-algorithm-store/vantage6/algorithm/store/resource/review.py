@@ -1,30 +1,33 @@
-import logging
 import datetime
-
+import logging
 from http import HTTPStatus
 from threading import Thread
 
-from flask import request, g, render_template, Flask, current_app
+from flask import Flask, current_app, g, render_template, request
 from flask_mail import Mail
 from flask_restful import Api
+from marshmallow import ValidationError
+from sqlalchemy import select
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
-from vantage6.backend.common.resource.pagination import Pagination
+
+from vantage6.backend.common import get_backend_service_url
+from vantage6.backend.common.auth import get_email_for_keycloak_id
 from vantage6.backend.common.globals import (
     DEFAULT_EMAIL_FROM_ADDRESS,
     DEFAULT_SUPPORT_EMAIL_ADDRESS,
 )
-from vantage6.backend.common import get_server_url
+from vantage6.backend.common.resource.pagination import Pagination
 
-from vantage6.algorithm.store.model.common.enums import ReviewStatus, AlgorithmStatus
-from vantage6.algorithm.store.permission import PermissionManager, Operation as P
-from vantage6.algorithm.store.resource import (
-    with_permission,
-    AlgorithmStoreResources,
-)
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.common.enums import AlgorithmStatus, ReviewStatus
 from vantage6.algorithm.store.model.policy import Policy
+from vantage6.algorithm.store.permission import Operation as P, PermissionManager
+from vantage6.algorithm.store.resource import (
+    AlgorithmStoreResources,
+    with_permission,
+)
 from vantage6.algorithm.store.resource.schema.input_schema import (
     ReviewCreateInputSchema,
     ReviewUpdateInputSchema,
@@ -119,8 +122,8 @@ class ReviewBase(AlgorithmStoreResources):
     @staticmethod
     def _is_reviewers_assignment_finished(reviews: list[db.Review]) -> bool:
         """
-        Check if the reviewers assignment is finished for the given algorithm, according to the
-        policies set. This is the case if:
+        Check if the reviewers assignment is finished for the given algorithm, according
+        to the policies set. This is the case if:
         1. the minimum number of reviewers has been reached
         2. the minimum number of different organizations has been involved
 
@@ -135,12 +138,7 @@ class ReviewBase(AlgorithmStoreResources):
             True if the reviewers assignment is finished, False otherwise
         """
         # get the number of unique organizations assigned to review the algorithm.
-        # A unique organization is defined by the combination of organization id and server
-        current_orgs = len(
-            set(
-                [(rev.reviewer.organization_id, rev.reviewer.server) for rev in reviews]
-            )
-        )
+        current_orgs = len(set([(rev.reviewer.organization_id) for rev in reviews]))
 
         return (
             current_orgs >= Policy.get_minimum_reviewing_orgs()
@@ -223,7 +221,7 @@ class Reviews(ReviewBase):
 
         tags: ["Review"]
         """
-        q = g.session.query(db.Review)
+        q = select(db.Review)
 
         # filter by simple filters
         if algorithm_id := request.args.get("algorithm_id"):
@@ -300,12 +298,16 @@ class Reviews(ReviewBase):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate request body
-        errors = review_create_schema.validate(data)
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_create_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         # check that the algorithm exists and has reviewable status
         algorithm: db.Algorithm = db.Algorithm.get(data["algorithm_id"])
@@ -317,12 +319,12 @@ class Reviews(ReviewBase):
             }, HTTPStatus.BAD_REQUEST
         # check if a policy exist that allow the user to assign a review
         if not Policy.search_user_in_policy(
-            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS.value
+            g.user, StorePolicies.ALLOWED_REVIEW_ASSIGNERS
         ):
             return {
                 "msg": "You are not allowed to assign reviews due to the policy set "
                 "by the administrator of this store."
-            }, HTTPStatus.UNAUTHORIZED
+            }, HTTPStatus.FORBIDDEN
 
         # check if the developer is the review assigner and if this is allowed
         if (
@@ -351,7 +353,7 @@ class Reviews(ReviewBase):
         # a different dev policy is set
 
         elif not Policy.search_user_in_policy(
-            reviewer, StorePolicies.ALLOWED_REVIEWERS.value
+            reviewer, StorePolicies.ALLOWED_REVIEWERS
         ):
             return {
                 "msg": f"User id='{reviewer.id}' is not allowed to review algorithms, "
@@ -367,14 +369,12 @@ class Reviews(ReviewBase):
                     "their own algorithm!"
                 )
             }, HTTPStatus.BAD_REQUEST
-        if (
-            g.session.query(db.Review)
-            .filter(
+        if g.session.scalars(
+            select(db.Review).filter(
                 db.Review.algorithm_id == data["algorithm_id"],
                 db.Review.reviewer_id == data["reviewer_id"],
             )
-            .first()
-        ):
+        ).first():
             return {
                 "msg": "Reviewer has already reviewed this algorithm!"
             }, HTTPStatus.BAD_REQUEST
@@ -389,10 +389,11 @@ class Reviews(ReviewBase):
 
         # also update the algorithm status to 'under review' if policies are met:
         if self._is_reviewers_assignment_finished(algorithm.reviews):
-            algorithm.status = AlgorithmStatus.UNDER_REVIEW
+            algorithm.status = AlgorithmStatus.UNDER_REVIEW.value
             algorithm.save()
 
         # send email to the reviewer to notify them of the new review
+        # TODO next time we change something here, update to kwargs instead of args
         Thread(
             target=self._send_email_to_reviewer,
             args=(
@@ -400,6 +401,8 @@ class Reviews(ReviewBase):
                 self.mail,
                 review,
                 g.user.username,
+                algorithm.name,
+                algorithm.developer.username,
                 self.config,
                 request.headers.get("store_url"),
             ),
@@ -413,6 +416,8 @@ class Reviews(ReviewBase):
         mail: Mail,
         review: db.Review,
         review_assigner_username: str,
+        algorithm_name: str,
+        dev_username: str,
         config: dict,
         store_url: str | None,
     ) -> None:
@@ -427,6 +432,10 @@ class Reviews(ReviewBase):
             Flask-Mail instance
         review : db.Review
             Review instance
+        algorithm_name : str
+            Name of the algorithm
+        dev_username : str
+            Username of the developer
         review_assigner_username : str
             Username of the user that assigned the review
         config : dict
@@ -434,22 +443,22 @@ class Reviews(ReviewBase):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that they have been assigned a review."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the reviewer's email address
-        # TODO remove v5+ as all users should have an email address
-        if not review.reviewer.email:
+        reviewer_email = get_email_for_keycloak_id(review.reviewer.keycloak_id)
+        if not reviewer_email:
             log.warning(
-                "No email address found for the reviewer %s (id %s). No email will be "
-                "sent to alert the reviewer that they have been assigned a review.",
+                "No email address found for the reviewer '%s' (id %s). No email will be"
+                " sent to alert the reviewer that they have been assigned a review.",
                 review.reviewer.username,
                 review.reviewer_id,
             )
@@ -463,18 +472,17 @@ class Reviews(ReviewBase):
 
         template_vars = {
             "reviewer_username": review.reviewer.username,
-            "algorithm_name": review.algorithm.name,
-            "dev_username": review.algorithm.developer.username,
+            "algorithm_name": algorithm_name,
+            "dev_username": dev_username,
             "assigner_username": review_assigner_username,
-            "store_url": get_server_url(config, store_url),
-            "server_url": review.reviewer.server.url,
+            "store_url": get_backend_service_url(config, store_url),
             "support_email": support_email,
         }
         with app.app_context():
             mail.send_email(
                 subject="New vantage6 algorithm to review",
                 sender=email_sender,
-                recipients=[review.reviewer.email],
+                recipients=[reviewer_email],
                 text_body=render_template("mail/new_review.txt", **template_vars),
                 html_body=render_template("mail/new_review.html", **template_vars),
             )
@@ -561,11 +569,11 @@ class Review(ReviewBase):
             if not other_reviews or not self._is_reviewers_assignment_finished(
                 other_reviews
             ):
-                algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT
+                algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
             elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
                 # if this was the last remaining review that needed to be approved, but
                 # it is now deleted, the algorithm should be approved
-                algorithm.status = AlgorithmStatus.APPROVED
+                algorithm.status = AlgorithmStatus.APPROVED.value
             algorithm.save()
         elif algorithm.status == AlgorithmStatus.APPROVED:
             # for algorithms that are currently approved, the reviews may not be
@@ -581,7 +589,7 @@ class Review(ReviewBase):
 
 class ReviewUpdateResources(AlgorithmStoreResources):
     @staticmethod
-    def send_email_review_update(
+    def _send_email_review_update(
         app: Flask,
         mail: Mail,
         algorithm: db.Algorithm,
@@ -608,23 +616,23 @@ class ReviewUpdateResources(AlgorithmStoreResources):
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that they have been assigned a review."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the developer's email address
-        # TODO remove v5+ as all users should have an email address
         status_text = "approved" if is_approved else "rejected"
-        if not algorithm.developer.email:
+        developer_email = get_email_for_keycloak_id(algorithm.developer.keycloak_id)
+        if not developer_email:
             log.warning(
-                "No email address found for the developer %s (id %s). No email will be "
-                "sent to alert the developer that their algorithm has been %s.",
+                "No email address found for the developer '%s' (id %s). No email will "
+                "be sent to alert the developer that their algorithm has been %s.",
                 algorithm.developer.username,
                 algorithm.developer_id,
                 status_text,
@@ -655,7 +663,7 @@ class ReviewUpdateResources(AlgorithmStoreResources):
             "developer_username": algorithm.developer.username,
             "algorithm_name": algorithm.name,
             "status_text": status_text,
-            "store_url": get_server_url(config, store_url),
+            "store_url": get_backend_service_url(config, store_url),
             "final_paragraph": final_paragraph,
             "support_email": support_email,
         }
@@ -665,7 +673,7 @@ class ReviewUpdateResources(AlgorithmStoreResources):
                     f"Your Vantage6 algorithm {algorithm.name} has been {status_text}"
                 ),
                 sender=email_sender,
-                recipients=[algorithm.developer.email],
+                recipients=[developer_email],
                 text_body=render_template(
                     "mail/algorithm_review_finalized.txt", **template_vars
                 ),
@@ -711,12 +719,16 @@ class ReviewApprove(ReviewUpdateResources):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate input
-        errors = review_update_schema.validate(data)
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_update_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         review = db.Review.get(id)
         if not review:
@@ -734,7 +746,7 @@ class ReviewApprove(ReviewUpdateResources):
             }, HTTPStatus.BAD_REQUEST
 
         # update the review status to 'approved'
-        review.status = ReviewStatus.APPROVED
+        review.status = ReviewStatus.APPROVED.value
         review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
@@ -751,7 +763,7 @@ class ReviewApprove(ReviewUpdateResources):
 
             # notify the developer by email that their algorithm has been approved
             Thread(
-                target=self.send_email_review_update,
+                target=self._send_email_review_update,
                 args=(
                     current_app._get_current_object(),
                     self.mail,
@@ -802,12 +814,16 @@ class ReviewReject(ReviewUpdateResources):
 
         tags: ["Review"]
         """
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
         # validate input
-        errors = review_update_schema.validate(request.get_json())
-        if errors:
-            return {"msg": "Invalid input", "errors": errors}, HTTPStatus.BAD_REQUEST
+        try:
+            data = review_update_schema.load(data)
+        except ValidationError as e:
+            return {
+                "msg": "Invalid input",
+                "errors": e.messages,
+            }, HTTPStatus.BAD_REQUEST
 
         review: db.Review = db.Review.get(id)
         if not review:
@@ -825,7 +841,7 @@ class ReviewReject(ReviewUpdateResources):
             }, HTTPStatus.BAD_REQUEST
 
         # update the review status to 'rejected'
-        review.status = ReviewStatus.REJECTED
+        review.status = ReviewStatus.REJECTED.value
         review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
         if comment := data.get("comment"):
             review.comment = comment
@@ -833,7 +849,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # also update the algorithm status to 'rejected'
         algorithm: db.Algorithm = review.algorithm
-        algorithm.status = AlgorithmStatus.REJECTED
+        algorithm.status = AlgorithmStatus.REJECTED.value
         algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
         algorithm.save()
 
@@ -841,7 +857,7 @@ class ReviewReject(ReviewUpdateResources):
         for other_review in algorithm.reviews:
             if other_review.id == review.id:
                 continue
-            other_review.status = ReviewStatus.DROPPED
+            other_review.status = ReviewStatus.DROPPED.value
             other_review.save()
 
             # notify the reviewer by email that this review is no longer necessary
@@ -851,6 +867,7 @@ class ReviewReject(ReviewUpdateResources):
                     current_app._get_current_object(),
                     self.mail,
                     other_review,
+                    algorithm.name,
                     self.config,
                     request.headers.get("store_url"),
                 ),
@@ -858,7 +875,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # Notify the developer that their algorithm has been rejected
         Thread(
-            target=self.send_email_review_update,
+            target=self._send_email_review_update,
             args=(
                 current_app._get_current_object(),
                 self.mail,
@@ -880,6 +897,7 @@ class ReviewReject(ReviewUpdateResources):
         app: Flask,
         mail: Mail,
         review: db.Review,
+        algorithm_name: str,
         config: dict,
         store_url: str | None,
     ) -> None:
@@ -895,49 +913,51 @@ class ReviewReject(ReviewUpdateResources):
             Flask-Mail instance
         review : db.Review
             Review instance
+        algorithm_name : str
+            Name of the algorithm
         config : dict
             Configuration dictionary
         store_url : str | None
             URL of the store API
         """
-        smtp_settings = config.get("smtp", {})
+        smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:
             log.warning(
                 "No SMTP settings found. No emails will be sent to alert the reviewer "
                 "that their review is no longer required."
             )
             return
-        email_sender = smtp_settings.get("email_from", DEFAULT_EMAIL_FROM_ADDRESS)
-        support_email = config.get("support_email", DEFAULT_SUPPORT_EMAIL_ADDRESS)
+        email_sender = smtp_settings.get("from", DEFAULT_EMAIL_FROM_ADDRESS)
+        support_email = smtp_settings.get("replyTo", DEFAULT_SUPPORT_EMAIL_ADDRESS)
 
         # get the reviewer's email address
-        # TODO remove v5+ as all users should have an email address
-        if not review.reviewer.email:
+        reviewer_email = get_email_for_keycloak_id(review.reviewer.keycloak_id)
+        if not reviewer_email:
             log.warning(
-                "No email address found for the reviewer %s (id %s). No email will be "
-                "sent to alert the reviewer that their review is no longer required.",
+                "No email address found for the reviewer '%s' (id %s). No email will be"
+                " sent to alert the reviewer that their review is no longer required.",
                 review.reviewer.username,
                 review.reviewer_id,
             )
             return
         log.info(
-            "Sending email to reviewer %s (id %s) to notify them that their review is "
-            "no longer required.",
+            "Sending email to reviewer '%s' (id %s) to notify them that their review is"
+            " no longer required.",
             review.reviewer.username,
             review.reviewer_id,
         )
 
         template_vars = {
             "reviewer_username": review.reviewer.username,
-            "algorithm_name": review.algorithm.name,
-            "store_url": get_server_url(config, store_url),
+            "algorithm_name": algorithm_name,
+            "store_url": get_backend_service_url(config, store_url),
             "support_email": support_email,
         }
         with app.app_context():
             mail.send_email(
                 subject="Vantage6 algorithm review no longer required",
                 sender=email_sender,
-                recipients=[review.reviewer.email],
+                recipients=[reviewer_email],
                 text_body=render_template(
                     "mail/review_no_longer_required.txt", **template_vars
                 ),

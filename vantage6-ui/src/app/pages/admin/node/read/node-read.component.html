@@ -67,6 +67,9 @@
                   <button mat-flat-button color="accent" (click)="generateNewAPIKey()">
                     {{ "node-edit.actions.new-api-key" | translate }}
                   </button>
+                  <button mat-flat-button color="warn" *ngIf="canKill()" (click)="handleKillNodeTasks()">
+                    {{ "node-edit.actions.killTasks" | translate }}
+                  </button>
                 </div>
               </ng-container>
             </ng-container>

@@ -23,30 +23,31 @@ import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/m
 import { ChipComponent } from '../../../../../components/helpers/chip/chip.component';
 import { NodeAdminCardComponent } from '../../../../../components/helpers/node-admin-card/node-admin-card.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
-    selector: 'app-study-read',
-    templateUrl: './study-read.component.html',
-    styleUrls: ['./study-read.component.scss'],
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ChipComponent,
-        NgFor,
-        NodeAdminCardComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-study-read',
+  templateUrl: './study-read.component.html',
+  styleUrls: ['./study-read.component.scss'],
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ChipComponent,
+    NgFor,
+    NodeAdminCardComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class StudyReadComponent implements OnInit, OnDestroy {
   destroy$ = new Subject();
@@ -125,7 +126,7 @@ export class StudyReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.study) return;
           this.isLoading = true;
           await this.studyService.deleteStudy(this.study.id.toString());

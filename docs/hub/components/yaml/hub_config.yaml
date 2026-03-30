@@ -1,0 +1,88 @@
+# This is an example `values.yaml` for deploying the complete vantage6 hub in
+# production using the `hub` parent chart (HQ + Auth/Keycloak + Algorithm Store).
+#
+# The hub chart can create Gateway + cert-manager Certificates for you. The subchart
+# services remain internal ClusterIP services.
+
+hubGateway:
+  enabled: true
+  hosts:
+    auth: auth.uluru.vantage6.ai
+    hq: hq.uluru.vantage6.ai
+    portal: portal.uluru.vantage6.ai
+    store: store.uluru.vantage6.ai
+  # How to manage certificates for the gateway of your hub.
+  tls:
+    # Default: cert-manager issues/renews certs. Recommended to let cert-manager
+    # handle the certificates for you.
+    mode: cert-manager
+    # If you want to use existing TLS certificates, you can specify the secrets here.
+    # This is useful if you want to use your own certificates.
+    existingSecrets:
+      auth: ""
+      hq: ""
+      portal: ""
+      store: ""
+  # If you want to use cert-manager to issue/renew certificates, you can specify the
+  # cluster issuer here.
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
+
+# Global settings shared between HQ, auth and algorithm store. Values here act
+# as defaults and can be overridden in the subcharts below.
+global:
+  # Shared URLs for the vantage6 services. `external` are the public-facing URLs;
+  # `internal` are in-cluster service URLs other components should use.
+  urls:
+    external:
+      auth: https://auth.vantage6.org
+      store: https://store.vantage6.org
+      ui: https://portal.vantage6.org
+      hq: https://hq.vantage6.org
+    internal:
+      # You can typically leave these empty and let the charts derive them from
+      # the release name and namespace. Override only for custom routing.
+      auth: ""
+      store: ""
+      ui: ""
+      hq: ""
+
+  # Shared Keycloak configuration used as default for HQ and Store. The auth
+  # chart itself can also use these as defaults.
+  keycloak:
+    url: https://auth.vantage6.org
+    realm: vantage6
+    adminClient: backend-admin-client
+    publicClient: public_client
+    adminUsername: admin
+    adminPassword: change-me
+    adminClientSecret: change-me-too
+
+  # Optional shared node name for local-storage based volumes (logs, prometheus).
+  # If set, HQ and Store can inherit this when they use hostPath PVs.
+  k8sNodeName: linux-node-1
+
+  # Optional wait settings used by initContainers when deploying via the hub
+  # chart. When enabled, Store and HQ will wait for Auth (and HQ can wait for
+  # Store) before starting their main containers.
+  wait:
+    auth:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: curlimages/curl:8.7.1
+    store:
+      enabled: true
+      maxAttempts: 60
+      intervalSeconds: 5
+      image: curlimages/curl:8.7.1
+
+hq:
+  # configuration for the headquarters should be placed here
+
+auth:
+  # configuration for the authentication service should be placed here
+
+store:
+  # configuration for the algorithm store should be placed here

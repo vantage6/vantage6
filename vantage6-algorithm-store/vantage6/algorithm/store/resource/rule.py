@@ -1,20 +1,21 @@
 import logging
-
 from http import HTTPStatus
-from flask.globals import request
+
 from flask import g
+from flask.globals import request
 from flask_restful import Api
-from sqlalchemy import and_
+from sqlalchemy import select
 
 from vantage6.common import logger_name
+
+from vantage6.backend.common.resource.pagination import Pagination
+
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.resource import (
     AlgorithmStoreResources,
     with_authentication,
 )
 from vantage6.algorithm.store.resource.schema.output_schema import RuleOutputSchema
-from vantage6.backend.common.resource.pagination import Pagination
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -83,17 +84,16 @@ class Rules(AlgorithmStoreResources):
                 type: integer
               description: Get rules for a specific role
             - in: query
-              name: username
+              name: user_id
               schema:
                 type: string
-              description: Get rules for a specific user. Should be used in combination
-                with server_url, as you need both to identify a user.
+              description: Get rules for a specific user. This includes the
+                rules that are part of the user's roles.
             - in: query
-              name: server_url
+              name: current_user
               schema:
-                type: string
-              description: Get rules for a specific user - server combination. Should be
-                used in combination with username, as you need both to identify a user.
+                type: boolean
+              description: Get rules for the current user
             - in: query
               name: page
               schema:
@@ -129,7 +129,7 @@ class Rules(AlgorithmStoreResources):
 
         tags: ["Rule"]
         """
-        q = g.session.query(db.Rule)
+        q = select(db.Rule)
 
         args = request.args
 
@@ -143,7 +143,7 @@ class Rules(AlgorithmStoreResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.role_rule_association)
@@ -152,25 +152,15 @@ class Rules(AlgorithmStoreResources):
             )
 
         # filters to get rules of a specific user
-        username = args.get("username")
-        server_url = args.get("server_url")
-        if (username and not server_url) or (server_url and not username):
-            return {
-                "msg": "Both username and server_url are required to filter by user!"
-            }, HTTPStatus.BAD_REQUEST
-        elif username and server_url:
-            server = db.Vantage6Server.get_by_url(server_url)
-            if not server:
-                return {
-                    "msg": f'Server with url="{server_url}" is not whitelisted at this'
-                    "algorithm store!"
-                }, HTTPStatus.BAD_REQUEST
-            user = db.User.get_by_server(username, server.id)
-            if not user:
-                return {
-                    "msg": f'User with username="{username}" from server with url='
-                    f'"{server_url}" is not registered at this algorithm store!'
-                }, HTTPStatus.BAD_REQUEST
+        if "user_id" in args or args.get("current_user", False):
+            if "user_id" in args:
+                user = db.User.get(args["user_id"])
+                if not user:
+                    return {
+                        "msg": f"User with id={args['user_id']} does not exist!"
+                    }, HTTPStatus.BAD_REQUEST
+            else:
+                user = g.user
             # TODO when algorithm store gets option to assign loose rules to users,
             # uncomment and modify the lines in the query below
             q = (
@@ -181,10 +171,7 @@ class Rules(AlgorithmStoreResources):
                 # .outerjoin(db.UserPermission, db.Rule.id == db.UserPermission.c.rule_id)
                 .filter(
                     # or_(
-                    and_(
-                        db.User.username == username,
-                        db.User.v6_server_id == server.id,
-                    ),
+                    db.User.id == user.id
                     # db.UserPermission.c.user_id == user.id,
                     # )
                 )

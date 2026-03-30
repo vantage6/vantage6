@@ -42,6 +42,7 @@ jobs:
           echo "stage=${STAGE}" >> $GITHUB_OUTPUT
           echo "build=${PARTS2[2]}" >> $GITHUB_OUTPUT
           MAJOR_NAME=''
+          if [[ $MAJOR == '5' ]]; then MAJOR_NAME="uluru"; fi
           if [[ $MAJOR == '4' ]]; then MAJOR_NAME="cotopaxi"; fi
           if [[ $MAJOR == '3' ]]; then MAJOR_NAME="petronas"; fi
           if [[ $MAJOR == '2' ]]; then MAJOR_NAME="harukas"; fi
@@ -74,7 +75,7 @@ jobs:
           ref: ${{ env.branch }}
           token: ${{ secrets.COMMIT_PAT }}
 
-      - name: Update version in Python packages
+      - name: Update version in Python packages and Helm charts
         id: set_versions
         env:
           build: ${{ steps.split.outputs.build }}
@@ -137,6 +138,65 @@ jobs:
         with:
           prerelease: ${{ env.stage != '' }}
 
+  # Build and push Helm charts
+  helm-charts:
+    runs-on: ubuntu-latest
+    needs: version
+    env:
+      branch: ${{ needs.version.outputs.branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.branch }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.0
+        # TODO remove this at some point. It is here now because helm plugin install
+        # otherwise requires --verify=false flags as helm v4 appears unsupported by the
+        # plugin at present.
+        with:
+          version: v3.18.4
+
+      - name: Login to harbor2.vantage6.ai
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: helm registry login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+
+      - name: Install helm cm-push and add chartmuseum as a repository
+        env:
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          helm plugin install https://github.com/chartmuseum/helm-push
+          helm repo add v6-harbor-infrastructure https://harbor2.vantage6.ai/chartrepo/infrastructure --username $USERNAME --password $PASSWORD
+
+      - name: Update Helm dependencies
+        run: |
+          helm dependency update charts/auth
+          helm dependency update charts/common
+          helm dependency update charts/node
+          helm dependency update charts/store
+          helm dependency update charts/hq
+          helm dependency update charts/hub
+
+      - name: Package Helm charts
+        run: |
+          helm package charts/auth
+          helm package charts/common
+          helm package charts/node
+          helm package charts/store
+          helm package charts/hq
+          helm package charts/hub
+      - name: Push Helm charts
+        run: |
+          helm cm-push auth-*.tgz v6-harbor-infrastructure
+          helm cm-push common-*.tgz v6-harbor-infrastructure
+          helm cm-push node-*.tgz v6-harbor-infrastructure
+          helm cm-push store-*.tgz v6-harbor-infrastructure
+          helm cm-push hq-*.tgz v6-harbor-infrastructure
+          helm cm-push hub-*.tgz v6-harbor-infrastructure
   support-images:
     name: Build support images
     runs-on: ubuntu-latest
@@ -204,11 +264,6 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - # we only release a new base image if it is a major or minor release
-        name: Build and push Docker base image
-        if: ${{ env.patch == 0 }}
-        run: make base-image TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
-
       - # build the actual infrastructure images
         name: Build and push Docker image
         run: make image TAG=$version BASE=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
@@ -262,7 +317,7 @@ jobs:
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: make algorithm-omop-base-image BASE=${major}.${minor} TAG=${major}.${minor} PUSH_REG=true TAG_LATEST=$tag_latest
 
-  # Update the server and node images on harbor2 for this major version,
+  # Update the infrastructure images on harbor2 for this major version,
   # including the 'live' tag that triggers a redeployment of the IKNL deployment
   deploy:
     runs-on: ubuntu-latest
@@ -284,21 +339,20 @@ jobs:
 
       - name: Pull docker images
         run: |
-          docker pull harbor2.vantage6.ai/infrastructure/server:${version}
+          docker pull harbor2.vantage6.ai/infrastructure/hq:${version}
           docker pull harbor2.vantage6.ai/infrastructure/node:${version}
           docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
           docker pull harbor2.vantage6.ai/infrastructure/ui:${version}
           docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-client:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-configurator:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/squid:${version}
 
       - name: Tag docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        # Tag the images with major name for any new release, except prereleases. Only
+        # prereleases of a new major version (x.0.0<N>) are tagged with the major name,
+        # as no definitive releases have been made yet for that major version.
+        if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0)) }}
         run: |
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker tag harbor2.vantage6.ai/infrastructure/hq:${version} harbor2.vantage6.ai/infrastructure/hq:${major_name}
+          docker tag harbor2.vantage6.ai/infrastructure/hq:${version} harbor2.vantage6.ai/infrastructure/hq:${major_name}-live
           docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/algorithm-store:${version} harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
           docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:${major_name}
@@ -313,10 +367,10 @@ jobs:
           docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
 
       - name: Push docker images
-        if: ${{  env.stage == ''  &&  env.major_name != '' }}
+        if: ${{  env.major_name != '' && (env.stage == '' || (env.minor == 0 && env.patch == 0))}}
         run: |
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
+          docker push harbor2.vantage6.ai/infrastructure/hq:${major_name}
+          docker push harbor2.vantage6.ai/infrastructure/hq:${major_name}-live
           docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
           docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}
@@ -329,19 +383,6 @@ jobs:
         run: |
           docker tag harbor2.vantage6.ai/infrastructure/alpine:${version} harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
           docker push harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-client:${version} harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-configurator:${version} harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version} harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
-
-          docker tag harbor2.vantage6.ai/infrastructure/squid:${version} harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
-
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,
@@ -368,17 +409,24 @@ jobs:
         with:
           ref: ${{ env.branch }}
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.13"
 
-      - name: Install dependencies
+      - name: Install uv
         run: |
-          python -m pip install --upgrade pip
-          pip install click
-          pip install wheel
-          pip install twine
+          pip install uv
+
+      - name: Create virtual environment
+        run: |
+          uv venv --python 3.13
+          . .venv/bin/activate
+          echo PATH=$PATH >> $GITHUB_ENV
+
+      - name: Install twine for publishing
+        run: |
+          uv pip install twine
 
       - name: Build project
         id: make
@@ -393,30 +441,3 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           make publish
-
-  # When the project is built and released the Discord community is notified.
-  notify:
-    runs-on: ubuntu-latest
-    needs: [version, build-n-release, deploy]
-    env:
-      version: ${{ needs.version.outputs.version }}
-      stage: ${{ needs.version.outputs.stage }}
-      branch: ${{ needs.version.outputs.branch }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.branch }}
-
-      - name: Install dependencies
-        run: |
-          pip install discord.py==1.7.3
-          pip install click
-
-      - name: Notify Discord community
-        if: ${{  env.stage == '' }}
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_RELEASE_TOKEN }}
-        run: |
-          make community FLAGS="--version $version --notes '' \
-            --post-notes ''"

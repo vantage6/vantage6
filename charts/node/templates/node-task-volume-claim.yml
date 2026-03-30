@@ -1,0 +1,17 @@
+{{- if not (lookup "v1" "PersistentVolumeClaim" "" (printf "%s-task-pvc" .Release.Name)) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-task-pvc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.node.persistence.tasks.size }}
+  storageClassName: {{ .Values.node.persistence.tasks.storageClass }}
+  selector:
+    matchLabels:
+      type: local-tasks
+{{- end }}

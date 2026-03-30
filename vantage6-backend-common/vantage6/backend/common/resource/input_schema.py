@@ -1,5 +1,6 @@
 from typing import List
-from marshmallow import Schema, fields, validates, ValidationError
+
+from marshmallow import Schema, ValidationError, fields, validates
 from marshmallow.validate import Length, Range
 
 MAX_LEN_NAME = 128
@@ -80,7 +81,7 @@ class RoleInputSchema(_NameValidationSchema):
             raise ValidationError("Role name cannot be one of the default roles")
 
 
-class ServerRoleInputSchema(RoleInputSchema):
-    """Schema for validating input for creating a server role."""
+class HQRoleInputSchema(RoleInputSchema):
+    """Schema for validating input for creating a HQ role."""
 
     organization_id = fields.Integer(validate=Range(min=1))

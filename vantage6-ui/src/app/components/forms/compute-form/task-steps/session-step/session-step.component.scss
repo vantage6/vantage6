@@ -1,0 +1,18 @@
+.form {
+  .margin-bottom-4 {
+    margin-bottom: 1rem;
+  }
+
+  .node-alert {
+    margin-bottom: 1rem;
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  button[matStepperNext] {
+    margin-top: 1rem;
+  }
+}

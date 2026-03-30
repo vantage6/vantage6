@@ -1,26 +1,35 @@
-# TODO this is almost a copy of the same file in the server package. Refactor
+import inspect as class_inspect
 import logging
 import os
-import inspect as class_inspect
-from typing import Any
 from time import sleep
+from typing import Any
+
 from flask.globals import g
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import Column, Integer, inspect, Table, exists
-from sqlalchemy.orm.session import Session
-from sqlalchemy.ext.declarative import declared_attr, DeclarativeMeta
-from sqlalchemy.orm.clsregistry import _ModuleMarker
-from sqlalchemy import create_engine
+from sqlalchemy import (
+    Column,
+    Integer,
+    Table,
+    create_engine,
+    exists,
+    inspect,
+    select,
+    text,
+)
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.orm import scoped_session, sessionmaker, RelationshipProperty
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.declarative import DeclarativeMeta, declared_attr
+from sqlalchemy.orm import RelationshipProperty, scoped_session, sessionmaker
+from sqlalchemy.orm.clsregistry import _ModuleMarker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
+
 from vantage6.common import logger_name
+
 from vantage6.backend.common import session
 from vantage6.backend.common.globals import (
     MAX_NUMBER_OF_ATTEMPTS,
     RETRY_DELAY_IN_SECONDS,
 )
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -41,6 +50,8 @@ class BaseDatabase:
         self.Session = None
         self.object_session = None
         self.allow_drop_all = False
+        self.session_flask_requests = None
+        self.session_outside_flask_requests = None
 
     def _drop_all(self, base: DeclarativeMeta):
         """
@@ -70,6 +81,8 @@ class BaseDatabase:
         unit testing.
         """
         self._drop_all(base)
+        if self.engine:
+            self.engine.dispose()
         self.engine = None
         self.Session = None
         self.object_session = None
@@ -111,27 +124,22 @@ class BaseDatabase:
         for attempt in range(MAX_NUMBER_OF_ATTEMPTS):
             try:
                 self.engine = create_engine(uri, pool_pre_ping=True)
-                # we can call Session() to create a session, if a session already
-                # exists it will return the same session (!). implicit access to the
-                # Session (without calling it first). The scoped session is scoped to
-                # the local thread the process is running in.
-                self.session_a = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False)
-                )
-                self.session_a.configure(bind=self.engine)
 
-                # TODO BvB 7/2/2024 I think this session is not necessary as algorithm
-                # store does not use iPython shell
-                # because the Session factory returns the same session (if one exists
-                # already) we need a second factory to create an alternative session.
-                # this is required if we use both the flask session and the iPython.
-                # Because the flask session is managed by the hooks `pre_request` and
-                # `post request`. If we would use the same session for other tasks, the
-                # session can be terminated unexpectedly.
-                self.session_b = scoped_session(
+                # Create a session for flask requests. If a session already
+                # exists it will return the same session (!).
+                self.session_flask_requests = scoped_session(
                     sessionmaker(autocommit=False, autoflush=False)
                 )
-                self.session_b.configure(bind=self.engine)
+                self.session_flask_requests.configure(bind=self.engine)
+
+                # Create alternative session to use outside of flask requests.
+                # If using the same session for both flask requests and outside of
+                # flask requests, the session can be terminated unexpectedly by flask
+                # `pre_request` and `post_request` hooks.
+                self.session_outside_flask_requests = scoped_session(
+                    sessionmaker(autocommit=False, autoflush=False)
+                )
+                self.session_outside_flask_requests.configure(bind=self.engine)
 
                 # short hand to obtain a object-session.
                 self.object_session = Session.object_session
@@ -148,8 +156,9 @@ class BaseDatabase:
                 else:
                     raise Exception(
                         f"Unable to connect to the database!"
-                        f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and {max_time_in_minutes} minutes."
-                        f" Please ensure the database is up and running."
+                        f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and "
+                        f"{max_time_in_minutes} minutes."
+                        " Please ensure the database is up and running."
                     ) from e
 
         log.info("Database initialized!")
@@ -231,14 +240,19 @@ class BaseDatabase:
         col_name = column.key
         col_type = column.type.compile(self.engine.dialect)
         tab_name = table_cls.__tablename__
-        log.warn(
+        log.warning(
             "Adding column '%s' to table '%s' as it did not exist yet",
             col_name,
             tab_name,
         )
-        self.engine.execute(
-            'ALTER TABLE "%s" ADD COLUMN %s %s' % (tab_name, col_name, col_type)
-        )
+        with self.engine.connect() as conn:
+            with conn.begin():
+                conn.execute(
+                    text(
+                        'ALTER TABLE "%s" ADD COLUMN %s %s'
+                        % (tab_name, col_name, col_type)
+                    )
+                )
 
     @staticmethod
     def is_column_missing(
@@ -339,9 +353,9 @@ class BaseDatabaseSessionManager:
             The database class - a derived class type of BaseDatabase
         """
         if db_session_mgr.in_flask_request():
-            g.session = database().session_a
+            g.session = database().session_flask_requests
         else:
-            session.session = database().session_b
+            session.session = database().session_outside_flask_requests
 
     @staticmethod
     def clear_session() -> None:
@@ -394,11 +408,13 @@ class BaseModelBase:
 
         result = None
 
+        stmt = select(cls)
         if id_ is None:
-            result = session_.query(cls).all()
+            result = session_.scalars(stmt).all()
         else:
             try:
-                result = session_.query(cls).filter_by(id=id_).one()
+                stmt = stmt.where(cls.id == id_)
+                result = session_.scalars(stmt).one()
             except NoResultFound:
                 result = None
 
@@ -463,7 +479,7 @@ class BaseModelBase:
             True if the value exists, False otherwise
         """
         session_ = db_session_mgr.get_session()
-        result = session_.query(exists().where(getattr(cls, field) == value)).scalar()
+        result = session_.scalar(select(exists().where(getattr(cls, field) == value)))
         session_.commit()
         return result
 
@@ -487,3 +503,25 @@ class BaseModelBase:
             f"Relations: \n{relations}\n"
             f"Methods: \n{methods}\n"
         )
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Check if the object is equal to another object.
+
+        Parameters
+        ----------
+        other: Any
+            The other object to compare to
+
+        Returns
+        -------
+        bool
+            True if the objects are equal, False otherwise
+        """
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        """
+        Hash the object.
+        """
+        return self.id

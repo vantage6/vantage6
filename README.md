@@ -14,9 +14,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/vantage6/vantage6/badge.svg?branch=main)](https://coveralls.io/github/vantage6/vantage6?branch=main)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2e60ac3b3f284620805f7399cba317be)](https://app.codacy.com/gh/vantage6/vantage6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://zenodo.org/badge/492818831.svg)](https://zenodo.org/badge/latestdoi/492818831)
-[![Discord](https://img.shields.io/discord/643526403207331841)](https://discord.gg/yAyFf6Y)
 [![Research software directory](https://img.shields.io/badge/rsd-vantage6-deepskyblue)](https://research-software-directory.org/software/vantage6)
-
 
 </h3>
 
@@ -33,7 +31,10 @@
 
 This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website](https://vantage6.ai) to learn more!
 
-You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord)](https://discord.gg/yAyFf6Y) channel.
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If
+you have any questions, suggestions or just want to chat about federated learning,
+please reach out on our
+[Github Discussions](https://github.com/vantage6/vantage6/discussions).
 
 ## Infrastructure overview
 
@@ -42,11 +43,15 @@ You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai
 _A High level overview of the vantage6 infrastructure. Vantage6 has both a
 client-server and peer-to-peer architecture. The client is used by the researcher to
 create (PET) computation requests. It is also used to manage users, organizations and
-collaborations. The server contains users, organizations, collaborations, tasks and
-their results. It provides a central access point for both the clients and nodes. The
-nodes have access to privacy sensitive data and handle computation requests retrieved
-from the server. Computation request are executed as separate containers on the node.
-These containers are connected to containers at other nodes by a VPN network._
+collaborations.
+The server is referred to as the 'vantage6 hub' and consists of several
+components. Most importantly, the vantage6 headquarters (HQ) contains the users,
+organizations, collaborations, tasks and their results. It provides a central access
+point for both the clients and nodes. Other important components of the hub are the
+authentication service, algorithm store, and user interface.
+The nodes have access to privacy sensitive data and handle computation requests retrieved
+from the HQ. Computation request are executed as separate containers on the node.
+These containers are connected to containers at other nodes by a internal network._
 
 ## :books: Quickstart
 
@@ -55,16 +60,19 @@ These containers are connected to containers at other nodes by a VPN network._
 The **vantage6** infrastructure is delivered in Docker images. To run these images, you
 need to have [Docker](https://docs.docker.com/get-docker/) installed. To install the
 latest version of the vantage6 CLI, you need to have
-[Python](https://www.python.org/downloads/), we recommend using an environment manager
-like [mini-conda](https://docs.conda.io/en/latest/miniconda.html).
+[Python](https://www.python.org/downloads/) v3.13. We recommend
+[uv](https://docs.astral.sh/uv/) for package management.
 
 Install the latest version of the vantage6 CLI by using:
 
 ```bash
+uv pip install vantage6
+# or, if you are using conda / pyenv / ...
 pip install vantage6
 ```
 
-This install the `v6` commands, which allows you to manage your nodes and servers. To view all available options, run:
+This installs the `v6` commands, which allows you to manage your hub and nodes. To
+view all available options, run:
 
 ```bash
 v6 --help
@@ -73,39 +81,53 @@ v6 --help
 For example you can create a local test setup by using:
 
 ```bash
-v6 dev create-demo-network
+v6 sandbox new
 ```
 
-This creates a local network with a server and two nodes. You can start the network by running:
+This creates a local network with a hub and three nodes, and also starts it. You can
+then manage this network with the following commands:
 
 ```bash
-v6 dev start-demo-network
+# stop the sandbox
+v6 sandbox stop
+# start again once you stopped the sandbox
+v6 sandbox start
+# remove sandbox files from your system
+v6 sandbox remove
 ```
 
-This will start the server and nodes in the background. You can view the logs by running:
+This will start the hub and nodes in the background. You can go to your browser and
+access the UI at ``http://localhost:30760``.
+You can view the logs by running:
 
 ```bash
 # View node logs
 v6 node attach
 
-# View server logs
-v6 server attach
+# View hub components logs
+v6 hq attach
+v6 algorithm-store attach
+v6 auth attach
 ```
 
 From here you can use the [vantage6-client](https://pypi.org/project/vantage6-client)
-to interact with the server. The demo network has a pre-configured organization with
+to interact with the hub. The demo network has a pre-configured organization with
 the following credentials:
 
-- Username: `dev_admin`
-- Password: `password`
+- Username: `admin`
+- Password: `admin`
 
 For example, you can create a new organization by running:
 
 ```python
 from vantage6.client import Client
 
-client = Client('http://127.0.0.1', 7601, '/api', log_level='debug')
-client.authenticate('dev_admin', 'password')
+client = Client(
+  hq_url='http://localhost:30761/api',
+  auth_url='http://localhost:30764',
+  log_level='debug'
+)
+client.authenticate()
 client.setup_encryption(None)
 
 client.organization.create(
@@ -124,22 +146,21 @@ You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai
 
 ### PYPI packages
 
-This repository is home to 6 PyPi packages:
+This repository is home to 8 PyPI packages:
 
-- [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and server instances_
-- [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with the vantage6-server_
+- [vantage6](https://pypi.org/project/vantage6) -> _CLI for managing node and hub instances_
+- [vantage6-client](https://pypi.org/project/vantage6-client) -> _Python client for interacting with vantage6_
 - [vantage6-algorithm-tools](https://pypi.org/project/vantage6-algorithm-tools) -> _Python tools to facilitate algorithm development_
 - [vantage6-node](https://pypi.org/project/vantage6-node) -> _Node application package_
-- [vantage6-server](https://pypi.org/project/vantage6-server) -> _Server application package_
+- [vantage6-hq](https://pypi.org/project/vantage6-hq) -> _HQ application package_
 - [vantage6-algorithm-store](https://pypi.org/project/vantage6-algorithm-store) -> _Algorithm store application package_
 - [vantage6-common](https://pypi.org/project/vantage6-common) -> _Package with common vantage6 functions_
-- [vantage6-backend-common](https://pypi.org/project/vantage6-backend-common) -> _Package with functions common to central server and algorithm store_
+- [vantage6-backend-common](https://pypi.org/project/vantage6-backend-common) -> _Package with functions common to HQ and algorithm store_
 
-**Note that when using vantage6 you do not install the _server_ and _node_ packages. These are delivered to you in Docker images.**
+**Note that when using vantage6 you do not have to install the _hq_ and _node_ packages. These are delivered to you in Docker images.**
 
 This repository also hosts the code for the vantage6 user interface (UI). The UI
-is an Angular web application that can be used to interact with the vantage6 server
-easily.
+is an Angular web application that can be used to interact with the vantage6 HQ easily.
 
 ### Docker images
 
@@ -147,21 +168,12 @@ The vantage6 infrastructure is delivered in Docker images. All Docker images are
 in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
 - `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
-- `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
+- `harbor2.vantage6.ai/infrastructure/hq:VERSION` -> _HQ application Docker image_
 - `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
 - `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
-
-Several other images are used to support the infrastructure:
-
-- `harbor2.vantage6.ai/infrastructure/infrastructure-base:VERSION` -> _Base image for the infrastructure_
-- `harbor2.vantage6.ai/infrastructure/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
-- `harbor2.vantage6.ai/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
-- `harbor2.vantage6.ai/infrastructure/vpn-client` -> _VPN image used to connect to the VPN_
-- `harbor2.vantage6.ai/infrastructure/vpn-configurator` -> _VPN image used for initialization_
-- `harbor2.vantage6.ai/infrastructure/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
 
 And finally there are some images released for algorithm development:
 
@@ -170,10 +182,10 @@ And finally there are some images released for algorithm development:
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of 
-the federated learning community. If you are interested in contributing, first of all, 
-thank you! Second, please take a look at our 
-[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html) 
+We hope to continue developing, improving, and supporting **vantage6** with the help of
+the federated learning community. If you are interested in contributing, first of all,
+thank you! Second, please take a look at our
+[contributing guidelines](https://docs.vantage6.ai/en/main/community/contribute.html)
 and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">
@@ -200,7 +212,6 @@ If you are using **vantage6**, please cite this repository as well as the accomp
 
 <p align="center">
   <a href="https://vantage6.ai">vantage6.ai</a> •
-  <a href="https://discord.gg/yAyFf6Y">Discord</a> •
-  <a href="https://vantage6.discourse.group/">Discourse</a> •
+  <a href="https://github.com/vantage6/vantage6/discussions">Github Discussions</a> •
   <a href="https://docs.vantage6.ai">User documentation</a>
 </p>

@@ -10,6 +10,7 @@ export interface TemplateTask {
 interface FixedTemplateTask {
   name?: string;
   description?: string;
+  session_id?: number;
   organizations?: string[];
   databases?: FixedDatabase[];
   arguments?: FixedArgument[];

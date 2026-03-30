@@ -24,26 +24,26 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-algorithm-assign-review',
-    templateUrl: './algorithm-assign-review.component.html',
-    styleUrl: './algorithm-assign-review.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        NgFor,
-        MatOption,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-assign-review',
+  templateUrl: './algorithm-assign-review.component.html',
+  styleUrl: './algorithm-assign-review.component.scss',
+  imports: [
+    PageHeaderComponent,
+    NgIf,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    NgFor,
+    MatOption,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmAssignReviewComponent extends BaseCreateComponent implements OnInit, OnDestroy {
   @Input() algoID: string = '';
@@ -88,10 +88,10 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
     if (!store) {
       return;
     }
-    this.algorithm = await this.algorithmService.getAlgorithm(store.url, this.algoID);
-    let reviewers = await this.storeUserService.getUsers(store.url, { reviewers_for_algorithm_id: this.algorithm.id });
+    this.algorithm = await this.algorithmService.getAlgorithm(store, this.algoID);
+    let reviewers = await this.storeUserService.getUsers(store, { reviewers_for_algorithm_id: this.algorithm.id });
     // get existing reviews for this algorithm and remove those reviewers from the list
-    this.existing_reviews = await this.reviewService.getReviews(store.url, { algorithm_id: this.algoID });
+    this.existing_reviews = await this.reviewService.getReviews(store, { algorithm_id: this.algoID });
     reviewers = reviewers.filter((reviewer) => !this.existing_reviews.some((review) => review.reviewer.id === reviewer.id));
 
     // the remaining users are still assignable as reviewer
@@ -113,7 +113,7 @@ export class AlgorithmAssignReviewComponent extends BaseCreateComponent implemen
         algorithm_id: Number(this.algoID),
         reviewer_id: reviewer
       };
-      await this.reviewService.createReview(store.url, reviewCreate);
+      await this.reviewService.createReview(store, reviewCreate);
     });
     await Promise.all(promises);
     this.isLoading = false;

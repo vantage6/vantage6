@@ -9,8 +9,9 @@ regularly. In that section, we explain the fundamentals of algorithm containers
 in more detail than in this guide.
 
 Also, note that this guide is mainly aimed at developers who want to develop
-their algorithm in Python, although we will try to clearly indicate where
-this differs from algorithms written in other languages.
+their algorithm in Python, although we will make an effort to indicate where
+this differs from algorithms written in other programming languages. Writing your algorithm in
+Python is recommended because it is currently the best supported  language for vantage6.
 
 .. _algo-dev-create-algorithm:
 
@@ -30,11 +31,6 @@ After doing so, you will have a new folder with the name of your algorithm,
 boilerplate code and a checklist in the README.md file that you can follow to
 complete your algorithm.
 
-.. note::
-   There is also a `boilerplate for R <https://github.com/IKNL/vtg.tpl>`_,
-   but this is not flexible and it is not updated as frequently as the Python
-   boilerplate.
-
 Setting up your environment
 ---------------------------
 
@@ -50,11 +46,11 @@ package.
 
    # create a Python environment. Be sure to replace <my-algorithm-env> with
    # the name of your environment.
-   conda create -n <my-algorithm-env> python=3.10
-   conda activate <my-algorithm-env>
+   uv venv --python 3.13
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
    # install the algorithm dependencies
-   pip install -r requirements.txt
+   uv sync
 
 Also, it is always good to use a version control system such as ``git`` to
 keep track of your changes. An initial commit of the boilerplate code could be:
@@ -67,7 +63,7 @@ keep track of your changes. An initial commit of the boilerplate code could be:
    git commit -m "Initial commit"
 
 Note that having your code in a git repository is necessary if you want to
-:ref:`update your algorithm <algo-dev-update-algo>`.
+:ref:`update your algorithm <algo-dev-update-algo>` at a later stage.
 
 Implementing your algorithm
 ---------------------------
@@ -78,38 +74,6 @@ to add your own code.
 
 You may wonder why the boilerplate code is structured the way it is. This
 is explained in the :ref:`code structure section <algo-code_structure>`.
-
-.. _algo-env-vars:
-
-Environment variables
----------------------
-
-The algorithms have access to several environment variables. You can also
-specify additional environment variables via the ``algorithm_env`` option
-in the node configuration files (see the
-:ref:`example node configuration file <node-configure-structure>`).
-
-Environment variables provided by the vantage6 infrastructure are used
-to locate certain files or to add local configuration settings into the
-container. These are usually used in the Python wrapper and you don't normally
-need them in your functions. However, you can access them in your functions
-as follows:
-
-.. code:: python
-
-   def my_function():
-       # environment variable that specifies the input file
-       input_file = os.environ["INPUT_FILE"]
-       # environment variable that specifies the database URI for the database with
-       # the 'default' label
-       default_database_uri = os.environ["DEFAULT_DATABASE_URI"]
-
-       # do something with the input file and database URI
-       pass
-
-The environment variables that you specify in the node configuration file
-can be used in the exact same manner. You can view all environment variables
-that are available to your algorithm by ``print(os.environ)``.
 
 Returning results
 -----------------
@@ -128,36 +92,65 @@ These results will be returned to the user after the algorithm has finished.
 
 .. warning::
 
-    The results that you return should be JSON serializable. This means that
-    you cannot, for example, return a ``pandas.DataFrame`` or a
-    ``numpy.ndarray`` (such objects may not be readable to a non-Python using
-    recipient or may even be insecure to send over the internet). They should
-    be converted to a JSON-serializable format first.
+    The results that you return should ideally be JSON serializable. This means that
+    you should not, for example, return a ``pandas.DataFrame`` or a
+    ``numpy.ndarray``. Such objects may not be readable to a non-Python-using
+    recipient, or may even be insecure to send over the internet. They should
+    be converted to a JSON-serializable format first (e.g. with ``df.to_json()`` in
+    pandas).
+
+.. _algo-env-vars:
+
+Environment variables
+---------------------
+
+The algorithms have access to several environment variables. You can also
+specify additional environment variables via the ``algorithm_env`` option
+in the node configuration files (see the
+:ref:`example node configuration file <node-configure-structure>`). You can access
+environment variables in your functions as follows:
+
+.. code:: python
+
+   import os
+
+   def my_function():
+       # environment variable that specifies the input file
+       env_var = os.environ["ENV_VAR_SPECIFIED_IN_NODE_CONFIG"]
+
+       # do something with the input file and database URI
+       pass
+
+You can view all environment variables that are available to your algorithm by
+``print(os.environ)``. This includes a number of environment variables that are
+provided by the vantage6 infrastructure.
 
 Example functions
 -----------------
 
-Just an example of how you can implement your algorithm:
+Below are simple but typical examples of different types of algorithm functions -
+central, partial, data extraction, and preprocessing functions.
 
 Central function
 ~~~~~~~~~~~~~~~~
 
 .. code:: python
 
-  from vantage6.algorithm.tools.decorators import algorithm_client
-  from vantage6.algorithm.client import AlgorithmClient
-  # info and error can be used to log algorithm events
-  from vantage6.algorithm.tools.util import info, error
+   from vantage6.algorithm.decorator.algorithm_client import algorithm_client
+   from vantage6.algorithm.decorator.action import central
+   from vantage6.algorithm.client import AlgorithmClient
+   from vantage6.algorithm.tools.util import info, error
 
+   @central
    @algorithm_client
    def main(client: AlgorithmClient, *args, **kwargs):
       # Run partial function.
+      info("Creating subtask for partial function")
       task = client.task.create(
-         {
-            # Method name should match the name of the partial function used/created
-            "method": "my_partial_function",
-            "args": args,
-            "kwargs": kwargs
+         method="my_partial_function",
+         arguments={
+            "function_argument_1": "value_1",
+            "function_argument_2": "value_2"
          },
          organizations=[1, 2]
       )
@@ -174,10 +167,12 @@ Partial function
 .. code:: python
 
    import pandas as pd
-   from vantage6.algorithm.tools.decorators import data
+   from vantage6.algorithm.tools.decorator import dataframe
+   from vantage6.algorithm.decorator.action import federated
 
-   @data(1)
-   def my_partial_function(data: pd.DataFrame, column_name: str):
+   @federated
+   @dataframe(1)
+   def add_one_and_sum(data: pd.DataFrame, column_name: str):
        # do something with the data
        data[column_name] = data[column_name] + 1
 
@@ -186,23 +181,177 @@ Partial function
            "result": sum(data[colum_name].to_list())
        }
 
+Data extraction function
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import os
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.action import data_extraction
+   from vantage6.algorithm.tools.util import info
+
+   @data_extraction
+   def read_csv(db_connection_details: dict):
+       info("Extracting data")
+
+       # for a CSV database, the URI is the path to the CSV file
+       df = pd.read_csv(db_connection_details["uri"])
+
+    @data_extraction
+    def read_sql_database(db_connection_details: dict):
+       # for a SQL database, the URI is the connection string. Environment variables
+       # such as username+password can be provided in the node configuration file.
+       df = pd.read_sql_query(
+         db_connection_details["uri"],
+         db_connection_details["query"],
+         os.getenv("USERNAME"),
+         os.getenv("PASSWORD"),
+      )
+
+       return df
+
+Note that the ``USERNAME`` and ``PASSWORD`` environment variables are not provided by the
+vantage6 infrastructure. They should be added to the node configuration file as
+explained in the :ref:`algo-env-vars` section.
+
+Preprocessing function
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import pandas as pd
+
+   from vantage6.algorithm.decorator.action import preprocessing
+   from vantage6.algorithm.tools.util import info
+
+   @preprocessing
+   def add_one(df: pd.DataFrame, column_name: str):
+       # do some preprocessing with the data
+       df[column_name] = df[column_name] + 1
+       return df
+
+.. _algo-functions-provided:
+
+Functions provided by the vantage6 infrastructure
+-------------------------------------------------
+
+There are already some data extraction and preprocessing functions provided by the
+vantage6 infrastructure. These contain the most common data extractions (such as
+CSV, Excel, Parquet and basic SQL wrappers) and common preprocessing transformations.
+
+You can make these functions available in your algorithm by importing them from the
+vantage6 algorithm tools:
+
+.. code:: python
+
+   # in your algorithm's __init__.py file
+   from vantage6.algorithm.data_extraction import *
+   from vantage6.algorithm.preprocessing import *
+
+.. note::
+
+   As algorithm developer, you should keep in mind that error messages may contain
+   sensitive information. In Python, we often see Pandas errors when manipulating data,
+   for instance that a certain data value is not a valid date.
+
+   To help you keep such sensitive information private, vantage6
+   provides a decorator that can be used to handle pandas errors. This decorator will
+   catch all pandas errors and return a generic error message. You can use this
+   decorator by adding it to your algorithm function:
+
+   .. code:: python
+
+      from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+
+      @handle_pandas_errors
+      def my_function(data: pd.DataFrame):
+         return data
+
+   All data extraction and preprocessing functions provided by the vantage6 algorithm
+   tools package are decorated with the ``handle_pandas_errors`` decorator, so that any
+   pandas-related error occurring during the execution of the function will be caught
+   and a generic error message will be returned instead of the traceback. Note that
+   this decorator does not catch all errors, so you should still be careful with the
+   data you handle in your algorithm functions.
+
 .. _mock-test-algo-dev:
 
 Testing your algorithm
 ----------------------
 
-It can be helpful to test your algorithm outside of Docker using the
-``MockAlgorithmClient``. This may save
-time as it does not require you to set up a test infrastructure with a vantage6
-server and nodes, and allows you to test your algorithm without building a
-Docker image every time. The algorithm boilerplate code comes with a test file that
-you can use to test your algorithm using the ``MockAlgorithmClient`` - you can
+It can be helpful to test your algorithm outside of a containerized environment using
+the ``MockNetwork``. This may save time as it does not require you to set up a test
+infrastructure with a vantage6 hub and nodes, and allows you to test your algorithm
+without building a Docker image every time. The algorithm boilerplate code comes with a
+test file that you can use to test your algorithm using the ``MockNetwork`` - you can
 of course extend that to add more or different tests.
 
-The :ref:`MockAlgorithmClient <mock-client-api-ref>` has the same interface as
-the ``AlgorithmClient``, so it should be easy to switch between the two. An
-example of how you can use the ``MockAlgorithmClient`` to test your algorithm
-is included in the boilerplate code.
+The ``MockNetwork`` comes with a ``MockAlgorithmClient`` and a ``MockUserClient`` that
+have the same interface as the ``AlgorithmClient`` and the ``UserClient``, so it should
+be easy to switch between the two. The following example shows how to use the
+``MockUserClient`` to test your algorithm:
+
+.. code:: python
+
+        from vantage6.algorithm.mock.mock_network import MockNetwork
+        network = MockNetwork(
+            module_name="my_algorithm",
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 2
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+                # datasets for node 3
+                {"dataset_1": {"database": "mock_data.csv", "db_type": "csv"}},
+            ],
+        )
+        client = network.user_client
+        client.dataframe.create(
+            label="dataset_1", method="my_method", arguments={}
+        )
+        client.task.create(
+            method="my_method",
+            organizations=[0],
+            arguments={
+                "example_argument": 10
+            },
+            databases=[{"label": "dataset_1"}]
+        )
+        results = client.result.from_task(task.get("id"))
+        print(results)
+
+Or in case you do not want to test data extraction you can provide a pandas
+DataFrame instead of a string for the database value:
+
+.. code:: python
+
+        import pandas as pd
+        from vantage6.algorithm.mock.mock_network import MockNetwork
+
+        network = MockNetwork(
+            module_name="my_algorithm",
+            datasets=[
+                # datasets for node 1
+                {"dataset_1": pd.DataFrame({"column_1": [1, 2, 3]})},
+                # datasets for node 2
+                {"dataset_1": pd.DataFrame({"column_1": [4, 5, 6]})},
+                # datasets for node 3
+                {"dataset_1": pd.DataFrame({"column_1": [7, 8, 9]})},
+            ],
+        )
+        client = network.user_client
+        client.task.create(
+            method="my_method",
+            organizations=[0],
+            arguments={
+                "example_argument": 10
+            },
+            databases=[{"label": "dataset_1"}]
+        )
+        results = client.result.from_task(task.get("id"))
+        print(results)
 
 Writing documentation
 ---------------------
@@ -211,14 +360,11 @@ It is important that you add documentation of your algorithm so that users
 know how to use it. In principle, you may choose any format of documentation,
 and you may choose to host it anywhere you like. However, in our experience it
 works well to keep your documentation close to your code. We recommend using the
-``readthedocs`` platform to host your documentation. Alternatively, you could
-use a ``README`` file in the root of your algorithm directory - if the
-documentation is not too extensive, this may be sufficient.
+``readthedocs`` platform to host your documentation. A template for such documentation
+can be generated when running the ``v6 algorithm create`` command.
 
-.. note::
-
-    We intend to provide a template for the documentation of algorithms in the
-    future. This template will be based on the ``readthedocs`` platform.
+Alternatively, you could use a ``README`` file - if the documentation is not too
+extensive, e.g. the algorithm is onlyfor testing purposes, this may be sufficient.
 
 Package & distribute
 --------------------
@@ -253,77 +399,96 @@ Here are a few examples of how to build and upload your image:
     docker build -t my-user-name/algorithm-example:latest .
     docker push my-user-name/algorithm-example:latest
 
-    # Build and upload to private registry. Here you don't need to provide
-    # a username but you should write out the full image URL. Also, again you
-    # need to be logged in with ``docker login``.
+    # Build and upload to private registry. Note that to be able to use this, you need
+    # to have an account at the registry and be logged in with ``docker login``
     docker build -t harbor2.vantage6.ai/PROJECT/algorithm-example:latest .
     docker push harbor2.vantage6.ai/PROJECT/algorithm-example:latest
 
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
 
+Uploading your algorithm to the algorithm store
+-----------------------------------------------
+
+To upload your algorithm to the algorithm store, you should generate an
+``algorithm.json`` file, that contains the metadata of your algorithm, such as,
+which functions are available, which arguments are needed, etc.
+
+The easiest way to generate this file is to run the following command:
+
+.. code:: bash
+
+   v6 algorithm generate-store-json
+
+That command will help you to generate the appropriate JSON file. Note that type hints
+and docstrings are important to generate a fully correct JSON file.
+
+Once you have the ``algorithm.json`` file, you can upload it to the algorithm store
+by going to the relevant page in the UI and uploading the file.
+
 Calling your algorithm from vantage6
 ------------------------------------
 
 If you want to test your algorithm in the context of vantage6, you should
-set up a vantage6 infrastructure. You should create a server and at least one
-node (depending on your algorithm you may need more). Follow the instructions
-in the :ref:`server-admin-guide` and :ref:`node-admin-guide` to set up your
-infrastructure. If you are running them on the same machine, take care to
-provide the node with the proper address of the server as detailed
-:ref:`here <use-server-local>`.
-
-Once your infrastructure is set up, you can create a task for your algorithm.
-You can do this either via the :ref:`UI <ui>` or via the
+set up a vantage6 infrastructure. To do that quickly, you can use the ``v6 sandbox new``
+command, which will create a sandbox environment with a hub and several nodes.
+Once you have a vantage6 sandbox running, you can create a task for
+your algorithm. You can do this either via the :ref:`UI <ui>` or via the
 :ref:`Python client <pyclient-create-task>`.
 
 It is also possible to test your algorithm by running a test script on a local
-vantage6 :ref:`dev network <create-dev-network>`. This can be done by running
+vantage6 :ref:`sandbox <local-test>`. This can be done by running
 the following CLI command:
 
 .. code:: bash
 
-   v6 test client-script --create-dev-network
+   # Run your own script
+   v6 test client-script --create-sandbox --script path/to/test_script.py
 
-This will create a dev network and run the test script included in the repository on the
-latest version of the vantage6 infrastructure.
-To let the script run the algorithm, the arguments needed by the task should be added to
-``algo_test_arguments.py``
+   # OR
+   # provide task arguments to the default test script
+   v6 test client-script --create-sandbox --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'method': 'my_method', 'arguments': {'column_name': 'my_column'}, 'databases': [{'label': 'db_label'}]}"
 
-A custom test script can be used by running:
+.. note::
 
-.. code:: bash
+    For v5.0, you need to have a sandbox that already has extracted dataframes in the
+    database, or the test script should create them. We hope to add features to make
+    this easier in the future.
 
-   v6 test client-script --create-dev-network --script path/to/test_script.py
 
-In this case, the script should contain the code to run and test the algorithm, and return the
-execution result. For example, to test the average algorithm, the script could look like this:
+The commands above will create a sandbox and run the test script on that sandbox. The
+infrastructure contains a default test script that creates a task where only the
+arguments for ``client.task.create`` have to be provided.
+
+The more flexible, but more complex, option is to write your own test script.
+In this case, the script should contain the code to run and test the algorithm, and
+return the execution result. For example, to test the average algorithm, the script
+could look like this:
 
 .. code:: python
 
     from vantage6.client import Client
-    from vantage6.common.globals import Ports
 
     def run_test():
         # Create a client and authenticate
-        client = Client("http://localhost", Ports.DEV_SERVER.value, "/api")
-        client.authenticate("dev_admin", "password")
-
-        input_ = {
-            "method": "central_average",
-            "args": [],
-            "kwargs": {"column_name": "Age"},
-        }
+        client = Client(
+            hq_url="http://localhost:30761/hq",
+            auth_url="http://localhost:30764"
+        )
+        client.authenticate()
 
         # create the task
         task = client.task.create(
-            collaboration=1,
             organizations=[1],
             name="test_average_task",
             image="harbor2.vantage6.ai/demo/average",
             description="",
-            input_=input_,
-            databases=[{"label": "olympic_athletes"}],
+            method="central_average",
+            arguments={"column_name": "Age"},
+            session=1,
+            collaboration=1,
+            databases=[{"dataframe_id": 1}],
+            action="central_compute",
         )
 
         # wait for the task to complete
@@ -335,34 +500,27 @@ execution result. For example, to test the average algorithm, the script could l
     if __name__ == "__main__":
         run_test()
 
-Another option to test the algorithm without writing a script, is to pass the arguments
-directly to the command:
-
-.. code:: bash
-
-   v6 test client-script --task-arguments "{ 'collaboration': 1, 'organizations': [1], 'name': 'task_name', 'image': 'my_image', 'description': '', 'input_': { 'method': 'my_method', 'args': [], 'kwargs': {'column_name': 'my_column'}}, 'databases': [{'label': 'db_label'}]}"
-
-After running, the network will be stopped and removed unless you specify otherwise by setting
-``--keep true`` in the command.
+After running the CLI command, sandbox created/started for this test will be
+stopped/removed unless you specify the ``--keep`` flag in the command.
 
 If a dataset different from the default ones is needed, it can be included in the
-dev network by specifying the label and the path to the dataset in the ``--add-dataset``
+sandbox by specifying the label and the path to the dataset in the ``--add-dataset``
 argument of the command:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --create-dev-network --add-dataset my_label /path/to/dataset
+   v6 test client-script --script /path/to/test_script.py --create-sandbox --add-dataset my_label /path/to/dataset
 
-If a dev network configuration exists, but the network is not running, it is possible
-to start the existing network configuration and run the test script on it:
+If a sandbox configuration exists, but the sandbox is not running, it is possible
+to start the existing sandbox and run the test script on it:
 
 .. code:: bash
 
-   v6 test client-script --script /path/to/test_script.py --start-dev-network --name my_network
+   v6 test client-script --script /path/to/test_script.py --start-sandbox --name my_sandbox
 
-If a the ``--start-dev-network`` and the ``--create-dev-network`` arguments are not specified,
-the test script will be executed on the running dev network, if active.
-
+If a the ``--start-sandbox`` and the ``--create-sandbox`` arguments are not specified,
+the test script will be executed on the running sandbox - if none are running, an error
+will be raised.
 
 
 .. _algo-dev-update-algo:
