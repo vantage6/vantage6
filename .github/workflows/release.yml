@@ -148,11 +148,13 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       tag_latest: ${{ needs.version.outputs.tag_latest }}
     steps:
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -184,11 +186,13 @@ jobs:
       branch: ${{ needs.version.outputs.branch }}
       tag_latest: ${{ needs.version.outputs.tag_latest }}
     steps:
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -234,12 +238,13 @@ jobs:
       tag_latest: ${{ needs.version.outputs.tag_latest }}
 
     steps:
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
-
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -275,33 +280,34 @@ jobs:
       stage: ${{ needs.version.outputs.stage }}
       major_name: ${{ needs.version.outputs.major_name }}
     steps:
-      - name: Login to harbor2.vantage6.ai
-        env:
-          USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          PASSWORD: ${{ secrets.DOCKER_TOKEN }}
-        run: |
-          docker login harbor2.vantage6.ai -u $USERNAME -p $PASSWORD
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Pull docker images
         run: |
-          docker pull harbor2.vantage6.ai/infrastructure/server:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/node:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/algorithm-store:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/ui:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/alpine:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-client:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/vpn-configurator:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version}
-          docker pull harbor2.vantage6.ai/infrastructure/squid:${version}
+          docker pull ghcr.io/${{ github.repository }}/server:${version}
+          docker pull ghcr.io/${{ github.repository }}/node:${version}
+          docker pull ghcr.io/${{ github.repository }}/algorithm-store:${version}
+          docker pull ghcr.io/${{ github.repository }}/ui:${version}
+          docker pull ghcr.io/${{ github.repository }}/alpine:${version}
+          docker pull ghcr.io/${{ github.repository }}/vpn-client:${version}
+          docker pull ghcr.io/${{ github.repository }}/vpn-configurator:${version}
+          docker pull ghcr.io/${{ github.repository }}/ssh-tunnel:${version}
+          docker pull ghcr.io/${{ github.repository }}/squid:${version}
 
       - name: Tag docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker tag harbor2.vantage6.ai/infrastructure/server:${version} harbor2.vantage6.ai/infrastructure/server:${major_name}-live
-          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major_name}
-          docker tag harbor2.vantage6.ai/infrastructure/algorithm-store:${version} harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
-          docker tag harbor2.vantage6.ai/infrastructure/ui:${version} harbor2.vantage6.ai/infrastructure/ui:${major_name}
+          docker tag ghcr.io/${{ github.repository }}/server:${version} ghcr.io/${{ github.repository }}/server:${major_name}
+          docker tag ghcr.io/${{ github.repository }}/server:${version} ghcr.io/${{ github.repository }}/server:${major_name}-live
+          docker tag ghcr.io/${{ github.repository }}/node:${version} ghcr.io/${{ github.repository }}/node:${major_name}
+          docker tag ghcr.io/${{ github.repository }}/algorithm-store:${version} ghcr.io/${{ github.repository }}/algorithm-store:${major_name}
+          docker tag ghcr.io/${{ github.repository }}/ui:${version} ghcr.io/${{ github.repository }}/ui:${major_name}
 
       - # Release a node image for major.minor. This is released for any
         # non-candidate release or if no non-candidate release has been made yet
@@ -309,17 +315,17 @@ jobs:
         name: Build latest node minor image
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: |
-          docker tag harbor2.vantage6.ai/infrastructure/node:${version} harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/node:${major}.${minor}
+          docker tag ghcr.io/${{ github.repository }}/node:${version} ghcr.io/${{ github.repository }}/node:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/node:${major}.${minor}
 
       - name: Push docker images
         if: ${{  env.stage == ''  &&  env.major_name != '' }}
         run: |
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}
-          docker push harbor2.vantage6.ai/infrastructure/server:${major_name}-live
-          docker push harbor2.vantage6.ai/infrastructure/node:${major_name}
-          docker push harbor2.vantage6.ai/infrastructure/algorithm-store:${major_name}
-          docker push harbor2.vantage6.ai/infrastructure/ui:${major_name}
+          docker push ghcr.io/${{ github.repository }}/server:${major_name}
+          docker push ghcr.io/${{ github.repository }}/server:${major_name}-live
+          docker push ghcr.io/${{ github.repository }}/node:${major_name}
+          docker push ghcr.io/${{ github.repository }}/algorithm-store:${major_name}
+          docker push ghcr.io/${{ github.repository }}/ui:${major_name}
 
       - # Release matching support images for major.minor. This is released for any
         # non-candidate release or if no non-candidate release has been made yet
@@ -327,21 +333,20 @@ jobs:
         name: Build latest minor version support images
         if: ${{ env.stage == '' || env.patch == 0 }}
         run: |
-          docker tag harbor2.vantage6.ai/infrastructure/alpine:${version} harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/alpine:${major}.${minor}
+          docker tag ghcr.io/${{ github.repository }}/alpine:${version} ghcr.io/${{ github.repository }}/alpine:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/alpine:${major}.${minor}
 
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-client:${version} harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-client:${major}.${minor}
+          docker tag ghcr.io/${{ github.repository }}/vpn-client:${version} ghcr.io/${{ github.repository }}/vpn-client:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/vpn-client:${major}.${minor}
 
-          docker tag harbor2.vantage6.ai/infrastructure/vpn-configurator:${version} harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/vpn-configurator:${major}.${minor}
+          docker tag ghcr.io/${{ github.repository }}/vpn-configurator:${version} ghcr.io/${{ github.repository }}/vpn-configurator:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/vpn-configurator:${major}.${minor}
 
-          docker tag harbor2.vantage6.ai/infrastructure/ssh-tunnel:${version} harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/ssh-tunnel:${major}.${minor}
+          docker tag ghcr.io/${{ github.repository }}/ssh-tunnel:${version} ghcr.io/${{ github.repository }}/ssh-tunnel:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/ssh-tunnel:${major}.${minor}
 
-          docker tag harbor2.vantage6.ai/infrastructure/squid:${version} harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
-          docker push harbor2.vantage6.ai/infrastructure/squid:${major}.${minor}
-
+          docker tag ghcr.io/${{ github.repository }}/squid:${version} ghcr.io/${{ github.repository }}/squid:${major}.${minor}
+          docker push ghcr.io/${{ github.repository }}/squid:${major}.${minor}
 
   # Build an release all the vantage6 infrastructure packages. For all
   # the packages it will (1) update the version as specified in the tag,

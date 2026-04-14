@@ -146,34 +146,34 @@ easily.
 The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
 in our private [Harbor](https://goharbor.io/) registry. The most important images are:
 
-- `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
-- `harbor2.vantage6.ai/infrastructure/server:VERSION` -> _Server application Docker image_
-- `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
-- `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
+- `ghcr.io/vantage6/node:VERSION` -> _Node application Docker image_
+- `ghcr.io/vantage6/server:VERSION` -> _Server application Docker image_
+- `ghcr.io/vantage6/ui:VERSION` -> _User interface Docker image_
+- `ghcr.io/vantage6/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
 
 Several other images are used to support the infrastructure:
 
-- `harbor2.vantage6.ai/infrastructure/infrastructure-base:VERSION` -> _Base image for the infrastructure_
-- `harbor2.vantage6.ai/infrastructure/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
-- `harbor2.vantage6.ai/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
-- `harbor2.vantage6.ai/infrastructure/vpn-client` -> _VPN image used to connect to the VPN_
-- `harbor2.vantage6.ai/infrastructure/vpn-configurator` -> _VPN image used for initialization_
-- `harbor2.vantage6.ai/infrastructure/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
+- `ghcr.io/vantage6/infrastructure-base:VERSION` -> _Base image for the infrastructure_
+- `ghcr.io/vantage6/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
+- `ghcr.io/vantage6/alpine` -> _Alpine image used for vpn traffic forwarding_
+- `ghcr.io/vantage6/vpn-client` -> _VPN image used to connect to the VPN_
+- `ghcr.io/vantage6/vpn-configurator` -> _VPN image used for initialization_
+- `ghcr.io/vantage6/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
 
 And finally there are some images released for algorithm development:
 
-- `harbor2.vantage6.ai/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
-- `harbor2.vantage6.ai/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
+- `ghcr.io/vantage6/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
+- `ghcr.io/vantage6/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
 ## :gift_heart: Join the community!
 
-We hope to continue developing, improving, and supporting **vantage6** with the help of 
-the federated learning community. If you are interested in contributing, first of all, 
-thank you! Second, please take a look at our 
-[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html) 
+We hope to continue developing, improving, and supporting **vantage6** with the help of
+the federated learning community. If you are interested in contributing, first of all,
+thank you! Second, please take a look at our
+[contributing guidelines](https://docs.vantage6.ai/en/main/devops/contribute.html)
 and our [code of conduct](CODE_OF_CONDUCT.md).
 
 <a href="https://github.com/vantage6/vantage6/graphs/contributors">

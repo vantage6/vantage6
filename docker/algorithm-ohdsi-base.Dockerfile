@@ -4,7 +4,7 @@ ARG BASE=4.0
 # We could do this by supplying an environment var or store a requirements.txt
 # file in the repo.however for now lets always use the latest in a build.
 # ARG OHDSI_VERSION=0.3.2
-FROM harbor2.vantage6.ai/infrastructure/algorithm-base:${BASE}
+FROM ghcr.io/vantage6/algorithm-base:${BASE}
 
 LABEL version=${TAG}
 # LABEL ohdsi_version=${OHDSI_VERSION}
@@ -53,4 +53,3 @@ RUN pip install psycopg2-binary
 # FIXME FM 5-9-2023: This is a bit to broad, it would be better to figure out
 # a way to only set this for the OHDSI R packages.
 ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server/
-

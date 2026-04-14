@@ -67,13 +67,13 @@ the following steps to test a release:
   .. code:: bash
 
     v6 dev create-demo-network \
-        -i harbor2.vantage6.ai/infrastructure/server:<version> \
-        --ui-image harbor2.vantage6.ai/infrastructure/ui:<version>
+        -i ghcr.io/vantage6/server:<version> \
+        --ui-image ghcr.io/vantage6/ui:<version>
 
     v6 dev start-demo-network \
-        --server-image harbor2.vantage6.ai/infrastructure/server:<version> \
-        --node-image harbor2.vantage6.ai/infrastructure/node:<version> \
-        --store-image harbor2.vantage6.ai/infrastructure/algorithm-store:<version>
+        --server-image ghcr.io/vantage6/server:<version> \
+        --node-image ghcr.io/vantage6/node:<version> \
+        --store-image ghcr.io/vantage6/algorithm-store:<version>
 
 4. *Test code changes*. Go through all issues that are part of the new release
    and test if they work as intended.
@@ -218,8 +218,8 @@ Docker images can be pulled manually with e.g.
 
 ::
 
-  docker pull harbor2.vantage6.ai/infrastructure/server:cotopaxi
-  docker pull harbor2.vantage6.ai/infrastructure/node:3.1.0
+  docker pull ghcr.io/vantage6/server:cotopaxi
+  docker pull ghcr.io/vantage6/node:3.1.0
 
 User Interface release
 ----------------------

@@ -1,9 +1,8 @@
-version: '4'
+version: "4"
 services:
-
   vantage6-server:
     # build: .
-    image: harbor2.vantage6.ai/infrastructure/server:latest
+    image: ghcr.io/vantage6/server:latest
     dockerfile: server.Dockerfile
     ports:
       - "7601:7601"
@@ -13,12 +12,12 @@ services:
       # - ./configs/sqlite.yaml:/mnt/config.yaml
       - ./configs/postgress.yaml:/mnt/config.yaml
     command: [
-      "uwsgi --http :7601 --gevent 1000 --http-websockets
+        "uwsgi --http :7601 --gevent 1000 --http-websockets
         --http-chunked-input --http-keepalive --post-buffering 0
         --master --callable app --disable-logging
         --wsgi-file /vantage6/vantage6-server/vantage6/server/wsgi.py
-        --pyargv /mnt/config.yaml"
-    ]
+        --pyargv /mnt/config.yaml",
+      ]
 
   database:
     image: postgres:10

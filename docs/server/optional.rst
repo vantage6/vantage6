@@ -56,7 +56,7 @@ to your own environment.
     name: run-ui
     services:
       ui:
-        image: harbor2.vantage6.ai/infrastructure/ui:cotopaxi
+        image: ghcr.io/vantage6/ui:cotopaxi
         ports:
           - "8000:80"
         environment:
@@ -396,10 +396,10 @@ Just remember that you need to configure the server to use your SMTP server
 Azure Blob Storage
 """"""""""""""""""
 
-For algorithms that require large inputs or outputs, the default relational 
+For algorithms that require large inputs or outputs, the default relational
 database is not well suited. Azure blob storage can be used
 instead. In this case, references to the inputs and results will be stored
-in the database, whereas the actual data is stored in `Azure Blob Storage 
+in the database, whereas the actual data is stored in `Azure Blob Storage
 <https://azure.microsoft.com/en-us/products/storage/blobs>`__. See
 :ref:`server-configure` for more details on the configuration,
 and :ref:`blob-storage` for more information.

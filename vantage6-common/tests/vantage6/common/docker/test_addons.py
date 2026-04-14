@@ -138,7 +138,7 @@ class TestParseImageName(TestCase):
     def test_parse_image_name_with_sha_and_tag(self):
         self.assertEqual(
             parse_image_name(
-                "harbor2.vantage6.ai/infrastructure/node:4.5@sha256:1234567890abcdef"
+                "ghcr.io/vantage6/node:4.5@sha256:1234567890abcdef"
                 "1234567890abcdef1234567890abcdef1234567890abcdef"
             ),
             (
