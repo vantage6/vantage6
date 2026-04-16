@@ -22,6 +22,7 @@ from vantage6.common.docker.addons import (
     running_in_docker,
     remove_container_if_exists,
 )
+from docker import DockerClient
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
 from vantage6.node.globals import SSH_TUNNEL_IMAGE, PACKAGE_FOLDER
@@ -88,6 +89,7 @@ class SSHTunnel(DockerBaseManager):
         node_name: str,
         config_volume: str,
         tunnel_image: str | None = None,
+        docker_client: DockerClient | None = None,
     ) -> None:
         """
         Create a tunnel from the isolated network to a remote machine and
@@ -106,6 +108,8 @@ class SSHTunnel(DockerBaseManager):
             Name of the ssh config volume (or local path)
         tunnel_image : str | None, optional
             User defined image to use for the tunnel, by default None
+        docker_client : DockerClient | None, optional
+            Docker client to use, by default None (creates new client)
 
         Raises
         ------
@@ -113,7 +117,7 @@ class SSHTunnel(DockerBaseManager):
             Missing key in the configuration
         """
 
-        super().__init__(isolated_network_mgr)
+        super().__init__(isolated_network_mgr, docker_client=docker_client)
 
         # reference to the SSH tunnel container
         self.container = None

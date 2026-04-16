@@ -45,7 +45,7 @@ class DockerTaskManager(DockerBaseManager):
         self,
         image: str,
         docker_client: DockerClient,
-        vpn_manager: VPNManager,
+        vpn_manager: VPNManager | None,
         node_name: str,
         node_id: int,
         run_id: int,
@@ -72,8 +72,8 @@ class DockerTaskManager(DockerBaseManager):
             Name of docker image to be run
         docker_client: DockerClient
             Docker client instance to use
-        vpn_manager: VPNManager
-            VPN manager required to set up traffic forwarding via VPN
+        vpn_manager: VPNManager | None
+            VPN manager required to set up traffic forwarding via VPN, or None
         node_name: str
             Name of the node, to track running algorithms
         node_id: int
@@ -566,7 +566,7 @@ class DockerTaskManager(DockerBaseManager):
             environment_variables["https_proxy"] = self.proxy.address
 
             no_proxy = []
-            if self.__vpn_manager.subnet:
+            if self.__vpn_manager and self.__vpn_manager.subnet:
                 # Computing all ips in the vpn network is not feasible as the
                 # no_proxy environment variable will be too long for the
                 # container to start. So we only add the net + mask. For some

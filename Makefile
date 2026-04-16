@@ -128,6 +128,7 @@ algorithm-omop-base-image:
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest) \
 		--build-arg BASE=${BASE} \
 		--build-arg TAG=${TAG} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform linux/amd64 \
 		-f ./docker/algorithm-ohdsi-base.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -196,6 +197,7 @@ image:
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/server:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform ${PLATFORMS} \
 		-f ./docker/node-and-server.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -207,6 +209,7 @@ algorithm-store-image:
 		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-store:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform ${PLATFORMS} \
 		-f ./docker/algorithm-store.Dockerfile \
 		$(if ${_condition_push},--push .,.)
