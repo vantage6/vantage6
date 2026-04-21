@@ -1,10 +1,9 @@
 FROM debian:12
 
-RUN apt update
-RUN apt upgrade -y
-
-RUN apt install -y openssh-server
-RUN apt install -y curl
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y openssh-server curl \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
 

@@ -14,7 +14,6 @@ import logging
 import docker
 import re
 import shutil
-from docker.utils import parse_repository_tag
 
 from typing import NamedTuple
 from pathlib import Path
@@ -49,6 +48,7 @@ from vantage6.node.docker.exceptions import (
     AlgorithmContainerNotFound,
 )
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+from vantage6.node.docker.utils import login_to_registries
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -111,10 +111,11 @@ class DockerManager(DockerBaseManager):
         self,
         ctx: DockerNodeContext | NodeContext,
         isolated_network_mgr: NetworkManager,
-        vpn_manager: VPNManager,
+        vpn_manager: VPNManager | None,
         tasks_dir: Path,
         client: NodeClient,
         proxy: Squid | None = None,
+        docker_client: docker.DockerClient | None = None,
     ) -> None:
         """Initialization of DockerManager creates docker connection and
         sets some default values.
@@ -125,17 +126,19 @@ class DockerManager(DockerBaseManager):
             Context object from which some settings are obtained
         isolated_network_mgr: NetworkManager
             Manager for the isolated network
-        vpn_manager: VPNManager
-            VPN Manager object
+        vpn_manager: VPNManager | None
+            VPN Manager object, or None if VPN is not configured
         tasks_dir: Path
             Directory in which this task's data are stored
         client: NodeClient
             Client object to communicate with the server
         proxy: Squid | None
             Squid proxy object
+        docker_client: docker.DockerClient | None
+            Authenticated docker client to reuse
         """
         self.log.debug("Initializing DockerManager")
-        super().__init__(isolated_network_mgr)
+        super().__init__(isolated_network_mgr, docker_client=docker_client)
 
         self.data_volume_name = ctx.docker_volume_name
         self.ctx = ctx
@@ -170,7 +173,7 @@ class DockerManager(DockerBaseManager):
 
         # login to the registries
         docker_registries = ctx.config.get("docker_registries", [])
-        self.login_to_registries(docker_registries)
+        login_to_registries(docker_registries, docker_client=self.docker)
 
         # set database uri and whether or not it is a file
         self._set_database(ctx.databases)
@@ -648,6 +651,7 @@ class DockerManager(DockerBaseManager):
         # killed, but we don't register them as killed so they will be run
         # again when the node is restarted
         self.cleanup_tasks()
+
         for service in self.linked_services:
             self.isolated_network_mgr.disconnect(service)
 
@@ -750,8 +754,7 @@ class DockerManager(DockerBaseManager):
 
             except UnknownAlgorithmStartFail:
                 self.log.exception(
-                    f"Failed to start run {run_id} for an "
-                    "unknown reason. Retrying..."
+                    f"Failed to start run {run_id} for an unknown reason. Retrying..."
                 )
                 time.sleep(1)  # add some time before retrying the next attempt
 
@@ -794,7 +797,7 @@ class DockerManager(DockerBaseManager):
                         break
                 except AlgorithmContainerNotFound:
                     self.log.exception(
-                        "Failed to find container for " "algorithm with run_id %s",
+                        "Failed to find container for algorithm with run_id %s",
                         task.run_id,
                     )
                     self.failed_tasks.append(task)
@@ -837,27 +840,6 @@ class DockerManager(DockerBaseManager):
             status=finished_task.status,
             parent_id=finished_task.parent_id,
         )
-
-    def login_to_registries(self, registries: list = []) -> None:
-        """
-        Login to the docker registries
-
-        Parameters
-        ----------
-        registries: list
-            list of registries to login to
-        """
-        for registry in registries:
-            try:
-                self.docker.login(
-                    username=registry.get("username"),
-                    password=registry.get("password"),
-                    registry=registry.get("registry"),
-                )
-                self.log.info(f"Logged in to {registry.get('registry')}")
-            except docker.errors.APIError as e:
-                self.log.warning(f"Could not login to {registry.get('registry')}")
-                self.log.warning(e)
 
     def link_container_to_network(self, container_name: str, config_alias: str) -> None:
         """

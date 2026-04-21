@@ -4,7 +4,8 @@ ARG BASE=4.0
 # We could do this by supplying an environment var or store a requirements.txt
 # file in the repo.however for now lets always use the latest in a build.
 # ARG OHDSI_VERSION=0.3.2
-FROM harbor2.vantage6.ai/infrastructure/algorithm-base:${BASE}
+ARG REGISTRY=ghcr.io/vantage6
+FROM ${REGISTRY}/algorithm-base:${BASE}
 
 LABEL version=${TAG}
 # LABEL ohdsi_version=${OHDSI_VERSION}

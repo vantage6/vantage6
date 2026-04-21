@@ -5,6 +5,7 @@ import time
 import ipaddress
 
 from json.decoder import JSONDecodeError
+from docker import DockerClient
 from docker.models.containers import Container
 
 from vantage6.common import logger_name
@@ -47,6 +48,7 @@ class VPNManager(DockerBaseManager):
         vpn_client_image: str | None = None,
         network_config_image: str | None = None,
         extra_hosts: dict[str, str] | None = None,
+        docker_client: DockerClient | None = None,
     ) -> None:
         """
         Initializes a VPN manager instance
@@ -67,8 +69,10 @@ class VPNManager(DockerBaseManager):
             Name of alternative VPN client image to be used
         network_config_image: str | None
             Name of alternative network config image to be used
+        docker_client: DockerClient | None
+            Docker client to use. If None, a new client will be created.
         """
-        super().__init__(isolated_network_mgr)
+        super().__init__(isolated_network_mgr, docker_client=docker_client)
 
         self.vpn_client_container_name = f"{APPNAME}-{node_name}-vpn-client"
         self.vpn_volume_name = vpn_volume_name
@@ -91,17 +95,14 @@ class VPNManager(DockerBaseManager):
             else network_config_image
         )
 
-        self._update_images()
-
-        self.log.debug("Used VPN images:")
-        self.log.debug(f"  Alpine: {self.alpine_image}")
-        self.log.debug(f"  Client: {self.vpn_client_image}")
-        self.log.debug(f"  Config: {self.network_config_image}")
-
         self.has_vpn = False
 
     def _update_images(self) -> None:
         """Pulls the latest version of the VPN images"""
+        self.log.debug("Used VPN images:")
+        self.log.debug(f"  Alpine: {self.alpine_image}")
+        self.log.debug(f"  Client: {self.vpn_client_image}")
+        self.log.debug(f"  Config: {self.network_config_image}")
         self.log.info("Updating VPN images...")
         self.log.debug("Pulling Alpine image")
         pull_image(self.docker, self.alpine_image)
@@ -125,9 +126,12 @@ class VPNManager(DockerBaseManager):
             return
         elif not self._is_ipv4_subnet(self.subnet):
             self.log.error(
-                f"VPN subnet {self.subnet} is not a valid subnet! " "Disabling VPN..."
+                f"VPN subnet {self.subnet} is not a valid subnet! Disabling VPN..."
             )
             return
+
+        # Pull VPN images only when we actually need them
+        self._update_images()
 
         self.log.debug("Mounting VPN configuration file")
         # add volume containing OVPN config file
@@ -395,9 +399,7 @@ class VPNManager(DockerBaseManager):
 
         # Find ports on VPN container that are already occupied
         cmd = (
-            "sh -c "
-            '"iptables -t nat -L PREROUTING -n | '
-            "awk '{print $7}' | cut -c 5-\""
+            "sh -c \"iptables -t nat -L PREROUTING -n | awk '{print $7}' | cut -c 5-\""
         )
         occupied_ports = self.vpn_client_container.exec_run(cmd=cmd)
 
@@ -424,15 +426,15 @@ class VPNManager(DockerBaseManager):
             # Rule for directing external vpn traffic to algorithms
             command += (
                 "iptables -t nat -A PREROUTING -i tun0 -p tcp "
-                f'--dport {port["port"]} -j DNAT '
-                f'--to {algo_ip}:{port["algo_port"]};'
+                f"--dport {port['port']} -j DNAT "
+                f"--to {algo_ip}:{port['algo_port']};"
             )
 
             # Rule for directing internal vpn traffic to algorithms
             command += (
                 f"iptables -t nat -A PREROUTING -d {vpn_ip}/32 -p tcp "
-                f'--dport {port["port"]} -j DNAT '
-                f'--to {algo_ip}:{port["algo_port"]};'
+                f"--dport {port['port']} -j DNAT "
+                f"--to {algo_ip}:{port['algo_port']};"
             )
 
             # remove the algorithm ports from the dictionaries as these are no
