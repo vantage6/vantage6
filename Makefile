@@ -3,7 +3,7 @@
 
 # docker image tag
 TAG ?= cotopaxi
-REGISTRY ?= harbor2.vantage6.ai
+REGISTRY ?= ghcr.io/vantage6
 PLATFORMS ?= linux/arm64,linux/amd64
 # Example for local development
 # TAG ?= local
@@ -100,20 +100,20 @@ install-dev:
 	cd vantage6-algorithm-store && pip install -e .[dev]
 
 base-image:
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/infrastructure-base:latest"
+	@echo "Building ${REGISTRY}/infrastructure-base:${TAG}"
+	@echo "Building ${REGISTRY}/infrastructure-base:latest"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/infrastructure-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/infrastructure-base:latest) \
+		--tag ${REGISTRY}/infrastructure-base:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure-base:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/infrastructure-base.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 algorithm-base-image:
-	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-base:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-base:latest) \
+		--tag ${REGISTRY}/algorithm-base:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-base:latest) \
 		--platform ${PLATFORMS} \
 		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
@@ -122,10 +122,10 @@ algorithm-base-image:
 # FIXME FM 17-10-2023: This fails to build for arm64, this is because of
 # the r-base image.
 algorithm-omop-base-image:
-	@echo "Building ${REGISTRY}/algorithms/algorithm-ohdsi-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-ohdsi-base:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest) \
+		--tag ${REGISTRY}/algorithm-ohdsi-base:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-ohdsi-base:latest) \
 		--build-arg BASE=${BASE} \
 		--build-arg TAG=${TAG} \
 		--build-arg REGISTRY=${REGISTRY} \
@@ -143,58 +143,58 @@ support-image:
 	make support-squid-image
 
 support-squid-image:
-	@echo "Building ${REGISTRY}/infrastructure/squid:${TAG}"
+	@echo "Building ${REGISTRY}/squid:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/squid:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/squid:latest) \
+		--tag ${REGISTRY}/squid:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/squid:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/squid.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 support-alpine-image:
-	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
+	@echo "Building ${REGISTRY}/alpine:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/alpine:latest) \
+		--tag ${REGISTRY}/alpine:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/alpine:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 support-vpn-client-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-client:${TAG}"
+	@echo "Building ${REGISTRY}/vpn-client:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-client:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-client:latest) \
+		--tag ${REGISTRY}/vpn-client:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/vpn-client:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-client.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 support-vpn-configurator-image:
-	@echo "Building ${REGISTRY}/infrastructure/vpn-configurator:${TAG}"
+	@echo "Building ${REGISTRY}/vpn-configurator:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/vpn-configurator:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/vpn-configurator:latest) \
+		--tag ${REGISTRY}/vpn-configurator:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/vpn-configurator:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/vpn-configurator.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 support-ssh-tunnel-image:
-	@echo "Building ${REGISTRY}/infrastructure/ssh-tunnel:${TAG}"
+	@echo "Building ${REGISTRY}/ssh-tunnel:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/ssh-tunnel:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ssh-tunnel:latest) \
+		--tag ${REGISTRY}/ssh-tunnel:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/ssh-tunnel:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/ssh-tunnel.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 image:
-	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/server:${TAG}"
+	@echo "Building ${REGISTRY}/node:${TAG}"
+	@echo "Building ${REGISTRY}/server:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/node:${TAG} \
-		--tag ${REGISTRY}/infrastructure/server:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/node:latest) \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/server:latest) \
+		--tag ${REGISTRY}/node:${TAG} \
+		--tag ${REGISTRY}/server:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/node:latest) \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/server:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--build-arg REGISTRY=${REGISTRY} \
@@ -203,10 +203,10 @@ image:
 		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
-	@echo "Building ${REGISTRY}/infrastructure/algorithm-store:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-store:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-store:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-store:latest) \
+		--tag ${REGISTRY}/algorithm-store:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-store:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
 		--build-arg REGISTRY=${REGISTRY} \
@@ -215,12 +215,11 @@ algorithm-store-image:
 		$(if ${_condition_push},--push .,.)
 
 ui-image:
-	@echo "Building ${REGISTRY}/infrastructure/ui:${TAG}"
+	@echo "Building ${REGISTRY}/ui:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ui:latest) \
+		--tag ${REGISTRY}/ui:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/ui:latest) \
 		--build-arg TAG=${TAG} \
-		--build-arg BASE=${BASE} \
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
 		$(if ${_condition_push},--push .,.)

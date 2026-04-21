@@ -2,14 +2,14 @@
 #
 # IMAGES
 # ------
-# * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/server:x.x.x
+# * ghcr.io/vantage6/node:x.x.x
+# * ghcr.io/vantage6/server:x.x.x
 #
-ARG TAG=latest
 ARG BASE=4.14
-ARG REGISTRY=harbor2.vantage6.ai
-FROM ${REGISTRY}/infrastructure/infrastructure-base:${BASE}
+ARG REGISTRY=ghcr.io/vantage6
+FROM ${REGISTRY}/infrastructure-base:${BASE}
 
+ARG TAG=latest
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 

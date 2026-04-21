@@ -39,9 +39,13 @@ services:
       SSH_TUNNEL_VOLUME_NAME: vantage6-<NODE_NAME>-user-ssh-vol
       SSH_SQUID_VOLUME_NAME: vantage6-<NODE_NAME>-user-squid-vol
       PRIVATE_KEY: /mnt/private_key.pem
-      # For each database defined in the node config, add an env var:
-      #   <LABEL>_DATABASE_URI: <filename-or-connection-string>
-      # If the database is file-based, also add a bind mount below.
+      # For each database in the node config, add an env var that matches
+      # what `v6 node start` would set: <LABEL>_DATABASE_URI: <label><suffix>
+      # For file-based databases, also add a bind mount to /mnt/<label><suffix>
+      # Example for a database with label "default" and uri "/data/mydb.csv":
+      #   DEFAULT_DATABASE_URI: default.csv
+      # For non-file databases (e.g. SQL), use the connection string directly:
+      #   MYDB_DATABASE_URI: postgresql://user:pass@host/db
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw
       # Node config — mount the single YAML file, read-only
@@ -55,8 +59,9 @@ services:
       - <PATH_TO_LOG_DIR>:/mnt/log:rw
       # Encryption private key (remove if encryption is disabled)
       - <PATH_TO_PRIVATE_KEY>:/mnt/private_key.pem:ro
-      # Database files — one bind mount per file-based database
-      # - /data/my_database.csv:/mnt/my_database.csv:ro
+      # Database files — one bind mount per file-based database.
+      # The container target must be /mnt/<label><suffix> to match the env var.
+      # - /data/my_database.csv:/mnt/default.csv:ro
     labels:
       vantage6-type: node
       system: "False"

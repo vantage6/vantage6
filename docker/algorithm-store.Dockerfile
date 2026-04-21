@@ -4,11 +4,11 @@
 # -----
 # * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
 #
-ARG TAG=latest
 ARG BASE=4.14
-ARG REGISTRY=harbor2.vantage6.ai
-FROM ${REGISTRY}/infrastructure/infrastructure-base:${BASE}
+ARG REGISTRY=ghcr.io/vantage6
+FROM ${REGISTRY}/infrastructure-base:${BASE}
 
+ARG TAG=latest
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>; Bart van Beusekom <b.vanbeusekom@iknl.nl>"
 

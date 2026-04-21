@@ -35,6 +35,8 @@ import requests.exceptions
 import psutil
 import pynvml
 
+from docker import DockerClient
+
 from pathlib import Path
 from threading import Thread
 from socketio import Client as SocketIO
@@ -64,7 +66,7 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
-from vantage6.node.docker.docker_manager import login_to_registries
+from vantage6.node.docker.utils import login_to_registries
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.docker.ssh_tunnel import SSHTunnel
@@ -157,10 +159,10 @@ class Node:
         # Login to docker registries early, so that credentials are available
         # when infrastructure images (VPN, squid, SSH tunnel) are pulled
         docker_registries = self.config.get("docker_registries", [])
-        docker_client = None
+        docker_client = DockerClient.from_env()
         if docker_registries:
             self.log.info("Logging in to docker registries")
-            docker_client = login_to_registries(docker_registries)
+            login_to_registries(docker_registries, docker_client=docker_client)
 
         # Setup VPN connection
         self.vpn_manager = self.setup_vpn_connection(

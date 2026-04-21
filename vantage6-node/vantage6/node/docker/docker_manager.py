@@ -48,47 +48,11 @@ from vantage6.node.docker.exceptions import (
     AlgorithmContainerNotFound,
 )
 from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+from vantage6.node.docker.utils import login_to_registries
 
 log = logging.getLogger(logger_name(__name__))
 
 SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
-
-
-def login_to_registries(
-    registries: list, docker_client: docker.DockerClient | None = None
-) -> docker.DockerClient:
-    """
-    Login to docker registries.
-
-    This is a module-level function so it can be called early in node
-    initialization, before DockerManager is instantiated.
-
-    Parameters
-    ----------
-    registries : list
-        List of registry dicts with 'username', 'password', 'registry' keys
-    docker_client : docker.DockerClient | None
-        Docker client to use. If None, a new client will be created.
-
-    Returns
-    -------
-    docker.DockerClient
-        The authenticated docker client
-    """
-    if docker_client is None:
-        docker_client = docker.from_env()
-    for registry in registries:
-        try:
-            docker_client.login(
-                username=registry.get("username"),
-                password=registry.get("password"),
-                registry=registry.get("registry"),
-            )
-            log.info(f"Logged in to {registry.get('registry')}")
-        except docker.errors.APIError as e:
-            log.warning(f"Could not login to {registry.get('registry')}")
-            log.warning(e)
-    return docker_client
 
 
 class Result(NamedTuple):
@@ -209,7 +173,7 @@ class DockerManager(DockerBaseManager):
 
         # login to the registries
         docker_registries = ctx.config.get("docker_registries", [])
-        self.login_to_registries(docker_registries)
+        login_to_registries(docker_registries, docker_client=self.docker)
 
         # set database uri and whether or not it is a file
         self._set_database(ctx.databases)
@@ -876,17 +840,6 @@ class DockerManager(DockerBaseManager):
             status=finished_task.status,
             parent_id=finished_task.parent_id,
         )
-
-    def login_to_registries(self, registries: list = []) -> None:
-        """
-        Login to the docker registries
-
-        Parameters
-        ----------
-        registries: list
-            list of registries to login to
-        """
-        login_to_registries(registries, docker_client=self.docker)
 
     def link_container_to_network(self, container_name: str, config_alias: str) -> None:
         """

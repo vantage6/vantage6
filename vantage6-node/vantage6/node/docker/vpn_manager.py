@@ -95,15 +95,14 @@ class VPNManager(DockerBaseManager):
             else network_config_image
         )
 
-        self.log.debug("Used VPN images:")
-        self.log.debug(f"  Alpine: {self.alpine_image}")
-        self.log.debug(f"  Client: {self.vpn_client_image}")
-        self.log.debug(f"  Config: {self.network_config_image}")
-
         self.has_vpn = False
 
     def _update_images(self) -> None:
         """Pulls the latest version of the VPN images"""
+        self.log.debug("Used VPN images:")
+        self.log.debug(f"  Alpine: {self.alpine_image}")
+        self.log.debug(f"  Client: {self.vpn_client_image}")
+        self.log.debug(f"  Config: {self.network_config_image}")
         self.log.info("Updating VPN images...")
         self.log.debug("Pulling Alpine image")
         pull_image(self.docker, self.alpine_image)

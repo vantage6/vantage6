@@ -1,8 +1,6 @@
-ARG TAG=latest
-ARG BASE=4.3
 FROM node:20-alpine AS node
 
-ARG TAG
+ARG TAG=latest
 LABEL version=${TAG}
 LABEL maintainer="Bart van Beusekom <b.vanbeusekom@iknl.nl>, Frank Martin <f.martin@iknl.nl>"
 
