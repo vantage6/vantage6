@@ -23,7 +23,7 @@
 
 services:
   node:
-    image: harbor2.vantage6.ai/infrastructure/node:cotopaxi
+    image: ghcr.io/vantage6/node:cotopaxi
     container_name: vantage6-<NODE_NAME>-user
     restart: unless-stopped
     tty: true

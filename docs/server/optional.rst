@@ -91,12 +91,21 @@ private registry.
   This specification is supported by all major container registry providers, such
   as Docker Hub, Harbor, Azure Container Registry and Github container registry.
 
+Github Container Registry
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Github Container Registry is a private registry that is provided by Github. It is a
+turn-key solution for hosting your own Docker images. It is free to use (at time of
+writing) and links to your Github repository. We use it to host the main vantage6
+images.
+
 Harbor
 ~~~~~~
 
-Our preferred solution for hosting a Docker registry is
+Another solution for hosting a Docker registry is
 `Harbor <https://goharbor.io>`_. Harbor provides access control, a user
-interface and automated scanning on vulnerabilities.
+interface and automated scanning on vulnerabilities. This setup is more complex, but it
+offers more features.
 
 Docker Hub
 ~~~~~~~~~~

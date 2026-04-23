@@ -175,8 +175,7 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         error(f"Could not authenticate with server: {e}")
         error("Please check (1) your API key and (2) if your server is online")
         warning(
-            "If you continue, you should provide your collaboration "
-            "settings manually."
+            "If you continue, you should provide your collaboration settings manually."
         )
         if q.confirm("Do you want to abort?", default=True).unsafe_ask():
             exit(0)
@@ -221,13 +220,15 @@ def _get_allowed_algorithms() -> list[str]:
         "use strings to provide one algorithm at a time."
     )
     info("Examples:")
-    info(r"^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
     info(
-        r"^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
-        "harbor2.vantage6.ai/algorithms"
+        r"^ghcr\.io/vantage6/algorithm-average:latest$    Allow the demo average algorithm"
     )
     info(
-        r"^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
+        r"^ghcr\.io/vantage6/algorithm-*.   Allow all algorithms from "
+        "ghcr.io/vantage6"
+    )
+    info(
+        r"^ghcr\.io/vantage6/algorithm-average@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []

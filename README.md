@@ -144,7 +144,7 @@ easily.
 ### Docker images
 
 The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
-in our private [Harbor](https://goharbor.io/) registry. The most important images are:
+in the vantage6 GitHub Container Registry. The most important images are:
 
 - `ghcr.io/vantage6/node:VERSION` -> _Node application Docker image_
 - `ghcr.io/vantage6/server:VERSION` -> _Server application Docker image_

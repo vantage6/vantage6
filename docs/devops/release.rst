@@ -149,8 +149,8 @@ The release pipeline executes the following steps:
    tag and commit this back to the main branch.
 3. Install the dependencies and build the Python package.
 4. Upload the package to PyPi.
-5. Build and push the Docker image to `harbor2.vantage6.ai
-   <https://harbor2.vantage6.ai>`_.
+5. Build and push the Docker image to `ghcr.io/vantage6
+   <https://ghcr.io/vantage6>`_.
 6. Post a message in Discord to alert the community of the new release. This
    is not done if the version is a pre-release (e.g. version/x.y.0rc1).
 
@@ -181,7 +181,7 @@ in the table below.
      - Token from coveralls to post the test coverage stats.
    * - ``DOCKER_TOKEN``
      - Token used together ``DOCKER_USERNAME`` to upload the container images
-       to our `<https://harbor2.vantage6.ai>`_.
+       to `<https://ghcr.io/vantage6>`_.
    * - ``DOCKER_USERNAME``
      - See ``DOCKER_TOKEN``.
    * - ``PYPI_TOKEN``
@@ -239,7 +239,7 @@ The release pipeline for the UI executes the following steps:
 1. Version tag is verified (same as infrastructure).
 2. Version is updated in the code (same as infrastructure).
 3. Application is built.
-4. Docker images are built and released to harbor2.
+4. Docker images are built and released to ghcr.io/vantage6.
 5. Application is pushed to our UI deployment slot (an Azure app service).
 
 
@@ -252,7 +252,7 @@ updated upon new releases, as is for instance the case for the Cotopaxi server.
 
 For Cotopaxi, the following checks are done:
 
-- Check that harbor2.vantage6.ai has updated images ``server:cotopaxi``,
+- Check that ghcr.io/vantage6 has updated images ``server:cotopaxi``,
   ``server:cotopaxi-live`` and ``node:cotopaxi``.
 - Check if the (live) server version is updated. Go to:
   https://cotopaxi.vantage6.ai/version. Check logs if it is not updated.
