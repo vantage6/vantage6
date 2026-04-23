@@ -33,7 +33,6 @@ from vantage6.server.resource.common.output_schema import (
 )
 from vantage6.server.model import Run as db_Run, Node, Task, Collaboration, Organization
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

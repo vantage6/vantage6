@@ -9,7 +9,6 @@ from vantage6.backend.common.globals import HOST_URI_ENV
 from vantage6.backend.common import get_server_url
 from vantage6.server import db
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 

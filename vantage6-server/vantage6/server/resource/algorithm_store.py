@@ -17,7 +17,6 @@ from vantage6.server.algo_store_communication import (
     request_algo_store,
 )
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 

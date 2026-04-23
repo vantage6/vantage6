@@ -12,7 +12,6 @@ from vantage6.algorithm.store._version import __version__
 # TODO move to common / refactor
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

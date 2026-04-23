@@ -22,7 +22,6 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
 from vantage6.common.globals import STRING_ENCODING
 
-
 # Initialize FLASK
 app = Flask(__name__)
 log = logging.getLogger(logger_name(__name__))

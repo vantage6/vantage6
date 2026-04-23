@@ -654,7 +654,7 @@ def create_demo_network(
     else:
         error(f"Configuration {Fore.RED}{server_name}{Style.RESET_ALL} already exists!")
         exit(1)
-    (node_config, server_import_config, server_config, store_config) = demo
+    node_config, server_import_config, server_config, store_config = demo
     ctx = get_server_context(server_name, False, ServerContext)
     click_ctx.invoke(
         cli_server_import,

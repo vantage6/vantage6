@@ -43,7 +43,6 @@ from vantage6.server._version import __version__
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller.fixture import load
 
-
 logger = logger_name(__name__)
 log = logging.getLogger(logger)
 
@@ -3537,7 +3536,7 @@ class TestResources(unittest.TestCase):
             {
                 "label": "diagnosis",
                 "arguments": {"bind": "diagnosis_data"},
-            }
+            },
         ]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.CREATED)

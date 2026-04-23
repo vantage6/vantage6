@@ -161,7 +161,8 @@ class RabbitMQManager:
                 "bind": "/etc/rabbitmq/definitions.json",
                 "mode": "ro",
             },
-            self.ctx.data_dir / RABBIT_CONFIG: {
+            self.ctx.data_dir
+            / RABBIT_CONFIG: {
                 "bind": "/etc/rabbitmq/rabbitmq.config",
                 "mode": "ro",
             },

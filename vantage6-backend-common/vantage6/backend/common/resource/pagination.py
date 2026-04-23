@@ -11,7 +11,6 @@ from sqlalchemy.orm.decl_api import DeclarativeMeta
 from vantage6.common import logger_name
 from vantage6.backend.common.globals import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
