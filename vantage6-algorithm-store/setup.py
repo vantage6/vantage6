@@ -31,7 +31,7 @@ setup(
     packages=find_namespace_packages(),
     python_requires=">=3.10",
     install_requires=[
-        "flask==3.1.1",
+        "flask==3.1.3",
         "flask-cors==6.0.0",
         "Flask-Principal==0.4.0",
         "flask-marshmallow==0.15.0",
@@ -42,7 +42,7 @@ setup(
         "requests==2.33.1",
         "schema==0.7.5",
         "SQLAlchemy==1.4.46",
-        "werkzeug==3.1.5",
+        "werkzeug==3.1.8",
         f"vantage6 == {version_ns['__version__']}",
         f"vantage6-common == {version_ns['__version__']}",
     ],

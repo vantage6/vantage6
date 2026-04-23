@@ -50,7 +50,7 @@ setup(
             "SQLAlchemy==1.4.46",
             "schema==0.7.5",
             "appdirs==1.4.4",
-            "flask==3.1.1",
+            "flask==3.1.3",
             "black",
             "pre-commit",
         ]
