@@ -34,7 +34,7 @@ setup(
         "appdirs==1.4.4",
         "click==8.1.3",
         "colorama==0.4.6",
-        "cryptography==46.0.5",
+        "cryptography==46.0.7",
         "docker>=7.1.0",
         "pyfiglet==1.0.4",
         "pyjwt==2.12.1",
