@@ -22,6 +22,8 @@ from vantage6.common.docker.addons import (
     remove_container_if_exists,
     pull_image,
 )
+from docker import DockerClient
+
 from vantage6.node.docker.docker_base import DockerBaseManager
 from vantage6.node.docker.docker_manager import NetworkManager
 from vantage6.node.globals import SQUID_IMAGE, PACKAGE_FOLDER
@@ -45,6 +47,7 @@ class Squid(DockerBaseManager):
         node_name: str,
         config_volume: str,
         squid_image: str | None = None,
+        docker_client: DockerClient | None = None,
     ) -> None:
         """
         Create a tunnel from the isolated network to a remote machine and
@@ -63,6 +66,8 @@ class Squid(DockerBaseManager):
             Name of the ssh config volume (or local path)
         squid_image : str | None, optional
             User defined image to use for the tunnel, by default None
+        docker_client : DockerClient | None, optional
+            Docker client to use, by default None (creates new client)
 
         Raises
         ------
@@ -70,7 +75,7 @@ class Squid(DockerBaseManager):
             Missing key in the configuration
         """
 
-        super().__init__(isolated_network_mgr)
+        super().__init__(isolated_network_mgr, docker_client=docker_client)
 
         # reference to the squid container
         self.container = None

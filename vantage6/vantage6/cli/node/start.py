@@ -155,7 +155,7 @@ def cli_node_start(
         ("/mnt/vpn", vpn_volume.name, "rw"),
         ("/mnt/ssh", ssh_volume.name, "rw"),
         ("/mnt/squid", squid_volume.name, "rw"),
-        ("/mnt/config", str(ctx.config_dir), "ro"),
+        (f"/mnt/config/{name}.yaml", str(ctx.config_file), "ro"),
         ("/var/run/docker.sock", "/var/run/docker.sock", "rw"),
     ]
 

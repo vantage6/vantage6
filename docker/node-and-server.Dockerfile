@@ -5,16 +5,18 @@
 # * ghcr.io/vantage6/node:x.x.x
 # * ghcr.io/vantage6/server:x.x.x
 #
-ARG TAG=latest
 ARG BASE=4.14
-FROM ghcr.io/vantage6/infrastructure-base:${BASE}
+ARG REGISTRY=ghcr.io/vantage6
+FROM ${REGISTRY}/infrastructure-base:${BASE}
 
+ARG TAG=latest
 LABEL version=${TAG}
 LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 
 # Update and upgrade
-RUN apt update -y
-RUN apt upgrade -y
+RUN apt-get update -y \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Fix DB issue
 RUN pip install psycopg2-binary
@@ -43,8 +45,10 @@ RUN pip install -e /vantage6/vantage6-server
 
 # Overwrite uWSGI installation from the requirements.txt
 # Install uWSGI from source (for RabbitMQ)
-RUN apt-get install --no-install-recommends --no-install-suggests -y \
-  libssl-dev python3-setuptools
+RUN apt-get update \
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+  libssl-dev python3-setuptools \
+  && rm -rf /var/lib/apt/lists/*
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \

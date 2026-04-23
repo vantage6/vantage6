@@ -1,9 +1,9 @@
 FROM debian:12
 
-RUN apt-get update
-RUN apt-get upgrade -y
-
-RUN apt-get install -y squid
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y squid \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
 

@@ -35,6 +35,8 @@ import requests.exceptions
 import psutil
 import pynvml
 
+from docker import DockerClient
+
 from pathlib import Path
 from threading import Thread
 from socketio import Client as SocketIO
@@ -64,6 +66,7 @@ from vantage6.common.client.node_client import NodeClient
 from vantage6.node import proxy_server
 from vantage6.node.util import get_parent_id
 from vantage6.node.docker.docker_manager import DockerManager
+from vantage6.node.docker.utils import login_to_registries
 from vantage6.node.docker.vpn_manager import VPNManager
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.docker.ssh_tunnel import SSHTunnel
@@ -153,14 +156,28 @@ class Node:
         # Setup tasks dir
         self._set_task_dir(self.ctx)
 
+        # Login to docker registries early, so that credentials are available
+        # when infrastructure images (VPN, squid, SSH tunnel) are pulled
+        docker_registries = self.config.get("docker_registries", [])
+        docker_client = DockerClient.from_env()
+        if docker_registries:
+            self.log.info("Logging in to docker registries")
+            login_to_registries(docker_registries, docker_client=docker_client)
+
         # Setup VPN connection
-        self.vpn_manager = self.setup_vpn_connection(isolated_network_mgr, self.ctx)
+        self.vpn_manager = self.setup_vpn_connection(
+            isolated_network_mgr, self.ctx, docker_client=docker_client
+        )
 
         # Create SSH tunnel according to the node configuration
-        self.ssh_tunnels = self.setup_ssh_tunnels(isolated_network_mgr)
+        self.ssh_tunnels = self.setup_ssh_tunnels(
+            isolated_network_mgr, docker_client=docker_client
+        )
 
         # Create Squid proxy server
-        self.squid = self.setup_squid_proxy(isolated_network_mgr)
+        self.squid = self.setup_squid_proxy(
+            isolated_network_mgr, docker_client=docker_client
+        )
 
         # setup the docker manager
         self.log.debug("Setting up the docker manager")
@@ -171,6 +188,7 @@ class Node:
             tasks_dir=self.__tasks_dir,
             client=self.client,
             proxy=self.squid,
+            docker_client=docker_client,
         )
 
         # Create a long-lasting websocket connection.
@@ -582,8 +600,7 @@ class Node:
 
                 if not task_id:
                     self.log.error(
-                        f"task_id of run (id={results.run_id}) "
-                        f"could not be retrieved"
+                        f"task_id of run (id={results.run_id}) could not be retrieved"
                     )
                     return
 
@@ -763,7 +780,9 @@ class Node:
             self.__tasks_dir = ctx.data_dir
             self.__vpn_dir = ctx.vpn_dir
 
-    def setup_squid_proxy(self, isolated_network_mgr: NetworkManager) -> Squid:
+    def setup_squid_proxy(
+        self, isolated_network_mgr: NetworkManager, docker_client=None
+    ) -> Squid:
         """
         Initiates a Squid proxy if configured in the config.yml
 
@@ -786,6 +805,8 @@ class Node:
         ----------
         isolated_network_mgr: NetworkManager
             Network manager for isolated network
+        docker_client: DockerClient | None
+            Authenticated docker client
 
         Returns
         -------
@@ -813,7 +834,12 @@ class Node:
 
         try:
             squid = Squid(
-                isolated_network_mgr, config, self.ctx.name, volume, custom_squid_image
+                isolated_network_mgr,
+                config,
+                self.ctx.name,
+                volume,
+                custom_squid_image,
+                docker_client=docker_client,
             )
         except Exception as e:
             self.log.critical("Squid proxy failed to initialize. Continuing without.")
@@ -823,7 +849,7 @@ class Node:
         return squid
 
     def setup_ssh_tunnels(
-        self, isolated_network_mgr: NetworkManager
+        self, isolated_network_mgr: NetworkManager, docker_client=None
     ) -> list[SSHTunnel]:
         """
         Create a SSH tunnels when they are defined in the configuration file.
@@ -835,6 +861,8 @@ class Node:
         ----------
         isolated_network_mgr: NetworkManager
             Manager for the isolated network
+        docker_client: DockerClient | None
+            Authenticated docker client
         """
         if "ssh-tunnels" not in self.config:
             self.log.info("No SSH tunnels configured")
@@ -876,6 +904,7 @@ class Node:
                     self.ctx.name,
                     volume,
                     custom_tunnel_image,
+                    docker_client=docker_client,
                 )
             except Exception as e:
                 self.log.error("Error setting up SSH tunnel")
@@ -887,8 +916,11 @@ class Node:
         return tunnels
 
     def setup_vpn_connection(
-        self, isolated_network_mgr: NetworkManager, ctx: DockerNodeContext | NodeContext
-    ) -> VPNManager:
+        self,
+        isolated_network_mgr: NetworkManager,
+        ctx: DockerNodeContext | NodeContext,
+        docker_client=None,
+    ) -> VPNManager | None:
         """
         Setup container which has a VPN connection
 
@@ -898,12 +930,18 @@ class Node:
             Manager for the isolated Docker network
         ctx: DockerNodeContext | NodeContext
             Context object for the node
+        docker_client: DockerClient | None
+            Authenticated docker client
 
         Returns
         -------
-        VPNManager
-            Manages the VPN connection
+        VPNManager | None
+            Manages the VPN connection, or None if VPN is not configured
         """
+        if not self.config.get("vpn_subnet"):
+            self.log.info("VPN subnet is not defined, skipping VPN setup")
+            return None
+
         ovpn_file = os.path.join(self.__vpn_dir, VPN_CONFIG_FILE)
 
         self.log.info("Setting up VPN client container")
@@ -939,11 +977,10 @@ class Node:
             vpn_client_image=custom_vpn_client,
             network_config_image=custom_network,
             extra_hosts=extra_hosts,
+            docker_client=docker_client,
         )
 
-        if not self.config.get("vpn_subnet"):
-            self.log.warn("VPN subnet is not defined! VPN disabled.")
-        elif not os.path.isfile(ovpn_file):
+        if not os.path.isfile(ovpn_file):
             # if vpn config doesn't exist, get it and write to disk
             self._connect_vpn(vpn_manager, VPNConnectMode.REFRESH_COMPLETE, ovpn_file)
         else:
@@ -1067,7 +1104,7 @@ class Node:
             i += 1
 
         self.log.info(
-            f"Connected to host={self.client.host} on port=" f"{self.client.port}"
+            f"Connected to host={self.client.host} on port={self.client.port}"
         )
 
         self.log.debug(
@@ -1233,6 +1270,7 @@ class Node:
         adapter.
         """
         self.log.info("Cleaning up node...")
+
         if hasattr(self, "socketIO") and self.socketIO:
             try:
                 self.socketIO.disconnect()
@@ -1251,6 +1289,7 @@ class Node:
                     tunnel.stop()
                 except Exception:
                     self.log.exception("Error stopping SSH tunnel during cleanup")
+
         if hasattr(self, "_Node__docker") and self.__docker:
             try:
                 self.__docker.cleanup()
