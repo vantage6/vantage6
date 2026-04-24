@@ -5,7 +5,7 @@
 # * ghcr.io/vantage6/node:x.x.x
 # * ghcr.io/vantage6/server:x.x.x
 #
-ARG BASE=4.14
+ARG BASE=4.15
 ARG REGISTRY=ghcr.io/vantage6
 FROM ${REGISTRY}/infrastructure-base:${BASE}
 
