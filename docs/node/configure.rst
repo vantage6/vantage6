@@ -111,18 +111,18 @@ There are two important steps to be taken to accomplish this:
 
       policies:
          allowed_algorithms:
-            - ^ghcr\.io/vantage6/[a-zA-Z]+/[a-zA-Z]+
-            - ^ghcr\.io/vantage6/algorithm-glm$
-            - ^ghcr\.io/vantage6/algorithm-glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8a1e597d83a47fac21d6af3$
+            - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+
+            - ^ghcr\.io/vantage6/algorithm/glm$
+            - ^ghcr\.io/vantage6/algorithm/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8a1e597d83a47fac21d6af3$
          allowed_algorithm_stores:
             - https://store.cotopaxi.vantage6.ai
 
    These four examples lead to the following restrictions:
-   1. ``^ghcr\.io/vantage6/[a-zA-Z]+/[a-zA-Z]+``: allow all images
-      from the ghcr.io/vantage6 registry
-   2. ``^ghcr\.io/vantage6/algorithm-glm$``: only allow the GLM image, but
+   1. ``^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+``: allow all images
+      from the ghcr.io/vantage6 registry that start with ``algorithm/``
+   2. ``^ghcr\.io/vantage6/algorithm/glm$``: only allow the GLM image, but
       all builds of this image
-   3. ``^ghcr\.io/vantage6/algorithm-glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8a1e597d83a47fac21d6af3$``
+   3. ``^ghcr\.io/vantage6/algorithm/glm@sha256:82becede498899ec668628e7cb0ad87b6e1c371cb8a1e597d83a47fac21d6af3$``
       ``a1e597d83a47fac21d6af3$``: allows only this specific build from the GLM
       image to run on your data
    4. ``https://store.cotopaxi.vantage6.ai``: allow all algorithms from the

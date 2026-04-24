@@ -56,7 +56,7 @@ to your own environment.
     name: run-ui
     services:
       ui:
-        image: ghcr.io/vantage6/ui:cotopaxi
+        image: ghcr.io/vantage6/infrastructure/ui:cotopaxi
         ports:
           - "8000:80"
         environment:

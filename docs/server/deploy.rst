@@ -129,7 +129,7 @@ may want to use a different image tag, or you may want to use a different port.
 
     services:
       vantage6-server:
-        image: ghcr.io/vantage6/server:cotopaxi
+        image: ghcr.io/vantage6/infrastructure/server:cotopaxi
         ports:
         - "8000:80"
         volumes:
@@ -147,7 +147,7 @@ look something like this if you want to use `secrets in docker compose
 
     services:
       vantage6-server:
-        image: ghcr.io/vantage6/server:cotopaxi
+        image: ghcr.io/vantage6/infrastructure/server:cotopaxi
         ports:
         - "8000:80"
         environment:

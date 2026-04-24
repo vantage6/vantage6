@@ -266,8 +266,8 @@ Here are a few examples of how to build and upload your image:
     # Build and upload to private registry (GCR as example). Here you don't need to
     # provide a username but you should write out the full image URL. Also, again you
     # need to be logged in with ``docker login``.
-    docker build -t ghcr.io/vantage6/algorithm-example:latest .
-    docker push ghcr.io/vantage6/algorithm-example:latest
+    docker build -t ghcr.io/vantage6/algorithm/example:latest .
+    docker push ghcr.io/vantage6/algorithm/example:latest
 
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
@@ -330,7 +330,7 @@ execution result. For example, to test the average algorithm, the script could l
             collaboration=1,
             organizations=[1],
             name="test_average_task",
-            image="ghcr.io/vantage6/algorithm-average:latest",
+            image="ghcr.io/vantage6/algorithm/average:latest",
             description="",
             input_=input_,
             databases=[{"label": "olympic_athletes"}],

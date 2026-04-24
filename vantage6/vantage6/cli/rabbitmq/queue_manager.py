@@ -17,7 +17,7 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 from vantage6.cli.globals import RABBIT_TIMEOUT
 
-DEFAULT_RABBIT_IMAGE = "ghcr.io/vantage6/rabbitmq"
+DEFAULT_RABBIT_IMAGE = "ghcr.io/vantage6/infrastructure/rabbitmq"
 RABBIT_CONFIG = "rabbitmq.config"
 RABBIT_DIR = "rabbitmq"
 
@@ -34,7 +34,7 @@ class RabbitMQManager:
         Network manager for network in which server container resides
     image: str
         Docker image to use for RabbitMQ container. By default, the image
-        ghcr.io/vantage6/rabbitmq is used.
+        ghcr.io/vantage6/infrastructure/rabbitmq is used.
     """
 
     def __init__(
