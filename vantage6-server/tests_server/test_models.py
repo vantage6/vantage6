@@ -23,7 +23,6 @@ from vantage6.server.model import (
 )
 from vantage6.server.model.rule import Scope, Operation
 
-
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
 logging.basicConfig(level=logging.CRITICAL)

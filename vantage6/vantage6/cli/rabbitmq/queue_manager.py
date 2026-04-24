@@ -17,7 +17,7 @@ from vantage6.cli.context.server import ServerContext
 from vantage6.cli.rabbitmq.definitions import RABBITMQ_DEFINITIONS
 from vantage6.cli.globals import RABBIT_TIMEOUT
 
-DEFAULT_RABBIT_IMAGE = "harbor2.vantage6.ai/infrastructure/rabbitmq"
+DEFAULT_RABBIT_IMAGE = "ghcr.io/vantage6/rabbitmq"
 RABBIT_CONFIG = "rabbitmq.config"
 RABBIT_DIR = "rabbitmq"
 
@@ -34,7 +34,7 @@ class RabbitMQManager:
         Network manager for network in which server container resides
     image: str
         Docker image to use for RabbitMQ container. By default, the image
-        harbor2.vantage6.ai/infrastructure/rabbitmq is used.
+        ghcr.io/vantage6/rabbitmq is used.
     """
 
     def __init__(
@@ -75,7 +75,7 @@ class RabbitMQManager:
         # check if a RabbitMQ container is already running
         self.rabbit_container = get_container(docker_client=self.docker, name=self.host)
         if self.rabbit_container:
-            info("RabbitMQ is already running! Linking the server to that " "queue")
+            info("RabbitMQ is already running! Linking the server to that queue")
             if not self.network_mgr.contains(self.rabbit_container):
                 self.network_mgr.connect(self.rabbit_container)
             return
@@ -162,7 +162,10 @@ class RabbitMQManager:
                 "mode": "ro",
             },
             self.ctx.data_dir
-            / RABBIT_CONFIG: {"bind": "/etc/rabbitmq/rabbitmq.config", "mode": "ro"},
+            / RABBIT_CONFIG: {
+                "bind": "/etc/rabbitmq/rabbitmq.config",
+                "mode": "ro",
+            },
             rabbit_data_dir: {"bind": "/var/lib/rabbitmq", "mode": "rw"},
         }
 

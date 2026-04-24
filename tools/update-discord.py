@@ -110,7 +110,7 @@ class PostUpdates(commands.Cog):
         )
 
         links = (
-            "[harbor2](https://harbor2.vantage6.ai)\n"
+            "[Github Container Registry](https://ghcr.io/vantage6)\n"
             "[Project website](https://vantage6.ai)\n"
             "[Build status](https://github.com/vantage6/vantage6/actions)"
         )
@@ -137,8 +137,7 @@ class PostUpdates(commands.Cog):
         embed.add_field(
             name="Docker Images",
             value=(
-                f"harbor2.vantage6.ai/infrastructure/node:{version} \n"
-                f" harbor2.vantage6.ai/infrastructure/server:{version}"
+                f"ghcr.io/vantage6/node:{version} \n ghcr.io/vantage6/server:{version}"
             ),
             inline=False,
         )

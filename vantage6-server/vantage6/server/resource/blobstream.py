@@ -23,7 +23,6 @@ from vantage6.server.resource import (
 )
 from vantage6.server.model import Run as db_Run, Task as db_Task
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

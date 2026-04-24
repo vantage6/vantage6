@@ -33,7 +33,6 @@ from vantage6.server.resource.common.input_schema import TaskInputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 from vantage6.server.resource.event import kill_task
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 

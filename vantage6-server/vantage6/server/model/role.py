@@ -39,9 +39,7 @@ class Role(Base):
     users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
-    def get_by_name(
-        cls, name: str, is_default_role: bool | None = None
-    ) -> Role | None:
+    def get_by_name(cls, name: str, is_default_role: bool | None = None) -> Role | None:
         """
         Get a role by its name.
 

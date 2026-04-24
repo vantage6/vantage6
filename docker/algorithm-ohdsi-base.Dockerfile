@@ -54,4 +54,3 @@ RUN pip install psycopg2-binary
 # FIXME FM 5-9-2023: This is a bit to broad, it would be better to figure out
 # a way to only set this for the OHDSI R packages.
 ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-17-openjdk-amd64/lib/server/
-

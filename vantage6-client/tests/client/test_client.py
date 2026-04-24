@@ -8,7 +8,6 @@ from unittest.mock import patch, MagicMock
 from vantage6.client import UserClient
 from vantage6.common.globals import STRING_ENCODING
 
-
 # Mock server
 HOST = "mock_server"
 PORT = 1234

@@ -15,7 +15,6 @@ from vantage6.algorithm.store.resource import (
 from vantage6.algorithm.store.resource.schema.output_schema import RuleOutputSchema
 from vantage6.backend.common.resource.pagination import Pagination
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 rule_schema = RuleOutputSchema()
@@ -44,13 +43,6 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         methods=("GET",),
         resource_class_kwargs=services,
     )
-    # api.add_resource(
-    #     Rule,
-    #     path + "/<int:id>",
-    #     endpoint="rule_with_id",
-    #     methods=("GET",),
-    #     resource_class_kwargs=services,
-    # )
 
 
 # ------------------------------------------------------------------------------
@@ -143,7 +135,7 @@ class Rules(AlgorithmStoreResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
             q = (
                 q.join(db.role_rule_association)
@@ -203,41 +195,3 @@ class Rules(AlgorithmStoreResources):
 
         # model serialization
         return self.response(page, rule_schema)
-
-
-# class Rule(ServicesResources):
-#     @with_user
-#     def get(self, id):
-#         """Returns a specific rule
-#         ---
-#         description: >-
-#             Get a rule by it's id. The user must be authenticated, but does
-#             not require any additional permissions to view rules.\n
-
-#             Accesible to users.
-
-#         parameters:
-#         - in: path
-#           name: id
-#           schema:
-#               type: integer
-#           minimum: 1
-#           description: rule_id
-#           required: true
-
-#         responses:
-#           200:
-#             description: Ok
-#           404:
-#             description: Rule not found
-
-#         security:
-#             - bearerAuth: []
-
-#         tags: ["Rule"]
-#         """
-#         rule = db.Rule.get(id)
-#         if not rule:
-#             return {"msg": f"Rule id={id} not found!"}, HTTPStatus.NOT_FOUND
-
-#         return rule_schema.dump(rule, many=False), HTTPStatus.OK

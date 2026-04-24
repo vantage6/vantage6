@@ -7,7 +7,6 @@ from flask_restful import Api
 from vantage6.server.resource import ServicesResources
 from vantage6.common import logger_name
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
