@@ -1,6 +1,6 @@
 export const mockDataQualityTemplateTask = {
   name: 'Quality check',
-  image: 'ghcr.io/vantage6/algorithm-starter-utils:latest',
+  image: 'ghcr.io/vantage6/algorithm/starter-utils:latest',
   function: 'fetch_static_file',
   collaboration: 2,
   fixed: { name: 'Quality check', databases: [] },
@@ -18,7 +18,7 @@ export const mockDataQualityTemplateTask = {
 
 export const mockDataCrossTabTemplateTask = {
   name: 'Cross tabulation',
-  image: 'ghcr.io/vantage6/algorithm-starter-crosstab:latest',
+  image: 'ghcr.io/vantage6/algorithm/starter-crosstab:latest',
   function: 'dct',
   collaboration: 2,
   fixed: {

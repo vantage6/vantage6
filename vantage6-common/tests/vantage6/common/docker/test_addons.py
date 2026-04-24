@@ -113,37 +113,37 @@ class TestParseImageName(TestCase):
 
     def test_parse_image_name_ghcr_average(self):
         self.assertEqual(
-            parse_image_name("ghcr.io/vantage6/algorithm-average:latest"),
-            ("ghcr.io", "vantage6/algorithm-average", "latest"),
+            parse_image_name("ghcr.io/vantage6/algorithm/average:latest"),
+            ("ghcr.io", "vantage6/algorithm/average", "latest"),
         )
 
     def test_parse_image_name_ghcr_average_tag_latest(self):
         self.assertEqual(
-            parse_image_name("ghcr.io/vantage6/algorithm-average:latest"),
-            ("ghcr.io", "vantage6/algorithm-average", "latest"),
+            parse_image_name("ghcr.io/vantage6/algorithm/average:latest"),
+            ("ghcr.io", "vantage6/algorithm/average", "latest"),
         )
 
     def test_parse_image_name_ghcr_average_tag_4(self):
         self.assertEqual(
-            parse_image_name("ghcr.io/vantage6/algorithm-average:4"),
-            ("ghcr.io", "vantage6/algorithm-average", "4"),
+            parse_image_name("ghcr.io/vantage6/algorithm/average:4"),
+            ("ghcr.io", "vantage6/algorithm/average", "4"),
         )
 
     def test_parse_image_name_with_sha(self):
         self.assertEqual(
-            parse_image_name("ghcr.io/vantage6/algorithm-average@sha256:1234"),
-            ("ghcr.io", "vantage6/algorithm-average", "sha256:1234"),
+            parse_image_name("ghcr.io/vantage6/algorithm/average@sha256:1234"),
+            ("ghcr.io", "vantage6/algorithm/average", "sha256:1234"),
         )
 
     def test_parse_image_name_with_sha_and_tag(self):
         self.assertEqual(
             parse_image_name(
-                "ghcr.io/vantage6/node:4.5@sha256:1234567890abcdef"
+                "ghcr.io/vantage6/infrastructure/node:4.5@sha256:1234567890abcdef"
                 "1234567890abcdef1234567890abcdef1234567890abcdef"
             ),
             (
                 "ghcr.io",
-                "vantage6/node",
+                "vantage6/infrastructure/node",
                 "4.5",
             ),
         )

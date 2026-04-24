@@ -319,7 +319,7 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     Parameters
     ----------
     image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest" or
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest" or
         "library/hello-world"
 
     Returns
@@ -349,12 +349,12 @@ def get_image_name_wo_tag(image: str) -> str:
     Parameters
     ----------
     image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest"
 
     Returns
     -------
     str
-        Image name without tag. E.g. "ghcr.io/vantage6/algorithm-average"
+        Image name without tag. E.g. "ghcr.io/vantage6/algorithm/average"
     """
     registry, repository, _ = parse_image_name(image)
     if registry == "docker.io":
@@ -377,7 +377,7 @@ def _get_manifest(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest"
     registry_user: str | None
         Docker username to authenticate with at the registry. Required if the image is
         private
@@ -469,7 +469,7 @@ def _get_digest_via_docker(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest"
     client: DockerClient
         Docker client.
     docker_username: str | None
@@ -516,7 +516,7 @@ def _get_digest_via_manifest(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest"
     docker_username: str | None
         Docker username to authenticate with at the registry. Required if the image is
         private
@@ -553,7 +553,7 @@ def get_digest(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "ghcr.io/vantage6/algorithm-average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/average:latest"
     client: DockerClient | None
         Docker client to use. If not provided, a new client will be created. An existing
         client could be useful to provide if it has already been authenticated with one

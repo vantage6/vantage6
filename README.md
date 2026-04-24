@@ -146,10 +146,10 @@ easily.
 The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
 in the vantage6 GitHub Container Registry. The most important images are:
 
-- `ghcr.io/vantage6/node:VERSION` -> _Node application Docker image_
-- `ghcr.io/vantage6/server:VERSION` -> _Server application Docker image_
-- `ghcr.io/vantage6/ui:VERSION` -> _User interface Docker image_
-- `ghcr.io/vantage6/algorithm-store:VERSION` -> _Algorithm store Docker image_
+- `ghcr.io/vantage6/infrastructure/node:VERSION` -> _Node application Docker image_
+- `ghcr.io/vantage6/infrastructure/server:VERSION` -> _Server application Docker image_
+- `ghcr.io/vantage6/infrastructure/ui:VERSION` -> _User interface Docker image_
+- `ghcr.io/vantage6/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
@@ -157,16 +157,16 @@ with `VERSION` being the full semantic version of the vantage6 infrastructure, e
 Several other images are used to support the infrastructure:
 
 - `ghcr.io/vantage6/infrastructure-base:VERSION` -> _Base image for the infrastructure_
-- `ghcr.io/vantage6/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
-- `ghcr.io/vantage6/alpine` -> _Alpine image used for vpn traffic forwarding_
-- `ghcr.io/vantage6/vpn-client` -> _VPN image used to connect to the VPN_
-- `ghcr.io/vantage6/vpn-configurator` -> _VPN image used for initialization_
-- `ghcr.io/vantage6/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
+- `ghcr.io/vantage6/infrastructure/squid:VERSION` -> _Squid proxy image used for the whitelisting service_
+- `ghcr.io/vantage6/infrastructure/alpine` -> _Alpine image used for vpn traffic forwarding_
+- `ghcr.io/vantage6/infrastructure/vpn-client` -> _VPN image used to connect to the VPN_
+- `ghcr.io/vantage6/infrastructure/vpn-configurator` -> _VPN image used for initialization_
+- `ghcr.io/vantage6/infrastructure/ssh-tunnel` -> _SSH tunnel image used for connecting algorithms to external services_
 
 And finally there are some images released for algorithm development:
 
-- `ghcr.io/vantage6/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
-- `ghcr.io/vantage6/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
 ## :gift_heart: Join the community!
 

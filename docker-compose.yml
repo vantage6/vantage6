@@ -1,6 +1,6 @@
 services:
   vantage6-server:
-    image: ghcr.io/vantage6/server:latest
+    image: ghcr.io/vantage6/infrastructure/server:latest
     ports:
       - "7601:7601"
     depends_on:

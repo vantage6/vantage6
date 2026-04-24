@@ -2,7 +2,7 @@ average = {
     "collaboration": 1,
     "organizations": [1],
     "name": "test_average_task",
-    "image": "ghcr.io/vantage6/algorithm-average:latest",
+    "image": "ghcr.io/vantage6/algorithm/average:latest",
     "description": "",
     "input_": {
         "method": "central_average",
@@ -16,7 +16,7 @@ kaplan_meier = {
     "collaboration": 1,
     "organizations": [1],
     "name": "test_average_task",
-    "image": "ghcr.io/vantage6/algorithm-kaplan-meier:latest",
+    "image": "ghcr.io/vantage6/algorithm/kaplan-meier:latest",
     "description": "",
     "input_": {
         "method": "kaplan_meier_central",

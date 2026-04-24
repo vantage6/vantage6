@@ -3,7 +3,7 @@
 
 # docker image tag
 TAG ?= cotopaxi
-REGISTRY ?= ghcr.io/vantage6
+REGISTRY ?= ghcr.io/vantage6/infrastructure
 PLATFORMS ?= linux/arm64,linux/amd64
 # Example for local development
 # TAG ?= local
