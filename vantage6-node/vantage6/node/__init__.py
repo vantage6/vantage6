@@ -39,6 +39,7 @@ import requests.exceptions
 from gevent.pywsgi import WSGIServer
 from keycloak import KeycloakAuthenticationError
 from socketio import Client as SocketIO
+from socketio import exceptions as sio_exceptions
 
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
@@ -493,19 +494,29 @@ class Node:
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
 
-        self.socketIO.emit(
-            "algorithm_status_change",
-            data={
-                "node_id": self.client.whoami.id_,
-                "status": status.value,
-                "run_id": run_id,
-                "task_id": task["id"],
-                "collaboration_id": self.client.collaboration_id,
-                "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
-            },
-            namespace="/tasks",
-        )
+        try:
+            self.socketIO.emit(
+                "algorithm_status_change",
+                data={
+                    "node_id": self.client.whoami.id_,
+                    "status": status.value,
+                    "run_id": run_id,
+                    "task_id": task["id"],
+                    "collaboration_id": self.client.collaboration_id,
+                    "organization_id": self.client.whoami.organization_id,
+                    "parent_id": get_parent_id(task),
+                },
+                namespace="/tasks",
+            )
+        except Exception as e:
+            self.log.warning(
+                "Skipping algorithm_status_change emit: /tasks namespace not connected "
+                "(run_id=%s, task_id=%s). Exception: %s - %s",
+                run_id,
+                task.get("id"),
+                type(e).__name__,
+                e,
+            )
 
     def __poll_task_results(self) -> None:
         """
@@ -558,19 +569,29 @@ class Node:
 
                 # notify other nodes, server and clients about algorithm status
                 # change
-                self.socketIO.emit(
-                    "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": results.status.value,
-                        "run_id": results.run_id,
-                        "task_id": results.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": results.parent_id,
-                    },
-                    namespace="/tasks",
-                )
+                try:
+                    self.socketIO.emit(
+                        "algorithm_status_change",
+                        data={
+                            "node_id": self.client.whoami.id_,
+                            "status": results.status.value,
+                            "run_id": results.run_id,
+                            "task_id": results.task_id,
+                            "collaboration_id": self.client.collaboration_id,
+                            "organization_id": self.client.whoami.organization_id,
+                            "parent_id": results.parent_id,
+                        },
+                        namespace="/tasks",
+                    )
+                except Exception as e:
+                    self.log.warning(
+                        "Skipping algorithm_status_change emit: /tasks namespace not "
+                        "connected (run_id=%s, task_id=%s). Exception: %s - %s",
+                        results.run_id,
+                        results.task_id,
+                        type(e).__name__,
+                        e,
+                    )
             except Exception as e:
                 self.log.exception(
                     "poll_task_results (Speaking) thread had an exception: %s - %s",
@@ -736,17 +757,23 @@ class Node:
 
     def __process_tasks_queue(self) -> None:
         """Keep checking queue for incoming tasks (and execute them)."""
-        try:
-            while True:
+        while True:
+            try:
                 self.log.info("Waiting for new tasks....")
                 run_to_execute = self.runs_queue.get()
                 self.log.info("New task received")
                 self.__start_task(run_to_execute)
-
-        except (KeyboardInterrupt, InterruptedError):
-            self.log.info("Node is interrupted, shutting down...")
-            self.cleanup()
-            sys.exit()
+            except (KeyboardInterrupt, InterruptedError):
+                self.log.info("Node is interrupted, shutting down...")
+                self.cleanup()
+                sys.exit()
+            except Exception as e:
+                self.log.exception(
+                    "Task queue processing error; continuing: %s - %s",
+                    type(e).__name__,
+                    e,
+                )
+                time.sleep(1)
 
     def kill_containers(self, kill_info: dict) -> list[dict]:
         """
