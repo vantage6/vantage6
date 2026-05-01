@@ -7,7 +7,7 @@ from vantage6.common import logger_name
 
 from vantage6.backend.common import session as db_session
 
-from vantage6.hq import HQApp
+from vantage6.hq import HQApp, db
 from vantage6.hq.default_roles import DefaultRole
 from vantage6.hq.model import (
     Collaboration,
@@ -446,11 +446,9 @@ class TestResources(TestResourceBase):
         }
 
         try:
-            with (
-                patch("vantage6.server.get_default_roles", return_value=[default_role]),
-                patch("vantage6.server.log.warning") as mock_warning,
-            ):
-                HQApp._add_default_roles()
+            # _add_default_roles lives on Vantage6App and logs via backend.common.log
+            with patch("vantage6.backend.common.log.warning") as mock_warning:
+                HQApp._add_default_roles([default_role], db)
 
             updated_role = Role.get(role.id)
             same_name_roles = [

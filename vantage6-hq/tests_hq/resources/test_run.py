@@ -58,8 +58,8 @@ class TestResources(TestResourceBase):
         col = Collaboration(name=str(uuid.uuid1()), organizations=[org1, org2])
         col.save()
 
-        node1, api_key1 = self.create_node(organization=org1, collaboration=col)
-        node2, _ = self.create_node(organization=org2, collaboration=col)
+        node1 = self.create_node(organization=org1, collaboration=col)
+        node2 = self.create_node(organization=org2, collaboration=col)
 
         task = Task(
             image="localhost/algorithms/test:local",
@@ -96,7 +96,7 @@ class TestResources(TestResourceBase):
         finished_sibling.save()
 
         try:
-            headers = self.login_node(api_key1)
+            headers = self.login_node(node1)
             response = self.app.patch(
                 f"/api/run/{failing_run.id}",
                 headers=headers,
