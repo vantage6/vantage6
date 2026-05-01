@@ -7,7 +7,7 @@ hq:
   standalone: true
 
   apiPath: /hq
-  image: harbor2.vantage6.ai/infrastructure/hq:uluru
+  image: ghcr.io/vantage6/infrastructure/hq:uluru
 
   port: 7601
   internal:
@@ -47,7 +47,7 @@ database:
   external: true
 
 ui:
-  image: harbor2.vantage6.ai/infrastructure/ui:uluru
+  image: ghcr.io/vantage6/infrastructure/ui:uluru
   port: 7600
   allowedAlgorithmStores: "*"
   communityStoreUrl: https://store.uluru.vantage6.ai

@@ -198,9 +198,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "internal": {
                     "port": Ports.SANDBOX_HQ.value,
                 },
-                "image": (
-                    self.hq_image or "harbor2.vantage6.ai/infrastructure/hq:uluru"
-                ),
+                "image": (self.hq_image or "ghcr.io/vantage6/infrastructure/hq:uluru"),
                 "algorithm_stores": [
                     {
                         "name": "Local store",
@@ -244,9 +242,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             ),
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
-                "image": (
-                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:uluru"
-                ),
+                "image": (self.ui_image or "ghcr.io/vantage6/infrastructure/ui:uluru"),
             },
             "prometheus": prometheus_config,
         }
@@ -326,7 +322,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 },
                 "image": (
                     self.store_image
-                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:uluru"
+                    or "ghcr.io/vantage6/infrastructure/algorithm-store:uluru"
                 ),
                 "policies": {
                     "allowLocalhost": True,

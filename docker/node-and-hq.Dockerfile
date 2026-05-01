@@ -2,8 +2,8 @@
 #
 # IMAGES
 # ------
-# * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/hq:x.x.x
+# * ghcr.io/vantage6/infrastructure/node:x.x.x
+# * ghcr.io/vantage6/infrastructure/hq:x.x.x
 #
 ARG TAG=latest
 ARG BASE=5.0

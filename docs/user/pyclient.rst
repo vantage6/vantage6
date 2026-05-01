@@ -342,7 +342,7 @@ Here we assume that
 -  the nodes are configured to look at the right database
 
 In this manual, we'll use the averaging algorithm from
-``ghcr.io/vantage6/algorithm/average:latest``, so the second requirement is met.
+``ghcr.io/vantage6/algorithm/demo/average:latest``, so the second requirement is met.
 We'll assume the nodes in your collaboration have been configured to look as
 something like:
 
@@ -419,7 +419,7 @@ Next, we need to extract data from a database. We can do this by creating a data
    dataframe = client.dataframe.create(
       label="olympic_athletes_db",
       method="read_csv",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average",
       arguments={},
       session=session["id"]
    )
@@ -434,7 +434,7 @@ will only work for CSV files. For a SQL database, you might want to create a tas
    dataframe = client.dataframe.create(
       label="my_database",
       method="read_sql_database",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average",
       arguments={"query": "SELECT * FROM my_table"},
       session=session["id"]
    )
@@ -466,7 +466,7 @@ us create a task that runs the central part of the
       collaboration=1,
       organizations=[2],
       name="an-awesome-task",
-      image="ghcr.io/vantage6/algorithm/average:latest",
+      image="ghcr.io/vantage6/algorithm/demo/average:latest",
       description='',
       method='central_average',
       arguments=arguments,
@@ -504,7 +504,7 @@ central part of the algorithm will normally do:
       collaboration=1,
       organizations=[2,3],
       name="an-awesome-task",
-      image="ghcr.io/vantage6/algorithm/average:latest",
+      image="ghcr.io/vantage6/algorithm/demo/average:latest",
       description='',
       method='partial_average',
       arguments=arguments,

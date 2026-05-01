@@ -481,7 +481,7 @@ could look like this:
         task = client.task.create(
             organizations=[1],
             name="test_average_task",
-            image="ghcr.io/vantage6/algorithm/average:latest",
+            image="ghcr.io/vantage6/algorithm/demo/average:latest",
             description="",
             method="central_average",
             arguments={"column_name": "Age"},

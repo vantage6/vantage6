@@ -26,7 +26,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
       - name: vantage6-node
-        image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:uluru" }}
+        image: {{ .Values.node.image | default "ghcr.io/vantage6/infrastructure/node:uluru" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
         - name: V6_PROXY_PORT

@@ -41,7 +41,7 @@ hq:
   replications: {{ hq.replications | default(1) }}
 
   # The image used to start the hq
-  image: {{ hq.image | default('harbor2.vantage6.ai/infrastructure/hq:uluru') }}
+  image: {{ hq.image | default('ghcr.io/vantage6/infrastructure/hq:uluru') }}
 
   # HQ image pull policy.
   # Possible values are:
@@ -247,7 +247,7 @@ database:
 ui:
 
   # The image of the UI
-  image: {{ ui.image | default('harbor2.vantage6.ai/infrastructure/ui:uluru') }}
+  image: {{ ui.image | default('ghcr.io/vantage6/infrastructure/ui:uluru') }}
   # UI image pull policy. Possible values are: Always (default), IfNotPresent, Never
   imagePullPolicy: {{ ui.imagePullPolicy | default('Always') }}
   # Service port for the UI

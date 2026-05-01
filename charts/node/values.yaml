@@ -15,7 +15,7 @@ node:
     port: 7601
     path: /hq
 
-  image: harbor2.vantage6.ai/infrastructure/node:uluru
+  image: ghcr.io/vantage6/infrastructure/node:uluru
 
   taskNamespace: vantage6-tasks
   k8sNodeName: docker-desktop

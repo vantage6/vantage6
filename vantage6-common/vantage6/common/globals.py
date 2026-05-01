@@ -22,8 +22,8 @@ DEFAULT_NODE_IMAGE_WO_TAG = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node"
 
 DEFAULT_ALPINE_IMAGE = f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/alpine:latest"
 
-#  CHART GLOBALS
-DEFAULT_CHART_REPO = "https://harbor2.vantage6.ai/chartrepo/infrastructure"
+# CHART GLOBALS (Helm OCI in GHCR — see release workflow helm-charts job)
+DEFAULT_HELM_CHART_OCI_PREFIX = f"oci://{DEFAULT_DOCKER_REGISTRY}/helm"
 
 #
 #   COMMON GLOBALS

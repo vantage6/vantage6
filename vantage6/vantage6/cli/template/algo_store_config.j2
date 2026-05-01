@@ -38,7 +38,7 @@ store:
   {% endif %}
 
   # Which image to use to run the store.
-  image: {{ store.image | default('harbor2.vantage6.ai/infrastructure/algorithm-store:uluru') }}
+  image: {{ store.image | default('ghcr.io/vantage6/infrastructure/algorithm-store:uluru') }}
   # Algorithm store image pull policy.
   # Possible values are:
   # - Always: always pull the image from the registry
