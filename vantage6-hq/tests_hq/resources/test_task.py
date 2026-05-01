@@ -243,10 +243,30 @@ class TestResources(TestResourceBase):
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.NOT_FOUND)
 
-        # task without any node created
-        task_json["organizations"] = [{"id": org.id}]
-        task_json["collaboration_id"] = col.id
-        results = self.app.post("/api/task", headers=headers, json=task_json)
+        # task without any node created — user must have Task CREATE permission so the
+        # request reaches _validate_nodes_exist (BAD_REQUEST); otherwise early auth wins
+        # with 401 before that check.
+        rule_create = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        user_can_create = self.create_user(organization=org, rules=[rule_create])
+        session_can_create = Session(
+            name="test_session_can_create",
+            user_id=user_can_create.id,
+            collaboration=col,
+        )
+        session_can_create.save()
+        headers_can_create = self.login(user_can_create)
+        task_base = {
+            "method": "dummy",
+            "image": "some-image",
+            "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+        }
+        task_json = {
+            **task_base,
+            "organizations": [{"id": org.id}],
+            "collaboration_id": col.id,
+            "session_id": session_can_create.id,
+        }
+        results = self.app.post("/api/task", headers=headers_can_create, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # node is used implicitly as in further checks, can only create task
@@ -256,9 +276,11 @@ class TestResources(TestResourceBase):
         org2 = Organization()
         org2.save()
 
-        # test user outside the collaboration
+        # test user outside the collaboration (need CREATE here too; auth runs before
+        # org-membership validation)
+        task_json["session_id"] = session.id
         task_json["organizations"] = [{"id": org2.id}]
-        results = self.app.post("/api/task", headers=headers, json=task_json)
+        results = self.app.post("/api/task", headers=headers_can_create, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.BAD_REQUEST)
 
         # user in the collaboration but still without any permissions
@@ -266,14 +288,26 @@ class TestResources(TestResourceBase):
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
-        # user with organization permissions for other organization
-        rule = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
-        headers = self.get_user_auth_header(rules=[rule])
+        # User belongs to another organization (not in this collaboration) but has
+        # GLOBAL Task CREATE: can_for_col passes; _validate_init_org denies → 403.
+        rule_global = Rule.get_by_("task", Scope.GLOBAL, Operation.CREATE)
+        user_outside_col = self.create_user(rules=[rule_global])
+        session_outside_col = Session(
+            name="session_outside_col",
+            user_id=user_outside_col.id,
+            collaboration=col,
+        )
+        session_outside_col.save()
+        headers = self.login(user_outside_col)
+        task_json["session_id"] = session_outside_col.id
+        task_json["collaboration_id"] = col.id
+        task_json["organizations"] = [{"id": org.id}]
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.FORBIDDEN)
 
         # user with organization permissions
-        headers = self.get_user_auth_header(org, rules=[rule])
+        task_json["session_id"] = session_can_create.id
+        headers = self.get_user_auth_header(org, rules=[rule_create])
         results = self.app.post("/api/task", headers=headers, json=task_json)
         self.assertEqual(results.status_code, HTTPStatus.CREATED)
 
@@ -299,6 +333,8 @@ class TestResources(TestResourceBase):
         # cleanup
         # delete the 1 task that was created in this unit test
         Task.get()[::-1][0].delete()
+        session_outside_col.delete()
+        session_can_create.delete()
         session.delete()
         node.delete()
         org.delete()

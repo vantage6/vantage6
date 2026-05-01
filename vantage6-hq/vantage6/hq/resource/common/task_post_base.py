@@ -81,11 +81,27 @@ class TaskPostBase(ServicesResources):
         tuple[dict, HTTPStatus]
             Tuple containing the response and the HTTP status code.
         """
-        self._validate_request_body(data)
-
-        session = self._validate_session(data["session_id"])
+        data = self._validate_request_body(data)
 
         collaboration, study = self._validate_collaboration_and_study(data)
+
+        # Authorize early so invalid container collaboration / user scope returns 401
+        # before node/session validation runs (which can surface as 500s).
+        image = data.get("image", "")
+        if (
+            g.user
+            and rule_collection_to_check is not None
+            and not rule_collection_to_check.can_for_col(P.CREATE, collaboration.id)
+        ):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
+        if g.container and not self.__verify_container_permissions(
+            g.container, image, collaboration.id
+        ):
+            return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
+
+        session = self._validate_session(data["session_id"])
 
         organizations_json_list = data.get("organizations")
         org_ids = [org.get("id") for org in organizations_json_list]
@@ -98,21 +114,6 @@ class TaskPostBase(ServicesResources):
             self._validate_node_allows_user_task(nodes)
 
         init_org = self._validate_init_org(collaboration)
-
-        # verify permissions
-        image = data.get("image", "")
-        if (
-            g.user
-            and rule_collection_to_check is not None
-            and not rule_collection_to_check.can_for_col(P.CREATE, collaboration.id)
-        ):
-            return {
-                "msg": "You lack the permission to do that!"
-            }, HTTPStatus.UNAUTHORIZED
-        elif g.container and not self.__verify_container_permissions(
-            g.container, image, collaboration.id
-        ):
-            return {"msg": "Container-token is not valid"}, HTTPStatus.UNAUTHORIZED
 
         image_with_hash, store, algorithm = self.get_algorithm(
             data.get("store_id"), collaboration.id, image
