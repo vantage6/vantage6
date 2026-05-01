@@ -18,7 +18,7 @@ from vantage6.cli.common.start import (
 from vantage6.cli.common.utils import create_directory_if_not_exists
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import ChartName, InfraComponentName
-from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
+from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
@@ -61,7 +61,7 @@ def cli_node_start(
 
     create_directory_if_not_exists(ctx.log_dir)
     create_directory_if_not_exists(ctx.data_dir)
-    create_task_namespace_if_not_exists(ctx, k8s_config)
+    create_task_namespace_if_not_exists(ctx)
 
     # Determine image-name. First we check if the image is set in the config file.
     # If so, we use it. Otherwise, we use the same version as HQ.
@@ -113,9 +113,7 @@ def cli_node_start(
         )
 
 
-def create_task_namespace_if_not_exists(
-    ctx: NodeContext, k8s_config: KubernetesConfig
-) -> None:
+def create_task_namespace_if_not_exists(ctx: NodeContext) -> None:
     """
     Create the task namespace if it does not exist.
 
@@ -123,8 +121,6 @@ def create_task_namespace_if_not_exists(
     ----------
     ctx: NodeContext
         The context of the node.
-    k8s_config: KubernetesConfig
-        The Kubernetes configuration.
     """
     task_namespace = ctx.config.get("node", {}).get("taskNamespace")
     if not task_namespace:

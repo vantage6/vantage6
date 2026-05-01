@@ -46,12 +46,16 @@ spec:
           mountPath: /app/tasks
         - name: config-volume
           mountPath: /app/config
+          readOnly: true
         - name: node-logs
           mountPath: /mnt/log
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
           subPath: {{ .originalName }}
+          {{- if eq (default "copy" .mount_mode) "ro" }}
+          readOnly: true
+          {{- end }}
         {{- end }}
       volumes:
       - name: task-files-root

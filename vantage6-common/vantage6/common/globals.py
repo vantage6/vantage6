@@ -33,6 +33,9 @@ PACKAGE_FOLDER = Path(__file__).parent.parent.parent
 DATABASE_TYPES = ["csv", "parquet", "sql", "sparql", "excel", "other"]
 FILE_BASED_DATABASE_TYPES = ["csv", "parquet", "excel", "other"]
 SERVICE_BASED_DATABASE_TYPES = ["sql", "sparql", "other"]
+# Default when database.mount_mode is omitted. Keep "copy" unless default "ro"
+# behavior for non-file databases is explicitly handled.
+DEFAULT_DB_MOUNT_MODE = "copy"
 
 PING_INTERVAL_SECONDS = 60
 
