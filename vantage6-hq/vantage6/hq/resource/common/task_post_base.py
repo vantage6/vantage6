@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import uuid
 from http import HTTPStatus
@@ -155,15 +156,14 @@ class TaskPostBase(ServicesResources):
 
         return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
-    def _validate_request_body(self, data: dict) -> None:
-        # validate request body
+    def _validate_request_body(self, data: dict) -> dict:
+        """Parse and validate request JSON; raises BadRequestError on failure."""
         try:
-            data = task_input_schema.load(data)
+            return task_input_schema.load(data)
         except ValidationError as e:
-            return {
-                "msg": "Request body is incorrect",
-                "errors": e.messages,
-            }, HTTPStatus.BAD_REQUEST
+            raise BadRequestError(
+                "Request body is incorrect: " + json.dumps(e.messages)
+            ) from e
 
     def _validate_session(self, session_id: int) -> db.Session:
         session = db.Session.get(session_id)
