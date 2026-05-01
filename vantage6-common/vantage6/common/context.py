@@ -13,7 +13,12 @@ import pyfiglet
 from vantage6.common import Fore, Singleton, Style, __version__, error, get_config_path
 from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
-from vantage6.common.globals import InstanceType
+from vantage6.common.globals import APPNAME, SANDBOX_SUFFIX, InstanceType
+from vantage6.common.kubernetes.utils import (
+    running_in_pod,
+    running_in_wsl,
+    running_on_windows,
+)
 from vantage6.common.log import OwnershipPreservingRotatingFileHandler
 
 
