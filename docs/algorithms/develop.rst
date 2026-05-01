@@ -401,8 +401,8 @@ Here are a few examples of how to build and upload your image:
 
     # Build and upload to private registry. Note that to be able to use this, you need
     # to have an account at the registry and be logged in with ``docker login``
-    docker build -t harbor2.vantage6.ai/PROJECT/algorithm-example:latest .
-    docker push harbor2.vantage6.ai/PROJECT/algorithm-example:latest
+    docker build -t ghcr.io/vantage6/algorithm/example:latest .
+    docker push ghcr.io/vantage6/algorithm/example:latest
 
 Now that your algorithm has been uploaded it is available for nodes to retrieve
 when they need it.
@@ -481,7 +481,7 @@ could look like this:
         task = client.task.create(
             organizations=[1],
             name="test_average_task",
-            image="harbor2.vantage6.ai/demo/average",
+            image="ghcr.io/vantage6/algorithm/average:latest",
             description="",
             method="central_average",
             arguments={"column_name": "Age"},

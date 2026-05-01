@@ -27,20 +27,21 @@ The image registry is not really a part of the vantage6 infrastructure. You shou
 install and configure your own image registry, depending on your needs. Below, we list
 some of the most popular image registries that we recommend.
 
+Github Container Registry
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Github Container Registry is a private registry that is provided by Github. It is a
+turn-key solution for hosting your own Docker images. It is free to use (at time of
+writing) and links to your Github repository. We use it to host the main vantage6
+images.
+
 Harbor
 ~~~~~~
 
-Our preferred solution for hosting a Docker registry is
-`Harbor <https://goharbor.io>`_, which is part of the open source-based
-`Cloud Native Computing Foundation <https://cncf.io>`_. Harbor provides access control, a user
-interface and automated scanning on vulnerabilities.
-
-Github container registry
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-`Github container registry <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_
-is a free Docker registry provided by Github. It is a good solution for hosting
-your algorithms, especially if you are using Github for your code.
+Another solution for hosting a Docker registry is
+`Harbor <https://goharbor.io>`_. Harbor provides access control, a user
+interface and automated scanning on vulnerabilities. This setup is more complex, but it
+offers more features.
 
 Docker Hub
 ~~~~~~~~~~

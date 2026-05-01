@@ -44,8 +44,10 @@ spec:
         volumeMounts:
         - name: task-files-root
           mountPath: /app/tasks
+        # Single-file mount (like Docker: `/mnt/config/<name>.yaml` only), not whole dir
         - name: config-volume
-          mountPath: /app/config
+          mountPath: /app/config/config.yml
+          subPath: config.yml
           readOnly: true
         - name: node-logs
           mountPath: /mnt/log

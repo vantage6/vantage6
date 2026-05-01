@@ -15,7 +15,7 @@ from vantage6.common.colors import ColorStreamHandler
 from vantage6.common.configuration_manager import ConfigurationManager
 from vantage6.common.globals import InstanceType
 from vantage6.common.log import OwnershipPreservingRotatingFileHandler
-from vantage6.common import __version__
+
 
 class AppContext(metaclass=Singleton):
     """
@@ -443,9 +443,9 @@ class AppContext(metaclass=Singleton):
         AssertionError
             If the configuration manager is not initialized.
         """
-        assert (
-            self.config_manager
-        ), "Log file unkown as configuration manager not initialized"
+        assert self.config_manager, (
+            "Log file unkown as configuration manager not initialized"
+        )
         # See: https://github.com/vantage6/vantage6/issues/2512
         # (potential) Python 3.11+ host-side will produce
         # InstanceType.NODE_user.log instead node_user.log, so we make sure
@@ -655,12 +655,8 @@ class AppContext(metaclass=Singleton):
             )
         except PermissionError:
             error(
-<<<<<<< HEAD
-                f"Can't write to log dir: {Fore.RED}{self.log_file}{Style.RESET_ALL}!"
-=======
                 f"Can't write to log dir (permissions error): "
                 f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
->>>>>>> parent of e6f474098 (Revert "Merge pull request #2561 from vantage6/release/4.14". This is done so v5.0 can be merged into main)
             )
             exit(1)
 

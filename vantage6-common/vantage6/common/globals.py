@@ -12,7 +12,7 @@ APPNAME = "vantage6"
 
 MAIN_VERSION_NAME = "uluru"
 
-DEFAULT_DOCKER_REGISTRY = "harbor2.vantage6.ai"
+DEFAULT_DOCKER_REGISTRY = "ghcr.io/vantage6"
 
 DEFAULT_NODE_IMAGE = (
     f"{DEFAULT_DOCKER_REGISTRY}/infrastructure/node:{MAIN_VERSION_NAME}"

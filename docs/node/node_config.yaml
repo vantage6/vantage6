@@ -126,7 +126,7 @@ node:
     # expected to be a valid regular expression. It's important to set this policy when
     # using sensitive data to control which algorithms are allowed to run on the node.
     allowed_algorithms:
-      - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+      - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+$
       - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from a particular algorithm store. Set

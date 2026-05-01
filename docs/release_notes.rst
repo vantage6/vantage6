@@ -1,7 +1,6 @@
 Release notes
 =============
 
-<<<<<<< HEAD
 5.0.0
 -----
 
@@ -74,7 +73,28 @@ more details regarding the lower-level changes required to accomplish it.*
 
   - Check if database labels exist on node startup
     (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
-=======
+
+4.15.0
+------
+
+*30 April 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: Flask, requests, werkzeug,
+    cryptography, copier, pygments, and various UI dependencies
+    (`PR#2591 <https://github.com/vantage6/vantage6/pull/2591>`_).
+
+- **Feature**
+
+  - Allow building docker images for a private docker registry
+    (`PR#2590 <https://github.com/vantage6/vantage6/pull/2590>`_).
+
+- **Change**
+
+  - Change the default docker registry to ghcr.io/vantage6, since harbor2.vantage6.ai
+    was taken offline (`PR#2587 <https://github.com/vantage6/vantage6/pull/2587>`_).
+
 4.14.0
 ------
 

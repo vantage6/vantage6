@@ -161,7 +161,7 @@ class ContainerManager:
 
         # try to see if jobs can be created in the cluster - if not, tasks cannot be
         # created so we return False
-        test_pod_name = str(uuid.uuid4())
+        test_pod_name = "v6-test-pod-" + str(uuid.uuid4())
         try:
             self.core_api.create_namespaced_pod(
                 namespace=self.task_namespace,

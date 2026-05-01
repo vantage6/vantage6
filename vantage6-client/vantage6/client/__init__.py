@@ -1924,7 +1924,6 @@ class UserClient(ClientBase):
                 collaboration is not set
             store : int, optional
                 ID of the algorithm store to retrieve the algorithm from
-<<<<<<< HEAD
             databases: list[list[dict]] | list[dict], optional
                 Databases to be used at the node. Each dict should look like this:
                 {"type": "dataframe", "dataframe_id": <my_dataframe_id>}. If the
@@ -1937,21 +1936,6 @@ class UserClient(ClientBase):
                 available from either, there will be an error. Suitable actions may be
                 one of 'data_extraction', 'preprocessing', 'federated_compute',
                 'central_compute' or 'postprocessing'.
-=======
-            server_url: str, optional
-                URL of the server on which the task is created. This should be given if
-                the algorithm is retrieved from an algorithm store, and the server does
-                not contain its own URL in the configuration (you will be alerted of
-                this in an error message).
-            databases: list[dict], optional
-                Databases to be used at the node. Each dict should contain at
-                least a 'label' key. Additional optional keys are 'query' (if
-                using SQL/SPARQL databases), 'sheet_name' (if using Excel
-                databases), 'preprocessing' information, and 'arguments'. When
-                a node enables the experimental `run_context_file` feature,
-                these arguments are exposed to the algorithm via the run
-                context input entry under `inputs[*].arguments`.
->>>>>>> parent of e6f474098 (Revert "Merge pull request #2561 from vantage6/release/4.14". This is done so v5.0 can be merged into main)
             field: str, optional
                 Which data field to keep in the returned dict. For instance,
                 "field='name'" will only return the name of the task. Default is None.
@@ -2190,14 +2174,9 @@ class UserClient(ClientBase):
             params = {"include": "task"} if include_task else {}
             run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
-<<<<<<< HEAD
-            # decrypt input arguments
-            run = self._decrypt_input_arguments(run_data=run, is_single_run=True)
-=======
             if decrypt_input:
                 self.parent.log.info("--> Attempting to decrypt run input!")
-                run = self._decrypt_input(run_data=run, is_single_run=True)
->>>>>>> parent of e6f474098 (Revert "Merge pull request #2561 from vantage6/release/4.14". This is done so v5.0 can be merged into main)
+                run = self._decrypt_input_arguments(run_data=run, is_single_run=True)
 
             return run
 

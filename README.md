@@ -165,20 +165,20 @@ is an Angular web application that can be used to interact with the vantage6 HQ 
 ### Docker images
 
 The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
-in our private [Harbor](https://goharbor.io/) registry. The most important images are:
+in the vantage6 GitHub Container Registry. The most important images are:
 
-- `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
-- `harbor2.vantage6.ai/infrastructure/hq:VERSION` -> _HQ application Docker image_
-- `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
-- `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
+- `ghcr.io/vantage6/infrastructure/node:VERSION` -> _Node application Docker image_
+- `ghcr.io/vantage6/infrastructure/hq:VERSION` -> _HQ application Docker image_
+- `ghcr.io/vantage6/infrastructure/ui:VERSION` -> _User interface Docker image_
+- `ghcr.io/vantage6/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
 
 And finally there are some images released for algorithm development:
 
-- `harbor2.vantage6.ai/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
-- `harbor2.vantage6.ai/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
 ## :gift_heart: Join the community!
 

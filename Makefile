@@ -3,7 +3,7 @@
 
 # docker image tag
 TAG ?= uluru
-REGISTRY ?= harbor2.vantage6.ai
+REGISTRY ?= ghcr.io/vantage6/infrastructure
 PLATFORMS ?= linux/arm64,linux/amd64
 # Example for local development
 # TAG ?= local
@@ -95,10 +95,10 @@ install-dev:
 	uv pip install -e .[dev,docs]
 
 algorithm-base-image:
-	@echo "Building ${REGISTRY}/algorithms/algorithm-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-base:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-base:latest) \
+		--tag ${REGISTRY}/algorithm-base:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-base:latest) \
 		--platform ${PLATFORMS} \
 		--build-arg TAG=${TAG} \
 		-f ./docker/algorithm-base.Dockerfile \
@@ -107,12 +107,13 @@ algorithm-base-image:
 # FIXME FM 17-10-2023: This fails to build for arm64, this is because of
 # the r-base image.
 algorithm-omop-base-image:
-	@echo "Building ${REGISTRY}/algorithms/algorithm-ohdsi-base:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-ohdsi-base:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-ohdsi-base:latest) \
+		--tag ${REGISTRY}/algorithm-ohdsi-base:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-ohdsi-base:latest) \
 		--build-arg BASE=${BASE} \
 		--build-arg TAG=${TAG} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform linux/amd64 \
 		-f ./docker/algorithm-ohdsi-base.Dockerfile \
 		$(if ${_condition_push},--push .,.)
@@ -123,44 +124,46 @@ support-image:
 	make support-alpine-image
 
 support-alpine-image:
-	@echo "Building ${REGISTRY}/infrastructure/alpine:${TAG}"
+	@echo "Building ${REGISTRY}/alpine:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/alpine:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/alpine:latest) \
+		--tag ${REGISTRY}/alpine:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/alpine:latest) \
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 image:
-	@echo "Building ${REGISTRY}/infrastructure/node:${TAG}"
-	@echo "Building ${REGISTRY}/infrastructure/hq:${TAG}"
+	@echo "Building ${REGISTRY}/node:${TAG}"
+	@echo "Building ${REGISTRY}/hq:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/node:${TAG} \
-		--tag ${REGISTRY}/infrastructure/hq:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/node:latest) \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/hq:latest) \
+		--tag ${REGISTRY}/node:${TAG} \
+		--tag ${REGISTRY}/hq:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/node:latest) \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/hq:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform ${PLATFORMS} \
 		-f ./docker/node-and-hq.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 algorithm-store-image:
-	@echo "Building ${REGISTRY}/infrastructure/algorithm-store:${TAG}"
+	@echo "Building ${REGISTRY}/algorithm-store:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/algorithm-store:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/algorithm-store:latest) \
+		--tag ${REGISTRY}/algorithm-store:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/algorithm-store:latest) \
 		--build-arg TAG=${TAG} \
 		--build-arg BASE=${BASE} \
+		--build-arg REGISTRY=${REGISTRY} \
 		--platform ${PLATFORMS} \
 		-f ./docker/algorithm-store.Dockerfile \
 		$(if ${_condition_push},--push .,.)
 
 ui-image:
-	@echo "Building ${REGISTRY}/infrastructure/ui:${TAG}"
+	@echo "Building ${REGISTRY}/ui:${TAG}"
 	docker buildx build \
-		--tag ${REGISTRY}/infrastructure/ui:${TAG} \
-		$(if ${_condition_tag_latest},--tag ${REGISTRY}/infrastructure/ui:latest) \
+		--tag ${REGISTRY}/ui:${TAG} \
+		$(if ${_condition_tag_latest},--tag ${REGISTRY}/ui:latest) \
 		--build-arg TAG=${TAG} \
 		--platform ${PLATFORMS} \
 		-f ./docker/ui.Dockerfile \
