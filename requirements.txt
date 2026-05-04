@@ -22,7 +22,7 @@ Flask-Mail==0.9.1
 flask-marshmallow==0.15.0
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.10
-flask-socketio==5.5.1
+flask-socketio==5.6.1
 gevent==25.4.2
 greenlet==3.2.1
 idna==3.7
