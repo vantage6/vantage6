@@ -254,10 +254,13 @@ def _validate_container_token():
 
     try:
         # Decode and verify the container token
+        # `sub` holds structured container claims (not a string); disable sub validation
+        # required by PyJWT 2+.
         claims = jwt.decode(
             token,
             current_app.config["jwt_secret_key"],
             algorithms=["HS256"],
+            options={"verify_sub": False},
         )
     except Exception as container_error:
         log.error("Container authentication failed: %s", str(container_error))

@@ -25,7 +25,7 @@ dependencies = [
     "parquet-tools==0.2.16",
     "psutil==7.0.0",
     "python-socketio==5.15.0",
-    "requests==2.32.4",
+    "requests==2.33.1",
     "vantage6==5.0.0rc3",
     "vantage6-client==5.0.0rc3",
     "vantage6-common==5.0.0rc3",

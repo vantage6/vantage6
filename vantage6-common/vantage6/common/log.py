@@ -1,5 +1,60 @@
 import logging
+import logging.handlers
+import os
+from dataclasses import dataclass
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class FileMetadata:
+    user_id: int
+    group_id: int
+    mode: int
+
+
+class OwnershipPreservingRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """
+    Rotating file handler that keeps ownership and mode after rollover.
+
+    This prevents permission issues when the same mounted log file may be
+    created by a regular host user (e.g. id=1000), but rotate by root inside a
+    container.
+    """
+
+    def _capture_metadata(self) -> FileMetadata | None:
+        try:
+            file_stats = os.stat(self.baseFilename)
+        except OSError:
+            return None
+        return FileMetadata(
+            user_id=file_stats.st_uid,
+            group_id=file_stats.st_gid,
+            mode=file_stats.st_mode & 0o7777,
+        )
+
+    def _restore_metadata(self, metadata: FileMetadata | None) -> None:
+        if not metadata:
+            return
+        try:
+            os.chown(self.baseFilename, metadata.user_id, metadata.group_id)
+        except OSError:
+            pass
+        try:
+            os.chmod(self.baseFilename, metadata.mode)
+        except OSError:
+            pass
+
+    def doRollover(self) -> None:
+        """
+        Rotate the active log file and restore its original ownership and mode.
+
+        Overrides ``logging.handlers.RotatingFileHandler.doRollover()`` so the
+        replacement log file keeps the same uid, gid, and permissions as the
+        pre-rollover file.
+        """
+        metadata = self._capture_metadata()
+        super().doRollover()
+        self._restore_metadata(metadata)
 
 
 def get_file_logger(
@@ -35,7 +90,7 @@ def get_file_logger(
     logger.propagate = False
 
     # add file handler
-    fh = logging.handlers.RotatingFileHandler(file_path)
+    fh = OwnershipPreservingRotatingFileHandler(file_path)
     fh.setLevel(log_level_file)
     logger.addHandler(fh)
 

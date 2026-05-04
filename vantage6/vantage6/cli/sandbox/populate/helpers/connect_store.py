@@ -135,7 +135,7 @@ def connect_store(client: Client, store_port: int = Ports.DEV_ALGO_STORE.value) 
     client.algorithm.create(
         name="Session Basics",
         description="A set of basic algorithms for a session management",
-        image="harbor2.vantage6.ai/algorithms/session-basics:latest",
+        image="ghcr.io/vantage6/algorithm/session-basics:latest",
         vantage6_version="5.0.0",
         code_url="https://github.com/vantage6-ai/v6-session-basics",
         partitioning="horizontal",

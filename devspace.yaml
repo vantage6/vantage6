@@ -14,10 +14,10 @@ vars:
   CURRENT_NAMESPACE:
     command: kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null | grep -v "^null$" | grep -v "^$" || echo "default"
   POPULATE_MARKER: ".devspace/vantage6_populate_done"
-  HQ_IMAGE: harbor2.vantage6.ai/infrastructure/hq
-  NODE_IMAGE: harbor2.vantage6.ai/infrastructure/node
-  STORE_IMAGE: harbor2.vantage6.ai/infrastructure/algorithm-store
-  UI_IMAGE: harbor2.vantage6.ai/infrastructure/ui
+  HQ_IMAGE: ghcr.io/vantage6/infrastructure/hq
+  NODE_IMAGE: ghcr.io/vantage6/infrastructure/node
+  STORE_IMAGE: ghcr.io/vantage6/infrastructure/algorithm-store
+  UI_IMAGE: ghcr.io/vantage6/infrastructure/ui
   NODE_PROXY_STARTING_PORT_NUMBER: 7654
   NODE_TEST_DATABASE_MOUNT_PATH:
     question: "Where is the parent folder where the node test data is located on the host machine?"
@@ -592,7 +592,7 @@ commands:
 
   # This will build all images for this project. This is probably the first command
   # you want to run. In case you do not run it, it will pull the latest images from
-  # our harbor registry (which potentially has outdated dependencies).
+  # our GHCR registry (which potentially has outdated dependencies).
   rebuild:
     description: "Rebuild images for this project (use --hq, --node, --store, --ui for specific images)"
     command: |

@@ -25,7 +25,7 @@ node:
   {% else %}
   # You may specify a fixed image to use to run the node. Note that if specified, the
   # node will not automatically run the version matching the HQ version.
-  # image: harbor2.vantage6.ai/infrastructure/node:uluru
+  # image: ghcr.io/vantage6/infrastructure/node:uluru
   {% endif %}
 
   # Node image pull policy.
@@ -174,6 +174,11 @@ node:
       type: {{ db.type }}
       volumePath: {{ db.volumePath }}
       originalName: {{ db.originalName }}
+      # OPTIONAL: controls how file/folder databases are exposed to algorithm
+      # containers.
+      # - copy (default): copy file data into the node data volume
+      # - ro: bind-mount host path read-only into algorithm containers
+      mount_mode: {{ db.mount_mode | default('copy') }}
     {% endfor %}
     {% endif %}
     {% if node.databases.serviceBased is defined %}
@@ -216,7 +221,7 @@ node:
       {% endfor %}
     {% else %}
     # allowed_algorithms:
-    #   - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+    #   - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+
     #   - ^myalgorithm\.ai/some-algorithm
     {% endif %}
 
@@ -278,7 +283,7 @@ node:
     # expected to be a valid regular expression. If you don't specify this, all algorithm
     # images are allowed to run on this node (unless other policies restrict this).
     # allowed_algorithms:
-    #   - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+    #   - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+
     #   - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from particular algorithm stores. Set

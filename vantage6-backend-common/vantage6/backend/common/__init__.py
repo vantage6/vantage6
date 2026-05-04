@@ -336,11 +336,24 @@ class Vantage6App:
                 )
                 new_role.save()
             else:
-                current_role = db.Role.get_by_name(role["name"])
-                # check that the rules are the same. Use set() to compare without order
-                if set(current_role.rules) != set(role["rules"]):
-                    log.warning("Updating default role %s with new rules", role["name"])
+                current_role = db.Role.get_by_name(role["name"], is_default_role=True)
+                if not current_role:
+                    log.warning(
+                        "'%s' is a default (built-in) role name. "
+                        "A role by that name is already present in the database. "
+                        "Will skip creating the default role by the same name.",
+                        role["name"],
+                    )
+                    continue
+                # Check whether any default role properties changed. Use set()
+                # to compare rules without relying on their order.
+                has_rule_changes = set(current_role.rules) != set(role["rules"])
+                has_description_change = current_role.description != role["description"]
+
+                if has_rule_changes or has_description_change:
+                    log.warning("Updating default role %s...", role["name"])
                     current_role.rules = role["rules"]
+                    current_role.description = role["description"]
                     current_role.save()
 
     def _add_keycloak_id_to_super_user(self, super_user: BaseModelBase) -> None:

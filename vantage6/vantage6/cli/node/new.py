@@ -326,13 +326,15 @@ def _get_allowed_algorithms() -> list[str]:
         "use strings to provide one algorithm at a time."
     )
     info("Examples:")
-    info(r"^harbor2\.vantage6\.ai/demo/average$    Allow the demo average algorithm")
     info(
-        r"^harbor2\.vantage6\.ai/algorithms/.*   Allow all algorithms from "
-        "harbor2.vantage6.ai/algorithms"
+        r"^ghcr\.io/vantage6/algorithm/demo/average$    Allow the demo average algorithm"
     )
     info(
-        r"^harbor2\.vantage6\.ai/demo/average@sha256:82becede...$    Allow a "
+        r"^ghcr\.io/vantage6/algorithm/.*   Allow all algorithms from "
+        "ghcr.io/vantage6/algorithm"
+    )
+    info(
+        r"^ghcr\.io/vantage6/algorithm/demo/average@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []

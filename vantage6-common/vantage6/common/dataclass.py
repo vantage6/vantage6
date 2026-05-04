@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import Self
 
 from vantage6.common.enum import DatabaseType
+from vantage6.common.globals import DEFAULT_DB_MOUNT_MODE
+
+SUPPORTED_DATABASE_MOUNT_MODES = {"copy", "ro"}
 
 
 @dataclass
@@ -29,6 +32,7 @@ class TaskDB:
     is_dir: bool | None = None
     env: dict | None = None
     local_uri: str | None = None
+    mount_mode: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> Self:
@@ -49,8 +53,17 @@ class TaskDB:
                 f"Database with label {data['label']} has no uri. "
                 "Please provide a valid uri."
             )
+        if (
+            "mount_mode" in data
+            and data["mount_mode"] not in SUPPORTED_DATABASE_MOUNT_MODES
+        ):
+            raise ValueError(
+                f"Database with label {data['label']} has an invalid mount mode: "
+                f"{data['mount_mode']}. Please provide a valid mount mode."
+            )
         return cls(
             label=data["label"],
             type=DatabaseType(data["type"]),
             uri=data["uri"],
+            mount_mode=data.get("mount_mode", DEFAULT_DB_MOUNT_MODE),
         )

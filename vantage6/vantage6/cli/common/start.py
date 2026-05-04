@@ -7,7 +7,7 @@ from pathlib import Path
 from vantage6.common import error, info
 from vantage6.common.context import AppContext
 from vantage6.common.globals import (
-    DEFAULT_CHART_REPO,
+    DEFAULT_HELM_CHART_OCI_PREFIX,
     InstanceType,
 )
 
@@ -146,13 +146,12 @@ def helm_install(
             f"{local_chart_dir}/{chart_name.value}",
         ]
     else:
+        chart_ref = f"{DEFAULT_HELM_CHART_OCI_PREFIX}/{chart_name.value}"
         command = [
             "helm",
             "install",
             release_name,
-            chart_name,
-            "--repo",
-            DEFAULT_CHART_REPO,
+            chart_ref,
             # TODO v5+ remove this flag when we have a stable release, see #2213
             "--devel",
         ]
