@@ -221,14 +221,14 @@ def _get_allowed_algorithms() -> list[str]:
     )
     info("Examples:")
     info(
-        r"^ghcr\.io/vantage6/algorithm/average:latest$    Allow the demo average algorithm"
+        r"^ghcr\.io/vantage6/algorithm/glm:latest$    Allow the GLM algorithm"
     )
     info(
         r"^ghcr\.io/vantage6/algorithm/*.   Allow all algorithms from "
         "ghcr.io/vantage6/algorithm/"
     )
     info(
-        r"^ghcr\.io/vantage6/algorithm/average@sha256:82becede...$    Allow a "
+        r"^ghcr\.io/vantage6/algorithm/glm@sha256:82becede...$    Allow a "
         "specific hash of average algorithm"
     )
     allowed_algorithms = []

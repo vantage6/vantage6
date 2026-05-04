@@ -2,7 +2,7 @@ average = {
     "collaboration": 1,
     "organizations": [1],
     "name": "test_average_task",
-    "image": "ghcr.io/vantage6/algorithm/average:latest",
+    "image": "ghcr.io/vantage6/algorithm/demo/average:latest",
     "description": "",
     "input_": {
         "method": "central_average",

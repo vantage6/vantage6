@@ -330,7 +330,7 @@ execution result. For example, to test the average algorithm, the script could l
             collaboration=1,
             organizations=[1],
             name="test_average_task",
-            image="ghcr.io/vantage6/algorithm/average:latest",
+            image="ghcr.io/vantage6/algorithm/demo/average:latest",
             description="",
             input_=input_,
             databases=[{"label": "olympic_athletes"}],
