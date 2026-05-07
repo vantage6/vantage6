@@ -189,12 +189,12 @@ jobs:
           set -euo pipefail
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           PREFIX="oci://ghcr.io/${OWNER_LC}/helm"
-          helm push auth-*.tgz "${PREFIX}/auth"
-          helm push common-*.tgz "${PREFIX}/common"
-          helm push node-*.tgz "${PREFIX}/node"
-          helm push store-*.tgz "${PREFIX}/store"
-          helm push hq-*.tgz "${PREFIX}/hq"
-          helm push hub-*.tgz "${PREFIX}/hub"
+          helm push auth-*.tgz "${PREFIX}"
+          helm push common-*.tgz "${PREFIX}"
+          helm push node-*.tgz "${PREFIX}"
+          helm push store-*.tgz "${PREFIX}"
+          helm push hq-*.tgz "${PREFIX}"
+          helm push hub-*.tgz "${PREFIX}"
   support-images:
     name: Build support images
     runs-on: ubuntu-latest
