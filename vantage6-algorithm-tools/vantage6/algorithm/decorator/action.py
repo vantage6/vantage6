@@ -162,8 +162,8 @@ def data_extraction(func: Callable) -> Callable:
             "username": "postgresql",
             "password": "password",
         }
-        >>>>    # some more code here, and eventually return a pandas DataFrame
-        >>>>    return pd.DataFrame({"a": [1, 2, 3]})
+        >>>    # some more code here, and eventually return a pandas DataFrame
+        >>>    return pd.DataFrame({"a": [1, 2, 3]})
         ```
 
         The node will convert the pandas DataFrame to a parquet file on the node, which

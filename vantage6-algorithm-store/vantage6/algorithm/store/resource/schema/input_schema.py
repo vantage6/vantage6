@@ -263,12 +263,12 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     )
     allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
-    default_value = fields.String()
+    default_value = fields.String(allow_none=True)
     conditional_on = fields.String()
     conditional_operator = fields.String(
-        validate=validate.OneOf(ConditionalArgComparator.list())
+        validate=validate.OneOf(ConditionalArgComparator.list(), allow_none=True)
     )
-    conditional_value = fields.String()
+    conditional_value = fields.String(allow_none=True)
     is_frontend_only = fields.Boolean()
 
     @validates_schema
