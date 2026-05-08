@@ -3,10 +3,10 @@ import click
 
 from vantage6.common import info
 from vantage6.client import Client
-from vantage6.cli.globals import COMMUNITY_STORE
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.server.start import cli_server_start
+from vantage6.cli.dev.connect_store import connect_and_seed_local_store
 from vantage6.cli.dev.utils import get_dev_server_context
 from vantage6.common.globals import DEFAULT_API_PATH
 
@@ -95,29 +95,7 @@ def start_demo_network(
     USERNAME = "dev_admin"
     PASSWORD = "password"
     client.authenticate(USERNAME, PASSWORD)
-    existing_stores = client.store.list().get("data", [])
-    existing_urls = [store["url"] for store in existing_stores]
     api_path = store_ctx.config.get("api_path", DEFAULT_API_PATH)
-    local_store_url = f"http://localhost:{store_ctx.config['port']}{api_path}"
-    if not local_store_url in existing_urls:
-        client.store.create(
-            algorithm_store_url=local_store_url,
-            name="local store",
-            all_collaborations=True,
-            force=True,  # required to link localhost store
-        )
-        # note that we do not need to register the user as root of the store: this is
-        # already handled in the store config file and is executed on store startup (and
-        # successful because server is already started up at that point)
-    info("Done!")
-
-    # link the community store also to the server
-    info("Linking community algorithm store to local server...")
-    if not COMMUNITY_STORE in existing_urls:
-        client.store.create(
-            algorithm_store_url=COMMUNITY_STORE,
-            name="Community store (read-only)",
-            all_collaborations=True,
-            force=True,  # required to continue when linking localhost server
-        )
+    local_store_url = f"http://localhost:{store_ctx.config['port']}"
+    connect_and_seed_local_store(client, local_store_url, api_path)
     info("Done!")
