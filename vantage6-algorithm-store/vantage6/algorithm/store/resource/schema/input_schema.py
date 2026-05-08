@@ -272,10 +272,10 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     type_ = fields.String(required=True, data_key="type")
     allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
-    default_value = fields.String()
+    default_value = fields.String(allow_none=True)
     conditional_on = fields.String()
-    conditional_operator = fields.String()
-    conditional_value = fields.String()
+    conditional_operator = fields.String(allow_none=True)
+    conditional_value = fields.String(allow_none=True)
     is_frontend_only = fields.Boolean()
 
     @validates("type_")
@@ -294,6 +294,8 @@ class ArgumentInputSchema(_NameDescriptionSchema):
         """
         Validate that the conditional comparator is one of the allowed values.
         """
+        if value is None:
+            return
         comparators = [c.value for c in ConditionalArgComparator]
         if value not in comparators:
             raise ValidationError(

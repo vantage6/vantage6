@@ -15,11 +15,15 @@ Release notes
 
   - Allow building docker images for a private docker registry
     (`PR#2590 <https://github.com/vantage6/vantage6/pull/2590>`_).
+  - Add community algorithms to the algorithm store by default (`PR#2596
+    <https://github.com/vantage6/vantage6/pull/2596>`_).
 
 - **Change**
 
   - Change the default docker registry to ghcr.io/vantage6, since harbor2.vantage6.ai
     was taken offline (`PR#2587 <https://github.com/vantage6/vantage6/pull/2587>`_).
+  - Allow null values for optional function argument fields in the algorithm store
+    (`PR#2596 <https://github.com/vantage6/vantage6/pull/2596>`_).
 
 4.14.0
 ------

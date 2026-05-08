@@ -220,9 +220,7 @@ def _get_allowed_algorithms() -> list[str]:
         "use strings to provide one algorithm at a time."
     )
     info("Examples:")
-    info(
-        r"^ghcr\.io/vantage6/algorithm/glm:latest$    Allow the GLM algorithm"
-    )
+    info(r"^ghcr\.io/vantage6/algorithm/glm:latest$    Allow the GLM algorithm")
     info(
         r"^ghcr\.io/vantage6/algorithm/*.   Allow all algorithms from "
         "ghcr.io/vantage6/algorithm/"
