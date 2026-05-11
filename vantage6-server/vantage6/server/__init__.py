@@ -82,10 +82,8 @@ from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
 from vantage6.server.service.azure_storage_service import AzureStorageService
 
-
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
-
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
@@ -611,10 +609,8 @@ class ServerApp:
             if isinstance(identity, dict):
                 return identity
 
-            log.error(
-                f"Could not create a JSON serializable identity \
-                        from '{str(identity)}'"
-            )
+            log.error(f"Could not create a JSON serializable identity \
+                        from '{str(identity)}'")
 
         @self.jwt.user_lookup_loader
         # pylint: disable=unused-argument

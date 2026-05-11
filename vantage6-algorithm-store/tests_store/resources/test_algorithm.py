@@ -448,8 +448,36 @@ class TestAlgorithmResources(TestResources):
             rv.json["functions"][0]["arguments"][0]["conditional_value"], "test"
         )
 
+        # explicit null values for optional fields should be accepted
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "nullable-arg",
+                "type": ArgumentType.STRING,
+                "has_default_value": False,
+                "default_value": None,
+                "conditional_operator": None,
+                "conditional_value": None,
+            }
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        self.assertEqual(rv.status_code, 201)
+
         # test that there is an error if argument with conditional does not have a
         # default value
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "dependent",
+                "type": ArgumentType.STRING,
+                "has_default_value": True,
+                "conditional_on": "conditional",
+                "conditional_operator": "==",
+                "conditional_value": "test",
+            },
+            {
+                "name": "conditional",
+                "type": ArgumentType.STRING,
+            },
+        ]
         json_data["functions"][0]["arguments"][0]["has_default_value"] = False
         rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
         self.assertEqual(rv.status_code, 400)

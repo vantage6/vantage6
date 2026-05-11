@@ -13,7 +13,6 @@ from sqlalchemy import Column, Integer, ForeignKey, Table
 
 from vantage6.algorithm.store.model.base import Base
 
-
 Permission = Table(
     "Permission",
     Base.metadata,

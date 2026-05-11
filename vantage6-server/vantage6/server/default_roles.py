@@ -110,26 +110,30 @@ def get_default_roles(db) -> list[dict]:
     researcher_only_rules = [
         rule for rule in RESEARCHER_RULES if rule not in ORG_ADMIN_RULES
     ]
-    COLLAB_ADMIN_RULES = ORG_ADMIN_RULES + researcher_only_rules + [
-        db.Rule.get_by_("user", Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_("user", Scope.COLLABORATION, Operation.CREATE),
-        db.Rule.get_by_("user", Scope.COLLABORATION, Operation.EDIT),
-        # The following rule is given so that a collaboration admin can
-        # view which organizations they may add to their collaboration
-        db.Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW),
-        db.Rule.get_by_("organization", Scope.COLLABORATION, Operation.EDIT),
-        db.Rule.get_by_("collaboration", Scope.ORGANIZATION, Operation.VIEW),
-        db.Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT),
-        db.Rule.get_by_("role", Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_("node", Scope.COLLABORATION, Operation.CREATE),
-        db.Rule.get_by_("node", Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_("node", Scope.COLLABORATION, Operation.DELETE),
-        db.Rule.get_by_("event", Scope.COLLABORATION, Operation.SEND),
-        db.Rule.get_by_("study", Scope.COLLABORATION, Operation.VIEW),
-        db.Rule.get_by_("study", Scope.COLLABORATION, Operation.CREATE),
-        db.Rule.get_by_("study", Scope.COLLABORATION, Operation.EDIT),
-        db.Rule.get_by_("study", Scope.COLLABORATION, Operation.DELETE),
-    ]
+    COLLAB_ADMIN_RULES = (
+        ORG_ADMIN_RULES
+        + researcher_only_rules
+        + [
+            db.Rule.get_by_("user", Scope.COLLABORATION, Operation.VIEW),
+            db.Rule.get_by_("user", Scope.COLLABORATION, Operation.CREATE),
+            db.Rule.get_by_("user", Scope.COLLABORATION, Operation.EDIT),
+            # The following rule is given so that a collaboration admin can
+            # view which organizations they may add to their collaboration
+            db.Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW),
+            db.Rule.get_by_("organization", Scope.COLLABORATION, Operation.EDIT),
+            db.Rule.get_by_("collaboration", Scope.ORGANIZATION, Operation.VIEW),
+            db.Rule.get_by_("collaboration", Scope.COLLABORATION, Operation.EDIT),
+            db.Rule.get_by_("role", Scope.COLLABORATION, Operation.VIEW),
+            db.Rule.get_by_("node", Scope.COLLABORATION, Operation.CREATE),
+            db.Rule.get_by_("node", Scope.COLLABORATION, Operation.VIEW),
+            db.Rule.get_by_("node", Scope.COLLABORATION, Operation.DELETE),
+            db.Rule.get_by_("event", Scope.COLLABORATION, Operation.SEND),
+            db.Rule.get_by_("study", Scope.COLLABORATION, Operation.VIEW),
+            db.Rule.get_by_("study", Scope.COLLABORATION, Operation.CREATE),
+            db.Rule.get_by_("study", Scope.COLLABORATION, Operation.EDIT),
+            db.Rule.get_by_("study", Scope.COLLABORATION, Operation.DELETE),
+        ]
+    )
     COLLAB_ADMIN_ROLE = {
         "name": DefaultRole.COL_ADMIN,
         "description": "Can manage a collaboration including its organization and users."

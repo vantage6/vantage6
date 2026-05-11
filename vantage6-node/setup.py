@@ -36,7 +36,7 @@ setup(
         "gevent==25.4.2",
         "jinja2==3.1.6",
         "python-socketio==5.15.0",
-        "requests==2.32.4",
+        "requests==2.33.1",
         "psutil==5.9.0",
         "nvidia-ml-py==12.535.133",
         f"vantage6 == {version_ns['__version__']}",
@@ -50,7 +50,7 @@ setup(
             "SQLAlchemy==1.4.46",
             "schema==0.7.5",
             "appdirs==1.4.4",
-            "flask==3.1.1",
+            "flask==3.1.3",
             "black",
             "pre-commit",
         ]

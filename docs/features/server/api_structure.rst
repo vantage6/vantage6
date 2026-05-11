@@ -11,7 +11,7 @@ same way, loosely following HATEOAS rules. An example is detailed below:
       "id": 1,
       "name": "test",
       "results": "/api/result?task_id=1",
-      "image": "harbor2.vantage6.ai/testing/v6-test-py",
+      "image": "ghcr.io/vantage6/algorithm/test:latest",
       ...
   }
 

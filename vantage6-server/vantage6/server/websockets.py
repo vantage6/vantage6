@@ -15,7 +15,6 @@ from vantage6.server.model.authenticatable import Authenticatable
 from vantage6.server.model.rule import Operation, Scope
 from vantage6.server.model.base import DatabaseSessionManager
 
-
 ALL_NODES_ROOM = "all_nodes"
 
 

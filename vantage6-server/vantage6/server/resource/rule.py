@@ -12,7 +12,6 @@ from vantage6.server import db
 from vantage6.server.resource.common.output_schema import RuleSchema
 from vantage6.backend.common.resource.pagination import Pagination
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 rule_schema = RuleSchema()

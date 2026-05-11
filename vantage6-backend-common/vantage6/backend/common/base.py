@@ -21,7 +21,6 @@ from vantage6.backend.common.globals import (
     RETRY_DELAY_IN_SECONDS,
 )
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

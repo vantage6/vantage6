@@ -37,7 +37,7 @@ of a docker-compose file that can be used to deploy the algorithm store.
 
     services:
       vantage6-algorithm-store:
-        image: harbor2.vantage6.ai/infrastructure/algorithm-store:cotopaxi
+        image: ghcr.io/vantage6/infrastructure/algorithm-store:cotopaxi
         ports:
         - "8000:5000"
         volumes:

@@ -28,7 +28,6 @@ from vantage6.algorithm.store.resource import (
 from vantage6.algorithm.store.resource import AlgorithmStoreResources
 from vantage6.algorithm.store.default_roles import DefaultRole
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(logger_name(__name__))
 

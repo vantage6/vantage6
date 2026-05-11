@@ -59,11 +59,11 @@ Angular production servers can be deployed in many ways. Angular's
 [deployment documentation](https://angular.io/guide/deployment) offers a number
 of options.
 
-Alternatively, we provide the Docker image `harbor2.vantage6.ai/infrastructure/ui`
+Alternatively, we provide the Docker image `ghcr.io/vantage6/infrastructure/ui`
 to help you deploy your own UI. In that case, run
 
 ```
-docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80 harbor2.vantage6.ai/infrastructure/ui:latest
+docker run --env SERVER_URL="<your_url>" --env API_PATH="<your_path>" -p 8080:80 ghcr.io/vantage6/infrastructure/ui:latest
 ```
 
 to run a UI on port 8080 that communicates with your own server. For instance,

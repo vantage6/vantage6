@@ -12,7 +12,6 @@ from vantage6.server.resource import ServicesResources, with_user
 from vantage6.server.resource.common.input_schema import ColumnNameInputSchema
 from vantage6.server.resource.task import Tasks
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

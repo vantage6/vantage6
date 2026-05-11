@@ -19,7 +19,6 @@ from vantage6.server import db
 from vantage6.server.resource.common.output_schema import NodeSchema
 from vantage6.server.resource.common.input_schema import NodeInputSchema
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 

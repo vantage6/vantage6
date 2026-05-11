@@ -26,7 +26,6 @@ from vantage6.server.resource.common.output_schema import (
     UserWithPermissionDetailsSchema,
 )
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

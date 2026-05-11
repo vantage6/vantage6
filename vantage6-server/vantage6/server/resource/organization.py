@@ -17,7 +17,6 @@ from vantage6.server.resource.common.input_schema import OrganizationInputSchema
 from vantage6.server.resource import only_for, with_user, ServicesResources
 from vantage6.server.resource.common.output_schema import OrganizationSchema
 
-
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 

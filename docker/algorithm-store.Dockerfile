@@ -2,10 +2,10 @@
 #
 # IMAGE
 # -----
-# * harbor2.vantage6.ai/infrastructure/algorithm-store:x.x.x
+# * ghcr.io/vantage6/infrastructure/algorithm-store:x.x.x
 #
-ARG BASE=4.14
-ARG REGISTRY=ghcr.io/vantage6
+ARG BASE=4.15
+ARG REGISTRY=ghcr.io/vantage6/infrastructure
 FROM ${REGISTRY}/infrastructure-base:${BASE}
 
 ARG TAG=latest

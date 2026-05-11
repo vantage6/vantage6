@@ -23,7 +23,6 @@ from vantage6.server.resource.common.output_schema import (
 )
 from vantage6.server.resource import with_user, only_for, ServicesResources
 
-
 module_name = __name__.split(".")[-1]
 log = logging.getLogger(module_name)
 
