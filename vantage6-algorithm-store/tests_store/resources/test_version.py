@@ -1,9 +1,8 @@
 import json
 import unittest
 
-from vantage6.algorithm.store import __version__
-
 from tests_store.base.unittest_base import TestResources
+from vantage6.algorithm.store import __version__
 
 
 class TestAlgorithmResources(TestResources):
