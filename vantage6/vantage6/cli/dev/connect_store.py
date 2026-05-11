@@ -197,8 +197,10 @@ def connect_and_seed_local_store(
 
     if store is None:
         info("Linking local algorithm store to server")
+        # Server probes {algorithm_store_url}/vantage6-server; the store serves
+        # that under the API prefix (default /api). URL must include that prefix.
         store = client.store.create(
-            algorithm_store_url=normalized_store_url,
+            algorithm_store_url=normalized_api_url,
             name="local store",
             all_collaborations=True,
             force=True,
