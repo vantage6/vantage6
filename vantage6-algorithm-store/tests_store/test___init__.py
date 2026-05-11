@@ -3,14 +3,13 @@ from unittest.mock import patch
 
 from vantage6.common.enum import AlgorithmViewPolicies, StorePolicies
 
+from tests_store.base.unittest_base import TestResources
 from vantage6.algorithm.store import db
 from vantage6.algorithm.store.default_roles import DefaultRole, get_default_roles
 from vantage6.algorithm.store.model.policy import Policy
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.user import User
-
-from .base.unittest_base import TestResources
 
 
 class TestAlgorithmStoreApp(TestResources):

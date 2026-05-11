@@ -10,6 +10,7 @@ from vantage6.common.enum import (
     StorePolicies,
 )
 
+from tests_store.base.unittest_base import TestResources
 from vantage6.algorithm.store.model.algorithm import Algorithm
 from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.argument import Argument
@@ -25,8 +26,6 @@ from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.rule import Operation, Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.resource.algorithm import AlgorithmBaseResource
-
-from ..base.unittest_base import TestResources
 
 
 class TestAlgorithmResources(TestResources):
@@ -426,14 +425,14 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "nullable-arg",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": False,
                 "default_value": None,
                 "conditional_operator": None,
                 "conditional_value": None,
             }
         ]
-        rv = self.app.post("/api/algorithm", json=json_data, headers=HEADERS)
+        rv = self.app.post("/api/algorithm", json=json_data)
         self.assertEqual(rv.status_code, 201)
 
         # test that there is an error if argument with conditional does not have a
@@ -441,7 +440,7 @@ class TestAlgorithmResources(TestResources):
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "dependent",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
                 "has_default_value": True,
                 "conditional_on": "conditional",
                 "conditional_operator": "==",
@@ -449,7 +448,7 @@ class TestAlgorithmResources(TestResources):
             },
             {
                 "name": "conditional",
-                "type": ArgumentType.STRING,
+                "type": AlgorithmArgumentType.STRING,
             },
         ]
         json_data["functions"][0]["arguments"][0]["has_default_value"] = False
