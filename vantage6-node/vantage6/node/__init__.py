@@ -494,28 +494,40 @@ class Node:
             time.sleep(1)
         self.log.debug("Connected to /tasks namespace")
 
-        try:
-            self.socketIO.emit(
-                "algorithm_status_change",
-                data={
-                    "node_id": self.client.whoami.id_,
-                    "status": status.value,
-                    "run_id": run_id,
-                    "task_id": task["id"],
-                    "collaboration_id": self.client.collaboration_id,
-                    "organization_id": self.client.whoami.organization_id,
-                    "parent_id": get_parent_id(task),
-                },
-                namespace="/tasks",
-            )
-        except Exception as e:
+        for _attempt in range(MAX_ATTEMPTS):
+            try:
+                self.socketIO.emit(
+                    "algorithm_status_change",
+                    data={
+                        "node_id": self.client.whoami.id_,
+                        "status": status.value,
+                        "run_id": run_id,
+                        "task_id": task["id"],
+                        "collaboration_id": self.client.collaboration_id,
+                        "organization_id": self.client.whoami.organization_id,
+                        "parent_id": get_parent_id(task),
+                    },
+                    namespace="/tasks",
+                )
+            except Exception as e:
+                self.log.warning(
+                    "Skipping algorithm_status_change emit: /tasks namespace not connected "
+                    "(run_id=%s, task_id=%s). Exception: %s - %s",
+                    run_id,
+                    task.get("id"),
+                    type(e).__name__,
+                    e,
+                )
+                time.sleep(1)
+            else:
+                self.log.debug("Successfully emitted algorithm_status_change")
+                break
+        else:
             self.log.warning(
-                "Skipping algorithm_status_change emit: /tasks namespace not connected "
-                "(run_id=%s, task_id=%s). Exception: %s - %s",
+                "Failed to emit algorithm_status_change after %s attempts (run_id=%s, task_id=%s)",
+                MAX_ATTEMPTS,
                 run_id,
                 task.get("id"),
-                type(e).__name__,
-                e,
             )
 
     def __poll_task_results(self) -> None:
@@ -569,29 +581,43 @@ class Node:
 
                 # notify other nodes, server and clients about algorithm status
                 # change
-                try:
-                    self.socketIO.emit(
-                        "algorithm_status_change",
-                        data={
-                            "node_id": self.client.whoami.id_,
-                            "status": results.status.value,
-                            "run_id": results.run_id,
-                            "task_id": results.task_id,
-                            "collaboration_id": self.client.collaboration_id,
-                            "organization_id": self.client.whoami.organization_id,
-                            "parent_id": results.parent_id,
-                        },
-                        namespace="/tasks",
-                    )
-                except Exception as e:
+
+                for _attempt in range(5):
+                    try:
+                        self.socketIO.emit(
+                            "algorithm_status_change",
+                            data={
+                                "node_id": self.client.whoami.id_,
+                                "status": results.status.value,
+                                "run_id": results.run_id,
+                                "task_id": results.task_id,
+                                "collaboration_id": self.client.collaboration_id,
+                                "organization_id": self.client.whoami.organization_id,
+                                "parent_id": results.parent_id,
+                            },
+                            namespace="/tasks",
+                        )
+
+                    except Exception as e:
+                        self.log.warning(
+                            "Failed to emit algorithm_status_change: /tasks namespace not "
+                            "connected? (run_id=%s, task_id=%s). Exception: %s - %s",
+                            results.run_id,
+                            results.task_id,
+                            type(e).__name__,
+                            e,
+                        )
+                        time.sleep(3)
+                    else:
+                        self.log.debug("Successfully emitted algorithm_status_change")
+                        break
+                else:
                     self.log.warning(
-                        "Skipping algorithm_status_change emit: /tasks namespace not "
-                        "connected (run_id=%s, task_id=%s). Exception: %s - %s",
+                        "Failed to emit algorithm_status_change after 3 attempts (run_id=%s, task_id=%s)",
                         results.run_id,
                         results.task_id,
-                        type(e).__name__,
-                        e,
                     )
+
             except Exception as e:
                 self.log.exception(
                     "poll_task_results (Speaking) thread had an exception: %s - %s",
