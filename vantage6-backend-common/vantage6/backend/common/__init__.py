@@ -167,9 +167,13 @@ class Vantage6App:
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
-        # set JWT algorithms that keycloak uses
+        # JWT algorithms Keycloak may use for realm access tokens (same RSA key
+        # can sign RS256/RS384/RS512). Restricting to RS256 alone breaks when the
+        # realm is configured for a stronger RSA variant.
         self.app.config["JWT_ALGORITHM"] = "RS256"
-        self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
+        self.app.config["JWT_DECODE_ALGORITHMS"] = self.ctx.config.get(
+            "jwt_decode_algorithms", ["RS256", "RS384", "RS512"]
+        )
         # Leeway is provided for the token IAT to prevent errors that token is not yet
         # valid, which can happen if server times are drifting slightly.
         self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
