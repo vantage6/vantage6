@@ -11,7 +11,12 @@ fi
 
 
 # initialize the database
-python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
+python -m vantage6.hq.init_db "${VANTAGE6_CONFIG_LOCATION}"
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "ERROR: failed to initialize HQ database" >&2
+    exit "$status"
+fi
 
 # start HQ
 exec uwsgi \
