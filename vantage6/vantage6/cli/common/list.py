@@ -55,6 +55,8 @@ def get_configuration_list(instance_type: InstanceType) -> None:
             instance_type=instance_type,
         )
         failed_imports = failed_imports_system + failed_imports_user
+
+    click.echo("-" * len(header))
     if failed_imports:
         warning(f"{Fore.RED}Failed imports: {len(failed_imports)}{Style.RESET_ALL}")
 
