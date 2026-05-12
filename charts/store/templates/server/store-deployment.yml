@@ -53,17 +53,19 @@ spec:
           value: {{ default $internal.auth $storeKeycloak.url }}
         - name: KEYCLOAK_REALM
           value: {{ (default ($global.keycloak | default (dict)) .Values.store.keycloak).realm }}
+        - name: VANTAGE6_CONFIG_LOCATION
+          value: /mnt/config.yaml
+        - name: V6_PROXY_PORT
+          value: "{{ .Values.store.internal.port }}"
+        - name: UWSGI_GEVENT
+          value: "1000"
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-store-secrets
         ports:
         - containerPort: {{ .Values.store.internal.port }}
-        command: [
-          "uwsgi", "--http", ":{{ .Values.store.internal.port }}", "--gevent", "1000", "--http-websockets",
-          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
-          "/vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py",
-          "--pyargv", "/mnt/config.yaml",
-        ]
+        command:
+          - /vantage6/vantage6-algorithm-store/server.sh
         volumeMounts:
         - name: config-file
           mountPath: /mnt/config.yaml

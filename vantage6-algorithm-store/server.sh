@@ -2,6 +2,9 @@
 
 echo "[server.sh start]"
 
+HTTP_PORT="${V6_PROXY_PORT:-80}"
+GEVENT="${UWSGI_GEVENT:-100}"
+
 # check if environment variable is set
 if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     echo "VANTAGE6_CONFIG_LOCATION is not set"
@@ -20,8 +23,8 @@ fi
 
 # start the algorithm store
 exec uwsgi \
-    --http :80 \
-    --gevent 100 \
+    --http ":${HTTP_PORT}" \
+    --gevent "${GEVENT}" \
     --http-websockets \
     --master \
     --callable app \

@@ -95,6 +95,12 @@ spec:
         - name: LOCAL_STORE_URL
           value: {{ $internal.store }}
 {{- end }}
+        - name: VANTAGE6_CONFIG_LOCATION
+          value: /mnt/config.yaml
+        - name: V6_PROXY_PORT
+          value: "{{ .Values.hq.internal.port }}"
+        - name: UWSGI_GEVENT
+          value: "1000"
         envFrom:
         - secretRef:
             name: {{ .Release.Name }}-hq-secrets
@@ -104,12 +110,9 @@ spec:
         - containerPort: {{ .Values.prometheus.exporter_port | default 7603 }}
           name: prmths-export
         {{- end }}
-        command: [
-          "uwsgi", "--http", ":{{ .Values.hq.internal.port }}", "--gevent", "1000", "--http-websockets",
-          "--master", "--callable", "app", "--disable-logging", "--wsgi-file",
-          "/vantage6/vantage6-hq/vantage6/hq/wsgi.py", "--pyargv",
-          "/mnt/config.yaml",
-        ]
+        # server.sh runs init_db then uwsgi (same as local Docker); env sets port/gevent.
+        command:
+          - /vantage6/vantage6-hq/server.sh
         volumeMounts:
         - name: config-file
           mountPath: /mnt/config.yaml
