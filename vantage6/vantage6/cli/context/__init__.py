@@ -23,7 +23,7 @@ from vantage6.cli.context.node import NodeContext
 
 def select_context_class(
     type_: InstanceType,
-) -> HQContext | NodeContext | AlgorithmStoreContext | AuthContext:
+) -> HQContext | NodeContext | AlgorithmStoreContext | AuthContext | HubContext:
     """
     Select the context class based on the type of instance.
 
