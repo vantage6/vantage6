@@ -264,6 +264,17 @@ store:
   #  ssl: false                           # true for SSL, false for STARTTLS
   {% endif %}
 
+  # Optional: seed algorithms on store init (see algorithm store docs). Omitted keys
+  # default to false / empty list. For dev/sandbox, the CLI sets community, basics,
+  # and demo to true.
+  {% if store.link_algorithms is defined %}
+  link_algorithms:
+    list: {{ store.link_algorithms.list | default([]) }}
+    community: {{ store.link_algorithms.community | default(false) }}
+    basics: {{ store.link_algorithms.basics | default(false) }}
+    demo: {{ store.link_algorithms.demo | default(false) }}
+  {% else %}
+
 database:
   # whether or not to use an external database
   external: {{ database.external | default(false) }}

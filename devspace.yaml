@@ -373,6 +373,11 @@ deployments:
             disable_review: true
             review_own_algorithm: true
             forward_ports: false
+          link_algorithms:
+            list: []
+            community: true
+            basics: true
+            demo: true
         database:
           external: false
           image:

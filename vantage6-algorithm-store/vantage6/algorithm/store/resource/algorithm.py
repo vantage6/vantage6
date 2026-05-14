@@ -10,11 +10,6 @@ from marshmallow import ValidationError
 from sqlalchemy import or_, select
 
 from vantage6.common import logger_name
-from vantage6.common.docker.addons import (
-    get_digest,
-    get_image_name_wo_tag,
-    parse_image_name,
-)
 from vantage6.common.globals import DATAFRAME_MULTIPLE_KEYWORD
 
 from vantage6.backend.common import get_backend_service_url
@@ -26,6 +21,10 @@ from vantage6.backend.common.globals import (
 from vantage6.backend.common.resource.pagination import Pagination
 
 from vantage6.algorithm.store import db
+from vantage6.algorithm.store.algorithm_create import (
+    create_algorithm_from_validated_data,
+    resolve_image_digest,
+)
 from vantage6.algorithm.store.model.algorithm import Algorithm as db_Algorithm
 from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.argument import Argument
@@ -128,7 +127,7 @@ def permissions(permission_mgr: PermissionManager) -> None:
 class AlgorithmBaseResource(AlgorithmStoreResources):
     """Base class for the algorithm resource"""
 
-    def _get_image_digest(self, image_name: str) -> tuple[str, str]:
+    def _get_image_digest(self, image_name: str) -> tuple[str, str | None]:
         """
         Get the sha256 of the image.
 
@@ -143,53 +142,7 @@ class AlgorithmBaseResource(AlgorithmStoreResources):
             Tuple with the docker image including tag, and the digest of the image if
             found. If the digest could not be determined, `None` is returned.
         """
-        # split image and tag
-        try:
-            # pylint: disable=unused-variable
-            registry, _, tag = parse_image_name(image_name)
-            image_wo_tag = get_image_name_wo_tag(image_name)
-        except Exception as e:
-            raise ValueError(f"Invalid image name: {image_name}") from e
-
-        # if tag is not a digest, set it in the image name
-        if not tag.startswith("sha256:"):
-            image_and_tag = f"{image_wo_tag}:{tag}"
-        else:
-            image_and_tag = image_wo_tag
-
-        # get the digest of the image.
-        digest = get_digest(image_name)
-
-        # If getting digest failed, try to use authentication
-        if digest:
-            log.info("Digest obtained succesfully!")
-            return image_and_tag, digest
-        else:
-            log.debug("Failed to get digest without authentication...")
-
-        docker_registries = self.config.get("private_docker_registries", [])
-        registry_user = None
-        registry_password = None
-        for reg in docker_registries:
-            if reg["registry"] == registry:
-                registry_user = reg.get("username")
-                registry_password = reg.get("password")
-                break
-        if registry_user and registry_password:
-            log.info("Retrying to get digest with authentication...")
-            digest = get_digest(
-                full_image=image_name,
-                registry_username=registry_user,
-                registry_password=registry_password,
-            )
-            if digest:
-                log.info("Digest obtained succesfully!")
-            else:
-                log.error("Failed to get digest with authentication!")
-        else:
-            log.error("Failed to get digest!")
-
-        return image_and_tag, digest
+        return resolve_image_digest(image_name, self.config)
 
 
 class Algorithms(AlgorithmBaseResource):
@@ -554,94 +507,16 @@ class Algorithms(AlgorithmBaseResource):
                 "msg": "Image digest could not be determined"
             }, HTTPStatus.BAD_REQUEST
 
-        # create the algorithm
-        algorithm = db_Algorithm(
-            name=data["name"],
-            description=data.get("description", ""),
-            image=image,
-            partitioning=data["partitioning"],
-            vantage6_version=data["vantage6_version"],
-            code_url=data["code_url"],
-            documentation_url=data.get("documentation_url", None),
+        disable_review = self.config.get("dev", {}).get("disable_review", False)
+        algorithm = create_algorithm_from_validated_data(
+            data,
+            g.user.id,
+            self.config,
+            resolved_image=image,
             digest=digest,
-            developer_id=g.user.id,
-            submission_comments=data.get("submission_comments", None),
+            auto_approve=disable_review,
         )
-        algorithm.save()
-
-        # If reviews are disabled, approve the algorithm immediately
-        approved = False
-        if self.config.get("dev", {}).get("disable_review", False):
-            algorithm.approve()
-            approved = True
-
-        # create the algorithm's subresources
-        for function in data["functions"]:
-            # create the function
-            func = Function(
-                name=function["name"],
-                display_name=function.get("display_name", ""),
-                description=function.get("description", ""),
-                step_type=function["step_type"],
-                standalone=function.get("standalone", True),
-                algorithm_id=algorithm.id,
-            )
-            func.save()
-            # create the arguments. Note that the field `conditional_on_id` is skipped
-            # because it might not exist yet (depending on the order of the arguments)
-            for argument in function.get("arguments", []):
-                arg = Argument(
-                    name=argument["name"],
-                    display_name=argument.get("display_name", ""),
-                    description=argument.get("description", ""),
-                    type_=argument["type_"],
-                    has_default_value=argument.get("has_default_value", False),
-                    default_value=argument.get("default_value", None),
-                    conditional_operator=argument.get("conditional_operator", None),
-                    conditional_value=argument.get("conditional_value", None),
-                    is_frontend_only=argument.get("is_frontend_only", False),
-                    function_id=func.id,
-                )
-                arg.save()
-            # after creating the arguments, all have had their IDs assigned so we can
-            # now set the column `conditional_on_id`
-            for argument in function.get("arguments", []):
-                arg = Argument.get_by_name(argument["name"], func.id)
-                if argument.get("conditional_on"):
-                    conditional_on = Argument.get_by_name(
-                        argument["conditional_on"], func.id
-                    )
-                    arg.conditional_on_id = conditional_on.id
-                    arg.save()
-                if argument.get("allowed_values", []):
-                    for value in argument["allowed_values"]:
-                        allowed_value = AllowedArgumentValue(
-                            value=str(value), argument_id=arg.id
-                        )
-                        allowed_value.save()
-            # create the databases
-            for database in function.get("databases", []):
-                db_ = Database(
-                    name=database["name"],
-                    description=database.get("description", ""),
-                    function_id=func.id,
-                    multiple=database.get(DATAFRAME_MULTIPLE_KEYWORD, False),
-                )
-                db_.save()
-            # create the visualizations
-            for visualization in function.get("ui_visualizations", []):
-                vis = UIVisualization(
-                    name=visualization["name"],
-                    description=visualization.get("description", ""),
-                    type_=visualization["type_"],
-                    schema=visualization.get("schema", {}),
-                    function_id=func.id,
-                )
-                vis.save()
-
-        if not approved:
-            # send email to users responsible to assign reviewers. Do this in a
-            # separate thread to avoid blocking the response
+        if not disable_review and algorithm.status != AlgorithmStatus.APPROVED:
             Thread(
                 target=self._send_email_to_review_assigners,
                 args=(
@@ -666,23 +541,7 @@ class Algorithms(AlgorithmBaseResource):
         store_url: str | None,
     ) -> None:
         """
-        When new algorithm is created, send email to users responsible to assign
-        reviewers.
-
-        Parameters
-        ----------
-        app : Flask
-            Flask app instance
-        mail: flask_mail.Mail
-            Flask mail instance
-        algorithm : Algorithm
-            Algorithm that has been created
-        submitting_user_name : str
-            Username of the user that submitted the algorithm
-        config : dict
-            Configuration dictionary
-        store_url : str | None
-            URL of the algorithm store
+        Background task: email algorithm managers when a new algorithm needs reviewers.
         """
         smtp_settings = config.get("smtp_server", {})
         if not smtp_settings:

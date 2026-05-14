@@ -661,7 +661,7 @@ class TestAlgorithmResources(TestResources):
         # check that the review is also dropped
         self.assertEqual(Review.get(review_id).status, ReviewStatus.DROPPED.value)
 
-    @patch("vantage6.algorithm.store.resource.algorithm.get_digest")
+    @patch("vantage6.algorithm.store.algorithm_create.get_digest")
     def test_get_image_digest(self, get_digest_mock):
         """Test AlgorithmBaseResource._get_image_digest"""
         # test that invalid image raises an error
