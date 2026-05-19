@@ -82,12 +82,12 @@ def _download_community_algorithm_metadata() -> list[tuple[str, dict]]:
 
     metadata: list[tuple[str, dict]] = []
     for repo_slug in repo_slugs:
+        # This is the vantage6 v4 branch, so we use the `v4` branch that was created
+        # for all community algorithms.
+        # This code should never make it to v5 and above!
         metadata_url = (
-            f"https://raw.githubusercontent.com/{repo_slug}/main/algorithm_store.json"
+            f"https://raw.githubusercontent.com/{repo_slug}/v4/algorithm_store.json"
         )
-        if "v6-average-py" in repo_slug:
-            # average repo still has master branch instead of main
-            metadata_url = metadata_url.replace("main", "master")
         try:
             info(f"Downloading metadata from {repo_slug}")
             repo_response = requests.get(metadata_url, timeout=10)
