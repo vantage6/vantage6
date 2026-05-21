@@ -120,16 +120,28 @@ def find_running_service_names(
         svc_ends_with = f"user-{instance_type.value}"
     else:
         svc_ends_with = f"-{instance_type.value}"
+    is_part_hub = False
+    if instance_type in [
+        InstanceType.HQ,
+        InstanceType.ALGORITHM_STORE,
+        InstanceType.AUTH,
+    ]:
+        is_part_hub = True
+        if only_system_folders:
+            alternative_svc_ends_with = "system-hub"
+        elif only_user_folders:
+            alternative_svc_ends_with = "user-hub"
+        else:
+            alternative_svc_ends_with = "-hub"
 
     matching_services = []
     for release in releases:
         release_name = release.get("name", "")
 
         # Check if this is a vantage6 service
-        is_matching_service = (
-            release_name.startswith(svc_starts_with)
-            and release_name.endswith(svc_ends_with)
-            and instance_type.value in release_name
+        is_matching_service = release_name.startswith(svc_starts_with) and (
+            release_name.endswith(svc_ends_with)
+            or (is_part_hub and release_name.endswith(alternative_svc_ends_with))
         )
 
         if is_matching_service:
