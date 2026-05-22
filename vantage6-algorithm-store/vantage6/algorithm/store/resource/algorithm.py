@@ -449,9 +449,10 @@ class Algorithms(AlgorithmBaseResource):
                                   argument. Can be one of '==', '!=', '>', '<', '>=',
                                   '<='.
                               conditional_value:
-                                type: string
+                                type: string | int | float | boolean | None
                                 description: Value that the argument should be compared
-                                  to.
+                                  to. Coerced to a string when stored (e.g. true
+                                  becomes "true").
                               is_frontend_only:
                                 type: boolean
                                 description: Frontend-only arguments are displayed in
@@ -810,9 +811,10 @@ class Algorithm(AlgorithmBaseResource):
                                   argument. Can be one of '==', '!=', '>', '<', '>=',
                                   '<='.
                               conditional_value:
-                                type: string
+                                type: string | int | float | boolean | None
                                 description: Value that the argument should be compared
-                                  to.
+                                  to. Coerced to a string when stored (e.g. true
+                                  becomes "true").
                               is_frontend_only:
                                 type: boolean
                                 description: Frontend-only arguments are displayed in
