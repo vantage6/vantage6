@@ -353,7 +353,7 @@ class AppContext(metaclass=Singleton):
             return {
                 "log": mount_path / "log",
                 "data": mount_path / "data",
-                "config": mount_path / "config",
+                "config": mount_path / "config" / instance_type,
                 "dev": mount_path / "dev",
             }
         elif system_folders:

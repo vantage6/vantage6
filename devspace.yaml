@@ -443,18 +443,24 @@ dev:
   # This puts the HQ container in development mode. It syncs the local files with
   # the container and starts the HQ in development mode. Code changes will be
   # hot-reloaded and a port forward is created to access the HQ.
+  # Python package sync: uploadExcludeFile ../dev/python-sync-upload.exclude per sync path
+  # (file path is relative to each local sync directory, not the repo root).
   vantage6-hq:
     labelSelector:
       component: vantage6-hq
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-common/:/vantage6/vantage6-common/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-hq/:/vantage6/vantage6-hq/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
         startContainer: true
     command: ["/bin/sh", "/vantage6/vantage6-hq/dev_hq.sh"]
     logs:
@@ -486,12 +492,16 @@ dev:
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-common/:/vantage6/vantage6-common/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-backend-common/:/vantage6/vantage6-backend-common/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
       - path: ./vantage6-algorithm-store/:/vantage6/vantage6-algorithm-store/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
         startContainer: true
     logs:
       enabled: true
@@ -543,14 +553,17 @@ dev:
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
         onUpload:
           restartContainer: true
       - path: ./vantage6-common/:/vantage6/vantage6-common/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
         onUpload:
           restartContainer: true
       - path: ./vantage6-node/:/vantage6/vantage6-node/
         disableDownload: true
+        uploadExcludeFile: ../dev/python-sync-upload.exclude
         onUpload:
           restartContainer: true
       # It is possible to manually add nodes. You need to put the configuration files in

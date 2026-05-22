@@ -77,6 +77,22 @@ more details regarding the lower-level changes required to accomplish it.*
   - Check if database labels exist on node startup
     (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
 
+4.15.1
+------
+
+*19 May 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: mistune, urllib3, and
+    various UI dependencies (`PR#2608 <https://github.com/vantage6/vantage6/pull/2608>`_).
+
+- **Change**
+
+  - Update community algorithm store to use the v4 branch instead of the main branch.
+    This is to ensure v4 will still work when v5 is released.
+    (`PR#2607 <https://github.com/vantage6/vantage6/pull/2607>`_).
+
 4.15.0
 ------
 
