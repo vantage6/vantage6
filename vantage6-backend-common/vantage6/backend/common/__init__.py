@@ -373,7 +373,7 @@ class Vantage6App:
 
         # Also sync the organization ID of the super user in keycloak. Only do that
         # for HQ (where organization_id is defined), not for the algorithm store.
-        if super_user.keycloak_id:
+        if super_user.organization_id:
             self._set_organization_id_in_keycloak(
                 super_user.keycloak_id,
                 super_user.organization_id,
