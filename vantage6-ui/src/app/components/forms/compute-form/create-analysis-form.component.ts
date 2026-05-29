@@ -224,7 +224,12 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
   }
 
   get shouldShowDataframeStep(): boolean {
-    return !!this.function?.databases && this.function.databases.length > 0 && this.preSelectedDataframes.length === 0;
+    return (
+      !!this.function?.databases &&
+      this.function.databases.length > 0 &&
+      this.preSelectedDataframes.length === 0 &&
+      this.function.step_type !== AlgorithmStepType.DataExtraction
+    );
   }
 
   get shouldShowDatabaseStep(): boolean {
@@ -323,6 +328,16 @@ export class CreateAnalysisFormComponent implements OnInit, OnDestroy, AfterView
       (this.availableSteps.dataframe && this.dataframeForm.invalid && this.shouldShowDataframeStep) ||
       (this.availableSteps.parameter && this.parameterForm.invalid)
     );
+  }
+
+  isLastStepValid(): boolean {
+    if (this.shouldShowParameterStep) return this.parameterForm.valid;
+    if (this.shouldShowDataframeStep) return this.dataframeForm.valid;
+    if (this.shouldShowDatabaseStep) return this.databaseForm.valid;
+    if (this.shouldShowStudyStep) return this.studyForm.valid;
+    if (this.availableSteps.session) return this.sessionForm.valid;
+    if (this.availableSteps.function) return this.functionForm.valid;
+    return false;
   }
 
   getFormInvalidReasons(): string[] {
