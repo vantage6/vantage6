@@ -353,7 +353,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(rv.json["developer_id"], user.id)
         self.assertEqual(rv.json["submission_comments"], "test_comments")
 
-        # test default values - first with wrong default value type
+        # test default values - JSON numbers are coerced to strings
         json_data["functions"][0]["arguments"] = [
             {
                 "name": "test_argument",
@@ -363,9 +363,10 @@ class TestAlgorithmResources(TestResources):
             }
         ]
         rv = self.app.post("/api/algorithm", json=json_data)
-        self.assertEqual(rv.status_code, HTTPStatus.BAD_REQUEST)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        self.assertEqual(rv.json["functions"][0]["arguments"][0]["default_value"], "1")
 
-        # test default values - now with correct default value type
+        # test default values - string default
         json_data["functions"][0]["arguments"][0]["default_value"] = "test"
         rv = self.app.post("/api/algorithm", json=json_data)
         self.assertEqual(rv.status_code, HTTPStatus.CREATED)
@@ -420,6 +421,28 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(
             rv.json["functions"][0]["arguments"][0]["conditional_value"], "test"
         )
+
+        # JSON booleans in defaults and conditionals are coerced to strings
+        json_data["functions"][0]["arguments"] = [
+            {
+                "name": "toggle",
+                "type": AlgorithmArgumentType.BOOLEAN.value,
+            },
+            {
+                "name": "dependent",
+                "type": AlgorithmArgumentType.BOOLEAN.value,
+                "has_default_value": True,
+                "default_value": True,
+                "conditional_on": "toggle",
+                "conditional_operator": "==",
+                "conditional_value": False,
+            },
+        ]
+        rv = self.app.post("/api/algorithm", json=json_data)
+        self.assertEqual(rv.status_code, HTTPStatus.CREATED)
+        dependent = rv.json["functions"][0]["arguments"][1]
+        self.assertEqual(dependent["default_value"], "true")
+        self.assertEqual(dependent["conditional_value"], "false")
 
         # explicit null values for optional fields should be accepted
         json_data["functions"][0]["arguments"] = [
@@ -661,7 +684,7 @@ class TestAlgorithmResources(TestResources):
         # check that the review is also dropped
         self.assertEqual(Review.get(review_id).status, ReviewStatus.DROPPED.value)
 
-    @patch("vantage6.algorithm.store.resource.algorithm.get_digest")
+    @patch("vantage6.algorithm.store.algorithm_create.get_digest")
     def test_get_image_digest(self, get_digest_mock):
         """Test AlgorithmBaseResource._get_image_digest"""
         # test that invalid image raises an error

@@ -339,6 +339,12 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "forward_ports": True,
                     "local_port_to_expose": Ports.SANDBOX_ALGO_STORE.value,
                 },
+                "link_algorithms": {
+                    "list": [],
+                    "community": True,
+                    "basics": True,
+                    "demo": True,
+                },
             },
             "database": (
                 {

@@ -37,6 +37,10 @@ more details regarding the lower-level changes required to accomplish it.*
   - New 'update image' button in the UI to update the image of an algorithm in an
     algorithm store without changing other algorithm metadata
     (`Issue#2394 <https://github.com/vantage6/vantage6/issues/2394>`_).
+  - Algorithm stores can add algorithms from URLs on initialization using the
+    ``link_algorithms`` configuration. Optional presets (``community``, ``basics``,
+    ``demo``) are available to add community, basics, and demo algorithms to the store
+    (`PR#2614 <https://github.com/vantage6/vantage6/pull/2614>`_).
 
 - **Change**
 

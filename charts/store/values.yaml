@@ -14,6 +14,12 @@ store:
   policies:
     algorithmView: public
 
+  link_algorithms:
+    list: []
+    community: false
+    basics: false
+    demo: false
+
   image: ghcr.io/vantage6/infrastructure/store:uluru
 
   internal:

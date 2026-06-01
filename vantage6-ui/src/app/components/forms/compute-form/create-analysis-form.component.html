@@ -86,7 +86,7 @@
     </mat-stepper>
     <!-- show alert if the form is invalid and the issue is NOT in the last step (parameter step) -->
     <app-alert
-      *ngIf="isFormInvalid() && stepper.selectedIndex === stepper.steps.length - 1 && parameterForm.valid"
+      *ngIf="isFormInvalid() && stepper.selectedIndex === stepper.steps.length - 1 && isLastStepValid()"
       class="node-alert"
       [label]="getInvalidAlertLabel()"
     ></app-alert>

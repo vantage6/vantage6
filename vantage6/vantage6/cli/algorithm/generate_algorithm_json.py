@@ -129,14 +129,29 @@ class Function:
         for argument in self.json["arguments"]:
             if argument["name"] in template_json["arguments"]:
                 argument.update(template_json["arguments"][argument["name"]])
-        # Add any frontend arguments specified in the template json
-        if "frontend_arguments" in template_json:
-            for frontend_argument in template_json["frontend_arguments"]:
-                self._add_frontend_argument(template_json, frontend_argument)
+        self._expand_frontend_arguments(template_json)
 
     def merge_with_existing_json(self, existing_json: dict) -> None:
         """Merge the function json with the existing json data"""
-        self._merge_dicts(self.json, existing_json)
+        self._expand_frontend_arguments(existing_json)
+        existing_without_frontend = {
+            key: value
+            for key, value in existing_json.items()
+            if key != "frontend_arguments"
+        }
+        self._merge_dicts(self.json, existing_without_frontend)
+
+    def _expand_frontend_arguments(self, source_json: dict) -> None:
+        """
+        Expand ``frontend_arguments`` into the ``arguments`` list.
+
+        Used for built-in preprocessing templates and legacy algorithm_store.json
+        files that still store frontend-only arguments separately.
+        """
+        if "frontend_arguments" not in source_json:
+            return
+        for frontend_argument in source_json["frontend_arguments"]:
+            self._add_frontend_argument(source_json, frontend_argument)
 
     def _is_func_defined_in_vantage6(self) -> bool:
         """Check if the function is defined in the vantage6 package"""
@@ -154,11 +169,13 @@ class Function:
                 else:
                     self._replace_target_with_source(target, key, value)
             else:
-                # Add new key-value pair from source to target
-                self._replace_target_with_source(target, key, value)
+                target[key] = value
 
     def _replace_target_with_source(self, target: dict, key: str, value: Any) -> None:
         """Replace the value in target with the one from source"""
+        if key not in target:
+            target[key] = value
+            return
         if target[key] == value:
             return
 
@@ -226,7 +243,7 @@ class Function:
                 "is_frontend_only": False,
             }
             if param.default != inspect.Parameter.empty:
-                arg_json["default"] = param.default
+                arg_json["default_value"] = param.default
 
             return arg_json, FunctionArgumentType.PARAMETER
 

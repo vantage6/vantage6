@@ -250,6 +250,38 @@ class _MixedBaseTypeField(fields.Field):
             raise ValidationError("Values should be str, int or float")
 
 
+def coerce_to_store_string(value) -> str | None:
+    """
+    Normalize a JSON value to the string form stored in the database.
+
+    Algorithm metadata (e.g. ``algorithm_store.json``) may use native JSON booleans and
+    numbers; the store persists these fields as strings.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, dict)):
+        return json.dumps(value)
+    raise TypeError(f"Unsupported value type: {type(value).__name__}")
+
+
+class _StoreStringValueField(fields.Field):
+    """Accept JSON scalars/collections and coerce to a store string (or null)."""
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if value is None:
+            return None
+        try:
+            return coerce_to_store_string(value)
+        except TypeError as exc:
+            raise ValidationError("Not a valid string.") from exc
+
+
 class ArgumentInputSchema(_NameDescriptionSchema):
     """
     Schema for the input of an argument.
@@ -263,12 +295,12 @@ class ArgumentInputSchema(_NameDescriptionSchema):
     )
     allowed_values = fields.List(_MixedBaseTypeField())
     has_default_value = fields.Boolean()
-    default_value = fields.String(allow_none=True)
+    default_value = _StoreStringValueField(allow_none=True)
     conditional_on = fields.String()
     conditional_operator = fields.String(
         validate=validate.OneOf(ConditionalArgComparator.list()), allow_none=True
     )
-    conditional_value = fields.String(allow_none=True)
+    conditional_value = _StoreStringValueField(allow_none=True)
     is_frontend_only = fields.Boolean()
 
     @validates_schema

@@ -43,6 +43,7 @@ from vantage6.algorithm.store.globals import (
     RESOURCES,
     RESOURCES_PATH,
 )
+from vantage6.algorithm.store.link_algorithms import link_algorithms_from_config
 from vantage6.algorithm.store.model.base import Base, Database, DatabaseSessionManager
 from vantage6.algorithm.store.model.common.enums import AlgorithmStatus
 from vantage6.algorithm.store.permission import PermissionManager
@@ -290,6 +291,9 @@ class AlgorithmStoreApp(Vantage6App):
                 "No root user found in the configuration file, nor are users defined in"
                 " the database. This means no-one can alter resources on this store."
             )
+
+        # Add algorithms defined in the configuration file
+        link_algorithms_from_config(self.ctx.config)
 
 
 def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:

@@ -128,10 +128,8 @@ pipelines:
       echo "Keycloak is ready, starting dev mode..."
       start_dev \
         vantage6-auth
-      # Note that store is started before HQ so that HQ can couple to the store on
-      # startup.
-      # TODO alternative solution is to make the store coupling a process that waits
-      # until it is successful.
+      # Store is started before HQ. HQ waits for store HTTP via the wait-for-store
+      # initContainer (global.wait.store in devspace.yaml) before init_db runs.
       echo "Starting store..."
       create_deployments \
         vantage6-store
@@ -292,6 +290,20 @@ deployments:
       chart:
         name: ./charts/hq
       values:
+        global:
+          urls:
+            internal:
+              auth: ${KEYCLOAK_URL}
+              store: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+          wait:
+            auth:
+              enabled: true
+              maxAttempts: 60
+              intervalSeconds: 5
+            store:
+              enabled: true
+              maxAttempts: 60
+              intervalSeconds: 5
         hq:
           standalone: true
           image: ${HQ_IMAGE} # needed for automatic image tag update
@@ -348,6 +360,15 @@ deployments:
       chart:
         name: ./charts/store
       values:
+        global:
+          urls:
+            internal:
+              auth: ${KEYCLOAK_URL}
+          wait:
+            auth:
+              enabled: true
+              maxAttempts: 60
+              intervalSeconds: 5
         store:
           standalone: true
           image: ${STORE_IMAGE}
@@ -373,6 +394,11 @@ deployments:
             disable_review: true
             review_own_algorithm: true
             forward_ports: false
+          link_algorithms:
+            list: []
+            community: true
+            basics: true
+            demo: true
         database:
           external: false
           image:

@@ -141,6 +141,21 @@ class User(Base):
         session.commit()
         return result
 
+    @classmethod
+    def get_first_user(cls) -> User:
+        """
+        Get the first user.
+
+        Returns
+        -------
+        User
+            A random user that is in the database
+        """
+        session = DatabaseSessionManager.get_session()
+        result = session.scalars(select(cls).order_by(cls.id)).first()
+        session.commit()
+        return result
+
     def is_reviewer(self) -> bool:
         """
         Check if user is allowed to review algorithms

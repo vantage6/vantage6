@@ -72,6 +72,19 @@ data:
       disable_review: {{ .Values.store.dev.disable_review }}
       review_own_algorithm: {{ .Values.store.dev.review_own_algorithm }}
     {{- end }}
+    {{- $link := .Values.store.link_algorithms | default dict }}
+    link_algorithms:
+      {{- if $link.list }}
+      list:
+      {{- range $link.list }}
+      - {{ . | quote }}
+      {{- end }}
+      {{- else }}
+      list: []
+      {{- end }}
+      community: {{ $link.community | default false }}
+      basics: {{ $link.basics | default false }}
+      demo: {{ $link.demo | default false }}
     port: {{ .Values.store.internal.port }}
     {{- $global := .Values.global | default (dict) }}
     {{- $urls := $global.urls | default (dict) }}

@@ -371,12 +371,14 @@ class Vantage6App:
             log.error("This means that you cannot login as this user")
             log.exception(exc)
 
-        # Also sync the organization ID of the super user in keycloak
-        self._set_organization_id_in_keycloak(
-            super_user.keycloak_id,
-            super_user.organization_id,
-            super_user.username,
-        )
+        # Also sync the organization ID of the super user in keycloak. Only do that
+        # for HQ (where organization_id is defined), not for the algorithm store.
+        if super_user.organization_id:
+            self._set_organization_id_in_keycloak(
+                super_user.keycloak_id,
+                super_user.organization_id,
+                super_user.username,
+            )
 
     def _set_organization_id_in_keycloak(
         self, keycloak_id: str, organization_id: int, username: str
@@ -394,14 +396,17 @@ class Vantage6App:
             The username (for logging purposes)
         """
         try:
+            # note that we get the full user payload from Keycloak and update the
+            # organization ID attribute. If we would only update that attribute,
+            # other user profile fields (e.g. email, name) are cleared by Keycloak.
             keycloak_admin = get_keycloak_admin_client()
+            payload = keycloak_admin.get_user(keycloak_id)
+            payload_attributes = payload.get("attributes", {}) or {}
+            payload_attributes["organization_id"] = [str(organization_id)]
+            payload["attributes"] = payload_attributes
             keycloak_admin.update_user(
                 user_id=keycloak_id,
-                payload={
-                    "attributes": {
-                        "organization_id": [str(organization_id)],
-                    }
-                },
+                payload=payload,
             )
             log.debug(
                 "Set organization_id=%s for user %s in Keycloak",

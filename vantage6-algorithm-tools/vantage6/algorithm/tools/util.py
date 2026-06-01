@@ -189,7 +189,7 @@ def get_action() -> AlgorithmStepType:
 
     Check that the environment variable `FUNCTION_ACTION` is set and that the value
     corresponds to a valid action. An action is a certain role for an algorithm
-    container, such as `data_extraction`, `data_preprocessing`, etc.
+    container, such as `data_extraction`, `preprocessing`, etc.
 
     Returns
     -------
