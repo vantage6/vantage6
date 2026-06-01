@@ -36,13 +36,11 @@ class TestLinkAlgorithms(TestResources):
     def test_nested_store_link_algorithms_section(self):
 
         cfg = {
-            "store": {
-                "link_algorithms": {
-                    "list": [],
-                    "community": False,
-                    "basics": True,
-                    "demo": False,
-                }
+            "link_algorithms": {
+                "list": [],
+                "community": False,
+                "basics": True,
+                "demo": False,
             }
         }
         parsed = _parse_link_algorithms_config(cfg)
