@@ -7,7 +7,10 @@ metadata:
   name: {{ .Release.Name }}-realm-import
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
-{{ include "auth.labels" . | indent 4 }}
+    app: {{ include "auth.name" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    chart: {{ .Chart.Name }}
 spec:
   keycloakCRName: {{ .Release.Name }}-kc
   realm:
