@@ -422,10 +422,18 @@ class DefaultSocketNamespace(Namespace):
             data["df_name"],
             data["node_id"],
         )
-        df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
-            data["df_name"], data["session_id"], data["node_id"]
-        )
-        df_to_be_deleted.delete()
+        try:
+            df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
+                data["df_name"], data["session_id"], data["node_id"]
+            )
+        except Exception as e:
+            self.log.error("Error occurred while fetching dataframe to be deleted: %s", e)
+            return
+        
+        try:
+            df_to_be_deleted.delete()
+        except Exception as e:
+            self.log.error("Error occurred while deleting dataframe: %s", e)
 
         self.__cleanup()
 
