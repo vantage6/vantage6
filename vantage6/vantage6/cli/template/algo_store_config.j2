@@ -274,6 +274,12 @@ store:
     basics: {{ store.link_algorithms.basics | default(false) }}
     demo: {{ store.link_algorithms.demo | default(false) }}
   {% else %}
+  # link_algorithms:
+  #   list: []
+  #   community: false
+  #   basics: false
+  #   demo: false
+  {% endif %}
 
 database:
   # whether or not to use an external database
