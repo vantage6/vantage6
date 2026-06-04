@@ -12,7 +12,23 @@ more details regarding the lower-level changes required to accomplish it.*
 
 - **Security**
 
-.. TODO to be added just before release
+  - Default admin credentials are no longer ``root``/``root``. When a new production service
+    is created, the admin password is generated automatically and thus different every
+    time. Note that test and development networks (created with ``v6 sandbox`` or
+    ``v6 dev``) do still have a default admin password of ``admin``/``admin``
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-fgmc-2hqj-86v4>`_).
+  - Prevent that algorithms can access input and output from other algorithms. This fix
+    came with moving to Kubernetes, where algorithms are now run as Kubernetes jobs.
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-x9f6-9rvm-mmrg>`_)
+  - In earlier versions, users could request emails for MFA reset an infinite number of
+    times, potentially causing a denial of service. By moving to Keycloak, this is now
+    prevented as Keycloak does not offer this functionality
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-5549-c5q7-fj65>`_).
+  - If a user's email address was compromised, MFA could be bypassed by resetting the
+    password and the TOTP code. This is now prevented as the admin is now the only
+    user that can reset a user's MFA code
+    (`advisory <https://github.com/vantage6/vantage6/security/advisories/GHSA-4c5c-2vc3-x5w2>`_).
+
 
 - **Feature**
 
@@ -77,6 +93,9 @@ more details regarding the lower-level changes required to accomplish it.*
 
   - Check if database labels exist on node startup
     (`Issue#1755 <https://github.com/vantage6/vantage6/issues/1755>`_).
+  - Prevent issues in database initialization due to racing conditions when there
+    are multiple concurrent services start at the same time
+    (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
 
 4.15.1
 ------

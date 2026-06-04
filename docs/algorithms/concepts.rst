@@ -53,7 +53,7 @@ the model converges.
 In vantage6, it is also possible to run only the partial parts of the analysis on the
 nodes and combine them on your own machine, but it is usually preferable to run
 the central part within vantage6, because then you don't have to keep your machine
-running during the analysis, you do not need to run the central part yourself, and the 
+running during the analysis, you do not need to run the central part yourself, and the
 results are stored on the HQ, so they may also be accessed by other users.
 
 .. note::
@@ -91,8 +91,8 @@ The available file mounts are:
 The file mounts are mapped to environment variables that are described in the
 :ref:`algo-env-vars` section.
 
-.. TODO v5+ the above statement is not correct anymore, that section contains info
-.. on the env vars that node config file can set.
+.. TODO the above statement is not correct anymore, that section contains info
+.. on the env vars that node config file can set. See #2522
 
 .. _wrapper-concepts:
 

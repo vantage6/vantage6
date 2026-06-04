@@ -152,8 +152,6 @@ def helm_install(
             "install",
             release_name,
             chart_ref,
-            # TODO v5+ remove this flag when we have a stable release, see #2213
-            "--devel",
         ]
         if chart_version:
             command.extend(["--version", chart_version])

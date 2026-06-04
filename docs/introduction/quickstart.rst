@@ -36,8 +36,6 @@ Then, install the vantage6 command line interface (CLI) by running:
 
     uv pip install vantage6
 
-.. TODO v5+ remove note below, see #2213
-
 .. note::
 
     While vantage6 5.0.0 has not yet been released, you can install the latest version of the CLI
@@ -45,7 +43,7 @@ Then, install the vantage6 command line interface (CLI) by running:
 
     .. code-block:: bash
 
-        uv pip install vantage6 --prerelease=allow
+        uv pip install vantage6
 
 .. _create-dev-network:
 
