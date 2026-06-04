@@ -15,10 +15,10 @@ import { StoreUserFormComponent } from '../../../../components/forms/store-user-
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-store-user-edit',
-    templateUrl: './store-user-edit.component.html',
-    styleUrl: './store-user-edit.component.scss',
-    imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner]
+  selector: 'app-store-user-edit',
+  templateUrl: './store-user-edit.component.html',
+  styleUrl: './store-user-edit.component.scss',
+  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner]
 })
 export class StoreUserEditComponent extends BaseEditComponent implements OnInit {
   user?: StoreUser;
@@ -47,7 +47,7 @@ export class StoreUserEditComponent extends BaseEditComponent implements OnInit 
 
   protected async initData(): Promise<void> {
     if (!this.store) return;
-    this.user = await this.storeUserService.getUser(this.store.url, this.id, [StoreUserLazyProperties.Roles]);
+    this.user = await this.storeUserService.getUser(this.store, this.id, [StoreUserLazyProperties.Roles]);
     this.isLoading = false;
   }
 
@@ -59,7 +59,7 @@ export class StoreUserEditComponent extends BaseEditComponent implements OnInit 
     };
 
     this.isSubmitting = true;
-    const user = await this.storeUserService.editUser(this.store.url, this.user.id, userFormSubmit);
+    const user = await this.storeUserService.editUser(this.store, this.user.id, userFormSubmit);
     if (user.id) {
       this.router.navigate([routePaths.storeUser, user.id]);
     } else {
@@ -72,6 +72,6 @@ export class StoreUserEditComponent extends BaseEditComponent implements OnInit 
   }
 
   getTitle(): string {
-    return this.user ? `${this.user.username} @ ${this.user.server.url}` : '';
+    return this.user ? this.user.username : '';
   }
 }

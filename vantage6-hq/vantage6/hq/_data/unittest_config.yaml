@@ -1,0 +1,11 @@
+api_path: '/api'
+jwt_secret_key: 'dummy-jwt-secret'
+logging:
+    level:        CRITICAL                   # Can be on of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'; 'NONE' disables logging.
+    file:         unittest.log           # Filename of logfile
+    use_console:  False                  # Log output to the console?
+    backup_count: 5                      # Number of logs to keep
+    max_size:     1024                   # Specified in kB (i.e. 1024 means a maximum file size of 1MB)
+    format:       "%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s"
+    datefmt:      "%Y-%m-%d %H:%M:%S"
+

@@ -22,6 +22,7 @@ import { AlertComponent } from '../../../../components/alerts/alert/alert.compon
 import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
 
 @Component({
   selector: 'app-algorithm-read',
@@ -61,6 +62,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
   isLoading = true;
 
   canEdit = false;
+  canCreate = false;
   canDelete = false;
   canAssignReviewers: boolean = false;
   canViewReviews: boolean = false;
@@ -100,6 +102,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
     if (!chosenStore) return;
 
     this.canEdit = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.EDIT);
+    this.canCreate = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.CREATE);
     this.canDelete = this.storePermissionService.isAllowed(StoreResourceType.ALGORITHM, OperationType.DELETE);
     this.canAssignReviewers = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.CREATE);
     this.canViewReviews = this.storePermissionService.isAllowed(StoreResourceType.REVIEW, OperationType.VIEW);
@@ -109,7 +112,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
       propertiesToLoad.push(AlgorithmLazyProperties.Reviews);
     }
 
-    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore.url, this.id, propertiesToLoad);
+    this.algorithm = await this.algorithmService.getAlgorithm(chosenStore, this.id, propertiesToLoad);
 
     this.isLoading = false;
   }
@@ -131,7 +134,7 @@ export class AlgorithmReadComponent implements OnInit, OnDestroy {
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
       .subscribe(async (result) => {
-        if (result === true) {
+        if (result === ConfirmDialogOption.PRIMARY) {
           if (!this.algorithm) return;
           this.isLoading = true;
           await this.algorithmService.deleteAlgorithm(this.algorithm.id.toString());

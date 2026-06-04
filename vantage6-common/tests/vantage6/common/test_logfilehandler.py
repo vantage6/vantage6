@@ -1,7 +1,6 @@
 import os
 import stat
 import tempfile
-
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
@@ -26,9 +25,10 @@ class TestOwnershipPreservingRotatingFileHandler(TestCase):
             # Patch chmod/chown to avoid permission assumptions in CI/CT and to
             # verify that metadata restoration is attempted with the expected
             # values. Not as good a test.. but it's something.
-            with patch.object(log_module.os, "chown") as mock_chown, patch.object(
-                log_module.os, "chmod"
-            ) as mock_chmod:
+            with (
+                patch.object(log_module.os, "chown") as mock_chown,
+                patch.object(log_module.os, "chmod") as mock_chmod,
+            ):
                 handler.doRollover()
             handler.close()
 
@@ -47,9 +47,10 @@ class TestOwnershipPreservingRotatingFileHandler(TestCase):
             )
 
             # No base file exists yet, so there is no metadata to carry over.
-            with patch.object(log_module.os, "chown") as mock_chown, patch.object(
-                log_module.os, "chmod"
-            ) as mock_chmod:
+            with (
+                patch.object(log_module.os, "chown") as mock_chown,
+                patch.object(log_module.os, "chmod") as mock_chmod,
+            ):
                 handler.doRollover()
             handler.close()
 

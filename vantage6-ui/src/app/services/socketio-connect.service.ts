@@ -3,8 +3,8 @@ import { BehaviorSubject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
 import { environment } from 'src/environments/environment';
-import { TokenStorageService } from './token-storage.service';
 import { AlgorithmLogMsg, AlgorithmStatusChangeMsg, NewTaskMsg, NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,14 +16,14 @@ export class SocketioConnectService {
   algoLogUpdate$: BehaviorSubject<AlgorithmLogMsg | null> = new BehaviorSubject<AlgorithmLogMsg | null>(null);
   socket: Socket | null = null;
 
-  constructor(private tokenStorageService: TokenStorageService) {}
+  constructor(private authService: AuthService) {}
 
   connect() {
     if (this.socket === null) {
-      const token = this.tokenStorageService.getToken();
+      const token = this.authService.getToken();
       // connect to tasks namespace
       const namespace = '/tasks';
-      this.socket = io(`${environment.server_url}${namespace}`, {
+      this.socket = io(`${environment.hq_url}${namespace}`, {
         withCredentials: true,
         extraHeaders: {
           Authorization: `Bearer ${token}`
@@ -33,7 +33,7 @@ export class SocketioConnectService {
     }
   }
 
-  disconnect() {
+  async disconnect(): Promise<void> {
     if (this.socket) {
       this.socket.disconnect();
     }
@@ -68,7 +68,7 @@ export class SocketioConnectService {
     });
 
     // get messages when a new task is created
-    this.socket?.on('new_task', (data) => {
+    this.socket?.on('new_task_update', (data) => {
       this.taskCreated$.next(data);
     });
 
@@ -76,7 +76,6 @@ export class SocketioConnectService {
     this.socket?.on('algorithm_log', (data: AlgorithmLogMsg) => {
       this.algoLogUpdate$.next(data);
     });
-    
   }
 
   public getNodeStatusUpdates() {

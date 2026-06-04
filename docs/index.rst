@@ -5,30 +5,17 @@ Overview
 
 What is vantage6?
 -----------------
-Vantage6 stands for pri\ **va**\ cy preservi\ **n**\ g
-federa\ **t**\ ed le\ **a**\ rnin\ **g** infrastructur\ **e** for
-\ **s**\ ecure \ **i**\ nsight e\ **x**\ change.
 
-.. raw:: html
-
-   <iframe width="750" height="420" src="https://youtube.com/embed/HVHvlkAeuD0"
-     frameborder="0"
-     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-     allowfullscreen>
-   </iframe>
-
-The project is inspired by the `Personal Health Train <https://pht.health-ri.nl/>`_
-(PHT) concept. In this analogy vantage6 is the *tracks* and *stations*.
-Compatible algorithms are the *trains*, and computation tasks are the *journey*.
-Vantage6 is completely open source under the
-`Apache License <https://github.com/IKNL/vantage6/blob/master/LICENSE>`_.
+Vantage6 is a privacy-enhancing technology (PET) platform that allows organizations to
+collaborate on data analysis tasks without sharing the data itself. Vantage6 is
+open source and completely free to use.
 
 What vantage6 does:
 
-* delivering algorithms to data stations and collecting their results
-* managing users, organizations, collaborations, computation tasks and their
+* deliver algorithms to data stations and collecting their results
+* manage users, organizations, collaborations, computation tasks and their
   results
-* providing control (security) at the data-stations to their owners
+* provide control (security) at the data stations to the data owners
 
 The vantage6 infrastructure is designed with three fundamental functional
 aspects of federated learning.
@@ -47,19 +34,14 @@ This documentation space consists of the following main sections:
 
 * **Overview** |rarr| *You are here now*
 * :doc:`/introduction/introduction` |rarr| *Introduction to vantage6 concepts*
-* :doc:`/introduction/architecture` |rarr| *An more extensive explanation of vantage6
-  components*
+* :doc:`/introduction/quickstart` |rarr| *Quickstart guide - run vantage6 locally*
 * :doc:`/user/index` |rarr| *How to use vantage6 as a researcher*
 * :doc:`/node/index` |rarr| *How to install and configure vantage6 nodes*
-* :doc:`/server/index` |rarr| *How to configure and deploy vantage6 servers*
-* :doc:`/algorithm_store/index` |rarr| *How to configure and deploy vantage6 algorithm stores*
-* :doc:`/features/index` (Under construction) |rarr|
-  *Documentation of vantage6 features*
-* :doc:`/devops/index` |rarr| *How to collaborate on the development of the
-  vantage6 infrastructure*
-* :doc:`/algorithms/index` |rarr| *Develop algorithms that are compatible with
-  vantage6*
-* :doc:`/function-docs/index` |rarr|
+* :doc:`/hub/index` |rarr| *How to configure and deploy the central vantage6 components*
+* :doc:`/community/index` |rarr| *How to collaborate on the development of vantage6*
+* :doc:`/algorithms/index` |rarr| *Develop vantage6 algorithms*
+* :doc:`/technical_reference/index` |rarr| *In-depth documentation of vantage6 features*
+* :doc:`/api-docs/index` |rarr|
   *Documentation of the vantage6 infrastructure code*
 * :doc:`/glossary` |rarr| *A dictionary of common terms used in these docs*
 * :doc:`/release_notes` |rarr| *Log of what has been released and when*
@@ -88,11 +70,27 @@ This is a - non-exhaustive - list of vantage6 resources.
 
 **Community**
 
-* `Discord <https://discord.gg/yAyFf6Y>`_  |rarr| *Chat with the vantage6
-  community*
+* `Github Discussions <https://github.com/vantage6/vantage6/discussions>`_  |rarr| *Ask
+  questions or share your ideas with the vantage6 community*
 * :ref:`Community meetings <community-meetings>` |rarr| *Bi-monthly developer
   community meeting*
 
+Video overview
+--------------
+
+This video provides an overview of the vantage6 project. The video is from 2020 and
+therefore does not reflect the latest features and developments, but the core
+concepts are still valid. The architecture of the vantage6 infrastructure is also still
+valid, however, many new components have been added and terminology has changed
+since the video was recorded.
+
+.. raw:: html
+
+   <iframe width="750" height="420" src="https://youtube.com/embed/HVHvlkAeuD0"
+     frameborder="0"
+     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+     allowfullscreen>
+   </iframe>
 
 -------------------------------------------------------------------------------
 
@@ -104,7 +102,6 @@ Index
 
    self
    introduction/introduction
-   introduction/architecture
    introduction/quickstart
    introduction/communitystore
 
@@ -114,12 +111,11 @@ Index
 
    user/index
    node/index
-   server/index
-   algorithm_store/index
+   hub/index
    algorithms/index
-   features/index
-   devops/index
-   function-docs/index
+   community/index
+   technical_reference/index
+   api-docs/index
    glossary
 
 .. toctree::

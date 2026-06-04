@@ -26,7 +26,7 @@ export class EncryptionService {
     sessionStorage.setItem(CHOSEN_COLLAB_PRIVATE_KEY, privateKey);
   }
 
-  clear() {
+  async clear(): Promise<void> {
     this.privateKey$.next(null);
     sessionStorage.removeItem(CHOSEN_COLLAB_PRIVATE_KEY);
   }

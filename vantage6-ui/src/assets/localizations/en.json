@@ -1,5 +1,6 @@
 {
   "general": {
+    "general": "General",
     "back": "Back",
     "next": "Next",
     "filter": "Filter",
@@ -26,7 +27,9 @@
     "false": "False",
     "parameter": "Parameter",
     "show_more": "Show more",
-    "show_less": "Show less"
+    "show_less": "Show less",
+    "details-title": "Details",
+    "errors": "Errors"
   },
   "resources": {
     "collaboration": "Collaboration",
@@ -37,7 +40,10 @@
     "roles": "Roles",
     "users": "Users",
     "nodes": "Nodes",
+    "sessions": "Sessions",
+    "session": "Session",
     "tasks": "Tasks",
+    "task": "Task",
     "algorithms": "Algorithms",
     "algorithm": "Algorithm",
     "stores": "Algorithm stores"
@@ -46,13 +52,59 @@
     "admin": "Administration",
     "home": "Home",
     "analyze": "Analyze",
+    "new-analysis": "New analysis",
+    "new-dataframe": "New dataframe",
+    "new-dataframe-preprocess": "Preprocessing",
+    "history": "Analysis history",
     "stores": "Algorithm store",
     "algorithms-approved": "Approved algorithms",
     "pending-algorithms": "Pending algorithms",
-    "old-algorithms": "Old algorithms"
+    "old-algorithms": "Old algorithms",
+    "privacy": "Privacy Statement"
   },
   "home": {
     "title": "Home"
+  },
+  "privacy": {
+    "disclaimer": {
+      "title": "Disclaimer",
+      "content": "Vantage6 is an open-source project, that might be used by anyone. This Privacy statement is not a legal document, and does not create any rights or obligations. It is provided only to inform you what personal information the vantage6 software collects, and how it is used."
+    },
+    "title": "Privacy statement",
+    "lastUpdated": "Last Updated",
+    "lastUpdatedDate": "August 6, 2025",
+    "introduction": {
+      "title": "Introduction",
+      "content": "This Privacy statement describes how Vantage6 collects, uses, and protects your personal information when you use our federated learning platform. The vantage6 project is committed to protecting your privacy and ensuring the security of your data."
+    },
+    "dataCollection": {
+      "title": "Data collection",
+      "content": "Vantage6 collects the following types of information:",
+      "item1": "Account information (username, email address, organization name)",
+      "item2": "Usage data (login times, feature usage)"
+    },
+    "dataUsage": {
+      "title": "How vantage6 uses your data",
+      "content": "Your data is used only to provide a working federated learning platform, and to comply with legal obligations.",
+      "details-account": "Cookies are used to authenticate you. These cookies are essential for the functioning of vantage6, and are the only cookies used by vantage6.",
+      "details-usage": "The vantage6 software logs which requests you make to our platform, and when. Depending on the project, logging may be a legal requirement that can be used to prevent or detect abuse. Also, logging may be used in your project to detect errors in the vantage6 software, or in related components, such as algorithms run in your project. The log level set in your vantage6 project determines the amount of information that is logged."
+    },
+    "dataSharing": {
+      "title": "Data sharing",
+      "content": "Vantage6 is not a commercial platform and as such, has no commercial interest in your data. The vantage6 software has no built-in mechanism to share your personal information. Although the vantage6 team would not endorse this, the organization responsible for maintaining vantage6 in your project is technically able to share your data. In rare cases, they may even be required by law to share data."
+    },
+    "dataSecurity": {
+      "title": "Data security",
+      "content": "The vantage6 software aims to implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. Note that, as an open-source platform, there is not a single organization that is responsible for the security of the vantage6 software. Also, the way in which vantage6 is deployed in your project`will determine the security of your data. The vantage6 development team recommends that every project has a party that takes responsibility for the security."
+    },
+    "userRights": {
+      "title": "Your personal information",
+      "content": "You should contact the organization responsible for maintaining vantage6 in your project if you have any questions about your personal information."
+    },
+    "contact": {
+      "title": "Contact us",
+      "content": "If you have any questions about this Privacy statement, please reach out to us on Github Discussions, or create a Github issue:"
+    }
   },
   "choose-collaboration": {
     "title": "Choose a collaboration",
@@ -66,7 +118,7 @@
   "upload-key": {
     "title": "Upload encryption key",
     "description": "The collaboration that you selected is encrypted. Upload your private key to decrypt the encrypted data.",
-    "description-part-two": "Your private key will be used to decrypt the data locally, and does not leave your browser. Uploading an incorrect key will allow you to continue to view some task metadata, but not the task's input and results.",
+    "description-part-two": "Your private key will be used to decrypt the data locally, and does not leave your browser. Uploading an incorrect key will allow you to continue to view some task metadata, but not the task's input arguments and results.",
     "file-label": "Upload PEM file"
   },
   "chosen-collaboration-alert": {
@@ -82,9 +134,76 @@
   "table": {
     "search-placeholder": "Search"
   },
+  "session-list": {
+    "title": "Sessions"
+  },
+  "session-create": {
+    "create-title": "Create session",
+    "edit-title": "Edit session",
+    "session-form": {
+      "name": "Name",
+      "scope": "Select scope",
+      "study": "Select study",
+      "entire-collab": "Entire collaboration"
+    }
+  },
+  "session": {
+    "title": "Session {{name}}",
+    "delete-title": "Are you sure you want to delete session '{{name}}'?",
+    "delete-content": "This operation cannot be undone.",
+    "name": "Name",
+    "user": "Initiating user",
+    "scope": "Scope",
+    "ready": "Ready to use?",
+    "created-at": "Created",
+    "restricted_to_single_image": "Session restricted to single image?",
+    "image": "Image used in session",
+    "dataframes": {
+      "title": "Dataframes",
+      "add": "Create dataframe",
+      "db-label-short": "Database used",
+      "db-label": "Database used to create this dataframe",
+      "ready": "Ready to use?",
+      "last_session_task": "Last task executed on this dataframe",
+      "columns": "Columns",
+      "no-dataframes": "No dataframes created yet for this session."
+    }
+  },
+  "dataframe-read": {
+    "title": "Dataframe {{name}}",
+    "not-ready-despite-extraction": "The data extraction task to produce this dataframe failed. The dataframe cannot be used for analyses.",
+    "last-session-task-failed": "The last task in this dataframe failed. Please check if this does not impact further analyses.",
+    "columns": {
+      "title": "Dataframe columns",
+      "no-columns": "No columns are available for this dataframe.",
+      "add-preprocessing": "Add preprocessing step",
+      "name": "Column name",
+      "node-names": "Available on nodes",
+      "type": "Column type",
+      "alerts": {
+        "no-columns-for-node": "The node '{{node}}' does not have any columns available for this dataframe.",
+        "missing-column": "The column '{{column}}' is not available on the node '{{node}}'.",
+        "mixed-types": "The column '{{column}}' has different data types on different nodes. Types found: {{types}}."
+      }
+    },
+    "delete-dialog": {
+      "title": "Are you sure you want to delete the dataframe '{{name}}'?",
+      "content": "This operation cannot be undone."
+    },
+    "tasks-table": {
+      "title": "Tasks using this dataframe",
+      "no-tasks": "No tasks are using this dataframe."
+    }
+  },
+  "preprocessing": {
+    "title": "Add preprocessing step to dataframe '{{name}}'",
+    "title-without-session": "Create new preprocessing step"
+  },
   "task": {
+    "session": "Session",
     "algorithm": "Algorithm",
     "database": "Database",
+    "dataframe": "Dataframe",
     "description": "Description",
     "function": "Function",
     "parameters": "Parameters",
@@ -100,13 +219,21 @@
     "preprocessor": "Preprocessor",
     "preprocessing-function": "Preprocessing function",
     "filter-function": "Filter function",
+    "task-type": "Task type",
+    "action": {
+      "preprocessing": "Preprocessing",
+      "data_extraction": "Data extraction",
+      "federated_compute": "Federated compute",
+      "central_compute": "Central compute",
+      "postprocessing": "Postprocessing"
+    },
     "alert-node-offline": "The node '{{name}}' is offline. This task will be handled when the node is back online.",
     "alert-no-result": "Failed to retrieve result.",
-    "alert-blob-read-input": "Input is stored in blob storage. Please use the UUID in the python client to retrieve the input.",
+    "alert-blob-read-arguments": "Input is stored in blob storage. Please use the UUID in the python client to retrieve the input.",
     "alert-blob-read-result": "Result is stored in blob storage. Please use the UUID in the python client to retrieve the result.",
-    "alert-failed-read-input": "Failed to parse input.",
-    "alert-failed-read-input-function": "Failed to parse input, therefore, information about the function cannot be displayed.",
-    "alert-failed-read-input-visualization": "Failed to parse input, therefore, no visualization can be displayed.",
+    "alert-failed-read-arguments": "Failed to parse function arguments.",
+    "alert-failed-read-arguments-function": "Failed to parse function arguments, therefore, information about the function cannot be displayed.",
+    "alert-failed-read-arguments-visualization": "Failed to parse function arguments, therefore, no visualization can be displayed.",
     "alert-failed-read-encrypted-result": "Result was not successfully decoded and decrypted. Please use your private key locally to decrypt the results, and then perform base64 decoding.",
     "alert-failed-read-result": "Result was not successfully decoded. Please perform base64 decoding locally to get the results."
   },
@@ -116,18 +243,20 @@
     "finished-at": "Finished",
     "node": "Assigned node",
     "show-log": "Show logs",
-    "alert-node-offline": "Task can't start, node is offline.",
+    "alert-node-offline": "Algorithm run can't start, node is offline.",
     "blob-storage-used": "Blob storage used"
   },
   "task-list": {
-    "title": "Tasks"
+    "title": "History"
   },
   "task-create": {
-    "title": "Create task",
+    "title": "Create analysis",
+    "alert-dataframes-not-ready": "None of the dataframes in the selected session are ready to use. Most likely, the data extraction task to produce them failed. You can only use this session to create tasks that do not use data.",
+    "step-session": "Select session",
     "step-study": {
       "title": "Select study",
-      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of task for.",
-      "description": "Select the study you want to run a task for. If you want to run the task for the entire collaboration, select that option.",
+      "explanation": "Your collaboration defines studies, which allows you to quickly select a set of organizations to run a certain type of analysis for.",
+      "description": "Select the study you want to run an analysis for. If you want to run the analysis for the entire collaboration, select that option.",
       "select-full-collaboration": "Entire collaboration"
     },
     "step-function": {
@@ -137,9 +266,12 @@
         "function": "Select which algorithm function you want to run",
         "function-placeholder": "Provide your search term here",
         "name": "Provide a suitable name for your task",
+        "df-name": "Provide a suitable name for the dataframe created by this task",
+        "df-name-warning": "The dataframe name is not filled in for repeating data extraction tasks. Please provide a unique name for the dataframe.",
         "description": "Optionally, describe your task so you can find it back later",
         "organization-central": "Select the organization that will run this function. Note that you have selected a central function, which will probably create subtasks for other organizations in the collaboration",
-        "organization-partial": "Select the organizations that will carry out a partial function"
+        "organization-partial": "Select the organizations that will carry out a partial function. By default, all organizations are selected as federated actions are usually carried out on all data stations.",
+        "function-restricted-to-same-image": "The selected session only allows functions from the same image to be run throughout the session. Therefore, only functions from the session's allowed image are shown."
       }
     },
     "step-database": {
@@ -149,7 +281,14 @@
         "query": "This database is a {{dbType}} database. Provide a query to select the data",
         "worksheet": "This database is an Excel file. Provide the name of the worksheet to use"
       },
-      "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later."
+      "error-db-update": "Could not retrieve node configuration. The database step will not be available. Please try again later.",
+      "no-databases-available": "No databases are available on the node! Please contact the node administrator to configure databases."
+    },
+    "step-dataframe": {
+      "title": "Select dataframe",
+      "create-new-df": "Create dataframe",
+      "description": "Select the dataframe(s) you want to use. The options in the dropdown represent the dataframes created in the selected session.",
+      "alert-dataframe-not-ready-for-all-selected-organizations": "The selected dataframe is not properly created for selected organizations: {{organizations}}. Please deselect these organization or create a new dataframe that also supports them."
     },
     "step-preprocessing": {
       "title": "Extend data",
@@ -168,16 +307,21 @@
       "title": "Define parameters",
       "description": "Provide parameter values for the selected algorithm function",
       "valid-json": "Please provide valid JSON input.",
-      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field"
+      "upload-or-fill-in-json": "Upload a JSON file or fill in the JSON input field",
+      "warning-column-list-multiple-dataframes": "This function accepts multiple dataframes in a single argument. The selection of columns are from the first selected dataframe."
     },
-    "alert-no-online-nodes": "You cannot create a task right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
-    "alert-no-stores": "You cannot create a task because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
-    "alert-no-algorithms": "You cannot create a task because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
+    "alert-no-online-nodes": "You cannot create an analysis right now because no nodes are online in your collaboration. Online nodes are required to collect information on available databases and columns. Please try again later or contact your collaboration manager.",
+    "alert-no-sessions-found": "No sessions found. To compute you must first create a session.",
+    "alert-no-stores": "You cannot create an analysis because no algorithm stores are available to your collaboration. These are required to obtain the available algorithms from. Please contact your collaboration manager.",
+    "alert-no-algorithms": "You cannot create an analysis because no algorithms can be retrieved from the algorithm stores that are linked to your collaboration. Please contact your collaboration manager.",
     "alert-no-node-config": "The node '{{name}}' does not share its configuration, nor does any other node that is online. This is required to determine the available databases. Please contact the node administrator.",
-    "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm requires one or more. Please contact the node administrator so that they might add them."
+    "alert-no-databases": "The node '{{name}}' configuration does not contain any databases, while this algorithm function requires one or more. Please contact the node administrator so that they might add them.",
+    "alert-no-dataframes-in-session": "The selected session does not contain any dataframes yet. Most analyses require a dataframe to be created first.",
+    "alert-no-dataframes": "The selected session does not contain any ready-to-use dataframes, while this algorithm function requires one or more. Please initialize your session by creating a dataframe.",
+    "form-invalid": "Please complete the following steps to submit a task:"
   },
   "task-read": {
-    "title": "Task",
+    "title": "Analysis",
     "card-general": {
       "title": "General"
     },
@@ -198,7 +342,7 @@
         "download-json": "Download JSON",
         "download-csv": "Download CSV",
         "download-result": "Download result",
-        "download-input": "Download input"
+        "download-arguments": "Download function arguments"
       }
     },
     "card-algorithm": {
@@ -215,13 +359,13 @@
       "title": "Are you sure you want to kill the task '{{name}}'?",
       "content": "Note, this will also kill all subtasks.\nThis operation cannot be undone."
     },
-    "repeat": "Repeat task",
-    "alert-algorithm-not-found": "The algorithm used in this task could not be retrieved from the algorithm store. This limits the displayed information. This may happen if a task is created in the Python client or if the algorithm is no longer approved."
+    "repeat": "Repeat analysis",
+    "alert-algorithm-not-found": "The algorithm used in this analysis could not be retrieved from the algorithm store. This limits the displayed information. This may happen if an analysis is created in the Python client or if the algorithm is no longer approved."
   },
   "template-task-create": {
-    "title": "Quick task",
+    "title": "Quick analysis",
     "actions": {
-      "select": "Select quick task"
+      "select": "Select quick analysis"
     }
   },
   "algorithm": {
@@ -237,7 +381,8 @@
     "invalidated-at": "Invalidated at",
     "submission-comments": "Submission comments",
     "function": {
-      "type": "Type of function",
+      "execution-type": "Type of function",
+      "step-type": "Type of session step",
       "standalone": "Standalone function",
       "standalone_tooltip": "Whether this function produces useful results when running it by itself. Disabling this option will hide the function when creating tasks in this UI.",
       "argument": {
@@ -271,7 +416,10 @@
           "short_header": "Only for UI"
         }
       },
-      "databases": "Databases",
+      "databases": {
+        "title": "Databases",
+        "multiple": "Does the algorithm accept multiple dataframes in this single argument?"
+      },
       "visualization": {
         "title": "Visualizations",
         "type": "Type of visualization",
@@ -286,7 +434,7 @@
   },
   "algorithm-old-list": {
     "title": "Invalidated algorithms",
-    "alert": "The following algorithms are not available for use in tasks. They have been replaced by newer versions or have been rejected by reviewers.",
+    "alert": "The following algorithms are not available for use in analyses any more. They have been replaced by newer versions or have been rejected by reviewers.",
     "no-algorithms": "No old algorithms are available for your collaboration!"
   },
   "algorithm-read": {
@@ -303,7 +451,7 @@
     },
     "manage": "Manage algorithm",
     "invalidate-dialog": {
-      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in tasks.",
+      "title": "Are you sure you want to invalidate the algorithm '{{name}}'? It will no longer be available for use in analyses.",
       "content": "This operation cannot be undone."
     },
     "delete-dialog": {
@@ -322,12 +470,13 @@
         "assign": "Assign reviewers"
       },
       "under-review": {
-        "content": "This algorithm is under review. It is not available for use in tasks.",
+        "content": "This algorithm is under review. It is not available for use in analyses.",
         "view": "View reviews"
       },
-      "invalidated": "This algorithm is {{ status }}. It is not available for use in tasks."
+      "invalidated": "This algorithm is {{ status }}. It is not available for use in analyses."
     },
     "invalidate": "Invalidate",
+    "update-algorithm-image": "Update algorithm image",
     "card-reviews": {
       "title": "Reviews",
       "button": "View reviews"
@@ -337,6 +486,7 @@
     "title": "Add a new algorithm to the algorithm store",
     "subtitle": "Add algorithm details",
     "short-title": "Add algorithm",
+    "errors-explanation": "Your form is invalid. Please fix the following errors before submitting the form:",
     "function": {
       "title": "Function",
       "add": "Add function",
@@ -374,6 +524,14 @@
     "error-dialog": {
       "title": "Error updating algorithm",
       "message": "An error occurred while updating the algorithm: {{error}}"
+    }
+  },
+  "algorithm-update-image": {
+    "title": "Update algorithm image",
+    "image": "Image",
+    "confirm-dialog": {
+      "title": "Update algorithm image",
+      "content": "Are you sure you want to update the algorithm image? This will create a new version of the algorithm with the updated image. You will need to go through the review process again."
     }
   },
   "review": {
@@ -428,7 +586,6 @@
     "card-per-review": {
       "title": "Review by {{reviewer}}",
       "reviewer": "Reviewer",
-      "reviewer-server": "Server that reviewer belongs to",
       "comment": "Reviewer comments",
       "requested-at": "Review requested at",
       "requested-by": "Review requested by",
@@ -495,6 +652,7 @@
     "name": "Name",
     "encrypted": "Encrypted",
     "organizations": "Organizations",
+    "session-restrict-to-same-image": "Restrict session to single image?",
     "algorithm-store": {
       "url": "Web address",
       "actions": {
@@ -503,7 +661,7 @@
       },
       "delete-dialog": {
         "title": "Are you sure you want to remove the algorithm store '{{name}}' from the collaboration '{{collaboration}}'?",
-        "content": "Users will no longer be able to create tasks in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
+        "content": "Users will no longer be able to create analyses in this collaboration with the algorithms in this store.\nThe algorithm store can be added back to the collaboration at any time."
       }
     }
   },
@@ -546,7 +704,7 @@
       "title": "Are you sure you want to delete the collaboration '{{name}}'?",
       "content": "Note, this will also delete all nodes and tasks related to this collaboration.\nThis operation cannot be undone."
     },
-    "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending tasks."
+    "alert-missing-nodes": "Not all organizations have registered nodes for this collaboration. Please ensure that they are registered and active before sending analyses."
   },
   "study-read": {
     "title": "Study",
@@ -555,7 +713,7 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the study '{{name}}'?",
-      "content": "Note, this will also delete all tasks related to this study.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses related to this study.\nThis operation cannot be undone."
     }
   },
   "study-create": {
@@ -568,17 +726,12 @@
     "title": "Add algorithm store to your collaboration",
     "name": "Name",
     "url": "Algorithm store URL",
-    "server_url": "Vantage6 server URL",
+    "api-path": "Algorithm store API path",
     "form": {
       "name-hint": "This name will be used to identify the algorithm store in your collaboration(s).",
-      "url-hint": "The web address of the algorithm store, including the API path (often '/api') at the end.",
-      "server-url-hint": "The web address of this vantage6 server. This should be the address of the vantage6 server's including the API path.",
+      "url-hint": "The web address of the algorithm store, excluding the API path.",
+      "api-path-hint": "The API path to the algorithm store. Default is '/api'.",
       "all-collaborations": "Make this algorithm store available to all collaborations"
-    },
-    "localhost-dialog": {
-      "title": "Adding localhost algorithm store",
-      "content": "You are adding an algorithm store running on localhost. This is insecure and should only be done for development servers. Are you sure you want to continue?",
-      "confirm": "I understand, proceed."
     }
   },
   "algorithm-store-list": {
@@ -608,8 +761,6 @@
     "policy": "Policy",
     "not-defined": "No extra limitations",
     "algorithm_view": "Who can view algorithms?",
-    "allowed_servers": "Which servers are responsible for managing this algorithm store?",
-    "allow_localhost": "Are localhost servers allowed to access the store?",
     "min_reviewers": "Minimum number of reviewers",
     "min_reviewing_organizations": "Minimum number of organizations providing reviewers",
     "assign_review_own_algorithm": "Are developers allowed to assign reviewers for their own algorithms?",
@@ -617,7 +768,7 @@
     "allowed_review_assigners": "Users allowed to assign reviews (extra check on top of permission)",
     "algorithm_view-values": {
       "public": "Everyone",
-      "whitelisted": "Any user from whitelisted servers",
+      "authenticated": "Any authenticated user",
       "private": "Only users with explicit permission"
     }
   },
@@ -666,8 +817,8 @@
       "event": "Event",
       "port": "Port",
       "study": "Study",
+      "session": "Session",
       "algorithm": "Algorithm",
-      "vantage6_server": "Whitelisted server",
       "review": "Review"
     },
     "scope": {
@@ -689,21 +840,26 @@
   },
   "user": {
     "username": "Username",
-    "email": "Email",
     "password": "Password",
     "password-repeat": "Repeat password",
-    "first-name": "First name",
-    "last-name": "Last name",
     "organization": "Organization",
     "roles": "Roles",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "create-in-keycloak": "Create user in Keycloak"
   },
   "user-list": {
     "title": "Users",
     "filter-placeholder": "Filter by organization"
   },
   "user-create": {
-    "title": "Create user"
+    "title": "Create user",
+    "service-account": "Create service account user",
+    "setting-service-account": "You are setting up a service account user. This user will get a generated secret that should be stored securely. The user should only be used for automated tasks.",
+    "service-account-download-dialog": {
+      "title": "Service Account Created",
+      "message": "The service account has been created successfully. The credentials have been downloaded.",
+      "security-message": "Important: Keep these credentials secure and do not share them. They provide access to your organization's data."
+    }
   },
   "user-read": {
     "title": "User",
@@ -712,7 +868,9 @@
     },
     "delete-dialog": {
       "title": "Are you sure you want to delete the user '{{name}}'?",
-      "content": "Note, this will also delete all tasks this user created.\nThis operation cannot be undone."
+      "content": "Note, this will also delete all analyses this user created. This operation cannot be undone.\nPlease also choose if you want to delete the linked Keycloak account as well.",
+      "delete-with-keycloak": "Delete user from vantage6 and Keycloak",
+      "delete-without-keycloak": "Delete user from vantage6 only"
     }
   },
   "user-edit": {
@@ -731,7 +889,13 @@
   "node-edit": {
     "actions": {
       "edit": "Change name",
-      "new-api-key": "Reset API key"
+      "new-api-key": "Reset API key",
+      "killTasks": "Kill current tasks"
+    },
+    "kill-tasks-dialog": {
+      "title": "Are you sure you want to kill all tasks currently running on node '{{name}}'?",
+      "content": "This may disturb analyses run by other users. This operation cannot be undone.",
+      "success": "The node '{{name}}' has been instructed to kill all tasks."
     }
   },
   "task-status": {
@@ -746,11 +910,7 @@
     "StartFailed": "Start failed",
     "NotAllowed": "Algorithm not allowed by node"
   },
-  "store": {
-    "server": "Server URL"
-  },
   "store-user": {
-    "server": "Server at which user is registered",
     "roles": "Roles in store",
     "create": {
       "title": "Register user at store"
@@ -766,8 +926,9 @@
   "header": {
     "actions": {
       "logout": "Logout",
-      "change_password": "Change password",
-      "my-user": "View my user"
+      "change-password": "Change password",
+      "view-account": "View my permissions",
+      "manage-account": "Manage account"
     }
   },
   "login": {
@@ -851,6 +1012,13 @@
     "production-ready-guidelines": "production-ready algorithm guidelines",
     "contribute-email": "If you do, you can send an email to",
     "account-and-review": "to aquire and account and upload your algorithm. The algorithm will be reviewed before it is added to the community store."
+  },
+  "collaboration-edit": {
+    "confirm-dialog": {
+      "title": "Are you sure you want to edit this collaboration?",
+      "changing-encryption": "You are changing the encryption status of this collaboration. Adding encryption will require all organizations to provide their nodes with an encryption key. Data on existing tasks will not change its encryption status and will also no longer be automatically readable by vantage6 as the assumption on encryption of their results will be wrong.",
+      "removing-organizations": "You are removing organizations from this collaboration. This will also delete dataframes on the nodes of the removed organizations. This data cannot be recovered."
+    }
   },
   "error": {
     "algorithmStoreNotAvailable": "Algorithm store '{{name}}' is not available"

@@ -1,28 +1,30 @@
 # -*- coding: utf-8 -*-
 import logging
-
 from http import HTTPStatus
 
-import sqlalchemy
-from flask import request, g
+from flask import g, request
 from flask_restful import Api
-
+from marshmallow import ValidationError
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from vantage6.common import logger_name
+
+from vantage6.backend.common.auth import (
+    get_keycloak_id_for_user,
+    get_organization_id_from_keycloak,
+)
 from vantage6.backend.common.resource.error_handling import handle_exceptions
 from vantage6.backend.common.resource.pagination import Pagination
-from vantage6.algorithm.store import db
-from vantage6.algorithm.store.permission import Operation as P, PermissionManager
-from vantage6.algorithm.store.model.user import User as db_User
-from vantage6.algorithm.store.model import Vantage6Server
-from vantage6.algorithm.store.model.rule import Operation
-from vantage6.algorithm.store.model.policy import Policy
-from vantage6.algorithm.store.resource import (
-    request_from_store_to_v6_server,
-    with_permission,
-    AlgorithmStoreResources,
-)
 
+from vantage6.algorithm.store import db
+from vantage6.algorithm.store.model.rule import Operation
+from vantage6.algorithm.store.model.user import User as db_User
+from vantage6.algorithm.store.permission import Operation as P, PermissionManager
+from vantage6.algorithm.store.resource import (
+    AlgorithmStoreResources,
+    with_permission,
+)
 from vantage6.algorithm.store.resource.schema.input_schema import (
     UserInputSchema,
     UserUpdateInputSchema,
@@ -124,14 +126,6 @@ class Users(AlgorithmStoreResources):
               type: integer
             description: Role that is assigned to user
           - in: query
-            name: can_review
-            schema:
-              type: boolean
-            description: >-
-              Filter users that can review algorithms. If true, only users that are
-              allowed to review algorithms are returned. If false, only users that are
-              not allowed to review algorithms are returned.
-          - in: query
             name: reviewers_for_algorithm_id
             schema:
               type: integer
@@ -170,7 +164,7 @@ class Users(AlgorithmStoreResources):
         tags: ["User"]
         """
         args = request.args
-        q = g.session.query(db_User)
+        q = select(db_User)
 
         # filter by any field of this endpoint
         for param in ["username"]:
@@ -182,7 +176,7 @@ class Users(AlgorithmStoreResources):
             role = db.Role.get(args["role_id"])
             if not role:
                 return {
-                    "msg": f'Role with id={args["role_id"]} does not exist!'
+                    "msg": f"Role with id={args['role_id']} does not exist!"
                 }, HTTPStatus.BAD_REQUEST
 
             q = (
@@ -191,21 +185,7 @@ class Users(AlgorithmStoreResources):
                 .filter(db.Role.id == args["role_id"])
             )
 
-        # find users that can review algorithms
-        # TODO v5+ this option is superseded by the reviewers_for_algorithm_id option.
-        # Remove it in 5.0.
-        if "can_review" in args:
-            can_review = bool(args["can_review"])
-            # TODO this approach may not be the most efficient if there are many users.
-            # Consider improving.
-            reviewers = [
-                user.id for user in db.User.get() if user.can("review", Operation.EDIT)
-            ]
-            if can_review:
-                q = q.filter(db.User.id.in_(reviewers))
-            else:
-                q = q.filter(db.User.id.notin_(reviewers))
-
+        # find users that can review this algorithm
         if "reviewers_for_algorithm_id" in args:
             try:
                 algorithm_id = int(args["reviewers_for_algorithm_id"])
@@ -263,7 +243,7 @@ class Users(AlgorithmStoreResources):
                 properties:
                   username:
                     type: string
-                    description: Username unique to the whitelisted server
+                    description: Username to add to allow setting permissions
                   roles:
                     type: array
                     items:
@@ -283,46 +263,29 @@ class Users(AlgorithmStoreResources):
 
         tags: ["User"]
         """
-        data = request.get_json()
-        # the assumption is that it is possible to create only users linked to your own server
-        server = Vantage6Server.get_by_url(request.headers["Server-Url"])
         # validate request body
-        errors = user_input_schema.validate(data)
-        if errors:
+        data = request.get_json(silent=True)
+        try:
+            data = user_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
+
+        # check if the user already exists in keycloak
+        user_id = get_keycloak_id_for_user(request.json["username"])
 
         # check unique constraints
-        if db.User.get_by_server(username=data["username"], v6_server_id=server.id):
+        if db.User.get_by_keycloak_id(keycloak_id=user_id):
             return {"msg": "User already registered."}, HTTPStatus.BAD_REQUEST
 
-        # check whether users of this server are allowed to get any permissions
-        allowed_servers_to_edit = Policy.get_servers_with_edit_permission()
-        if allowed_servers_to_edit and server.url not in allowed_servers_to_edit:
-            return {
-                "msg": f"Users from the server {server.url} are not allowed to be "
-                "registered in this algorithm store by the store administrator."
-            }, HTTPStatus.FORBIDDEN
-
-        # Check if the user exists in the relevant vantage6 server. Note that this only
-        # works if:
-        # 1. the user executing this request is in the same v6 server
-        # 2. They are allowed to see the user in the v6 server
-        server_response, status_code = request_from_store_to_v6_server(
-            url=f"{server.url}/user",
-            params={"username": data["username"]},
-        )
-        if (
-            status_code != HTTPStatus.OK
-            or len(server_response.json().get("data", [])) != 1
-        ):
-            return {
-                "msg": f"User '{data['username']}' not found in the Vantage6 server."
-            }, HTTPStatus.BAD_REQUEST
-        user_email = server_response.json()["data"][0].get("email")
-        user_org = server_response.json()["data"][0]["organization"]["id"]
+        # Retrieve organization_id from Keycloak user attributes
+        organization_id = get_organization_id_from_keycloak(user_id)
+        if organization_id is None:
+            msg = "User '%s' does not have organization_id attribute in Keycloak"
+            log.error(msg, data["username"])
+            return {"msg": msg % data["username"]}, HTTPStatus.BAD_REQUEST
 
         # process the required roles. It is only possible to assign roles with
         # rules that you already have permission to. This way we ensure you can
@@ -338,9 +301,8 @@ class Users(AlgorithmStoreResources):
 
         user = db.User(
             username=data["username"],
-            email=user_email,
-            organization_id=user_org,
-            v6_server_id=server.id,
+            organization_id=organization_id,
+            keycloak_id=user_id,
             roles=roles,
         )
 
@@ -404,18 +366,6 @@ class User(AlgorithmStoreResources):
                     items:
                       type: integer
                     description: User's roles
-                  email:
-                    type: string
-                    description: User's email address. Do not combine this option with
-                      the update_email option.
-                  update_email:
-                    type: boolean
-                    description: Whether to update the email address by using the value
-                      from the vantage6 server. Do not combine this option with the
-                      email option to manually set the email address.
-                  organization_id:
-                    type: integer
-                    description: User's organization id. Can be written only if empty.
 
         parameters:
           - in: path
@@ -429,8 +379,7 @@ class User(AlgorithmStoreResources):
           200:
             description: Ok
           400:
-            description: User cannot be updated to contents of request body,
-              e.g. due to duplicate email address.
+            description: User cannot be updated to contents of request body
           404:
             description: User not found
           401:
@@ -445,38 +394,15 @@ class User(AlgorithmStoreResources):
         if not user:
             return {"msg": f"user id={id} not found"}, HTTPStatus.NOT_FOUND
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
         # validate request body
-        errors = user_patch_input_schema.validate(data)
-        if errors:
+        try:
+            data = user_patch_input_schema.load(data)
+        except ValidationError as e:
             return {
                 "msg": "Request body is incorrect",
-                "errors": errors,
+                "errors": e.messages,
             }, HTTPStatus.BAD_REQUEST
-
-        if email := data.get("email"):
-            user.email = email
-        elif "update_email" in data and data["update_email"]:
-            server = Vantage6Server.get_by_url(request.headers["Server-Url"])
-            server_response, status_code = request_from_store_to_v6_server(
-                url=f"{server.url}/user",
-                params={"username": user.username},
-            )
-            if (
-                status_code != HTTPStatus.OK
-                or len(server_response.json().get("data", [])) != 1
-            ):
-                return {
-                    "msg": f"User '{user.username}' not found in the Vantage6 server."
-                }, HTTPStatus.BAD_REQUEST
-            user.email = server_response.json()["data"][0].get("email")
-            if not user.email:
-                log.warning(
-                    "No email address found for user '%s' in the Vantage6 server.",
-                    user.username,
-                )
-        if organization_id := data.get("organization_id") and not user.organization_id:
-            user.organization_id = organization_id
 
         if "roles" in data:
             # validate that these roles exist
@@ -508,7 +434,7 @@ class User(AlgorithmStoreResources):
 
         try:
             user.save()
-        except sqlalchemy.exc.IntegrityError as e:
+        except IntegrityError as e:
             log.error(e)
             user.session.rollback()
             return {

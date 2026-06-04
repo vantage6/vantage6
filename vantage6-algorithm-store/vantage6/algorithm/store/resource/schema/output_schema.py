@@ -1,21 +1,22 @@
 from marshmallow import fields
 
+from vantage6.common.enum import AlgorithmArgumentType
+
 from vantage6.backend.common.resource.output_schema import (
     BaseHATEOASModelSchema,
     create_one_to_many_link,
 )
+
 from vantage6.algorithm.store.model.algorithm import Algorithm
+from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
 from vantage6.algorithm.store.model.argument import Argument
 from vantage6.algorithm.store.model.database import Database
 from vantage6.algorithm.store.model.function import Function
-from vantage6.algorithm.store.model.allowed_argument_value import AllowedArgumentValue
+from vantage6.algorithm.store.model.review import Review
 from vantage6.algorithm.store.model.role import Role
 from vantage6.algorithm.store.model.rule import Rule
 from vantage6.algorithm.store.model.ui_visualization import UIVisualization
 from vantage6.algorithm.store.model.user import User
-from vantage6.algorithm.store.model.review import Review
-from vantage6.algorithm.store.model.vantage6_server import Vantage6Server
-from vantage6.algorithm.store.model.common.enums import ArgumentType
 
 
 class HATEOASModelSchema(BaseHATEOASModelSchema):
@@ -34,7 +35,7 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         setattr(self, "role", lambda obj: self.create_hateoas("role", obj))
         setattr(self, "user", lambda obj: self.create_hateoas("user", obj))
         setattr(self, "review", lambda obj: self.create_hateoas("review", obj))
-        setattr(self, "server", lambda obj: self.create_hateoas("server", obj))
+        setattr(self, "hq", lambda obj: self.create_hateoas("hq", obj))
 
         # call super class. Do this after setting the attributes above, because
         # the super class initializer will call the attributes.
@@ -61,8 +62,6 @@ class FunctionOutputSchema(HATEOASModelSchema):
 
     class Meta:
         model = Function
-
-    type_ = fields.String(data_key="type")
 
     databases = fields.Nested("DatabaseOutputSchema", many=True)
     arguments = fields.Nested("ArgumentOutputSchema", many=True)
@@ -112,12 +111,12 @@ class AllowedArgumentValueSchema(HATEOASModelSchema):
 
     def _convert_value_type(self, obj, result):
         """Helper method to convert value type based on argument type"""
-        if obj.argument.type_ == ArgumentType.INTEGER.value:
+        if obj.argument.type_ == AlgorithmArgumentType.INTEGER:
             try:
                 result["value"] = int(result["value"])
             except (ValueError, TypeError):
                 pass
-        elif obj.argument.type_ == ArgumentType.FLOAT.value:
+        elif obj.argument.type_ == AlgorithmArgumentType.FLOAT:
             try:
                 result["value"] = float(result["value"])
             except (ValueError, TypeError):
@@ -131,19 +130,6 @@ class UIVisualizationOutputSchema(HATEOASModelSchema):
         model = UIVisualization
 
     type_ = fields.String(data_key="type")
-
-
-class Vantage6ServerOutputSchema(HATEOASModelSchema):
-    """Marshmallow output schema to serialize the Vantage6Server model"""
-
-    class Meta:
-        model = Vantage6Server
-
-    users = fields.Function(
-        lambda obj: create_one_to_many_link(
-            obj, link_to="user", link_from="v6_server_id"
-        )
-    )
 
 
 class RoleOutputSchema(HATEOASModelSchema):
@@ -176,7 +162,6 @@ class UserOutputSchema(HATEOASModelSchema):
             obj, link_to="algorithm", link_from="user_id"
         )
     )
-    server = fields.Nested("Vantage6ServerOutputSchema", exclude=["users"])
 
 
 class ReviewOutputSchema(HATEOASModelSchema):

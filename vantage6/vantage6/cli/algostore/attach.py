@@ -1,49 +1,40 @@
 import click
-import docker
-import questionary as q
 
-from colorama import Fore, Style
+from vantage6.common import info
 
-from vantage6.common import error
-from vantage6.common.docker.addons import check_docker_running
-from vantage6.common.globals import APPNAME, InstanceType
-from vantage6.cli.common.start import attach_logs
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
+from vantage6.cli.common.attach import attach_logs
+from vantage6.cli.context import InstanceType
+from vantage6.cli.globals import InfraComponentName
+from vantage6.cli.k8s_config import select_k8s_config
 
 
 @click.command()
-@click.option("-n", "--name", default=None, help="configuration name")
-@click.option("--system", "system_folders", flag_value=True)
+@click.option("-n", "--name", default=None, help="Name of the configuration")
+@click.option("--system", "system_folders", flag_value=True, help="Use system folders")
+@click.option("--user", "system_folders", flag_value=False, help="Use user folders")
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
 @click.option(
-    "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
+    "--sandbox", "is_sandbox", flag_value=True, help="Attach to a sandbox environment"
 )
-def cli_algo_store_attach(name: str, system_folders: bool) -> None:
+def cli_algo_store_attach(
+    name: str | None,
+    system_folders: bool,
+    context: str,
+    namespace: str,
+    is_sandbox: bool,
+) -> None:
     """
-    Show the server logs in the current console.
+    Show the store logs in the current console.
     """
-    check_docker_running()
-    client = docker.from_env()
-
-    running_servers = client.containers.list(
-        filters={"label": f"{APPNAME}-type={InstanceType.ALGORITHM_STORE.value}"}
+    info("Attaching to store logs...")
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
+    attach_logs(
+        name,
+        instance_type=InstanceType.ALGORITHM_STORE,
+        infra_component=InfraComponentName.ALGORITHM_STORE,
+        system_folders=system_folders,
+        k8s_config=k8s_config,
+        is_sandbox=is_sandbox,
+        additional_labels="component=store",
     )
-    running_server_names = [container.name for container in running_servers]
-
-    if not name:
-        try:
-            name = q.select(
-                "Select the algorithm store you wish to attach:",
-                choices=running_server_names,
-            ).unsafe_ask()
-        except KeyboardInterrupt:
-            error("Aborted by user!")
-            return
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}-{InstanceType.ALGORITHM_STORE.value}"
-
-    if name in running_server_names:
-        container = client.containers.get(name)
-        attach_logs(container, InstanceType.ALGORITHM_STORE)
-    else:
-        error(f"{Fore.RED}{name}{Style.RESET_ALL} is not running!")

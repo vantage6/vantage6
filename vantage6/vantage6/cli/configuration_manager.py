@@ -1,6 +1,17 @@
-from schema import And, Or, Use, Optional
+from pathlib import Path
+from typing import Self
+
+from schema import And, Use
 
 from vantage6.common.configuration_manager import Configuration, ConfigurationManager
+
+from vantage6.cli.globals import (
+    ALGO_STORE_TEMPLATE_FILE,
+    AUTH_TEMPLATE_FILE,
+    HQ_TEMPLATE_FILE,
+    HUB_TEMPLATE_FILE,
+    NODE_TEMPLATE_FILE,
+)
 
 LOGGING_VALIDATORS = {
     "level": And(
@@ -14,23 +25,20 @@ LOGGING_VALIDATORS = {
 }
 
 
-class ServerConfiguration(Configuration):
+class HQConfiguration(Configuration):
+    """Stores the HQ's configuration and defines a set of HQ-specific validators."""
+
+    # TODO: explore how to validate helm values.yaml files, see issue 2105
+    VALIDATORS = {}
+
+
+class AlgorithmStoreConfiguration(Configuration):
     """
-    Stores the server's configuration and defines a set of server-specific
-    validators.
+    Stores the algorithm store's configuration and defines a set of algorithm
+    store-specific validators.
     """
 
-    VALIDATORS = {
-        "description": Use(str),
-        "ip": Use(str),
-        "port": Use(int),
-        Optional("api_path"): str,
-        "uri": Use(str),
-        "allow_drop_all": Use(bool),
-        "logging": {**LOGGING_VALIDATORS, "file": Use(str)},
-        Optional("server_name"): str,
-        Optional("runs_data_cleanup_days"): Use(int),
-    }
+    VALIDATORS = {}
 
 
 class NodeConfiguration(Configuration):
@@ -39,21 +47,32 @@ class NodeConfiguration(Configuration):
     validators.
     """
 
+    # TODO perhaps we can remove these classes and do validation of the configuration
+    # file more easily with helm values.yaml checks.
     VALIDATORS = {
-        "api_key": Use(str),
-        "server_url": Use(str),
-        "port": Or(Use(int), None),
-        "task_dir": Use(str),
-        # TODO: remove `dict` validation from databases
-        "databases": Or([Use(dict)], dict, None),
-        "api_path": Use(str),
-        "logging": LOGGING_VALIDATORS,
-        "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
-        Optional("node_extra_env"): dict,
-        Optional("node_extra_mounts"): [str],
-        Optional("node_extra_hosts"): dict,
-        Optional("share_algorithm_logs"): Use(bool),
+        # # TODO enable validators for node. To see if it works, use v6 node list
+        # "node": {
+        #     "hq_url": Use(str),
+        #     "port": Or(Use(int), None),
+        #     "task_dir": Use(str),
+        #     # TODO: remove `dict` validation from databases
+        #     "api_path": Use(str),
+        #     "logging": LOGGING_VALIDATORS,
+        #     "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
+        #     Optional("node_extra_env"): dict,
+        #     Optional("node_extra_mounts"): [str],
+        #     Optional("node_extra_hosts"): dict,
+        #     Optional("share_algorithm_logs"): Use(bool),
+        # }
     }
+
+
+class AuthConfiguration(Configuration):
+    VALIDATORS = {}
+
+
+class HubConfiguration(Configuration):
+    VALIDATORS = {}
 
 
 class TestConfiguration(Configuration):
@@ -70,18 +89,18 @@ class NodeConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=NodeConfiguration, name=name)
+    def __init__(self, name: str, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(conf_class=NodeConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
-    def from_file(cls, path: str) -> "NodeConfigurationManager":
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
         """
         Create a new instance of the NodeConfigurationManager from a
         configuration file.
 
         Parameters
         ----------
-        path : str
+        path : str | Path
             Path to the configuration file.
 
         Returns
@@ -89,12 +108,20 @@ class NodeConfigurationManager(ConfigurationManager):
         NodeConfigurationManager
             A new instance of the NodeConfigurationManager.
         """
-        return super().from_file(path, conf_class=NodeConfiguration)
+        return super().from_file(
+            path, conf_class=NodeConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the node.
+        """
+        return super()._get_config_template(NODE_TEMPLATE_FILE)
 
 
-class ServerConfigurationManager(ConfigurationManager):
+class HQConfigurationManager(ConfigurationManager):
     """
-    Maintains the server's configuration.
+    Maintains the HQ's configuration.
 
     Parameters
     ----------
@@ -102,26 +129,234 @@ class ServerConfigurationManager(ConfigurationManager):
         Name of the configuration file.
     """
 
-    def __init__(self, name, *args, **kwargs) -> None:
-        super().__init__(conf_class=ServerConfiguration, name=name)
+    def __init__(self, name: str, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(conf_class=HQConfiguration, name=name, is_sandbox=is_sandbox)
 
     @classmethod
-    def from_file(cls, path) -> "ServerConfigurationManager":
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
         """
-        Create a new instance of the ServerConfigurationManager from a
+        Create a new instance of the HQConfigurationManager from a
         configuration file.
 
         Parameters
         ----------
-        path : str
+        path : str | Path
             Path to the configuration file.
 
         Returns
         -------
-        ServerConfigurationManager
-            A new instance of the ServerConfigurationManager.
+        HQConfigurationManager
+            A new instance of the HQConfigurationManager.
         """
-        return super().from_file(path, conf_class=ServerConfiguration)
+        return super().from_file(
+            path, conf_class=HQConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the HQ.
+
+        Returns
+        -------
+        str
+            The configuration template for the HQ.
+        """
+        return super()._get_config_template(HQ_TEMPLATE_FILE)
+
+
+class AlgorithmStoreConfigurationManager(ConfigurationManager):
+    """
+    Maintains the algorithm store's configuration.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    """
+
+    def __init__(self, name: str, is_sandbox: bool = False, *args, **kwargs) -> None:
+        super().__init__(
+            conf_class=AlgorithmStoreConfiguration, name=name, is_sandbox=is_sandbox
+        )
+
+    @classmethod
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the AlgorithmStoreConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+
+        Returns
+        -------
+        AlgorithmStoreConfigurationManager
+            A new instance of the AlgorithmStoreConfigurationManager.
+        """
+        return super().from_file(
+            path, conf_class=AlgorithmStoreConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the algorithm store.
+
+        Returns
+        -------
+        str
+            The configuration template for the algorithm store.
+        """
+        return super()._get_config_template(ALGO_STORE_TEMPLATE_FILE)
+
+
+class AuthConfigurationManager(ConfigurationManager):
+    """
+    Maintains the auth's configuration.
+
+    Parameters
+    ----------
+    name : str
+        Name of the configuration file.
+    is_sandbox : bool, optional
+        Whether the configuration is a sandbox configuration, by default False
+    """
+
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        super().__init__(conf_class=AuthConfiguration, name=name, is_sandbox=is_sandbox)
+
+    @classmethod
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the AuthConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+
+        Returns
+        -------
+        AuthConfigurationManager
+            A new instance of the AuthConfigurationManager.
+        """
+        return super().from_file(
+            path, conf_class=AuthConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the auth.
+        """
+        return super()._get_config_template(AUTH_TEMPLATE_FILE)
+
+
+class HubConfigurationManager(ConfigurationManager):
+    """
+    Maintains the hub's configuration.
+    """
+
+    def __init__(self, name, is_sandbox: bool = False, *args, **kwargs):
+        """
+        Maintains the hub's configuration.
+
+        Parameters
+        ----------
+        name : str
+            Name of the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+        """
+        super().__init__(conf_class=HubConfiguration, name=name, is_sandbox=is_sandbox)
+
+    @classmethod
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the HubConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+
+        Returns
+        -------
+        HubConfigurationManager
+            A new instance of the HubConfigurationManager.
+        """
+        return super().from_file(
+            path, conf_class=HubConfiguration, is_sandbox=is_sandbox
+        )
+
+    def get_config_template(self) -> str:
+        """
+        Get the configuration template for the hub.
+
+        Returns
+        -------
+        str
+            The configuration template for the hub.
+        """
+        return super()._get_config_template(HUB_TEMPLATE_FILE)
+
+    def render_config(
+        self,
+        auth_config: str | None = None,
+        hq_config: str | None = None,
+        store_config: str | None = None,
+    ) -> str:
+        """
+        Render the configuration to a string.
+
+        Extra configurations of subcharts can be provided to render the configuration
+        with.
+
+        Parameters
+        ----------
+        auth_config : str | None
+            The authentication configuration.
+        hq_config : str | None
+            The HQ configuration.
+        store_config : str | None
+            The algorithm store configuration.
+
+        Returns
+        -------
+        str
+            The rendered configuration.
+        """
+        hub_config = super().render_config()
+        # add the auth, hq and store configurations to the hub configuration
+        if auth_config:
+            hub_config += "\nauth:\n" + self._add_extra_indent(auth_config)
+        if hq_config:
+            hub_config += "\nhq:\n" + self._add_extra_indent(hq_config)
+        if store_config:
+            hub_config += "\nstore:\n" + self._add_extra_indent(store_config)
+        return hub_config
+
+    def _add_extra_indent(self, str_subconfig: str) -> str:
+        """
+        Add extra indent to the subconfiguration.
+
+        Parameters
+        ----------
+        str_subconfig : str
+            The subconfiguration to add extra indent to.
+
+        Returns
+        -------
+        str
+            The subconfiguration with extra indent.
+        """
+        return "\n".join(["  " + line for line in str_subconfig.split("\n")])
 
 
 class TestingConfigurationManager(ConfigurationManager):
@@ -129,5 +364,23 @@ class TestingConfigurationManager(ConfigurationManager):
         super().__init__(conf_class=TestConfiguration, name=name)
 
     @classmethod
-    def from_file(cls, path):
-        return super().from_file(path, conf_class=TestConfiguration)
+    def from_file(cls, path: Path | str, is_sandbox: bool = False) -> Self:
+        """
+        Create a new instance of the TestingConfigurationManager from a
+        configuration file.
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to the configuration file.
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
+
+        Returns
+        -------
+        TestingConfigurationManager
+            A new instance of the TestingConfigurationManager.
+        """
+        return super().from_file(
+            path, conf_class=TestConfiguration, is_sandbox=is_sandbox
+        )

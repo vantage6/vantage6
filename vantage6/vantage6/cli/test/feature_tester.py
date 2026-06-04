@@ -1,29 +1,40 @@
 import sys
+
 import click
 
 from vantage6.common.globals import Ports
+
 from vantage6.client import UserClient
-from vantage6.cli.utils import error
+from vantage6.client.utils import LogLevel
+
 from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
+from vantage6.cli.utils import error
 
 
 @click.command()
-@click.option("--host", type=str, default="http://localhost", help="URL of the server")
 @click.option(
-    "--port", type=int, default=Ports.DEV_SERVER.value, help="Port of the server"
-)
-@click.option("--api-path", type=str, default="/api", help="API path of the server")
-@click.option(
-    "--username",
+    "--hq-url",
     type=str,
-    default="dev_admin",
-    help="Username of vantage6 user account to create the task with",
+    default=f"http://localhost:{Ports.SANDBOX_HQ}/hq",
+    help="URL of HQ",
 )
 @click.option(
-    "--password",
+    "--auth-url",
     type=str,
-    default="password",
-    help="Password of vantage6 user account to create the task with",
+    default=f"http://localhost:{Ports.SANDBOX_AUTH}",
+    help="URL of the authentication service (Keycloak)",
+)
+@click.option(
+    "--auth-realm",
+    type=str,
+    default="vantage6",
+    help="Realm of the authentication service (Keycloak)",
+)
+@click.option(
+    "--auth-client",
+    type=str,
+    default="public_client",
+    help="Client ID of the authentication service (Keycloak)",
 )
 @click.option(
     "--collaboration",
@@ -49,7 +60,6 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
     is_flag=True,
     help="Run the diagnostic test on only nodes that are online",
 )
-@click.option("--no-vpn", is_flag=True, help="Don't execute VPN tests")
 @click.option(
     "--private-key",
     type=str,
@@ -57,24 +67,29 @@ from vantage6.cli.test.common.diagnostic_runner import DiagnosticRunner
     help="Path to the private key for end-to-end encryption",
 )
 @click.option(
-    "--mfa-code",
+    "--session-id",
+    type=int,
+    default=1,
+    help="ID of the session to use for the diagnostic test",
+)
+@click.option(
+    "--database-label",
     type=str,
-    help="Multi-factor authentication code. Use this if MFA is enabled on the "
-    "server.",
+    default="olympic-athletes",
+    help="Label of the database to use for the diagnostic test",
 )
 def cli_test_features(
-    host: str,
-    port: int,
-    api_path: str,
-    username: str,
-    password: str,
+    hq_url: str,
+    auth_url: str,
+    auth_realm: str,
+    auth_client: str,
     collaboration: int,
     organizations: list[int] | None,
     all_nodes: bool,
     online_only: bool,
-    no_vpn: bool,
     private_key: str | None,
-    mfa_code: str | None,
+    session_id: int,
+    database_label: str,
 ) -> list[dict]:
     """
     Run diagnostic checks on an existing vantage6 network.
@@ -83,15 +98,28 @@ def cli_test_features(
     test the functionality of vantage6, and will report back the results.
     """
     if all_nodes and organizations:
-        error("Cannot use --all-nodes and --organization at the same time.")
+        error("Cannot use --all-nodes and --organizations at the same time.")
         sys.exit(1)
 
     if all_nodes or not organizations:
         organizations = None
 
-    client = UserClient(host=host, port=port, path=api_path, log_level="critical")
-    client.authenticate(username=username, password=password, mfa_code=mfa_code)
+    client = UserClient(
+        hq_url=hq_url,
+        auth_url=auth_url,
+        auth_realm=auth_realm,
+        auth_client=auth_client,
+        log_level=LogLevel.CRITICAL,
+    )
+    client.authenticate()
     client.setup_encryption(private_key)
-    diagnose = DiagnosticRunner(client, collaboration, organizations, online_only)
-    res = diagnose(base=True, vpn=not no_vpn)
+    diagnose = DiagnosticRunner(
+        client,
+        collaboration,
+        organizations,
+        online_only,
+        session_id,
+        database_label,
+    )
+    res = diagnose()
     return res

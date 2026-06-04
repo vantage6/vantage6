@@ -1,13 +1,18 @@
 import click
-import questionary as q
-import docker
+from kubernetes.config.config_exception import ConfigException
+from kubernetes.stream import stream
 
-from vantage6.common import error
-from vantage6.common.globals import APPNAME
-from vantage6.common.docker.addons import check_docker_running
-from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.common import error, info
+from vantage6.common.globals import APPNAME, InstanceType
+
 from vantage6.cli import __version__
-from vantage6.cli.node.common import find_running_node_names
+from vantage6.cli.common.utils import (
+    extract_name_and_is_sandbox,
+)
+from vantage6.cli.common.version import get_and_select_ctx
+from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
+from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
 
 
 @click.command()
@@ -16,7 +21,7 @@ from vantage6.cli.node.common import find_running_node_names
     "--system",
     "system_folders",
     flag_value=True,
-    help="Search for configuration in system folders rather than " "user folders",
+    help="Search for configuration in system folders rather than user folders",
 )
 @click.option(
     "--user",
@@ -26,36 +31,102 @@ from vantage6.cli.node.common import find_running_node_names
     help="Search for configuration in user folders rather than "
     "system folders. This is the default",
 )
-def cli_node_version(name: str, system_folders: bool) -> None:
+@click.option("--context", default=None, help="Kubernetes context to use")
+@click.option("--namespace", default=None, help="Kubernetes namespace to use")
+@click.option(
+    "--sandbox", "is_sandbox", flag_value=True, help="Is this a sandbox environment?"
+)
+def cli_node_version(
+    name: str, system_folders: bool, context: str, namespace: str, is_sandbox: bool
+) -> None:
     """
     Returns current version of a vantage6 node.
     """
-    check_docker_running()
-    client = docker.from_env()
+    name, is_sandbox = extract_name_and_is_sandbox(name, is_sandbox)
+    if is_sandbox:
+        system_folders = False
 
-    running_node_names = find_running_node_names(client)
+    k8s_config = select_k8s_config(context=context, namespace=namespace)
 
-    if not name:
-        if not running_node_names:
-            error(
-                "No nodes are running! You can only check the version for "
-                "nodes that are running"
-            )
-            exit(1)
+    ctx = get_and_select_ctx(
+        InstanceType.NODE, name, system_folders, k8s_config, is_sandbox
+    )
+    version = _get_node_version_from_k8s(ctx.helm_release_name, k8s_config)
+    info("")
+    info(f"Node version: {version}")
+    info(f"CLI version: {__version__}")
+
+
+def _get_node_version_from_k8s(
+    helm_release: str,
+    k8s_config: KubernetesConfig,
+) -> str:
+    """
+    Runs 'vnode-local version' in the node pod belonging to the Helm release.
+    """
+    pod = _get_pod_name_for_helm_release(helm_release, k8s_config)
+    output = _exec_pod_command(
+        pod_name=pod,
+        namespace=k8s_config.namespace,
+        command=["vnode-local", "version"],
+    )
+    return output.strip()
+
+
+def _get_pod_name_for_helm_release(
+    helm_release: str,
+    k8s_config: KubernetesConfig,
+) -> str:
+    """
+    Returns the first pod name for a given Helm release in a namespace.
+    Looks up pods using the standard Helm label 'app.kubernetes.io/instance'.
+    """
+    try:
+        # Load kubeconfig (context optional). Falls back to in-cluster if not available.
         try:
-            name = q.select(
-                "Select the node you wish to inspect:", choices=running_node_names
-            ).unsafe_ask()
-        except KeyboardInterrupt:
-            error("Aborted by user!")
-            return
-    else:
-        post_fix = "system" if system_folders else "user"
-        name = f"{APPNAME}-{name}-{post_fix}"
+            k8s_config.load_kube_config(context=k8s_config.context)  # desktop/dev
+        except ConfigException:
+            k8s_config.load_incluster_config()  # in-cluster
+    except ConfigException as exc:
+        raise RuntimeError(f"Failed to load Kubernetes config: {exc}") from exc
 
-    if name in running_node_names:
-        container = client.containers.get(name)
-        version = container.exec_run(cmd="vnode-local version", stdout=True)
-        click.echo({"node": version.output.decode("utf-8"), "cli": __version__})
-    else:
-        error(f"Node {name} is not running! Cannot provide version...")
+    core = get_core_api_with_ssl_handling()
+    selector = f"app={APPNAME}-node,release={helm_release}"
+    pods = core.list_namespaced_pod(
+        namespace=k8s_config.namespace, label_selector=selector
+    ).items
+    if not pods:
+        error(
+            f"No pods found for Helm release '{helm_release}' in ns "
+            f"'{k8s_config.namespace}'"
+        )
+        exit(1)
+    # Prefer a Ready pod
+    for p in pods:
+        for cond in p.status.conditions or []:
+            if cond.type == "Ready" and cond.status == "True":
+                return p.metadata.name
+    # Fallback to first pod
+    return pods[0].metadata.name
+
+
+def _exec_pod_command(
+    pod_name: str,
+    namespace: str,
+    command: list[str],
+) -> str:
+    """
+    Executes a command inside the specified pod (and optional container) and returns stdout.
+    """
+    core = get_core_api_with_ssl_handling()
+    resp = stream(
+        core.connect_get_namespaced_pod_exec,
+        pod_name,
+        namespace,
+        command=command,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+    )
+    return resp

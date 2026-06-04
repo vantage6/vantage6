@@ -4,14 +4,44 @@ Utility functions for the CLI
 
 from __future__ import annotations
 
-import re
-import docker
 import os
-import questionary as q
-
+import re
+import subprocess
 from pathlib import Path
 
-from vantage6.common import error, warning, info
+import questionary as q
+
+from vantage6.common import error, info, warning
+
+MAX_LEN_NAME = 16
+
+
+def _is_valid_k8s_dns_name(name: str) -> bool:
+    """
+    Validate a Kubernetes DNS-1035 label.
+
+    Rules:
+      - lower case alphanumeric or '-'
+      - start with a letter
+      - end with alphanumeric
+      - length 1-63
+    """
+    if len(name) == 0 or len(name) > 63:
+        return False
+    return re.match(r"^[a-z]([-a-z0-9]*[a-z0-9])?$", name) is not None
+
+
+def _check_k8s_dns_name(name: str) -> None:
+    """
+    Exit with error if the provided name is not a valid DNS-1035 label.
+    """
+    if not _is_valid_k8s_dns_name(name):
+        error(
+            f"Invalid name: '{name}'. Name must comply with the following rules: "
+            "letters, numbers, or '-', start with a letter, end with letter or number, "
+            "and be at most 63 characters."
+        )
+        exit(1)
 
 
 def check_config_name_allowed(name: str) -> None:
@@ -31,24 +61,6 @@ def check_config_name_allowed(name: str) -> None:
             f"Name '{name}' is not allowed. Please use only the following "
             "characters: a-zA-Z0-9_.-"
         )
-        # FIXME: FM, 2023-01-03: I dont think this is a good side effect. This
-        # should be handled by the caller.
-        exit(1)
-
-
-def check_if_docker_daemon_is_running(docker_client: docker.DockerClient) -> None:
-    """
-    Check if Docker daemon is running
-
-    Parameters
-    ----------
-    docker_client : docker.DockerClient
-        The docker client
-    """
-    try:
-        docker_client.ping()
-    except Exception:
-        error("Docker socket can not be found. Make sure Docker is running.")
         exit(1)
 
 
@@ -74,7 +86,7 @@ def remove_file(file: str | Path, file_type: str) -> None:
         warning(f"Could not remove {file_type} file: {file} does not exist")
 
 
-def prompt_config_name(name: str | None) -> None:
+def prompt_config_name(name: str | None) -> str:
     """
     Get a new configuration name from the user, or simply return the name if
     it is not None.
@@ -95,7 +107,110 @@ def prompt_config_name(name: str | None) -> None:
         except KeyboardInterrupt:
             error("Aborted by user!")
             exit(1)
+        if not name:
+            error("No configuration name provided!")
+            exit(1)
         if name.count(" ") > 0:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
+    if len(name) > MAX_LEN_NAME:
+        # Note that we set a limit of 16 chars because kubernetes has a limit of 63
+        # chars for DNS labels. The remaining 47 chars may be appended and prepended by
+        # vantage6 to identify a kubernetes resource.
+        error(
+            f"Configuration name '{name}' is too long! Maximum length is "
+            f"{MAX_LEN_NAME} characters."
+        )
+        exit(1)
+    _check_k8s_dns_name(name)
     return name
+
+
+def switch_context_and_namespace(
+    context: str | None = None, namespace: str | None = None
+) -> None:
+    # input validation
+    validate_input_cmd_args(context, "context name", allow_none=True)
+    validate_input_cmd_args(namespace, "namespace name", allow_none=True)
+
+    try:
+        if context:
+            subprocess.run(
+                ["kubectl", "config", "use-context", context],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            info(f"Successfully set context to: {context}")
+
+        if namespace:
+            subprocess.run(
+                [
+                    "kubectl",
+                    "config",
+                    "set-context",
+                    context or "--current",
+                    f"--namespace={namespace}",
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            info(f"Successfully set namespace to: {namespace}")
+
+    except subprocess.CalledProcessError as e:
+        error(f"Failed to set Kubernetes context or namespace: {e}")
+
+
+def validate_input_cmd_args(
+    value: str | None, field_name: str, allow_none: bool = False
+) -> None:
+    """
+    Validate input for subprocess commands.
+
+    Exit with error if the input is invalid.
+
+    Parameters
+    ----------
+    value : str | None
+        The value to validate.
+    field_name : str
+        The name of the field being validated, used for error messages.
+    allow_none : bool, optional
+        Whether None is allowed as a valid value. Defaults to False.
+    """
+    if allow_none and value is None:
+        return
+
+    if not isinstance(value, str) or not re.match("^[a-zA-Z0-9_.-]+$", value):
+        error(
+            f"Invalid {field_name}: {value}. Use only alphanumeric characters, "
+            "dashes, underscores, or dots."
+        )
+        exit(1)
+
+
+def merge_nested_dicts(base: dict, extra: dict) -> dict:
+    """
+    Merge two nested dictionaries.
+
+    If a key is not present in the base dictionary, it is added.
+    If a key is present in the base dictionary and is a dictionary, it is merged.
+    If a key is present in the base dictionary and is not a dictionary, it is replaced.
+
+    Parameters
+    ----------
+    base: dict
+        The base dictionary to merge into
+    extra: dict
+        The extra dictionary to merge from
+
+    Returns
+    -------
+    dict
+        The merged dictionary
+    """
+    for k, v in extra.items():
+        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
+            merge_nested_dicts(base[k], v)  # merge in place
+        else:
+            base[k] = v
+    return base

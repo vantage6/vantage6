@@ -1,4 +1,6 @@
 """Algorithm tools support the development of algorithms for the vantage6 platform."""
 
+import importlib.metadata
+
 # make sure the version is available
-from vantage6.algorithm.client._version import __version__  # noqa: F401
+__version__ = importlib.metadata.version(__package__)

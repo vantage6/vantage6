@@ -1,6 +1,8 @@
 from typing import List
-from vantage6.client.filter import post_filtering
+
 from vantage6.common.client.client_base import ClientBase
+
+from vantage6.client.filter import post_filtering
 
 
 class StoreUserSubClient(ClientBase.SubClient):
@@ -57,7 +59,6 @@ class StoreUserSubClient(ClientBase.SubClient):
         return self.parent.request(
             "user",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )
 
@@ -86,7 +87,6 @@ class StoreUserSubClient(ClientBase.SubClient):
         return self.parent.request(
             f"user/{id_}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=False)
@@ -122,7 +122,6 @@ class StoreUserSubClient(ClientBase.SubClient):
             "user",
             method="POST",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=data,
         )
 
@@ -158,7 +157,6 @@ class StoreUserSubClient(ClientBase.SubClient):
             f"user/{id_}",
             method="PATCH",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=data,
         )
 
@@ -175,6 +173,5 @@ class StoreUserSubClient(ClientBase.SubClient):
             f"user/{id_}",
             method="DELETE",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
         self.parent.log.info(f"--> {res.get('msg')}")

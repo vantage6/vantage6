@@ -20,30 +20,30 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { PermissionsMatrixServerComponent } from '../../../../components/permissions-matrix/server/permissions-matrix-server.component';
+import { PermissionsMatrixHQComponent } from '../../../../components/permissions-matrix/hq/permissions-matrix-hq.component';
 import { RoleSubmitButtonsComponent } from '../../../../components/helpers/role-submit-buttons/role-submit-buttons.component';
 import { TableComponent } from '../../../../components/table/table.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-role-read',
-    templateUrl: './role-read.component.html',
-    styleUrls: ['./role-read.component.scss'],
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatCard,
-        MatCardContent,
-        MatTabGroup,
-        MatTab,
-        MatButton,
-        MatIcon,
-        PermissionsMatrixServerComponent,
-        RoleSubmitButtonsComponent,
-        TableComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-role-read',
+  templateUrl: './role-read.component.html',
+  styleUrls: ['./role-read.component.scss'],
+  imports: [
+    NgIf,
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatTabGroup,
+    MatTab,
+    MatButton,
+    MatIcon,
+    PermissionsMatrixHQComponent,
+    RoleSubmitButtonsComponent,
+    TableComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDestroy {
   isEditing: boolean = false;
@@ -97,10 +97,8 @@ export class RoleReadComponent extends BaseReadComponent implements OnInit, OnDe
     }
     this.userTable = {
       columns: [
-        { id: 'username', label: this.translateService.instant('user.username') },
-        { id: 'firstname', label: this.translateService.instant('user.first-name') },
-        { id: 'lastname', label: this.translateService.instant('user.last-name') },
-        { id: 'email', label: this.translateService.instant('user.email') }
+        { id: 'id', label: this.translateService.instant('user.id') },
+        { id: 'username', label: this.translateService.instant('user.username') }
       ],
       rows: this.role.users.map((user) => ({
         id: user.id.toString(),

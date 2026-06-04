@@ -3,21 +3,29 @@ import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, Ma
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatButton } from '@angular/material/button';
 import { TranslateModule } from '@ngx-translate/core';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
+import { NgIf } from '@angular/common';
 
-export interface DialogData {
+export interface BaseDialogData {
   title: string;
   content: string;
-  cancelButtonText: string;
   confirmButtonText: string;
   confirmButtonType: 'primary' | 'warn' | 'accent';
+  secondOptionButtonText?: string;
+  secondOptionButtonType?: 'primary' | 'warn' | 'accent';
+}
+
+export interface DialogData extends BaseDialogData {
+  cancelButtonText: string;
 }
 
 @Component({
-    selector: 'app-confirm-dialog',
-    templateUrl: 'confirm-dialog.component.html',
-    styleUrls: ['./confirm-dialog.component.scss'],
-    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
+  selector: 'app-confirm-dialog',
+  templateUrl: 'confirm-dialog.component.html',
+  styleUrls: ['./confirm-dialog.component.scss'],
+  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule, NgIf]
 })
 export class ConfirmDialogComponent {
+  confirmDialogOption = ConfirmDialogOption;
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

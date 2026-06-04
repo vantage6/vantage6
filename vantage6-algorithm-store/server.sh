@@ -2,6 +2,9 @@
 
 echo "[server.sh start]"
 
+HTTP_PORT="${V6_PROXY_PORT:-80}"
+GEVENT="${UWSGI_GEVENT:-100}"
+
 # check if environment variable is set
 if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     echo "VANTAGE6_CONFIG_LOCATION is not set"
@@ -9,13 +12,24 @@ if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     VANTAGE6_CONFIG_LOCATION="/mnt/config.yaml"
 fi
 
-uwsgi \
-    --http :80 \
-    --gevent 1000 \
+
+# initialize the database
+python -m vantage6.algorithm.store.init_db "${VANTAGE6_CONFIG_LOCATION}"
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "ERROR: failed to initialize algorithm store database" >&2
+    exit "$status"
+fi
+
+# start the algorithm store
+exec uwsgi \
+    --http ":${HTTP_PORT}" \
+    --gevent "${GEVENT}" \
     --http-websockets \
-    --master --callable app --disable-logging \
-    --wsgi-file \
-        /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
+    --master \
+    --callable app \
+    --disable-logging \
+    --wsgi-file /vantage6/vantage6-algorithm-store/vantage6/algorithm/store/wsgi.py \
     --pyargv "${VANTAGE6_CONFIG_LOCATION}"
 
 echo "[server.sh exit]"

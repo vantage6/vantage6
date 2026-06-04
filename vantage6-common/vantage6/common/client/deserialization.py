@@ -1,5 +1,5 @@
-from io import BufferedReader
 import json
+from io import BufferedReader
 from typing import Any
 
 

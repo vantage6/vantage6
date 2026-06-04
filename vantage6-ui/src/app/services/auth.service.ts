@@ -1,135 +1,69 @@
-import { Injectable } from '@angular/core';
-import { LoginForm, LostPasswordForm, MFAResetTokenForm, PasswordResetTokenForm } from 'src/app/models/forms/login-form.model';
-import { ApiService } from './api.service';
-import {
-  AuthResult,
-  ChangePassword,
-  Login,
-  LoginSubmit,
-  LoginRecoverLost,
-  SetupMFA,
-  LoginRecoverSubmit
-} from 'src/app/models/api/auth.model';
-import { PermissionService } from './permission.service';
-import { TokenStorageService } from './token-storage.service';
-import { SocketioConnectService } from './socketio-connect.service';
-import { LoginErrorService } from './login-error.service';
-import { EncryptionService } from './encryption.service';
+import { Injectable, inject, effect } from '@angular/core';
+import Keycloak from 'keycloak-js';
+import { KEYCLOAK_EVENT_SIGNAL, KeycloakEventType, typeEventArgs, ReadyArgs } from 'keycloak-angular';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { AuthRedirectService } from './auth-redirect.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  username = '';
-  password = '';
-  qr_uri = '';
-  otp_code = '';
+  authenticated = false;
+  authenticated$ = new BehaviorSubject<boolean>(false);
+  keycloakStatus: string | undefined;
+  private readonly keycloak = inject(Keycloak);
+  private readonly keycloakSignal = inject(KEYCLOAK_EVENT_SIGNAL);
+  private readonly authRedirectService = inject(AuthRedirectService);
 
-  constructor(
-    private apiService: ApiService,
-    private permissionService: PermissionService,
-    private tokenStorageService: TokenStorageService,
-    private socketConnectService: SocketioConnectService,
-    private loginErrorService: LoginErrorService,
-    private storePermissionService: PermissionService,
-    private encryptionService: EncryptionService
-  ) {}
+  constructor() {
+    effect(() => {
+      const keycloakEvent = this.keycloakSignal();
 
-  async isAuthenticated(): Promise<AuthResult> {
-    const authResult = await this.tokenStorageService.isAuthenticated();
-    if (authResult === AuthResult.Success) {
-      this.socketConnectService.connect();
-    }
-    return authResult;
-  }
+      this.keycloakStatus = keycloakEvent.type;
 
-  async login(loginForm: LoginForm): Promise<AuthResult> {
-    this.username = loginForm.username;
-    this.password = loginForm.password;
-    const data: LoginSubmit = {
-      username: this.username,
-      password: this.password
-    };
-    if (loginForm.mfaCode) {
-      data.mfa_code = loginForm.mfaCode;
-    }
-    const result = await this.apiService.postForApi<Login | SetupMFA>('/token/user', data);
-    this.loginErrorService.clearError();
-    if ('qr_uri' in result) {
-      // redirect to setup MFA
-      this.qr_uri = result.qr_uri;
-      this.otp_code = result.otp_secret;
-      return AuthResult.SetupMFA;
-    } else if (!('access_token' in result)) {
-      // ask for MFA code
-      return AuthResult.MFACode;
-    } else {
-      // login success
-      this.tokenStorageService.setSession(result, this.username);
-      return await this.isAuthenticated();
-    }
-  }
+      if (keycloakEvent.type === KeycloakEventType.Ready) {
+        this.authenticated = typeEventArgs<ReadyArgs>(keycloakEvent.args);
+        this.authenticated$.next(this.authenticated);
 
-  logout(): void {
-    this.tokenStorageService.clearSession();
-    this.permissionService.clear();
-    this.storePermissionService.clear();
-    this.socketConnectService.disconnect();
-    this.encryptionService.clear();
-  }
+        // Check if there's a stored intended URL and redirect to it
+        if (this.authenticated && this.authRedirectService.hasIntendedUrl()) {
+          const intendedUrl = this.authRedirectService.getAndClearIntendedUrl();
+          const currentUrl = window.location.pathname + window.location.search + window.location.hash;
+          if (intendedUrl && currentUrl !== intendedUrl) {
+            // small timeout to ensure the page is fully loaded
+            setTimeout(() => {
+              window.location.href = intendedUrl;
+            }, 100);
+          }
+        }
+      }
 
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await this.apiService.patchForApi<ChangePassword>('/password/change', {
-      current_password: oldPassword,
-      new_password: newPassword
+      if (keycloakEvent.type === KeycloakEventType.AuthLogout) {
+        this.authenticated = false;
+        this.authenticated$.next(this.authenticated);
+      }
+
+      // Handle token expiration
+      if (keycloakEvent.type === KeycloakEventType.TokenExpired) {
+        const currentUrl = window.location.pathname + window.location.search + window.location.hash;
+        this.authRedirectService.setIntendedUrl(currentUrl);
+      }
     });
   }
 
-  async passwordLost(forgotPasswordForm: LostPasswordForm): Promise<string> {
-    const data: LoginRecoverSubmit = {
-      email: forgotPasswordForm.email
-    };
-    const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/lost', data);
-    if (result.msg) {
-      return result.msg;
-    }
-    return '';
+  getToken(): string | undefined {
+    return this.keycloak.token;
   }
 
-  async passwordRecover(resetForm: PasswordResetTokenForm): Promise<boolean> {
-    const data = {
-      reset_token: resetForm.resetToken,
-      password: resetForm.password
-    };
-    const result = await this.apiService.postForApi<ChangePassword>('/recover/reset', data);
-    if (result.msg) {
-      return true;
-    }
-    return false;
+  authenticatedObservable(): Observable<boolean> {
+    return this.authenticated$.asObservable();
   }
 
-  async MFALost(): Promise<string> {
-    const data = {
-      username: this.username,
-      password: this.password
-    };
-    const result = await this.apiService.postForApi<LoginRecoverLost>('/recover/2fa/lost', data);
-    if (result.msg) {
-      return result.msg;
-    }
-    return '';
+  async login(): Promise<void> {
+    this.keycloak.login();
   }
 
-  async MFARecover(resetForm: MFAResetTokenForm): Promise<boolean> {
-    const data = {
-      reset_token: resetForm.resetToken
-    };
-    const result = await this.apiService.postForApi<SetupMFA>('/recover/2fa/reset', data);
-    if ('qr_uri' in result) {
-      this.qr_uri = result.qr_uri;
-      this.otp_code = result.otp_secret;
-      return true;
-    }
-    return false;
+  logout(): void {
+    this.keycloak.logout();
   }
 }

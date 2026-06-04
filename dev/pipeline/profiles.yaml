@@ -1,0 +1,113 @@
+# This file lists profiles to run devspace in a custom way.
+version: v2beta1
+# Profile to run without local Keycloak
+# This profile removes the local Keycloak deployment and configures all components to
+# use external Keycloak
+# You can use this profile by running `devspace run start-dev --profile no-local-auth`.
+# When doing so, also make sure to set the environment variables in the `.devspace/.env`
+# file.
+profiles:
+- name: no-local-auth
+  patches:
+  # Remove the auth deployment from the deployments section
+  - op: remove
+    path: deployments.vantage6-auth
+  # Remove vantage6-auth from the hq pipeline create_deployments command
+  - op: replace
+    path: pipelines.hub.run
+    value: |-
+      run_dependencies --all
+      ensure_pull_secrets --all
+      create_deployments \
+        vantage6-hq \
+        vantage6-store
+      start_dev \
+        vantage6-hq \
+        vantage6-hq-db \
+        vantage6-ui \
+        vantage6-store \
+        vantage6-store-db
+  # Remove the auth deployment from the dev section
+  - op: remove
+    path: dev.vantage6-auth
+
+# Profiles for building individual images
+- name: build-hq-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      hq:
+        image: ${HQ_IMAGE}
+        dockerfile: docker/node-and-hq.Dockerfile
+        context: .
+
+- name: build-node-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      node:
+        image: ${NODE_IMAGE}
+        dockerfile: docker/node-and-hq.Dockerfile
+        context: .
+
+- name: build-store-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      store:
+        image: ${STORE_IMAGE}
+        dockerfile: docker/algorithm-store.Dockerfile
+        context: .
+
+- name: build-ui-only
+  patches:
+  - op: replace
+    path: images
+    value:
+      ui:
+        image: ${UI_IMAGE}
+        dockerfile: docker/ui_dev.Dockerfile
+        context: .
+
+- name: with-prometheus
+  patches:
+  # Add prometheus folder creation to the create-log-folder hook
+  - op: replace
+    path: hooks/2/command
+    value: |
+      echo "Creating log folder"
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/hq
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/store
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/node
+      python dev/create_mount_directory.py ${LOG_MOUNT_PATH}/prometheus
+  # Enable Prometheus in the HQ Helm values
+  - op: replace
+    path: deployments.vantage6-hq.helm.values.prometheus.enabled
+    value: true
+  - op: add
+    path: deployments.vantage6-hq.helm.values.prometheus.exporter_port
+    value: 7603
+  - op: add
+    path: deployments.vantage6-hq.helm.values.prometheus.storageSize
+    value: "2Gi"
+  - op: add
+    path: deployments.vantage6-hq.helm.values.prometheus.storageClass
+    value: local-storage
+  - op: add
+    path: deployments.vantage6-hq.helm.values.prometheus.volumeHostPath
+    value: ${HOST_DATA_PATH}/prometheus
+  # Replace the entire ports array to include prometheus exporter (7603) port forwards
+  - op: replace
+    path: dev.vantage6-hq.ports
+    value:
+      - port: 7601:7601
+        bindAddress: localhost
+      - port: 7601:7601
+        bindAddress: ${PORTS_BIND_ADDRESS}
+      - port: 7603:7603
+        bindAddress: localhost
+      - port: 7603:7603
+        bindAddress: ${PORTS_BIND_ADDRESS}

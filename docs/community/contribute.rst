@@ -1,0 +1,385 @@
+.. _contribute:
+
+Contribute
+==========
+
+Support questions
+-----------------
+
+If you have questions, please reach out on
+`Github Discussions <https://github.com/vantage6/vantage6/discussions>`_ .
+If you want to report a bug or request a new feature, please create a
+`new issue <https://github.com/vantage6/vantage6/issues/new/choose>`_. If you are not
+sure whether to create an issue or a discussion, please create a discussion first - we
+can always create an issue from a discussion.
+
+Reporting issues
+----------------
+
+Issues can be posted at our `Github issue page <https://github.com/vantage6/vantage6/issues>`_.
+
+We distinguish between the following types of issues:
+
+* Bug report: you encountered broken code
+* Feature request: you want something to be added
+* Change request: there is a something you would like to be different but it
+  is not considered a new feature nor is something broken
+* Security vulnerabilities: you found a security issue
+
+Each issue type has its own template. Using these templates makes it easier for
+us to manage them.
+
+.. warning::
+
+    Security vulnerabilities should not be reported in the Github issue tracker
+    as they should not be publically visible. To see how we deal with security
+    vulnerabilities read our `policy <https://github.com/vantage6/vantage6/blob/main/SECURITY.md>`_.
+
+    The :ref:`security-vulnerabilities` section describes how to release a
+    security patch yourself.
+
+We distibute the open issues in sprints and hotfixes.
+You can check out these boards here:
+
+* `Sprints <https://github.com/orgs/vantage6/projects/1>`_
+* `Hotfixes <https://github.com/orgs/vantage6/projects/2>`_
+
+When a high impact bug is reported, we will put it on the hotfix board and
+create a patch release as soon as possible.
+
+The sprint board tracks which issues we plan to fix in which upcoming release.
+Low-impact bugs, new features and changes will be scheduled into a sprint
+periodically. We automatically assign the label 'new' to all newly reported
+issues to track which issues should still be scheduled.
+
+If you would like to fix an existing bug or create a new feature, check
+:ref:`submit-patch` for more details on e.g. how to set up a local development
+environment and how the release process works. We prefer that
+you let us know you what are working on so we prevent duplicate work.
+
+.. _security-vulnerabilities:
+
+Security vulnerabilities
+------------------------
+
+If you are a member of the vantage6 Github organization, you can create an
+security advisory in the `Security <https://github.com/vantage6/vantage6/security/
+advisories>`_ tab. See :numref:`advisory` on what to fill in.
+
+If you are not a member, please reach out to a vantage6 project member.
+They can create a security advisory for you.
+
+.. list-table:: Advisory details
+   :name: advisory
+   :widths: 33 67
+   :header-rows: 1
+
+   * - Name
+     - Details
+   * - Ecosystem
+     - Set to ``pip``
+   * - Package name
+     - Set to ``vantage6``
+   * - Affected versions
+     - Specify the versions (or set of verions) that are affected
+   * - Patched version
+     - Version where the issue is addessed, you can fill this in later when
+       the patch is released.
+   * - Severity
+     - Determine severity score using `this <https://nvd.nist.gov/vuln-metrics/
+       cvss/v3-calculator>`__ tool. Then use table :numref:`severity` to
+       determine the level from this score.
+   * - Common weakness enumerator (CWE)
+     - Find the CWE (or multiple) on `this <https://cwe.mitre.org/>`__ website.
+
+.. list-table:: Severity
+   :name: severity
+   :widths: 33 67
+   :header-rows: 1
+
+   * - Score
+     - Level
+   * - 0.1-3.9
+     - Low
+   * - 4.0-6.9
+     - Medium
+   * - 7.0-8.9
+     - High
+   * - 9.0-10.0
+     - Critical
+
+Once the advisory has been created it is possible to create a private fork from
+there (Look for the button ``Start a temporary private fork``). This private
+fork should be used to solve the issue.
+
+From the same page you should request a CVE number so we can alert dependent
+software projects. Github will review the request - it is not clear what this
+entails, but they have approved all advisories so far.
+
+Community sprints
+-----------------
+
+We organize community sprints to work on new features and bug fixes. In cycles of four
+weeks, we work across multiple organizations to improve vantage6.
+We work on `sprint boards <https://github.com/orgs/vantage6/projects/1>`_ where we track
+the progress of the issues that are scheduled for the sprint. Each sprint starts with a
+planning meeting, where we decide which issues we will work on. At the end of the sprint,
+we have a review meeting where we discuss the progress.
+
+The sprints are open to any developer who wants to contribute significantly to the
+infrastructure during that period. It is possible to decide per sprint whether you want
+to participate or not. Please reach out to one of the owners of the vantage6
+[Github organization](https://github.com/orgs/vantage6/people) if you want to join one
+or more sprints.
+
+.. _community-meetings:
+
+Community Meetings
+------------------
+
+We host bi-monthly community meetings intended for aligning development
+efforts. Anyone is welcome to join although they are mainly intended for
+infrastructure and algorithm developers. You can present what your team is working on
+and find collaboration partners.
+
+Community meetings are usually held on the third Thursday of the month at 11:00
+AM CET on Microsoft Teams. Reach out to community members or leaders
+if you want to join the community meeting.
+
+For more information and slides from previous meetings, check our
+`website <https://vantage6.ai/community-meetings/>`_.
+
+.. _submit-patch:
+
+Submitting patches
+------------------
+If there is not an open issue for what you want to submit, please open one for
+discussion before submitting the PR. This helps to avoid duplicate work and to get
+feedback on your idea before you start working on it.
+
+The workflow below is specific to the
+`vantage6 infrastructure repository <https://github.com/vantage6/vantage6>`_.
+However, the concepts for our other repositories (such as algorithm repositories) are
+the same. Then, modify the links below and ignore steps that may be irrelevant to that
+particular repository.
+
+Setup your environment
+^^^^^^^^^^^^^^^^^^^^^^
+* Make sure you have a Github account
+* Install and configure ``git`` and ``make``
+* Clone the main repository locally:
+
+  ::
+
+    git clone https://github.com/vantage6/vantage6
+    cd vantage6
+
+* Add your fork as a remote to push your work to. Replace ``{username}`` with
+  your username.
+
+  ::
+
+    git remote add fork https://github.com/{username}/vantage6
+
+  .. note::
+
+    If you are a member of the vantage6 Github organization, you do not need to create a
+    fork but you can simply create a new branch and push your work to that branch.
+
+* Create a virtual environment to work in using uv:
+
+  ::
+
+    uv venv --python 3.13
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+* Install vantage6 as development environment:
+
+  ::
+
+    make install-dev
+
+
+Coding
+^^^^^^
+
+First, create a branch you can work on. Make sure you branch of the latest
+``main`` branch:
+
+.. code::
+
+    git fetch origin
+    git checkout -b your-branch-name origin/main
+
+
+Then you can create your bugfix, change or feature. Make sure to commit
+frequently. Preferably include tests that cover your changes.
+
+Finally, push your commits to your fork on Github and create a pull request.
+
+::
+
+    git push --set-upstream fork your-branch-name
+
+Code style
+^^^^^^^^^^
+
+We use `Ruff <https://docs.astral.sh/ruff/>`_ to format
+our code. It is important that you use this style so make sure that your
+contribution will be easily incorporated into the code base.
+
+Ruff is automatically installed into your python environment
+when you run ``make install-dev``. To automatically enable Ruff, we recommend
+that you install the `Ruff` extension from Charlie R Marsh in the VSCode
+marketplace. By enabling the option 'format on save' you can then automatically
+format your code in the proper style when you save a file.
+
+Alternatively, or additionally, you may install a pre-commit hook that will
+automatically format your code when you commit it. To do so, run the following
+command:
+
+::
+
+    pre-commit install
+
+You may need to run ``pre-commit autoupdate`` to update the pre-commit hook.
+
+Unit tests & coverage
+^^^^^^^^^^^^^^^^^^^^^
+You can execute unit tests using the ``test`` command in the Makefile:
+
+::
+
+    make test
+
+If you want to execute a specific unit test (e.g. the one you just created or
+one that is failing), you can use a command like:
+
+::
+
+    python -m unittest tests_folder.test_filename.TestClassName.test_name
+
+This command assumes you are in the directory above ``tests_folder``. If you are
+inside the ``tests_folder``, then you should remove that part.
+
+Verifying local code changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+While working on a new feature, it can be useful to run vantage6 locally with your code
+changes to verify that it does what you expect it to do. The ``v6 dev``
+:ref:`commands <develop-env>` can be used for this purpose. With these commands, a local
+vantage6 network can be run that immediately syncs code changes that you make. It also
+restarts those infrastructure components affected by your changes. Note
+that this only works for changes that you make to code running *within* vantage6
+containers. If you make changes to the images, make sure to run ``v6 dev rebuild`` to
+rebuild the images.
+
+To test changes to the CLI, make sure that you create an editable installation of the
+CLI, as indicated above with the ``make install-dev`` command.
+
+Changes in the Helm charts often require you to stop your running ``v6 dev`` environment
+and run ``v6 dev start`` again. This is because the Helm charts are deployed as
+Kubernetes resources, and these resources need to be updated to reflect the changes you
+made.
+
+If you made changes in the CLI, these are often not reflected in the development
+environment: the development environment is run by ``v6 dev`` commands and therefore,
+changes in ``v6 node`` or ``v6 hq``, etc., do not impact the development environment.
+Therefore, the ``v6 sandbox`` command can often be used to test changes in the CLI -
+these commands use the commands of individual infrastructure components in ``v6 node``,
+``v6 hq``, etc. under the hood.
+If you have also changed the Helm charts locally, you can use the ``--local-chart-dir``
+flag to test the changes locally. For example:
+
+::
+
+    v6 sandbox new --local-chart-dir /path/to/vantage6/charts
+
+.. note::
+
+    To run the ``v6 dev`` commands, you need to have Devspace installed. See the
+    :ref:`develop-env` section for more information.
+
+Pull Request
+^^^^^^^^^^^^
+
+Please consider first which branch you want to merge your contribution into.
+**Patches** are usually directly merged into ``main``, but **features** are
+usually merged into a release branch (e.g. ``release/4.1`` for versions 4.1.x)
+before being merged into the ``main`` branch.
+
+Before the PR is merged, it should pass the following requirements:
+
+* At least one approved review of a code owner
+* All `unit tests <https://github.com/vantage6/vantage6/actions/workflows/unit_
+  tests.yml>`_ should complete
+* `CodeQL <https://docs.github.com/en/code-security/code-scanning/automatically
+  -scanning-your-code-for-vulnerabilities-and-errors/about-code-scanning-with-
+  codeql>`_ (vulnerability scanning) should pass
+* `Codacy <https://app.codacy.com/gh/vantage6/vantage6/dashboard>`_ - Code
+  quality checks - should be OK
+* `Coveralls <https://coveralls.io/github/vantage6/vantage6>`_ - Code coverage
+  analysis - should not decrease
+
+Code owners may diverge from the above requirements, for instance in case of false
+positives in the CodeQL check.
+
+Documentation
+^^^^^^^^^^^^^
+Depending on the changes you made, you may need to add documentation. For more
+information on how and where to edit the documentation,
+see the section :doc:`documentation`.
+
+Consider which documentation you need to update:
+
+* **User documentation.**
+  Update it if your change led to a different expierence for the end-user
+* **Technical documentation.**
+  Update it if you added new functionality. Check if your function docstrings
+  have also been added (see last bullet below).
+* **Function docstrings**
+  These should always be documented using the
+  `numpy format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+  Such docstrings can then be used to automatically generate parts of the
+  technical documentation space.
+
+
+Roles in the vantage6 community
+-------------------------------
+
+As an open-source community, vantage6 is open to constructive development efforts from
+anyone. Developers that contribute regularly may at some point become official
+members and as such can get more permissions. This section outlines the rules that we
+follow as a community to govern this process.
+
+Community access tiers
+^^^^^^^^^^^^^^^^^^^^^^
+
+A few levels of access are discerned within the vantage6 community:
+
+- **Contributors**: people that have opened pull requests which have been merged
+- **Members**: members of the vantage6 Github organization
+- **Administrators**: administrators of the vantage6 Github organization
+
+Contributor access is available to anyone that wants to contribute to vantage6. They
+can create their own forks of the vantage6 repository and create pull requests from
+there.
+
+Membership gives developers more extensive access, for instance to create branches
+within the official repository and view private repositories within the vantage6
+Github organization. Membership may be given to anyone that requests it and will be
+granted if the majority of the vantage6 members approves of this. There are no hard
+requirements for membership: usually, making several contributions helps in receiving
+membership, but someone may also attain membership if they are, for instance, an
+employee of a trusted organization that plans to invest in vantage6.
+
+Administrator level access gives developers access to merge pull requests into the main
+branch and execute other sensitive actions within the repositories. This level of access
+will only be granted to a small number of developers that have demonstrated their
+knowledge of vantage6 extensively. Administrator access will only be given if all
+administrators agree unanimously that it should be granted. In rare cases, administrator
+access may also be revoked if the other administrators unanimously agree that it should
+be revoked.
+
+Voting for membership and administrator access may be done in the community meetings,
+but can also be done asynchronously via email.

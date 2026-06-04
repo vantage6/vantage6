@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from vantage6.common.utest import run_tests, find_tests
+import argparse
+import logging
 import sys
 import types
+from pathlib import Path
+
+from vantage6.common.utest import find_tests, run_tests
+
+# Suppress all logging output
+logging.getLogger().setLevel(logging.CRITICAL)
+for logger_name in logging.root.manager.loggerDict:
+    logging.getLogger(logger_name).setLevel(logging.CRITICAL)
 
 # The uwsgi Python package is a C extension that is only available when running
 # inside a uwsgi process.
@@ -12,39 +20,85 @@ sys.modules["uwsgi"] = types.SimpleNamespace()
 
 
 def run():
+    parser = argparse.ArgumentParser(description="Run vantage6 test suites")
+    parser.add_argument("--common", action="store_true", help="Run common tests")
+    parser.add_argument("--cli", action="store_true", help="Run CLI tests")
+    parser.add_argument(
+        "--algorithm-store", action="store_true", help="Run algorithm store tests"
+    )
+    parser.add_argument(
+        "--algorithm-tools", action="store_true", help="Run algorithm tools tests"
+    )
+    parser.add_argument("--hq", action="store_true", help="Run HQ tests")
+    parser.add_argument("--node", action="store_true", help="Run node tests")
+    parser.add_argument("--all", action="store_true", help="Run all test suites")
+
+    args = parser.parse_args()
+
+    # If no specific tests are selected, run all by default
+    if not any(
+        [
+            args.common,
+            args.cli,
+            args.algorithm_store,
+            args.algorithm_tools,
+            args.hq,
+            args.node,
+            args.all,
+        ]
+    ):
+        args.all = True
+
+    success = True
+
     # run common tests
-    common_test_suites = find_tests(str(Path(__file__).parent / "vantage6-common"))
-    success_common = run_tests(common_test_suites)
-
-    # run CLI tests
-    cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
-    success_cli = run_tests(cli_test_suites)
-
-    # run server tests
-    server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
-    success_server = run_tests(server_test_suites)
+    if args.common or args.all:
+        common_test_path = Path(__file__).parent / "vantage6-common" / "tests"
+        common_test_suites = find_tests(str(common_test_path))
+        success_common = run_tests(common_test_suites)
+        success = success and success_common
 
     # run algorithm store tests
-    algorithm_store_test_suites = find_tests(
-        str(Path(__file__).parent / "vantage6-algorithm-store")
-    )
-    success_algorithm_store = run_tests(algorithm_store_test_suites)
-
-    # run algorithm tests
-    algorithm_test_suites = find_tests(
-        str(Path(__file__).parent / "vantage6-algorithm-tools")
-    )
-    success_algorithm_tools = run_tests(algorithm_test_suites)
-
-    sys.exit(
-        not (
-            success_server
-            and success_cli
-            and success_common
-            and success_algorithm_store
-            and success_algorithm_tools
+    if args.algorithm_store or args.all:
+        algorithm_store_test_suites = find_tests(
+            str(Path(__file__).parent / "vantage6-algorithm-store")
         )
-    )
+        success = success and run_tests(algorithm_store_test_suites)
+
+    # run algorithm tools tests
+    if args.algorithm_tools or args.all:
+        algorithm_tools_test_suites = find_tests(
+            str(Path(__file__).parent / "vantage6-algorithm-tools")
+        )
+        success = success and run_tests(algorithm_tools_test_suites)
+
+    # run algorithm tools tests
+    if args.algorithm_tools or args.all:
+        algorithm_tools_test_suites = find_tests(
+            str(Path(__file__).parent / "vantage6-algorithm-tools")
+        )
+        success_algorithm_tools = run_tests(algorithm_tools_test_suites)
+        success = success and success_algorithm_tools
+
+    # run HQ tests
+    if args.hq or args.all:
+        hq_test_suites = find_tests(str(Path(__file__).parent / "vantage6-hq"))
+        success_hq = run_tests(hq_test_suites)
+        success = success and success_hq
+
+    # run node tests
+    if args.node or args.all:
+        node_test_suites = find_tests(str(Path(__file__).parent / "vantage6-node"))
+        success_node = run_tests(node_test_suites)
+        success = success and success_node
+
+    # run CLI tests
+    if args.cli or args.all:
+        cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
+        success_cli = run_tests(cli_test_suites)
+        success = success and success_cli
+
+    sys.exit(not success)
 
 
 if __name__ == "__main__":

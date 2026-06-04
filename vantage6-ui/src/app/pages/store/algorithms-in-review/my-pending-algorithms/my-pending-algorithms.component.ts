@@ -31,23 +31,23 @@ enum TableRows {
 }
 
 @Component({
-    selector: 'app-my-pending-algorithms',
-    templateUrl: './my-pending-algorithms.component.html',
-    styleUrl: './my-pending-algorithms.component.scss',
-    imports: [
-        PageHeaderComponent,
-        MatCard,
-        MatCardContent,
-        MatButton,
-        RouterLink,
-        NgIf,
-        MatIcon,
-        MatCardHeader,
-        MatCardTitle,
-        TableComponent,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-my-pending-algorithms',
+  templateUrl: './my-pending-algorithms.component.html',
+  styleUrl: './my-pending-algorithms.component.scss',
+  imports: [
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    MatButton,
+    RouterLink,
+    NgIf,
+    MatIcon,
+    MatCardHeader,
+    MatCardTitle,
+    TableComponent,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -130,7 +130,7 @@ export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
 
   private async setLoggedInStoreUser(): Promise<void> {
     if (!this.store) return;
-    const result = await this.storeUserService.getUsers(this.store.url, { username: this.permissionService.activeUser?.username });
+    const result = await this.storeUserService.getUsers(this.store, { username: this.permissionService.activeUser?.username });
     if (result.length > 0) {
       this.loggedInStoreUser = result[0];
     }
@@ -139,7 +139,7 @@ export class MyPendingAlgorithmsComponent implements OnInit, OnDestroy {
   private async initializeReviewTable(pageInReview: number): Promise<void> {
     if (!this.store) return;
 
-    const reviews = await this.storeReviewService.getPaginatedReviews(this.store.url, pageInReview, {
+    const reviews = await this.storeReviewService.getPaginatedReviews(this.store, pageInReview, {
       reviewer_id: this.loggedInStoreUser?.id,
       under_review: true
     });

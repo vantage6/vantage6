@@ -1,0 +1,16 @@
+<form class="form" [formGroup]="formGroup">
+  <div class="field-description">{{ "task-create.step-study.explanation" | translate }}</div>
+  <div class="field-description">{{ "task-create.step-study.description" | translate }}</div>
+
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ "resources.study" | translate }}</mat-label>
+    <mat-select formControlName="studyOrCollabID" [compareWith]="compareStudyOrCollabForSelection">
+      <mat-option [value]="studyOrCollab.Collaboration + collaboration?.id">
+        {{ "task-create.step-study.select-full-collaboration" | translate }}
+      </mat-option>
+      <mat-option *ngFor="let study of studies" [value]="studyOrCollab.Study + study.id">
+        {{ study.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</form>

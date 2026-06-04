@@ -31,6 +31,7 @@ export interface GetNodeParameters {
   organization_id?: string;
   collaboration_id?: string;
   study_id?: string;
+  session_id?: string;
   sort?: NodeSortProperties;
 }
 

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from enum import Enum as Enumerate
-from sqlalchemy import Column, Text, String
+from sqlalchemy import Column, String, Text, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
+
+from vantage6.common.enum import StrEnumBase
+
 from vantage6.backend.common.permission_models import RuleInterface
 
+from vantage6.algorithm.store.model.base import Base, DatabaseSessionManager
 
-class Operation(str, Enumerate):
+
+class Operation(StrEnumBase):
     """Enumerator of all available operations"""
 
     VIEW = "view"
@@ -22,7 +25,7 @@ class Rule(Base, RuleInterface):
 
     A rule gives access to a single type of action with a given operation
     and resource on which it acts. Note that rules are defined on startup
-    of the server, based on permissions defined in the endpoints. You cannot
+    of the store, based on permissions defined in the endpoints. You cannot
     edit the rules in the database.
 
     Attributes
@@ -49,7 +52,7 @@ class Rule(Base, RuleInterface):
     users = relationship("User", back_populates="rules", secondary="UserPermission")
 
     @classmethod
-    def get_by_(cls, name: str, operation: str) -> Rule | None:
+    def get_by_(cls, name: str, operation: Operation) -> Rule | None:
         """
         Get a rule by its name and operation.
 
@@ -57,8 +60,8 @@ class Rule(Base, RuleInterface):
         ----------
         name : str
             Name of the resource on which the rule acts, e.g. 'algorithm'
-        operation : str
-            Operation of the rule, e.g. 'view'
+        operation : Operation
+            Operation of the rule, e.g. Operation.VIEW
 
         Returns
         -------
@@ -68,14 +71,12 @@ class Rule(Base, RuleInterface):
         """
         session = DatabaseSessionManager.get_session()
         try:
-            result = (
-                session.query(cls)
-                .filter_by(
+            result = session.scalars(
+                select(cls).filter_by(
                     name=name,
-                    operation=operation,
+                    operation=operation.value,
                 )
-                .first()
-            )
+            ).first()
             session.commit()
             return result
         except NoResultFound:
@@ -90,6 +91,4 @@ class Rule(Base, RuleInterface):
         str
             String representation of the rule
         """
-        return (
-            f"<Rule " f"{self.id}: '{self.name}', " f"operation: {self.operation}" ">"
-        )
+        return f"<Rule {self.id}: '{self.name}', operation: {self.operation}>"

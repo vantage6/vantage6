@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database for vantage6 HQ (server)
+  hq-db:
+    image: postgres:13
+    container_name: vantage6-hq-db
+    environment:
+      POSTGRES_USER: vantage6
+      POSTGRES_PASSWORD: vantage6
+      POSTGRES_DB: vantage6
+    ports:
+      - "5432:5432"
+    volumes:
+      - hq-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vantage6"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL database for vantage6 algorithm store
+  store-db:
+    image: postgres:13
+    container_name: vantage6-store-db
+    environment:
+      POSTGRES_USER: vantage6
+      POSTGRES_PASSWORD: vantage6
+      POSTGRES_DB: vantage6_store
+    ports:
+      - "5433:5432"
+    volumes:
+      - store-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vantage6"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL database for Keycloak authentication service
+  auth-db:
+    image: postgres:13
+    container_name: vantage6-auth-db
+    environment:
+      POSTGRES_USER: vantage6
+      POSTGRES_PASSWORD: vantage6
+      POSTGRES_DB: vantage6_auth
+    ports:
+      - "5434:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  hq-db-data:
+    driver: local
+  store-db-data:
+    driver: local
+  auth-db-data:
+    driver: local

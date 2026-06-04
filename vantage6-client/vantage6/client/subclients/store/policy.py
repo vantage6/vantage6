@@ -1,5 +1,6 @@
-from vantage6.client.filter import post_filtering
 from vantage6.common.client.client_base import ClientBase
+
+from vantage6.client.filter import post_filtering
 
 
 class PolicySubClient(ClientBase.SubClient):
@@ -32,5 +33,4 @@ class PolicySubClient(ClientBase.SubClient):
         return self.parent.request(
             f"policy{public_or_not}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )

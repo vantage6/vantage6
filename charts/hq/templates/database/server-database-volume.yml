@@ -1,0 +1,28 @@
+{{- $global := .Values.global | default (dict) }}
+{{- if not .Values.database.external }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-hq-pgres-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    type: local
+    app: vantage6-hq
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ .Values.database.volumePath }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName | default $global.k8sNodeName }}
+{{- end }}

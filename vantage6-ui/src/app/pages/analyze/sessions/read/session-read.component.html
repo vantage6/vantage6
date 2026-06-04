@@ -1,0 +1,105 @@
+<ng-container *ngIf="!isLoading && session; else loading">
+  <app-page-header title="Session">
+    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canCreate || canEdit || canDelete">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item *ngIf="canCreate" (click)="newAnalysis()">
+        <mat-icon>science</mat-icon>
+        <span>{{ "links.new-analysis" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canEdit" (click)="handleEdit()">
+        <mat-icon>edit</mat-icon>
+        <span>{{ "general.edit" | translate }}</span>
+      </button>
+      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
+        <mat-icon>delete</mat-icon>
+        <span>{{ "general.delete" | translate }}</span>
+      </button>
+    </mat-menu>
+  </app-page-header>
+  <ng-container *ngIf="!isLoading && session; else loading">
+    <mat-card *ngIf="!isLoading">
+      <mat-card-header>
+        <mat-card-title>{{ "session.title" | translate: { name: session.name } }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="data-list">
+          <div class="data-list__item">
+            <b>{{ "general.id" | translate }}</b>
+            <span>{{ session.id || "-" }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.name" | translate }}</b>
+            <span>{{ session.name || "-" }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.scope" | translate }}</b>
+            <span>{{ translateScope(session.scope) }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.user" | translate }}</b>
+            <span>{{ owner?.username || "-" }}</span>
+          </div>
+          <div class="data-list__item" *ngIf="session.scope === sessionScope.Organization">
+            <b>{{ "resources.organization" | translate }}</b>
+            <span>{{ owner?.organization?.name || "-" }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.created-at" | translate }}</b>
+            <span>{{ printDate(session.created_at) }}</span>
+          </div>
+          <div class="data-list__item" *ngIf="study">
+            <b>{{ "resources.study" | translate }}</b>
+            <span>{{ study.name }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.ready" | translate }}</b>
+            <span>{{ session.ready ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+          </div>
+          <div class="data-list__item">
+            <b>{{ "session.restricted_to_single_image" | translate }}</b>
+            <span>{{ chosenCollaborationIsRestrictedToSingleImage ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+          </div>
+          <div class="data-list__item data-list__item--big" *ngIf="chosenCollaborationIsRestrictedToSingleImage">
+            <b>{{ "session.image" | translate }}</b>
+            <span>{{ session.image || "-" }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card>
+      <mat-card-header class="card-header--spacebetween">
+        <mat-card-title>{{ "session.dataframes.title" | translate }}</mat-card-title>
+        <button mat-flat-button color="primary" (click)="addDataframe()">
+          <mat-icon>add</mat-icon>{{ "session.dataframes.add" | translate }}
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <app-table
+          *ngIf="hasDataframes()"
+          [data]="dataframeTable"
+          (rowClick)="handleDataframeTableClick($event)"
+          [isLoading]="isLoading"
+          (searchChanged)="handleSearchChanged($event)"
+        ></app-table>
+        <p *ngIf="!hasDataframes()">{{ "session.dataframes.no-dataframes" | translate }}</p>
+        <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+  <ng-template #loading>
+    <mat-card>
+      <mat-card-content>
+        <mat-spinner diameter="48"></mat-spinner>
+      </mat-card-content>
+    </mat-card>
+  </ng-template>
+</ng-container>
+<ng-template #loading>
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

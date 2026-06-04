@@ -1,22 +1,22 @@
 """
 Database connection classes for algorithm store.
 
-Note that this file is almost identical to the one for the vantage6 server. However,
+Note that this file is almost identical to the one for the vantage6 HQ. However,
 this is necessary because the database class is a singleton so we have to create
 two different classes for it.
 """
 
 import logging
-from typing import Any
 
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.session import Session
 
-from vantage6.common import logger_name, Singleton
+from vantage6.common import Singleton, logger_name
+
 from vantage6.backend.common.base import (
-    BaseModelBase,
-    BaseDatabaseSessionManager,
     BaseDatabase,
+    BaseDatabaseSessionManager,
+    BaseModelBase,
 )
 
 module_name = logger_name(__name__)
@@ -132,25 +132,6 @@ class ModelBase(BaseModelBase):
         Delete the object from the database.
         """
         return self._delete(DatabaseSessionManager)
-
-    @classmethod
-    def exists(cls, field: str, value: Any) -> bool:
-        """
-        Check if a value exists for a given field in the database model.
-
-        Parameters
-        ----------
-        field: str
-            The field to check
-        value: Any
-            The value to check
-
-        Returns
-        -------
-        bool
-            True if the value exists, False otherwise
-        """
-        return cls._exists(field, value, DatabaseSessionManager)
 
 
 Base = declarative_base(cls=ModelBase)

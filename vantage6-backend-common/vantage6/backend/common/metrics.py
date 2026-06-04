@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Type
+
 from prometheus_client import Gauge, start_http_server
 
 log = logging.getLogger(__name__)

@@ -1,0 +1,17 @@
+{{- if .Values.node.databases.fileBased }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-db-pvc
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.node.persistence.database.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.node.persistence.database.size }}
+  selector:
+    matchLabels:
+      type: local-database
+{{- end }}

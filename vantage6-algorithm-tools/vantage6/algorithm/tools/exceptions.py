@@ -106,10 +106,6 @@ class DeserializationError(InputError):
     """Raised when result deserialization fails."""
 
 
-# TODO v5+ remove this alias, which is there for backwards compatibility
-DeserializationException = DeserializationError
-
-
 class EnvironmentVariableError(InputError):
     """
     Error raised when environment variable handling fails.
@@ -159,4 +155,18 @@ class NodePermissionException(AlgorithmError):
 
     Example usage:
     - The node does not allow the computation to be executed on a certain data column.
+    """
+
+
+# ---------------- Session exceptions ----------------
+
+
+class SessionActionMismatchError(AlgorithmError):
+    """
+    Error raised when the action requested by the user does not match the action
+    requested by the container.
+
+    Example usage:
+    - The function is e.g. a data extraction function but the user requests to start
+      a preprocessing task using that function.
     """

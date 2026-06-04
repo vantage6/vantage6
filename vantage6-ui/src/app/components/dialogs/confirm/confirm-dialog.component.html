@@ -2,7 +2,21 @@
 <mat-dialog-content class="mat-typography confirm-dialog-content">{{ data.content }}</mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-flat-button mat-dialog-close>{{ data.cancelButtonText || "general.cancel" | translate }}</button>
-  <button mat-flat-button mat-dialog-close color="{{ data.confirmButtonType || 'primary' }}" [mat-dialog-close]="true">
+  <button
+    *ngIf="data.secondOptionButtonText"
+    mat-flat-button
+    mat-dialog-close
+    color="{{ data.secondOptionButtonType || 'accent' }}"
+    [mat-dialog-close]="confirmDialogOption.SECONDARY"
+  >
+    {{ data.secondOptionButtonText || "general.second-option" | translate }}
+  </button>
+  <button
+    mat-flat-button
+    mat-dialog-close
+    color="{{ data.confirmButtonType || 'primary' }}"
+    [mat-dialog-close]="confirmDialogOption.PRIMARY"
+  >
     {{ data.confirmButtonText || "general.confirm" | translate }}
   </button>
 </mat-dialog-actions>

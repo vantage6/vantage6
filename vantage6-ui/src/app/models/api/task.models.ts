@@ -2,6 +2,7 @@ import { BaseLink } from './base.model';
 import { BaseOrganization } from './organization.model';
 import { BaseUser } from './user.model';
 import { NodeStatus } from './node.model';
+import { AlgorithmStepType } from './session.models';
 
 export enum TaskLazyProperties {
   InitOrg = 'init_org',
@@ -11,7 +12,13 @@ export enum TaskLazyProperties {
 
 export enum TaskSortProperties {
   ID = 'id',
+  IDDesc = '-id',
   Name = 'name'
+}
+
+export enum TaskDatabaseType {
+  Dataframe = 'dataframe',
+  Source = 'source'
 }
 
 export enum TaskStatus {
@@ -24,7 +31,8 @@ export enum TaskStatus {
   NoDockerImage = 'non-existing Docker image',
   NotAllowed = 'not allowed',
   Crashed = 'crashed',
-  Killed = 'killed by user'
+  Killed = 'killed by user',
+  Unknown = 'unknown error'
 }
 
 export enum TaskStatusGroup {
@@ -43,6 +51,7 @@ export interface GetTaskParameters {
   include?: string;
   is_user_created?: number;
   status?: TaskStatus;
+  dataframe_id?: number;
 }
 
 export interface BaseTask {
@@ -50,7 +59,11 @@ export interface BaseTask {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
+  method: string;
+  action: AlgorithmStepType;
+  arguments: TaskParameter[];
   init_org: BaseLink;
   init_user: BaseLink;
   algorithm_store?: BaseLink;
@@ -67,8 +80,11 @@ export interface Task {
   name: string;
   description: string;
   status: TaskStatus;
+  session: BaseLink;
   image: string;
-  input?: TaskInput;
+  method: string;
+  action: AlgorithmStepType;
+  arguments: TaskParameter[];
   init_org?: BaseOrganization;
   init_user?: BaseUser;
   runs: TaskRun[];
@@ -83,14 +99,18 @@ export interface Task {
 
 export interface TaskDBOutput {
   label: string;
-  parameters?: string;
+  position: number;
+  dataframe_id?: number;
+  dataframe_name?: string;
+  type: TaskDatabaseType;
 }
 
 export interface TaskRun {
   id: number;
   status: TaskStatus;
-  input: string;
+  arguments: string;
   node: RunNode;
+  action: AlgorithmStepType;
   assigned_at: string;
   started_at?: string;
   finished_at?: string;
@@ -108,11 +128,6 @@ export interface RunNode {
   status?: NodeStatus | null;
 }
 
-interface TaskInput {
-  method: string;
-  parameters: TaskParameter[];
-}
-
 export interface TaskParameter {
   label: string;
   value: string;
@@ -125,47 +140,31 @@ export interface TaskResult {
   blob_storage_used?: boolean;
 }
 
-export interface TaskDatabase {
-  label: string;
-  query?: string;
-  sheet_name?: string;
+interface CreateTaskDatabase {
+  label?: string;
+  dataframe_id?: number;
+  type: TaskDatabaseType;
+  multiple?: boolean;
 }
 
 export interface CreateTask {
   name: string;
   description: string;
   image: string;
+  method: string;
+  session_id: number;
   collaboration_id: number;
   study_id?: number;
   store_id: number;
-  server_url: string;
-  databases: TaskDatabase[];
   organizations: CreateTaskOrganization[];
+  databases: CreateTaskDatabase[][];
 }
 
 export interface KillTask {
   id: number;
 }
 
-interface CreateTaskOrganization {
+export interface CreateTaskOrganization {
   id: number;
-  input: string;
-}
-
-export interface CreateTaskInput {
-  method: string;
-  kwargs: object;
-}
-
-export interface ColumnRetrievalInput {
-  collaboration_id: number;
-  db_label: string;
-  organizations: CreateTaskOrganization[];
-  query?: string;
-  sheet_name?: string;
-}
-
-// The result of the /column endpoint is either a task or a list of column names
-export interface ColumnRetrievalResult extends BaseTask {
-  columns?: string[];
+  arguments: string;
 }

@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
-from __future__ import unicode_literals, print_function
-
-import sys
-import os
+from __future__ import print_function, unicode_literals
 
 import logging
+import os
+import sys
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
+from io import StringIO
+
+# ANSI color codes
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
 
 
 class TestResult(unittest.TextTestResult):
@@ -24,12 +31,12 @@ class TestResult(unittest.TextTestResult):
 
     def addError(self, test, err):
         unittest.result.TestResult.addError(self, test, err)
-        error = "[ERROR]"
+        error = f"{RED}[ERROR]{RESET}"
 
         if self.showAll:
             self.stream.writeln(error)
         elif self.dots:
-            self.stream.write("E")
+            self.stream.write(f"{RED}E{RESET}")
             self.stream.flush()
 
         self.log.error("%-85s %s" % (test, error))
@@ -37,12 +44,12 @@ class TestResult(unittest.TextTestResult):
 
     def addFailure(self, test, err):
         unittest.result.TestResult.addFailure(self, test, err)
-        fail = "[FAIL]"
+        fail = f"{RED}[FAIL]{RESET}"
 
         if self.showAll:
             self.stream.writeln(fail)
         elif self.dots:
-            self.stream.write("F")
+            self.stream.write(f"{RED}F{RESET}")
             self.stream.flush()
 
         self.log.error("%-85s %s" % (test, fail))
@@ -58,24 +65,24 @@ class TestResult(unittest.TextTestResult):
 
     def addSkip(self, test, reason):
         unittest.result.TestResult.addSkip(self, test, reason)
-        skipped = "[SKIPPED] (%s)" % reason
+        skipped = f"{YELLOW}[SKIPPED]{RESET} (%s)" % reason
 
         if self.showAll:
             self.stream.writeln(skipped)
         elif self.dots:
-            self.stream.write("s")
+            self.stream.write(f"{YELLOW}s{RESET}")
             self.stream.flush()
 
         self.log.info("%-85s %s" % (test, skipped))
 
     def addSuccess(self, test):
         unittest.result.TestResult.addSuccess(self, test)
-        ok = "[OK]"
+        ok = f"{GREEN}[OK]{RESET}"
 
         if self.showAll:
             self.stream.writeln(ok)
         elif self.dots:
-            self.stream.write(".")
+            self.stream.write(f"{GREEN}.{RESET}")
             self.stream.flush()
 
         self.log.info("%-75s %s" % (test, ok))
@@ -103,6 +110,13 @@ class TestRunner(unittest.TextTestRunner):
         return self.resultclass(
             self.stream, self.descriptions, self.verbosity, self.log
         )
+
+    def run(self, test):
+        """Run tests with print statement suppression."""
+        # Redirect stdout and stderr to suppress print statements during test execution
+        with redirect_stdout(StringIO()), redirect_stderr(StringIO()):
+            result = super().run(test)
+        return result
 
 
 def find_test_packages(suite, retval=set()):

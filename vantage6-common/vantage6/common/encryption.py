@@ -1,38 +1,36 @@
 """Encryption between organizations
 
-Module to provide async encrpytion between organizations. All input and
-result fields should be encrypted when communicating to the central
-server.
+Module to provide async encrpytion between organizations. All input arguments and
+result fields should be encrypted when communicating to HQ.
 
-All incomming messages (input/results) should be encrypted using the
+All incomming messages (input arguments/results) should be encrypted using the
 public key of this organization. This way we can decrypt them using our
 private key.
 
-In the case we are sending messages (input/results) we need to encrypt
+In the case we are sending messages (input arguments/results) we need to encrypt
 it using the public key of the receiving organization. (retreiving
 these public keys is outside the scope of this module).
 """
 
 # TODO handle no public key from other organization (should that happen here?)
-import os
-import logging
 import base64
 import json
-from typing import IO
-
+import logging
+import os
 from pathlib import Path
+from typing import IO
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key,
 )
 
-from vantage6.common import Singleton, logger_name, bytes_to_base64s, base64s_to_bytes
+from vantage6.common import Singleton, base64s_to_bytes, bytes_to_base64s, logger_name
 from vantage6.common.globals import DEFAULT_CHUNK_SIZE, STRING_ENCODING
 
 SEPARATOR = "$"
@@ -257,7 +255,7 @@ class RSACryptor(CryptorBase):
     key from another organization, make sure the key is in the right
     data-type.
 
-    Communication between node and server requires serialization (and
+    Communication between node and HQ requires serialization (and
     deserialization) of the encrypted messages (which are in bytes).
     The API can not communicate bytes, therefore a base64 conversion
     needs to be executed (and also a utf-8 encoding needs to be applied
@@ -356,7 +354,7 @@ class RSACryptor(CryptorBase):
         # encrypt bytes directly in javascript) - so if this key was encrypted in the
         # UI, we need to decode it here as extra step. If it fails, ignore it as it is
         # apparently not needed.
-        # TODO v5+ add additional encoding step in Python so that we always have the
+        # TODO v7+ add additional encoding step in Python so that we always have the
         # same process
         try:
             shared_key = self.str_to_bytes(shared_key.decode(STRING_ENCODING))
@@ -690,7 +688,7 @@ class RSACryptor(CryptorBase):
         # In the UI, the result has an extra base64 encoding step also for the
         # symmetrical part of the encryption. If it fails, ignore it as it is
         # apparently not needed.
-        # TODO v5+ adapt as stated above in decrypting shared key
+        # TODO v7+ adapt as stated above in decrypting shared key
         try:
             json.loads(result.decode(STRING_ENCODING))
         except json.decoder.JSONDecodeError:
@@ -814,18 +812,17 @@ class RSACryptor(CryptorBase):
 
         Compare a public key with the generated public key from the private key
         that is stored in this instance. This is usefull for verifying that the
-        public key stored on the server is derived from the currently used
+        public key stored on HQ is derived from the currently used
         private key.
 
         Parameters
         ----------
         pubkey_base64: str
-            The public key to verify as returned from the server.
+            The public key to verify as returned from HQ.
 
         Returns
         -------
         bool
             True if the public key is valid, False otherwise.
         """
-        public_key_server = base64s_to_bytes(pubkey_base64)
-        return self.public_key_bytes == public_key_server
+        return self.public_key_bytes == base64s_to_bytes(pubkey_base64)

@@ -15,7 +15,15 @@ import { MatInput } from '@angular/material/input';
   selector: 'app-store-role-form',
   templateUrl: './store-role-form.component.html',
   styleUrl: './store-role-form.component.scss',
-  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, PermissionsMatrixStoreComponent, RoleSubmitButtonsComponent, TranslateModule]
+  imports: [
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    PermissionsMatrixStoreComponent,
+    RoleSubmitButtonsComponent,
+    TranslateModule
+  ]
 })
 export class StoreRoleFormComponent extends BaseFormComponent implements OnInit {
   @Input() selectableRules: StoreRule[] = [];
@@ -54,7 +62,7 @@ export class StoreRoleFormComponent extends BaseFormComponent implements OnInit 
   }
 
   handleChangedSelection(rules: Rule_[]): void {
-    // we know that these are vantage6 server rules, not store rules here
+    // we know that these are vantage6 store rules, not HQ rules here
     rules = rules as StoreRule[];
     this.selectedRules = rules ? rules.map((rule) => rule.id) : [];
   }

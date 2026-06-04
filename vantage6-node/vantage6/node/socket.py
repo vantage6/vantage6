@@ -3,7 +3,9 @@ import logging
 from socketio import ClientNamespace
 
 from vantage6.common import logger_name
-from vantage6.common.task_status import TaskStatus, has_task_failed
+from vantage6.common.enum import RunStatus
+
+from vantage6.node.k8s.session_manager import SessionFileManager
 
 
 class NodeTaskNamespace(ClientNamespace):
@@ -37,22 +39,22 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_sync(self):
         """
-        Actions to be taken on socket sync event. This event is triggered by
-        the server when the node connects to the socket namespace.
+        Actions to be taken on socket sync event. This event is triggered by HQ when the
+        node connects to the socket namespace.
         """
         self.log.info("(Re)Connected to the /tasks namespace")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_HQ()
+        self.log.debug("Tasks synced again with HQ...")
         self.node_worker_ref.share_node_details()
 
     def on_disconnect(self):
         """Actions to be taken on socket disconnect event."""
         # self.node_worker_ref.socketIO.disconnect()
-        self.log.info("Disconnected from the server")
+        self.log.info("Disconnected from HQ")
 
-    def on_new_task(self, data: dict):
+    def on_new_task_update(self, data: dict):
         """
-        Actions to be taken when node is notified of new task by server
+        Actions to be taken when node is notified of new task by HQ
 
         Parameters
         ----------
@@ -69,8 +71,7 @@ class NodeTaskNamespace(ClientNamespace):
             self.log.info(f"New task has been added task_id={task_id}")
         else:
             self.log.critical(
-                "Node reference is not set in socket namespace; cannot create "
-                "new task!"
+                "Node reference is not set in socket namespace; cannot create new task!"
             )
 
     def on_algorithm_status_change(self, data: dict):
@@ -86,13 +87,25 @@ class NodeTaskNamespace(ClientNamespace):
                 job_id of the algorithm container that changed status
             status: str
                 New status of the algorithm container
+            run_id: int
+                run_id of the algorithm container that changed status
+            task_id: int
+                task_id of the algorithm container that changed status
+            collaboration_id: int
+                collaboration_id of the algorithm container that changed status
+            node_id: int
+                node_id of the algorithm container that changed status
+            organization_id: int
+                organization_id of the algorithm container that changed status
+            parent_id: int
+                parent_id of the algorithm container that changed status
         """
         status = data.get("status")
         job_id = data.get("job_id")
-        if has_task_failed(status):
+        if RunStatus.has_failed(status):
             # TODO handle run sequence at this node. Maybe terminate all
             #     containers with the same job_id?
-            if status == TaskStatus.NOT_ALLOWED:
+            if status == RunStatus.NOT_ALLOWED:
                 self.log.critical(
                     "A node within your collaboration part did not allow a "
                     "container of job_id=%s to start",
@@ -105,28 +118,27 @@ class NodeTaskNamespace(ClientNamespace):
                     job_id,
                     status,
                 )
+
         # else: no need to do anything when a task has started/finished/... on
         # another node
 
     def on_expired_token(self):
         """
-        Action to be taken when node is notified by server that its token
-        has expired.
+        Action to be taken when node is notified by HQ that its token has expired.
         """
         self.log.warning("Your token is no longer valid... reconnecting")
         self.node_worker_ref.socketIO.disconnect()
         self.log.debug("Old socket connection terminated")
-        self.node_worker_ref.client.refresh_token()
-        self.log.debug("Token refreshed")
+        self.node_worker_ref.client.obtain_new_token()
+        self.log.debug("New token obtained")
         self.node_worker_ref.connect_to_socket()
         self.log.debug("Connected to socket")
-        self.node_worker_ref.sync_task_queue_with_server()
-        self.log.debug("Tasks synced again with the server...")
+        self.node_worker_ref.sync_task_queue_with_HQ()
+        self.log.debug("Tasks synced again with HQ...")
 
     def on_invalid_token(self) -> None:
         """
-        The server indicates that this node has an invalid token. We should
-        reauthenticate.
+        HQ indicates that this node has an invalid token. We should re-authenticate.
         """
         self.log.warning("Node has invalid token. Reauthenticating...")
         self.node_worker_ref.socketIO.disconnect()
@@ -139,7 +151,7 @@ class NodeTaskNamespace(ClientNamespace):
 
     def on_kill_containers(self, kill_info: dict):
         """
-        Action to be taken when nodes are instructed by server to kill one or
+        Action to be taken when nodes are instructed by HQ to kill one or
         more tasks
 
         Parameters
@@ -159,9 +171,32 @@ class NodeTaskNamespace(ClientNamespace):
                     "task_id": killed.task_id,
                     "collaboration_id": self.node_worker_ref.client.collaboration_id,
                     "node_id": self.node_worker_ref.client.whoami.id_,
-                    "status": TaskStatus.KILLED,
+                    "status": RunStatus.KILLED.value,
                     "organization_id": self.node_worker_ref.client.whoami.organization_id,
                     "parent_id": killed.parent_id,
                 },
                 namespace="/tasks",
             )
+
+    def on_delete_dataframe(self, data: dict):
+        """
+        Action to be taken when a dataframe is instructed to be deleted.
+        """
+        self.log.info("Received instruction to delete dataframe: %s", data["df_name"])
+        session_file_manager = SessionFileManager(
+            data["session_id"],
+            task_dir_extension=self.node_worker_ref.ctx.config.get("dev", {}).get(
+                "task_dir_extension"
+            ),
+        )
+        session_file_manager.delete_dataframe_file(data["df_name"])
+        # send back a socket event to HQ to indicate that the dataframe has been deleted
+        self.emit(
+            "dataframe_deleted",
+            {
+                "df_name": data["df_name"],
+                "session_id": data["session_id"],
+                "node_id": self.node_worker_ref.client.whoami.id_,
+            },
+            namespace="/tasks",
+        )

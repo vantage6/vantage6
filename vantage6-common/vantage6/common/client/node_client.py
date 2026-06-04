@@ -1,58 +1,75 @@
-"""
-This module provides a client interface for the node to communicate with the
-central server.
-"""
+"""This module provides a client interface for the node to communicate with HQ."""
 
-import jwt
 import datetime
+import os
 import time
-
 from threading import Thread
+
+from keycloak import KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
-    NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS,
     InstanceType,
+    RequiredNodeEnvVars,
 )
 
 
 class NodeClient(ClientBase):
-    """Node interface to the central server."""
+    """Node interface to vantage6 hub."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, node_account_name: str, api_key: str, hq_url: str, auth_url: str
+    ):
+        """
+        Initialize the node client.
+
+        Parameters
+        ----------
+        node_account_name : str
+            The name of the node account.
+        api_key : str
+            The API key of the node.
+        hq_url : str
+            The url of the HQ to connect to.
+        auth_url : str
+            The url of the authentication service.
+        """
+        super().__init__(hq_url=hq_url, auth_url=auth_url)
+
+        self.node_account_name = node_account_name
+        self.api_key = api_key
 
         # self.name = None
         self.collaboration_id = None
         self.whoami = None
+        self.keycloak_client_id = None
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
+        self.column = self.Column(self)
 
-    def authenticate(self, api_key: str) -> None:
+        self.kc_openid = KeycloakOpenID(
+            server_url=self.auth_url,
+            realm_name=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_REALM.value),
+            client_id=f"{self.node_account_name}-node-client",
+            client_secret_key=self.api_key,
+        )
+        self.token_validity_period = None
+
+    def authenticate(self) -> None:
         """
-        Nodes authentication at the central server.
-
-        It also identifies itself by retrieving the collaboration
-        and organization to which this node belongs. The server
-        returns a JWT-token that is used in all succeeding requests.
-
-        Parameters
-        ----------
-        api_key : str
-            The api key of the node.
+        Authentication this node by using keycloak.
         """
-        super().authenticate({"api_key": api_key}, path="token/node")
+        # get token from keycloak
+        try:
+            self.obtain_new_token()
+        except Exception as e:
+            self.log.exception("Getting token failed: %s", e)
+            raise e
 
-        # obtain the server authenticatable id
-        id_ = jwt.decode(
-            self.token,
-            options={"verify_signature": False},
-        )["sub"]
-
-        # get info on how the server sees me
-        node = self.request(f"node/{id_}")
+        # get info on how HQ sees this node
+        node = self.request("node/me")
 
         name = node.get("name")
         self.collaboration_id = node.get("collaboration").get("id")
@@ -63,59 +80,68 @@ class NodeClient(ClientBase):
 
         self.whoami = WhoAmI(
             type_=InstanceType.NODE.value,
-            id_=id_,
+            id_=node["id"],
             name=name,
             organization_id=organization_id,
             organization_name=organization_name,
         )
 
-    def auto_refresh_token(self) -> None:
+    def obtain_new_token(self) -> None:
+        """Get a new token."""
+        self.log.debug("Obtaining new token")
+        token = self.kc_openid.token(grant_type="client_credentials")
+        self._access_token = token["access_token"]
+        decoded_token = self.kc_openid.decode_token(self._access_token)
+        self.token_validity_period = decoded_token["exp"] - decoded_token["iat"]
+
+    def auto_renew_token(self) -> None:
         """Start a thread that refreshes token before it expires."""
         # set up thread to refresh token
-        t = Thread(target=self.__refresh_token_worker, daemon=True)
+        t = Thread(target=self.__renew_token_worker, daemon=True)
         t.start()
 
-    def __refresh_token_worker(self) -> None:
+    def __renew_token_worker(self) -> None:
         """Keep refreshing token to prevent it from expiring."""
+        # set variable to start trying to refresh the token 3/4 of the time before
+        # it expires
+        period_start_refresh = self.token_validity_period / 4
+        # set variable to sleep between refreshes - so that we have about 20 attempts
+        # before the token expires
+        interval_between_refreshes = period_start_refresh / 20
+        token_expired = False
         while True:
             # get the time until the token expires
-            expiry_time = jwt.decode(self.token, options={"verify_signature": False})[
-                "exp"
-            ]
+            expiry_time = self.kc_openid.decode_token(self.token)["exp"]
             time_until_expiry = expiry_time - time.time()
-            if time_until_expiry < 0:
-                self.log.error(
-                    "Token and refresh token have expired. Please restart the node!"
-                )
-                return
-            elif time_until_expiry < NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS:
+            if time_until_expiry < period_start_refresh:
+                if time_until_expiry < 0 and not token_expired:
+                    token_expired = True
+                    self.log.error("Token has expired. Some requests may have failed!")
+                    # if token expires, keycloak service is down, or internet connection
+                    # of the node is down. We keep on trying to refresh the token but
+                    # not too often.
+                    interval_between_refreshes = 60  # 1 minute
                 try:
-                    self.refresh_token()
+                    self.obtain_new_token()
+                    token_expired = False
                 except Exception as e:
-                    self.log.error("Refreshing token failed: %s", e)
-                    # sleep for a bit and then try again. The server might be
+                    self.log.error("Getting new token failed: %s", e)
+                    # sleep for a bit and then try again. HQ might be
                     # unreachable or internet connection down. We sleep so long that
                     # we should have about 20 attempts before the token expires.
-                    time.sleep(NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS / 20)
+                    time.sleep(interval_between_refreshes)
             else:
-                time.sleep(
-                    int(
-                        time_until_expiry
-                        - NODE_CLIENT_REFRESH_BEFORE_EXPIRES_SECONDS
-                        + 1
-                    )
-                )
+                time.sleep(int(time_until_expiry - period_start_refresh + 1))
 
     def request_token_for_container(self, task_id: int, image: str) -> dict:
-        """Request a container-token at the central server.
+        """Request a container-token at HQ.
 
         This token is used by algorithm containers that run on this
         node. These algorithms can then create subtasks and retrieve
         subresults.
 
-        The server performs a few checks (e.g. if the task you
-        request the key for is in progress) before handing out this
-        token.
+        HQ performs a few checks (e.g. if the task you request the key for is in
+        progress) before handing out this token.
 
         Parameters
         ----------
@@ -174,29 +200,30 @@ class NodeClient(ClientBase):
 
             # if there are multiple pages of algorithm runs, get them all
             links = run_data.get("links")
+
             page = 1
             while links and links.get("next"):
                 page += 1
-                new_runs_page = self.parent.request(
+                next_page = self.parent.request(
                     endpoint="run", params={**params, "page": page}
                 )
-                run_data["data"] += new_runs_page["data"]
-                links = new_runs_page.get("links")
+                run_data["data"] += next_page["data"]
+                links = next_page.get("links")
 
             # strip pagination links
             run_data = run_data["data"]
 
             # Multiple runs
             for run in run_data:
-                run["input"] = self.parent._fetch_and_decrypt_run_data(
-                    run["input"], run["blob_storage_used"]
+                run["arguments"] = self.parent._fetch_and_decrypt_run_data(
+                    run["arguments"], run["blob_storage_used"]
                 )
 
             return run_data
 
         def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
             """
-            Update the algorithm run data at the central server.
+            Update the algorithm run data at HQ.
 
             Typically used for task status updates (started, finished, etc)
 
@@ -214,13 +241,13 @@ class NodeClient(ClientBase):
             Returns
             -------
             dict | None
-                The response from the server, or None if wrong data was provided
+                The response from HQ, or None if wrong data was provided
             """
             if "result" in data:
                 if not init_org_id:
                     self.parent.log.critical(
                         "Organization id is not provided: cannot send results "
-                        "to server as they cannot be encrypted"
+                        "to HQ as they cannot be encrypted"
                     )
                     return
                 self.parent.log.debug(
@@ -237,7 +264,7 @@ class NodeClient(ClientBase):
                         "initiating organization belong to your organization?"
                     )
 
-                self.parent.log.debug("Sending algorithm run update to server")
+                self.parent.log.debug("Sending algorithm run update to HQ")
                 blob_store_enabled = self.parent.check_if_blob_store_enabled()
                 # If the result is a blob, it is not base64 encoded.
                 data["result"] = self.parent.cryptor.encrypt_bytes_to_str(
@@ -245,12 +272,12 @@ class NodeClient(ClientBase):
                     public_key,
                     skip_base64_encoding_of_msg=blob_store_enabled,
                 )
-                # If blob store is enabled, stream the result to the server, which
+                # If blob store is enabled, stream the result to HQ, which
                 # will stream it to the blob store and return the UUID reference to use.
                 if blob_store_enabled:
-                    result_uuid = self.parent._upload_run_data_to_server(data["result"])
+                    result_uuid = self.parent._upload_run_data_to_hq(data["result"])
                     self.parent.log.debug(
-                        f"Result uploaded to server with UUID: {result_uuid}"
+                        f"Result uploaded to HQ with UUID: {result_uuid}"
                     )
                     data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
@@ -260,7 +287,7 @@ class NodeClient(ClientBase):
 
         def get(self, id_) -> dict:
             """
-            Obtain algorithm store from the central server.
+            Obtain algorithm store from HQ.
 
             Parameters
             ----------
@@ -274,14 +301,36 @@ class NodeClient(ClientBase):
             """
             return self.parent.request(f"algorithmstore/{id_}")
 
+    class Column(ClientBase.SubClient):
+        """Subclient for the column endpoint."""
+
+        def post(self, df_id: int, data: dict) -> dict:
+            """
+            Create a column at HQ.
+
+            Parameters
+            ----------
+            df_id: int
+                ID of the dataframe.
+            data: dict
+                Dictionary of fields that are to be patched
+
+            Returns
+            -------
+            dict
+                The response from HQ.
+            """
+            return self.parent.request(
+                f"session/dataframe/{df_id}/column", method="post", json=data
+            )
+
     def is_encrypted_collaboration(self) -> bool:
         """
         Check whether the encryption is enabled.
 
-        End-to-end encryption is per collaboration managed at the
-        central server. It is important to note that the local
-        configuration-file should allow explicitly for unencrpyted
-        messages. This function returns the setting from the server.
+        End-to-end encryption is per collaboration managed at the HQ. It is important to
+        note that the local configuration-file should allow explicitly for unencrpyted
+        messages. This function returns the setting from HQ.
 
         Returns
         -------
@@ -291,9 +340,9 @@ class NodeClient(ClientBase):
         response = self.request(f"collaboration/{self.collaboration_id}")
         return response.get("encrypted") == 1
 
-    def set_task_start_time(self, id_: int) -> None:
+    def set_run_start_time(self, id_: int) -> None:
         """
-        Sets the start time of the task at the central server.
+        Sets the start time of the task at HQ.
 
         This is important as this will note that the task has been
         started, and is waiting for restuls.
@@ -309,63 +358,6 @@ class NodeClient(ClientBase):
                 "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
             },
         )
-
-    def get_vpn_config(self) -> tuple[bool, str]:
-        """
-        Obtain VPN configuration from the server
-
-        Returns
-        -------
-        bool
-            Whether or not obtaining VPN config was successful
-        str
-            OVPN configuration file content
-        """
-        response = self.request("vpn")
-
-        ovpn_config = response.get("ovpn_config")
-        if ovpn_config is None:
-            return False, ""
-
-        # replace windows line endings to linux style to prevent extra
-        # whitespace in writing the file
-        ovpn_config = ovpn_config.replace("\r\n", "\n")
-
-        return True, ovpn_config
-
-    def refresh_vpn_keypair(self, ovpn_file: str) -> bool:
-        """
-        Refresh the client's keypair in an ovpn configuration file
-
-        Parameters
-        ----------
-        ovpn_file: str
-            The path to the current ovpn configuration on disk
-
-        Returns
-        -------
-        bool
-            Whether or not the refresh was successful
-        """
-        # Extract the contents of the VPN file
-        with open(ovpn_file, "r") as file:
-            ovpn_config = file.read()
-
-        response = self.request(
-            "vpn/update",
-            method="POST",
-            json={"vpn_config": ovpn_config},
-        )
-        ovpn_config = response.get("ovpn_config")
-        if not ovpn_config:
-            self.log.warn("Refreshing VPN keypair not successful!")
-            self.log.warn("Disabling node-to-node communication via VPN")
-            return False
-
-        # write new configuration back to file
-        with open(ovpn_file, "w") as f:
-            f.write(ovpn_config)
-        return True
 
     def check_user_allowed_to_send_task(
         self,

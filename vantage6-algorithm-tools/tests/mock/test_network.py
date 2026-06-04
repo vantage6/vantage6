@@ -1,0 +1,131 @@
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
+
+import pandas as pd
+
+from vantage6.algorithm.data_extraction.mock_extract import MockDatabaseType
+from vantage6.algorithm.mock import MockNetwork
+from vantage6.algorithm.mock.client import MockUserClient
+from vantage6.algorithm.mock.hq import MockHQ
+from vantage6.algorithm.mock.node import MockNode
+
+TEST_ALGORITHM_NAME = "test_algorithm"
+DATASET_LABEL = "dataset_1"
+MOCK_DATA_CSV = "mock_data.csv"
+
+
+class TestMockNetworkDataframe(TestCase):
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create a simple mock network with 2 nodes
+        self.data1 = pd.DataFrame({"id": [1, 2, 3], "value": [10, 20, 30]})
+        self.data2 = pd.DataFrame({"id": [4, 5, 6], "value": [40, 50, 60]})
+
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
+            self.network = MockNetwork(
+                module_name=TEST_ALGORITHM_NAME,
+                datasets=[
+                    # datasets for node 1
+                    {
+                        DATASET_LABEL: {
+                            "database": self.data1,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
+                    },
+                    # datasets for node 2
+                    {
+                        DATASET_LABEL: {
+                            "database": self.data2,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
+                    },
+                ],
+            )
+
+    def test_network_initialization(self):
+        """Test if network is properly initialized"""
+        self.assertEqual(len(self.network.nodes), 2)
+        self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
+
+        # Check if data is properly assigned to nodes
+        node1_data = self.network.nodes[0].dataframes[DATASET_LABEL]
+        node2_data = self.network.nodes[1].dataframes[DATASET_LABEL]
+
+        pd.testing.assert_frame_equal(node1_data, self.data1)
+        pd.testing.assert_frame_equal(node2_data, self.data2)
+
+    def test_attributes(self):
+        """Test if properties are properly initialized"""
+        # Check the types
+        self.assertIsInstance(self.network.hq, MockHQ)
+        self.assertIsInstance(self.network.user_client, MockUserClient)
+
+        self.assertEqual(len(self.network.nodes), 2)
+        self.assertIsInstance(self.network.nodes[0], MockNode)
+        self.assertIsInstance(self.network.nodes[1], MockNode)
+
+        self.assertEqual(self.network.module_name, TEST_ALGORITHM_NAME)
+        self.assertEqual(self.network.collaboration_id, 1)
+
+    def test_properties(self):
+        """Test if properties are properly initialized"""
+        self.assertEqual(len(self.network.organization_ids), 2)
+        self.assertEqual(len(self.network.node_ids), 2)
+
+    def test_get_node(self):
+        """Test if get_node is properly initialized"""
+        self.assertIsInstance(self.network.get_node(1), MockNode)
+        self.assertIsInstance(self.network.get_node(2), MockNode)
+
+    def test_hq_initialization(self):
+        """Test if HQ is properly initialized"""
+        self.assertEqual(len(self.network.hq.tasks), 0)
+        self.assertEqual(len(self.network.hq.runs), 0)
+        self.assertEqual(len(self.network.hq.results), 0)
+
+    def test_node_initialization(self):
+        """Test if node is properly initialized"""
+        self.assertEqual(len(self.network.nodes), 2)
+        self.assertEqual(self.network.nodes[0].id_, 1)
+        self.assertEqual(self.network.nodes[1].id_, 2)
+        self.assertEqual(self.network.nodes[0].organization_id, 1)
+        self.assertEqual(self.network.nodes[1].organization_id, 2)
+        self.assertEqual(self.network.nodes[0].collaboration_id, 1)
+        self.assertEqual(self.network.nodes[1].collaboration_id, 1)
+
+
+class TestMockNetworkURI(TestCase):
+    def setUp(self):
+        """Set up test fixtures"""
+        with patch(
+            "vantage6.algorithm.mock.node.import_module", return_value=MagicMock()
+        ):
+            self.network = MockNetwork(
+                module_name=TEST_ALGORITHM_NAME,
+                datasets=[
+                    {
+                        DATASET_LABEL: {
+                            "database": MOCK_DATA_CSV,
+                            "db_type": MockDatabaseType.CSV.value,
+                        }
+                    }
+                ],
+            )
+
+    def test_network_initialization(self):
+        """Test if network is properly initialized"""
+        self.assertEqual(len(self.network.nodes), 1)
+        self.assertEqual(len(self.network.nodes[0].dataframes), 0)
+        db_matched = next(
+            db for db in self.network.nodes[0].datasets if db.label == DATASET_LABEL
+        )
+        self.assertEqual(db_matched.database, MOCK_DATA_CSV)
+
+    def test_node_initialization(self):
+        """Test if node is properly initialized"""
+        self.assertEqual(len(self.network.nodes), 1)
+        self.assertEqual(self.network.nodes[0].id_, 1)
+        self.assertEqual(self.network.nodes[0].organization_id, 1)
+        self.assertEqual(self.network.nodes[0].collaboration_id, 1)

@@ -119,7 +119,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
 
     const getPublicPolicies = !this.storePermissionService.isUserRegistered;
 
-    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore.url, getPublicPolicies);
+    const policies = await this.algorithmStoreService.getAlgorithmStorePolicies(this.algorithmStore, getPublicPolicies);
 
     this.policyTable = this.translatePoliciesToTable(policies);
   }
@@ -149,7 +149,7 @@ export class AlgorithmStoreReadComponent implements OnInit, OnDestroy {
   private translatePolicyValue(key: string, value: string | string[] | boolean): string {
     if (key === AvailableStorePolicies.ALGORITHM_VIEW) {
       return this.translateService.instant(`store-policies.${key}-values.${value}`);
-    } else if (key === AvailableStorePolicies.ALLOW_LOCALHOST || key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
+    } else if (key === AvailableStorePolicies.ASSIGN_REVIEW_OWN_ALGORITHM) {
       return value ? this.translateService.instant('general.yes') : this.translateService.instant('general.no');
     } else if (
       value === null &&

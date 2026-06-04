@@ -1,5 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import Column, String, ForeignKey, Integer
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from vantage6.algorithm.store.model.base import Base
@@ -22,12 +23,15 @@ class Database(Base):
         ID of the algorithm that this function belongs to
     function : :class:`~.model.algorithm.algorithm`
         Algorithm function that this database belongs to
+    multiple : bool
+        Whether this multiple dataframes can be supplied for this argument
     """
 
     # fields
     name = Column(String)
     description = Column(String)
     function_id = Column(Integer, ForeignKey("function.id"))
+    multiple = Column(Boolean, default=False)
 
     # relationships
     function = relationship("Function", back_populates="databases")

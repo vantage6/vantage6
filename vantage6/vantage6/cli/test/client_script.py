@@ -1,18 +1,16 @@
-import click
 import json
 import subprocess
 import sys
-
 from pathlib import Path
 
+import click
 from rich.console import Console
 
-from vantage6.cli.dev.create import create_demo_network
-from vantage6.cli.dev.remove import remove_demo_network
-from vantage6.cli.dev.start import start_demo_network
-from vantage6.cli.dev.stop import stop_demo_network
+from vantage6.cli.sandbox.new import cli_new_sandbox
+from vantage6.cli.sandbox.remove import cli_sandbox_remove
+from vantage6.cli.sandbox.start import cli_sandbox_start
+from vantage6.cli.sandbox.stop import cli_sandbox_stop
 from vantage6.cli.utils import prompt_config_name
-from vantage6.common.globals import Ports
 
 TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script.py"
 
@@ -21,8 +19,8 @@ TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script
 @click.option(
     "--script",
     type=click.Path(),
-    default=TEST_FILE_PATH,
-    help="Path of the script to test the algorithm. If a script is not provided, the default script is used.",
+    # default=TEST_FILE_PATH,
+    help="Path of the script to test the algorithm.",
 )
 @click.option(
     "--task-arguments",
@@ -31,33 +29,55 @@ TEST_FILE_PATH = Path(__file__).parent / "algo_test_scripts" / "algo_test_script
     help="Arguments to be provided to Task.create function. If --script is provided, this should not be set.",
 )
 @click.option(
-    "--create-dev-network",
+    "--create-sandbox",
     is_flag=True,
-    help="Create a new dev network to run the test",
+    help="Create a new sandbox to run the test",
 )
 @click.option(
-    "--start-dev-network",
+    "--start-sandbox",
     is_flag=True,
-    help="Start a dev network to run the test",
+    help="Start a sandbox to run the test",
+)
+@click.option("-n", "--name", default=None, type=str, help="Name for your sandbox")
+@click.option("--hq-image", type=str, default=None, help="HQ Docker image to use")
+@click.option(
+    "--store-image", type=str, default=None, help="Algorithm store Docker image to use"
+)
+@click.option("--node-image", type=str, default=None, help="Node Docker image to use")
+@click.option(
+    "--extra-hq-config",
+    type=click.Path(exists=True),
+    default=None,
+    help="YAML File with additional HQ configuration. This will be appended to the HQ "
+    "configuration file",
 )
 @click.option(
-    "-n", "--name", default=None, type=str, help="Name for your development setup"
+    "--extra-store-config",
+    type=click.Path(exists=True),
+    default=None,
+    help="YAML File with additional algorithm store configuration. This will be "
+    "appended to the algorithm store configuration file",
 )
 @click.option(
-    "--server-url",
-    type=str,
-    default="http://host.docker.internal",
-    help="Server URL to point to. If you are using Docker Desktop, "
-    "the default http://host.docker.internal should not be changed.",
+    "--extra-auth-config",
+    type=click.Path(exists=True),
+    default=None,
+    help="YAML File with additional auth configuration. This will be appended to the "
+    "auth configuration file",
 )
 @click.option(
-    "-i", "--image", type=str, default=None, help="Server Docker image to use"
+    "--extra-node-config",
+    type=click.Path(exists=True),
+    default=None,
+    help="YAML File with additional node configuration. This will be appended to the "
+    "node configuration file",
 )
 @click.option(
     "--keep",
     type=bool,
+    flag_value=True,
     default=False,
-    help="Keep the dev network after finishing the test",
+    help="Keep the sandbox after finishing the test",
 )
 @click.option(
     "--add-dataset",
@@ -73,20 +93,25 @@ def cli_test_client_script(
     script: Path | None,
     task_arguments: str | None,
     name: str,
-    server_url: str,
-    create_dev_network: bool,
-    start_dev_network: bool,
-    image: str,
+    create_sandbox: bool,
+    start_sandbox: bool,
+    hq_image: str,
+    store_image: str,
+    node_image: str,
+    extra_hq_config: Path,
+    extra_store_config: Path,
+    extra_auth_config: Path,
+    extra_node_config: Path,
     keep: bool,
     add_dataset: list[tuple[str, Path]] = (),
 ) -> int:
     """
-    Run a script for testing an algorithm on a dev network.
+    Run a script for testing an algorithm on a sandbox network.
     The path to the script must be provided as an argument.
     """
     if not (script or task_arguments):
         raise click.UsageError("--script or --task-arguments must be set.")
-    elif script != TEST_FILE_PATH and task_arguments:
+    elif script and task_arguments:
         raise click.UsageError("--script and --task-arguments cannot be set together.")
 
     # Check if the task_arguments is a valid JSON string
@@ -99,26 +124,29 @@ def cli_test_client_script(
     name = prompt_config_name(name)
 
     # create the network
-    if create_dev_network:
+    if create_sandbox:
         click_ctx.invoke(
-            create_demo_network,
+            cli_new_sandbox,
             name=name,
             num_nodes=3,
-            server_url=server_url,
-            server_port=Ports.DEV_SERVER.value,
-            image=image,
-            extra_server_config=None,
-            extra_node_config=None,
+            hq_image=hq_image,
+            store_image=store_image,
+            node_image=node_image,
+            extra_hq_config=extra_hq_config,
+            extra_store_config=extra_store_config,
+            extra_auth_config=extra_auth_config,
+            extra_node_config=extra_node_config,
             add_dataset=add_dataset,
         )
 
     # start the server and nodes
-    if create_dev_network or start_dev_network:
+    if start_sandbox and not create_sandbox:
         click_ctx.invoke(
-            start_demo_network,
+            cli_sandbox_start,
             name=name,
-            server_image=image,
-            node_image=image,
+            node_image=node_image,
+            extra_node_config=extra_node_config,
+            add_dataset=add_dataset,
         )
 
     # run the test script and get the result
@@ -142,9 +170,9 @@ def cli_test_client_script(
     # was created for this test. If the network was started for this test, stop it but
     # do not remove it.
     if not keep:
-        if create_dev_network or start_dev_network:
-            click_ctx.invoke(stop_demo_network, name=name)
-        if create_dev_network:
-            click_ctx.invoke(remove_demo_network, name=name)
+        if start_sandbox or create_sandbox:
+            click_ctx.invoke(cli_sandbox_stop, name=name)
+        if create_sandbox:
+            click_ctx.invoke(cli_sandbox_remove, name=name)
 
     return result.returncode

@@ -1,0 +1,36 @@
+<form class="form" [formGroup]="formGroup">
+  <div class="field-description">{{ "task-create.step-dataframe.description" | translate }}</div>
+
+  <div *ngIf="shouldShowDataframeSelection">
+    <mat-form-field *ngFor="let database of function?.databases || []; let i = index" subscriptSizing="dynamic" class="dataframe-select">
+      <mat-label>{{ database.name }}{{ database.description ? " (" + database.description + ")" : "" }}</mat-label>
+      <mat-select [formControlName]="'dataframeId' + i" [compareWith]="compareIDsForSelection" [multiple]="database.multiple">
+        <mat-option *ngFor="let dataframe of dataframes" [value]="dataframe.id">
+          {{ dataframe.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <app-alert-with-button
+    *ngIf="dataFrameNotReadyForAllSelectedOrganizations()"
+    class="node-alert"
+    label="{{
+      'task-create.step-dataframe.alert-dataframe-not-ready-for-all-selected-organizations'
+        | translate: { organizations: organizationNamesWithNonReadyDataframes.join(', ') }
+    }}"
+    buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+    buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+    [isSuccessAlert]="false"
+  ></app-alert-with-button>
+
+  <div *ngIf="shouldShowNoDataframesAlert">
+    <app-alert-with-button
+      class="node-alert"
+      label="{{ 'task-create.alert-no-dataframes' | translate }}"
+      buttonText="{{ 'task-create.step-dataframe.create-new-df' | translate }}"
+      buttonLink="{{ routes.dataframeCreate + '/' + session?.id }}"
+      [isSuccessAlert]="false"
+    ></app-alert-with-button>
+  </div>
+</form>

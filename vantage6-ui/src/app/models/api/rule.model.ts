@@ -4,6 +4,7 @@ export enum ResourceType {
   COLLABORATION = 'collaboration',
   ROLE = 'role',
   NODE = 'node',
+  SESSION = 'session',
   TASK = 'task',
   RUN = 'run',
   RESULT = 'result',
@@ -18,7 +19,6 @@ export enum StoreResourceType {
   ALGORITHM = 'algorithm',
   USER = 'user',
   ROLE = 'role',
-  VANTAGE6_SERVER = 'vantage6_server',
   REVIEW = 'review',
   ANY = '*'
 }
@@ -65,9 +65,10 @@ interface BaseGetRuleParameters {
 
 export interface GetRuleParameters extends BaseGetRuleParameters {
   user_id?: number;
+  current_user?: boolean;
 }
 
 export interface GetStoreRuleParameters extends BaseGetRuleParameters {
-  username?: string;
-  server_url?: string;
+  user_id?: number;
+  current_user?: boolean;
 }

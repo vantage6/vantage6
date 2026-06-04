@@ -102,29 +102,11 @@ export class UserListComponent extends BaseListComponent implements OnInit, OnDe
           label: this.translateService.instant('user.username'),
           searchEnabled: true,
           initSearchString: unlikeApiParameter(this.getUserParameters.username)
-        },
-        {
-          id: 'firstname',
-          label: this.translateService.instant('user.first-name'),
-          searchEnabled: true,
-          initSearchString: unlikeApiParameter(this.getUserParameters.firstname)
-        },
-        {
-          id: 'lastname',
-          label: this.translateService.instant('user.last-name'),
-          searchEnabled: true,
-          initSearchString: unlikeApiParameter(this.getUserParameters.lastname)
-        },
-        {
-          id: 'email',
-          label: this.translateService.instant('user.email'),
-          searchEnabled: true,
-          initSearchString: unlikeApiParameter(this.getUserParameters.email)
         }
       ],
       rows: result.data.map((_) => ({
         id: _.id.toString(),
-        columnData: { id: _.id, username: _.username, firstname: _.firstname, lastname: _.lastname, email: _.email }
+        columnData: { id: _.id, username: _.username }
       }))
     };
     this.pagination = result.links;

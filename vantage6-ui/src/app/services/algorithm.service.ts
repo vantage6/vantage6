@@ -57,7 +57,7 @@ export class AlgorithmService {
   async getAlgorithmForCommunityStore(id: string, lazyProperties: AlgorithmLazyProperties[] = []) {
     const algorithmStore = this.getCommunityStore();
 
-    return await this.getAlgorithm(algorithmStore.url, id, lazyProperties);
+    return await this.getAlgorithm(algorithmStore, id, lazyProperties);
   }
 
   getCommunityStore(): AlgorithmStore {
@@ -65,12 +65,13 @@ export class AlgorithmService {
       id: -1,
       name: 'community store',
       url: environment.community_store_url,
+      api_path: environment.community_store_api_path,
       collaborations: [],
       all_collaborations: true
     };
   }
   async getAlgorithmsForAlgorithmStore(algorithmStore: AlgorithmStore, params: object = {}): Promise<Algorithm[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(`${algorithmStore.url}`, '/algorithm', {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<Algorithm>>(algorithmStore, '/algorithm', {
       per_page: 9999,
       ...params
     });
@@ -84,7 +85,7 @@ export class AlgorithmService {
   }
 
   async getPaginatedAlgorithms(store: AlgorithmStore, currentPage: number, params: object = {}): Promise<Pagination<Algorithm>> {
-    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store.url, '/algorithm', currentPage, params);
+    const result = await this.apiService.getForAlgorithmApiWithPagination<Algorithm>(store, '/algorithm', currentPage, params);
     result.data.forEach((algorithm) => {
       algorithm.algorithm_store_url = store.url;
       algorithm.algorithm_store_id = store.id;
@@ -92,12 +93,12 @@ export class AlgorithmService {
     return result;
   }
 
-  async getAlgorithm(algorithm_store_url: string, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
-    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algorithm_store_url, `/algorithm/${id}`);
+  async getAlgorithm(algoStore: AlgorithmStore, id: string, lazyProperties: AlgorithmLazyProperties[] = []): Promise<Algorithm> {
+    let result = await this.apiService.getForAlgorithmApi<Algorithm>(algoStore, `/algorithm/${id}`);
     result = this.parseAllowedValues(result);
 
     const algorithm: Algorithm = { ...result, reviews: [] };
-    await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algorithm_store_url);
+    await getLazyProperties(result, algorithm, lazyProperties, this.apiService, algoStore);
 
     return algorithm;
   }
@@ -115,7 +116,7 @@ export class AlgorithmService {
     algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore.url, '/algorithm', algorithm);
+    const result = await this.apiService.postForAlgorithmApi<Algorithm>(algorithmStore, '/algorithm', algorithm);
     return result;
   }
 
@@ -123,20 +124,20 @@ export class AlgorithmService {
     algorithm = this.cleanAlgorithmForm(algorithm);
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore.url, `/algorithm/${algorithmId}`, algorithm);
+    const result = await this.apiService.patchForAlgorithmApi<Algorithm>(algorithmStore, `/algorithm/${algorithmId}`, algorithm);
     return result;
   }
 
   async deleteAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.deleteForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}`);
+    return await this.apiService.deleteForAlgorithmApi(algorithmStore, `/algorithm/${algorithmId}`);
   }
 
   async invalidateAlgorithm(algorithmId: string): Promise<void> {
     const algorithmStore = this.chosenStoreService.store$.value;
     if (!algorithmStore) return;
-    return await this.apiService.postForAlgorithmApi(algorithmStore.url, `/algorithm/${algorithmId}/invalidate`, {});
+    return await this.apiService.postForAlgorithmApi(algorithmStore, `/algorithm/${algorithmId}/invalidate`, {});
   }
 
   private getAlgorithmStoresForCollaboration(): AlgorithmStore[] {
@@ -155,7 +156,7 @@ export class AlgorithmService {
         // also cast the 'has_default_value' field to a boolean, in the HTML it is a string.
         arg.has_default_value = arg.has_default_value === 'true' || arg.has_default_value === true;
         arg.is_frontend_only = arg.is_frontend_only === 'true' || arg.is_frontend_only === true;
-        if (arg.is_default_value_null === true) {
+        if (arg.is_default_value_null === true || !arg.has_default_value) {
           delete arg.default_value;
         } else if (isListTypeArgument(arg.type) && arg.default_value) {
           // if the argument is a list type, parse the comma-separated string to an
@@ -197,6 +198,12 @@ export class AlgorithmService {
         delete arg.conditionalValueNull;
       });
     });
+    if (algorithmForm.submission_comments == null) {
+      delete algorithmForm.submission_comments;
+    }
+    if (algorithmForm.documentation_url == null) {
+      delete algorithmForm.documentation_url;
+    }
     return algorithmForm;
   }
 

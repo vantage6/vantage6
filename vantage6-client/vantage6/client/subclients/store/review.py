@@ -1,6 +1,8 @@
 from typing import List
-from vantage6.client.filter import post_filtering
+
 from vantage6.common.client.client_base import ClientBase
+
+from vantage6.client.filter import post_filtering
 
 
 class ReviewSubClient(ClientBase.SubClient):
@@ -77,7 +79,6 @@ class ReviewSubClient(ClientBase.SubClient):
         return self.parent.request(
             "review",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             params=params,
         )
 
@@ -106,7 +107,6 @@ class ReviewSubClient(ClientBase.SubClient):
         return self.parent.request(
             f"review/{id_}",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
 
     @post_filtering(iterable=False)
@@ -137,7 +137,6 @@ class ReviewSubClient(ClientBase.SubClient):
             "review",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json={"algorithm_id": algorithm, "reviewer_id": reviewer},
         )
 
@@ -154,7 +153,6 @@ class ReviewSubClient(ClientBase.SubClient):
             f"review/{id_}",
             method="delete",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
@@ -181,7 +179,6 @@ class ReviewSubClient(ClientBase.SubClient):
             f"review/{id_}/approve",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )
 
@@ -208,6 +205,5 @@ class ReviewSubClient(ClientBase.SubClient):
             f"review/{id_}/reject",
             method="post",
             is_for_algorithm_store=True,
-            headers=self.parent.util._get_server_url_header(),
             json=body,
         )

@@ -1,4 +1,15 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnDestroy,
+  Output,
+  QueryList,
+  ViewChildren
+} from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -23,7 +34,6 @@ import {
   ArgumentType,
   ConditionalArgComparatorType,
   FunctionForm,
-  FunctionType,
   PartitioningType
 } from 'src/app/models/api/algorithm.model';
 import { VisualizationType, getVisualizationSchema } from 'src/app/models/api/visualization.model';
@@ -45,7 +55,9 @@ import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { NumberOnlyDirective } from '../../../directives/numberOnly.directive';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { AlgorithmStepType } from 'src/app/models/api/session.models';
 import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-algorithm-form',
@@ -84,7 +96,7 @@ import { MatChipFormComponent } from '../mat-chip-form/mat-chip-form.component';
     MatChipFormComponent
   ]
 })
-export class AlgorithmFormComponent implements OnInit, AfterViewInit {
+export class AlgorithmFormComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() algorithm?: AlgorithmForm;
   @Output() cancelled: EventEmitter<void> = new EventEmitter();
   // Note: we are using any because the form is dynamic and the structure is not known
@@ -99,7 +111,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   isEdit: boolean = false;
   isLoading: boolean = true;
   partitionTypes = Object.values(PartitioningType);
-  functionTypes = Object.values(FunctionType);
+  functionStepTypes = Object.values(AlgorithmStepType);
   paramTypes = Object.values(ArgumentType);
   visualizationTypes = Object.values(VisualizationType);
   selectedFile: File | null = null;
@@ -108,6 +120,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schemaDetails: { [id: string]: any } = {};
+  formErrorMessages: string[] = [];
+  private formValueChangesSubscription?: Subscription;
 
   // FIXME these forms are also defined in a separate function at the end but we need
   // to define them here to prevent type errors in the form... find a solution to define
@@ -146,7 +160,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     name: ['', [Validators.required]],
     display_name: [''],
     description: [''],
-    type: ['', [Validators.required]],
+    step_type: ['', [Validators.required]],
     hidden: [false],
     arguments: this.fb.nonNullable.array([this.argumentForm]),
     databases: this.fb.nonNullable.array([this.databaseForm]),
@@ -179,7 +193,13 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
     } else {
       this.initializeFormForCreate();
     }
+    this.subscribeToFormChanges();
+    this.updateFormErrorMessages();
     this.isLoading = false;
+  }
+
+  ngOnDestroy(): void {
+    this.formValueChangesSubscription?.unsubscribe();
   }
 
   ngAfterViewInit(): void {
@@ -347,7 +367,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       functionFormGroup.controls['name'].setValue(func.name);
       functionFormGroup.controls['display_name'].setValue(func.display_name);
       functionFormGroup.controls['description'].setValue(func.description);
-      functionFormGroup.controls['type'].setValue(func.type);
+      functionFormGroup.controls['step_type'].setValue(func.step_type);
       functionFormGroup.controls['standalone'].setValue(func.standalone);
       if (func.arguments) {
         func.arguments.forEach((arg) => {
@@ -405,6 +425,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
           const databaseFormGroup = this.getDatabaseForm();
           databaseFormGroup.controls['name'].setValue(db.name);
           databaseFormGroup.controls['description'].setValue(db.description);
+          databaseFormGroup.controls['multiple'].setValue(db.multiple || false);
           (functionFormGroup.controls['databases'] as FormArray).push(databaseFormGroup);
         });
       }
@@ -428,6 +449,79 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       }
       (this.form.controls.functions as FormArray).push(functionFormGroup);
     });
+    this.updateFormErrorMessages();
+  }
+
+  // Recursively get all form errors including nested FormGroups and FormArrays
+  private getFormErrorMessages(form: AbstractControl, pathSegments: string[] = []): string[] {
+    let messages: string[] = [];
+
+    if (form instanceof FormGroup) {
+      Object.keys(form.controls).forEach((key) => {
+        const control = form.get(key);
+        if (control) {
+          const segment = this.getFormGroupSegment(key, control);
+          messages = messages.concat(this.getFormErrorMessages(control, [...pathSegments, segment]));
+        }
+      });
+    } else if (form instanceof FormArray) {
+      form.controls.forEach((control, index) => {
+        const segment = this.getFormArraySegment(control, index);
+        messages = messages.concat(this.getFormErrorMessages(control, [...pathSegments, segment]));
+      });
+    } else if (form instanceof FormControl) {
+      if (form.errors) {
+        const path = pathSegments.join(' > ') || 'Form';
+        Object.entries(form.errors).forEach(([errorKey, errorValue]) => {
+          messages.push(this.formatErrorMessage(path, errorKey, errorValue));
+        });
+      }
+    }
+
+    return messages;
+  }
+
+  private subscribeToFormChanges(): void {
+    this.formValueChangesSubscription?.unsubscribe();
+    this.formValueChangesSubscription = this.form.valueChanges.subscribe(() => {
+      this.updateFormErrorMessages();
+    });
+  }
+
+  private updateFormErrorMessages(): void {
+    this.formErrorMessages = this.getFormErrorMessages(this.form);
+  }
+
+  private getControlLabel(control: AbstractControl): string | null {
+    if (control instanceof FormGroup) {
+      const nameControl = control.get('name');
+      if (nameControl && typeof nameControl.value === 'string' && nameControl.value.trim().length > 0) {
+        return nameControl.value.trim();
+      }
+    }
+    return null;
+  }
+
+  private getFormGroupSegment(key: string, control: AbstractControl): string {
+    const label = this.getControlLabel(control);
+    return label ? `${key}: ${label}` : key;
+  }
+
+  private getFormArraySegment(control: AbstractControl, index: number): string {
+    const label = this.getControlLabel(control);
+    return label ? label : `Item ${index + 1}`;
+  }
+
+  private formatErrorMessage(path: string, errorKey: string, errorValue: unknown): string {
+    switch (errorKey) {
+      case 'required':
+        return `${path} is required.`;
+      default:
+        if (typeof errorValue === 'string') {
+          return `${path}: ${errorValue}`;
+        }
+        return `${path} has error: ${errorKey}.`;
+    }
   }
 
   private setSchemaControls(visSchemaForm: FormGroup, visType: VisualizationType, funcIdx: number, visIdx: number) {
@@ -504,7 +598,7 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
       name: ['', [Validators.required]],
       display_name: [''],
       description: [''],
-      type: ['', [Validators.required]],
+      step_type: ['', [Validators.required]],
       standalone: [true],
       arguments: this.fb.array([]),
       databases: this.fb.array([]),
@@ -537,7 +631,8 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit {
   private getDatabaseForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required]],
-      description: ['']
+      description: [''],
+      multiple: [false]
     });
   }
 

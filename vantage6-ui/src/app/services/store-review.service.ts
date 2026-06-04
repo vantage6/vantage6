@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { GetStoreReviewParameters, ReviewCreate, StoreReview } from '../models/api/review.model';
 import { ApiService } from './api.service';
 import { Pagination } from '../models/api/pagination.model';
+import { AlgorithmStore } from '../models/api/algorithmStore.model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +10,8 @@ import { Pagination } from '../models/api/pagination.model';
 export class StoreReviewService {
   constructor(private apiService: ApiService) {}
 
-  async getReviews(store_url: string, params: object = {}): Promise<StoreReview[]> {
-    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreReview>>(store_url, `/review`, {
+  async getReviews(algoStore: AlgorithmStore, params: object = {}): Promise<StoreReview[]> {
+    const result = await this.apiService.getForAlgorithmApi<Pagination<StoreReview>>(algoStore, `/review`, {
       ...params,
       per_page: 9999
     });
@@ -18,32 +19,32 @@ export class StoreReviewService {
   }
 
   async getPaginatedReviews(
-    store_url: string,
+    algoStore: AlgorithmStore,
     currentPage: number,
     parameters?: GetStoreReviewParameters
   ): Promise<Pagination<StoreReview>> {
-    return await this.apiService.getForAlgorithmApiWithPagination<StoreReview>(store_url, `/review`, currentPage, {
+    return await this.apiService.getForAlgorithmApiWithPagination<StoreReview>(algoStore, `/review`, currentPage, {
       ...parameters
     });
   }
 
-  async getReview(store_url: string, review_id: string): Promise<StoreReview> {
-    return await this.apiService.getForAlgorithmApi<StoreReview>(store_url, `/review/${review_id}`);
+  async getReview(algoStore: AlgorithmStore, review_id: string): Promise<StoreReview> {
+    return await this.apiService.getForAlgorithmApi<StoreReview>(algoStore, `/review/${review_id}`);
   }
 
-  async createReview(store_url: string, review: ReviewCreate): Promise<StoreReview> {
-    return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/review`, review);
+  async createReview(algoStore: AlgorithmStore, review: ReviewCreate): Promise<StoreReview> {
+    return await this.apiService.postForAlgorithmApi<StoreReview>(algoStore, `/review`, review);
   }
 
-  async approveReview(store_url: string, review_id: number, comment: string): Promise<StoreReview> {
-    return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/review/${review_id}/approve`, { comment: comment });
+  async approveReview(algoStore: AlgorithmStore, review_id: number, comment: string): Promise<StoreReview> {
+    return await this.apiService.postForAlgorithmApi<StoreReview>(algoStore, `/review/${review_id}/approve`, { comment: comment });
   }
 
-  async rejectReview(store_url: string, review_id: number, comment: string): Promise<StoreReview> {
-    return await this.apiService.postForAlgorithmApi<StoreReview>(store_url, `/review/${review_id}/reject`, { comment: comment });
+  async rejectReview(algoStore: AlgorithmStore, review_id: number, comment: string): Promise<StoreReview> {
+    return await this.apiService.postForAlgorithmApi<StoreReview>(algoStore, `/review/${review_id}/reject`, { comment: comment });
   }
 
-  async deleteReview(store_url: string, review_id: number): Promise<void> {
-    await this.apiService.deleteForAlgorithmApi(store_url, `/review/${review_id}`);
+  async deleteReview(algoStore: AlgorithmStore, review_id: number): Promise<void> {
+    await this.apiService.deleteForAlgorithmApi(algoStore, `/review/${review_id}`);
   }
 }

@@ -1,0 +1,26 @@
+<form class="form" [formGroup]="formGroup">
+  <div *ngIf="hasDatabases; else noDatabasesBlock">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ "task.database" | translate }}</mat-label>
+      <mat-select formControlName="database">
+        <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
+          {{ availableDatabase.name }}
+          <div class="detail-txt">({{ availableDatabase.type }})</div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</form>
+
+<ng-template #noDatabasesBlock>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length === 0"
+    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
+  ></app-alert>
+  <app-alert
+    class="node-alert"
+    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
+    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
+  ></app-alert>
+</ng-template>

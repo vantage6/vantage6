@@ -12,7 +12,7 @@ import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
 import { NodeOnlineStatusMsg } from 'src/app/models/socket-messages.model';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { MessageDialogComponent } from 'src/app/components/dialogs/message-dialog/message-dialog.component';
@@ -35,33 +35,38 @@ import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { ChipComponent } from '../../../../components/helpers/chip/chip.component';
 import { MatButton } from '@angular/material/button';
+import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
+import { TaskService } from 'src/app/services/task.service';
+import { ConfirmDialogComponent } from 'src/app/components/dialogs/confirm/confirm-dialog.component';
+import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.model';
+import { SnackbarService } from 'src/app/services/snackbar.service';
 
 @Component({
-    selector: 'app-node-read',
-    templateUrl: './node-read.component.html',
-    styleUrls: ['./node-read.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        TreeDropdownComponent,
-        NgIf,
-        MatCard,
-        MatCardContent,
-        MatAccordion,
-        NgFor,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelContent,
-        MatProgressSpinner,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        ReactiveFormsModule,
-        ChipComponent,
-        MatButton,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-node-read',
+  templateUrl: './node-read.component.html',
+  styleUrls: ['./node-read.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    TreeDropdownComponent,
+    NgIf,
+    MatCard,
+    MatCardContent,
+    MatAccordion,
+    NgFor,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatProgressSpinner,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    ReactiveFormsModule,
+    ChipComponent,
+    MatButton,
+    MatPaginator,
+    TranslateModule
+  ]
 })
 export class NodeReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';
@@ -79,6 +84,8 @@ export class NodeReadComponent implements OnInit, OnDestroy {
   pagination: PaginationLinks | null = null;
   currentPage: number = 1;
 
+  destroy$ = new Subject();
+
   private nodeStatusUpdateSubscription?: Subscription;
 
   constructor(
@@ -89,7 +96,11 @@ export class NodeReadComponent implements OnInit, OnDestroy {
     private permissionService: PermissionService,
     private socketioConnectService: SocketioConnectService,
     private translateService: TranslateService,
-    private fileService: FileService
+    private fileService: FileService,
+    private chosenCollaborationService: ChosenCollaborationService,
+    private taskService: TaskService,
+    private matDialog: MatDialog,
+    private snackBarService: SnackbarService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -103,6 +114,8 @@ export class NodeReadComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.nodeStatusUpdateSubscription?.unsubscribe();
+    this.destroy$.next(true);
+    this.destroy$.complete();
   }
 
   async handleSelectedTreeNodesChange(newSelected: ITreeSelectedValue[]): Promise<void> {
@@ -148,6 +161,48 @@ export class NodeReadComponent implements OnInit, OnDestroy {
 
   canEdit(orgId: number): boolean {
     return this.permissionService.isAllowedForOrg(ResourceType.NODE, OperationType.EDIT, orgId);
+  }
+
+  canKill(): boolean {
+    // we currently only allow killing tasks from the UI for organization members
+    // of the same node
+    return (
+      this.permissionService.isAllowedForCollab(
+        ResourceType.EVENT,
+        OperationType.SEND,
+        this.chosenCollaborationService.collaboration$.value
+      ) && this.permissionService.activeUser?.organization?.id === this.selectedNode?.organization?.id
+    );
+  }
+
+  handleKillNodeTasks(): void {
+    if (!this.selectedNode) return;
+
+    const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.translateService.instant('node-edit.kill-tasks-dialog.title', { name: this.selectedNode.name }),
+        content: this.translateService.instant('node-edit.kill-tasks-dialog.content'),
+        confirmButtonText: this.translateService.instant('general.delete'),
+        confirmButtonType: 'warn'
+      }
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (result) => {
+        if (result === ConfirmDialogOption.PRIMARY) {
+          this.killNodeTasks();
+          this.snackBarService.showMessage(
+            this.translateService.instant('node-edit.kill-tasks-dialog.success', { name: this.selectedNode?.name })
+          );
+        }
+      });
+  }
+
+  killNodeTasks(): void {
+    if (!this.selectedNode) return;
+    this.taskService.killNodeTasks(this.selectedNode.id);
   }
 
   onNodeStatusUpdate(nodeStatusUpdate: NodeOnlineStatusMsg): void {

@@ -1,0 +1,91 @@
+import os
+from collections.abc import Callable
+from functools import wraps
+from typing import TYPE_CHECKING, Optional
+
+from vantage6.common.globals import ContainerEnvNames
+
+from vantage6.algorithm.tools.util import error
+
+from vantage6.algorithm.client import AlgorithmClient
+
+if TYPE_CHECKING:
+    from vantage6.algorithm.mock.client import MockAlgorithmClient
+
+
+def _algorithm_client() -> Callable:
+    """
+    Decorator that adds an algorithm client object to a function
+
+    By adding @algorithm_client to a function, the ``algorithm_client``
+    argument will be added to the front of the argument list. This client can
+    be used to communicate with the vantage6 hub.
+
+    There is one reserved argument `mock_client` in the function to be
+    decorated. If this argument is provided, the decorator will add this
+    MockAlgorithmClient to the front of the argument list instead of the
+    regular AlgorithmClient.
+
+    This function expect the ``CONTAINER_TOKEN`` environment variable to be set.
+    If this is not the case, the function will exit with an error message.
+
+    Parameters
+    ----------
+    func : Callable
+        Function to decorate
+
+    Returns
+    -------
+    Callable
+        Decorated function
+
+    Examples
+    --------
+    >>> @algorithm_client
+    >>> def my_algorithm(algorithm_client: AlgorithmClient, <other arguments>):
+    >>>     pass
+    """
+
+    def protection_decorator(func: Callable, *args, **kwargs) -> Callable:
+        @wraps(func)
+        def decorator(
+            *args, mock_client: Optional["MockAlgorithmClient"] = None, **kwargs
+        ) -> Callable:
+            """
+            Wrap the function with the client object
+
+            Parameters
+            ----------
+            mock_client : MockAlgorithmClient | None
+                Mock client. If not None, used instead of the regular client
+            """
+            if mock_client is not None:
+                return func(mock_client, *args, **kwargs)
+
+            # read token from the environment
+            token = os.environ.get(ContainerEnvNames.CONTAINER_TOKEN.value)
+            if not token:
+                error(
+                    "Token not found. Is the method you called started as a "
+                    "compute container? Exiting..."
+                )
+                exit(1)
+
+            # read HQ address from the environment
+            host = os.environ[ContainerEnvNames.HOST.value]
+            port = os.environ[ContainerEnvNames.PORT.value]
+            api_path = os.environ[ContainerEnvNames.API_PATH.value]
+
+            client = AlgorithmClient(token=token, hq_url=f"{host}:{port}{api_path}")
+            return func(client, *args, **kwargs)
+
+        # set attribute that this function is wrapped in an algorithm client
+        decorator.vantage6_algorithm_client_decorated = True
+        return decorator
+
+    return protection_decorator
+
+
+# alias for algorithm_client so that algorithm developers can do
+# @algorithm_client instead of @algorithm_client()
+algorithm_client = _algorithm_client()

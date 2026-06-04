@@ -1,0 +1,28 @@
+{{- if .Values.node.databases.fileBased }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-db-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    type: local-database
+spec:
+  capacity:
+    storage: {{ .Values.node.persistence.database.size }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.node.persistence.database.storageClass }}
+  persistentVolumeReclaimPolicy: Delete
+  {{- range .Values.node.databases.fileBased }}
+  local:
+    path: {{ .volumePath | quote }}
+  {{- end }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.node.k8sNodeName }}
+{{- end }}

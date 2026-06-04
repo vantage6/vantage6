@@ -1,9 +1,9 @@
-from enum import Enum
+from vantage6.common.enum import StrEnumBase
 
 from vantage6.algorithm.store.model.rule import Operation, Rule
 
 
-class DefaultRole(str, Enum):
+class DefaultRole(StrEnumBase):
     """Enum containing the names of the default roles"""
 
     DEVELOPER = "Developer"
@@ -12,11 +12,6 @@ class DefaultRole(str, Enum):
     STORE_MANAGER = "Store Manager"
     ALGORITHM_MANAGER = "Algorithm Manager"
     VIEWER = "Viewer"
-    SERVER_MANAGER = "Server Manager"
-
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
 
 
 def get_default_roles() -> list[dict]:
@@ -40,7 +35,7 @@ def get_default_roles() -> list[dict]:
     # Define default roles
     # 1. Root user
     SUPER_ROLE = {
-        "name": DefaultRole.ROOT,
+        "name": DefaultRole.ROOT.value,
         "description": "Super role",
         "rules": Rule.get(),
     }
@@ -52,14 +47,14 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("review", Operation.VIEW),
     ]
     VIEWER_ROLE = {
-        "name": DefaultRole.VIEWER,
+        "name": DefaultRole.VIEWER.value,
         "description": "Can view algorithm store resources",
         "rules": VIEWER_RULES,
     }
     # 3. Reviewer role
     REVIEWER_RULES = VIEWER_RULES + [Rule.get_by_("review", Operation.EDIT)]
     REVIEWER_ROLE = {
-        "name": DefaultRole.REVIEWER,
+        "name": DefaultRole.REVIEWER.value,
         "description": "Can view resources and review algorithms",
         "rules": REVIEWER_RULES,
     }
@@ -73,7 +68,7 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("role", Operation.DELETE),
     ]
     STORE_MANAGER = {
-        "name": DefaultRole.STORE_MANAGER,
+        "name": DefaultRole.STORE_MANAGER.value,
         "description": "Can view resources and manage users and roles.",
         "rules": STORE_MANAGER,
     }
@@ -86,7 +81,7 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("review", Operation.DELETE),
     ]
     ALGORITHM_MANAGER = {
-        "name": DefaultRole.ALGORITHM_MANAGER,
+        "name": DefaultRole.ALGORITHM_MANAGER.value,
         "description": "Can view store resources and manage algorithms and reviews.",
         "rules": ALGORITHM_MANAGER_RULES,
     }
@@ -96,21 +91,9 @@ def get_default_roles() -> list[dict]:
         Rule.get_by_("algorithm", Operation.EDIT),
     ]
     DEVELOPER_ROLE = {
-        "name": DefaultRole.DEVELOPER,
+        "name": DefaultRole.DEVELOPER.value,
         "description": "Can view store resources and create new algorithms.",
         "rules": DEVELOPER_RULES,
-    }
-    # server manager role
-    SERVER_MANAGER_RULES = [
-        Rule.get_by_("vantage6_server", Operation.DELETE),
-    ]
-    SERVER_MANAGER_ROLE = {
-        "name": "Server Manager",
-        "description": (
-            "Can delete their own whitelisted vantage6 server. This rule is"
-            " assigned automatically upon whitelisting a server"
-        ),
-        "rules": SERVER_MANAGER_RULES,
     }
     # Combine all in array
     return [
@@ -120,5 +103,4 @@ def get_default_roles() -> list[dict]:
         STORE_MANAGER,
         ALGORITHM_MANAGER,
         DEVELOPER_ROLE,
-        SERVER_MANAGER_ROLE,
     ]

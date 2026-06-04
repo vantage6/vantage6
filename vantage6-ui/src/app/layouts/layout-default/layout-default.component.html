@@ -7,13 +7,17 @@
       {{ username }}
     </button>
     <mat-menu #headerMenu="matMenu">
-      <button mat-menu-item [routerLink]="routes.passwordChange">
+      <button mat-menu-item (click)="changePassword()">
         <mat-icon>key</mat-icon>
-        <span>{{ "header.actions.change_password" | translate }}</span>
+        <span>{{ "header.actions.change-password" | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="goToKeycloakAccount()">
+        <mat-icon>person</mat-icon>
+        <span>{{ "header.actions.manage-account" | translate }}</span>
       </button>
       <button mat-menu-item [routerLink]="[routes.user, userId]">
-        <mat-icon>person</mat-icon>
-        <span>{{ "header.actions.my-user" | translate }}</span>
+        <mat-icon>verified_user</mat-icon>
+        <span>{{ "header.actions.view-account" | translate }}</span>
       </button>
       <button mat-menu-item (click)="handleLogout()">
         <mat-icon>logout</mat-icon>
@@ -23,28 +27,44 @@
   </div>
 </mat-toolbar>
 <mat-sidenav-container autosize>
-  <mat-sidenav #sideNav *ngIf="!hideMenu" [mode]="hideSideMenu ? 'over' : 'side'" [fixedInViewport]="hideSideMenu" fixedTopGap="56">
-    <mat-nav-list>
-      <div *ngFor="let link of navigationLinks">
-        <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
-          <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-          <a matLine>{{ link.label }}</a>
-        </mat-list-item>
-        <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
-          <mat-list-item
-            [routerLink]="[sublink.route]"
-            [routerLinkActive]="['mdc-list-item--activated']"
-            [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
-          >
-            <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
-            <a matLine>{{ sublink.label }}</a>
+  <mat-sidenav
+    #sideNav
+    *ngIf="!hideMenu"
+    [mode]="hideSideMenu ? 'over' : 'side'"
+    [fixedInViewport]="hideSideMenu"
+    [ngClass]="{ 'fixed-sidenav': !hideSideMenu }"
+  >
+    <div class="sidenav-container">
+      <mat-nav-list>
+        <div *ngFor="let link of navigationLinks">
+          <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
+            <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+            <a matLine>{{ link.label }}</a>
           </mat-list-item>
+          <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
+            <mat-list-item
+              [routerLink]="[sublink.route]"
+              [routerLinkActive]="['mdc-list-item--activated']"
+              [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
+            >
+              <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
+              <a matLine>{{ sublink.label }}</a>
+            </mat-list-item>
+          </div>
         </div>
+      </mat-nav-list>
+      <!-- Privacy Statement Link - At the bottom -->
+      <div>
+        <mat-divider></mat-divider>
+        <mat-list-item [routerLink]="[routes.privacy]" [routerLinkActive]="['mdc-list-item--activated']" class="privacy-link">
+          <mat-icon matListItemIcon>privacy_tip</mat-icon>
+          <a matLine>{{ "links.privacy" | translate }}</a>
+        </mat-list-item>
       </div>
-    </mat-nav-list>
+    </div>
   </mat-sidenav>
   <mat-sidenav-content>
-    <div class="layout-container">
+    <div class="layout-container" [ngClass]="{ 'fixed-sidenav': !hideSideMenu }">
       <app-breadcrumbs></app-breadcrumbs>
       <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.chooseCollaboration">
         <mat-card class="choice-alert">

@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 
 import click
+import copier.errors
 import questionary as q
 from copier import run_update
-import copier.errors
 
 from vantage6.common import info, warning
 

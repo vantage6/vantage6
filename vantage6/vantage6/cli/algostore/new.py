@@ -1,61 +1,61 @@
-import click
-from colorama import Fore, Style
+import questionary as q
 
-from vantage6.common import info, error, ensure_config_dir_writable
-from vantage6.common.globals import InstanceType
-from vantage6.cli.globals import DEFAULT_SERVER_SYSTEM_FOLDERS
-from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
-from vantage6.cli.configuration_wizard import configuration_wizard
-from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
-
-
-@click.command()
-@click.option(
-    "-n", "--name", default=None, help="name of the configuration you want to use."
+from vantage6.common.context import AppContext
+from vantage6.common.globals import (
+    InstanceType,
 )
-@click.option("--system", "system_folders", flag_value=True)
-@click.option(
-    "--user", "system_folders", flag_value=False, default=DEFAULT_SERVER_SYSTEM_FOLDERS
-)
-def cli_algo_store_new(name: str, system_folders: bool) -> None:
+
+from vantage6.cli.configuration_create import add_common_backend_config
+
+
+def algo_store_configuration_questionaire(
+    instance_name: str, system_folders: bool
+) -> dict:
     """
-    Create a new server configuration.
+    Questionary to generate a config file for the algorithm store
+    instance.
+
+    Parameters
+    ----------
+    instance_name : str
+        Name of the store instance.
+    system_folders : bool
+        Whether to use system folders or user folders.
+
+    Returns
+    -------
+    dict
+        Dictionary with the new store configuration
     """
-    name = prompt_config_name(name)
+    config = {"store": {"keycloak": {}}, "database": {}}
 
-    # check if name is allowed for docker volume, else exit
-    check_config_name_allowed(name)
-
-    # check that this config does not exist
-    try:
-        if AlgorithmStoreContext.config_exists(name, system_folders):
-            error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already " "exists!")
-            exit(1)
-    except Exception as e:
-        error(e)
-        exit(1)
-
-    # Check that we can write in this folder
-    if not ensure_config_dir_writable(system_folders):
-        error("Your user does not have write access to all folders. Exiting")
-        info(
-            f"Create a new server using '{Fore.GREEN}v6 algorithm-store new "
-            f"--user{Style.RESET_ALL}' instead!"
-        )
-        exit(1)
-
-    # create config in ctx location
-    try:
-        cfg_file = configuration_wizard(
-            InstanceType.ALGORITHM_STORE, name, system_folders
-        )
-    except KeyboardInterrupt:
-        error("Configuration creation aborted.")
-        exit(1)
-    info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
-
-    flag = "" if system_folders else "--user"
-    info(
-        f"You can start the algorithm store by running {Fore.GREEN}v6 "
-        f"algorithm-store start {flag}{Style.RESET_ALL}"
+    config = add_common_backend_config(
+        config, InstanceType.ALGORITHM_STORE, instance_name
     )
+
+    # ask about openness of the algorithm store
+    config["store"]["policies"] = {}
+    is_open = q.confirm(
+        "Do you want to open the algorithm store to the public? This will allow anyone "
+        "to view the algorithms, but they cannot modify them.",
+        default=False,
+    ).unsafe_ask()
+    if is_open:
+        open_algos_policy = "public"
+    else:
+        is_open_to_whitelist = q.confirm(
+            "Do you want to allow all authenticated users to access "
+            "the algorithms in the store? If not allowing this, you will have to assign"
+            " the appropriate permissions to each user individually.",
+            default=True,
+        ).unsafe_ask()
+        open_algos_policy = "authenticated" if is_open_to_whitelist else "private"
+    config["store"]["policies"]["algorithm_view"] = open_algos_policy
+
+    dirs = AppContext.instance_folders(
+        InstanceType.ALGORITHM_STORE, instance_name, system_folders
+    )
+    log_dir = str(dirs["log"])
+    config["store"]["logging"]["volumeHostPath"] = log_dir
+
+    return config

@@ -23,29 +23,29 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-store-user-form',
-    templateUrl: './store-user-form.component.html',
-    styleUrl: './store-user-form.component.scss',
-    imports: [
-        NgIf,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        NgFor,
-        MatOption,
-        PermissionsMatrixStoreComponent,
-        MatButton,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-store-user-form',
+  templateUrl: './store-user-form.component.html',
+  styleUrl: './store-user-form.component.scss',
+  imports: [
+    NgIf,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    NgFor,
+    MatOption,
+    PermissionsMatrixStoreComponent,
+    MatButton,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class StoreUserFormComponent extends BaseFormComponent implements OnInit {
   @Input() user?: StoreUser;
   userRoles: StoreRole[] = [];
   userRules: StoreRule[] = [];
   availableRoles: StoreRole[] = [];
-  serverUsers: BaseUser[] = [];
+  hqUsers: BaseUser[] = [];
   store: AlgorithmStore | null = null;
   compareRolesForSelection = compareObjIDs;
 
@@ -88,21 +88,21 @@ export class StoreUserFormComponent extends BaseFormComponent implements OnInit 
   private async processRules(roles: StoreRole[]): Promise<void> {
     if (!this.store) return;
     const roleIDs = roles.map((role) => role.id);
-    this.userRules = await this.storeRuleService.getRulesForRoles(this.store?.url, roleIDs);
+    this.userRules = await this.storeRuleService.getRulesForRoles(this.store, roleIDs);
   }
 
   private async initData(): Promise<void> {
     this.isEdit = !!this.user;
     this.store = this.chosenStoreService.store$.value;
     if (!this.store) return;
-    this.availableRoles = await this.storeRoleService.getRoles(this.store.url);
+    this.availableRoles = await this.storeRoleService.getRoles(this.store);
     this.setupForm();
 
     if (!this.user) {
-      // if the user is being created, get the users from the server
-      this.serverUsers = await this.userService.getUsers();
+      // if the user is being created, get the users from HQ
+      this.hqUsers = await this.userService.getUsers();
       // remove the current user from the list
-      this.serverUsers = this.serverUsers.filter((serverUser) => serverUser.id !== this.permissionService.activeUser?.id);
+      this.hqUsers = this.hqUsers.filter((user) => user.id !== this.permissionService.activeUser?.id);
     } else {
       // if the user is being edited, set the form values
       this.userRoles = this.user.roles;

@@ -1,5 +1,4 @@
 import { StoreRole } from './store-role.model';
-import { StoreServerRegistration } from './store-server';
 
 export enum StoreUserLazyProperties {
   Roles = 'roles'
@@ -7,7 +6,6 @@ export enum StoreUserLazyProperties {
 
 export interface GetStoreUserParameters {
   username?: string;
-  can_review?: boolean;
   reviewers_for_algorithm_id?: number;
 }
 
@@ -19,7 +17,6 @@ export enum StoreUserSortProperties {
 export interface StoreUser {
   id: number;
   username: string;
-  server: StoreServerRegistration;
   roles: StoreRole[];
 }
 

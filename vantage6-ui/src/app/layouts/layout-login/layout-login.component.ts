@@ -9,10 +9,10 @@ interface BackgroundImage {
 }
 
 @Component({
-    selector: 'app-layout-login',
-    templateUrl: './layout-login.component.html',
-    styleUrls: ['./layout-login.component.scss'],
-    imports: [NgStyle, RouterOutlet, NgIf]
+  selector: 'app-layout-login',
+  templateUrl: './layout-login.component.html',
+  styleUrls: ['./layout-login.component.scss'],
+  imports: [NgStyle, RouterOutlet, NgIf]
 })
 export class LayoutLoginComponent implements OnInit {
   backgroundImage: BackgroundImage | null = null;
@@ -38,6 +38,9 @@ export class LayoutLoginComponent implements OnInit {
       image: 'cotopaxi',
       additional_styling: { 'background-position-y': 'top' },
       attribution: 'Cotopaxi, Ecuador by <a href="https://www.flickr.com/people/16448758@N03">Rinaldo Wurglitsch</a> (License CC BY 2.0)'
+    },
+    {
+      image: 'uluru'
     }
   ];
 

@@ -1,22 +1,20 @@
 from __future__ import annotations
 
+import hashlib
 import os.path
-
 from pathlib import Path
 
 from vantage6.common.context import AppContext
-from vantage6.common.globals import APPNAME, InstanceType
+from vantage6.common.globals import STRING_ENCODING, InstanceType
+
+from vantage6.cli import __version__
 from vantage6.cli.configuration_manager import NodeConfigurationManager
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-from vantage6.cli._version import __version__
 
 
 class NodeContext(AppContext):
     """
     Node context object for the host system.
-
-    See DockerNodeContext for the node instance mounts when running as a
-    dockerized service.
 
     Parameters
     ----------
@@ -27,9 +25,13 @@ class NodeContext(AppContext):
         _description_, by default N_FOL
     config_file : str, optional
         _description_, by default None
+    in_container : bool, optional
+        Whether the application is running inside a container, by default False
+    is_sandbox : bool, optional
+        Whether the configuration is a sandbox configuration, by default False
     """
 
-    # The server configuration manager is aware of the structure of the server
+    # The node configuration manager is aware of the structure of the node
     # configuration file and makes sure only valid configuration can be loaded.
     INST_CONFIG_MANAGER = NodeConfigurationManager
 
@@ -39,20 +41,27 @@ class NodeContext(AppContext):
         system_folders: bool = N_FOL,
         config_file: str = None,
         print_log_header: bool = True,
+        logger_prefix: str = "",
+        in_container: bool = False,
+        is_sandbox: bool = False,
     ):
         super().__init__(
             InstanceType.NODE,
             instance_name,
-            system_folders,
-            config_file,
-            print_log_header,
+            system_folders=system_folders,
+            config_file=config_file,
+            print_log_header=print_log_header,
+            logger_prefix=logger_prefix,
+            in_container=in_container,
+            is_sandbox=is_sandbox,
         )
         if print_log_header:
             self.log.info("vantage6 version '%s'", __version__)
+        self.identifier = self.__create_node_identifier()
 
     @classmethod
     def from_external_config_file(
-        cls, path: str, system_folders: bool = N_FOL
+        cls, path: str, system_folders: bool = N_FOL, is_sandbox: bool = False
     ) -> NodeContext:
         """
         Create a node context from an external configuration file. External
@@ -72,11 +81,16 @@ class NodeContext(AppContext):
             Node context object
         """
         return super().from_external_config_file(
-            Path(path).resolve(), InstanceType.NODE, system_folders
+            Path(path).resolve(),
+            InstanceType.NODE,
+            system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
-    def config_exists(cls, instance_name: str, system_folders: bool = N_FOL) -> bool:
+    def config_exists(
+        cls, instance_name: str, system_folders: bool = N_FOL, is_sandbox: bool = False
+    ) -> bool:
         """
         Check if a configuration file exists.
 
@@ -87,27 +101,33 @@ class NodeContext(AppContext):
             of the configuration file.
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
-
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
         Returns
         -------
         bool
             Whether the configuration file exists or not
         """
-        return super().config_exists(
-            InstanceType.NODE, instance_name, system_folders=system_folders
+        return super().base_config_exists(
+            InstanceType.NODE,
+            instance_name,
+            system_folders=system_folders,
+            is_sandbox=is_sandbox,
         )
 
     @classmethod
     def available_configurations(
-        cls, system_folders: bool = N_FOL
+        cls, system_folders: bool = N_FOL, is_sandbox: bool = False
     ) -> tuple[list, list]:
         """
-        Find all available server configurations in the default folders.
+        Find all available node configurations in the default folders.
 
         Parameters
         ----------
         system_folders : bool, optional
             System wide or user configuration, by default N_FOL
+        is_sandbox : bool, optional
+            Whether the configuration is a sandbox configuration, by default False
 
         Returns
         -------
@@ -115,7 +135,9 @@ class NodeContext(AppContext):
             The first list contains validated configuration files, the second
             list contains invalid configuration files.
         """
-        return super().available_configurations(InstanceType.NODE, system_folders)
+        return super().available_configurations(
+            InstanceType.NODE, system_folders, is_sandbox
+        )
 
     @staticmethod
     def type_data_folder(system_folders: bool = N_FOL) -> Path:
@@ -132,7 +154,7 @@ class NodeContext(AppContext):
         Path
             Path to the data folder
         """
-        return AppContext.type_data_folder(InstanceType.NODE.value, system_folders)
+        return AppContext.type_data_folder(InstanceType.NODE, system_folders)
 
     @property
     def databases(self) -> dict:
@@ -145,108 +167,14 @@ class NodeContext(AppContext):
             dictionary with database names as keys and their corresponding
             paths as values.
         """
-        return self.config["databases"]
-
-    @property
-    def docker_container_name(self) -> str:
-        """
-        Docker container name of the node.
-
-        Returns
-        -------
-        str
-            Node's Docker container name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}"
-
-    @property
-    def docker_network_name(self) -> str:
-        """
-        Private Docker network name which is unique for this node.
-
-        Returns
-        -------
-        str
-            Docker network name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-net"
-
-    @property
-    def docker_volume_name(self) -> str:
-        """
-        Docker volume in which task data is stored. In case a file based
-        database is used, this volume contains the database file as well.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get("DATA_VOLUME_NAME", f"{self.docker_container_name}-vol")
-
-    @property
-    def docker_vpn_volume_name(self) -> str:
-        """
-        Docker volume in which the VPN configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "VPN_VOLUME_NAME", f"{self.docker_container_name}-vpn-vol"
-        )
-
-    @property
-    def docker_ssh_volume_name(self) -> str:
-        """
-        Docker volume in which the SSH configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "SSH_TUNNEL_VOLUME_NAME", f"{self.docker_container_name}-ssh-vol"
-        )
-
-    @property
-    def docker_squid_volume_name(self) -> str:
-        """
-        Docker volume in which the SSH configuration is stored.
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return os.environ.get(
-            "SSH_SQUID_VOLUME_NAME", f"{self.docker_container_name}-squid-vol"
-        )
+        if self.in_container:
+            return self.config["databases"]
+        else:
+            return self.config["node"]["databases"]
 
     @property
     def proxy_log_file(self):
         return self.log_file_name(type_="proxy_server")
-
-    def docker_temporary_volume_name(self, job_id: int) -> str:
-        """
-        Docker volume in which temporary data is stored. Temporary data is
-        linked to a specific run. Multiple algorithm containers can have the
-        same run id, and therefore the share same temporary volume.
-
-        Parameters
-        ----------
-        job_id : int
-            run id provided by the server
-
-        Returns
-        -------
-        str
-            Docker volume name
-        """
-        return f"{APPNAME}-{self.name}-{self.scope}-{job_id}-tmpvol"
 
     def get_database_uri(self, label: str = "default") -> str:
         """
@@ -263,3 +191,40 @@ class NodeContext(AppContext):
             URI to the database
         """
         return self.config["databases"][label]
+
+    def set_folders(
+        self, instance_type: InstanceType, instance_name: str, system_folders: bool
+    ) -> None:
+        """
+        Set the folders for the node.
+
+        Parameters
+        ----------
+        instance_type : InstanceType
+            Instance type
+        instance_name : str
+            Instance name
+        system_folders : bool
+            Whether to use system folders
+        """
+        dirs = self.instance_folders(instance_type, instance_name, system_folders)
+
+        self.log_dir = dirs.get("log")
+        self.data_dir = dirs.get("data")
+        self.config_dir = dirs.get("config")
+
+    def __create_node_identifier(self) -> str:
+        """
+        Create a unique identifier for the node.
+
+        Returns
+        -------
+        str
+            Unique identifier for the node
+        """
+        if self.in_container:
+            api_key = os.environ.get("V6_API_KEY")
+        else:
+            api_key = self.config["node"]["apiKey"]
+
+        return hashlib.sha256(api_key.encode(STRING_ENCODING)).hexdigest()[:16]

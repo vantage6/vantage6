@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-store
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  selector:
+{{ include "store.matchLabels" . | indent 4 }}
+    component: store
+  ports:
+    - protocol: TCP
+      port: {{ .Values.store.port }}
+      targetPort: {{ .Values.store.internal.port }}
+      name: store-backend
+{{- if and .Values.store.dev .Values.store.dev.forward_ports .Values.store.dev.local_port_to_expose }}
+      nodePort: {{ .Values.store.dev.local_port_to_expose }}
+{{- end }}
+{{- if and .Values.store.dev .Values.store.dev.forward_ports .Values.store.dev.local_port_to_expose }}
+  type: NodePort
+{{- else }}
+  type: ClusterIP
+{{- end }}

@@ -1,11 +1,7 @@
 # requirements for readthedocs generation
--r ../vantage6-common/requirements.txt
--r ../vantage6-client/requirements.txt
--r ../vantage6-algorithm-tools/requirements.txt
--r ../vantage6/requirements.txt
--r ../vantage6-node/requirements.txt
--r ../vantage6-server/requirements.txt
-sphinx==8.1.3
+# Note: This file is only used by ReadTheDocs which doesn't support pyproject.toml yet
+# For local development, use: cd docs && uv sync
+sphinx==8.2.3
 sphinx-autobuild
 sphinx-autodoc-typehints
 sphinx-click

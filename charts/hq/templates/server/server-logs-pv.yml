@@ -1,0 +1,33 @@
+{{- $global := .Values.global | default (dict) }}
+{{- if and
+ (not (lookup "v1" "PersistentVolume" "" (printf "%s-hq-logs-pv" .Release.Name)))
+ (ne (.Values.database.k8sNodeName | default $global.k8sNodeName) "")
+ (eq .Values.hq.logging.storageClass "local-storage")
+}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-hq-logs-pv
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+{{ include "vantage6.labels" . | indent 4 }}
+    type: local-logs
+    app: {{ include "vantage6.name" . }}
+spec:
+  capacity:
+    storage: {{ .Values.hq.logging.storageSize | default "128M" }}
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.hq.logging.storageClass | default "local-storage" }}
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ .Values.hq.logging.volumeHostPath  }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ .Values.database.k8sNodeName | default $global.k8sNodeName }}
+{{- end }}
