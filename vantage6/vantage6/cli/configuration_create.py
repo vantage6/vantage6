@@ -9,7 +9,6 @@ from vantage6.common.context import AppContext
 from vantage6.common.globals import (
     DEFAULT_API_PATH,
     InstanceType,
-    Ports,
 )
 
 from vantage6.cli.configuration_manager import (
@@ -44,11 +43,6 @@ def add_common_backend_config(
     """
     service_name = "hq" if instance_type == InstanceType.HQ else "store"
     backend_config = config[service_name]
-
-    backend_config["port"] = q.text(
-        f"Enter port to which the {service_name} listens:",
-        default=str(Ports.HTTPS),
-    ).unsafe_ask()
 
     backend_config["logging"] = {
         "file": f"{instance_name}-{service_name}.log",

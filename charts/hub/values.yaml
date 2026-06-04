@@ -1,27 +1,40 @@
-# Default values for the hub parent chart.
-#
-# The keys below correspond to the subchart names so that their values.yaml
-# structures can be provided from this single hub chart values file.
 hq:
   enabled: true
-  # Copy or override values from charts/hq/values.yaml here as needed.
 
 auth:
   enabled: true
-  # Copy or override values from charts/auth/values.yaml here as needed.
 
 store:
   enabled: true
-  # Copy or override values from charts/store/values.yaml here as needed.
+
+hubGateway:
+  enabled: false
+
+  hosts:
+    auth: ""
+    hq: ""
+    portal: ""
+    store: ""
+
+  tls:
+    mode: cert-manager
+
+    existingSecrets:
+      auth: ""
+      hq: ""
+      portal: ""
+      store: ""
+
+  certManager:
+    enabled: true
+    clusterIssuer: letsencrypt-prod
 
 global:
-  # Shared Keycloak configuration (used as default if subcharts don't override)
   keycloak:
     url: ""
     realm: "vantage6"
     adminClient: "backend-admin-client"
     publicClient: "public_client"
-  # Shared public URLs (used as defaults for HQ and Store)
   urls:
     external:
       auth: ""
@@ -33,13 +46,8 @@ global:
       store: ""
       ui: ""
       hq: ""
-  # Optional shared node name for local storage (logs/prometheus)
   k8sNodeName: ""
 
-  # Optional shared wait settings used by initContainers in HQ and Store
-  # when deploying via the hub chart. By default these are disabled so
-  # standalone charts are unaffected; enable them and set internal URLs
-  # to have HQ/Store wait for Auth (and HQ wait for Store).
   wait:
     auth:
       enabled: true

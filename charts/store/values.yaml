@@ -14,7 +14,13 @@ store:
   policies:
     algorithmView: public
 
-  image: harbor2.vantage6.ai/infrastructure/store:uluru
+  link_algorithms:
+    list: []
+    community: false
+    basics: false
+    demo: false
+
+  image: ghcr.io/vantage6/infrastructure/store:uluru
 
   internal:
     port: 7602

@@ -24,7 +24,7 @@ def parse_image_name(image: str) -> tuple[str, str, str]:
     Parameters
     ----------
     image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest" or
+        Image name. E.g. "ghcr.io/vantage6/algorithm/demo/average:latest" or
         "library/hello-world"
 
     Returns
@@ -54,12 +54,12 @@ def get_image_name_wo_tag(image: str) -> str:
     Parameters
     ----------
     image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/demo/average:latest"
 
     Returns
     -------
     str
-        Image name without tag. E.g. "harbor2.vantage6.ai/algorithms/average"
+        Image name without tag. E.g. "ghcr.io/vantage6/algorithm/demo/average"
     """
     registry, repository, _ = parse_image_name(image)
     if registry == "docker.io":
@@ -82,7 +82,7 @@ def _get_manifest(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/demo/average:latest"
     registry_user: str | None
         Docker username to authenticate with at the registry. Required if the image is
         private
@@ -142,8 +142,7 @@ def _get_manifest(
                     timeout=60,
                 )
 
-    # If still getting unauthorize, try with username and password. The following code
-    # was tested with private images on harbor2.vantage6.ai.
+    # If still getting unauthorize, try with username and password.
     if response.status_code == HTTPStatus.UNAUTHORIZED:
         response = requests.get(
             manifest_endpoint,
@@ -174,7 +173,7 @@ def get_digest(
     Parameters
     ----------
     full_image: str
-        Image name. E.g. "harbor2.vantage6.ai/algorithms/average:latest"
+        Image name. E.g. "ghcr.io/vantage6/algorithm/demo/average:latest"
     registry_username: str | None
         Registry username to authenticate with at the registry. Required if the image is
         private

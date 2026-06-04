@@ -302,17 +302,16 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
     socket: SocketIO
         SocketIO connection object to communicate kill instructions to node
     """
-    # Gather runs and task ids of current task and child tasks
-    child_runs = [r for child in task.children for r in child.runs]
-    all_runs = task.runs + child_runs
-
+    tasks_to_kill: list[db.Task] = [task] + list(task.children)
     kill_list = [
         {
-            "task_id": run.task_id,
+            "task_id": task_to_kill.id,
             "run_id": run.id,
             "organization_id": run.organization_id,
         }
-        for run in all_runs
+        for task_to_kill in tasks_to_kill
+        for run in task_to_kill.runs
+        if not RunStatus.has_finished(run.status)
     ]
 
     # emit socket event to the node to execute the container kills

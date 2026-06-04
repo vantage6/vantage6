@@ -338,13 +338,11 @@ Here we assume that
 -  you have a Python session with an authenticated Client object, as
    created in :ref:`authentication`.
 -  you already have the algorithm you want to run available as a
-   container in a container registry (see
-   `here <https://vantage6.discourse.group/t/developing-a-new-algorithm/31>`__
-   for more details on developing your own algorithm)
+   container in a container registry
 -  the nodes are configured to look at the right database
 
 In this manual, we'll use the averaging algorithm from
-``harbor2.vantage6.ai/demo/average``, so the second requirement is met.
+``ghcr.io/vantage6/algorithm/demo/average:latest``, so the second requirement is met.
 We'll assume the nodes in your collaboration have been configured to look as
 something like:
 
@@ -357,6 +355,7 @@ something like:
          type: csv
          volumePath: /my/local/path/to/data
          originalName: olympic_athletes_2016.csv
+         mount_mode: copy
 
 The third requirement is met when all nodes have the same labels in their
 configuration. As an end-user running the
@@ -420,7 +419,7 @@ Next, we need to extract data from a database. We can do this by creating a data
    dataframe = client.dataframe.create(
       label="olympic_athletes_db",
       method="read_csv",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average",
       arguments={},
       session=session["id"]
    )
@@ -435,7 +434,7 @@ will only work for CSV files. For a SQL database, you might want to create a tas
    dataframe = client.dataframe.create(
       label="my_database",
       method="read_sql_database",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average",
       arguments={"query": "SELECT * FROM my_table"},
       session=session["id"]
    )
@@ -455,7 +454,7 @@ on each node). Typically, the partial methods only run the node local analysis
 performs aggregation of those results as well (e.g. starts the partial
 analyses and then computes the overall average). First, let
 us create a task that runs the central part of the
-``harbor2.vantage6.ai/demo/average`` algorithm:
+``ghcr.io/vantage6/algorithm-average:latest`` algorithm:
 
 .. code:: python
 
@@ -467,7 +466,7 @@ us create a task that runs the central part of the
       collaboration=1,
       organizations=[2],
       name="an-awesome-task",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average:latest",
       description='',
       method='central_average',
       arguments=arguments,
@@ -505,7 +504,7 @@ central part of the algorithm will normally do:
       collaboration=1,
       organizations=[2,3],
       name="an-awesome-task",
-      image="harbor2.vantage6.ai/demo/average",
+      image="ghcr.io/vantage6/algorithm/demo/average:latest",
       description='',
       method='partial_average',
       arguments=arguments,

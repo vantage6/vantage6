@@ -14,7 +14,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/vantage6/vantage6/badge.svg?branch=main)](https://coveralls.io/github/vantage6/vantage6?branch=main)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2e60ac3b3f284620805f7399cba317be)](https://app.codacy.com/gh/vantage6/vantage6/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://zenodo.org/badge/492818831.svg)](https://zenodo.org/badge/latestdoi/492818831)
-[![Discord](https://img.shields.io/discord/643526403207331841)](https://discord.gg/yAyFf6Y)
 [![Research software directory](https://img.shields.io/badge/rsd-vantage6-deepskyblue)](https://research-software-directory.org/software/vantage6)
 
 </h3>
@@ -32,7 +31,10 @@
 
 This repository is contains all the **vantage6** infrastructure source code. The **vantage6** technology enables to manage and deploy privacy enhancing technologies like Federated Learning (FL) and Multi-Party Computation (MPC). Please visit our [website](https://vantage6.ai) to learn more!
 
-You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If you have any questions, suggestions or just want to chat about federated learning: join our [Discord)](https://discord.gg/yAyFf6Y) channel.
+You can find more (user) documentation at [readthedocs](https://docs.vantage6.ai). If
+you have any questions, suggestions or just want to chat about federated learning,
+please reach out on our
+[Github Discussions](https://github.com/vantage6/vantage6/discussions).
 
 ## Infrastructure overview
 
@@ -163,20 +165,20 @@ is an Angular web application that can be used to interact with the vantage6 HQ 
 ### Docker images
 
 The vantage6 infrastructure is delivered in Docker images. All Docker images are stored
-in our private [Harbor](https://goharbor.io/) registry. The most important images are:
+in the vantage6 GitHub Container Registry. The most important images are:
 
-- `harbor2.vantage6.ai/infrastructure/node:VERSION` -> _Node application Docker image_
-- `harbor2.vantage6.ai/infrastructure/hq:VERSION` -> _HQ application Docker image_
-- `harbor2.vantage6.ai/infrastructure/ui:VERSION` -> _User interface Docker image_
-- `harbor2.vantage6.ai/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
+- `ghcr.io/vantage6/infrastructure/node:VERSION` -> _Node application Docker image_
+- `ghcr.io/vantage6/infrastructure/hq:VERSION` -> _HQ application Docker image_
+- `ghcr.io/vantage6/infrastructure/ui:VERSION` -> _User interface Docker image_
+- `ghcr.io/vantage6/infrastructure/algorithm-store:VERSION` -> _Algorithm store Docker image_
 
 with `VERSION` being the full semantic version of the vantage6 infrastructure, e.g.
 `4.0.0` or `4.1.0rc0`.
 
 And finally there are some images released for algorithm development:
 
-- `harbor2.vantage6.ai/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
-- `harbor2.vantage6.ai/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-base:MAJOR.MINOR` -> _Base image for algorithm development_
+- `ghcr.io/vantage6/infrastructure/algorithm-ohdsi-base:MAJOR.MINOR` -> _Extended algorithm base image for OHDSI algorithm development_
 
 ## :gift_heart: Join the community!
 
@@ -210,7 +212,6 @@ If you are using **vantage6**, please cite this repository as well as the accomp
 
 <p align="center">
   <a href="https://vantage6.ai">vantage6.ai</a> •
-  <a href="https://discord.gg/yAyFf6Y">Discord</a> •
-  <a href="https://vantage6.discourse.group/">Discourse</a> •
+  <a href="https://github.com/vantage6/vantage6/discussions">Github Discussions</a> •
   <a href="https://docs.vantage6.ai">User documentation</a>
 </p>

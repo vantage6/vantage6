@@ -44,10 +44,13 @@ class Role(Base, RoleInterface):
     users = relationship("User", back_populates="roles", secondary="Permission")
 
     @classmethod
-    def get_by_name(cls, name: str):
+    def get_by_name(cls, name: str, is_default_role: bool | None = None):
         session = DatabaseSessionManager.get_session()
         try:
-            result = session.scalars(select(cls).filter_by(name=name)).first()
+            stmt = select(cls).filter_by(name=name)
+            if is_default_role is not None:
+                stmt = stmt.filter_by(is_default_role=is_default_role)
+            result = session.scalars(stmt).first()
             session.commit()
             return result
         except NoResultFound:

@@ -267,7 +267,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 },
                 "keycloak": {
                     "url": (
-                        f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
+                        f"http://vantage6-{self.hub_name}-user-hub-kc."
                         f"{self.k8s_config.namespace}.svc.cluster.local:"
                         f"{Ports.DEV_AUTH.value}"
                     ),

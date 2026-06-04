@@ -11,8 +11,8 @@ spec:
     - protocol: TCP
       port: {{ .Values.hq.port }}
       targetPort: {{ .Values.hq.internal.port }}
-      name: vantage6-hq-backend
-{{- if and .Values.hq.dev.forward_ports .Values.hq.dev.local_hub_port_to_expose }}
+      name: v6-hq-backend
+{{- if and .Values.hq.dev .Values.hq.dev.forward_ports .Values.hq.dev.local_hub_port_to_expose }}
       nodePort: {{ .Values.hq.dev.local_hub_port_to_expose }}
 {{- end }}
 {{- if and .Values.prometheus .Values.prometheus.enabled }}
@@ -20,11 +20,11 @@ spec:
       port: {{ .Values.prometheus.exporter_port | default 7603 }}
       targetPort: {{ .Values.prometheus.exporter_port | default 7603 }}
       name: prometheus-exporter
-  {{- if and .Values.hq.dev.forward_ports .Values.hq.dev.local_prometheus_port_to_expose }}
+  {{- if and .Values.hq.dev .Values.hq.dev.forward_ports .Values.hq.dev.local_prometheus_port_to_expose }}
       nodePort: {{ .Values.hq.dev.local_prometheus_port_to_expose }}
   {{- end }}
 {{- end }}
-{{- if and .Values.hq.dev.forward_ports .Values.hq.dev.local_hub_port_to_expose }}
+{{- if and .Values.hq.dev .Values.hq.dev.forward_ports .Values.hq.dev.local_hub_port_to_expose }}
   type: NodePort
 {{- else }}
   type: ClusterIP

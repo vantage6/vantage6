@@ -76,8 +76,8 @@ Federated implementation
     and 2) has to be able to read and write to files.
 
     However, if you use a different language you are not able to use our
-    wrapper. Reach out to us on `Discord <https://discord.gg/yAyFf6Y>`__ to
-    discuss how this works.
+    wrapper. Reach out to us on `Github Discussions <https://github.com/vantage6/vantage6/discussions>`_
+    to discuss how this works.
 
 A federated algorithm consist of two parts:
 
@@ -516,5 +516,4 @@ address (harbor2.vantage6.ai) and the project name (demo).
    docker push harbor2.vantage6.ai/demo/average
 
 .. note::
-    Reach out to us on `Discord <https://discord.gg/yAyFf6Y>`__ if you want to
-    use our registries (harbor2.vantage6.ai and harbor2.vantage6.ai).
+    Reach out to us if you want to use our registry (harbor2.vantage6.ai).

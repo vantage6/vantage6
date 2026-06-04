@@ -856,6 +856,11 @@ class Node:
         self.socketIO.emit("node_info_update", config_to_share, namespace="/tasks")
 
     def cleanup(self) -> None:
+        """
+        Cleanup the node by disconnecting from the socket, and cleaning up the k8s
+        container manager.
+        """
+        self.log.info("Cleaning up node...")
         try:
             if hasattr(self, "socketIO") and self.socketIO:
                 self.socketIO.disconnect()

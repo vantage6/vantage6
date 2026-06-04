@@ -21,5 +21,5 @@ the **[main Vantage6 README](https://github.com/vantage6/vantage6/blob/main/READ
 
 Vantage6 is a Privacy Enhancing Technology (PET) Operations platform that enables
 federated learning and multi-party computation. For more information, visit
-[vantage6.ai](https://vantage6.ai) or join our
-[Discord community](https://discord.gg/yAyFf6Y).
+[vantage6.ai](https://vantage6.ai) or view our
+[documentation](https://docs.vantage6.ai).

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib.metadata
 import logging
-import os
 import subprocess
 import sys
 import time
@@ -21,6 +20,7 @@ from vantage6.common.client.client_base import ClientBase
 from vantage6.common.encryption import DummyCryptor, RSACryptor
 from vantage6.common.enum import TaskDatabaseType
 from vantage6.common.globals import APPNAME, AuthStatus
+from vantage6.common.kubernetes.utils import running_in_wsl
 from vantage6.common.serialization import serialize
 
 from vantage6.client.filter import post_filtering
@@ -106,9 +106,8 @@ class UserClient(ClientBase):
         self.log.info(" Welcome to")
         for line in pyfiglet.figlet_format(APPNAME, font="big").split("\n"):
             self.log.info(line)
-        self.log.info(" --> Join us on Discord! https://discord.gg/rwRvwyK")
         self.log.info(" --> Docs: https://docs.vantage6.ai")
-        self.log.info(" --> Blog: https://vantage6.ai")
+        self.log.info(" --> Project website: https://vantage6.ai")
         self.log.info("-" * 60)
         self.log.info("Cite us!")
         self.log.info("If you publish your findings obtained using vantage6, ")
@@ -249,10 +248,7 @@ class UserClient(ClientBase):
         self.log.info("Opening browser for authentication...")
         try:
             # Check if we're in WSL - then use wslview to open the browser
-            if (
-                os.path.exists("/proc/version")
-                and "microsoft" in open("/proc/version").read().lower()
-            ):
+            if running_in_wsl():
                 try:
                     subprocess.run(["wslview", url_to_open], check=True)
                 except (subprocess.SubprocessError, FileNotFoundError):
@@ -2148,7 +2144,9 @@ class UserClient(ClientBase):
 
     class Run(ClientBase.SubClient):
         @post_filtering(iterable=False)
-        def get(self, id_: int, include_task: bool = False) -> dict:
+        def get(
+            self, id_: int, include_task: bool = False, decrypt_input: bool = True
+        ) -> dict:
             """View a specific run
 
             Parameters
@@ -2157,6 +2155,8 @@ class UserClient(ClientBase):
                 id of the run you want to inspect
             include_task : bool, optional
                 Whenever to include the task or not, by default False
+            decrypt_input : bool, optional
+                Whether to attempt decryption of the run input, by default True
             field: str, optional
                 Which data field to keep in the result. For instance, "field='name'"
                 will only return the name of the run. Default is None.
@@ -2170,14 +2170,13 @@ class UserClient(ClientBase):
             dict
                 Containing the run data
             """
-            self.parent.log.info("--> Attempting to decrypt results!")
-
             # get run from the API
             params = {"include": "task"} if include_task else {}
             run = self.parent.request(endpoint=f"run/{id_}", params=params)
 
-            # decrypt input arguments
-            run = self._decrypt_input_arguments(run_data=run, is_single_run=True)
+            if decrypt_input:
+                self.parent.log.info("--> Attempting to decrypt run input!")
+                run = self._decrypt_input_arguments(run_data=run, is_single_run=True)
 
             return run
 

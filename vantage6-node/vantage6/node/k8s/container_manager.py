@@ -161,7 +161,7 @@ class ContainerManager:
 
         # try to see if jobs can be created in the cluster - if not, tasks cannot be
         # created so we return False
-        test_pod_name = str(uuid.uuid4())
+        test_pod_name = "v6-test-pod-" + str(uuid.uuid4())
         try:
             self.core_api.create_namespaced_pod(
                 namespace=self.task_namespace,
@@ -980,15 +980,33 @@ class ContainerManager:
             source_database = databases_to_use[0]
             db: TaskDB = self.databases[source_database["label"]]
             if db.is_file or db.is_dir:
+                if db.mount_mode == "ro":
+                    self.log.info(
+                        f"Binding database {source_database['label']} as read-only"
+                    )
+                else:
+                    self.log.info(
+                        f"Binding database {source_database['label']} as read-write"
+                    )
                 db_volume, db_mount = self._create_run_mount(
                     volume_name=f"task-{run_io.run_id}-db-{source_database['label']}",
                     host_path=db.uri,
                     mount_path=db.local_uri,
                     type_="File" if db.is_file else "Directory",
-                    read_only=True,
+                    read_only=db.mount_mode == "ro",
                 )
                 volumes.append(db_volume)
                 vol_mounts.append(db_mount)
+
+            if db.mount_mode == "ro" and not db.is_file and not db.is_dir:
+                self.log.error(
+                    f"Database {source_database['label']} is of type {db.type} but "
+                    "mount_mode is 'ro'. This is not supported."
+                )
+                raise PermanentAlgorithmStartFail(
+                    f"Database {source_database['label']} is of type {db.type} but "
+                    "mount_mode is 'ro'. This is not supported."
+                )
 
             environment_variables[ContainerEnvNames.DATABASE_URI.value] = db.local_uri
             environment_variables[ContainerEnvNames.DATABASE_TYPE.value] = db.type
@@ -1582,7 +1600,7 @@ class ContainerManager:
         """
         if not kill_list:
             self.log.warning(
-                "Received instruction from HQ to kill all algorithms running on this "
+                "Received instruction to kill all algorithms running on this "
                 "node. Executing that now..."
             )
 

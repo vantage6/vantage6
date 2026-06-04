@@ -1,0 +1,25 @@
+{{- $hg := .Values.hubGateway | default (dict) -}}
+{{- $hosts := $hg.hosts | default (dict) -}}
+{{- $portalHost := get $hosts "portal" | default "" -}}
+{{- if and ($hg.enabled | default false) (ne (trim $portalHost) "") -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}-portal-route
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+spec:
+  parentRefs:
+    - name: {{ .Release.Name }}-gateway
+      sectionName: portal
+  hostnames:
+    - {{ $portalHost | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ .Release.Name }}-ui
+          port: 7600
+{{- end }}
+

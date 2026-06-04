@@ -13,3 +13,21 @@ Helpers for the hub parent chart.
 {{- printf "%s-%s" .Release.Name (include "hub.name" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Resolve the TLS secret name for a component Ingress/Certificate.
+Usage: {{ include "hub.tlsSecretName" (dict "ctx" . "component" "auth") }}
+*/}}
+{{- define "hub.tlsSecretName" -}}
+{{- $ctx := .ctx -}}
+{{- $component := .component -}}
+{{- $hg := $ctx.Values.hubGateway | default (dict) -}}
+{{- $tls := $hg.tls | default (dict) -}}
+{{- $existing := $tls.existingSecrets | default (dict) -}}
+{{- $override := (get $existing $component) | default "" -}}
+{{- if ne (trim $override) "" -}}
+{{- $override -}}
+{{- else -}}
+{{- printf "%s-%s-tls" $ctx.Release.Name $component -}}
+{{- end -}}
+{{- end }}

@@ -10,18 +10,25 @@ def run_kubectl_command(
     args: list[str],
     k8s_config: KubernetesConfig,
     check: bool = True,
+    use_k8s_config_namespace: bool = True,
+    input_text: str | None = None,
 ) -> subprocess.CompletedProcess:
     """
     Run a kubectl command with the appropriate context and namespace.
 
     Parameters
     ----------
-    command : list[str]
-        The kubectl command to run (without 'kubectl' prefix if already included).
+    args : list[str]
+        The kubectl arguments to run.
     k8s_config: KubernetesConfig
         Kubernetes configuration object with context and namespace.
     check : bool
         Whether to raise an exception on non-zero exit code.
+    use_k8s_config_namespace: bool
+        Whether to use the namespace from the Kubernetes configuration.
+    input_text: str | None
+        Optional stdin content to pass to kubectl (for example when using
+        ``kubectl apply -f -``).
 
     Returns
     -------
@@ -37,19 +44,17 @@ def run_kubectl_command(
     if k8s_config.context:
         command.extend(["--context", k8s_config.context])
 
-    if k8s_config.namespace:
+    if k8s_config.namespace and use_k8s_config_namespace:
         command.extend(["--namespace", k8s_config.namespace])
 
-    info(f"Running command: {' '.join(command)}")
     try:
         result = subprocess.run(
             command,
             check=check,
             capture_output=True,
             text=True,
+            input=input_text,
         )
-        if result.stdout:
-            info(result.stdout.strip())
         return result
     except subprocess.CalledProcessError as e:
         error(f"Command failed: {' '.join(command)}")

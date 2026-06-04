@@ -2,6 +2,11 @@
 
 echo "[server.sh start]"
 
+# HTTP listen port (Kubernetes / Docker set V6_PROXY_PORT; default matches image)
+HTTP_PORT="${V6_PROXY_PORT:-80}"
+# uWSGI async workers (Helm sets 1000 for cluster deployments; local default 100)
+GEVENT="${UWSGI_GEVENT:-100}"
+
 # check if environment variable is set
 if [ -z "$VANTAGE6_CONFIG_LOCATION" ]; then
     echo "VANTAGE6_CONFIG_LOCATION is not set"
@@ -11,12 +16,17 @@ fi
 
 
 # initialize the database
-python /vantage6/vantage6-hq/vantage6/hq/init_db.py "${VANTAGE6_CONFIG_LOCATION}"
+python -m vantage6.hq.init_db "${VANTAGE6_CONFIG_LOCATION}"
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "ERROR: failed to initialize HQ database" >&2
+    exit "$status"
+fi
 
 # start HQ
 exec uwsgi \
-    --http :80 \
-    --gevent 100 \
+    --http ":${HTTP_PORT}" \
+    --gevent "${GEVENT}" \
     --http-websockets \
     --http-chunked-input \
     --http-keepalive \

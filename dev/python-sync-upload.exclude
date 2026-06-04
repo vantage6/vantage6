@@ -1,0 +1,6 @@
+# Paths excluded from local -> container sync (gitignore syntax, relative to each sync path).
+# Referenced from devspace.yaml as ../dev/python-sync-upload.exclude (from package dirs).
+# Local .venv symlinks break DevSpace untar in the pod; containers use image Python deps.
+.venv/
+venv/
+__pycache__/

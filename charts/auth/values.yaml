@@ -5,6 +5,13 @@ keycloak:
   instances: 1
   hostname: ""
 
+  behindGateway:
+    enabled: false
+    proxyHeaders: xforwarded
+    httpPort: 7680
+
+  # note that dependent on the production setting, the users and secrets that are
+  # set are different - for non-production, they are set to simple, non-secure values.
   production: true
   tls:
     enabled: true

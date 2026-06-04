@@ -53,12 +53,12 @@ offers a number of options to deploy the UI code directly without container
 technology.
 
 Finally, note that kubernetes uses the Docker image
-`harbor2.vantage6.ai/infrastructure/ui` to run the UI. One could also run the UI
+`ghcr.io/vantage6/infrastructure/ui` to run the UI. One could also run the UI
 with a command such as:
 
 ```
 docker run --env HQ_URL="<your_url>" --env API_PATH="<your_path>" \
-  -p 8888:80 harbor2.vantage6.ai/infrastructure/ui:uluru
+  -p 8888:80 ghcr.io/vantage6/infrastructure/ui:uluru
 ```
 
 This is recommended for v4 deployments, but no longer in v5. Please checkout

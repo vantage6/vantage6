@@ -11,7 +11,7 @@ node:
   apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
   # The image to use for the node.
-  image: harbor2.vantage6.ai/infrastructure/node:latest
+  image: ghcr.io/vantage6/infrastructure/node:latest
 
   # Node image pull policy. Possible values are: Always (default), IfNotPresent, Never
   imagePullPolicy: Always
@@ -71,6 +71,14 @@ node:
       type: csv
       volumePath: /my/local/path/to/data
       originalName: olympic_athletes_2016.csv
+      # OPTIONAL: controls how file/folder databases are exposed to algorithm
+      # containers.
+      # - copy (default): copy file data into the node data volume
+      # - ro: bind-mount host path read-only into algorithm containers
+      # NOTE: For now, `ro` has tested support for Linux hosts only. On
+      # Windows/macOS hosts, use `copy` (default).
+      # Use `ro` only for file/folder-backed data sources.
+      mount_mode: copy
     # Service-based databases - these are databases that are running on the node
     # machine. They will be accessed using the URI.
     serviceBased:
@@ -118,7 +126,7 @@ node:
     # expected to be a valid regular expression. It's important to set this policy when
     # using sensitive data to control which algorithms are allowed to run on the node.
     allowed_algorithms:
-      - ^harbor2\.vantage6\.ai/[a-zA-Z]+/[a-zA-Z]+
+      - ^ghcr\.io/vantage6/algorithm/[a-zA-Z]+/[a-zA-Z]+$
       - ^myalgorithm\.ai/some-algorithm
 
     # It is also possible to allow all algorithms from a particular algorithm store. Set

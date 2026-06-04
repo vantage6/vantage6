@@ -167,9 +167,13 @@ class Vantage6App:
         # let us handle exceptions
         self.app.config["PROPAGATE_EXCEPTIONS"] = True
 
-        # set JWT algorithms that keycloak uses
+        # JWT algorithms Keycloak may use for realm access tokens (same RSA key
+        # can sign RS256/RS384/RS512). Restricting to RS256 alone breaks when the
+        # realm is configured for a stronger RSA variant.
         self.app.config["JWT_ALGORITHM"] = "RS256"
-        self.app.config["JWT_DECODE_ALGORITHMS"] = ["RS256"]
+        self.app.config["JWT_DECODE_ALGORITHMS"] = self.ctx.config.get(
+            "jwt_decode_algorithms", ["RS256", "RS384", "RS512"]
+        )
         # Leeway is provided for the token IAT to prevent errors that token is not yet
         # valid, which can happen if server times are drifting slightly.
         self.app.config["JWT_DECODE_LEEWAY"] = self.ctx.config.get(
@@ -336,11 +340,24 @@ class Vantage6App:
                 )
                 new_role.save()
             else:
-                current_role = db.Role.get_by_name(role["name"])
-                # check that the rules are the same. Use set() to compare without order
-                if set(current_role.rules) != set(role["rules"]):
-                    log.warning("Updating default role %s with new rules", role["name"])
+                current_role = db.Role.get_by_name(role["name"], is_default_role=True)
+                if not current_role:
+                    log.warning(
+                        "'%s' is a default (built-in) role name. "
+                        "A role by that name is already present in the database. "
+                        "Will skip creating the default role by the same name.",
+                        role["name"],
+                    )
+                    continue
+                # Check whether any default role properties changed. Use set()
+                # to compare rules without relying on their order.
+                has_rule_changes = set(current_role.rules) != set(role["rules"])
+                has_description_change = current_role.description != role["description"]
+
+                if has_rule_changes or has_description_change:
+                    log.warning("Updating default role %s...", role["name"])
                     current_role.rules = role["rules"]
+                    current_role.description = role["description"]
                     current_role.save()
 
     def _add_keycloak_id_to_super_user(self, super_user: BaseModelBase) -> None:
@@ -354,12 +371,14 @@ class Vantage6App:
             log.error("This means that you cannot login as this user")
             log.exception(exc)
 
-        # Also sync the organization ID of the super user in keycloak
-        self._set_organization_id_in_keycloak(
-            super_user.keycloak_id,
-            super_user.organization_id,
-            super_user.username,
-        )
+        # Also sync the organization ID of the super user in keycloak. Only do that
+        # for HQ (where organization_id is defined), not for the algorithm store.
+        if super_user.organization_id:
+            self._set_organization_id_in_keycloak(
+                super_user.keycloak_id,
+                super_user.organization_id,
+                super_user.username,
+            )
 
     def _set_organization_id_in_keycloak(
         self, keycloak_id: str, organization_id: int, username: str
@@ -377,14 +396,17 @@ class Vantage6App:
             The username (for logging purposes)
         """
         try:
+            # note that we get the full user payload from Keycloak and update the
+            # organization ID attribute. If we would only update that attribute,
+            # other user profile fields (e.g. email, name) are cleared by Keycloak.
             keycloak_admin = get_keycloak_admin_client()
+            payload = keycloak_admin.get_user(keycloak_id)
+            payload_attributes = payload.get("attributes", {}) or {}
+            payload_attributes["organization_id"] = [str(organization_id)]
+            payload["attributes"] = payload_attributes
             keycloak_admin.update_user(
                 user_id=keycloak_id,
-                payload={
-                    "attributes": {
-                        "organization_id": [str(organization_id)],
-                    }
-                },
+                payload=payload,
             )
             log.debug(
                 "Set organization_id=%s for user %s in Keycloak",

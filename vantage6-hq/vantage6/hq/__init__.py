@@ -9,6 +9,8 @@ import os
 
 from gevent import monkey
 
+from vantage6.backend.common.globals import RequiredBackendEnvVars
+
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -51,7 +53,6 @@ from vantage6.hq.globals import (
     HQ_MODULE_NAME,
     RESOURCES,
     RESOURCES_PATH,
-    SUPER_USER_INFO,
 )
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.permission import PermissionManager
@@ -222,6 +223,12 @@ class HQApp(Vantage6App):
             "jwt_secret_key", str(uuid.uuid4())
         )
 
+        # PyJWT 2.10+ enforces that `sub` is a string. Vantage6 historically
+        # used non-string subjects (e.g. ints and container dicts), which
+        # breaks protected endpoints after the PyJWT bump.
+        # Disabling this validation keeps compatibility
+        self.app.config["JWT_VERIFY_SUB"] = False
+
     def configure_api(self) -> None:
         """Define global API output and its structure."""
         self._configure_api_base(HATEOASModelSchema, db.Base)
@@ -323,7 +330,9 @@ class HQApp(Vantage6App):
 
         # Ensure root user and organization exist
         try:
-            admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
+            admin_user = db.User.get_by_username(
+                os.environ.get(RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value)
+            )
         except NoResultFound:
             log.warning("No root user found! Is this the first run?")
             admin_user = self._create_super_user()
@@ -341,10 +350,16 @@ class HQApp(Vantage6App):
 
         This method is used when HQ is started for the first time.
         """
+        root_username = os.environ.get(
+            RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value
+        )
+        if not root_username:
+            raise Exception("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
+
         # sanity check, this function should never be called in any other
         # context than the first run of HQ
         try:
-            db.User.get_by_username(SUPER_USER_INFO["username"])
+            db.User.get_by_username(root_username)
             raise Exception("Attempted to create super user when it already existed!")
         except NoResultFound:
             pass
@@ -357,14 +372,8 @@ class HQApp(Vantage6App):
 
         root = db.Role.get_by_name(DefaultRole.ROOT.value)
 
-        # TODO no longer use any default root username / password
-        log.warning(
-            f"Creating super user ({SUPER_USER_INFO['username']})"
-            " with default password!"
-        )
-
         user = db.User(
-            username=SUPER_USER_INFO["username"],
+            username=root_username,
             roles=[root],
             organization=org,
         )

@@ -51,7 +51,7 @@ the following steps to test a release:
 1. *Create a release candidate*. This process is the same as creating
    the :ref:`actual release <create-release>`, except that the candidate has
    a 'pre' tag (e.g. ``1.2.3rc1`` for release candidate number 1 of version
-   1.2.3). Note that for an RC, no notifications are sent to Discord.
+   1.2.3).
 2. *Install the release*. The release should be tested from a clean environment.
 
 .. code:: bash
@@ -66,10 +66,10 @@ the following steps to test a release:
 .. code:: bash
 
     v6 sandbox new \
-        --hq-image harbor2.vantage6.ai/infrastructure/hq:<version> \
-        --ui-image harbor2.vantage6.ai/infrastructure/ui:<version> \
-        --node-image harbor2.vantage6.ai/infrastructure/node:<version> \
-        --store-image harbor2.vantage6.ai/infrastructure/algorithm-store:<version>
+        --hq-image ghcr.io/vantage6/infrastructure/hq:<version> \
+        --ui-image ghcr.io/vantage6/infrastructure/ui:<version> \
+        --node-image ghcr.io/vantage6/infrastructure/node:<version> \
+        --store-image ghcr.io/vantage6/infrastructure/algorithm-store:<version>
 
 4. *Test code changes*. Go through all issues that are part of the new release
    and test if they work as intended.
@@ -145,12 +145,9 @@ The release pipeline executes the following steps:
    the process it stopped.
 2. Update the version in the repository code to the version specified in the
    tag and commit this back to the main branch.
-3. Build and push the Docker images and Helm charts to `harbor2.vantage6.ai
-   <https://harbor2.vantage6.ai>`_.
+3. Build and push the Docker images and Helm charts to ``ghcr.io/vantage6``.
 4. Create a Github release with the version number and the release notes.
 5. Upload the package to PyPi.
-6. Post a message in Discord to alert the community of the new release. This
-   is skipped if the version is a pre-release.
 
 .. note::
 
@@ -158,7 +155,7 @@ The release pipeline executes the following steps:
     at the same time, with the same version number.
 
 The release pipeline uses a number of environment variables to, for instance,
-authenticate to PyPi and Discord. These variables are listed and explained
+to authenticate to PyPi. These variables are listed and explained
 in the table below.
 
 .. list-table:: Environment variables
@@ -179,14 +176,11 @@ in the table below.
      - Token from coveralls to post the test coverage stats.
    * - ``DOCKER_TOKEN``
      - Token used together ``DOCKER_USERNAME`` to upload the container images
-       to our `<https://harbor2.vantage6.ai>`_.
+       to ``ghcr.io/vantage6/infrastructure``.
    * - ``DOCKER_USERNAME``
      - See ``DOCKER_TOKEN``.
    * - ``PYPI_TOKEN``
      - Token used to upload the Python packages to PyPi.
-   * - ``DISCORD_RELEASE_TOKEN``
-     - Token to post a message to the Discord community when a new release is
-       published.
 
 .. _release-strategy:
 
@@ -220,6 +214,13 @@ for distributing the upgrades. These are the following:
 | troltunga     | ``1.x.x`` release      |
 +---------------+------------------------+
 
+Docker images can be pulled manually with e.g.
+
+::
+
+  docker pull ghcr.io/vantage6/infrastructure/server:cotopaxi
+  docker pull ghcr.io/vantage6/infrastructure/node:3.1.0
+
 
 Post-release checks
 -------------------
@@ -230,7 +231,7 @@ updated upon new releases, as is for instance the case for the Uluru community s
 
 For Uluru, the following checks may be performed:
 
-- Check that harbor2.vantage6.ai has updated images, e.g. ``hq:uluru``,
+- Check that ghcr.io/vantage6 has updated images, e.g. ``hq:uluru``,
   ``hq:uluru-live`` and ``node:uluru``.
 - Check if the (live) hub version is updated. Go to:
   https://uluru.vantage6.ai/version. Check logs if it is not updated.

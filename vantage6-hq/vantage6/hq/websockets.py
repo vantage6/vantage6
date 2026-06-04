@@ -49,7 +49,7 @@ class DefaultSocketNamespace(Namespace):
             )
         return session.type == "node"
 
-    def on_connect(self) -> None:
+    def on_connect(self, _auth: dict | None = None) -> None:
         """
         A new incoming connection request from a client.
 
@@ -60,6 +60,12 @@ class DefaultSocketNamespace(Namespace):
 
         Nodes that are connecting are also set to status 'online'.
 
+        Parameters
+        ----------
+        _auth
+            Optional auth payload from the Socket.IO client (Flask-SocketIO 5.x
+            passes this on ``connect``). This is not used in this implementation but
+            required to prevent errors in calling this code.
 
         Note
         ----

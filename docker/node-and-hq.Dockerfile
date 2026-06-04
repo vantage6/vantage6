@@ -2,8 +2,8 @@
 #
 # IMAGES
 # ------
-# * harbor2.vantage6.ai/infrastructure/node:x.x.x
-# * harbor2.vantage6.ai/infrastructure/hq:x.x.x
+# * ghcr.io/vantage6/infrastructure/node:x.x.x
+# * ghcr.io/vantage6/infrastructure/hq:x.x.x
 #
 ARG TAG=latest
 ARG BASE=5.0
@@ -16,7 +16,8 @@ LABEL maintainer="Frank Martin <f.martin@iknl.nl>"
 # libdev is needed for arm compilation
 RUN apt-get update \
     && apt-get install --no-install-recommends -y gcc python3-dev libffi-dev \
-    && apt-get upgrade -y
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Fix DB issue
 RUN pip install psycopg2-binary
@@ -38,7 +39,9 @@ RUN uv pip install --system -e vantage6-node
 
 # Overwrite uWSGI installation from the requirements.txt
 # Install uWSGI from source (for RabbitMQ)
-RUN apt-get install --no-install-recommends --no-install-suggests -y libssl-dev
+RUN apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 RUN CFLAGS="-I/usr/local/opt/openssl/include" \
   LDFLAGS="-L/usr/local/opt/openssl/lib" \
   UWSGI_PROFILE_OVERRIDE=ssl=true \

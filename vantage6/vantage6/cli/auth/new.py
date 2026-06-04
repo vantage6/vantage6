@@ -24,7 +24,7 @@ def auth_configuration_questionaire(
     name: str,
     k8s_cfg: KubernetesConfig,
     credentials: dict[AuthCredentials, Any],
-    includ_global_auth_settings: bool = True,
+    include_global_auth_settings: bool = True,
 ) -> tuple[dict[str, Any]]:
     """
     Kubernetes-specific questionnaire to generate Helm values for the Keycloak helm
@@ -39,7 +39,7 @@ def auth_configuration_questionaire(
     credentials: dict[AuthCredentials, Any]
         Dictionary with the credentials for the authentication service. This will be
         updated with the new credentials.
-    includ_global_auth_settings: bool
+    include_global_auth_settings: bool
         Whether to include the global authentication settings. May be set to False
         if we are using the hub chart.
 
@@ -56,7 +56,7 @@ def auth_configuration_questionaire(
 
     config = _add_keycloak_admin_secret(config, name, k8s_cfg, credentials)
 
-    if includ_global_auth_settings:
+    if include_global_auth_settings:
         config["keycloak"].update(global_auth_settings_questionaire())
 
     # Add SMTP configuration if requested
@@ -184,20 +184,26 @@ def _add_smtp_config(config: dict) -> dict:
         default=smtp_config["user"] if smtp_config["user"] else "noreply@vantage6.ai",
     ).unsafe_ask()
 
-    smtp_config["fromDisplayName"] = q.text(
+    from_display_name = q.text(
         "Display name used in the 'From' header (optional, press Enter to skip):",
         default="",
     ).unsafe_ask()
+    if from_display_name:
+        smtp_config["fromDisplayName"] = from_display_name
 
-    smtp_config["replyTo"] = q.text(
+    reply_to = q.text(
         "Reply-to email address (optional, press Enter to skip):",
         default="",
     ).unsafe_ask()
+    if reply_to:
+        smtp_config["replyTo"] = reply_to
 
-    smtp_config["replyToDisplayName"] = q.text(
+    reply_to_display_name = q.text(
         "Reply-to display name (optional, press Enter to skip):",
         default="",
     ).unsafe_ask()
+    if reply_to_display_name:
+        smtp_config["replyToDisplayName"] = reply_to_display_name
 
     config["keycloak"]["smtpServer"] = smtp_config
 

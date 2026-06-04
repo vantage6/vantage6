@@ -25,9 +25,12 @@ class NodeCLITest(unittest.TestCase):
     def setUpClass(cls):
         return super().setUpClass()
 
+    @patch("vantage6.cli.common.list.running_in_wsl", return_value=False)
     @patch("vantage6.cli.context.node.NodeContext.available_configurations")
     @patch("vantage6.cli.common.list.find_running_service_names")
-    def test_list(self, find_running_service_names, available_configurations):
+    def test_list(
+        self, find_running_service_names, available_configurations, _running_in_wsl
+    ):
         """A container list and their current status."""
         # https://docs.python.org/3/library/unittest.mock.html#mock-names-and-the-name-attribute
 

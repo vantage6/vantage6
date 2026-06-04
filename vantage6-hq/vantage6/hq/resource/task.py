@@ -490,7 +490,7 @@ class Tasks(TaskBase):
 
         if "database" in args:
             q = q.join(db.TaskDatabase).filter(
-                db.TaskDatabase.database == args["database"]
+                db.TaskDatabase.label == args["database"]
             )
 
         if "is_user_created" in args:

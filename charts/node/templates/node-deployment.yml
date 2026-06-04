@@ -26,7 +26,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
       - name: vantage6-node
-        image: {{ .Values.node.image | default "harbor2.vantage6.ai/infrastructure/node:uluru" }}
+        image: {{ .Values.node.image | default "ghcr.io/vantage6/infrastructure/node:uluru" }}
         imagePullPolicy: {{ .Values.node.imagePullPolicy | default "Always" }}
         env:
         - name: V6_PROXY_PORT
@@ -44,14 +44,20 @@ spec:
         volumeMounts:
         - name: task-files-root
           mountPath: /app/tasks
+        # Single-file mount (like Docker: `/mnt/config/<name>.yaml` only), not whole dir
         - name: config-volume
-          mountPath: /app/config
+          mountPath: /app/config/config.yml
+          subPath: config.yml
+          readOnly: true
         - name: node-logs
           mountPath: /mnt/log
         {{- range .Values.node.databases.fileBased }}
         - name: database-volume-{{ .name }}
           mountPath: /app/databases/{{ .name }}.{{ .type }}
           subPath: {{ .originalName }}
+          {{- if eq (default "copy" .mount_mode) "ro" }}
+          readOnly: true
+          {{- end }}
         {{- end }}
       volumes:
       - name: task-files-root

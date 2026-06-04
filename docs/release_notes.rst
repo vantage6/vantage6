@@ -37,6 +37,10 @@ more details regarding the lower-level changes required to accomplish it.*
   - New 'update image' button in the UI to update the image of an algorithm in an
     algorithm store without changing other algorithm metadata
     (`Issue#2394 <https://github.com/vantage6/vantage6/issues/2394>`_).
+  - Algorithm stores can add algorithms from URLs on initialization using the
+    ``link_algorithms`` configuration. Optional presets (``community``, ``basics``,
+    ``demo``) are available to add community, basics, and demo algorithms to the store
+    (`PR#2614 <https://github.com/vantage6/vantage6/pull/2614>`_).
 
 - **Change**
 
@@ -76,6 +80,106 @@ more details regarding the lower-level changes required to accomplish it.*
   - Prevent issues in database initialization due to racing conditions when there
     are multiple concurrent services start at the same time
     (`PR#2510 <https://github.com/vantage6/vantage6/pull/2510>`_).
+
+4.15.1
+------
+
+*19 May 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: mistune, urllib3, and
+    various UI dependencies (`PR#2608 <https://github.com/vantage6/vantage6/pull/2608>`_).
+
+- **Change**
+
+  - Update community algorithm store to use the v4 branch instead of the main branch.
+    This is to ensure v4 will still work when v5 is released.
+    (`PR#2607 <https://github.com/vantage6/vantage6/pull/2607>`_).
+
+4.15.0
+------
+
+*11 May 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: Flask, requests, werkzeug,
+    cryptography, copier, pygments, and various UI dependencies
+    (`PR#2591 <https://github.com/vantage6/vantage6/pull/2591>`_).
+
+- **Feature**
+
+  - Allow building docker images for a private docker registry
+    (`PR#2590 <https://github.com/vantage6/vantage6/pull/2590>`_).
+  - Add community algorithms to the algorithm store by default (`PR#2596
+    <https://github.com/vantage6/vantage6/pull/2596>`_).
+
+- **Change**
+
+  - Change the default docker registry to ghcr.io/vantage6, since harbor2.vantage6.ai
+    was taken offline (`PR#2587 <https://github.com/vantage6/vantage6/pull/2587>`_).
+  - Allow null values for optional function argument fields in the algorithm store
+    (`PR#2596 <https://github.com/vantage6/vantage6/pull/2596>`_).
+
+4.14.0
+------
+
+*24 March 2026*
+
+- **Security**
+
+  - Update PyJWT and several UI dependencies to fix security vulnerabilities (`PR#2555
+    <https://github.com/vantage6/vantage6/pull/2555>`_).
+
+- **Feature**
+
+  - Add experimental run context feature
+    (`PR#2541 <https://github.com/vantage6/vantage6/pull/2541>`_,
+    `PR#2552 <https://github.com/vantage6/vantage6/pull/2552>`_).
+  - Add read-only bind-mount database mount mode for nodes
+    (`Issue#2532 <https://github.com/vantage6/vantage6/issues/2532>`_,
+    `PR#2537 <https://github.com/vantage6/vantage6/pull/2537>`_).
+
+- **Change**
+
+  - Skip VPN helper container when VPN is inactive
+    (`Issue#2506 <https://github.com/vantage6/vantage6/issues/2506>`_,
+    `PR#2507 <https://github.com/vantage6/vantage6/pull/2507>`_).
+  - Preserve log ownership and avoid ``--config`` logging side effects
+    (`Issue#1551 <https://github.com/vantage6/vantage6/issues/1551>`_,
+    `PR#2511 <https://github.com/vantage6/vantage6/pull/2511>`_).
+  - Remove task execution permissions for Organization Admin role
+    (`Issue#2312 <https://github.com/vantage6/vantage6/issues/2312>`_,
+    `PR#2513 <https://github.com/vantage6/vantage6/pull/2513>`_).
+  - Allow skipping input decryption in ``UserClient.Run.get()``
+    (`Issue#2549 <https://github.com/vantage6/vantage6/issues/2549>`_,
+    `PR#2550 <https://github.com/vantage6/vantage6/pull/2550>`_).
+
+- **Bugfix**
+
+  - Fix algorithm client result pagination loop
+    (`Issue#2516 <https://github.com/vantage6/vantage6/issues/2516>`_,
+    `PR#2517 <https://github.com/vantage6/vantage6/pull/2517>`_).
+  - Fail pending sibling runs immediately when run fails (`PR#2529
+    <https://github.com/vantage6/vantage6/pull/2529>`_).
+  - Kill all child runs on task kill (`Issue#2519
+    <https://github.com/vantage6/vantage6/issues/2519>`_,
+    `PR#2520 <https://github.com/vantage6/vantage6/pull/2520>`_).
+  - Explicit ordering for task databases to prevent unpredictable results
+    (`Issue#2383 <https://github.com/vantage6/vantage6/issues/2383>`_,
+    `PR#2531 <https://github.com/vantage6/vantage6/pull/2531>`_).
+
+
+4.13.7
+------
+
+*17 February 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities: cryptography, cffi and
+    various UI dependencies (`PR#2502 <https://github.com/vantage6/vantage6/pull/2502>`_).
 
 4.13.6
 ------

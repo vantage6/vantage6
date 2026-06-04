@@ -1,10 +1,12 @@
 from typing import Any
+from urllib.parse import urlparse
 
 import click
 import questionary as q
 import yaml
+from colorama import Fore, Style
 
-from vantage6.common import info
+from vantage6.common import error, info
 from vantage6.common.globals import (
     InstanceType,
     Ports,
@@ -16,6 +18,7 @@ from vantage6.cli.auth.new import (
     global_auth_settings_questionaire,
 )
 from vantage6.cli.common.new import new
+from vantage6.cli.context.hub import HubContext
 from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS
 from vantage6.cli.hq.new import hq_configuration_questionaire
 from vantage6.cli.hub.utils.enum import AuthCredentials
@@ -60,6 +63,11 @@ def cli_hub_new(
     and Prometheus.
     """
     name = prompt_config_name(name)
+
+    if HubContext.config_exists(name, system_folders):
+        error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
+        exit(1)
+
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
 
     # get basic general configuration (e.g. URLs for the services)
@@ -72,12 +80,29 @@ def cli_hub_new(
     info("Now, let's setup the authentication service...")
     auth_name = f"{name}-auth"
     auth_credentials = {}
+    extra_config = {
+        "keycloak": {
+            # Keycloak is exposed via a Gateway (TLS terminated at the Gateway)
+            "behindGateway": {
+                "enabled": True,
+                "proxyHeaders": "xforwarded",
+                "httpPort": 7680,
+            },
+            "hostname": base_config["auth_url"],
+            "publicClient": {
+                "redirectUris": [
+                    f"{base_config['ui_url']}",
+                ],
+            },
+        }
+    }
     auth_config = new(
         config_producing_func=auth_configuration_questionaire,
-        config_producing_func_args=(auth_name, k8s_cfg, auth_credentials),
+        config_producing_func_args=(auth_name, k8s_cfg, auth_credentials, False),
         name=auth_name,
         system_folders=system_folders,
         type_=InstanceType.AUTH,
+        extra_config=extra_config,
         save_config_file=False,
     )
 
@@ -91,6 +116,17 @@ def cli_hub_new(
             },
         },
     }
+    if base_config["has_store"]:
+        extra_config["hq"]["algorithm_stores"] = [
+            {
+                "name": base_config["store_name"],
+                "url": base_config["store_url"],
+                "api_path": "/store",
+            }
+        ]
+        extra_config["ui"] = {
+            "communityStoreApiPath": "/store",
+        }
     hq_config = new(
         config_producing_func=hq_configuration_questionaire,
         config_producing_func_args=(hq_name, system_folders),
@@ -111,7 +147,8 @@ def cli_hub_new(
             "store": {
                 "logging": {
                     "level": base_config["log_level"],
-                }
+                },
+                "api_path": "/store",
             }
         }
         if auth_config_dict.get("keycloak", {}).get("smtpServer") is not None:
@@ -187,28 +224,29 @@ def _get_base_config() -> dict[str, Any]:
     ).unsafe_ask()
     if k8s_node_name != no_local_storage:
         base_config["k8sNodeName"] = k8s_node_name
-    base_config["hq_url"] = q.text(
-        "On what address will the HQ be reachable?",
-        default="https://hq.vantage6.ai",
+    info("We need you to provide a domain where you will deploy the hub services.")
+    info("For instance, the domain 'example.com' will lead to the following URLs:")
+    info("Authentication:  https://auth.example.com")
+    info("HQ:              https://hq.example.com")
+    info("UI:              https://portal.example.com")
+    info("Algorithm store: https://store.example.com")
+    url_domain = q.text(
+        "On what domain will the services be reachable?",
+        default="vantage6.ai",
     ).unsafe_ask()
-    base_config["auth_url"] = q.text(
-        "On what address will the auth service be reachable?",
-        default="https://auth.vantage6.ai",
-    ).unsafe_ask()
-
-    base_config["ui_url"] = q.text(
-        "On what address will the UI be reachable?",
-        default="https://ui.vantage6.ai",
-    ).unsafe_ask()
-
+    base_config["hq_url"] = f"https://hq.{url_domain}"
+    base_config["auth_url"] = f"https://auth.{url_domain}"
+    base_config["ui_url"] = f"https://portal.{url_domain}"
     base_config["has_store"] = q.confirm(
         "Do you want to use an algorithm store?",
         default=True,
     ).unsafe_ask()
     if base_config["has_store"]:
-        base_config["store_url"] = q.text(
-            "On what address will the algorithm store be reachable?",
-            default="https://store.vantage6.ai",
+        base_config["store_url"] = f"https://store.{url_domain}"
+        base_config["store_name"] = q.text(
+            "What is the name of the algorithm store?",
+            default="",
+            validate=lambda x: x != "",
         ).unsafe_ask()
     base_config["log_level"] = q.select(
         "What is the log level for the algorithm store?",
@@ -240,16 +278,22 @@ def _create_hub_config(
     dict[str, Any]
         The hub configuration.
     """
+
+    def _hostname_from_url(url: str) -> str:
+        parsed = urlparse(url)
+        return parsed.hostname or ""
+
     urls = {
         "external": {
             "auth": base_config["auth_url"],
-            "store": base_config["store_url"],
+            "store": base_config.get("store_url", ""),
+            # The UI is typically exposed on portal.<domain>
             "ui": base_config["ui_url"],
             "hq": base_config["hq_url"],
         },
         "internal": {
             "auth": (
-                f"http://vantage6-{name}-user-hub-kc-nodeport.{k8s_cfg.namespace}.svc"
+                f"http://vantage6-{name}-user-hub-kc-service.{k8s_cfg.namespace}.svc"
                 f".cluster.local:{Ports.DEV_AUTH.value}"
             ),
             "store": (
@@ -267,15 +311,39 @@ def _create_hub_config(
         },
     }
 
+    hub_gateway = {
+        "enabled": True,
+        "hosts": {
+            "auth": _hostname_from_url(urls["external"]["auth"]),
+            "hq": _hostname_from_url(urls["external"]["hq"]),
+            "portal": _hostname_from_url(urls["external"]["ui"]),
+            "store": _hostname_from_url(urls["external"]["store"]),
+        },
+        "tls": {
+            "mode": "cert-manager",
+            "existingSecrets": {
+                "auth": "",
+                "hq": "",
+                "portal": "",
+                "store": "",
+            },
+        },
+        "certManager": {
+            "enabled": True,
+            "clusterIssuer": "letsencrypt-prod",
+        },
+    }
+
     keycloak = {
         "url": urls["external"]["auth"],
     } | global_auth_settings_questionaire()
 
     global_config = {
+        "hubGateway": hub_gateway,
         "urls": urls,
         "keycloak": keycloak,
     }
-    if base_config["k8sNodeName"] is not None:
+    if base_config.get("k8sNodeName") is not None:
         global_config["k8sNodeName"] = base_config["k8sNodeName"]
     return global_config
 

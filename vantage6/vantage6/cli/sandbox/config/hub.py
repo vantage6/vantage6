@@ -95,7 +95,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             # names and ports created by the hub Helm chart.
             "internal": {
                 "auth": (
-                    f"http://vantage6-{self.hub_name}-user-hub-kc-nodeport."
+                    f"http://vantage6-{self.hub_name}-user-hub-kc-service."
                     f"{self.k8s_config.namespace}.svc.cluster.local:"
                     f"{Ports.DEV_AUTH.value}"
                 ),
@@ -198,9 +198,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 "internal": {
                     "port": Ports.SANDBOX_HQ.value,
                 },
-                "image": (
-                    self.hq_image or "harbor2.vantage6.ai/infrastructure/hq:uluru"
-                ),
+                "image": (self.hq_image or "ghcr.io/vantage6/infrastructure/hq:uluru"),
                 "algorithm_stores": [
                     {
                         "name": "Local store",
@@ -244,9 +242,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             ),
             "ui": {
                 "port": Ports.SANDBOX_UI.value,
-                "image": (
-                    self.ui_image or "harbor2.vantage6.ai/infrastructure/ui:uluru"
-                ),
+                "image": (self.ui_image or "ghcr.io/vantage6/infrastructure/ui:uluru"),
             },
             "prometheus": prometheus_config,
         }
@@ -326,7 +322,7 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                 },
                 "image": (
                     self.store_image
-                    or "harbor2.vantage6.ai/infrastructure/algorithm-store:uluru"
+                    or "ghcr.io/vantage6/infrastructure/algorithm-store:uluru"
                 ),
                 "policies": {
                     "allowLocalhost": True,
@@ -342,6 +338,12 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
                     "review_own_algorithm": True,
                     "forward_ports": True,
                     "local_port_to_expose": Ports.SANDBOX_ALGO_STORE.value,
+                },
+                "link_algorithms": {
+                    "list": [],
+                    "community": True,
+                    "basics": True,
+                    "demo": True,
                 },
             },
             "database": (
@@ -404,9 +406,15 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
             "keycloak": {
                 "production": False,
                 "passwordUpdateRequired": False,
-                "redirectUris": [
-                    f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
-                ],
+                "publicClient": {
+                    "redirectUris": [
+                        f"{HTTP_LOCALHOST}:{Ports.SANDBOX_UI.value}",
+                    ],
+                },
+                "dev": {
+                    "forward_ports": True,
+                    "local_auth_port_to_expose": Ports.SANDBOX_AUTH.value,
+                },
             },
             "database": database_config,
         }
