@@ -176,6 +176,7 @@ ui-image:
 		$(if ${_condition_push},--push .,.)
 
 rebuild:
+	-rm -rf dist
 	@echo "------------------------------------"
 	@echo "         BUILDING PROJECT           "
 	@echo "------------------------------------"
@@ -213,14 +214,8 @@ rebuild:
 	cd vantage6-algorithm-store && make rebuild
 
 publish:
-	cd vantage6-common && make publish
-	cd vantage6-client && make publish
-	cd vantage6-algorithm-tools && make publish
-	cd vantage6 && make publish
-	cd vantage6-node && make publish
-	cd vantage6-backend-common && make publish
-	cd vantage6-hq && make publish
-	cd vantage6-algorithm-store && make publish
+	# uv workspace builds write artifacts to the root dist/ directory
+	twine upload --repository pypi dist/*
 
 # Default test subpackages if none specified
 TEST_SUBPACKAGES ?= common,cli,algorithm-store,hq,algorithm-tools
