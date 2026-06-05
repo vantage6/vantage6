@@ -1,6 +1,22 @@
 Release notes
 =============
 
+5.0.1
+-----
+
+*05 June 2026*
+
+- **Security**
+
+  - Update dependencies to fix security vulnerabilities
+    (`PR#2619 <https://github.com/vantage6/vantage6/pull/2619>`_).
+
+- **Change**
+
+  - Modify way in which dependencies are updated. Before, dependency updates of
+    sub-packages were difficult to forward to the uv.lock file. This is now improved
+    (`PR#2619 <https://github.com/vantage6/vantage6/pull/2619>`_).
+
 5.0.0
 -----
 
