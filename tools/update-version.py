@@ -332,8 +332,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
 
     for chart_file in chart_files:
         if not chart_file.exists():
-            print(f"Skipping missing chart: {chart_file}")
-            continue
+            raise Exception(f"Skipping missing chart: {chart_file}")
         print(f"Updating version in {chart_file}")
         with open(chart_file, "r", encoding="utf-8") as f:
             content = f.read()
