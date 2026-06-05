@@ -4,7 +4,7 @@ Release notes
 5.0.0
 -----
 
-*?? 2026*
+*04 June 2026*
 
 *Release 5.0.0 is the largest release in the history of vantage6. We have only listed
 top-level changes to keep this overview readable. The issues of the major changes offer
