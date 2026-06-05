@@ -32,8 +32,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install flake8 pytest
         make install-dev
+        # flake8 is not in uv.lock; install after sync so uv does not remove it
+        uv pip install flake8
 
     - name: Lint with flake8
       run: |
