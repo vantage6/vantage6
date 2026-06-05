@@ -10,8 +10,8 @@ build-dist:
 	uv build
 
 publish:
-	# Uploading to pypi.org
-	twine upload --repository pypi dist/*
+	# Uploading to pypi.org (workspace builds land in the root dist/)
+	twine upload --repository pypi ../dist/vantage6_client*
 
 clean:
 	# Cleaning ...

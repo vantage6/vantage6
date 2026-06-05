@@ -39,9 +39,12 @@ endif
 help:
 	@echo "Available commands to 'make':"
 	@echo "  set-version          : set version (e.g set-version FLAGS=\"--version 2.0.0 --build 0 --spec alpha\")"
-	@echo "  uninstall            : uninstall all vantage6 packages"
-	@echo "  install              : do a regular install of all vantage6 packages"
-	@echo "  install-dev          : do an editable install of all vantage6 packages"
+	@echo "  uninstall            : remove the local virtual environment"
+	@echo "  lock                 : update uv.lock from local pyproject.toml files"
+	@echo "  lock-upgrade         : update uv.lock and upgrade dependency versions"
+	@echo "  install              : install local packages (non-editable) from uv.lock"
+	@echo "  install-dev          : editable install of all workspace packages from uv.lock"
+	@echo "  install-pypi         : install published packages from PyPI (VERSION=5.0.0)"
 	@echo "  image                : build the node/hq docker image"
 	@echo "  algorithm-store-image: build the algorithm store docker image"
 	@echo "  ui-image             : build the user interface docker image"
@@ -63,36 +66,39 @@ help:
 set-version:
 	cd tools && python update-version.py ${FLAGS}
 
+# Match package versions in each subpackage pyproject.toml when installing from PyPI.
+VERSION ?= 5.0.0
+
 uninstall:
-	uv remove vantage6
-	uv remove vantage6-client
-	uv remove vantage6-algorithm-tools
-	uv remove vantage6-common
-	uv remove vantage6-node
-	uv remove vantage6-backend-common
-	uv remove vantage6-hq
-	uv remove vantage6-algorithm-store
+	rm -rf .venv
 
+lock:
+	uv lock
+
+lock-upgrade:
+	uv lock --upgrade
+
+# Non-editable install of local workspace packages (uses uv.lock).
 install:
-	uv add vantage6-common
-	uv add vantage6-client
-	uv add vantage6-algorithm-tools
-	uv add vantage6
-	uv add vantage6-node
-	uv add vantage6-backend-common
-	uv add vantage6-hq
-	uv add vantage6-algorithm-store
+	uv sync --no-editable
 
+# Editable install of local workspace packages (uses uv.lock). Run `make lock` after
+# changing dependencies in any pyproject.toml.
 install-dev:
-	uv pip install -e vantage6-common
-	uv pip install -e vantage6-client
-	uv pip install -e vantage6-algorithm-tools
-	uv pip install -e vantage6[dev]
-	uv pip install -e vantage6-node[dev]
-	uv pip install -e vantage6-backend-common[dev]
-	uv pip install -e vantage6-hq[dev]
-	uv pip install -e vantage6-algorithm-store[dev]
-	uv pip install -e .[dev,docs]
+	uv sync --extra dev --extra docs
+
+# Install published wheels from PyPI (simulates end-user / post-release environment).
+install-pypi:
+	uv pip install \
+		"vantage6-common==$(VERSION)" \
+		"vantage6-client==$(VERSION)" \
+		"vantage6-algorithm-tools==$(VERSION)" \
+		"vantage6==$(VERSION)" \
+		"vantage6-node==$(VERSION)" \
+		"vantage6-backend-common==$(VERSION)" \
+		"vantage6-hq==$(VERSION)" \
+		"vantage6-algorithm-store==$(VERSION)"
+	uv pip install ".[dev,docs]"
 
 algorithm-base-image:
 	@echo "Building ${REGISTRY}/algorithm-base:${TAG}"
@@ -170,6 +176,7 @@ ui-image:
 		$(if ${_condition_push},--push .,.)
 
 rebuild:
+	-rm -rf dist
 	@echo "------------------------------------"
 	@echo "         BUILDING PROJECT           "
 	@echo "------------------------------------"
@@ -207,14 +214,8 @@ rebuild:
 	cd vantage6-algorithm-store && make rebuild
 
 publish:
-	cd vantage6-common && make publish
-	cd vantage6-client && make publish
-	cd vantage6-algorithm-tools && make publish
-	cd vantage6 && make publish
-	cd vantage6-node && make publish
-	cd vantage6-backend-common && make publish
-	cd vantage6-hq && make publish
-	cd vantage6-algorithm-store && make publish
+	# uv workspace builds write artifacts to the root dist/ directory
+	twine upload --repository pypi dist/*
 
 # Default test subpackages if none specified
 TEST_SUBPACKAGES ?= common,cli,algorithm-store,hq,algorithm-tools

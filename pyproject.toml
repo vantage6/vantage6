@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-base"
-version = "5.0.0"
+version = "5.0.1rc2"
 description = "Vantage6 - Privacy-preserving federated learning"
 readme = "README.md"
 license = {text = "MIT"}
@@ -29,15 +29,37 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "vantage6-common==5.0.0",
-    "vantage6-client==5.0.0",
-    "vantage6==5.0.0",
-    "vantage6-algorithm-tools==5.0.0",
-    "vantage6-backend-common==5.0.0",
-    "vantage6-node==5.0.0",
-    "vantage6-hq==5.0.0",
-    "vantage6-algorithm-store==5.0.0",
+    "vantage6-common",
+    "vantage6-client",
+    "vantage6",
+    "vantage6-algorithm-tools",
+    "vantage6-backend-common",
+    "vantage6-node",
+    "vantage6-hq",
+    "vantage6-algorithm-store",
 ]
+
+[tool.uv.workspace]
+members = [
+    "vantage6",
+    "vantage6-common",
+    "vantage6-client",
+    "vantage6-node",
+    "vantage6-hq",
+    "vantage6-algorithm-store",
+    "vantage6-algorithm-tools",
+    "vantage6-backend-common",
+]
+
+[tool.uv.sources]
+vantage6-common = { workspace = true }
+vantage6-client = { workspace = true }
+vantage6 = { workspace = true }
+vantage6-algorithm-tools = { workspace = true }
+vantage6-backend-common = { workspace = true }
+vantage6-node = { workspace = true }
+vantage6-hq = { workspace = true }
+vantage6-algorithm-store = { workspace = true }
 
 [project.optional-dependencies]
 dev = [

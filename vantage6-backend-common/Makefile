@@ -10,8 +10,8 @@ build-dist:
 	uv build
 
 publish:
-	# Uploading to pypi.org
-	twine upload --repository pypi dist/*
+	# Uploading to pypi.org (workspace builds land in the root dist/)
+	twine upload --repository pypi ../dist/vantage6_backend_common*
 
 test:
 	coverage run --source=vantage6 --omit="utest.py" ./utest.py

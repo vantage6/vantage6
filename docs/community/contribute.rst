@@ -197,7 +197,8 @@ Setup your environment
 
   ::
 
-    make install-dev
+    make lock        # after changing dependencies in any pyproject.toml
+    make install-dev # editable install from local packages (uses uv.lock)
 
 
 Coding

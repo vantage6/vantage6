@@ -1,15 +1,15 @@
 dependencies:
 - name: hq
   repository: file://../hq
-  version: 5.0.0-rc8
+  version: 5.0.1-rc2
 - name: auth
   repository: file://../auth
-  version: 5.0.0-rc8
+  version: 5.0.1-rc2
 - name: store
   repository: file://../store
-  version: 5.0.0-rc8
+  version: 5.0.1-rc2
 - name: common
   repository: file://../common
-  version: 5.0.0-rc8
+  version: 5.0.1-rc2
 digest: sha256:4987a37dbe1ece7b383750ebce255adb01d6a444d70f66feec4686faba90bf72
-generated: "2026-05-12T15:12:46.848038244+02:00"
+generated: "2026-06-05T13:08:04.085124+00:00"
