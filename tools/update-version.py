@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
@@ -31,6 +32,14 @@ PACKAGE_PIN_PATTERN = re.compile(
     r'"(vantage6(?:-[a-z-]+)?)(==|>=)([\d.]+(?:a\d+|b\d+|rc\d+)?(?:\.post\d+)?)"'
 )
 
+# Matches Helm chart / Chart.lock version strings (e.g. 5.0.1, 5.0.0-rc9)
+HELM_CHART_VERSION_PATTERN = r"[\d.]+(-\w+(\.\d+)?)?(\.post\d+)?"
+
+
+def repo_root() -> Path:
+    """Return the repository root (parent of the tools/ directory)."""
+    return Path(__file__).resolve().parent.parent
+
 
 def find_pyproject_files() -> List[Path]:
     """
@@ -41,9 +50,8 @@ def find_pyproject_files() -> List[Path]:
     List[Path]
         List of paths to pyproject.toml files
     """
-    # Find all pyproject.toml files in vantage6 packages
     files = []
-    for file_path in Path("../").rglob("pyproject.toml"):
+    for file_path in repo_root().rglob("pyproject.toml"):
         # Skip docs, node_modules, .venv and other non-package pyproject.toml files
         if (
             "docs" not in str(file_path)
@@ -202,17 +210,20 @@ def update_version_docker_files(version: str) -> None:
 
     # update version label in node-and-hq and algorithm store dockerfile
     print("Updating version in Dockerfiles for node, HQ and algorithm store")
+    root = repo_root()
     files = [
-        Path("../docker/node-and-hq.Dockerfile"),
-        Path("../docker/algorithm-store.Dockerfile"),
+        root / "docker/node-and-hq.Dockerfile",
+        root / "docker/algorithm-store.Dockerfile",
     ]
     for file in files:
-        with open(file, "r") as f:
+        if not file.exists():
+            raise Exception(f"Skipping missing Dockerfile: {file}")
+        with open(file, "r", encoding="utf-8") as f:
             content = f.read()
             new_content = re.sub(
                 r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
             )
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             f.write(new_content)
 
 
@@ -229,9 +240,8 @@ def update_ui_package(version: str, spec: str, build: int) -> None:
     build : int
         Build number
     """
-    # Check if we're running from tools directory or main directory
-    package_json = Path("../vantage6-ui/package.json")
-    package_lock_json = Path("../vantage6-ui/package-lock.json")
+    package_json = repo_root() / "vantage6-ui/package.json"
+    package_lock_json = repo_root() / "vantage6-ui/package-lock.json"
 
     new_version = build_version_string(version, spec, build, with_dash=True)
 
@@ -271,8 +281,7 @@ def update_uv_lock(version: str, spec: str, build: int, post: int) -> None:
     updated. Dependency resolution is unchanged; run ``make lock`` separately
     if you need a full lock refresh.
     """
-    repo_root = Path(__file__).resolve().parent.parent
-    uv_lock = repo_root / "uv.lock"
+    uv_lock = repo_root() / "uv.lock"
     if not uv_lock.exists():
         raise Exception(f"Skipping uv.lock update: {uv_lock} not found")
 
@@ -298,7 +307,7 @@ def update_uv_lock(version: str, spec: str, build: int, post: int) -> None:
 
 def update_helm_charts(version: str, spec: str, build: int) -> None:
     """
-    Update version in Helm charts
+    Update version in Helm Chart.yaml and Chart.lock files.
 
     Parameters
     ----------
@@ -309,44 +318,73 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
     build : int
         Build number
     """
+    root = repo_root()
     chart_files = [
-        Path("../charts/common/Chart.yaml"),
-        Path("../charts/node/Chart.yaml"),
-        Path("../charts/store/Chart.yaml"),
-        Path("../charts/hq/Chart.yaml"),
-        Path("../charts/auth/Chart.yaml"),
-        Path("../charts/hub/Chart.yaml"),
+        root / "charts/common/Chart.yaml",
+        root / "charts/node/Chart.yaml",
+        root / "charts/store/Chart.yaml",
+        root / "charts/hq/Chart.yaml",
+        root / "charts/auth/Chart.yaml",
+        root / "charts/hub/Chart.yaml",
     ]
     new_version = build_version_string(version, spec, build, with_dash=True)
+    helm_version_pattern = HELM_CHART_VERSION_PATTERN
 
     for chart_file in chart_files:
+        if not chart_file.exists():
+            print(f"Skipping missing chart: {chart_file}")
+            continue
         print(f"Updating version in {chart_file}")
-        with open(chart_file, "r") as f:
+        with open(chart_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Update appVersion
         content = re.sub(
-            r'appVersion: "[\d.]+(-\w+(\.\d+)?)?"',
+            rf'appVersion: "{helm_version_pattern}"',
             f'appVersion: "{new_version}"',
             content,
         )
 
         # Update version
         content = re.sub(
-            r'^version: "[\d.]+(-\w+(\.\d+)?)?"',
+            rf'^version: "{helm_version_pattern}"',
             f'version: "{new_version}"',
             content,
             flags=re.MULTILINE,
         )
 
-        # Update common and hub chart dependency versions if they exist
+        # Update subchart dependency versions in Chart.yaml
         content = re.sub(
-            r'(name: (common|hq|auth|store)\n\s+version: )"[\d.]+(-\w+(\.\d+)?)?"',
+            rf'(name: (common|hq|auth|store|node)\n\s+version: )"'
+            rf"{helm_version_pattern}"
+            rf'"',
             f'\\1"{new_version}"',
             content,
         )
 
-        with open(chart_file, "w") as f:
+        with open(chart_file, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    generated = datetime.now().astimezone().isoformat()
+    for lock_file in sorted((root / "charts").rglob("Chart.lock")):
+        print(f"Updating dependency versions in {lock_file}")
+        with open(lock_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        content = re.sub(
+            rf'(^  version: )"?{helm_version_pattern}"?',
+            rf"\g<1>{new_version}",
+            content,
+            flags=re.MULTILINE,
+        )
+        content = re.sub(
+            r'^generated: ".*"',
+            f'generated: "{generated}"',
+            content,
+            flags=re.MULTILINE,
+        )
+
+        with open(lock_file, "w", encoding="utf-8") as f:
             f.write(content)
 
 
