@@ -4,6 +4,33 @@ from typing import List
 
 import click
 
+VANTAGE6_PACKAGES = [
+    "vantage6-common",
+    "vantage6-client",
+    "vantage6-algorithm-tools",
+    "vantage6",
+    "vantage6-node",
+    "vantage6-backend-common",
+    "vantage6-hq",
+    "vantage6-algorithm-store",
+]
+
+# Workspace members listed in uv.lock [[package]] entries.
+UV_LOCK_PACKAGES = [*VANTAGE6_PACKAGES, "vantage6-base"]
+
+# Pattern to match version in uv.lock [[package]] entries
+LOCK_VERSION_PATTERN = r"[\d.]+(?:a\d+|b\d+|rc\d+)?(?:\.post\d+)?"
+
+# Pattern to match version in pyproject.toml [project] version field
+PROJECT_VERSION_PATTERN = re.compile(
+    r'(?<=^version = ")[\d.]+(?:a\d+|b\d+|rc\d+)?(?:\.post\d+)?(?=")',
+    re.MULTILINE,
+)
+# Pattern to match version in pyproject.toml dependencies
+PACKAGE_PIN_PATTERN = re.compile(
+    r'"(vantage6(?:-[a-z-]+)?)(==|>=)([\d.]+(?:a\d+|b\d+|rc\d+)?(?:\.post\d+)?)"'
+)
+
 
 def find_pyproject_files() -> List[Path]:
     """
@@ -107,6 +134,28 @@ def update_file_content(
         f.write(content)
 
 
+def _replace_project_version(content: str, new_version: str) -> str:
+    """Update only the [project] version field (first match in each pyproject.toml)."""
+    return PROJECT_VERSION_PATTERN.sub(new_version, content, count=1)
+
+
+def _replace_package_pins(content: str, new_version: str) -> str:
+    """
+    Update pinned inter-package dependencies (== / >=).
+
+    The root pyproject.toml uses uv workspace sources without version pins; those
+    entries are left unchanged.
+    """
+
+    def replacer(match: re.Match) -> str:
+        package, operator, _old_version = match.groups()
+        if package not in VANTAGE6_PACKAGES:
+            return match.group(0)
+        return f'"{package}{operator}{new_version}"'
+
+    return PACKAGE_PIN_PATTERN.sub(replacer, content)
+
+
 def update_pyproject_versions(version: str, spec: str, build: int, post: int) -> None:
     """
     Update version in all pyproject.toml files.
@@ -130,37 +179,13 @@ def update_pyproject_versions(version: str, spec: str, build: int, post: int) ->
 
     for file_path in files:
         print(f"Updating: {file_path}")
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Update the project version
-        content = re.sub(
-            r'version = "[\d.]+(a\d+|b\d+|rc\d+)?(\.post\d+)?"',
-            f'version = "{new_version}"',
-            content,
-        )
+        content = _replace_project_version(content, new_version)
+        content = _replace_package_pins(content, new_version)
 
-        # Update all vantage6 dependency versions
-        vantage6_packages = [
-            "vantage6-common",
-            "vantage6-client",
-            "vantage6-algorithm-tools",
-            "vantage6",
-            "vantage6-node",
-            "vantage6-backend-common",
-            "vantage6-hq",
-            "vantage6-algorithm-store",
-        ]
-
-        for package in vantage6_packages:
-            # Match both == and >= dependencies in quoted strings
-            pattern = rf'"{package}==[\d.]+(a\d+|b\d+|rc\d+)?(\.post\d+)?"'
-            content = re.sub(pattern, f'"{package}=={new_version}"', content)
-
-            pattern = rf'"{package}>=[\d.]+(a\d+|b\d+|rc\d+)?(\.post\d+)?"'
-            content = re.sub(pattern, f'"{package}>={new_version}"', content)
-
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
 
@@ -238,34 +263,37 @@ def update_ui_package(version: str, spec: str, build: int) -> None:
             f.write(content)
 
 
-def update_uv_lock(version: str, spec: str, build: int) -> None:
+def update_uv_lock(version: str, spec: str, build: int, post: int) -> None:
     """
-    Update version in the uv.lock file
+    Update workspace package versions in uv.lock without running ``uv lock``.
 
-    Parameters
-    ----------
-    version : str
-        The new version to which to update.
-    spec : str
-        Version spec (final, alpha, beta, candidate)
-    build : int
-        Build number
+    Only the ``[[package]]`` version fields for vantage6 workspace members are
+    updated. Dependency resolution is unchanged; run ``make lock`` separately
+    if you need a full lock refresh.
     """
-    # Check if we're running from tools directory or main directory
-    if Path("../uv.lock").exists():
-        uv_lock = Path("../uv.lock")
-    else:
-        uv_lock = Path("uv.lock")
+    repo_root = Path(__file__).resolve().parent.parent
+    uv_lock = repo_root / "uv.lock"
+    if not uv_lock.exists():
+        raise Exception(f"Skipping uv.lock update: {uv_lock} not found")
 
-    new_version = build_version_string(version, spec, build)
+    new_version = build_version_string(version, spec, build, post)
+    print(f"Updating workspace package versions in {uv_lock}")
 
-    # Update the single vantage6 package entry in uv.lock
-    update_file_content(
-        uv_lock,
-        r'name = "vantage6"\nversion = "[\d.]+(a\d+|b\d+|rc\d+)?(\.post\d+)?"',
-        f'name = "vantage6"\nversion = "{new_version}"',
-        "vantage6 package version",
-    )
+    with open(uv_lock, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    for package in UV_LOCK_PACKAGES:
+        pattern = (
+            rf'(name = "{re.escape(package)}"\nversion = ")'
+            rf"{LOCK_VERSION_PATTERN}"
+            rf'(")'
+        )
+        content, count = re.subn(pattern, rf"\g<1>{new_version}\g<2>", content)
+        if count:
+            print(f"  {package}: {count} version(s) updated")
+
+    with open(uv_lock, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 def update_helm_charts(version: str, spec: str, build: int) -> None:
@@ -329,7 +357,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
 @click.option("--post", default="0", help=".postN")
 def set_version(spec: str, version: str, build: int, post: int) -> None:
     """
-    Update version printrmation in all pyproject.toml files and helm charts
+    Update version information in all pyproject.toml files and helm charts
 
     Parameters
     ----------
@@ -366,8 +394,8 @@ def set_version(spec: str, version: str, build: int, post: int) -> None:
     update_ui_package(version, spec, int(build))
     print("UI package files updated")
 
-    update_uv_lock(version, spec, int(build))
-    print("uv.lock file updated")
+    update_uv_lock(version, spec, int(build), int(post))
+    print("uv.lock workspace package versions updated")
 
     print("Version update complete!")
 
