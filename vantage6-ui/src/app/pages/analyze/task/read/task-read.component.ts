@@ -436,7 +436,7 @@ export class TaskReadComponent implements OnInit, OnDestroy {
 
   getParameterValueAsString(parameter: TaskParameter): string {
     const argument: Argument | undefined = this.function?.arguments.find((_) => _.name === parameter.label);
-    let parameter_str = argument?.type !== ArgumentType.Json ? parameter.value : JSON.stringify(parameter.value);
+    let parameter_str = argument?.type !== ArgumentType.Json ? String(parameter.value) : JSON.stringify(parameter.value);
     if (parameter_str.length > THRESHOLD_LONG_PARAMETER_TEXT) {
       const len_not_displayed = parameter_str.length - THRESHOLD_LONG_PARAMETER_TEXT;
       parameter_str = parameter_str.substring(0, THRESHOLD_LONG_PARAMETER_TEXT) + '... (' + len_not_displayed + ' more characters)';
