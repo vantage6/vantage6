@@ -121,6 +121,11 @@ class DefaultSocketNamespace(Namespace):
         node: Authenticatable
             Node that is to be connected
         """
+        # Load node data while session is active to avoid DetachedInstanceError
+        node_id = node.id
+        node_name = node.name
+        org_id = node.organization.id
+
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
@@ -133,7 +138,8 @@ class DefaultSocketNamespace(Namespace):
 
         # Add node to rooms and alert other clients of that
         self._add_node_to_rooms(node)
-        self.__alert_node_status(online=True, node=node)
+        self.__alert_node_status(online=True, node_id=node_id, node_name=node_name,
+                                org_id=org_id)
 
         # send dataframe deletion instructions to node
         self._send_dataframe_deletion_instructions(node)
@@ -221,9 +227,15 @@ class DefaultSocketNamespace(Namespace):
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
         if session.type == "node":
+            # Load node data while session is active to avoid DetachedInstanceError
+            node_id = auth.id
+            node_name = auth.name
+            org_id = auth.organization.id
+
             self.log.warning("emitting to /admin")
             self.socketio.emit("node-status-changed", namespace="/admin")
-            self.__alert_node_status(online=False, node=auth)
+            self.__alert_node_status(online=False, node_id=node_id, node_name=node_name,
+                                    org_id=org_id)
 
             # delete any data on the node stored on the server (e.g.
             # configuration data)
@@ -480,7 +492,9 @@ class DefaultSocketNamespace(Namespace):
         if room != ALL_NODES_ROOM:
             emit("message", msg, room=room)
 
-    def __alert_node_status(self, online: bool, node: Authenticatable) -> None:
+    def __alert_node_status(self, online: bool, node: Authenticatable = None,
+                           node_id: int = None, node_name: str = None,
+                           org_id: int = None) -> None:
         """
         Send status update of nodes when they change on/offline status
 
@@ -489,13 +503,25 @@ class DefaultSocketNamespace(Namespace):
         online: bool
             Whether node is coming online or not
         node: Authenticatable
-            The node SQLALchemy object
+            The node SQLALchemy object (deprecated, use node_id/node_name/org_id)
+        node_id: int
+            ID of the node
+        node_name: str
+            Name of the node
+        org_id: int
+            Organization ID of the node
         """
+        # Support both old and new calling conventions
+        if node_id is None:
+            node_id = node.id
+            node_name = node.name
+            org_id = node.organization.id
+
         event = "node-online" if online else "node-offline"
         for room in session.rooms:
             self.socketio.emit(
                 event,
-                {"id": node.id, "name": node.name, "org_id": node.organization.id},
+                {"id": node_id, "name": node_name, "org_id": org_id},
                 namespace="/tasks",
                 room=room,
             )
