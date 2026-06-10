@@ -124,7 +124,9 @@ class DefaultSocketNamespace(Namespace):
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
-        self.socketio.emit("node-status-changed", namespace="/admin")
+        # Skip the current connection to avoid gevent concurrency issues
+        self.socketio.emit("node-status-changed", namespace="/admin",
+                          skip_sid=request.sid)
 
         # Ensure that node syncs on initial connection
         emit("sync", room=request.sid)
