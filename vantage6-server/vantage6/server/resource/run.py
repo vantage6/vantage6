@@ -728,29 +728,33 @@ class Run(SingleRunBase):
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 
+        # Collect all necessary data while session is still active
+        run_data = {
+            "run_id": run.id,
+            "status": run.status,
+            "task_id": run.task.id,
+            "job_id": run.task.job_id,
+            "collaboration_id": run.task.collaboration.id,
+            "node_id": run.node.id,
+            "organization_id": run.organization.id,
+            "parent_id": run.task.parent_id,
+        }
+        collab_id = run.task.collaboration.id
+
         # notify collaboration nodes/users that the task has an update
         # TODO refactor it shouldn't be necessary to send two events.
         self.socketio.emit(
             "status_update",
             {"run_id": id},
             namespace="/tasks",
-            room=f"collaboration_{run.task.collaboration.id}",
+            room=f"collaboration_{collab_id}",
         )
 
         self.socketio.emit(
             "algorithm_status_change",
-            {
-                "run_id": run.id,
-                "status": run.status,
-                "task_id": run.task.id,
-                "job_id": run.task.job_id,
-                "collaboration_id": run.task.collaboration.id,
-                "node_id": run.node.id,
-                "organization_id": run.organization.id,
-                "parent_id": run.task.parent_id,
-            },
+            run_data,
             namespace="/tasks",
-            room=f"collaboration_{run.task.collaboration.id}",
+            room=f"collaboration_{collab_id}",
         )
 
         return run_schema.dump(run, many=False), HTTPStatus.OK
