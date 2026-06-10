@@ -125,6 +125,7 @@ class DefaultSocketNamespace(Namespace):
         node_id = node.id
         node_name = node.name
         org_id = node.organization.id
+        collab_id = node.collaboration_id
 
         # It appears to be necessary to use the root socketio instance
         # otherwise events cannot be sent outside the current namespace.
@@ -142,7 +143,8 @@ class DefaultSocketNamespace(Namespace):
                                 org_id=org_id)
 
         # send dataframe deletion instructions to node
-        self._send_dataframe_deletion_instructions(node)
+        self._send_dataframe_deletion_instructions(node_id=node_id,
+                                                  collaboration_id=collab_id)
 
     @staticmethod
     def _add_node_to_rooms(node: Authenticatable) -> None:
@@ -191,16 +193,23 @@ class DefaultSocketNamespace(Namespace):
                     f"collaboration_{collab.id}_organization_{user.organization.id}"
                 )
 
-    def _send_dataframe_deletion_instructions(self, node: Authenticatable) -> None:
+    def _send_dataframe_deletion_instructions(self, node: Authenticatable = None,
+                                             node_id: int = None,
+                                             collaboration_id: int = None) -> None:
         """
         Send dataframe deletion instructions to a node.
         """
-        for dataframe_to_delete in DataframeToBeDeletedAtNode.get_by_node_id(node.id):
+        # Support both old and new calling conventions
+        if node_id is None:
+            node_id = node.id
+            collaboration_id = node.collaboration_id
+
+        for dataframe_to_delete in DataframeToBeDeletedAtNode.get_by_node_id(node_id):
             send_delete_dataframe_event(
                 self.socketio,
                 dataframe_to_delete.dataframe_name,
                 dataframe_to_delete.session_id,
-                node.collaboration_id,
+                collaboration_id,
             )
 
     def on_disconnect(self, reason: str = None) -> None:
