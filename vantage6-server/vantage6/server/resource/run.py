@@ -757,8 +757,8 @@ class Run(SingleRunBase):
             room=f"collaboration_{collab_id}",
         )
 
-        # Reattach run to session in case it was detached by socketio operations
-        run = db.session.merge(run)
+        # Re-fetch run from database in case it was detached by socketio operations
+        run = db_Run.get(id)
         return run_schema.dump(run, many=False), HTTPStatus.OK
 
     def _add_dependent_tasks(self, dependent_tasks: list[db.Task]) -> list[db.Task]:
