@@ -49,7 +49,7 @@ class DefaultSocketNamespace(Namespace):
             )
         return session.type == "node"
 
-    def on_connect(self) -> None:
+    def on_connect(self, _auth: dict | None = None) -> None:
         """
         A new incoming connection request from a client.
 
@@ -195,7 +195,7 @@ class DefaultSocketNamespace(Namespace):
                 node.collaboration_id,
             )
 
-    def on_disconnect(self) -> None:
+    def on_disconnect(self, reason: str = None) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
 
