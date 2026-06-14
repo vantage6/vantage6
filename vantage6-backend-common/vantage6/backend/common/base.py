@@ -91,7 +91,12 @@ class BaseDatabase:
         self.URI = None
 
     def _connect(
-        self, base: DeclarativeMeta, uri="sqlite:////tmp/test.db", allow_drop_all=False
+        self,
+        base: DeclarativeMeta,
+        uri="sqlite:////tmp/test.db",
+        allow_drop_all=False,
+        pool_size=5,
+        max_overflow=10,
     ):
         """
         Connect to the database.
@@ -102,6 +107,10 @@ class BaseDatabase:
             URI of the database. Defaults to a sqlite database in /tmp.
         allow_drop_all : bool, optional
             If True, the database can be dropped. Defaults to False.
+        pool_size : int, optional
+            Number of connections to keep in the pool. Defaults to 5.
+        max_overflow : int, optional
+            Number of connections allowed beyond pool_size. Defaults to 10.
         """
         self.allow_drop_all = allow_drop_all
         self.URI = uri
@@ -117,6 +126,8 @@ class BaseDatabase:
         log.debug("  port:     {}".format(URL.port))
         log.debug("  database: {}".format(URL.database))
         log.debug("  username: {}".format(URL.username))
+        log.debug("  pool_size: {}".format(pool_size))
+        log.debug("  max_overflow: {}".format(max_overflow))
 
         # Make sure that the director for the file database exists.
         if URL.host is None and URL.database:
@@ -124,7 +135,12 @@ class BaseDatabase:
         # Try connecting to the Db MAX_ATTEMPT times if not error occur
         for attempt in range(MAX_NUMBER_OF_ATTEMPTS):
             try:
-                self.engine = create_engine(uri, pool_pre_ping=True)
+                self.engine = create_engine(
+                    uri,
+                    pool_pre_ping=True,
+                    pool_size=pool_size,
+                    max_overflow=max_overflow,
+                )
 
                 # Create a session for flask requests. If a session already
                 # exists it will return the same session (!).
