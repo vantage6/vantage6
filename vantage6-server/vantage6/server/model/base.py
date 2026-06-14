@@ -53,7 +53,13 @@ class Database(BaseDatabase, metaclass=Singleton):
         """
         self._close(Base)
 
-    def connect(self, uri="sqlite:////tmp/test.db", allow_drop_all=False):
+    def connect(
+        self,
+        uri="sqlite:////tmp/test.db",
+        allow_drop_all=False,
+        pool_size=5,
+        max_overflow=10,
+    ):
         """
         Connect to the database.
 
@@ -64,8 +70,12 @@ class Database(BaseDatabase, metaclass=Singleton):
         allow_drop_all : bool, optional
             If True, the database can be dropped. Defaults to False. Typically, it is
             only set to True for unit tests.
+        pool_size : int, optional
+            Number of connections to keep in the pool. Defaults to 5.
+        max_overflow : int, optional
+            Number of connections allowed beyond pool_size. Defaults to 10.
         """
-        self._connect(Base, uri, allow_drop_all)
+        self._connect(Base, uri, allow_drop_all, pool_size=pool_size, max_overflow=max_overflow)
 
 
 class DatabaseSessionManager(BaseDatabaseSessionManager):

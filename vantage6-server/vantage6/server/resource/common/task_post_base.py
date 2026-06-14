@@ -149,10 +149,17 @@ class TaskPostBase(ServicesResources):
         self._create_task_databases(task, data.get("databases", [[]]))
         self._create_runs(task, organizations_json_list, action)
 
+        # Force-load all column attributes while the session is still active so that
+        # the subsequent socketio emit (which causes a gevent context switch) cannot
+        # detach the task object via a lazy-load race against __cleanup().
+        task_id = task.id
+
         # alerting and logging
         self._notify_nodes_of_new_task(task)
         self._new_task_logging(task)
 
+        # Re-fetch task in case the session was cleared during socketio operations
+        task = db.Task.get(task_id)
         return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
     def _validate_request_body(self, data: dict) -> None:

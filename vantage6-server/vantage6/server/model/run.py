@@ -145,6 +145,31 @@ class Run(Base):
             raise
         return node
 
+    @classmethod
+    def get_stale_unstarted(cls, older_than: datetime.datetime) -> list["Run"]:
+        """
+        Return runs not yet started and assigned before the given datetime.
+
+        Parameters
+        ----------
+        older_than : datetime.datetime
+            Return runs assigned before this time
+
+        Returns
+        -------
+        list[Run]
+            List of runs that haven't started and are older than threshold
+        """
+        from sqlalchemy.orm import joinedload
+        session = DatabaseSessionManager.get_session()
+        return session.scalars(
+            select(cls)
+            .options(joinedload(cls.task))
+            .filter(cls.started_at.is_(None))
+            .filter(cls.finished_at.is_(None))
+            .filter(cls.assigned_at < older_than)
+        ).all()
+
     def __repr__(self) -> str:
         """
         Returns a string representation of the result.

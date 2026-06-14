@@ -179,11 +179,7 @@ class ServerApp(Vantage6App):
         Payload.max_decode_packets = 128
 
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
-        # The node sends custom "ping" events every 60 seconds which work reliably.
-        # Don't use low-level ping_timeout as it conflicts with custom pings and
-        # causes disconnections at exactly the timeout interval.
-        # Instead, set very high timeout (1 hour) as backup only.
-        # Primary health check is the custom ping mechanism in __socket_ping_worker.
+       
         ping_timeout = 60
         try:
             socketio = SocketIO(
