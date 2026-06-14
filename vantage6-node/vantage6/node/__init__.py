@@ -154,11 +154,24 @@ class Node:
         self.log.info("Init complete")
 
     def _setup_node_client(self, config: dict) -> NodeClient:
+        server_url = config.get("server_url", "")
+        port = config.get("port")
+        api_path = config.get("api_path", "")
+
+        # Omit the port when it is the default for the scheme. Including an
+        # explicit :443 in an HTTPS URL causes engineio to embed it in the
+        # WebSocket upgrade URL (wss://host:443/...), which some proxies (e.g.
+        # Envoy) reject during the HTTP→WS upgrade while accepting the same
+        # request without the redundant port.
+        scheme = server_url.split("://")[0] if "://" in server_url else "http"
+        default_ports = {"http": 80, "https": 443, "ws": 80, "wss": 443}
+        if port and port != default_ports.get(scheme):
+            full_url = f"{server_url}:{port}{api_path}"
+        else:
+            full_url = f"{server_url}{api_path}"
+
         return NodeClient(
-            server_url=(
-                f"{config.get('server_url')}:{config.get('port')}"
-                f"{config.get('api_path')}"
-            ),
+            server_url=full_url,
             auth_url=os.environ.get(RequiredNodeEnvVars.KEYCLOAK_URL.value),
             node_account_name=os.environ.get(RequiredNodeEnvVars.V6_NODE_NAME.value),
             api_key=os.environ.get(RequiredNodeEnvVars.V6_API_KEY.value),
@@ -554,9 +567,29 @@ class Node:
 
                 if not task_id:
                     self.log.error(
-                        "Task id for run id=%s could not be retrieved", results.run_id
+                        "Task id for run id=%s could not be retrieved; marking run as "
+                        "finished without result to prevent indefinite re-queuing",
+                        results.run_id,
                     )
-                    return
+                    # Patch without 'result' so init_org_id is not required for
+                    # encryption. Result data is lost but the server will stop
+                    # re-sending this task.
+                    try:
+                        self.client.run.patch(
+                            id_=results.run_id,
+                            data={
+                                "log": results.logs,
+                                "status": results.status.value,
+                                "finished_at": datetime.datetime.now().isoformat(),
+                            },
+                        )
+                    except Exception:
+                        self.log.exception(
+                            "Could not mark run %s as finished after metadata "
+                            "retrieval failure",
+                            results.run_id,
+                        )
+                    continue
 
                 response = self.client.request(f"task/{task_id}")
 
@@ -730,7 +763,8 @@ class Node:
         if debug_mode:
             self.log.debug("Debug mode enabled for socketio")
         self.socketIO = SocketIO(
-            request_timeout=60, logger=debug_mode, engineio_logger=debug_mode
+            request_timeout=60, logger=debug_mode, engineio_logger=debug_mode,
+            websocket_extra_options={"suppress_origin": True}
         )
 
         self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
