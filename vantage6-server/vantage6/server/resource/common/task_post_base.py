@@ -468,7 +468,7 @@ class TaskPostBase(ServicesResources):
         )
 
     def _new_task_logging(self, task: db.Task) -> None:
-        log.info("New task for collaboration '%s'", task.collaboration.name)
+        log.info("New task for collaboration %s", task.collaboration_id)
         if g.user:
             log.debug(" created by: '%s'", g.user.username)
         else:

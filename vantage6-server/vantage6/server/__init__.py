@@ -29,6 +29,7 @@ from flask import current_app
 from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
 from sqlalchemy.orm.exc import NoResultFound
+from engineio.payload import Payload
 
 from vantage6.common import logger_name, split_rabbitmq_uri
 from vantage6.common.globals import (
@@ -167,6 +168,11 @@ class ServerApp(Vantage6App):
         if debug_mode:
             log.debug("SocketIO debug mode enabled")
 
+        # Increase max_decode_packets to handle rapid message bursts
+        # Default is 16, which causes "Too many packets in payload" errors
+        # when many messages are batched together
+        Payload.max_decode_packets = 128
+
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
         try:
             socketio = SocketIO(
@@ -178,6 +184,7 @@ class ServerApp(Vantage6App):
                 logger=debug_mode,
                 engineio_logger=debug_mode,
                 always_connect=True,
+                max_http_buffer_size=10000000,
             )
         except Exception as e:
             log.warning(
@@ -195,6 +202,7 @@ class ServerApp(Vantage6App):
                 logger=debug_mode,
                 engineio_logger=debug_mode,
                 always_connect=True,
+                max_http_buffer_size=10000000,
             )
 
         namespace = DefaultSocketNamespace("/tasks", socketio, self.metrics)

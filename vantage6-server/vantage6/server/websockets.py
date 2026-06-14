@@ -247,8 +247,10 @@ class DefaultSocketNamespace(Namespace):
                                     org_id=org_id)
 
             # delete any data on the node stored on the server (e.g.
-            # configuration data)
-            self.__clean_node_data(auth)
+            # configuration data). Re-fetch node to avoid detached instance errors
+            node = db.Node.get(node_id)
+            if node:
+                self.__clean_node_data(node)
 
         self.log.info(f"{session.name} disconnected")
 
