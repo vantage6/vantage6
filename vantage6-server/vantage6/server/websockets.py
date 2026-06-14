@@ -88,28 +88,29 @@ class DefaultSocketNamespace(Namespace):
             return
 
         # get identity from token.
-        session.auth_id = get_jwt_identity()
-        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
-        auth.status = AuthStatus.ONLINE.value
-        auth.save()
+        try:
+            session.auth_id = get_jwt_identity()
+            auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
+            auth.status = AuthStatus.ONLINE.value
+            auth.save()
 
-        # define socket-session variables.
-        session.type = auth.type
-        session.name = auth.username if session.type == "user" else auth.name
-        self.log.info("Client identified as <%s>: <%s>", session.type, session.name)
+            # define socket-session variables.
+            session.type = auth.type
+            session.name = auth.username if session.type == "user" else auth.name
+            self.log.info("Client identified as <%s>: <%s>", session.type, session.name)
 
-        # join appropiate rooms
-        session.rooms = []
-        if session.type == "node":
-            self._handle_node_connection(auth)
-        elif session.type == "user":
-            self._add_user_to_rooms(auth)
+            # join appropiate rooms
+            session.rooms = []
+            if session.type == "node":
+                self._handle_node_connection(auth)
+            elif session.type == "user":
+                self._add_user_to_rooms(auth)
 
-        for room in session.rooms:
-            self.__join_room_and_notify(room)
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
+            for room in session.rooms:
+                self.__join_room_and_notify(room)
+        finally:
+            # cleanup (e.g. database session)
+            self.__cleanup()
 
     def _handle_node_connection(self, node: Authenticatable) -> None:
         """
@@ -131,8 +132,11 @@ class DefaultSocketNamespace(Namespace):
         # otherwise events cannot be sent outside the current namespace.
         # In this case, only events to '/tasks' can be emitted otherwise.
         # Skip the current connection to avoid gevent concurrency issues
-        self.socketio.emit("node-status-changed", namespace="/admin",
-                          skip_sid=request.sid)
+        try:
+            self.socketio.emit("node-status-changed", namespace="/admin",
+                              skip_sid=request.sid)
+        except Exception as e:
+            self.log.warning("Failed to emit node-status-changed: %s", str(e))
 
         # Ensure that node syncs on initial connection
         emit("sync", room=request.sid)
@@ -224,38 +228,41 @@ class DefaultSocketNamespace(Namespace):
             self.log.debug("Client disconnected before identification")
             return
 
-        for room in session.rooms:
-            # self.__leave_room_and_notify(room)
-            self.__leave_room_and_notify(room)
+        try:
+            for room in session.rooms:
+                self.__leave_room_and_notify(room)
 
-        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
-        auth.status = AuthStatus.OFFLINE.value
-        auth.save()
+            auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
+            auth.status = AuthStatus.OFFLINE.value
+            auth.save()
 
-        # It appears to be necessary to use the root socketio instance
-        # otherwise events cannot be sent outside the current namespace.
-        # In this case, only events to '/tasks' can be emitted otherwise.
-        if session.type == "node":
-            # Load node data while session is active to avoid DetachedInstanceError
-            node_id = auth.id
-            node_name = auth.name
-            org_id = auth.organization.id
+            # It appears to be necessary to use the root socketio instance
+            # otherwise events cannot be sent outside the current namespace.
+            # In this case, only events to '/tasks' can be emitted otherwise.
+            if session.type == "node":
+                # Load node data while session is active to avoid DetachedInstanceError
+                node_id = auth.id
+                node_name = auth.name
+                org_id = auth.organization.id
 
-            self.log.warning("emitting to /admin")
-            self.socketio.emit("node-status-changed", namespace="/admin")
-            self.__alert_node_status(online=False, node_id=node_id, node_name=node_name,
-                                    org_id=org_id)
+                self.log.warning("emitting to /admin")
+                try:
+                    self.socketio.emit("node-status-changed", namespace="/admin")
+                except Exception as e:
+                    self.log.warning("Failed to emit node-status-changed on disconnect: %s", str(e))
+                self.__alert_node_status(online=False, node_id=node_id, node_name=node_name,
+                                        org_id=org_id)
 
-            # delete any data on the node stored on the server (e.g.
-            # configuration data). Re-fetch node to avoid detached instance errors
-            node = db.Node.get(node_id)
-            if node:
-                self.__clean_node_data(node)
+                # delete any data on the node stored on the server (e.g.
+                # configuration data). Re-fetch node to avoid detached instance errors
+                node = db.Node.get(node_id)
+                if node:
+                    self.__clean_node_data(node)
 
-        self.log.info(f"{session.name} disconnected")
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
+            self.log.info(f"{session.name} disconnected")
+        finally:
+            # cleanup (e.g. database session)
+            self.__cleanup()
 
     def on_message(self, message: str) -> None:
         """
@@ -315,51 +322,52 @@ class DefaultSocketNamespace(Namespace):
         organization_id = data.get("organization_id")
         parent_id = data.get("parent_id")
 
-        run: db.Run = db.Run.get(run_id)
-        job_id = run.task.job_id
+        try:
+            run: db.Run = db.Run.get(run_id)
+            job_id = run.task.job_id
 
-        # log event in server logs
-        msg = (
-            f"A container for job_id={job_id} and run_id={run_id} "
-            f"in collaboration_id={collaboration_id} on node_id={node_id}"
-        )
-        if RunStatus.has_failed(status):
-            self.log.critical(f"{msg} exited with status={status}.")
-        else:
-            self.log.info(f"{msg} has a new status={status}.")
-
-        # notify nodes that there is a new task available if there are tasks dependent
-        # on this one
-        dependent_tasks = run.task.required_by
-        if status == RunStatus.COMPLETED and dependent_tasks:
-            self.log.debug(
-                f"{len(dependent_tasks)} dependent tasks ready to be executed"
+            # log event in server logs
+            msg = (
+                f"A container for job_id={job_id} and run_id={run_id} "
+                f"in collaboration_id={collaboration_id} on node_id={node_id}"
             )
-            for task in dependent_tasks:
-                emit(
-                    "new_task_update",
-                    {"id": task.id, "parent_id": task.parent_id},
-                    room=f"collaboration_{task.collaboration_id}",
+            if RunStatus.has_failed(status):
+                self.log.critical(f"{msg} exited with status={status}.")
+            else:
+                self.log.info(f"{msg} has a new status={status}.")
+
+            # notify nodes that there is a new task available if there are tasks dependent
+            # on this one
+            dependent_tasks = run.task.required_by
+            if status == RunStatus.COMPLETED and dependent_tasks:
+                self.log.debug(
+                    f"{len(dependent_tasks)} dependent tasks ready to be executed"
                 )
+                for task in dependent_tasks:
+                    emit(
+                        "new_task_update",
+                        {"id": task.id, "parent_id": task.parent_id},
+                        room=f"collaboration_{task.collaboration_id}",
+                    )
 
-        # emit task status change to other nodes/users in the collaboration
-        emit(
-            "algorithm_status_change",
-            {
-                "status": status,
-                "run_id": run_id,
-                "task_id": task_id,
-                "job_id": job_id,
-                "collaboration_id": collaboration_id,
-                "node_id": node_id,
-                "organization_id": organization_id,
-                "parent_id": parent_id,
-            },
-            room=f"collaboration_{collaboration_id}",
-        )
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
+            # emit task status change to other nodes/users in the collaboration
+            emit(
+                "algorithm_status_change",
+                {
+                    "status": status,
+                    "run_id": run_id,
+                    "task_id": task_id,
+                    "job_id": job_id,
+                    "collaboration_id": collaboration_id,
+                    "node_id": node_id,
+                    "organization_id": organization_id,
+                    "parent_id": parent_id,
+                },
+                room=f"collaboration_{collaboration_id}",
+            )
+        finally:
+            # cleanup (e.g. database session)
+            self.__cleanup()
 
     def on_node_info_update(self, node_config: dict) -> None:
         """
@@ -375,68 +383,74 @@ class DefaultSocketNamespace(Namespace):
         if not self._is_node():
             return
 
-        node = db.Node.get_by_keycloak_id(session.auth_id)
+        try:
+            node = db.Node.get_by_keycloak_id(session.auth_id)
 
-        # delete any old data that may be present (if cleanup on disconnect
-        # failed)
-        self.__clean_node_data(node=node)
+            # delete any old data that may be present (if cleanup on disconnect
+            # failed)
+            self.__clean_node_data(node=node)
 
-        # store (new) node config
-        to_store = []
-        for k, v in node_config.items():
-            # add single item or list of items
-            if isinstance(v, list):
-                to_store.extend(
-                    [db.NodeConfig(node_id=node.id, key=k, value=i) for i in v]
-                )
-            elif isinstance(v, dict):
-                for inner_key, inner_val in v.items():
-                    if isinstance(inner_val, list):
-                        to_store.extend(
-                            [
-                                db.NodeConfig(node_id=node.id, key=inner_key, value=val)
-                                for val in inner_val
-                            ]
-                        )
-                    else:
-                        to_store.append(
-                            db.NodeConfig(
-                                node_id=node.id, key=inner_key, value=inner_val
+            # store (new) node config
+            to_store = []
+            for k, v in node_config.items():
+                # add single item or list of items
+                if isinstance(v, list):
+                    to_store.extend(
+                        [db.NodeConfig(node_id=node.id, key=k, value=i) for i in v]
+                    )
+                elif isinstance(v, dict):
+                    for inner_key, inner_val in v.items():
+                        if isinstance(inner_val, list):
+                            to_store.extend(
+                                [
+                                    db.NodeConfig(node_id=node.id, key=inner_key, value=val)
+                                    for val in inner_val
+                                ]
                             )
-                        )
-            else:
-                to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
+                        else:
+                            to_store.append(
+                                db.NodeConfig(
+                                    node_id=node.id, key=inner_key, value=inner_val
+                                )
+                            )
+                else:
+                    to_store.append(db.NodeConfig(node_id=node.id, key=k, value=v))
 
-        node.config = to_store
-        node.save()
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
+            node.config = to_store
+            node.save()
+        finally:
+            # cleanup (e.g. database session)
+            self.__cleanup()
 
     def on_ping(self) -> None:
         """
         A client sends a ping to the server. The server detects who sent the
         ping and sets them as online.
         """
-        auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
+        if not hasattr(session, 'auth_id') or not session.auth_id:
+            self.log.debug("Ping received from unauthenticated client")
+            return
 
-        # There is a bug https://github.com/vantage6/vantage6/issues/2386 where the node
-        # disconnects on the server side but the node is still connected to the server.
-        # This is a last resort to recover the connection. It should be considered to
-        # remove the setting of the `status` field in this method when the bug is fixed.
-        if auth.status != AuthStatus.ONLINE.value:
-            self._handle_node_connection(auth)
-            for room in session.rooms:
-                self.__join_room_and_notify(room)
-            self.log.info(
-                f"Node {session.name} websocket session recovered through ping"
-            )
+        try:
+            auth = db.Authenticatable.get_by_keycloak_id(session.auth_id)
 
-        auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.timezone.utc)
-        auth.save()
+            # There is a bug https://github.com/vantage6/vantage6/issues/2386 where the node
+            # disconnects on the server side but the node is still connected to the server.
+            # This is a last resort to recover the connection. It should be considered to
+            # remove the setting of the `status` field in this method when the bug is fixed.
+            if auth.status != AuthStatus.ONLINE.value:
+                self._handle_node_connection(auth)
+                for room in session.rooms:
+                    self.__join_room_and_notify(room)
+                self.log.info(
+                    f"Node {session.name} websocket session recovered through ping"
+                )
 
-        self.__cleanup()
+            auth.status = AuthStatus.ONLINE.value
+            auth.last_seen = dt.datetime.now(dt.timezone.utc)
+            auth.save()
+        finally:
+            self.__cleanup()
 
     def on_dataframe_deleted(self, data: dict) -> None:
         """
@@ -448,19 +462,20 @@ class DefaultSocketNamespace(Namespace):
             data["node_id"],
         )
         try:
-            df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
-                data["df_name"], data["session_id"], data["node_id"]
-            )
-        except Exception as e:
-            self.log.error("Error occurred while fetching dataframe to be deleted: %s", e)
-            return
-        
-        try:
-            df_to_be_deleted.delete()
-        except Exception as e:
-            self.log.error("Error occurred while deleting dataframe: %s", e)
+            try:
+                df_to_be_deleted = DataframeToBeDeletedAtNode.get_by_multiple_keys(
+                    data["df_name"], data["session_id"], data["node_id"]
+                )
+            except Exception as e:
+                self.log.error("Error occurred while fetching dataframe to be deleted: %s", e)
+                return
 
-        self.__cleanup()
+            try:
+                df_to_be_deleted.delete()
+            except Exception as e:
+                self.log.error("Error occurred while deleting dataframe: %s", e)
+        finally:
+            self.__cleanup()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -564,18 +579,19 @@ class DefaultSocketNamespace(Namespace):
         task_id = data.get("task_id")
         log_message = data.get("log")
 
-        run = db.Run.get(run_id)
-        self._append_log(log_message, run)
-        run.save()
+        try:
+            run = db.Run.get(run_id)
+            self._append_log(log_message, run)
+            run.save()
 
-        # emit the log to the collaboration room so that the UI can display it
-        emit(
-            "algorithm_log",
-            {"run_id": run_id, "task_id": task_id, "log": log_message},
-            room=f"collaboration_{collaboration_id}",
-        )
-
-        self.__cleanup()
+            # emit the log to the collaboration room so that the UI can display it
+            emit(
+                "algorithm_log",
+                {"run_id": run_id, "task_id": task_id, "log": log_message},
+                room=f"collaboration_{collaboration_id}",
+            )
+        finally:
+            self.__cleanup()
 
     def _append_log(self, log_message, run):
         if run.log:
@@ -597,29 +613,30 @@ class DefaultSocketNamespace(Namespace):
         if not self._is_node():
             return
 
-        node = db.Node.get_by_keycloak_id(session.auth_id)
+        try:
+            node = db.Node.get_by_keycloak_id(session.auth_id)
 
-        os_label = data.pop("os", "unknown")
-        platform_label = data.pop("platform", "unknown")
-        for metric_name, value in data.items():
-            try:
-                self.metrics.set_metric(
-                    metric_name=metric_name,
-                    value=value,
-                    labels={
-                        "node_id": node.id,
-                        "os": os_label,
-                        "platform": platform_label,
-                    },
-                )
-            except ValueError as e:
-                self.log.warning(f"Invalid metric data: {e}")
-            except Exception as e:
-                self.log.error(f"Failed to process metric '{metric_name}': {e}")
+            os_label = data.pop("os", "unknown")
+            platform_label = data.pop("platform", "unknown")
+            for metric_name, value in data.items():
+                try:
+                    self.metrics.set_metric(
+                        metric_name=metric_name,
+                        value=value,
+                        labels={
+                            "node_id": node.id,
+                            "os": os_label,
+                            "platform": platform_label,
+                        },
+                    )
+                except ValueError as e:
+                    self.log.warning(f"Invalid metric data: {e}")
+                except Exception as e:
+                    self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
-        self.log.info(f"Updated metrics for node {node.id}")
-
-        self.__cleanup()
+            self.log.info(f"Updated metrics for node {node.id}")
+        finally:
+            self.__cleanup()
 
     @staticmethod
     def __is_identified_client() -> bool:
