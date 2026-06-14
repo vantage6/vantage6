@@ -110,6 +110,11 @@ class ServerApp(Vantage6App):
         t = Thread(target=self.__node_status_worker, daemon=True)
         t.start()
 
+        # Periodically re-notify nodes about runs that haven't started
+        # in case the original new_task_update notification was missed
+        # t_stale = Thread(target=self.__stale_task_notification_worker, daemon=True)
+        # t_stale.start()
+
         prometheus_config = self.ctx.config.get("prometheus", {})
         if prometheus_config.get("enabled", False):
             start_prometheus_exporter(
@@ -174,12 +179,18 @@ class ServerApp(Vantage6App):
         Payload.max_decode_packets = 128
 
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
+        # The node sends custom "ping" events every 60 seconds which work reliably.
+        # Don't use low-level ping_timeout as it conflicts with custom pings and
+        # causes disconnections at exactly the timeout interval.
+        # Instead, set very high timeout (1 hour) as backup only.
+        # Primary health check is the custom ping mechanism in __socket_ping_worker.
+        ping_timeout = 60
         try:
             socketio = SocketIO(
                 self.app,
                 async_mode="gevent_uwsgi",
                 message_queue=msg_queue,
-                ping_timeout=60,
+                ping_timeout=ping_timeout,
                 cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
@@ -197,7 +208,7 @@ class ServerApp(Vantage6App):
             socketio = SocketIO(
                 self.app,
                 message_queue=msg_queue,
-                ping_timeout=60,
+                ping_timeout=ping_timeout,
                 cors_allowed_origins=cors_settings,
                 logger=debug_mode,
                 engineio_logger=debug_mode,
@@ -329,17 +340,20 @@ class ServerApp(Vantage6App):
         (re)set where appropriate.
         """
         # add default roles (if they don't exist yet)
-        self._add_default_roles(get_default_roles(db), db)
-
-        # create root user if it is not in the DB yet
         try:
-            admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
-        except Exception:
-            log.warning("No root user found! Is this the first run?")
-            admin_user = self._create_super_user()
+            self._add_default_roles(get_default_roles(db), db)
 
-        if not admin_user.keycloak_id:
-            self._add_keycloak_id_to_super_user(admin_user)
+            # create root user if it is not in the DB yet
+            try:
+                admin_user = db.User.get_by_username(SUPER_USER_INFO["username"])
+            except Exception:
+                log.warning("No root user found! Is this the first run?")
+                admin_user = self._create_super_user()
+
+            if not admin_user.keycloak_id:
+                self._add_keycloak_id_to_super_user(admin_user)
+        finally:
+            DatabaseSessionManager.clear_session()
 
         return self
 
@@ -404,6 +418,44 @@ class ServerApp(Vantage6App):
             except Exception as e:
                 log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
+            finally:
+                DatabaseSessionManager.clear_session()
+
+    def __stale_task_notification_worker(self) -> None:
+        """
+        Re-notifies nodes about runs that haven't started after a threshold,
+        in case the original new_task_update notification was missed.
+        """
+        CHECK_INTERVAL = 30   # seconds between checks
+        STALE_THRESHOLD = 60  # re-notify runs open for > 45 seconds
+
+        while True:
+            try:
+                time.sleep(CHECK_INTERVAL)
+                threshold = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=STALE_THRESHOLD)
+                stale_runs = db.Run.get_stale_unstarted(older_than=threshold)
+                for run in stale_runs:
+                    task = run.task
+                    if not task:
+                        log.warning("Stale run %s has no task, skipping", run.id)
+                        continue
+                    log.debug(
+                        "Re-notifying for stale run_id=%s task_id=%s collab=%s",
+                        run.id, task.id, task.collaboration_id,
+                    )
+                    try:
+                        self.socketio.emit(
+                            "sync",
+                            namespace="/tasks",
+                            room=f"collaboration_{task.collaboration_id}",
+                        )
+                    except Exception as e:
+                        log.warning("Failed to re-emit sync for stale run: %s", str(e))
+            except Exception as e:
+                log.exception("Stale task notification worker error: %s", e)
+                time.sleep(CHECK_INTERVAL)
+            finally:
+                DatabaseSessionManager.clear_session()
 
     def __runs_data_cleanup_worker(self):
         """Start a background thread to clean up data from old Runs."""
@@ -420,6 +472,8 @@ class ServerApp(Vantage6App):
             except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")
                 log.exception(e)
+            finally:
+                DatabaseSessionManager.clear_session()
             # simple for now: check every hour
             time.sleep(3600)
 
@@ -431,50 +485,53 @@ class ServerApp(Vantage6App):
         """
         algorithm_stores = self.ctx.config.get("algorithm_stores", [])
         if algorithm_stores:
-            # couple the stores
-            for store in algorithm_stores:
-                if not (name := store.get("name")):
-                    log.warning("Algorithm store has no name, skipping coupling")
-                    continue
-                elif not (url := store.get("url")):
-                    log.warning(
-                        "Algorithm store %s has no url, skipping coupling", name
-                    )
-                    continue
-                elif not (api_path := store.get("api_path")):
-                    log.warning(
-                        "Algorithm store %s has no api_path, skipping coupling", name
-                    )
-                    continue
-                store = db.AlgorithmStore.get_by_url(url, api_path)
-                if not store:
-                    response, status = add_algorithm_store_to_database(
-                        {
-                            "name": name,
-                            "algorithm_store_url": url,
-                            "api_path": api_path,
-                        },
-                    )
-                    if status == HTTPStatus.CREATED:
-                        log.info(
-                            "Algorithm store '%s' at %s has been coupled to the server",
-                            name,
-                            url,
+            try:
+                # couple the stores
+                for store in algorithm_stores:
+                    if not (name := store.get("name")):
+                        log.warning("Algorithm store has no name, skipping coupling")
+                        continue
+                    elif not (url := store.get("url")):
+                        log.warning(
+                            "Algorithm store %s has no url, skipping coupling", name
                         )
+                        continue
+                    elif not (api_path := store.get("api_path")):
+                        log.warning(
+                            "Algorithm store %s has no api_path, skipping coupling", name
+                        )
+                        continue
+                    store = db.AlgorithmStore.get_by_url(url, api_path)
+                    if not store:
+                        response, status = add_algorithm_store_to_database(
+                            {
+                                "name": name,
+                                "algorithm_store_url": url,
+                                "api_path": api_path,
+                            },
+                        )
+                        if status == HTTPStatus.CREATED:
+                            log.info(
+                                "Algorithm store '%s' at %s has been coupled to the server",
+                                name,
+                                url,
+                            )
+                        else:
+                            log.error(
+                                "Failed to couple algorithm store '%s' at %s to the server:"
+                                " %s",
+                                name,
+                                url,
+                                response["msg"],
+                            )
                     else:
-                        log.error(
-                            "Failed to couple algorithm store '%s' at %s to the server:"
-                            " %s",
+                        log.info(
+                            "Algorithm store '%s' at %s is already coupled to the server",
                             name,
                             url,
-                            response["msg"],
                         )
-                else:
-                    log.info(
-                        "Algorithm store '%s' at %s is already coupled to the server",
-                        name,
-                        url,
-                    )
+            finally:
+                DatabaseSessionManager.clear_session()
 
 
 def run_server(config: str, system_folders: bool = True) -> ServerApp:
@@ -496,5 +553,11 @@ def run_server(config: str, system_folders: bool = True) -> ServerApp:
     ctx = ServerContext.from_external_config_file(
         config, system_folders, in_container=True
     )
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    db_config = ctx.config.get("database", {})
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=db_config.get("pool_size", 5),
+        max_overflow=db_config.get("max_overflow", 10),
+    )
     return ServerApp(ctx).start()
