@@ -35,3 +35,25 @@ Match labels
 {{- include "common.matchLabels" (dict "Chart" .Chart "Release" .Release "Values" .Values "Component" "node") -}}
 {{- end }}
 
+{{/*
+Kubernetes env-var suffix for a file-based database label (underscores only).
+*/}}
+{{- define "node.databaseEnvLabel" -}}
+{{- .databaseName | replace "-" "_" | upper -}}
+{{- end }}
+
+{{/*
+Kubernetes resource name for a file-based database volume.
+*/}}
+{{- define "node.databasePvName" -}}
+{{- $name := printf "%s-db-pv-%s" .releaseName .databaseName -}}
+{{- $name | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Kubernetes resource name for a file-based database volume claim.
+*/}}
+{{- define "node.databasePvcName" -}}
+{{- $name := printf "%s-db-pvc-%s" .releaseName .databaseName -}}
+{{- $name | trunc 63 | trimSuffix "-" -}}
+{{- end }}

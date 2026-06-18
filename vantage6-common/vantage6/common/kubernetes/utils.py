@@ -40,3 +40,14 @@ def running_on_windows() -> bool:
         True if running on a Windows machine, False otherwise
     """
     return platform.system() == "Windows"
+
+
+def database_env_label(label: str) -> str:
+    """
+    Convert a database label to the suffix used in DATABASE_* environment variables.
+
+    Database labels may contain hyphens (e.g. for Kubernetes resource names), but
+    environment variable names must use underscores so that shells like bash pass
+    them to child processes.
+    """
+    return label.replace("-", "_").upper()
