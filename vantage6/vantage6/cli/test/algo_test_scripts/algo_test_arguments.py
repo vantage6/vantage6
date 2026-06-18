@@ -8,7 +8,7 @@ average = {
     "arguments": {
         "column_name": "Age",
     },
-    "databases": [{"label": "olympic_athletes"}],
+    "databases": [{"label": "olympic-athletes"}],
 }
 
 kaplan_meier = {
@@ -23,7 +23,7 @@ kaplan_meier = {
         "censor_column_name": "censor",
         "organizations_to_include": [1, 2, 3],
     },
-    "databases": [{"label": "kaplan_meier_test"}],
+    "databases": [{"label": "kaplan-meier-test"}],
 }
 
 args = {"average": average, "kaplan_meier": kaplan_meier}
