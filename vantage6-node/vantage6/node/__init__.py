@@ -327,7 +327,7 @@ class Node:
 
     def sync_task_queue_with_HQ(self) -> None:
         """Get all unprocessed tasks from HQ for this node."""
-        assert self.client.cryptor, "Encrpytion has not been setup"
+        assert self.client.cryptor, "Encryption has not been setup"
 
         # request open tasks from HQ
         runs_to_execute = self.client.run.list(
