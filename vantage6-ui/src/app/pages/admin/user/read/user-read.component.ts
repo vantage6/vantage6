@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { PermissionService } from 'src/app/services/permission.service';
 import { RuleService } from 'src/app/services/rule.service';
 import { UserService } from 'src/app/services/user.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -27,8 +27,8 @@ import { KeycloakUserProfile, KeycloakUserService } from 'src/app/services/keycl
   selector: 'app-user-read',
   styleUrls: ['./user-read.component.scss'],
   templateUrl: './user-read.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatIconButton,
     MatMenuTrigger,
@@ -41,7 +41,6 @@ import { KeycloakUserProfile, KeycloakUserService } from 'src/app/services/keycl
     MatCardTitle,
     MatCardContent,
     ChipComponent,
-    NgFor,
     PermissionsMatrixHQComponent,
     MatProgressSpinner,
     TranslateModule

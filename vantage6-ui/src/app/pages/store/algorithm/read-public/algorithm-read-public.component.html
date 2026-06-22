@@ -1,8 +1,7 @@
 <div class="page-container">
-  <ng-container *ngIf="!isLoading; else loading">
+  @if (!isLoading) {
     <app-display-algorithm [algorithm]="algorithm"></app-display-algorithm>
-  </ng-container>
-  <ng-template #loading>
+  } @else {
     <mat-spinner diameter="48"></mat-spinner>
-  </ng-template>
+  }
 </div>

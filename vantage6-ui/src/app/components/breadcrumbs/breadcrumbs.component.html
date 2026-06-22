@@ -1,6 +1,10 @@
-<div class="crumbs" *ngIf="crumbs.length >= 1">
-  <a class="crumb home" [routerLink]="homeCrumb[1]" [attr.aria-label]="homeCrumb[0] | translate">
-    <mat-icon aria-hidden="false" aria-hidden="true">home</mat-icon>
-  </a>
-  <a class="crumb" *ngFor="let crumb of crumbs" [routerLink]="crumb[1]">{{ crumb[0] | translate }}</a>
-</div>
+@if (crumbs.length >= 1) {
+  <div class="crumbs">
+    <a class="crumb home" [routerLink]="homeCrumb[1]" [attr.aria-label]="homeCrumb[0] | translate">
+      <mat-icon aria-hidden="false" aria-hidden="true">home</mat-icon>
+    </a>
+    @for (crumb of crumbs; track crumb) {
+      <a class="crumb" [routerLink]="crumb[1]">{{ crumb[0] | translate }}</a>
+    }
+  </div>
+}

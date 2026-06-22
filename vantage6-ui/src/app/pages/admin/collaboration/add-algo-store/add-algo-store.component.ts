@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AddAlgorithmStore, AlgorithmStoreForm } from 'src/app/models/api/algorithmStore.model';
@@ -7,7 +7,7 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { environment } from 'src/environments/environment';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { AlgorithmStoreFormComponent } from '../../../../components/forms/algorithm-store-form/algorithm-store-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -16,7 +16,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-add-algo-store',
   templateUrl: './add-algo-store.component.html',
   styleUrls: ['./add-algo-store.component.scss'],
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, AlgorithmStoreFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class AddAlgoStoreComponent implements OnInit {
   id = '';

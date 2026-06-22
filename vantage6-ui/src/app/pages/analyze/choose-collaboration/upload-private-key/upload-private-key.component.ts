@@ -1,4 +1,4 @@
-import { Component, HostBinding } from '@angular/core';
+import { Component, HostBinding, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { readFile } from 'src/app/helpers/file.helper';
@@ -16,21 +16,22 @@ import { TranslateModule } from '@ngx-translate/core';
 // import * as JSEncrypt from 'jsencrypt';
 
 @Component({
-    selector: 'app-upload-private-key',
-    templateUrl: './upload-private-key.component.html',
-    styleUrl: './upload-private-key.component.scss',
-    imports: [
-        PageHeaderComponent,
-        MatCard,
-        MatCardContent,
-        ReactiveFormsModule,
-        MatFormField,
-        MatLabel,
-        MatInput,
-        MatButton,
-        MatSuffix,
-        TranslateModule
-    ]
+  selector: 'app-upload-private-key',
+  templateUrl: './upload-private-key.component.html',
+  styleUrl: './upload-private-key.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    PageHeaderComponent,
+    MatCard,
+    MatCardContent,
+    ReactiveFormsModule,
+    MatFormField,
+    MatLabel,
+    MatInput,
+    MatButton,
+    MatSuffix,
+    TranslateModule
+  ]
 })
 export class UploadPrivateKeyComponent {
   @HostBinding('class') class = 'card-container';

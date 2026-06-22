@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseStudy, StudyOrCollab } from '../../../../../models/api/study.model';
@@ -8,7 +8,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { NgFor } from '@angular/common';
+
 import { ChangesInCreateTaskService } from '../../../../../services/changes-in-create-task.service';
 import { BaseSession } from 'src/app/models/api/session.models';
 import { OrganizationService } from 'src/app/services/organization.service';
@@ -17,7 +17,8 @@ import { OrganizationService } from 'src/app/services/organization.service';
   selector: 'app-study-step',
   templateUrl: './study-step.component.html',
   styleUrls: ['./study-step.component.scss'],
-  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule, NgFor],
+  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, MatButtonModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class StudyStepComponent implements OnInit, OnDestroy {

@@ -1,7 +1,9 @@
 <app-page-header title="{{ 'role-list.title' | translate }}">
-  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.storeRoleCreate">
-    <mat-icon>add</mat-icon>{{ "role-create.title" | translate }}
-  </button>
+  @if (canCreate) {
+    <button actions mat-flat-button color="primary" [routerLink]="routes.storeRoleCreate">
+      <mat-icon>add</mat-icon>{{ "role-create.title" | translate }}
+    </button>
+  }
 </app-page-header>
 <mat-card>
   <mat-card-content>
@@ -11,6 +13,11 @@
       (searchChanged)="handleSearchChanged($event)"
       [isLoading]="isLoading"
     ></app-table>
-    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+    <mat-paginator
+      (page)="handlePageEvent($event)"
+      [length]="$safeNavigationMigration(pagination?.total)"
+      pageSize="10"
+      [hidePageSize]="true"
+    ></mat-paginator>
   </mat-card-content>
 </mat-card>

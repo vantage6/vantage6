@@ -1,30 +1,32 @@
 <app-page-header title="{{ 'algorithm-assign-review.title' | translate }}"> </app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
+@if (!isLoading) {
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "algorithm-assign-review.description" | translate: { name: algorithm?.name || "" } }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <form *ngIf="reviewers.length > 0; else noReviewers" class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ "algorithm-assign-review.reviewers" | translate }}</mat-label>
-          <mat-select multiple formControlName="reviewers">
-            <mat-option *ngFor="let reviewer of reviewers" [value]="reviewer">
-              {{ reviewer.username }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="button-container">
-          <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
-          <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
-        </div>
-      </form>
+      @if (reviewers.length > 0) {
+        <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ "algorithm-assign-review.reviewers" | translate }}</mat-label>
+            <mat-select multiple formControlName="reviewers">
+              @for (reviewer of reviewers; track reviewer) {
+                <mat-option [value]="reviewer">
+                  {{ reviewer.username }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="button-container">
+            <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
+            <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
+          </div>
+        </form>
+      } @else {
+        <p>{{ "algorithm-assign-review.no-reviewers" | translate }}</p>
+      }
     </mat-card-content>
   </mat-card>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
-<ng-template #noReviewers>
-  <p>{{ "algorithm-assign-review.no-reviewers" | translate }}</p>
-</ng-template>
+}

@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { SessionService } from 'src/app/services/session.service';
@@ -18,6 +18,7 @@ import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-t
 @Component({
   selector: 'app-dataframe-preprocess',
   templateUrl: './dataframe-preprocess.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CreateAnalysisFormComponent]
 })
 export class DataframePreprocessComponent implements OnInit, OnDestroy {

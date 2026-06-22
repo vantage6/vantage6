@@ -1,5 +1,5 @@
-import { DatePipe, NgIf } from '@angular/common';
-import { Component, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, HostBinding, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -39,18 +39,8 @@ enum TableRows {
 @Component({
   selector: 'app-task-list',
   templateUrl: './task-list.component.html',
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, RouterLink, MatIcon, MatCard, MatCardContent, TableComponent, MatPaginator, TranslateModule]
 })
 export class TaskListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Subject, combineLatest, delay, filter, takeUntil } from 'rxjs';
@@ -12,7 +12,7 @@ import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { MatToolbar } from '@angular/material/toolbar';
-import { NgIf, NgFor, NgClass, AsyncPipe } from '@angular/common';
+import { NgClass, AsyncPipe } from '@angular/common';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -28,9 +28,9 @@ import { KeycloakUserService } from 'src/app/services/keycloak-user.service';
   selector: 'app-layout-default',
   templateUrl: './layout-default.component.html',
   styleUrls: ['./layout-default.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     MatToolbar,
-    NgIf,
     MatIconButton,
     MatIcon,
     MatButton,
@@ -41,7 +41,6 @@ import { KeycloakUserService } from 'src/app/services/keycloak-user.service';
     MatSidenavContainer,
     MatSidenav,
     MatNavList,
-    NgFor,
     MatListItem,
     MatListItemIcon,
     NgClass,

@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { ChosenCollaborationService } from 'src/app/services/chosen-collaboratio
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { FileService } from 'src/app/services/file.service';
 import { NodeService } from 'src/app/services/node.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { CollaborationFormComponent } from '../../../../components/forms/collaboration-form/collaboration-form.component';
@@ -22,7 +22,8 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
 @Component({
   selector: 'app-collaboration-edit',
   templateUrl: './collaboration-edit.component.html',
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, CollaborationFormComponent, MatProgressSpinner]
 })
 export class CollaborationEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

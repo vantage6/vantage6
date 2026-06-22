@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, FormArray, FormBuilder, AbstractControl, Validators } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import {
@@ -17,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { NumberOnlyDirective } from '../../../../../directives/numberOnly.directive';
 import { floatRegex, integerRegex } from '../../../../../helpers/regex.helper';
@@ -42,11 +42,10 @@ import { compareIDsForSelection, getDisplayName } from '../task-create-helper';
     MatButtonModule,
     MatCheckboxModule,
     MatIconModule,
-    NgIf,
-    NgFor,
     AlertComponent,
     NumberOnlyDirective
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class ParameterStepComponent implements OnInit, OnDestroy {

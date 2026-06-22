@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
 import { OperationType, StoreResourceType } from 'src/app/models/api/rule.model';
@@ -7,7 +7,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
@@ -17,21 +17,21 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-algorithm-list',
-    templateUrl: './algorithm-list.component.html',
-    styleUrl: './algorithm-list.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        DisplayAlgorithmsComponent,
-        MatCard,
-        MatCardContent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-algorithm-list',
+  templateUrl: './algorithm-list.component.html',
+  styleUrl: './algorithm-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    PageHeaderComponent,
+    MatButton,
+    RouterLink,
+    MatIcon,
+    DisplayAlgorithmsComponent,
+    MatCard,
+    MatCardContent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class AlgorithmListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

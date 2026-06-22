@@ -5,7 +5,9 @@
     </button>
     <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
   </div>
-  <div *ngIf="submitDisabled" class="role-submit-buttons__error-message">
-    <mat-icon class="role-submit-buttons__error-icon">warning</mat-icon> {{ "role-submit-buttons.error-minimal-selection" | translate }}
-  </div>
+  @if (submitDisabled) {
+    <div class="role-submit-buttons__error-message">
+      <mat-icon class="role-submit-buttons__error-icon">warning</mat-icon> {{ "role-submit-buttons.error-minimal-selection" | translate }}
+    </div>
+  }
 </div>

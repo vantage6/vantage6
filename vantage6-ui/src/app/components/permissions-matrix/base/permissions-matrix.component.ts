@@ -1,7 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { SelectionChange, SelectionModel } from '@angular/cdk/collections';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { isEqualString } from 'src/app/helpers/general.helper';
 import { OperationType, ResourceType, Rule, Rule_, ScopeType, StoreResourceType, StoreRule } from 'src/app/models/api/rule.model';
@@ -85,6 +95,7 @@ export class OperationPermissionDictionary {
   selector: 'app-permissions-matrix',
   templateUrl: './permissions-matrix.component.html',
   styleUrls: ['./permissions-matrix.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false
 })
 export abstract class BasePermissionsMatrixComponent implements OnInit, OnChanges, OnDestroy {

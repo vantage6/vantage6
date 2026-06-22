@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatSelectChange, MatSelect } from '@angular/material/select';
 import { Subject, takeUntil } from 'rxjs';
@@ -8,7 +8,7 @@ import { BaseOrganization, OrganizationSortProperties } from 'src/app/models/api
 import { OperationType, ResourceType, ScopeType } from 'src/app/models/api/rule.model';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -21,19 +21,18 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-collaboration-form',
   templateUrl: './collaboration-form.component.html',
   imports: [
-    NgIf,
     ReactiveFormsModule,
     MatFormField,
     MatLabel,
     MatInput,
     MatCheckbox,
     MatSelect,
-    NgFor,
     MatOption,
     MatButton,
     MatProgressSpinner,
     TranslateModule
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./collaboration-form.component.scss']
 })
 export class CollaborationFormComponent implements OnInit {

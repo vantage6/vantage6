@@ -1,11 +1,12 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ResourceForm } from 'src/app/models/api/resource.model';
 
 @Component({
-    selector: 'app-base-edit',
-    templateUrl: './base-edit.component.html',
-    styleUrl: './base-edit.component.scss',
-    standalone: false
+  selector: 'app-base-edit',
+  templateUrl: './base-edit.component.html',
+  styleUrl: './base-edit.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export abstract class BaseEditComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

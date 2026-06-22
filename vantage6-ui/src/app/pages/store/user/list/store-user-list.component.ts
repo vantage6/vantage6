@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -11,7 +11,7 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -21,18 +21,8 @@ import { TableComponent } from '../../../../components/table/table.component';
   selector: 'app-store-user-list',
   templateUrl: './store-user-list.component.html',
   styleUrl: './store-user-list.component.scss',
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, RouterLink, MatIcon, MatCard, MatCardContent, TableComponent, MatPaginator, TranslateModule]
 })
 export class StoreUserListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getUserParameters: GetStoreUserParameters = {};

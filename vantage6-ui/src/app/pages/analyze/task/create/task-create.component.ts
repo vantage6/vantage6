@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { routePaths } from 'src/app/routes';
@@ -16,6 +16,7 @@ import { AlgorithmStepType } from 'src/app/models/api/session.models';
   templateUrl: './task-create.component.html',
   styleUrls: ['../../../../components/forms/compute-form/create-analysis-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateModule, CreateAnalysisFormComponent]
 })
 export class TaskCreateComponent implements OnInit, OnDestroy {

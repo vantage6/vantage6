@@ -1,7 +1,7 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { NgFor } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -13,9 +13,10 @@ export interface DialogData {
 }
 
 @Component({
-    selector: 'app-message-dialog',
-    templateUrl: './message-dialog.component.html',
-    imports: [MatDialogTitle, CdkScrollable, MatDialogContent, NgFor, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
+  selector: 'app-message-dialog',
+  templateUrl: './message-dialog.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [MatDialogTitle, CdkScrollable, MatDialogContent, MatDialogActions, MatButton, MatDialogClose, TranslateModule]
 })
 export class MessageDialogComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

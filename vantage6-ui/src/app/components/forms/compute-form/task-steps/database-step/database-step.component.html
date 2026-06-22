@@ -1,26 +1,24 @@
 <form class="form" [formGroup]="formGroup">
-  <div *ngIf="hasDatabases; else noDatabasesBlock">
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ "task.database" | translate }}</mat-label>
-      <mat-select formControlName="database">
-        <mat-option *ngFor="let availableDatabase of availableDatabases" [value]="availableDatabase.name">
-          {{ availableDatabase.name }}
-          <div class="detail-txt">({{ availableDatabase.type }})</div>
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+  @if (hasDatabases) {
+    <div>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "task.database" | translate }}</mat-label>
+        <mat-select formControlName="database">
+          @for (availableDatabase of availableDatabases; track availableDatabase) {
+            <mat-option [value]="availableDatabase.name">
+              {{ availableDatabase.name }}
+              <div class="detail-txt">({{ availableDatabase.type }})</div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  } @else {
+    @if (node && node.config.length === 0) {
+      <app-alert class="node-alert" label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"></app-alert>
+    }
+    @if (node && node.config.length > 0 && !nodeConfigContainsDatabases()) {
+      <app-alert class="node-alert" label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"></app-alert>
+    }
+  }
 </form>
-
-<ng-template #noDatabasesBlock>
-  <app-alert
-    class="node-alert"
-    *ngIf="node && node.config.length === 0"
-    label="{{ 'task-create.alert-no-node-config' | translate: { name: node.name } }}"
-  ></app-alert>
-  <app-alert
-    class="node-alert"
-    *ngIf="node && node.config.length > 0 && !nodeConfigContainsDatabases()"
-    label="{{ 'task-create.alert-no-databases' | translate: { name: node.name } }}"
-  ></app-alert>
-</ng-template>

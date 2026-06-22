@@ -8,7 +8,8 @@ import {
   OnDestroy,
   Output,
   QueryList,
-  ViewChildren
+  ViewChildren,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import {
   AbstractControl,
@@ -46,7 +47,7 @@ import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/m
 import { MatFormField, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatButton } from '@angular/material/button';
-import { NgIf, NgFor, TitleCasePipe, KeyValuePipe } from '@angular/common';
+import { TitleCasePipe, KeyValuePipe } from '@angular/common';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -63,6 +64,7 @@ import { Subscription } from 'rxjs';
   selector: 'app-algorithm-form',
   templateUrl: './algorithm-form.component.html',
   styleUrl: './algorithm-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     MatCard,
     MatCardHeader,
@@ -74,9 +76,7 @@ import { Subscription } from 'rxjs';
     MatInput,
     MatButton,
     MatSuffix,
-    NgIf,
     MatSelect,
-    NgFor,
     MatOption,
     MatAccordion,
     MatExpansionPanel,
@@ -290,6 +290,11 @@ export class AlgorithmFormComponent implements OnInit, AfterViewInit, OnDestroy 
 
   hasAllowedValues(type: string, allowedValues: string[] | undefined): boolean {
     return this.isArgumentWithAllowedValues(type) && allowedValues !== undefined && allowedValues.length > 0;
+  }
+
+  getAllowedValues(allowedValuesControl: AbstractControl): string[] {
+    const value = allowedValuesControl.value;
+    return Array.isArray(value) ? value : [];
   }
 
   addDatabase(functionFormGroup: FormGroup): void {

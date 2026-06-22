@@ -1,10 +1,14 @@
 <app-page-header title="{{ 'user-list.title' | translate }}">
-  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreateServiceAccount">
-    <mat-icon>add</mat-icon>{{ "user-create.service-account" | translate }}
-  </button>
-  <button actions mat-flat-button color="primary" *ngIf="canCreate" [routerLink]="routes.userCreate">
-    <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
-  </button>
+  @if (canCreate) {
+    <button actions mat-flat-button color="primary" [routerLink]="routes.userCreateServiceAccount">
+      <mat-icon>add</mat-icon>{{ "user-create.service-account" | translate }}
+    </button>
+  }
+  @if (canCreate) {
+    <button actions mat-flat-button color="primary" [routerLink]="routes.userCreate">
+      <mat-icon>add</mat-icon>{{ "user-create.title" | translate }}
+    </button>
+  }
 </app-page-header>
 <app-tree-dropdown
   [selectedTreeNodes]="selectedFilterOptions"
@@ -21,6 +25,11 @@
       (searchChanged)="handleSearchChanged($event)"
       [isLoading]="isLoading"
     ></app-table>
-    <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+    <mat-paginator
+      (page)="handlePageEvent($event)"
+      [length]="$safeNavigationMigration(pagination?.total)"
+      pageSize="10"
+      [hidePageSize]="true"
+    ></mat-paginator>
   </mat-card-content>
 </mat-card>

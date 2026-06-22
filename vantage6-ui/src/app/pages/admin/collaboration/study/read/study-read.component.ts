@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
@@ -14,7 +14,7 @@ import { BaseNode } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { Collaboration, CollaborationLazyProperties } from 'src/app/models/api/collaboration.model';
 import { CollaborationService } from 'src/app/services/collaboration.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../../components/page-header/page-header.component';
 import { MatIconButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -29,8 +29,8 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-study-read',
   templateUrl: './study-read.component.html',
   styleUrls: ['./study-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatIconButton,
     MatMenuTrigger,
@@ -43,7 +43,6 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
     MatCardTitle,
     MatCardContent,
     ChipComponent,
-    NgFor,
     NodeAdminCardComponent,
     MatProgressSpinner,
     TranslateModule

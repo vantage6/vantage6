@@ -18,7 +18,6 @@
       </button>
     </mat-menu>
   </app-page-header>
-  <ng-container *ngIf="!isLoading && session; else loading">
     <mat-card *ngIf="!isLoading">
       <mat-card-header>
         <mat-card-title>{{ "session.title" | translate: { name: session.name } }}</mat-card-title>
@@ -84,17 +83,14 @@
           (searchChanged)="handleSearchChanged($event)"
         ></app-table>
         <p *ngIf="!hasDataframes()">{{ "session.dataframes.no-dataframes" | translate }}</p>
-        <mat-paginator (page)="handlePageEvent($event)" [length]="pagination?.total" pageSize="10" [hidePageSize]="true"></mat-paginator>
+        <mat-paginator
+          (page)="handlePageEvent($event)"
+          [length]="$safeNavigationMigration(pagination?.total)"
+          pageSize="10"
+          [hidePageSize]="true"
+        ></mat-paginator>
       </mat-card-content>
     </mat-card>
-  </ng-container>
-  <ng-template #loading>
-    <mat-card>
-      <mat-card-content>
-        <mat-spinner diameter="48"></mat-spinner>
-      </mat-card-content>
-    </mat-card>
-  </ng-template>
 </ng-container>
 <ng-template #loading>
   <mat-card>
