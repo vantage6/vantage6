@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseSession, Dataframe } from '../../../../../models/api/session.models';
@@ -12,7 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
@@ -32,12 +32,11 @@ import { OrganizationService } from 'src/app/services/organization.service';
     MatButtonModule,
     MatIconModule,
     RouterModule,
-    NgIf,
-    NgFor,
     AlertComponent,
     AlertWithButtonComponent,
     MatProgressSpinner
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class SessionStepComponent implements OnInit, OnDestroy {

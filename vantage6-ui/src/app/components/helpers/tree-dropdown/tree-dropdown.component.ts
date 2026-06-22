@@ -1,4 +1,15 @@
-import { Component, Input, OnInit, OnChanges, ElementRef, ViewChild, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  OnChanges,
+  ElementRef,
+  ViewChild,
+  Output,
+  EventEmitter,
+  SimpleChanges,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatTreeFlatDataSource, MatTreeFlattener, MatTree, MatTreeNodeDef, MatTreeNode, MatTreeNodePadding } from '@angular/material/tree';
 import { ParentTreeControl } from './parent-tree-control';
@@ -8,7 +19,7 @@ import { MatChipGrid, MatChipRow, MatChipRemove, MatChipInput } from '@angular/m
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { NgIf, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { MatIconButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatRadioButton } from '@angular/material/radio';
@@ -53,6 +64,7 @@ export interface ITreeSelectedValue {
   selector: 'app-tree-dropdown',
   templateUrl: './tree-dropdown.component.html',
   styleUrls: ['./tree-dropdown.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CdkOverlayOrigin,
     MatFormField,
@@ -66,7 +78,6 @@ export interface ITreeSelectedValue {
     ReactiveFormsModule,
     FormsModule,
     CdkConnectedOverlay,
-    NgIf,
     MatIconButton,
     MatTree,
     NgClass,

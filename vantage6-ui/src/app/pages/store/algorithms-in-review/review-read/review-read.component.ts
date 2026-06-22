@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -18,7 +18,7 @@ import { StorePermissionService } from 'src/app/services/store-permission.servic
 import { StoreReviewService } from 'src/app/services/store-review.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MarkdownComponent } from 'ngx-markdown';
 import { MatButton } from '@angular/material/button';
@@ -30,15 +30,14 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-review-read',
   templateUrl: './review-read.component.html',
   styleUrl: './review-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
-    NgIf,
     MatCard,
     MatCardHeader,
     MatCardTitle,
     MatCardContent,
     MarkdownComponent,
-    NgFor,
     MatButton,
     RouterLink,
     MatIcon,

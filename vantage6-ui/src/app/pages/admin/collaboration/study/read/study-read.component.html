@@ -1,17 +1,23 @@
-<ng-container *ngIf="!isLoading && study; else loading">
+@if (!isLoading && study) {
   <app-page-header [title]="study.name">
-    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete || canDelete">
-      <mat-icon>more_vert</mat-icon>
-    </button>
+    @if (canDelete || canDelete) {
+      <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
     <mat-menu #menu="matMenu">
-      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.studyEdit, id]">
-        <mat-icon>edit</mat-icon>
-        <span>{{ "general.edit" | translate }}</span>
-      </button>
-      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
-        <mat-icon>delete</mat-icon>
-        <span>{{ "general.delete" | translate }}</span>
-      </button>
+      @if (canEdit) {
+        <button mat-menu-item [routerLink]="[routes.studyEdit, id]">
+          <mat-icon>edit</mat-icon>
+          <span>{{ "general.edit" | translate }}</span>
+        </button>
+      }
+      @if (canDelete) {
+        <button mat-menu-item (click)="handleDelete()">
+          <mat-icon>delete</mat-icon>
+          <span>{{ "general.delete" | translate }}</span>
+        </button>
+      }
     </mat-menu>
   </app-page-header>
   <mat-card>
@@ -40,7 +46,9 @@
           <b>{{ "resources.organizations" | translate }}</b>
           <span>
             <div class="chip-container">
-              <app-chip *ngFor="let organization of study.organizations" [label]="organization.name"></app-chip>
+              @for (organization of study.organizations; track organization) {
+                <app-chip [label]="organization.name"></app-chip>
+              }
             </div>
           </span>
         </div>
@@ -53,11 +61,10 @@
     [collaboration]="collaboration"
     (nodesUpdated)="onUpdatedNodes()"
   ></app-node-admin-card>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-card>
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
-</ng-template>
+}

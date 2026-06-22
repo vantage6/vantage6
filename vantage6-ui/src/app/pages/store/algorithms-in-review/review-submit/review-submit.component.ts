@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -13,7 +13,7 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreReviewService } from 'src/app/services/store-review.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatRadioGroup, MatRadioButton } from '@angular/material/radio';
@@ -24,8 +24,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-review-submit',
   templateUrl: './review-submit.component.html',
   styleUrl: './review-submit.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatCard,
     MatCardContent,

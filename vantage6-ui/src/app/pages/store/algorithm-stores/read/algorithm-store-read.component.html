@@ -1,4 +1,4 @@
-<ng-container *ngIf="!isLoading && algorithmStore">
+@if (!isLoading && algorithmStore) {
   <app-page-header title="{{ algorithmStore.name }}"></app-page-header>
   <mat-card>
     <mat-card-header>
@@ -26,12 +26,16 @@
       <mat-card-title>{{ "algorithm-store-read.card-collaborations.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <div *ngIf="!algorithmStore.all_collaborations; else noCollaborations">
-        <p>
-          {{ "algorithm-store-read.card-collaborations.description" | translate }}
-        </p>
-        <app-table [data]="collaborationTable" [isLoading]="isLoading"></app-table>
-      </div>
+      @if (!algorithmStore.all_collaborations) {
+        <div>
+          <p>
+            {{ "algorithm-store-read.card-collaborations.description" | translate }}
+          </p>
+          <app-table [data]="collaborationTable" [isLoading]="isLoading"></app-table>
+        </div>
+      } @else {
+        <p>{{ "algorithm-store-read.for-all-collaborations" | translate }}</p>
+      }
     </mat-card-content>
   </mat-card>
   <mat-card>
@@ -39,39 +43,39 @@
       <mat-card-title>{{ "algorithm-store-read.card-policies.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <app-table *ngIf="policyTable" [data]="policyTable" [isLoading]="isLoading"></app-table>
+      @if (policyTable) {
+        <app-table [data]="policyTable" [isLoading]="isLoading"></app-table>
+      }
     </mat-card-content>
   </mat-card>
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "algorithm-store-read.card-algorithms.title" | translate }}</mat-card-title>
-      <button
-        actions
-        mat-flat-button
-        class="right-aligned-button"
-        color="primary"
-        *ngIf="canAddAlgorithm"
-        [routerLink]="routePaths.algorithmCreate"
-      >
-        <mat-icon>add</mat-icon>{{ "algorithm-create.short-title" | translate }}
-      </button>
+      @if (canAddAlgorithm) {
+        <button actions mat-flat-button class="right-aligned-button" color="primary" [routerLink]="routePaths.algorithmCreate">
+          <mat-icon>add</mat-icon>{{ "algorithm-create.short-title" | translate }}
+        </button>
+      }
     </mat-card-header>
     <mat-card-content>
-      <div *ngIf="algorithms">
-        <p>{{ "algorithm-store-read.card-algorithms.description" | translate }}</p>
-        <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithmManage"></app-display-algorithms>
-      </div>
-      <div *ngIf="!algorithms">
-        <p>{{ getMessageNoAlgorithms() }}</p>
-      </div>
+      @if (algorithms) {
+        <div>
+          <p>{{ "algorithm-store-read.card-algorithms.description" | translate }}</p>
+          <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithmManage"></app-display-algorithms>
+        </div>
+      }
+      @if (!algorithms) {
+        <div>
+          <p>{{ getMessageNoAlgorithms() }}</p>
+        </div>
+      }
     </mat-card-content>
   </mat-card>
-</ng-container>
-<mat-card *ngIf="isLoading">
-  <mat-card-content>
-    <mat-spinner diameter="48"></mat-spinner>
-  </mat-card-content>
-</mat-card>
-<ng-template #noCollaborations>
-  <p>{{ "algorithm-store-read.for-all-collaborations" | translate }}</p>
-</ng-template>
+}
+@if (isLoading) {
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+}

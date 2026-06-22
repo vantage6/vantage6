@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -14,7 +14,7 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
@@ -29,8 +29,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-role-read',
   templateUrl: './role-read.component.html',
   styleUrls: ['./role-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatCard,
     MatCardContent,

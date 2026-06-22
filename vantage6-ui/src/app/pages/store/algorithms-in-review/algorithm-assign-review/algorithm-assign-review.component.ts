@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -14,7 +14,7 @@ import { StorePermissionService } from 'src/app/services/store-permission.servic
 import { StoreReviewService } from 'src/app/services/store-review.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
@@ -27,9 +27,9 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-algorithm-assign-review',
   templateUrl: './algorithm-assign-review.component.html',
   styleUrl: './algorithm-assign-review.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
-    NgIf,
     MatCard,
     MatCardHeader,
     MatCardTitle,
@@ -38,7 +38,6 @@ import { TranslateModule } from '@ngx-translate/core';
     MatFormField,
     MatLabel,
     MatSelect,
-    NgFor,
     MatOption,
     MatButton,
     MatProgressSpinner,

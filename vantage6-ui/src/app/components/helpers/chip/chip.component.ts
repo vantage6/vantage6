@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NgClass } from '@angular/common';
 
 @Component({
-    selector: 'app-chip',
-    templateUrl: './chip.component.html',
-    styleUrls: ['./chip.component.scss'],
-    imports: [NgClass]
+  selector: 'app-chip',
+  templateUrl: './chip.component.html',
+  styleUrls: ['./chip.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [NgClass]
 })
 export class ChipComponent {
   @Input() label: string = '';

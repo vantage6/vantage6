@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { routePaths } from 'src/app/routes';
 import { Resource } from 'src/app/models/api/resource.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,10 +7,11 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { Subject } from 'rxjs';
 
 @Component({
-    selector: 'app-base-read',
-    templateUrl: './base-read.component.html',
-    styleUrl: './base-read.component.scss',
-    standalone: false
+  selector: 'app-base-read',
+  templateUrl: './base-read.component.html',
+  styleUrl: './base-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export abstract class BaseReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

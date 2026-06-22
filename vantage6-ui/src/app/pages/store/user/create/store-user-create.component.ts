@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseCreateComponent } from 'src/app/components/admin-base/base-create/base-create.component';
@@ -8,7 +8,7 @@ import { StoreUserCreate, StoreUserForm } from 'src/app/models/api/store-user.mo
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { StoreUserFormComponent } from '../../../../components/forms/store-user-form/store-user-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -18,7 +18,8 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-store-user-create',
   templateUrl: './store-user-create.component.html',
   styleUrl: './store-user-create.component.scss',
-  imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class StoreUserCreateComponent extends BaseCreateComponent implements OnInit {
   destroy$ = new Subject();

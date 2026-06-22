@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
 import { SessionService } from 'src/app/services/session.service';
@@ -17,6 +17,7 @@ import { CreateAnalysisFormComponent } from 'src/app/components/forms/compute-fo
 @Component({
   selector: 'app-dataframe-create',
   templateUrl: './dataframe-create.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CreateAnalysisFormComponent]
 })
 export class DataframeCreateComponent implements OnInit, OnDestroy {

@@ -1,11 +1,11 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { BaseAlgorithmStore } from 'src/app/models/api/algorithmStore.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -15,7 +15,8 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-algorithm-store-list',
   templateUrl: './algorithm-store-list.component.html',
   styleUrl: './algorithm-store-list.component.scss',
-  imports: [PageHeaderComponent, NgIf, NgFor, MatButton, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmStoreListComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

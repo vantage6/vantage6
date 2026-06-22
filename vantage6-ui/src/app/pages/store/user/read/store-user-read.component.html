@@ -1,17 +1,23 @@
-<ng-container *ngIf="!isLoading && user; else loading">
+@if (!isLoading && user) {
   <app-page-header [title]="user.username">
-    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canDelete">
-      <mat-icon>more_vert</mat-icon>
-    </button>
+    @if (canDelete) {
+      <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
     <mat-menu #menu="matMenu">
-      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.storeUserEdit, id]">
-        <mat-icon>edit</mat-icon>
-        <span>{{ "general.edit" | translate }}</span>
-      </button>
-      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
-        <mat-icon>delete</mat-icon>
-        <span>{{ "general.delete" | translate }}</span>
-      </button>
+      @if (canEdit) {
+        <button mat-menu-item [routerLink]="[routes.storeUserEdit, id]">
+          <mat-icon>edit</mat-icon>
+          <span>{{ "general.edit" | translate }}</span>
+        </button>
+      }
+      @if (canDelete) {
+        <button mat-menu-item (click)="handleDelete()">
+          <mat-icon>delete</mat-icon>
+          <span>{{ "general.delete" | translate }}</span>
+        </button>
+      }
     </mat-menu>
   </app-page-header>
   <mat-card>
@@ -32,7 +38,9 @@
           <b>{{ "store-user.roles" | translate }}</b>
           <span>
             <div class="chip-container">
-              <app-chip *ngFor="let role of user.roles" [label]="role.name"></app-chip>
+              @for (role of user.roles; track role) {
+                <app-chip [label]="role.name"></app-chip>
+              }
             </div>
           </span>
         </div>
@@ -43,11 +51,10 @@
       </div>
     </mat-card-content>
   </mat-card>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-card>
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
-</ng-template>
+}

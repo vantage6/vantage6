@@ -1,4 +1,4 @@
-<ng-container *ngIf="!isLoading; else loading">
+@if (!isLoading) {
   <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "general.name" | translate }}</mat-label>
@@ -12,9 +12,11 @@
         (selectionChange)="handleOrganizationChange($event)"
         [compareWith]="compareOrganizationsForSelection"
       >
-        <mat-option *ngFor="let organization of organizations" [value]="organization">
-          {{ organization.name }}
-        </mat-option>
+        @for (organization of organizations; track organization) {
+          <mat-option [value]="organization">
+            {{ organization.name }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <div class="button-container">
@@ -22,7 +24,6 @@
       <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
     </div>
   </form>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+}

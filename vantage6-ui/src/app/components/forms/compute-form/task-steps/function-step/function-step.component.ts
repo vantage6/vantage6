@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { AlgorithmFunctionExtended, Algorithm } from '../../../../../models/api/algorithm.model';
@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AlertComponent } from '../../../../alerts/alert/alert.component';
 import { HighlightedTextPipe } from '../../../../../pipes/highlighted-text.pipe';
 import { Collaboration } from 'src/app/models/api/collaboration.model';
@@ -34,12 +34,11 @@ import { compareIDsForSelection, getDisplayName } from '../task-create-helper';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    NgIf,
-    NgFor,
     AlertComponent,
     HighlightedTextPipe,
     MatProgressSpinner
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class FunctionStepComponent implements OnInit, OnDestroy {

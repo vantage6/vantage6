@@ -1,20 +1,21 @@
-import { Component, HostBinding } from '@angular/core';
+import { Component, HostBinding, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { AlgorithmFormComponent } from '../../../../components/forms/algorithm-form/algorithm-form.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-algorithm-create',
-    templateUrl: './algorithm-create.component.html',
-    styleUrl: './algorithm-create.component.scss',
-    imports: [PageHeaderComponent, NgIf, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+  selector: 'app-algorithm-create',
+  templateUrl: './algorithm-create.component.html',
+  styleUrl: './algorithm-create.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmCreateComponent {
   @HostBinding('class') class = 'card-container';

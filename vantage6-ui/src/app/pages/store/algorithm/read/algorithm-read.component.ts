@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -12,7 +12,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dialog.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -28,8 +28,8 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-algorithm-read',
   templateUrl: './algorithm-read.component.html',
   styleUrl: './algorithm-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatIconButton,
     MatMenuTrigger,

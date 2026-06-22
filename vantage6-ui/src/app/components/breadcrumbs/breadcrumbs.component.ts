@@ -1,15 +1,16 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { Subject, filter, takeUntil } from 'rxjs';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatIcon } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-breadcrumbs',
-    templateUrl: './breadcrumbs.component.html',
-    styleUrls: ['./breadcrumbs.component.scss'],
-    imports: [NgIf, RouterLink, MatIcon, NgFor, TranslateModule]
+  selector: 'app-breadcrumbs',
+  templateUrl: './breadcrumbs.component.html',
+  styleUrls: ['./breadcrumbs.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [RouterLink, MatIcon, TranslateModule]
 })
 export class BreadcrumbsComponent implements OnDestroy {
   destroy$ = new Subject();

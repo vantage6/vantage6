@@ -1,13 +1,14 @@
-import { Component, EventEmitter, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { ResourceForm } from 'src/app/models/api/resource.model';
 
 @Component({
-    selector: 'app-base-form',
-    templateUrl: './base-form.component.html',
-    styleUrl: './base-form.component.scss',
-    standalone: false
+  selector: 'app-base-form',
+  templateUrl: './base-form.component.html',
+  styleUrl: './base-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: false
 })
 export abstract class BaseFormComponent implements OnDestroy {
   @Output() cancelled: EventEmitter<void> = new EventEmitter();

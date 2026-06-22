@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow, MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-mat-chip-form',
   templateUrl: './mat-chip-form.component.html',
   styleUrls: ['./mat-chip-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [MatIconModule, MatChipsModule, MatFormFieldModule, MatLabel, MatChipRow, MatChipGrid, MatChipInput, ReactiveFormsModule]
 })
 export class MatChipFormComponent implements OnInit {

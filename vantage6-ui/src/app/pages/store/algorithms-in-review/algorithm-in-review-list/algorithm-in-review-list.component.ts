@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { StoreUserService } from 'src/app/services/store-user.service';
 import { assignDevelopersToAlgorithms } from '../review.helper';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
-import { NgIf } from '@angular/common';
+
 import { TableComponent } from '../../../../components/table/table.component';
 
 enum TableRows {
@@ -30,7 +30,8 @@ enum TableRows {
   selector: 'app-algorithm-in-review-list',
   templateUrl: './algorithm-in-review-list.component.html',
   styleUrl: './algorithm-in-review-list.component.scss',
-  imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, NgIf, TableComponent, MatPaginator, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardHeader, MatCardTitle, MatCardContent, TableComponent, MatPaginator, TranslateModule]
 })
 export class AlgorithmInReviewListComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

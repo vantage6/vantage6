@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -10,7 +10,7 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -24,8 +24,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-store-user-read',
   templateUrl: './store-user-read.component.html',
   styleUrl: './store-user-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatIconButton,
     MatMenuTrigger,
@@ -37,7 +37,6 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
     MatCardHeader,
     MatCardTitle,
     MatCardContent,
-    NgFor,
     ChipComponent,
     PermissionsMatrixStoreComponent,
     MatProgressSpinner,

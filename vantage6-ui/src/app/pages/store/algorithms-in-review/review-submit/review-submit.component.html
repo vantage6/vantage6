@@ -1,4 +1,4 @@
-<ng-container *ngIf="!isLoading && !isSubmitting; else loading">
+@if (!isLoading && !isSubmitting) {
   <app-page-header title="{{ 'review-submit.title' | translate: { name: algorithm?.name || '' } }}"></app-page-header>
   <mat-card>
     <mat-card-content>
@@ -16,11 +16,10 @@
       </form>
     </mat-card-content>
   </mat-card>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-card>
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
-</ng-template>
+}

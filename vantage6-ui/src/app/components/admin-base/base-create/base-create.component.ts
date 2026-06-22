@@ -1,10 +1,11 @@
-import { Component, HostBinding } from '@angular/core';
+import { Component, HostBinding, ChangeDetectionStrategy } from '@angular/core';
 import { routePaths } from 'src/app/routes';
 
 @Component({
   selector: 'app-base-create',
   templateUrl: './base-create.component.html',
   styleUrl: './base-create.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class BaseCreateComponent {

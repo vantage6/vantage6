@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { combineLatest, Subject, takeUntil } from 'rxjs';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
@@ -11,7 +11,7 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
@@ -25,8 +25,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-algorithm-store-read',
   templateUrl: './algorithm-store-read.component.html',
   styleUrl: './algorithm-store-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatCard,
     MatCardHeader,

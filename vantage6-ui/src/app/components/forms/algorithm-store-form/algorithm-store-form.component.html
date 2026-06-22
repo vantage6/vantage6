@@ -14,9 +14,9 @@
     <input matInput type="text" formControlName="api_path" />
     <mat-hint>{{ "algorithm-store-add.form.api-path-hint" | translate }}</mat-hint>
   </mat-form-field>
-  <mat-checkbox formControlName="all_collaborations" *ngIf="canSetAllCollaborations">{{
-    "algorithm-store-add.form.all-collaborations" | translate
-  }}</mat-checkbox>
+  @if (canSetAllCollaborations) {
+    <mat-checkbox formControlName="all_collaborations">{{ "algorithm-store-add.form.all-collaborations" | translate }}</mat-checkbox>
+  }
   <div class="button-container">
     <button mat-flat-button type="submit" color="primary">{{ "general.submit" | translate }}</button>
     <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { BaseNode, Database } from '../../../../../models/api/node.model';
@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AlertComponent } from 'src/app/components/alerts/alert/alert.component';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
 import { TaskDBOutput } from 'src/app/models/api/task.models';
@@ -15,7 +15,8 @@ import { TaskDBOutput } from 'src/app/models/api/task.models';
   selector: 'app-database-step',
   templateUrl: './database-step.component.html',
   styleUrls: ['./database-step.component.scss'],
-  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, NgIf, NgFor, AlertComponent],
+  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, AlertComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class DatabaseStepComponent implements OnInit, OnDestroy {

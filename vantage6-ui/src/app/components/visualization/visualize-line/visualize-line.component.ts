@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Visualization } from 'src/app/models/api/visualization.model';
 import { FileService } from 'src/app/services/file.service';
 // import { Chart } from 'chart.js';
@@ -11,10 +11,11 @@ import { TranslateModule } from '@ngx-translate/core';
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale);
 
 @Component({
-    selector: 'app-visualize-line',
-    templateUrl: './visualize-line.component.html',
-    styleUrl: './visualize-line.component.scss',
-    imports: [MatButton, TranslateModule]
+  selector: 'app-visualize-line',
+  templateUrl: './visualize-line.component.html',
+  styleUrl: './visualize-line.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [MatButton, TranslateModule]
 })
 export class VisualizeLineComponent implements OnChanges {
   @Input() visualization?: Visualization | null;

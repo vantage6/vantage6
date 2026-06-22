@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, HostBinding, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isArgumentWithAllowedValues } from 'src/app/helpers/algorithm.helper';
 import { printDate } from 'src/app/helpers/general.helper';
@@ -7,7 +7,7 @@ import { Visualization } from 'src/app/models/api/visualization.model';
 import { routePaths } from 'src/app/routes';
 import { FileService } from 'src/app/services/file.service';
 import { MatCard, MatCardHeader, MatCardTitle, MatCardContent } from '@angular/material/card';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MarkdownComponent } from 'ngx-markdown';
 import {
   MatAccordion,
@@ -23,28 +23,27 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrderByPipe } from '../../../pipes/order-by.pipe';
 
 @Component({
-    selector: 'app-display-algorithm',
-    templateUrl: './display-algorithm.component.html',
-    styleUrl: './display-algorithm.component.scss',
-    imports: [
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        NgIf,
-        MarkdownComponent,
-        MatAccordion,
-        NgFor,
-        MatExpansionPanel,
-        MatExpansionPanelHeader,
-        MatExpansionPanelTitle,
-        MatExpansionPanelContent,
-        MatProgressSpinner,
-        MatButton,
-        MatIcon,
-        TranslateModule,
-        OrderByPipe
-    ]
+  selector: 'app-display-algorithm',
+  templateUrl: './display-algorithm.component.html',
+  styleUrl: './display-algorithm.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MarkdownComponent,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatExpansionPanelContent,
+    MatProgressSpinner,
+    MatButton,
+    MatIcon,
+    TranslateModule,
+    OrderByPipe
+  ]
 })
 export class DisplayAlgorithmComponent {
   @HostBinding('class') class = 'card-container';
