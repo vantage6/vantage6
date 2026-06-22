@@ -69,8 +69,8 @@ spec:
       - name: node-logs
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-logs-pvc
-      {{- range default (list) .Values.node.databases.fileBased }}
+      {{- range .Values.node.databases.fileBased }}
       - name: database-volume-{{ .name }}
         persistentVolumeClaim:
-          claimName: {{ $.Release.Name }}-db-pvc
+          claimName: {{ include "node.databasePvcName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
       {{- end }}
