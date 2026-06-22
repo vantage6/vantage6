@@ -1,4 +1,4 @@
-FROM node:20-alpine AS node
+FROM node:24-alpine AS node
 
 ARG TAG=latest
 LABEL version=${TAG}
