@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { getChipTypeForStatus, getStatusType, getTaskStatusTranslation } from 'src/app/helpers/task.helper';
 import { Algorithm, AlgorithmFunction, Argument, ArgumentType } from 'src/app/models/api/algorithm.model';
@@ -41,7 +41,7 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { StudyService } from 'src/app/services/study.service';
 import { Study } from 'src/app/models/api/study.model';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf, NgClass, NgFor, SlicePipe } from '@angular/common';
+import { NgClass, SlicePipe } from '@angular/common';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
@@ -71,9 +71,9 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-task-read',
   templateUrl: './task-read.component.html',
   styleUrls: ['./task-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
-    NgIf,
     MatIconButton,
     MatMenuTrigger,
     MatIcon,
@@ -85,7 +85,6 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,
     NgClass,
-    NgFor,
     StatusInfoComponent,
     MatButton,
     MatCardActions,

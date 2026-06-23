@@ -295,7 +295,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                             ),
                             "originalName": Path(dataset[1]).name,
                         }
-                        for dataset in [datasets[0]]
+                        for dataset in datasets
                     ]
                 },
                 "hq": {

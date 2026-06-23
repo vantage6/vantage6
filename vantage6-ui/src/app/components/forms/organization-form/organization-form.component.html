@@ -20,8 +20,12 @@
     <input matInput type="text" formControlName="domain" />
   </mat-form-field>
   <mat-form-field subscriptSizing="dynamic">
-    <mat-label *ngIf="!organization?.public_key">{{ "organization.public-key" | translate }}</mat-label>
-    <mat-label *ngIf="organization?.public_key">{{ "organization.public-key-new" | translate }}</mat-label>
+    @if (!organization?.public_key) {
+      <mat-label>{{ "organization.public-key" | translate }}</mat-label>
+    }
+    @if (organization?.public_key) {
+      <mat-label>{{ "organization.public-key-new" | translate }}</mat-label>
+    }
     <input matInput value="{{ selectedFile?.name }}" disabled />
     <input hidden (change)="selectFile($event)" #fileInput type="file" id="file" />
     <button mat-flat-button type="button" matSuffix color="primary" (click)="fileInput.click()">Select file</button>

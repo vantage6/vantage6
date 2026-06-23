@@ -9,7 +9,8 @@ import {
   OnInit,
   Output,
   ViewChild,
-  ViewEncapsulation
+  ViewEncapsulation,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
@@ -37,7 +38,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { AlertComponent } from '../../alerts/alert/alert.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { getDatabasesFromNode } from 'src/app/helpers/node.helper';
 import { SessionStepComponent } from './task-steps/session-step/session-step.component';
@@ -55,6 +56,7 @@ import { SessionService } from 'src/app/services/session.service';
   templateUrl: './create-analysis-form.component.html',
   styleUrls: ['./create-analysis-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
     AlertComponent,
@@ -71,7 +73,6 @@ import { SessionService } from 'src/app/services/session.service';
     MatButton,
     TranslateModule,
     ReactiveFormsModule,
-    NgIf,
     SessionStepComponent,
     StudyStepComponent,
     FunctionStepComponent,

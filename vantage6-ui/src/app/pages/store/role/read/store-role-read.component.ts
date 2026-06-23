@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs';
@@ -13,7 +13,7 @@ import { HandleConfirmDialogService } from 'src/app/services/handle-confirm-dial
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRoleService } from 'src/app/services/store-role.service';
 import { StoreRuleService } from 'src/app/services/store-rule.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatTabGroup, MatTab } from '@angular/material/tabs';
@@ -27,8 +27,8 @@ import { MatIcon } from '@angular/material/icon';
   selector: 'app-store-role-read',
   templateUrl: './store-role-read.component.html',
   styleUrl: './store-role-read.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatCard,
     MatCardContent,

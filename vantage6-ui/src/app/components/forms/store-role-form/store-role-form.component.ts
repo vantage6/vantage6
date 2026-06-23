@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
@@ -15,6 +15,7 @@ import { MatInput } from '@angular/material/input';
   selector: 'app-store-role-form',
   templateUrl: './store-role-form.component.html',
   styleUrl: './store-role-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     MatFormField,

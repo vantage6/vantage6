@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, RouterLink } from '@angular/router';
@@ -16,7 +16,7 @@ import { AlgorithmStoreService } from 'src/app/services/algorithm-store.service'
 import { CollaborationService } from 'src/app/services/collaboration.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -41,8 +41,8 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-collaboration-read',
   templateUrl: './collaboration-read.component.html',
   styleUrls: ['./collaboration-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     PageHeaderComponent,
     MatIconButton,
     MatMenuTrigger,
@@ -54,7 +54,6 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
     MatCardHeader,
     MatCardTitle,
     MatCardContent,
-    NgFor,
     ChipComponent,
     NodeAdminCardComponent,
     MatButton,

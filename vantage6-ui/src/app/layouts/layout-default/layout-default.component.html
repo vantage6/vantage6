@@ -1,5 +1,7 @@
 <mat-toolbar color="primary">
-  <button mat-icon-button *ngIf="hideSideMenu" (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  @if (hideSideMenu) {
+    <button mat-icon-button (click)="sideNav.toggle()"><mat-icon>menu</mat-icon></button>
+  }
   <img src="/assets/images/logo.png" class="logo" alt="vantage6" />
   <div class="actions">
     <button mat-flat-button [matMenuTriggerFor]="headerMenu">
@@ -27,86 +29,97 @@
   </div>
 </mat-toolbar>
 <mat-sidenav-container autosize>
-  <mat-sidenav
-    #sideNav
-    *ngIf="!hideMenu"
-    [mode]="hideSideMenu ? 'over' : 'side'"
-    [fixedInViewport]="hideSideMenu"
-    [ngClass]="{ 'fixed-sidenav': !hideSideMenu }"
-  >
-    <div class="sidenav-container">
-      <mat-nav-list>
-        <div *ngFor="let link of navigationLinks">
-          <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
-            <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-            <a matLine>{{ link.label }}</a>
+  @if (!hideMenu) {
+    <mat-sidenav
+      #sideNav
+      [mode]="hideSideMenu ? 'over' : 'side'"
+      [fixedInViewport]="hideSideMenu"
+      [ngClass]="{ 'fixed-sidenav': !hideSideMenu }"
+    >
+      <div class="sidenav-container">
+        <mat-nav-list>
+          @for (link of navigationLinks; track link) {
+            <div>
+              <mat-list-item class="parent" (click)="goToFirstSubmenu(link)">
+                <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+                <a matLine>{{ link.label }}</a>
+              </mat-list-item>
+              @for (sublink of link.submenus; track sublink) {
+                <div class="submenu" [ngClass]="{ expanded: link.expanded }">
+                  <mat-list-item
+                    [routerLink]="[sublink.route]"
+                    [routerLinkActive]="['mdc-list-item--activated']"
+                    [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
+                  >
+                    <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
+                    <a matLine>{{ sublink.label }}</a>
+                  </mat-list-item>
+                </div>
+              }
+            </div>
+          }
+        </mat-nav-list>
+        <!-- Privacy Statement Link - At the bottom -->
+        <div>
+          <mat-divider></mat-divider>
+          <mat-list-item [routerLink]="[routes.privacy]" [routerLinkActive]="['mdc-list-item--activated']" class="privacy-link">
+            <mat-icon matListItemIcon>privacy_tip</mat-icon>
+            <a matLine>{{ "links.privacy" | translate }}</a>
           </mat-list-item>
-          <div *ngFor="let sublink of link.submenus" class="submenu" [ngClass]="{ expanded: link.expanded }">
-            <mat-list-item
-              [routerLink]="[sublink.route]"
-              [routerLinkActive]="['mdc-list-item--activated']"
-              [routerLinkActiveOptions]="{ exact: !!sublink.shouldBeExact }"
-            >
-              <mat-icon matListItemIcon>{{ sublink.icon }}</mat-icon>
-              <a matLine>{{ sublink.label }}</a>
-            </mat-list-item>
-          </div>
         </div>
-      </mat-nav-list>
-      <!-- Privacy Statement Link - At the bottom -->
-      <div>
-        <mat-divider></mat-divider>
-        <mat-list-item [routerLink]="[routes.privacy]" [routerLinkActive]="['mdc-list-item--activated']" class="privacy-link">
-          <mat-icon matListItemIcon>privacy_tip</mat-icon>
-          <a matLine>{{ "links.privacy" | translate }}</a>
-        </mat-list-item>
       </div>
-    </div>
-  </mat-sidenav>
+    </mat-sidenav>
+  }
   <mat-sidenav-content>
     <div class="layout-container" [ngClass]="{ 'fixed-sidenav': !hideSideMenu }">
       <app-breadcrumbs></app-breadcrumbs>
-      <div *ngIf="isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.chooseCollaboration">
-        <mat-card class="choice-alert">
-          <mat-card-content>
-            <span>
-              <span class="low-importance"> {{ "chosen-collaboration-alert.content" | translate }} </span>&nbsp;
-              <strong>
-                {{ chosenCollaborationService.collaboration$.value?.name }}
-              </strong>
-            </span>
-            <span class="low-importance">
-              <mat-icon>info_outline</mat-icon>&nbsp;
-              {{ "chosen-collaboration-alert.info" | translate }}
-            </span>
-            <button mat-flat-button class="right-aligned-button" [routerLink]="routes.chooseCollaboration">
-              <mat-icon>swap_horiz</mat-icon>
-              {{ "chosen-collaboration-alert.change" | translate }}
-            </button>
-          </mat-card-content>
-        </mat-card>
-      </div>
-      <div *ngIf="isInStore && (chosenStoreService.store$ | async) && router.url !== routes.stores">
-        <mat-card class="choice-alert">
-          <mat-card-content>
-            <span>
-              <span class="low-importance"> {{ "chosen-store-alert.content" | translate }} </span>&nbsp;
-              <strong>
-                {{ chosenStoreService.store$.value?.name }}
-              </strong>
-            </span>
-            <span class="low-importance">
-              <mat-icon>info_outline</mat-icon>&nbsp;
-              {{ "chosen-store-alert.info" | translate }}
-            </span>
-            <button mat-flat-button class="right-aligned-button" [routerLink]="routes.stores">
-              <mat-icon>swap_horiz</mat-icon>
-              {{ "chosen-store-alert.change" | translate }}
-            </button>
-          </mat-card-content>
-        </mat-card>
-      </div>
-      <router-outlet *ngIf="chosenCollaborationService.isInitialized$ | async"></router-outlet>
+      @if (isAnalyze && (chosenCollaborationService.collaboration$ | async) && router.url !== routes.chooseCollaboration) {
+        <div>
+          <mat-card class="choice-alert">
+            <mat-card-content>
+              <span>
+                <span class="low-importance"> {{ "chosen-collaboration-alert.content" | translate }} </span>&nbsp;
+                <strong>
+                  {{ chosenCollaborationService.collaboration$.value?.name }}
+                </strong>
+              </span>
+              <span class="low-importance">
+                <mat-icon>info_outline</mat-icon>&nbsp;
+                {{ "chosen-collaboration-alert.info" | translate }}
+              </span>
+              <button mat-flat-button class="right-aligned-button" [routerLink]="routes.chooseCollaboration">
+                <mat-icon>swap_horiz</mat-icon>
+                {{ "chosen-collaboration-alert.change" | translate }}
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+      @if (isInStore && (chosenStoreService.store$ | async) && router.url !== routes.stores) {
+        <div>
+          <mat-card class="choice-alert">
+            <mat-card-content>
+              <span>
+                <span class="low-importance"> {{ "chosen-store-alert.content" | translate }} </span>&nbsp;
+                <strong>
+                  {{ chosenStoreService.store$.value?.name }}
+                </strong>
+              </span>
+              <span class="low-importance">
+                <mat-icon>info_outline</mat-icon>&nbsp;
+                {{ "chosen-store-alert.info" | translate }}
+              </span>
+              <button mat-flat-button class="right-aligned-button" [routerLink]="routes.stores">
+                <mat-icon>swap_horiz</mat-icon>
+                {{ "chosen-store-alert.change" | translate }}
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+      @if (chosenCollaborationService.isInitialized$ | async) {
+        <router-outlet></router-outlet>
+      }
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

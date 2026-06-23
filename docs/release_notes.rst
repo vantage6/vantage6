@@ -1,6 +1,40 @@
 Release notes
 =============
 
+5.0.2
+-----
+
+*23 June 2026*
+
+- **Security**
+
+  - Update PyJWT dependency and UI dependencies to fix security vulnerabilities
+    (`PR#2636 <https://github.com/vantage6/vantage6/pull/2636>`_).
+
+- **Change**
+
+  - Update UI from Angular v20 to v22
+    (`PR#2636 <https://github.com/vantage6/vantage6/pull/2636>`_).
+  - Added test dataset for Kaplan Meier to sandbox and development network
+    (`PR#2632 <https://github.com/vantage6/vantage6/pull/2632>`_).
+  - Removed unused dependencies from vantage6 common package
+    (`PR#2633 <https://github.com/vantage6/vantage6/pull/2633>`_).
+  - Update SECURITY.md now v5 is out
+    (`PR#2634 <https://github.com/vantage6/vantage6/pull/2634>`_).
+
+- **Bugfix**
+
+  - Fix having multiple file-based databases for nodes, which led to a conflict with
+    creating persistent volumes and volume claims
+    (`PR#2632 <https://github.com/vantage6/vantage6/pull/2632>`_).
+  - Fix environment variables when node database labels contain hyphens
+    (`PR#2632 <https://github.com/vantage6/vantage6/pull/2632>`_).
+  - Add Flask as dependency for the node, as it was used in the proxy services and
+    missing (`PR#2627 <https://github.com/vantage6/vantage6/pull/2627>`_).
+  - Algorithm tools were accidentally dependent on the vantage6 node package - this
+    requirement is now removed
+    (`PR#2628 <https://github.com/vantage6/vantage6/pull/2628>`_).
+
 5.0.1
 -----
 

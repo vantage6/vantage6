@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntil, Subject } from 'rxjs';
 import { BaseEditComponent } from 'src/app/components/admin-base/base-edit/base-edit.component';
@@ -8,7 +8,7 @@ import { StoreUser, StoreUserForm, StoreUserFormSubmit, StoreUserLazyProperties 
 import { routePaths } from 'src/app/routes';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StoreUserService } from 'src/app/services/store-user.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { StoreUserFormComponent } from '../../../../components/forms/store-user-form/store-user-form.component';
@@ -18,7 +18,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
   selector: 'app-store-user-edit',
   templateUrl: './store-user-edit.component.html',
   styleUrl: './store-user-edit.component.scss',
-  imports: [NgIf, PageHeaderComponent, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, StoreUserFormComponent, MatProgressSpinner]
 })
 export class StoreUserEditComponent extends BaseEditComponent implements OnInit {
   user?: StoreUser;

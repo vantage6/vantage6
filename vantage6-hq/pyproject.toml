@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-hq"
-version = "5.0.1rc2"
+version = "5.0.2rc2"
 description = "Vantage6 HQ"
 readme = "README.md"
 license = {text = "MIT"}
@@ -33,7 +33,7 @@ dependencies = [
     "marshmallow==3.26.2",
     "names_generator==0.2.0",
     "prometheus-client==0.21.1",
-    "pyjwt==2.12.1",
+    "pyjwt==2.13.0",
     "python-keycloak==5.5.0",
     "requests==2.33.1",
     "requests-oauthlib==1.3.1",
@@ -41,8 +41,8 @@ dependencies = [
     "sqlalchemy==2.0.37",
     "traitlets==5.8.1",
     "werkzeug==3.1.8",
-    "vantage6==5.0.1rc2",
-    "vantage6-common==5.0.1rc2",
+    "vantage6==5.0.2rc2",
+    "vantage6-common==5.0.2rc2",
 ]
 
 [project.optional-dependencies]

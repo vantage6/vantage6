@@ -2,17 +2,12 @@
   <mat-card>
     <mat-card-content>
       <h1>{{ "communitystore.welcome" | translate }}</h1>
+      <p>{{ "communitystore.introduction" | translate }} <a href="https://vantage6.ai">vantage6.ai</a>.</p>
       <p>
-        {{ "communitystore.introduction" | translate }} <a href="https://vantage6.ai">vantage6.ai</a>.
-      </p>
-      <p>
-        {{ "communitystore.contribute" |translate}}
-        <a href="https://docs.vantage6.ai/en/main/algorithms/review_guidelines.html">
-          production-ready algorithm guidelines
-          </a>.
-        {{ "communitystore.contribute-email" | translate }} <a href="mailto:f.martin@iknl.nl">Frank
-          Martin</a>
-        {{ "communitystore.account-and-review" | translate}}
+        {{ "communitystore.contribute" | translate }}
+        <a href="https://docs.vantage6.ai/en/main/algorithms/review_guidelines.html"> production-ready algorithm guidelines </a>.
+        {{ "communitystore.contribute-email" | translate }} <a href="mailto:f.martin@iknl.nl">Frank Martin</a>
+        {{ "communitystore.account-and-review" | translate }}
       </p>
     </mat-card-content>
   </mat-card>
@@ -21,15 +16,16 @@
 <div class="page-container">
   <app-page-header title="{{ 'communitystore.algorithms' | translate }}"></app-page-header>
   <br />
-  <ng-container *ngIf="!isLoading; else loading">
+  @if (!isLoading) {
     <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.communityStoreAlgorithms"></app-display-algorithms>
-    <mat-card *ngIf="algorithms.length === 0">
-      <mat-card-content>
-        <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
-      </mat-card-content>
-    </mat-card>
-  </ng-container>
-  <ng-template #loading>
+    @if (algorithms.length === 0) {
+      <mat-card>
+        <mat-card-content>
+          <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
+        </mat-card-content>
+      </mat-card>
+    }
+  } @else {
     <mat-spinner diameter="48"></mat-spinner>
-  </ng-template>
+  }
 </div>

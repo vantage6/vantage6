@@ -1,4 +1,4 @@
-<ng-container *ngIf="!isLoading && !isSubmitting && study; else loading">
+@if (!isLoading && !isSubmitting && study) {
   <app-page-header [title]="study.name"></app-page-header>
   <mat-card>
     <mat-card-content>
@@ -10,11 +10,10 @@
       ></app-study-form>
     </mat-card-content>
   </mat-card>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-card>
     <mat-card-content>
       <mat-spinner diameter="48"></mat-spinner>
     </mat-card-content>
   </mat-card>
-</ng-template>
+}

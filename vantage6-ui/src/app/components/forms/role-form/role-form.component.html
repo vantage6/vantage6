@@ -10,9 +10,11 @@
   <mat-form-field subscriptSizing="dynamic">
     <mat-label>{{ "role-create.formlabels.organization" | translate }}</mat-label>
     <mat-select formControlName="organization_id">
-      <mat-option *ngFor="let organization of organizations | orderBy: 'name'" [value]="organization.id">
-        {{ organization.name }}
-      </mat-option>
+      @for (organization of organizations | orderBy: "name"; track organization) {
+        <mat-option [value]="organization.id">
+          {{ organization.name }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <app-permissions-matrix-hq

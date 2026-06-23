@@ -1,5 +1,5 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
@@ -34,6 +34,7 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-dataframe-read',
   templateUrl: './dataframe-read.component.html',
   styleUrls: ['./dataframe-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     AlertComponent,
     MatButton,
@@ -48,8 +49,6 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
     MatMenuItem,
     MatProgressSpinner,
     MatPaginator,
-    NgIf,
-    NgFor,
     PageHeaderComponent,
     TableComponent,
     TranslateModule

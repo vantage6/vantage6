@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { ApiService } from 'src/app/services/api.service';
 import { Version } from 'src/app/models/api/version.model';
@@ -9,6 +9,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [MatCard, MatCardContent]
 })
 export class HomeComponent implements OnInit {

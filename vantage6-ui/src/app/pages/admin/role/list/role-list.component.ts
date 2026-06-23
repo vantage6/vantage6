@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -15,28 +15,18 @@ import { routePaths } from 'src/app/routes';
 import { PermissionService } from 'src/app/services/permission.service';
 import { RoleService } from 'src/app/services/role.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { TableComponent } from '../../../../components/table/table.component';
 
 @Component({
-    selector: 'app-role-list',
-    templateUrl: './role-list.component.html',
-    styleUrls: ['./role-list.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        MatButton,
-        RouterLink,
-        MatIcon,
-        MatCard,
-        MatCardContent,
-        TableComponent,
-        MatPaginator,
-        TranslateModule
-    ]
+  selector: 'app-role-list',
+  templateUrl: './role-list.component.html',
+  styleUrls: ['./role-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, RouterLink, MatIcon, MatCard, MatCardContent, TableComponent, MatPaginator, TranslateModule]
 })
 export class RoleListComponent extends BaseListComponent implements OnInit, OnDestroy {
   getRoleParameters: GetRoleParameters = {};

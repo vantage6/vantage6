@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { BaseCreateComponent } from 'src/app/components/admin-base/base-create/base-create.component';
@@ -14,14 +14,15 @@ import { PageHeaderComponent } from 'src/app/components/page-header/page-header.
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { StoreRoleFormComponent } from 'src/app/components/forms/store-role-form/store-role-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { NgIf } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-store-role-create',
   templateUrl: './store-role-create.component.html',
   styleUrls: ['./store-role-create.component.scss'],
-  imports: [PageHeaderComponent, MatCard, MatCardContent, StoreRoleFormComponent, MatProgressSpinner, NgIf, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, StoreRoleFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class StoreRoleCreateComponent extends BaseCreateComponent implements OnInit {
   selectableRules: StoreRule[] = [];

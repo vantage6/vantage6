@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { StoreUser } from 'src/app/models/api/store-user.model';
@@ -13,7 +13,7 @@ import { StoreRuleService } from 'src/app/services/store-rule.service';
 import { UserService } from 'src/app/services/user.service';
 import { BaseUser } from 'src/app/models/api/user.model';
 import { PermissionService } from 'src/app/services/permission.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/core';
@@ -26,13 +26,12 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-store-user-form',
   templateUrl: './store-user-form.component.html',
   styleUrl: './store-user-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     ReactiveFormsModule,
     MatFormField,
     MatLabel,
     MatSelect,
-    NgFor,
     MatOption,
     PermissionsMatrixStoreComponent,
     MatButton,

@@ -436,11 +436,16 @@ deployments:
           nodeProxyStartingPortNumber: ${NODE_PROXY_STARTING_PORT_NUMBER}
           databases:
             fileBased:
-              - name: default
+              - name: olympic-athletes
                 uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
                 type: csv
                 volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
                 originalName: ${NODE_TEST_DATABASE_NAME}
+              - name: kaplan-meier-test
+                uri: ${NODE_TEST_DATABASE_MOUNT_PATH}/km_dataset.csv
+                type: csv
+                volumePath: ${NODE_TEST_DATABASE_MOUNT_PATH}
+                originalName: km_dataset.csv
             serviceBased: []
           k8sNodeName: ${K8S_NODE_NAME}
           persistence:
@@ -564,13 +569,6 @@ dev:
   vantage6-node:
     labelSelector:
       component: node
-    env:
-      - name: "DATABASE_LABELS"
-        value: "default"
-      - name: "DATABASE_DEFAULT_URI"
-        value: ${NODE_TEST_DATABASE_MOUNT_PATH}/${NODE_TEST_DATABASE_NAME}
-      - name: "DATABASE_DEFAULT_TYPE"
-        value: "csv"
     sync:
       - path: ./vantage6/:/vantage6/vantage6/
         disableDownload: true

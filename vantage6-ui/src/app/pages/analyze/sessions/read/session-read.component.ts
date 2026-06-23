@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { routePaths } from 'src/app/routes';
 import { MatDialog } from '@angular/material/dialog';
@@ -39,6 +39,7 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-session-read',
   templateUrl: './session-read.component.html',
   styleUrls: ['./session-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
     MatMenuTrigger,

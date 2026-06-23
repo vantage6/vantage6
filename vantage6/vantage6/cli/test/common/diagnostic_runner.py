@@ -35,7 +35,8 @@ class DiagnosticRunner:
     session_id : int
         The ID of the session to use for the diagnostic test. By default 1.
     database_label : str
-        The label of the database to use for the diagnostic test. By default "default".
+        The label of the database to use for the diagnostic test. By default
+        "olympic-athletes", which is a development dataset.
     """
 
     def __init__(

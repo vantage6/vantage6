@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vantage6-common"
-version = "5.0.1rc2"
+version = "5.0.2rc2"
 description = "Vantage6 common utilities"
 readme = "README.md"
 license = {text = "MIT"}
@@ -22,10 +22,8 @@ dependencies = [
     "colorama==0.4.6",
     "cryptography==46.0.7",
     "docker>=7.1.0",
-    "pandas>=2.2.3",
     "pyfiglet==1.0.4",
     "PyYAML>=6.0.1",
-    "rich==13.5.2",
     "requests>=2.32.4",
     "schema==0.7.5",
 ]

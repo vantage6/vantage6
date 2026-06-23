@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 
@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-alert-with-button',
   templateUrl: './alert-with-button.component.html',
   styleUrls: ['./alert-with-button.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [MatButton, RouterLink]
 })
 export class AlertWithButtonComponent {

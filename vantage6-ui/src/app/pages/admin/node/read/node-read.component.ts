@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { BaseNode, Node, NodeEdit, NodeLazyProperties, NodeSortProperties, NodeStatus } from 'src/app/models/api/node.model';
 import { NodeService } from 'src/app/services/node.service';
 import { OrganizationSortProperties } from 'src/app/models/api/organization.model';
@@ -21,7 +21,7 @@ import { printDate } from 'src/app/helpers/general.helper';
 import { ITreeInputNode, ITreeSelectedValue } from 'src/app/components/helpers/tree-dropdown/tree-dropdown.component';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { TreeDropdownComponent } from '../../../../components/helpers/tree-dropdown/tree-dropdown.component';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatCard, MatCardContent } from '@angular/material/card';
 import {
   MatAccordion,
@@ -45,14 +45,13 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
   selector: 'app-node-read',
   templateUrl: './node-read.component.html',
   styleUrls: ['./node-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
     TreeDropdownComponent,
-    NgIf,
     MatCard,
     MatCardContent,
     MatAccordion,
-    NgFor,
     MatExpansionPanel,
     MatExpansionPanelHeader,
     MatExpansionPanelTitle,

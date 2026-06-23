@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -16,7 +16,7 @@ import { NodeService } from 'src/app/services/node.service';
 import { OrganizationService } from 'src/app/services/organization.service';
 import { PermissionService } from 'src/app/services/permission.service';
 import { SocketioConnectService } from 'src/app/services/socketio-connect.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatIconButton, MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -28,30 +28,29 @@ import { ChipComponent } from '../../../../components/helpers/chip/chip.componen
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-    selector: 'app-organization-read',
-    templateUrl: './organization-read.component.html',
-    styleUrls: ['./organization-read.component.scss'],
-    imports: [
-        NgIf,
-        PageHeaderComponent,
-        MatIconButton,
-        MatMenuTrigger,
-        MatIcon,
-        MatMenu,
-        MatMenuItem,
-        RouterLink,
-        MatCard,
-        MatCardHeader,
-        MatCardTitle,
-        MatCardContent,
-        MatButton,
-        TableComponent,
-        AlertComponent,
-        NgFor,
-        ChipComponent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-organization-read',
+  templateUrl: './organization-read.component.html',
+  styleUrls: ['./organization-read.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [
+    PageHeaderComponent,
+    MatIconButton,
+    MatMenuTrigger,
+    MatIcon,
+    MatMenu,
+    MatMenuItem,
+    RouterLink,
+    MatCard,
+    MatCardHeader,
+    MatCardTitle,
+    MatCardContent,
+    MatButton,
+    TableComponent,
+    AlertComponent,
+    ChipComponent,
+    MatProgressSpinner,
+    TranslateModule
+  ]
 })
 export class OrganizationReadComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

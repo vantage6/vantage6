@@ -1,19 +1,25 @@
-<ng-container *ngIf="!isLoading; else loading">
+@if (!isLoading) {
   <form class="form" [formGroup]="form" (ngSubmit)="handleSubmit()">
-    <mat-form-field *ngIf="!isEdit" subscriptSizing="dynamic">
-      <mat-label>{{ "user.username" | translate }}</mat-label>
-      <mat-select formControlName="username">
-        <mat-option *ngFor="let user of hqUsers" [value]="user.username">
-          {{ user.username }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    @if (!isEdit) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ "user.username" | translate }}</mat-label>
+        <mat-select formControlName="username">
+          @for (user of hqUsers; track user) {
+            <mat-option [value]="user.username">
+              {{ user.username }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ "user.roles" | translate }}</mat-label>
       <mat-select formControlName="roles" multiple [compareWith]="compareRolesForSelection">
-        <mat-option *ngFor="let role of availableRoles" [value]="role">
-          {{ role.name }}
-        </mat-option>
+        @for (role of availableRoles; track role) {
+          <mat-option [value]="role">
+            {{ role.name }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
     <div class="user-form__header">
@@ -27,7 +33,6 @@
       <button mat-flat-button (click)="handleCancel()">{{ "general.cancel" | translate }}</button>
     </div>
   </form>
-</ng-container>
-<ng-template #loading>
+} @else {
   <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+}

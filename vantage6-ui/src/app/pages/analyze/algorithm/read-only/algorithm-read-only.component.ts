@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Algorithm, AlgorithmFunction } from 'src/app/models/api/algorithm.model';
@@ -7,7 +7,7 @@ import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenCollaborationService } from 'src/app/services/chosen-collaboration.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatButton } from '@angular/material/button';
 import { DisplayAlgorithmComponent } from '../../../../components/algorithm/display-algorithm/display-algorithm.component';
@@ -19,7 +19,8 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-algorithm-read-only',
   templateUrl: './algorithm-read-only.component.html',
   styleUrl: './algorithm-read-only.component.scss',
-  imports: [NgIf, PageHeaderComponent, MatButton, DisplayAlgorithmComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, DisplayAlgorithmComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class AlgorithmReadOnlyComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

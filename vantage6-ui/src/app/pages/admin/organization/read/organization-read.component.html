@@ -1,17 +1,23 @@
-<ng-container *ngIf="!isLoading && organization">
+@if (!isLoading && organization) {
   <app-page-header title="{{ organization.name }}">
-    <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu" *ngIf="canEdit">
-      <mat-icon>more_vert</mat-icon>
-    </button>
+    @if (canEdit) {
+      <button actions mat-icon-button class="page-header__more" [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
     <mat-menu #menu="matMenu">
-      <button mat-menu-item *ngIf="canEdit" [routerLink]="[routes.organizationEdit, id]">
-        <mat-icon>edit</mat-icon>
-        <span>{{ "general.edit" | translate }}</span>
-      </button>
-      <button mat-menu-item *ngIf="canDelete" (click)="handleDelete()">
-        <mat-icon>delete</mat-icon>
-        <span>{{ "general.delete" | translate }}</span>
-      </button>
+      @if (canEdit) {
+        <button mat-menu-item [routerLink]="[routes.organizationEdit, id]">
+          <mat-icon>edit</mat-icon>
+          <span>{{ "general.edit" | translate }}</span>
+        </button>
+      }
+      @if (canDelete) {
+        <button mat-menu-item (click)="handleDelete()">
+          <mat-icon>delete</mat-icon>
+          <span>{{ "general.delete" | translate }}</span>
+        </button>
+      }
     </mat-menu>
   </app-page-header>
   <mat-card>
@@ -55,53 +61,50 @@
       <mat-card-title>{{ "organization-read.card-collaborations.title" | translate }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <app-table
-        *ngIf="organization.collaborations.length > 0; else noCollaborations"
-        [data]="collaborationTable"
-        (rowClick)="handleCollaborationClick($event)"
-      ></app-table>
+      @if (organization.collaborations.length > 0) {
+        <app-table [data]="collaborationTable" (rowClick)="handleCollaborationClick($event)"></app-table>
+      } @else {
+        <p>{{ "organization-read.no-collaborations" | translate }}</p>
+      }
     </mat-card-content>
   </mat-card>
   <mat-card>
     <mat-card-header>
       <mat-card-title>{{ "organization-read.card-nodes.title" | translate }}</mat-card-title>
-      <button
-        actions
-        mat-flat-button
-        class="right-aligned-button"
-        color="primary"
-        *ngIf="canCreateNodes && isMissingNodes()"
-        (click)="onRegisterMissingNodes()"
-      >
-        <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
-      </button>
+      @if (canCreateNodes && isMissingNodes()) {
+        <button actions mat-flat-button class="right-aligned-button" color="primary" (click)="onRegisterMissingNodes()">
+          <mat-icon>add</mat-icon>{{ "collaboration-read.card-nodes.add" | translate }}
+        </button>
+      }
     </mat-card-header>
     <mat-card-content>
-      <app-alert
-        *ngIf="isMissingNodes()"
-        class="node-alert"
-        label="{{
-          'organization-read.card-nodes.alert-missing-nodes' | translate: { collaborations: getCollaborationsWithMissingNodeNames() }
-        }}"
-      ></app-alert>
-      <div *ngIf="organization.nodes.length > 0; else noNodes" class="chip-container">
-        <app-chip
-          *ngFor="let node of organization.nodes"
-          label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
-          [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
-        ></app-chip>
-      </div>
+      @if (isMissingNodes()) {
+        <app-alert
+          class="node-alert"
+          label="{{
+            'organization-read.card-nodes.alert-missing-nodes' | translate: { collaborations: getCollaborationsWithMissingNodeNames() }
+          }}"
+        ></app-alert>
+      }
+      @if (organization.nodes.length > 0) {
+        <div class="chip-container">
+          @for (node of organization.nodes; track node) {
+            <app-chip
+              label="{{ node.status === nodeStatus.Online ? node.name : node.name + ' (' + ('general.offline' | translate) + ')' }}"
+              [type]="node.status === nodeStatus.Online ? 'success' : 'error'"
+            ></app-chip>
+          }
+        </div>
+      } @else {
+        <p>{{ "organization-read.no-nodes" | translate }}</p>
+      }
     </mat-card-content>
   </mat-card>
-</ng-container>
-<mat-card *ngIf="isLoading">
-  <mat-card-content>
-    <mat-spinner diameter="48"></mat-spinner>
-  </mat-card-content>
-</mat-card>
-<ng-template #noCollaborations>
-  <p>{{ "organization-read.no-collaborations" | translate }}</p>
-</ng-template>
-<ng-template #noNodes>
-  <p>{{ "organization-read.no-nodes" | translate }}</p>
-</ng-template>
+}
+@if (isLoading) {
+  <mat-card>
+    <mat-card-content>
+      <mat-spinner diameter="48"></mat-spinner>
+    </mat-card-content>
+  </mat-card>
+}

@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import { Algorithm, AlgorithmForm } from 'src/app/models/api/algorithm.model';
 import { routePaths } from 'src/app/routes';
 import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
-import { NgIf } from '@angular/common';
+
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { AlgorithmFormComponent } from '../../../../components/forms/algorithm-form/algorithm-form.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -19,7 +19,8 @@ import { convertAlgorithmToAlgorithmForm } from '../helpers';
   selector: 'app-algorithm-edit',
   templateUrl: './algorithm-edit.component.html',
   styleUrl: './algorithm-edit.component.scss',
-  imports: [NgIf, PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, AlgorithmFormComponent, MatCard, MatCardContent, MatProgressSpinner]
 })
 export class AlgorithmEditComponent implements OnInit, OnDestroy {
   @HostBinding('class') class = 'card-container';

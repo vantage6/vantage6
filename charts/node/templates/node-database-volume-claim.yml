@@ -1,17 +1,22 @@
-{{- if .Values.node.databases.fileBased }}
+{{- range .Values.node.databases.fileBased }}
+{{- $pvcName := include "node.databasePvcName" (dict "releaseName" $.Release.Name "databaseName" .name) }}
+{{- if not (lookup "v1" "PersistentVolumeClaim" ($.Values.namespace | default $.Release.Namespace) $pvcName) }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Release.Name }}-db-pvc
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  name: {{ $pvcName }}
+  namespace: {{ $.Values.namespace | default $.Release.Namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: {{ .Values.node.persistence.database.storageClass }}
+  storageClassName: {{ $.Values.node.persistence.database.storageClass }}
   resources:
     requests:
-      storage: {{ .Values.node.persistence.database.size }}
+      storage: {{ $.Values.node.persistence.database.size }}
   selector:
     matchLabels:
       type: local-database
+      database: {{ .name | quote }}
+{{- end }}
 {{- end }}

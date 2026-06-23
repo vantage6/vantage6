@@ -170,3 +170,12 @@ class SessionActionMismatchError(AlgorithmError):
     - The function is e.g. a data extraction function but the user requests to start
       a preprocessing task using that function.
     """
+
+
+class DataFrameNotFound(AlgorithmError):
+    """
+    Raised when a dataframe is not found.
+
+    Example usage:
+    - The dataframe is not found in the node.
+    """

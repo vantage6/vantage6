@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { routePaths } from 'src/app/routes';
@@ -10,7 +10,7 @@ import { Collaboration } from 'src/app/models/api/collaboration.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
@@ -26,11 +26,10 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 @Component({
   selector: 'app-session-create',
   templateUrl: './session-create.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
-    NgIf,
     MatCard,
-    NgFor,
     MatButton,
     MatFormField,
     MatLabel,

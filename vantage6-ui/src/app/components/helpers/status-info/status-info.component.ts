@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatIcon } from '@angular/material/icon';
 
@@ -8,7 +8,8 @@ import { MatIcon } from '@angular/material/icon';
   selector: 'app-status-info',
   templateUrl: './status-info.component.html',
   styleUrls: ['./status-info.component.scss'],
-  imports: [NgClass, NgIf, MatProgressSpinner, MatIcon, TranslateModule]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [NgClass, MatProgressSpinner, MatIcon, TranslateModule]
 })
 export class StatusInfoComponent {
   @Input() taskName: string = '';

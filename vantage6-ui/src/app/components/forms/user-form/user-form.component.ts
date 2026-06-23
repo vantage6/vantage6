@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntil } from 'rxjs';
 import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
@@ -12,7 +12,7 @@ import { OperationType, ResourceType, Rule, Rule_ } from 'src/app/models/api/rul
 import { RoleService } from 'src/app/services/role.service';
 import { BaseFormComponent } from '../../admin-base/base-form/base-form.component';
 import { PermissionService } from 'src/app/services/permission.service';
-import { NgIf, NgFor } from '@angular/common';
+
 import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSelect } from '@angular/material/select';
@@ -27,15 +27,14 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-user-form',
   templateUrl: './user-form.component.html',
   styleUrls: ['./user-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    NgIf,
     ReactiveFormsModule,
     MatFormField,
     MatLabel,
     MatInput,
     MatError,
     MatSelect,
-    NgFor,
     MatOption,
     MatHint,
     PermissionsMatrixHQComponent,

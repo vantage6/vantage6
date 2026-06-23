@@ -1,5 +1,4 @@
-import { NgIf } from '@angular/common';
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { routePaths } from 'src/app/routes';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
@@ -26,9 +25,9 @@ import { ConfirmDialogOption } from 'src/app/models/application/confirmDialog.mo
   selector: 'app-algorithm-update-image',
   templateUrl: './algorithm-update-image.component.html',
   styleUrl: './algorithm-update-image.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
-    NgIf,
     MatCard,
     MatCardContent,
     MatProgressSpinner,

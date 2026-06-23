@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { StoreRoleService } from 'src/app/services/store-role.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -21,18 +21,8 @@ import { TableComponent } from '../../../../components/table/table.component';
   selector: 'app-store-role-list',
   templateUrl: './store-role-list.component.html',
   styleUrl: './store-role-list.component.scss',
-  imports: [
-    PageHeaderComponent,
-    NgIf,
-    MatButton,
-    RouterLink,
-    MatIcon,
-    MatCard,
-    MatCardContent,
-    TableComponent,
-    MatPaginator,
-    TranslateModule
-  ]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatButton, RouterLink, MatIcon, MatCard, MatCardContent, TableComponent, MatPaginator, TranslateModule]
 })
 export class StoreRoleListComponent extends BaseListComponent implements OnInit {
   getRoleParameters: GetStoreRoleParameters = {};

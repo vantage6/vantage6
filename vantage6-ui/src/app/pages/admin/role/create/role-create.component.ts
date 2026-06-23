@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { BaseOrganization, Organization } from 'src/app/models/api/organization.model';
 import { RoleForm } from 'src/app/models/api/role.model';
@@ -8,17 +8,18 @@ import { OrganizationService } from 'src/app/services/organization.service';
 import { RoleService } from 'src/app/services/role.service';
 import { RuleService } from 'src/app/services/rule.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { RoleFormComponent } from '../../../../components/forms/role-form/role-form.component';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-role-create',
-    templateUrl: './role-create.component.html',
-    styleUrls: ['./role-create.component.scss'],
-    imports: [PageHeaderComponent, NgIf, MatCard, MatCardContent, RoleFormComponent, MatProgressSpinner, TranslateModule]
+  selector: 'app-role-create',
+  templateUrl: './role-create.component.html',
+  styleUrls: ['./role-create.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, MatCard, MatCardContent, RoleFormComponent, MatProgressSpinner, TranslateModule]
 })
 export class RoleCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';

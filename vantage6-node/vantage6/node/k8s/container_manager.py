@@ -32,6 +32,7 @@ from vantage6.common.globals import (
     ContainerEnvNames,
     NodePolicy,
 )
+from vantage6.common.kubernetes.utils import database_env_label
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
@@ -263,19 +264,24 @@ class ContainerManager:
         }
         ```
         """
-        db_labels = os.environ.get("DATABASE_LABELS", "").split(",")
+        db_labels = [
+            label.strip()
+            for label in os.environ.get("DATABASE_LABELS", "").split(",")
+            if label.strip()
+        ]
         if not db_labels:
             self.log.warning("No databases found in the environment variables")
             return {}
 
         databases = {}
         for label in db_labels:
+            env_label = database_env_label(label)
             # The URI on the host system. This can either be a path to a file or folder
             # or an address to a service.
-            uri_env_var = f"DATABASE_{label.upper()}_URI"
+            uri_env_var = f"DATABASE_{env_label}_URI"
             uri = os.environ.get(uri_env_var, "")
 
-            db_type_env_var = f"DATABASE_{label.upper()}_TYPE"
+            db_type_env_var = f"DATABASE_{env_label}_TYPE"
             db_type = os.environ.get(db_type_env_var, "")
             # In case we are dealing with a file or directory and when running the node
             # instance in a POD, our internal path to that file or folder is different.
@@ -299,11 +305,11 @@ class ContainerManager:
             # prefix
             env = {}
             for key in os.environ:
-                if key.startswith(f"DATABASE_{label.upper()}_") and key not in [
+                if key.startswith(f"DATABASE_{env_label}_") and key not in [
                     uri_env_var,
                     db_type_env_var,
                 ]:
-                    env[key.replace(f"DATABASE_{label.upper()}_", "")] = os.environ[key]
+                    env[key.replace(f"DATABASE_{env_label}_", "")] = os.environ[key]
 
             databases[label] = TaskDB(
                 label=label,

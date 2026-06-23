@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -20,7 +20,7 @@ import { StoreReviewService } from 'src/app/services/store-review.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
-import { NgIf } from '@angular/common';
+
 import { MatIcon } from '@angular/material/icon';
 import { TableComponent } from '../../../../components/table/table.component';
 
@@ -34,13 +34,13 @@ enum TableRows {
   selector: 'app-my-pending-algorithms',
   templateUrl: './my-pending-algorithms.component.html',
   styleUrl: './my-pending-algorithms.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     PageHeaderComponent,
     MatCard,
     MatCardContent,
     MatButton,
     RouterLink,
-    NgIf,
     MatIcon,
     MatCardHeader,
     MatCardTitle,

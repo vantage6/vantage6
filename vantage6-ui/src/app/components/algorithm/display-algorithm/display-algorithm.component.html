@@ -34,41 +34,52 @@
       </div>
       <div class="data-list__item data-list__item--big">
         <b>{{ "algorithm.code-url" | translate }}</b>
-        <div *ngIf="algorithm && algorithm.code_url">
-          <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
-        </div>
-        <div *ngIf="!algorithm || !algorithm.code_url">
-          <span>-</span>
-        </div>
+        @if (algorithm && algorithm.code_url) {
+          <div>
+            <a [href]="algorithm.code_url">{{ algorithm.code_url }}</a>
+          </div>
+        }
+        @if (!algorithm || !algorithm.code_url) {
+          <div>
+            <span>-</span>
+          </div>
+        }
       </div>
       <div class="data-list__item data-list__item--big">
         <b>{{ "algorithm.documentation-url" | translate }}</b>
-        <div *ngIf="algorithm && algorithm.documentation_url">
-          <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
-        </div>
-        <div *ngIf="!algorithm || !algorithm.documentation_url">
-          <span>-</span>
-        </div>
+        @if (algorithm && algorithm.documentation_url) {
+          <div>
+            <a [href]="algorithm.documentation_url">{{ algorithm.documentation_url }}</a>
+          </div>
+        }
+        @if (!algorithm || !algorithm.documentation_url) {
+          <div>
+            <span>-</span>
+          </div>
+        }
       </div>
       <div class="data-list__item">
         <b>{{ "algorithm.submitted-at" | translate }}</b>
-        <span>{{ printDate(algorithm?.submitted_at) }}</span>
+        <span>{{ printDate($safeNavigationMigration(algorithm?.submitted_at)) }}</span>
       </div>
-      <div *ngIf="algorithm?.approved_at" class="data-list__item">
-        <b>{{ "algorithm.approved-at" | translate }}</b>
-        <span>{{ printDate(algorithm?.approved_at) }}</span>
-      </div>
-      <div *ngIf="algorithm?.invalidated_at" class="data-list__item">
-        <b>{{ "algorithm.invalidated-at" | translate }}</b>
-        <span>{{ printDate(algorithm?.invalidated_at) }}</span>
-      </div>
-      <div
-        *ngIf="algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview"
-        class="data-list__item data-list__item--big"
-      >
-        <b>{{ "algorithm.submission-comments" | translate }}</b>
-        <markdown class="variable-binding" [data]="algorithm?.submission_comments || '-'"></markdown>
-      </div>
+      @if (algorithm?.approved_at) {
+        <div class="data-list__item">
+          <b>{{ "algorithm.approved-at" | translate }}</b>
+          <span>{{ printDate($safeNavigationMigration(algorithm?.approved_at)) }}</span>
+        </div>
+      }
+      @if (algorithm?.invalidated_at) {
+        <div class="data-list__item">
+          <b>{{ "algorithm.invalidated-at" | translate }}</b>
+          <span>{{ printDate($safeNavigationMigration(algorithm?.invalidated_at)) }}</span>
+        </div>
+      }
+      @if (algorithm?.status === algorithmStatus.AwaitingReviewerAssignment || algorithm?.status === algorithmStatus.UnderReview) {
+        <div class="data-list__item data-list__item--big">
+          <b>{{ "algorithm.submission-comments" | translate }}</b>
+          <markdown class="variable-binding" [data]="algorithm?.submission_comments || '-'"></markdown>
+        </div>
+      }
     </div>
   </mat-card-content>
 </mat-card>
@@ -77,162 +88,196 @@
     <mat-card-title>{{ "algorithm-read.card-functions.title" | translate }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <mat-accordion *ngIf="algorithm && algorithm.functions.length > 0; else noFunctions" class="card-accordion">
-      <mat-expansion-panel *ngFor="let function of algorithm.functions" (opened)="selectFunction(function.id)">
-        <mat-expansion-panel-header>
-          <mat-panel-title>{{ getDisplayName(function) }}</mat-panel-title>
-        </mat-expansion-panel-header>
-        <ng-template matExpansionPanelContent>
-          <mat-spinner *ngIf="!selectedFunction" diameter="48"></mat-spinner>
-          <ng-container *ngIf="selectedFunction">
-            <div class="data-list">
-              <div class="data-list__item">
-                <b>{{ "general.name" | translate }}</b>
-                <span>{{ selectedFunction.name || "-" }}</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "general.display_name" | translate }}</b>
-                <span>{{ selectedFunction.display_name || "-" }}</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "algorithm.function.step-type" | translate }}</b>
-                <span>{{ selectedFunction.step_type || "-" }}</span>
-              </div>
-              <div class="data-list__item data-list__item--big">
-                <b>{{ "general.description" | translate }}</b>
-                <span>{{ selectedFunction.description || "-" }}</span>
-              </div>
-              <div class="data-list__item">
-                <b>{{ "algorithm.function.standalone" | translate }}</b>
-                <span>{{ (selectedFunction.standalone ? "general.yes" : "general.no") | translate }}</span>
-              </div>
-              <!-- Separate accordeon for arguments -->
-              <div class="data-list__item data-list__item--full">
-                <h4>{{ "algorithm.function.argument.title" | translate }}</h4>
-                <mat-accordion *ngIf="function.arguments.length > 0; else noArguments" class="card-accordion sub-accordeon" [multi]="true">
-                  <mat-expansion-panel *ngFor="let argument of function.arguments | orderBy: 'id'">
-                    <mat-expansion-panel-header>
-                      <mat-panel-title>{{ getDisplayName(argument) }}</mat-panel-title>
-                    </mat-expansion-panel-header>
-                    <ng-template matExpansionPanelContent>
-                      <div class="data-list">
-                        <div class="data-list__item">
-                          <b>{{ "general.name" | translate }}</b>
-                          <span>{{ argument.name || "-" }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "general.display_name" | translate }}</b>
-                          <span>{{ argument.display_name || "-" }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "algorithm.function.argument.type" | translate }}</b>
-                          <span>{{ argument.type || "-" }}</span>
-                        </div>
-                        <div *ngIf="isArgumentWithAllowedValues(argument.type)" class="data-list__item">
-                          <b>{{ "algorithm.function.argument.allowed_values" | translate }}</b>
-                          <span>{{ argument.allowed_values.join(', ') }}</span>
-                        </div>
-                        <div class="data-list__item data-list__item--big">
-                          <b>{{ "general.description" | translate }}</b>
-                          <span>{{ argument.description || "-" }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "algorithm.function.argument.has_default" | translate }}</b>
-                          <span>{{ argument.has_default_value ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
-                        </div>
-                        <div class="data-list__item" *ngIf="argument.has_default_value">
-                          <b>{{ "algorithm.function.argument.default_value" | translate }}</b>
-                          <span>{{ argument.default_value || ("general.none" | translate) }}</span>
-                        </div>
-                        <div class="data-list__item" *ngIf="argument.conditional_on_id">
-                          <b>{{ "algorithm.function.argument.condition.conditional_on" | translate }}</b>
-                          <span>{{ getArgName(argument.conditional_on_id) }}</span>
-                        </div>
-                        <div class="data-list__item" *ngIf="argument.conditional_operator">
-                          <b>{{ "algorithm.function.argument.condition.operator" | translate }}</b>
-                          <span>{{ "algorithm.function.argument.condition.operators." + argument.conditional_operator | translate }}</span>
-                        </div>
-                        <div class="data-list__item" *ngIf="argument.conditional_value">
-                          <b>{{ "algorithm.function.argument.condition.value" | translate }}</b>
-                          <span>{{ argument.conditional_value }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "algorithm.function.argument.frontend_only.short_header" | translate }}</b>
-                          <span>{{ argument.is_frontend_only }}</span>
-                        </div>
-                      </div>
-                    </ng-template>
-                  </mat-expansion-panel>
-                </mat-accordion>
-              </div>
-              <!-- Separate accordeon for databases -->
-              <div class="data-list__item data-list__item--full">
-                <h4>{{ "algorithm.function.databases.title" | translate }}</h4>
-                <mat-accordion *ngIf="function.databases.length > 0; else noDatabases" class="card-accordion sub-accordeon" [multi]="true">
-                  <mat-expansion-panel *ngFor="let db of function.databases">
-                    <mat-expansion-panel-header>
-                      <mat-panel-title>{{ db.name }}</mat-panel-title>
-                    </mat-expansion-panel-header>
-                    <ng-template matExpansionPanelContent>
-                      <div class="data-list">
-                        <div class="data-list__item">
-                          <b>{{ "general.name" | translate }}</b>
-                          <span>{{ db.name || "-" }}</span>
-                        </div>
-                        <div class="data-list__item data-list__item--big">
-                          <b>{{ "general.description" | translate }}</b>
-                          <span>{{ db.description || "-" }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "algorithm.function.databases.multiple" | translate }}</b>
-                          <span>{{ db.multiple ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
-                        </div>
-                      </div>
-                    </ng-template>
-                  </mat-expansion-panel>
-                </mat-accordion>
-              </div>
-              <!-- Separate accordeon for visualizations -->
-              <div class="data-list__item data-list__item--full">
-                <h4>{{ "algorithm.function.visualization.title" | translate }}</h4>
-                <mat-accordion
-                  *ngIf="function.ui_visualizations.length > 0; else noVisualizations"
-                  class="card-accordion sub-accordeon"
-                  [multi]="true"
-                >
-                  <mat-expansion-panel *ngFor="let vis of function.ui_visualizations">
-                    <mat-expansion-panel-header>
-                      <mat-panel-title>{{ vis.name }}</mat-panel-title>
-                    </mat-expansion-panel-header>
-                    <ng-template matExpansionPanelContent>
-                      <div class="data-list">
-                        <div class="data-list__item">
-                          <b>{{ "general.name" | translate }}</b>
-                          <span>{{ vis.name || "-" }}</span>
-                        </div>
-                        <div class="data-list__item">
-                          <b>{{ "algorithm.function.visualization.type" | translate }}</b>
-                          <span>{{ vis.type || "-" }}</span>
-                        </div>
-                        <div class="data-list__item data-list__item--big">
-                          <b>{{ "general.description" | translate }}</b>
-                          <span>{{ vis.description || "-" }}</span>
-                        </div>
-                        <!-- TODO build system for more clearly indicating in UI what these properties mean -->
-                        <div class="data-list__item data-list__item--big">
-                          <b>{{ "algorithm.function.visualization.details" | translate }}</b>
-                          <span>{{ getVisualizationSchemaAsText(vis) }}</span>
-                        </div>
-                      </div>
-                    </ng-template>
-                  </mat-expansion-panel>
-                </mat-accordion>
-              </div>
-            </div>
-          </ng-container>
-        </ng-template>
-      </mat-expansion-panel>
-    </mat-accordion>
+    @if (algorithm && algorithm.functions.length > 0) {
+      <mat-accordion class="card-accordion">
+        @for (function of algorithm.functions; track function) {
+          <mat-expansion-panel (opened)="selectFunction(function.id)">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ getDisplayName(function) }}</mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              @if (!selectedFunction) {
+                <mat-spinner diameter="48"></mat-spinner>
+              }
+              @if (selectedFunction) {
+                <div class="data-list">
+                  <div class="data-list__item">
+                    <b>{{ "general.name" | translate }}</b>
+                    <span>{{ selectedFunction.name || "-" }}</span>
+                  </div>
+                  <div class="data-list__item">
+                    <b>{{ "general.display_name" | translate }}</b>
+                    <span>{{ selectedFunction.display_name || "-" }}</span>
+                  </div>
+                  <div class="data-list__item">
+                    <b>{{ "algorithm.function.step-type" | translate }}</b>
+                    <span>{{ selectedFunction.step_type || "-" }}</span>
+                  </div>
+                  <div class="data-list__item data-list__item--big">
+                    <b>{{ "general.description" | translate }}</b>
+                    <span>{{ selectedFunction.description || "-" }}</span>
+                  </div>
+                  <div class="data-list__item">
+                    <b>{{ "algorithm.function.standalone" | translate }}</b>
+                    <span>{{ (selectedFunction.standalone ? "general.yes" : "general.no") | translate }}</span>
+                  </div>
+                  <!-- Separate accordeon for arguments -->
+                  <div class="data-list__item data-list__item--full">
+                    <h4>{{ "algorithm.function.argument.title" | translate }}</h4>
+                    @if (function.arguments.length > 0) {
+                      <mat-accordion class="card-accordion sub-accordeon" [multi]="true">
+                        @for (argument of function.arguments | orderBy: "id"; track argument) {
+                          <mat-expansion-panel>
+                            <mat-expansion-panel-header>
+                              <mat-panel-title>{{ getDisplayName(argument) }}</mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <ng-template matExpansionPanelContent>
+                              <div class="data-list">
+                                <div class="data-list__item">
+                                  <b>{{ "general.name" | translate }}</b>
+                                  <span>{{ argument.name || "-" }}</span>
+                                </div>
+                                <div class="data-list__item">
+                                  <b>{{ "general.display_name" | translate }}</b>
+                                  <span>{{ argument.display_name || "-" }}</span>
+                                </div>
+                                <div class="data-list__item">
+                                  <b>{{ "algorithm.function.argument.type" | translate }}</b>
+                                  <span>{{ argument.type || "-" }}</span>
+                                </div>
+                                @if (isArgumentWithAllowedValues(argument.type)) {
+                                  <div class="data-list__item">
+                                    <b>{{ "algorithm.function.argument.allowed_values" | translate }}</b>
+                                    <span>{{ argument.allowed_values.join(", ") }}</span>
+                                  </div>
+                                }
+                                <div class="data-list__item data-list__item--big">
+                                  <b>{{ "general.description" | translate }}</b>
+                                  <span>{{ argument.description || "-" }}</span>
+                                </div>
+                                <div class="data-list__item">
+                                  <b>{{ "algorithm.function.argument.has_default" | translate }}</b>
+                                  <span>{{ argument.has_default_value ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+                                </div>
+                                @if (argument.has_default_value) {
+                                  <div class="data-list__item">
+                                    <b>{{ "algorithm.function.argument.default_value" | translate }}</b>
+                                    <span>{{ argument.default_value || ("general.none" | translate) }}</span>
+                                  </div>
+                                }
+                                @if (argument.conditional_on_id) {
+                                  <div class="data-list__item">
+                                    <b>{{ "algorithm.function.argument.condition.conditional_on" | translate }}</b>
+                                    <span>{{ getArgName(argument.conditional_on_id) }}</span>
+                                  </div>
+                                }
+                                @if (argument.conditional_operator) {
+                                  <div class="data-list__item">
+                                    <b>{{ "algorithm.function.argument.condition.operator" | translate }}</b>
+                                    <span>{{
+                                      "algorithm.function.argument.condition.operators." + argument.conditional_operator | translate
+                                    }}</span>
+                                  </div>
+                                }
+                                @if (argument.conditional_value) {
+                                  <div class="data-list__item">
+                                    <b>{{ "algorithm.function.argument.condition.value" | translate }}</b>
+                                    <span>{{ argument.conditional_value }}</span>
+                                  </div>
+                                }
+                                <div class="data-list__item">
+                                  <b>{{ "algorithm.function.argument.frontend_only.short_header" | translate }}</b>
+                                  <span>{{ argument.is_frontend_only }}</span>
+                                </div>
+                              </div>
+                            </ng-template>
+                          </mat-expansion-panel>
+                        }
+                      </mat-accordion>
+                    } @else {
+                      <p>{{ "algorithm-read.card-functions.no-parameters" | translate }}</p>
+                    }
+                  </div>
+                  <!-- Separate accordeon for databases -->
+                  <div class="data-list__item data-list__item--full">
+                    <h4>{{ "algorithm.function.databases.title" | translate }}</h4>
+                    @if (function.databases.length > 0) {
+                      <mat-accordion class="card-accordion sub-accordeon" [multi]="true">
+                        @for (db of function.databases; track db) {
+                          <mat-expansion-panel>
+                            <mat-expansion-panel-header>
+                              <mat-panel-title>{{ db.name }}</mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <ng-template matExpansionPanelContent>
+                              <div class="data-list">
+                                <div class="data-list__item">
+                                  <b>{{ "general.name" | translate }}</b>
+                                  <span>{{ db.name || "-" }}</span>
+                                </div>
+                                <div class="data-list__item data-list__item--big">
+                                  <b>{{ "general.description" | translate }}</b>
+                                  <span>{{ db.description || "-" }}</span>
+                                </div>
+                                <div class="data-list__item">
+                                  <b>{{ "algorithm.function.databases.multiple" | translate }}</b>
+                                  <span>{{ db.multiple ? ("general.yes" | translate) : ("general.no" | translate) }}</span>
+                                </div>
+                              </div>
+                            </ng-template>
+                          </mat-expansion-panel>
+                        }
+                      </mat-accordion>
+                    } @else {
+                      <p>{{ "algorithm-read.card-functions.no-databases" | translate }}</p>
+                    }
+                  </div>
+                  <!-- Separate accordeon for visualizations -->
+                  <div class="data-list__item data-list__item--full">
+                    <h4>{{ "algorithm.function.visualization.title" | translate }}</h4>
+                    @if (function.ui_visualizations.length > 0) {
+                      <mat-accordion class="card-accordion sub-accordeon" [multi]="true">
+                        @for (vis of function.ui_visualizations; track vis) {
+                          <mat-expansion-panel>
+                            <mat-expansion-panel-header>
+                              <mat-panel-title>{{ vis.name }}</mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <ng-template matExpansionPanelContent>
+                              <div class="data-list">
+                                <div class="data-list__item">
+                                  <b>{{ "general.name" | translate }}</b>
+                                  <span>{{ vis.name || "-" }}</span>
+                                </div>
+                                <div class="data-list__item">
+                                  <b>{{ "algorithm.function.visualization.type" | translate }}</b>
+                                  <span>{{ vis.type || "-" }}</span>
+                                </div>
+                                <div class="data-list__item data-list__item--big">
+                                  <b>{{ "general.description" | translate }}</b>
+                                  <span>{{ vis.description || "-" }}</span>
+                                </div>
+                                <!-- TODO build system for more clearly indicating in UI what these properties mean -->
+                                <div class="data-list__item data-list__item--big">
+                                  <b>{{ "algorithm.function.visualization.details" | translate }}</b>
+                                  <span>{{ getVisualizationSchemaAsText(vis) }}</span>
+                                </div>
+                              </div>
+                            </ng-template>
+                          </mat-expansion-panel>
+                        }
+                      </mat-accordion>
+                    } @else {
+                      <p>{{ "algorithm-read.card-functions.no-visualizations" | translate }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            </ng-template>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    } @else {
+      <p>{{ "algorithm-read.card-functions.no-functions" | translate }}</p>
+    }
   </mat-card-content>
 </mat-card>
 <mat-card>
@@ -247,15 +292,3 @@
     </button>
   </mat-card-content>
 </mat-card>
-<ng-template #noFunctions>
-  <p>{{ "algorithm-read.card-functions.no-functions" | translate }}</p>
-</ng-template>
-<ng-template #noArguments>
-  <p>{{ "algorithm-read.card-functions.no-parameters" | translate }}</p>
-</ng-template>
-<ng-template #noDatabases>
-  <p>{{ "algorithm-read.card-functions.no-databases" | translate }}</p>
-</ng-template>
-<ng-template #noVisualizations>
-  <p>{{ "algorithm-read.card-functions.no-visualizations" | translate }}</p>
-</ng-template>

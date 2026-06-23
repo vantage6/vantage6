@@ -9,6 +9,7 @@ from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.exceptions import (
     AlgorithmModuleNotFoundError,
+    DataFrameNotFound,
     MethodNotFoundError,
     SessionActionMismatchError,
 )
@@ -16,7 +17,6 @@ from vantage6.algorithm.tools.exceptions import (
 from vantage6.algorithm.mock.client import MockAlgorithmClient
 from vantage6.algorithm.mock.globals import MockDatabase
 from vantage6.algorithm.mock.util import env_vars
-from vantage6.node.k8s.exceptions import DataFrameNotFound
 
 if TYPE_CHECKING:
     from vantage6.algorithm.mock.network import MockNetwork

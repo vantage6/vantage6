@@ -31,17 +31,13 @@
     (window:resize)="setOverlayWidth()"
   >
     <div class="tree-dropdown__content">
-      <button
-        *ngIf="isTreeLayered()"
-        class="tree-dropdown__expand-collapse"
-        mat-icon-button
-        aria-label="Expand"
-        (click)="expandOrCollapseAll()"
-      >
-        <mat-icon>
-          {{ isSomeCollapsed() ? "unfold_more" : "unfold_less" }}
-        </mat-icon>
-      </button>
+      @if (isTreeLayered()) {
+        <button class="tree-dropdown__expand-collapse" mat-icon-button aria-label="Expand" (click)="expandOrCollapseAll()">
+          <mat-icon>
+            {{ isSomeCollapsed() ? "unfold_more" : "unfold_less" }}
+          </mat-icon>
+        </button>
+      }
       <mat-tree
         [dataSource]="dataSource"
         [treeControl]="treeControl"
@@ -60,29 +56,33 @@
           matTreeNodePaddingIndent="20"
         >
           <button mat-icon-button disabled></button>
-          <mat-checkbox
-            *ngIf="isMultiSelect && !treeNode.isFolder"
-            class="tree-dropdown__checkbox"
-            [checked]="isTreeNodeSelected(treeNode)"
-            [disabled]="treeNode.disabled"
-            color="primary"
-            (change)="changedNode(treeNode)"
-          >
-          </mat-checkbox>
-          <mat-radio-button
-            *ngIf="!isMultiSelect && !treeNode.isFolder"
-            class="tree-dropdown__radio"
-            [checked]="isTreeNodeSelected(treeNode)"
-            [disabled]="treeNode.disabled"
-            [name]="treeNode.code"
-            color="primary"
-            (change)="changedNode(treeNode)"
-          >
-          </mat-radio-button>
+          @if (isMultiSelect && !treeNode.isFolder) {
+            <mat-checkbox
+              class="tree-dropdown__checkbox"
+              [checked]="isTreeNodeSelected(treeNode)"
+              [disabled]="treeNode.disabled"
+              color="primary"
+              (change)="changedNode(treeNode)"
+            >
+            </mat-checkbox>
+          }
+          @if (!isMultiSelect && !treeNode.isFolder) {
+            <mat-radio-button
+              class="tree-dropdown__radio"
+              [checked]="isTreeNodeSelected(treeNode)"
+              [disabled]="treeNode.disabled"
+              [name]="treeNode.code"
+              color="primary"
+              (change)="changedNode(treeNode)"
+            >
+            </mat-radio-button>
+          }
           <div
             class="tree-dropdown__node-label"
             (click)="changedNode(treeNode)"
-            [innerHtml]="treeNode?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+            [innerHtml]="
+              $safeNavigationMigration(treeNode?.label) | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive
+            "
           ></div>
         </mat-tree-node>
 
@@ -105,28 +105,32 @@
                 {{ treeControl.isExpanded(treeNode) ? "expand_more" : "chevron_right" }}
               </mat-icon>
             </button>
-            <mat-checkbox
-              *ngIf="isMultiSelect && !treeNode.isFolder"
-              [checked]="isTreeNodeSelected(treeNode)"
-              (change)="changedNode(treeNode)"
-              [disabled]="treeNode.disabled"
-              color="primary"
-              class="tree-dropdown__checkbox"
-            >
-            </mat-checkbox>
-            <mat-radio-button
-              *ngIf="!isMultiSelect && !treeNode.isFolder"
-              class="tree-dropdown__radio"
-              [checked]="isTreeNodeSelected(treeNode)"
-              [disabled]="treeNode.disabled"
-              [name]="treeNode?.code"
-              color="primary"
-              (change)="changedNode(treeNode)"
-            ></mat-radio-button>
+            @if (isMultiSelect && !treeNode.isFolder) {
+              <mat-checkbox
+                [checked]="isTreeNodeSelected(treeNode)"
+                (change)="changedNode(treeNode)"
+                [disabled]="treeNode.disabled"
+                color="primary"
+                class="tree-dropdown__checkbox"
+              >
+              </mat-checkbox>
+            }
+            @if (!isMultiSelect && !treeNode.isFolder) {
+              <mat-radio-button
+                class="tree-dropdown__radio"
+                [checked]="isTreeNodeSelected(treeNode)"
+                [disabled]="treeNode.disabled"
+                [name]="$safeNavigationMigration(treeNode?.code)"
+                color="primary"
+                (change)="changedNode(treeNode)"
+              ></mat-radio-button>
+            }
             <div
               class="tree-dropdown__node-label"
               (click)="changedNode(treeNode)"
-              [innerHtml]="treeNode?.label | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive"
+              [innerHtml]="
+                $safeNavigationMigration(treeNode?.label) | highlight: treeSearch.config.searchInput : treeSearch.config.searchActive
+              "
             ></div>
           </mat-tree-node>
         </ng-container>

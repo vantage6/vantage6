@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntil } from 'rxjs';
 import { BaseListComponent } from 'src/app/components/admin-base/base-list/base-list.component';
 import { Algorithm } from 'src/app/models/api/algorithm.model';
@@ -6,7 +6,7 @@ import { AlgorithmService } from 'src/app/services/algorithm.service';
 import { ChosenStoreService } from 'src/app/services/chosen-store.service';
 import { StorePermissionService } from 'src/app/services/store-permission.service';
 import { PageHeaderComponent } from '../../../../components/page-header/page-header.component';
-import { NgIf } from '@angular/common';
+
 import { AlertComponent } from '../../../../components/alerts/alert/alert.component';
 import { DisplayAlgorithmsComponent } from '../../../../components/algorithm/display-algorithms/display-algorithms.component';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -14,19 +14,11 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-old-algorithm-list',
-    templateUrl: './old-algorithm-list.component.html',
-    styleUrl: './old-algorithm-list.component.scss',
-    imports: [
-        PageHeaderComponent,
-        NgIf,
-        AlertComponent,
-        DisplayAlgorithmsComponent,
-        MatCard,
-        MatCardContent,
-        MatProgressSpinner,
-        TranslateModule
-    ]
+  selector: 'app-old-algorithm-list',
+  templateUrl: './old-algorithm-list.component.html',
+  styleUrl: './old-algorithm-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [PageHeaderComponent, AlertComponent, DisplayAlgorithmsComponent, MatCard, MatCardContent, MatProgressSpinner, TranslateModule]
 })
 export class OldAlgorithmListComponent extends BaseListComponent implements OnInit, OnDestroy {
   oldAlgorithms: Algorithm[] = [];

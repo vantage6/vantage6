@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { Dataframe } from '../../../../../models/api/session.models';
@@ -8,7 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { NgIf, NgFor } from '@angular/common';
+
 import { AlertWithButtonComponent } from '../../../../alerts/alert-with-button/alert-with-button.component';
 import { routePaths } from '../../../../../routes';
 import { ChangesInCreateTaskService } from 'src/app/services/changes-in-create-task.service';
@@ -21,7 +21,8 @@ import { compareIDsForSelection } from '../task-create-helper';
   selector: 'app-dataframe-step',
   templateUrl: './dataframe-step.component.html',
   styleUrls: ['./dataframe-step.component.scss'],
-  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, NgIf, NgFor, AlertWithButtonComponent],
+  imports: [TranslateModule, ReactiveFormsModule, MatFormFieldModule, MatSelectModule, AlertWithButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class DataframeStepComponent implements OnInit, OnDestroy {

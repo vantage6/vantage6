@@ -3,14 +3,15 @@
     {{ "algorithm-list.manage" | translate }}
   </button>
 </app-page-header>
-<ng-container *ngIf="!isLoading; else loading">
+@if (!isLoading) {
   <app-display-algorithms [algorithms]="algorithms" [routeOnClick]="routePaths.algorithm"></app-display-algorithms>
-  <mat-card *ngIf="algorithms.length === 0">
-    <mat-card-content>
-      <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
-    </mat-card-content>
-  </mat-card>
-</ng-container>
-<ng-template #loading>
+  @if (algorithms.length === 0) {
+    <mat-card>
+      <mat-card-content>
+        <p>{{ "algorithm-list.no-algorithms" | translate }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+} @else {
   <mat-spinner diameter="48"></mat-spinner>
-</ng-template>
+}
