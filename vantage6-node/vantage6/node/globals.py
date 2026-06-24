@@ -58,3 +58,18 @@ DATABASE_BASE_PATH = "/app/databases/"
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
 DEFAULT_PROXY_PORT = 7654
+
+# Image used to probe algorithm network isolation at node startup.
+ISOLATION_PROBE_IMAGE = "curlimages/curl:latest"
+
+# RFC 5737 documentation addresses used to test egress blocking. These should not
+# appear in production whitelists. See
+# https://cplciciriello.net/blog-eng-cisco-01012025p1/
+ISOLATION_PROBE_CANDIDATES = (
+    "https://203.0.113.10",
+    "https://198.51.100.10",
+    "https://192.0.2.10",
+)
+
+# Maximum time to wait for the isolation probe pod to complete.
+ISOLATION_PROBE_TIMEOUT_SECONDS = 30

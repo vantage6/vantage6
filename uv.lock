@@ -3202,11 +3202,9 @@ dependencies = [
     { name = "colorama" },
     { name = "cryptography" },
     { name = "docker" },
-    { name = "pandas" },
     { name = "pyfiglet" },
     { name = "pyyaml" },
     { name = "requests" },
-    { name = "rich" },
     { name = "schema" },
 ]
 
@@ -3227,12 +3225,10 @@ requires-dist = [
     { name = "coverage", marker = "extra == 'dev'", specifier = "==7.10.2" },
     { name = "cryptography", specifier = "==46.0.7" },
     { name = "docker", specifier = ">=7.1.0" },
-    { name = "pandas", specifier = ">=2.2.3" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyfiglet", specifier = "==1.0.4" },
     { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "requests", specifier = ">=2.32.4" },
-    { name = "rich", specifier = "==13.5.2" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "schema", specifier = "==0.7.5" },
 ]
@@ -3316,6 +3312,7 @@ version = "5.0.2rc2"
 source = { editable = "vantage6-node" }
 dependencies = [
     { name = "click" },
+    { name = "flask" },
     { name = "gevent" },
     { name = "jinja2" },
     { name = "kubernetes" },
@@ -3341,6 +3338,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'" },
     { name = "click", specifier = "==8.1.3" },
     { name = "coverage", marker = "extra == 'dev'", specifier = "==7.10.2" },
+    { name = "flask", specifier = "==3.1.3" },
     { name = "gevent", specifier = "==25.4.2" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "kubernetes", specifier = "==36.0.2" },

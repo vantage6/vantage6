@@ -121,6 +121,8 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             exit(1)
 
+        self.check_algorithm_isolation()
+
         self.log.info("Connecting to HQ: %s", self.client.hq_url)
 
         # Authenticate with HQ, obtaining a JSON Web Token.
@@ -151,6 +153,35 @@ class Node:
             t.start()
 
         self.log.info("Init complete")
+
+    def check_algorithm_isolation(self) -> None:
+        """
+        Verify that algorithm containers cannot reach unwhitelisted external hosts.
+
+        When ``production`` is true (default), the node exits if isolation is not
+        enforced. Otherwise, a failed check is logged as a warning only.
+        """
+        isolated, isolation_message = (
+            self.k8s_container_manager.validate_algorithm_isolation()
+        )
+        if not isolated:
+            if self.config.get("production", True):
+                self.log.error(
+                    "Algorithm network isolation check failed: %s. Nodes with "
+                    "production=true require a Kubernetes environment that enforces "
+                    "NetworkPolicies. Common causes: Docker Desktop Kubernetes, missing "
+                    "NetworkPolicies in the task namespace, or a broad "
+                    "central_compute egress whitelist (e.g. 0.0.0.0/0).",
+                    isolation_message,
+                )
+                exit(1)
+            self.log.warning(
+                "Algorithm network isolation check failed: %s",
+                isolation_message,
+            )
+            return
+
+        self.log.info(isolation_message)
 
     def _setup_node_client(self, config: dict) -> NodeClient:
         return NodeClient(
