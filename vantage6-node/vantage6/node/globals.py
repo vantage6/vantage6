@@ -71,5 +71,8 @@ ISOLATION_PROBE_CANDIDATES = (
     "https://192.0.2.10",
 )
 
+# Maximum curl time for each isolation probe request.
+ISOLATION_PROBE_CURL_MAX_TIME_SECONDS = 5
+
 # Maximum time to wait for the isolation probe pod to complete.
-ISOLATION_PROBE_TIMEOUT_SECONDS = 30
+ISOLATION_PROBE_TIMEOUT_SECONDS = 15

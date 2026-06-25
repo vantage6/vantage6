@@ -2,5 +2,5 @@ dependencies:
 - name: common
   repository: file://../common
   version: 5.0.2-rc2
-digest: sha256:5f6fd0c90c5ddeb249487b85db1be871159dd9e50387eb540de46c9fda1ede0a
-generated: "2026-06-22T14:21:29.803815+00:00"
+digest: sha256:d26c8add7f86e319350814451640ee2c0318550be22d016d53733d5de7af967e
+generated: "2026-06-25T08:17:45.226442581+02:00"
