@@ -146,7 +146,7 @@ def validate_algorithm_isolation(
         return False, (
             "All isolation probe targets are covered by the central_compute "
             "egress whitelist. Broad whitelisting (e.g. 0.0.0.0/0) prevents "
-            "algorithm network isolation."
+            "algorithm network isolation"
         )
 
     pod_name = "v6-isolation-probe-" + str(uuid.uuid4())[:8]
@@ -222,7 +222,7 @@ def validate_algorithm_isolation(
             f"Algorithm containers can reach the public internet (probe URL: "
             f"{probe_url}). This usually means Kubernetes NetworkPolicies are not "
             f"enforced (e.g. Docker Desktop) or are missing in namespace "
-            f"'{task_namespace}'."
+            f"'{task_namespace}'"
         )
 
     return True, f"Algorithm network isolation verified (probe URL: {probe_url})."
