@@ -62,13 +62,12 @@ DEFAULT_PROXY_PORT = 7654
 # Image used to probe algorithm network isolation at node startup.
 ISOLATION_PROBE_IMAGE = "curlimages/curl:latest"
 
-# RFC 5737 documentation addresses used to test egress blocking. These should not
-# appear in production whitelists. See
-# https://cplciciriello.net/blog-eng-cisco-01012025p1/
+# RFC 2606 example domains that respond on the public internet. These are unlikely
+# to appear in production whitelists.
 ISOLATION_PROBE_CANDIDATES = (
-    "https://203.0.113.10",
-    "https://198.51.100.10",
-    "https://192.0.2.10",
+    "https://example.com",
+    "https://example.org",
+    "https://example.net",
 )
 
 # Maximum curl time for each isolation probe request.

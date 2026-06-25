@@ -1,4 +1,5 @@
 import ipaddress
+import socket
 import time
 import uuid
 from logging import Logger
@@ -24,11 +25,26 @@ def ip_in_cidr(ip: str, cidr: str) -> bool:
     return ipaddress.ip_address(ip) in ipaddress.ip_network(cidr, strict=False)
 
 
-def _extract_ip_from_url(url: str) -> str:
+def _extract_hostname_from_url(url: str) -> str:
     hostname = urlparse(url).hostname
     if not hostname:
         raise ValueError(f"Could not extract hostname from probe URL: {url}")
     return hostname
+
+
+def _resolve_host_ips(hostname: str) -> list[str]:
+    """Get all IP addresses for a hostname."""
+    try:
+        return list(
+            {
+                info[4][0]
+                for info in socket.getaddrinfo(
+                    hostname, 443, type=socket.SOCK_STREAM, proto=socket.IPPROTO_TCP
+                )
+            }
+        )
+    except socket.gaierror:
+        return []
 
 
 def _extract_whitelist_cidrs(whitelist_egress: list | None) -> list[str]:
@@ -45,6 +61,24 @@ def _extract_whitelist_cidrs(whitelist_egress: list | None) -> list[str]:
     return cidrs
 
 
+def _candidate_blocked_by_whitelist(hostname: str, cidrs: list[str]) -> bool:
+    """
+    Return True if all resolved addresses for the host are covered by the whitelist.
+    """
+    if not cidrs:
+        return False
+
+    try:
+        ips = [str(ipaddress.ip_address(hostname))]
+    except ValueError:
+        ips = _resolve_host_ips(hostname)
+
+    if not ips:
+        return False
+
+    return all(any(ip_in_cidr(ip, cidr) for cidr in cidrs) for ip in ips)
+
+
 def select_probe_target(whitelist_egress: list | None) -> str | None:
     """
     Select a probe URL that is not covered by central_compute egress whitelist CIDRs.
@@ -53,8 +87,8 @@ def select_probe_target(whitelist_egress: list | None) -> str | None:
     """
     cidrs = _extract_whitelist_cidrs(whitelist_egress)
     for url in ISOLATION_PROBE_CANDIDATES:
-        ip = _extract_ip_from_url(url)
-        if not any(ip_in_cidr(ip, cidr) for cidr in cidrs):
+        hostname = _extract_hostname_from_url(url)
+        if not _candidate_blocked_by_whitelist(hostname, cidrs):
             return url
     return None
 
