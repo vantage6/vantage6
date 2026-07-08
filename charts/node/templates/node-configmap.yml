@@ -77,6 +77,11 @@ data:
     debug:
       socketio: {{ .Values.node.debug.socketio }}
       proxy_server: {{ .Values.node.debug.proxy_server }}
+      {{- if hasKey .Values.node.debug "force_websocket" }}
+      force_websocket: {{ .Values.node.debug.force_websocket }}
+      {{- else }}
+      force_websocket: true
+      {{- end }}
     {{- end }}
     {{- if .Values.node.dev }}
     {{- if .Values.node.dev.task_dir_extension }}

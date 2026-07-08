@@ -770,10 +770,12 @@ class Node:
         self.socketIO.register_namespace(NodeTaskNamespace("/tasks"))
         NodeTaskNamespace.node_worker_ref = self
 
+        force_websocket = self.debug.get("force_websocket", True)
         self.socketIO.connect(
             url=self.client.server_url,
             headers=self.client.headers,
             wait=False,
+            transports=["websocket"] if force_websocket else None,
         )
 
         # Log the outcome
@@ -781,8 +783,11 @@ class Node:
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
                 self.log.critical(
-                    "Could not connect to the websocket channels, do you have a "
-                    "slow connection?"
+                    "Could not connect to the websocket channels. If your "
+                    "network does not support a direct websocket connection, "
+                    "set `debug.force_websocket: false` in the node "
+                    "configuration to use the default polling/upgrade "
+                    "transport negotiation instead."
                 )
                 exit(1)
             self.log.debug("Waiting for socket connection...")

@@ -414,6 +414,10 @@ node:
 
     # Set to `true` to set the Flask app used for proxy service into debug mode.
     proxy_server: {{ node.debug.proxy_server | default(false) }}
+
+    # Set to `false` to fall back to the default polling-then-upgrade
+    # transport negotiation instead of forcing a direct websocket connection.
+    force_websocket: {{ node.debug.force_websocket | default(true) }}
   {% endif %}
 
   {% if node.dev is defined %}

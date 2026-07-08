@@ -256,6 +256,14 @@ node:
     # Set to `true` to set the Flask app used for the LOCAL proxy service
     # into debug mode
     proxy_server: false
+    # Force the node to connect to the server using the websocket transport
+    # only, skipping the initial polling handshake. This avoids intermittent
+    # failures that can occur when upgrading a polling connection to
+    # websocket. Set to `false` to use the default polling-then-upgrade
+    # transport negotiation instead, e.g. if your network does not support a
+    # direct websocket connection. In either mode, if the connection cannot
+    # be established the node process will exit with a non-zero code.
+    force_websocket: true
 
   # Development settings - these should ONLY be used when running `v6 dev` environment,
   # which will use these settings automatically.
