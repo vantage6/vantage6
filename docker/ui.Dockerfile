@@ -11,7 +11,7 @@ RUN npm install
 RUN npm run build
 
 # run
-FROM nginx:alpine
+FROM dhi.io/nginx:1
 COPY --from=node /app/startup /app/startup
 COPY --from=node /app/dist/vantage6-UI/browser /usr/share/nginx/html
 
