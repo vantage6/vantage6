@@ -47,10 +47,18 @@ class NodeTaskNamespace(ClientNamespace):
         self.log.debug("Tasks synced again with HQ...")
         self.node_worker_ref.share_node_details()
 
-    def on_disconnect(self):
-        """Actions to be taken on socket disconnect event."""
+    def on_disconnect(self, reason: str | None = None):
+        """
+        Actions to be taken on socket disconnect event.
+
+        Parameters
+        ----------
+        reason: str | None
+            Reason for the disconnect as reported by the socket.io server, e.g.
+            'ping timeout' or 'transport error'.
+        """
         # self.node_worker_ref.socketIO.disconnect()
-        self.log.info("Disconnected from HQ")
+        self.log.info(f"Disconnected from HQ (reason: {reason})")
 
     def on_new_task_update(self, data: dict):
         """
