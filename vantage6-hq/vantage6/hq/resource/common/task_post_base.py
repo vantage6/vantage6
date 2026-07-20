@@ -151,10 +151,14 @@ class TaskPostBase(ServicesResources):
         self._create_task_databases(task, data.get("databases", [[]]))
         self._create_runs(task, organizations_json_list, action)
 
-        # alerting and logging
-        self._notify_nodes_of_new_task(task)
+        # alerting and logging. Log before emitting: the emit yields the greenlet,
+        # after which the session may have been cleared and `task` detached.
         self._new_task_logging(task)
+        task_id = task.id
+        self._notify_nodes_of_new_task(task)
 
+        # Re-attach the task before serializing it, in case the emit detached it.
+        task = db.Task.get(task_id)
         return task_schema.dump(task, many=False), HTTPStatus.CREATED
 
     def _validate_request_body(self, data: dict) -> dict:

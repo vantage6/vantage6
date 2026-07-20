@@ -2,6 +2,9 @@ import datetime
 import logging
 import uuid
 from http import HTTPStatus
+from unittest.mock import patch
+
+from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus
@@ -12,6 +15,7 @@ from vantage6.hq.model import (
     Run,
     Task,
 )
+from vantage6.hq.model.base import DatabaseSessionManager
 
 from .test_resource_base import TestResourceBase
 
@@ -136,3 +140,47 @@ class TestResources(TestResourceBase):
             col.delete()
             org1.delete()
             org2.delete()
+
+    def test_run_patch_survives_session_clear_during_emit(self):
+        """
+        A socket emit yields the greenlet, after which the database session may have
+        been cleared by another handler's cleanup, detaching the run. The endpoint
+        should still be able to serialize its response.
+
+        See https://github.com/vantage6/vantage6/issues/2656.
+        """
+        org = Organization(name=str(uuid.uuid1()))
+        col = Collaboration(name=str(uuid.uuid1()), organizations=[org])
+        col.save()
+        node = self.create_node(organization=org, collaboration=col)
+        task = Task(
+            image="localhost/algorithms/test:local", collaboration=col, init_org=org
+        )
+        task.save()
+        run = Run(task=task, organization=org, status=RunStatus.PENDING.value)
+        run.save()
+
+        try:
+            headers = self.login_node(node)
+
+            # Clear the session on emit, which is what a concurrent handler's
+            # __cleanup() does while the emit has yielded the greenlet.
+            with patch.object(
+                SocketIO,
+                "emit",
+                side_effect=lambda *a, **kw: DatabaseSessionManager.clear_session(),
+            ):
+                response = self.app.patch(
+                    f"/api/run/{run.id}",
+                    headers=headers,
+                    json={"status": RunStatus.COMPLETED.value},
+                )
+
+            self.assertEqual(response.status_code, HTTPStatus.OK)
+            self.assertEqual(response.json["status"], RunStatus.COMPLETED.value)
+        finally:
+            run.delete()
+            task.delete()
+            node.delete()
+            col.delete()
+            org.delete()

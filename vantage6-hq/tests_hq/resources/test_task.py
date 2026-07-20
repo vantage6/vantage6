@@ -1,6 +1,8 @@
 import logging
 from http import HTTPStatus
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatus
@@ -15,6 +17,7 @@ from vantage6.hq.model import (
     Study,
     Task,
 )
+from vantage6.hq.model.base import DatabaseSessionManager
 from vantage6.hq.model.rule import Operation, Scope
 from vantage6.hq.resource.event import kill_task
 
@@ -744,3 +747,102 @@ class TestResources(TestResourceBase):
         self.assertEqual(child_run_1.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_2.status, RunStatus.KILLED.value)
         self.assertEqual(child_run_done.status, RunStatus.COMPLETED.value)
+
+    def test_kill_task_marks_runs_killed_when_session_cleared_on_emit(self):
+        """
+        The emit yields the greenlet, after which the session may have been cleared.
+        The runs must still end up marked as killed rather than silently staying
+        active while the nodes have already been told to kill them.
+
+        See https://github.com/vantage6/vantage6/issues/2656.
+        """
+        org = Organization(name="kill-session-clear-org")
+        collaboration = Collaboration(
+            name="kill-session-clear-collaboration", organizations=[org]
+        )
+        collaboration.save()
+        task = Task(
+            name="kill-session-clear-task",
+            image="some-image",
+            collaboration=collaboration,
+            job_id=90002,
+        )
+        task.save()
+        run = Run(organization=org, task=task, status=RunStatus.ACTIVE.value)
+        run.save()
+
+        # Hold on to the ids: clearing the session below detaches these objects.
+        run_id = run.id
+        task_id = task.id
+        collaboration_id = collaboration.id
+        org_id = org.id
+
+        try:
+            socket = MagicMock()
+            socket.emit.side_effect = lambda *a, **kw: (
+                DatabaseSessionManager.clear_session()
+            )
+
+            # kill_task is called from a Flask endpoint, so run it in a request
+            # context: that is also what makes the cleared session the request-scoped
+            # one rather than the session shared by the rest of the test suite.
+            with self.server.app.test_request_context():
+                DatabaseSessionManager.get_session()
+                kill_task(Task.get(task_id), socket)
+
+            self.assertEqual(Run.get(run_id).status, RunStatus.KILLED.value)
+        finally:
+            Run.get(run_id).delete()
+            Task.get(task_id).delete()
+            Collaboration.get(collaboration_id).delete()
+            Organization.get(org_id).delete()
+
+    def test_task_post_survives_session_clear_during_emit(self):
+        """
+        The new-task emit yields the greenlet, after which the session may have been
+        cleared and the task detached before it is serialized into the response.
+
+        See https://github.com/vantage6/vantage6/issues/2656.
+        """
+        org = Organization()
+        org.save()
+        col = Collaboration(organizations=[org], encrypted=False)
+        col.save()
+        node = Node(organization=org, collaboration=col)
+        node.save()
+
+        rule_create = Rule.get_by_("task", Scope.COLLABORATION, Operation.CREATE)
+        user = self.create_user(organization=org, rules=[rule_create])
+        session = Session(
+            name="session-clear-session", user_id=user.id, collaboration=col
+        )
+        session.save()
+
+        try:
+            headers = self.login(user)
+            task_json = {
+                "method": "dummy",
+                "image": "some-image",
+                "action": AlgorithmStepType.FEDERATED_COMPUTE.value,
+                "organizations": [{"id": org.id}],
+                "collaboration_id": col.id,
+                "session_id": session.id,
+            }
+
+            with patch.object(
+                SocketIO,
+                "emit",
+                side_effect=lambda *a, **kw: DatabaseSessionManager.clear_session(),
+            ):
+                results = self.app.post("/api/task", headers=headers, json=task_json)
+
+            self.assertEqual(results.status_code, HTTPStatus.CREATED)
+            self.assertEqual(results.json["image"], "some-image")
+        finally:
+            for created_task in Task.get():
+                if created_task.collaboration_id == col.id:
+                    created_task.delete()
+            session.delete()
+            node.delete()
+            col.delete()
+            org.delete()

@@ -752,31 +752,40 @@ class Run(SingleRunBase):
                     dependent_run.finished_at = run.finished_at
                     dependent_run.save()
 
+        # Read everything we need off the ORM objects while the session is
+        # guaranteed to be alive. `socketio.emit` yields the greenlet, after which
+        # the session may have been cleared and `run` detached.
+        collaboration_id = run.task.collaboration.id
+        status_change_data = {
+            "run_id": run.id,
+            "status": run.status,
+            "task_id": run.task.id,
+            "job_id": run.task.job_id,
+            "collaboration_id": collaboration_id,
+            "node_id": run.node.id,
+            "organization_id": run.organization.id,
+            "parent_id": run.task.parent_id,
+        }
+
         # notify collaboration nodes/users that the task has an update
         # TODO refactor it shouldn't be necessary to send two events.
         self.socketio.emit(
             "status_update",
             {"run_id": id},
             namespace="/tasks",
-            room=f"collaboration_{run.task.collaboration.id}",
+            room=f"collaboration_{collaboration_id}",
         )
 
         self.socketio.emit(
             "algorithm_status_change",
-            {
-                "run_id": run.id,
-                "status": run.status,
-                "task_id": run.task.id,
-                "job_id": run.task.job_id,
-                "collaboration_id": run.task.collaboration.id,
-                "node_id": run.node.id,
-                "organization_id": run.organization.id,
-                "parent_id": run.task.parent_id,
-            },
+            status_change_data,
             namespace="/tasks",
-            room=f"collaboration_{run.task.collaboration.id}",
+            room=f"collaboration_{collaboration_id}",
         )
 
+        # Re-attach the run before serializing it: the save() above expired it, so
+        # the dump would hit the database anyway, and the emits may have detached it.
+        run = db_Run.get(id)
         return run_schema.dump(run, many=False), HTTPStatus.OK
 
     def _add_dependent_tasks(self, dependent_tasks: list[db.Task]) -> list[db.Task]:

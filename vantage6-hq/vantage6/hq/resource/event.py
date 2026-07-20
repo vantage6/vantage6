@@ -278,15 +278,20 @@ class KillNodeTasks(ServicesResources):
                     "msg": "You lack the permission to do that!"
                 }, HTTPStatus.UNAUTHORIZED
 
+        # Read the node's attributes before emitting: the emit yields the greenlet,
+        # after which the session may have been cleared and `node` detached.
+        node_id = node.id
+        collaboration_id = node.collaboration_id
+
         self.socketio.emit(
             "kill_containers",
-            {"node_id": node.id, "collaboration_id": node.collaboration_id},
+            {"node_id": node_id, "collaboration_id": collaboration_id},
             namespace="/tasks",
-            room=f"collaboration_{node.collaboration_id}",
+            room=f"collaboration_{collaboration_id}",
         )
 
         return {
-            "msg": f"Node {node.id} has been instructed to kill all containers"
+            "msg": f"Node {node_id} has been instructed to kill all containers"
             " running on it."
         }, HTTPStatus.OK
 
@@ -313,14 +318,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
         for run in task_to_kill.runs
         if not RunStatus.has_finished(run.status)
     ]
-
-    # emit socket event to the node to execute the container kills
-    socket.emit(
-        "kill_containers",
-        {"kill_list": kill_list, "collaboration_id": task.collaboration.id},
-        namespace="/tasks",
-        room=f"collaboration_{task.collaboration_id}",
-    )
+    collaboration_id = task.collaboration.id
 
     # set tasks and subtasks status to killed
     def set_killed(task: db.Task):
@@ -331,6 +329,16 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
             run.finished_at = dt.datetime.now(dt.timezone.utc)
             run.save()
 
-    set_killed(task)
-    for subtask in task.children:
-        set_killed(subtask)
+    # Update the runs before emitting: the emit yields the greenlet, after which the
+    # session may have been cleared and these runs detached - leaving them silently
+    # unkilled in the database while the nodes have already been told to kill them.
+    for task_to_kill in tasks_to_kill:
+        set_killed(task_to_kill)
+
+    # emit socket event to the node to execute the container kills
+    socket.emit(
+        "kill_containers",
+        {"kill_list": kill_list, "collaboration_id": collaboration_id},
+        namespace="/tasks",
+        room=f"collaboration_{collaboration_id}",
+    )
