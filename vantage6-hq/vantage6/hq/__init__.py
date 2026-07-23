@@ -9,8 +9,6 @@ import os
 
 from gevent import monkey
 
-from vantage6.backend.common.globals import RequiredBackendEnvVars
-
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
     # flake8: noqa: E402 (ignore import error)
@@ -42,6 +40,7 @@ from vantage6.common.globals import (
 from vantage6.cli.context.hq import HQContext
 
 from vantage6.backend.common import Vantage6App
+from vantage6.backend.common.globals import RequiredBackendEnvVars
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.permission import RuleNeed
 
