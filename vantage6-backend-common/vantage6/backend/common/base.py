@@ -365,9 +365,13 @@ class BaseDatabaseSessionManager:
         from the db module.
         """
         if BaseDatabaseSessionManager.in_flask_request():
-            # print(f"gsession: {g.session}")
-            g.session.remove()
-            # g.session = None
+            # `g.session` is only set once a session has actually been opened
+            # (via `new_session`). This is now called from `teardown_request`,
+            # which fires for every request-context pop - including socket
+            # events and error paths that never touched the database - so guard
+            # against clearing a session that was never created.
+            if "session" in g:
+                g.session.remove()
         else:
             if session.session:
                 session.session.remove()
