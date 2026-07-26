@@ -31,6 +31,12 @@ logging:
   - level: warning
     name: docker.auth
 port: {{ port }}
+# Nodes reject all algorithm images by default. Uncomment the lines below and
+# include an algorithm image pattern to allow it. Using `.*` will allow every
+# algorithm image. Use it with care.
+# policies:
+#   allowed_algorithms:
+#     - your-algorithm-image-pattern
 server_url: {{ server_url }}
 task_dir: {{ task_dir}}
 {{- user_provided_config -}}

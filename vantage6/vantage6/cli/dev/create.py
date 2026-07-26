@@ -8,7 +8,13 @@ from jinja2 import Environment, FileSystemLoader
 from colorama import Fore, Style
 
 from vantage6.common.globals import APPNAME, InstanceType, Ports
-from vantage6.common import ensure_config_dir_writable, info, error, generate_apikey
+from vantage6.common import (
+    ensure_config_dir_writable,
+    info,
+    warning,
+    error,
+    generate_apikey,
+)
 
 import vantage6.cli.dev.data as data_dir
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -633,6 +639,11 @@ def create_demo_network(
     """
     server_name = prompt_config_name(name)
     if not ServerContext.config_exists(server_name, False):
+        warning(
+            "Nodes reject all algorithm images when no algorithm policy is configured. "
+            "To allow algorithms in this development network, review and uncomment the "
+            "policies section in each generated node configuration."
+        )
         demo = demo_network(
             num_nodes,
             server_url,

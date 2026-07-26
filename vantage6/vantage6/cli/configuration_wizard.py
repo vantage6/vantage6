@@ -111,8 +111,9 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
         ).unsafe_ask()
 
     is_policies = q.confirm(
-        "Do you want to limit the algorithms allowed to run on your node? This "
-        "should always be done for production scenarios.",
+        "Do you want to configure which algorithms are allowed to run on your node? "
+        "If no algorithms or algorithm stores are allowed, the node will reject every "
+        "algorithm image.",
         default=True,
     ).unsafe_ask()
     policies = {}
@@ -145,6 +146,11 @@ def node_configuration_questionaire(dirs: dict, instance_name: str) -> dict:
             policies["allow_either_whitelist_or_store"] = not require_both_whitelists
     if policies:
         config["policies"] = policies
+    else:
+        warning(
+            "No allowed algorithm policy was configured. This node will reject "
+            "all algorithm images."
+        )
 
     res = q.select(
         "Which level of logging would you like?",

@@ -155,6 +155,10 @@ hash (i.e. version) of the trusted algorithm. Note that this process requires ma
 updates to the data station configuration, as well as a data station restart,
 each time that a new algorithm is approved or an existing algorithm is updated.
 
+If neither ``allowed_algorithms`` nor ``allowed_algorithm_stores`` is configured,
+the node rejects all algorithm images. To allow all images explicitly, configure
+``.*`` as an allowed algorithm pattern, but only if you really know what you are doing!
+
 It is also possible to allow a set of algorithms at once by providing a pattern, i.e.
 a regular expression. This makes it e.g. possible to allow a certain
 directory with algorithms. The disadvantage of this approach is that if an
