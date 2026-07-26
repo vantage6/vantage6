@@ -34,7 +34,6 @@ from vantage6.common.globals import (
 )
 from vantage6.common.task_status import TaskStatus, has_task_failed
 from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.algorithm.tools.wrappers import get_column_names
 from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
@@ -958,6 +957,8 @@ class DockerManager(DockerBaseManager):
         """
         Get column names from a node database
 
+        Column-name discovery is currently unsupported, so this returns no names.
+
         Parameters
         ----------
         label: str
@@ -970,27 +971,13 @@ class DockerManager(DockerBaseManager):
         list[str]
             List of column names
         """
-        db = self.databases.get(label)
-        if not db:
-            self.log.error("Database with label %s not found", label)
-            return []
-        if not db["is_file"]:
-            self.log.error(
-                "Database with label %s is not a file. Cannot"
-                " determine columns without query",
-                label,
-            )
-            return []
-        if db["type"] == "excel":
-            self.log.error(
-                "Cannot determine columns for excel database without a worksheet"
-            )
-            return []
-        if type_ not in ("csv", "sparql"):
-            self.log.error(
-                "Cannot determine columns for database of type %s."
-                "Only csv and sparql are supported",
-                type_,
-            )
-            return []
-        return get_column_names(db["uri"], type_)
+        # If we restore sharing column names through node configuration for the
+        # server's /column endpoint and UI column selectors, we can consider a simple
+        # standard-library implementation that does not require pandas.
+        # For now, its low usage does not justify the pandas dependency or the
+        # risk that incorrectly parsed data is exposed as column names.
+        self.log.error(
+            "Column-name discovery is currently unsupported; no column names "
+            "will be returned."
+        )
+        return []

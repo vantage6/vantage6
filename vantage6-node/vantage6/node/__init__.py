@@ -1211,8 +1211,8 @@ class Node:
         """
         Share part of the node's configuration with the server.
 
-        This helps the other parties in a collaboration to see e.g. which
-        algorithms they are allowed to run on this node.
+        This lets the other parties in a collaboration see the node details
+        that we have chosen to share.
         """
         # check if node allows to share node details, otherwise return
         if not self.config.get("share_config", True):
@@ -1229,11 +1229,12 @@ class Node:
             if encryption_config.get("enabled") is not None:
                 config_to_share["encryption"] = encryption_config.get("enabled")
 
-        # share node policies (e.g. who can run which algorithms)
+        # We only share the algorithm allow-list when this is explicitly enabled
         policies = self.config.get("policies", {})
-        config_to_share["allowed_algorithms"] = policies.get(
-            NodePolicy.ALLOWED_ALGORITHMS, "all"
-        )
+        if self.config.get("share_allowed_algorithms", False):
+            config_to_share["allowed_algorithms"] = policies.get(
+                NodePolicy.ALLOWED_ALGORITHMS, "all"
+            )
         if policies.get(NodePolicy.ALLOWED_USERS) is not None:
             config_to_share["allowed_users"] = policies.get(NodePolicy.ALLOWED_USERS)
         if policies.get(NodePolicy.ALLOWED_ORGANIZATIONS) is not None:
@@ -1241,17 +1242,17 @@ class Node:
                 NodePolicy.ALLOWED_ORGANIZATIONS
             )
 
-        # share node database labels, types, and column names (if they are
-        # fixed as e.g. for csv file)
+        # We always share database labels and types. Column-name should be opt-in.
         labels = []
         types = {}
         col_names = {}
+        share_column_names = self.config.get("share_column_names", False)
         for db in self.config.get("databases", []):
             label = db.get("label")
             type_ = db.get("type")
             labels.append(label)
             types[f"db_type_{label}"] = type_
-            if type_ in ("csv", "parquet"):
+            if share_column_names and type_ in ("csv", "parquet"):
                 col_names[f"columns_{label}"] = self.__docker.get_column_names(
                     label, type_
                 )
