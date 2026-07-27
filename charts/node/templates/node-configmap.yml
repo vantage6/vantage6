@@ -37,25 +37,25 @@ data:
       {{- if .Values.node.policies.allowed_algorithms }}
       allowed_algorithms:
         {{- range .Values.node.policies.allowed_algorithms }}
-        - {{ . }}
+        - {{ . | quote }}
         {{- end }}
       {{- end }}
       {{- if .Values.node.policies.allowed_algorithm_stores }}
       allowed_algorithm_stores:
         {{- range .Values.node.policies.allowed_algorithm_stores }}
-        - {{ . }}
+        - {{ . | quote }}
         {{- end }}
       {{- end }}
       {{- if .Values.node.policies.allowed_users }}
       allowed_users:
         {{- range .Values.node.policies.allowed_users }}
-        - {{ . }}
+        - {{ . | quote }}
         {{- end }}
       {{- end }}
       {{- if .Values.node.policies.allowed_organizations }}
       allowed_organizations:
         {{- range .Values.node.policies.allowed_organizations }}
-        - {{ . }}
+        - {{ . | quote }}
         {{- end }}
       {{- end }}
       require_algorithm_pull: {{ .Values.node.policies.require_algorithm_pull }}
