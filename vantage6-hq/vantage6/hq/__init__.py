@@ -398,12 +398,16 @@ class HQApp(Vantage6App):
                 time.sleep(PING_INTERVAL_SECONDS + 5)
 
                 # Check for each node that is online if they have responded.
-                # Otherwise set them to offline.
-                online_status_nodes = db.Node.get_online_nodes()
-                for node in online_status_nodes:
-                    if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
-                        node.status = AuthStatus.OFFLINE.value
-                        node.save()
+                # Otherwise set them to offline. This runs outside a Flask
+                # request, so wrap it in a session scope to make sure the DB
+                # session (and its pooled connection) is always released, even
+                # if a query below raises.
+                with DatabaseSessionManager.session_scope():
+                    online_status_nodes = db.Node.get_online_nodes()
+                    for node in online_status_nodes:
+                        if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
+                            node.status = AuthStatus.OFFLINE.value
+                            node.save()
             except Exception as e:
                 log.exception("Node-status thread encountered an exception: %s", e)
                 time.sleep(PING_INTERVAL_SECONDS)
@@ -416,10 +420,14 @@ class HQApp(Vantage6App):
         include_args = self.ctx.config.get("runs_data_cleanup_include_args", False)
         while True:
             try:
-                cleanup.cleanup_runs_data(
-                    self.ctx.config,
-                    include_args=include_args,
-                )
+                # This runs outside a Flask request, so wrap the cleanup in a
+                # session scope to make sure the DB session (and its pooled
+                # connection) is always released, even if the cleanup raises.
+                with DatabaseSessionManager.session_scope():
+                    cleanup.cleanup_runs_data(
+                        self.ctx.config,
+                        include_args=include_args,
+                    )
             except Exception as e:
                 log.error("Results cleanup failed. Will try again in one hour.")
                 log.exception(e)
@@ -496,5 +504,10 @@ def run_hq(config: str, system_folders: bool = True) -> HQApp:
         A running instance of the vantage6 HQ
     """
     ctx = HQContext.from_external_config_file(config, system_folders, in_container=True)
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=ctx.config.get("database_pool_size"),
+        max_overflow=ctx.config.get("database_max_overflow"),
+    )
     return HQApp(ctx)

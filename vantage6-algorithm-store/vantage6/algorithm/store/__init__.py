@@ -315,5 +315,10 @@ def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     ctx = AlgorithmStoreContext.from_external_config_file(
         config, system_folders, in_container=True
     )
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=ctx.config.get("database_pool_size"),
+        max_overflow=ctx.config.get("database_max_overflow"),
+    )
     return AlgorithmStoreApp(ctx)

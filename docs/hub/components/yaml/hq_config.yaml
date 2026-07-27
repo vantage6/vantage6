@@ -73,6 +73,17 @@ server:
   # Whether to also delete the algorithm arguments of the runs. False by default.
   runs_data_cleanup_include_args: false
 
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). These are
+  # ignored for SQLite databases. Postgres accepts 100 connections by default,
+  # so when running multiple HQ instances against one database, size these so
+  # that (pool_size + max_overflow) * number_of_instances stays below that
+  # limit. database_pool_size is the number of persistent connections kept
+  # open; database_max_overflow is the number of extra connections allowed
+  # during demand spikes.
+  # database_pool_size: 5
+  # database_max_overflow: 10
+
   # Set up with which origins the server should allow CORS requests. The default
   # is to allow all origins. If you want to restrict this, you can specify a list
   # of origins here. Below are examples to allow requests from the Uluru UI, and

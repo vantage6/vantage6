@@ -12,6 +12,12 @@ data:
     {{- else }}
     uri: postgresql://{{ .Values.database.username }}:{{ .Values.database.password }}@{{ .Release.Name }}-store-postgres:5432/{{ .Values.database.name }}
     {{- end }}
+    {{- if .Values.store.database_pool_size }}
+    database_pool_size: {{ .Values.store.database_pool_size }}
+    {{- end }}
+    {{- if .Values.store.database_max_overflow }}
+    database_max_overflow: {{ .Values.store.database_max_overflow }}
+    {{- end }}
     logging:
       backup_count: {{ .Values.store.logging.backup_count }}
       datefmt: {{ .Values.store.logging.datefmt | quote }}

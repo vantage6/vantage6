@@ -53,7 +53,13 @@ class Database(BaseDatabase, metaclass=Singleton):
         """
         self._close(Base)
 
-    def connect(self, uri="sqlite:////tmp/test.db", allow_drop_all=False):
+    def connect(
+        self,
+        uri="sqlite:////tmp/test.db",
+        allow_drop_all=False,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
+    ):
         """
         Connect to the database.
 
@@ -64,8 +70,20 @@ class Database(BaseDatabase, metaclass=Singleton):
         allow_drop_all : bool, optional
             If True, the database can be dropped. Defaults to False. Typically, it is
             only set to True for unit tests.
+        pool_size : int, optional
+            Number of persistent connections in the SQLAlchemy connection pool.
+            When None (default), SQLAlchemy's default is used. Ignored for SQLite.
+        max_overflow : int, optional
+            Number of extra connections allowed on top of ``pool_size``. When None
+            (default), SQLAlchemy's default is used. Ignored for SQLite.
         """
-        self._connect(Base, uri, allow_drop_all)
+        self._connect(
+            Base,
+            uri,
+            allow_drop_all,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+        )
 
 
 class DatabaseSessionManager(BaseDatabaseSessionManager):
@@ -102,6 +120,22 @@ class DatabaseSessionManager(BaseDatabaseSessionManager):
         the db module.
         """
         BaseDatabaseSessionManager._new_session(DatabaseSessionManager, Database)
+
+    @staticmethod
+    def session_scope():
+        """
+        Context manager that yields a session and always releases it.
+
+        Use this for database work that runs outside the Flask request
+        lifecycle (e.g. background worker threads), where the request hooks
+        that normally clear the session do not fire.
+
+        Returns
+        -------
+        contextmanager
+            A context manager yielding a database session
+        """
+        return BaseDatabaseSessionManager._session_scope(DatabaseSessionManager)
 
 
 class ModelBase(BaseModelBase):

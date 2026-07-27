@@ -89,6 +89,14 @@ store:
     - https://portal.uluru.vantage6.ai
     - http://localhost:7600
 
+  # SQLAlchemy database connection pool settings. Optional; when omitted,
+  # SQLAlchemy's defaults are used (pool_size=5, max_overflow=10). These are
+  # ignored for SQLite databases. database_pool_size is the number of persistent
+  # connections kept open; database_max_overflow is the number of extra
+  # connections allowed during demand spikes.
+  # database_pool_size: 5
+  # database_max_overflow: 10
+
   # Credentials used to login to private Docker registries. These credentials are used
   # to e.g. find the digests of the algorithm.
   private_docker_registries:
