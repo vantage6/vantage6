@@ -198,7 +198,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
     this.destroy$.next(true);
     this.nodeStatusUpdateSubscription?.unsubscribe();
   }
-  
+
   shouldShowAllowedValuesDropdown(argument: Argument): boolean {
     return (argument.allowed_values?.length ?? 0) > 0;
   }
@@ -441,7 +441,7 @@ export class TaskCreateComponent implements OnInit, OnDestroy, AfterViewInit {
       collaboration_id: this.collaboration?.id || -1,
       databases: taskDatabases,
       store_id: this.algorithm?.algorithm_store_id || -1,
-      server_url: environment.server_url,
+      server_url: `${environment.server_url}${environment.api_path}`,
       organizations: selectedOrganizations.map((organizationID) => {
         return {
           id: Number.parseInt(organizationID),
