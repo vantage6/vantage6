@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
@@ -9,7 +10,6 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import error, info
 
 from vantage6.algorithm.decorator.action import data_extraction
-import sys
 
 OHDSI_AVAILABLE = True
 try:

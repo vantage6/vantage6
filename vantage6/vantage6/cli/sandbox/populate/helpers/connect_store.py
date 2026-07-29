@@ -2,6 +2,7 @@
 Development script to connect HQ to the local store.
 """
 
+import sys
 import time
 from http import HTTPStatus
 
@@ -11,7 +12,6 @@ from vantage6.common import error, info
 from vantage6.common.globals import Ports
 
 from vantage6.client import Client
-import sys
 
 
 def _wait_for_store_to_be_online(

@@ -4,6 +4,7 @@ import importlib.metadata
 import json
 import logging
 import os
+import sys
 import time
 import traceback
 from abc import abstractmethod
@@ -40,7 +41,6 @@ from vantage6.backend.common.globals import (
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
-import sys
 
 __version__ = importlib.metadata.version(__package__)
 

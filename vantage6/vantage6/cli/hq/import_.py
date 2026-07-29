@@ -1,3 +1,5 @@
+import sys
+
 import click
 import requests
 import yaml
@@ -14,7 +16,6 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.hq import HQContext
-import sys
 
 
 @click.command()

@@ -1,4 +1,5 @@
 import json
+import sys
 import traceback
 from typing import TYPE_CHECKING, Any
 
@@ -10,7 +11,6 @@ from vantage6.algorithm.tools.exceptions import (
 from vantage6.algorithm.tools.util import error, warn
 
 from vantage6.algorithm.mock.globals import MockDatabase
-import sys
 
 if TYPE_CHECKING:
     from vantage6.algorithm.mock.network import MockNetwork

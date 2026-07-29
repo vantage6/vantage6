@@ -1,4 +1,5 @@
 import itertools
+import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -14,7 +15,6 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.utils import remove_file
-import sys
 
 
 def execute_remove(

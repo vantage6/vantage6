@@ -1,6 +1,7 @@
 import importlib
 import json
 import os
+import sys
 import traceback
 from typing import Any
 
@@ -14,7 +15,6 @@ from vantage6.common.globals import ContainerEnvNames
 
 from vantage6.algorithm.tools.exceptions import DeserializationError
 from vantage6.algorithm.tools.util import error, get_action, get_env_var, info
-import sys
 
 
 def wrap_algorithm(log_traceback: bool = True) -> None:

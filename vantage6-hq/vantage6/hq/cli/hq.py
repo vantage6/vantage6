@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from functools import wraps
 
@@ -13,7 +14,6 @@ from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
 
 from vantage6.hq import __version__
 from vantage6.hq.model.base import Database
-import sys
 
 help_ = {
     "name": "name of the configutation you want to use.",

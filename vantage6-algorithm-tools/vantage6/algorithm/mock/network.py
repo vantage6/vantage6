@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 
 from vantage6.common import info
@@ -9,7 +11,6 @@ from vantage6.algorithm.mock.client import MockUserClient
 from vantage6.algorithm.mock.globals import MockDatabase
 from vantage6.algorithm.mock.hq import MockHQ
 from vantage6.algorithm.mock.node import MockNode
-import sys
 
 
 class MockNetwork:

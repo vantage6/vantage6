@@ -3,6 +3,7 @@ Common functions that are used in node CLI commands
 """
 
 import os
+import sys
 
 from colorama import Fore, Style
 
@@ -19,7 +20,6 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
-import sys
 
 
 def _convert_k8s_url_to_localhost(url: str) -> str:

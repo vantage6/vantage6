@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from os import PathLike
 from pathlib import Path
 
@@ -15,7 +16,6 @@ from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import ChartName, CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import check_config_name_allowed, validate_input_cmd_args
-import sys
 
 
 def execute_cli_start(

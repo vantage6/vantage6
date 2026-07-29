@@ -1,3 +1,5 @@
+import sys
+
 from vantage6.common import error
 from vantage6.common.globals import InstanceType
 
@@ -11,7 +13,6 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.k8s_config import select_k8s_config
-import sys
 
 
 def get_and_select_ctx(

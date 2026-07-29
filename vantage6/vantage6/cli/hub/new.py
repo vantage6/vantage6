@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 from urllib.parse import urlparse
 
@@ -28,7 +29,6 @@ from vantage6.cli.k8s_config import (
     select_k8s_config,
 )
 from vantage6.cli.utils import prompt_config_name
-import sys
 
 
 @click.command()

@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import click
@@ -13,7 +14,6 @@ from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.hub import SandboxHubConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.utils import prompt_config_name
-import sys
 
 
 @click.command()

@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from functools import wraps
 
@@ -14,7 +15,6 @@ from vantage6.common.globals import (
 
 from vantage6.algorithm.tools.exceptions import UserInputError
 from vantage6.algorithm.tools.util import error, get_action, info, warn
-import sys
 
 
 def _get_user_dataframes() -> list[str]:

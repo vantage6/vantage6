@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 from importlib import resources as impresources
 from pathlib import Path
@@ -21,7 +22,6 @@ from vantage6.cli.sandbox.populate.helpers.utils import (
     replace_wsl_path,
     str_replace_wsl_path,
 )
-import sys
 
 
 @dataclass

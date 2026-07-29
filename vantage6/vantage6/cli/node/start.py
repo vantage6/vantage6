@@ -1,3 +1,5 @@
+import sys
+
 import click
 from kubernetes import client as k8s_client
 
@@ -21,7 +23,6 @@ from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
-import sys
 
 
 @click.command()

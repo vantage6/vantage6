@@ -2,6 +2,7 @@ import json
 import secrets
 import string
 import subprocess
+import sys
 from pathlib import Path
 
 import questionary as q
@@ -17,7 +18,6 @@ from vantage6.common.globals import (
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
-import sys
 
 
 def create_directory_if_not_exists(directory: Path) -> None:

@@ -1,3 +1,5 @@
+import sys
+
 import click
 from kubernetes.config.config_exception import ConfigException
 from kubernetes.stream import stream
@@ -13,7 +15,6 @@ from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
-import sys
 
 
 @click.command()

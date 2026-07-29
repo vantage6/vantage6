@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 
@@ -12,7 +13,6 @@ from vantage6.common import error, info
 from vantage6.cli.common.k8s_utils import run_kubectl_command
 from vantage6.cli.globals import TEMPLATE_FOLDER
 from vantage6.cli.k8s_config import KubernetesConfig
-import sys
 
 _DEFAULT_ENVOY_GATEWAY_NAMESPACE = "envoy-gateway-system"
 _DEFAULT_ENVOY_GATEWAY_RELEASE = "eg"

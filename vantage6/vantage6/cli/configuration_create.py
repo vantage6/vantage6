@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlparse
@@ -20,7 +21,6 @@ from vantage6.cli.configuration_manager import (
 )
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import merge_nested_dicts
-import sys
 
 
 def add_common_backend_config(

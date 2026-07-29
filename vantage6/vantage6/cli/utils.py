@@ -7,12 +7,12 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import questionary as q
 
 from vantage6.common import error, info, warning
-import sys
 
 MAX_LEN_NAME = 16
 

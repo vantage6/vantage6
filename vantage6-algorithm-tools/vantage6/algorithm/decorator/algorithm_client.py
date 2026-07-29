@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Optional
@@ -8,7 +9,6 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.client import AlgorithmClient
-import sys
 
 if TYPE_CHECKING:
     from vantage6.algorithm.mock.client import MockAlgorithmClient

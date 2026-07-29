@@ -1,10 +1,10 @@
 import subprocess
+import sys
 import time
 
 from vantage6.common import error, info, warning
 
 from vantage6.cli.k8s_config import KubernetesConfig
-import sys
 
 
 def run_kubectl_command(

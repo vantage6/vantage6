@@ -8,6 +8,8 @@ vantage6 applications with naming conventions, standard file locations, and
 more.
 """
 
+import sys
+
 from colorama import Fore, Style
 
 from vantage6.common import error
@@ -19,7 +21,6 @@ from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
-import sys
 
 
 def select_context_class(

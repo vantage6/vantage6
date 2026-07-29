@@ -2,6 +2,7 @@
 Script to populate the hub with basic fixtures.
 """
 
+import sys
 import time
 import traceback
 from logging import info
@@ -18,7 +19,6 @@ from vantage6.cli.sandbox.populate.helpers.connect_store import connect_store
 from vantage6.cli.sandbox.populate.helpers.delete_fixtures import delete_fixtures
 from vantage6.cli.sandbox.populate.helpers.load_fixtures import create_fixtures
 from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
-import sys
 
 
 def populate_hub_dev(

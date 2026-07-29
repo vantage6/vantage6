@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import click
@@ -20,7 +21,6 @@ from vantage6.common.globals import (
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.utils import prompt_config_name
-import sys
 
 
 @click.command()

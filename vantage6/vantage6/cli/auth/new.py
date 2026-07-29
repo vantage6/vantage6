@@ -1,3 +1,4 @@
+import sys
 import uuid
 from typing import Any
 from urllib.parse import urlparse
@@ -18,7 +19,6 @@ from vantage6.cli.utils_kubernetes import (
     get_core_api_with_ssl_handling,
     replace_localhost_for_k8s,
 )
-import sys
 
 
 def auth_configuration_questionaire(

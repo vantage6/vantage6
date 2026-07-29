@@ -7,6 +7,7 @@ Some commands, such as ``vnode-local start``, are used within the Docker
 container when ``v6 node start`` is used.
 """
 
+import sys
 from pathlib import Path
 
 import click
@@ -22,7 +23,6 @@ from vantage6.cli.context import NodeContext
 import vantage6.node.globals as constants
 from vantage6 import node
 from vantage6.node import __version__
-import sys
 
 
 @click.group(name="vnode-local")

@@ -1,3 +1,5 @@
+import sys
+
 import click
 import questionary as q
 
@@ -11,7 +13,6 @@ from vantage6.cli.configuration_create import (
 )
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
-import sys
 
 
 @click.command()

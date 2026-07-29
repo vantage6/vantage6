@@ -1,3 +1,4 @@
+import sys
 import time
 from pathlib import Path
 
@@ -18,7 +19,6 @@ from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_hub_sandbox
-import sys
 
 
 @click.command()

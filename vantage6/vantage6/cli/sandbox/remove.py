@@ -1,4 +1,5 @@
 import itertools
+import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -13,7 +14,6 @@ from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.hub.remove import cli_hub_remove
-import sys
 
 
 @click.command()

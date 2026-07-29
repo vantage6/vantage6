@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import click
@@ -18,7 +19,6 @@ from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.node.common import create_client_and_authenticate
-import sys
 
 
 @click.command()

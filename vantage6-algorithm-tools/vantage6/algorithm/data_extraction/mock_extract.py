@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 
 import pandas as pd
@@ -12,7 +13,6 @@ from vantage6.algorithm.data_extraction import (
     _read_sparql_database,
     _read_sql_database,
 )
-import sys
 
 
 class MockDatabaseType(StrEnumBase):

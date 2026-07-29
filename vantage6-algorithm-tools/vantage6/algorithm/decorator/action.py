@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -17,7 +18,6 @@ from vantage6.algorithm.tools.exceptions import (
 from vantage6.algorithm.tools.util import get_action, get_env_var
 
 from vantage6.algorithm.decorator.data import dataframe
-import sys
 
 
 def _exit_if_action_mismatch(function_action: AlgorithmStepType):
