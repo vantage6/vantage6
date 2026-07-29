@@ -156,13 +156,14 @@ store:
     # - https://raw.githubusercontent.com/my-org/my-algorithm/main/algorithm_store.json
 
     # Preset: load algorithms from the vantage6 community algorithms repository
-    # (submodules listed in vantage6/vantage6-community-algorithms).
+    # (submodules listed in https://github.com/vantage6/vantage6-community-algorithms).
     community: false
 
-    # Preset: load algorithms from vantage6/v6-session-basics.
+    # Preset: load algorithms from https://github.com/vantage6/v6-session-basics.
     basics: false
 
-    # Preset: load algorithms from vantage6/v6-average-py (demo average algorithm).
+    # Preset: load algorithms from https://github.com/vantage6/v6-average-py (demo
+    # average algorithm).
     demo: false
 
   logging:
