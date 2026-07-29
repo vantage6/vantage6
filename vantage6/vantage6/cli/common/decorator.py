@@ -10,6 +10,7 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import extract_name_and_is_sandbox
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context import get_context, select_context_class
+import sys
 
 
 def click_insert_context(
@@ -116,7 +117,7 @@ def click_insert_context(
                         )
                     except Exception:
                         error("No configurations could be found!")
-                        exit(1)
+                        sys.exit(1)
 
                 ctx = get_context(type_, name, system_folders, runtime_is_sandbox)
             extra_args = []

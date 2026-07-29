@@ -12,9 +12,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        description: str = None,
-        user: int = None,
+        name: str | None = None,
+        description: str | None = None,
+        user: int | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[dict]:
@@ -102,9 +102,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
     def edit(
         self,
         role_id: int,
-        name: str = None,
-        description: str = None,
-        rules: builtins.list[int] = None,
+        name: str | None = None,
+        description: str | None = None,
+        rules: builtins.list[int] | None = None,
     ) -> dict[str, Any]:
         """
         Edit an existing role

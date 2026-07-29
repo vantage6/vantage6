@@ -8,6 +8,7 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import error
 
 from vantage6.algorithm.client import AlgorithmClient
+import sys
 
 if TYPE_CHECKING:
     from vantage6.algorithm.mock.client import MockAlgorithmClient
@@ -69,7 +70,7 @@ def _algorithm_client() -> Callable:
                     "Token not found. Is the method you called started as a "
                     "compute container? Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
 
             # read HQ address from the environment
             host = os.environ[ContainerEnvNames.HOST.value]

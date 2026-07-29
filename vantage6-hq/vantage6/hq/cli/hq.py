@@ -13,6 +13,7 @@ from vantage6.cli.globals import DEFAULT_API_SERVICE_SYSTEM_FOLDERS as S_FOL
 
 from vantage6.hq import __version__
 from vantage6.hq.model.base import Database
+import sys
 
 help_ = {
     "name": "name of the configutation you want to use.",
@@ -61,7 +62,7 @@ def click_insert_context(func: Callable) -> Callable:
                     )
                 except Exception:
                     error("No configurations could be found!")
-                    exit()
+                    sys.exit()
 
             # raise error if config could not be found
             if not HQContext.config_exists(name, system_folders):
@@ -70,7 +71,7 @@ def click_insert_context(func: Callable) -> Callable:
                     f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
                     f" exist in the {Fore.RED}{scope}{Style.RESET_ALL} folder!"
                 )
-                exit(1)
+                sys.exit(1)
 
             # create HQ context, and initialize db
             ctx = HQContext(name, system_folders=system_folders, in_container=True)

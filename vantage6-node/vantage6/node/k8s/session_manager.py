@@ -18,7 +18,7 @@ class SessionFileManager:
     Class to manage session state on the node.
     """
 
-    def __init__(self, session_id: str, task_dir_extension: str = None):
+    def __init__(self, session_id: str, task_dir_extension: str | None = None):
         """
         Parameters
         ----------

@@ -21,6 +21,7 @@ from vantage6.cli.globals import ChartName, InfraComponentName
 from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.node.common import create_client
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
+import sys
 
 
 @click.command()
@@ -125,7 +126,7 @@ def create_task_namespace_if_not_exists(ctx: NodeContext) -> None:
     task_namespace = ctx.config.get("node", {}).get("taskNamespace")
     if not task_namespace:
         warning("Could not find node's task namespace in the config file.")
-        exit(1)
+        sys.exit(1)
 
     # TODO the namespace creation could use some refactoring, e.g. with v6 use namespace
     core_api = get_core_api_with_ssl_handling()
@@ -135,7 +136,7 @@ def create_task_namespace_if_not_exists(ctx: NodeContext) -> None:
         error(
             "Failed to list namespaces. Check if the cluster is running and reachable."
         )
-        exit(1)
+        sys.exit(1)
     namespace_names = [ns.metadata.name for ns in namespace_list.items]
     if task_namespace not in namespace_names:
         namespace_body = k8s_client.V1Namespace(

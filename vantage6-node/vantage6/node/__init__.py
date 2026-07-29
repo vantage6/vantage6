@@ -119,7 +119,7 @@ class Node:
         namespace_created = self.k8s_container_manager.ensure_task_namespace()
         if not namespace_created:
             self.log.error("Could not create the task namespace. Exiting.")
-            exit(1)
+            sys.exit(1)
 
         self.log.info("Connecting to HQ: %s", self.client.hq_url)
 
@@ -276,7 +276,7 @@ class Node:
                 "proxy-server is not set"
             )
             self.log.info("Shutting down the node...")
-            exit(1)
+            sys.exit(1)
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -323,7 +323,7 @@ class Node:
             )
             self.log.info("%s: %s", type(e), e)
             self.log.info("Shutting down the node...")
-            exit(1)
+            sys.exit(1)
 
     def sync_task_queue_with_HQ(self) -> None:
         """Get all unprocessed tasks from HQ for this node."""
@@ -616,7 +616,7 @@ class Node:
             self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
             self.log.critical("Unable to authenticate. Exiting")
-            exit(1)
+            sys.exit(1)
 
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_renew_token()
@@ -692,7 +692,7 @@ class Node:
                     "Could not connect to the websocket channels, do you have a "
                     "slow connection?"
                 )
-                exit(1)
+                sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)
             i += 1

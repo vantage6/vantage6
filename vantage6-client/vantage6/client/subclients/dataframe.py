@@ -33,7 +33,7 @@ class DataFrameSubClient(ClientBase.SubClient):
         return df
 
     @post_filtering()
-    def list(self, session: int = None, display=False) -> dict:
+    def list(self, session: int | None = None, display=False) -> dict:
         """
         List all dataframes.
 

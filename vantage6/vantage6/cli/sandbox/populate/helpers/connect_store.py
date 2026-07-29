@@ -11,6 +11,7 @@ from vantage6.common import error, info
 from vantage6.common.globals import Ports
 
 from vantage6.client import Client
+import sys
 
 
 def _wait_for_store_to_be_online(
@@ -53,7 +54,7 @@ def _wait_for_store_to_be_online(
 
     if not ready:
         error("Store did not become ready in time. Exiting...")
-        exit(1)
+        sys.exit(1)
     else:
         info("Store is online!")
 

@@ -2,7 +2,7 @@ import datetime as dt
 
 
 def parse_datetime(
-    date: str | dt.datetime = None, default: dt.datetime = None
+    date: str | dt.datetime | None = None, default: dt.datetime | None = None
 ) -> dt.datetime:
     """
     Utility function to parse a datetime string.

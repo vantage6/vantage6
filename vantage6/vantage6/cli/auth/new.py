@@ -18,6 +18,7 @@ from vantage6.cli.utils_kubernetes import (
     get_core_api_with_ssl_handling,
     replace_localhost_for_k8s,
 )
+import sys
 
 
 def auth_configuration_questionaire(
@@ -289,7 +290,7 @@ def parse_database_uri_to_config(
                     f"No {required_field[0]} could be found in the database URI. "
                     f"Please provide a {required_field[0]}."
                 )
-                exit(1)
+                sys.exit(1)
         if not port:
             warning(
                 "No port could be found in the database URI. Using default port 5432."
@@ -309,7 +310,7 @@ def parse_database_uri_to_config(
         error(
             "Please use format: postgresql://username:password@hostname:port/database"
         )
-        exit(1)
+        sys.exit(1)
 
 
 def _add_keycloak_admin_secret(
@@ -370,7 +371,7 @@ def _add_keycloak_admin_secret(
         )
     except Exception as exc:
         error(f"Failed to create Keycloak admin secret: {exc}")
-        exit(1)
+        sys.exit(1)
 
     credentials[AuthCredentials.KEYCLOAK_ADMIN_USER] = admin_user
     credentials[AuthCredentials.KEYCLOAK_ADMIN_PASSWORD] = admin_password

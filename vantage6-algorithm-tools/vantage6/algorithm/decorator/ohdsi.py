@@ -9,6 +9,7 @@ from vantage6.common.globals import ContainerEnvNames
 from vantage6.algorithm.tools.util import error, info
 
 from vantage6.algorithm.decorator.action import data_extraction
+import sys
 
 OHDSI_AVAILABLE = True
 try:
@@ -126,13 +127,13 @@ def _create_omop_database_connection(connection_details: dict) -> Callable:
     if not OHDSI_AVAILABLE:
         error("OHDSI/DatabaseConnector is not available.")
         error("Did you use 'algorithm-ohdsi-base' image to build this algorithm?")
-        exit(1)
+        sys.exit(1)
 
     expected_keys = ["dbms", "uri", "user", "password"]
     if not set(expected_keys).issubset(connection_details):
         missing_keys = set(expected_keys) - set(connection_details)
         error(f"Missing connection details: {missing_keys}. Exiting...")
-        exit(1)
+        sys.exit(1)
 
     info("Creating OHDSI database connection")
     dbms = connection_details["dbms"]
@@ -176,7 +177,7 @@ def _get_ohdsi_metadata(connection_details: dict) -> OHDSIMetaData:
         missing_env_vars = expected_env_vars - connection_details
         error(f"Missing connection details: {missing_env_vars}")
         error("Exiting...")
-        exit(1)
+        sys.exit(1)
 
     tmp = Path(os.environ[ContainerEnvNames.SESSION_FOLDER.value])
     metadata = OHDSIMetaData(

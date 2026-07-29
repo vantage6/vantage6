@@ -11,6 +11,7 @@ from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.k8s_config import select_k8s_config
+import sys
 
 
 def get_and_select_ctx(
@@ -57,7 +58,7 @@ def get_and_select_ctx(
 
     if not running_services:
         error(f"No running {instance_type.value}s found.")
-        exit(1)
+        sys.exit(1)
 
     if not name:
         helm_name = select_running_service(running_services, instance_type)
@@ -76,5 +77,5 @@ def get_and_select_ctx(
 
     if helm_name not in running_services:
         error(f"The {instance_type.value} {service_name} is not running.")
-        exit(1)
+        sys.exit(1)
     return ctx

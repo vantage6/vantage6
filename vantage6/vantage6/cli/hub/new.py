@@ -28,6 +28,7 @@ from vantage6.cli.k8s_config import (
     select_k8s_config,
 )
 from vantage6.cli.utils import prompt_config_name
+import sys
 
 
 @click.command()
@@ -66,7 +67,7 @@ def cli_hub_new(
 
     if HubContext.config_exists(name, system_folders):
         error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
-        exit(1)
+        sys.exit(1)
 
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
 

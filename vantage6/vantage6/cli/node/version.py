@@ -13,6 +13,7 @@ from vantage6.cli.common.version import get_and_select_ctx
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.utils_kubernetes import get_core_api_with_ssl_handling
+import sys
 
 
 @click.command()
@@ -100,7 +101,7 @@ def _get_pod_name_for_helm_release(
             f"No pods found for Helm release '{helm_release}' in ns "
             f"'{k8s_config.namespace}'"
         )
-        exit(1)
+        sys.exit(1)
     # Prefer a Ready pod
     for p in pods:
         for cond in p.status.conditions or []:

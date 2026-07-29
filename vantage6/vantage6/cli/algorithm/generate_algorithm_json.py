@@ -218,7 +218,7 @@ class Function:
             error(f"Function {self.name} has no annotation for argument {name}")
             info(f"Please add a type annotation to the argument {name}")
             info(f"For example, for string arguments: 'def {self.name}({name}: str)'")
-            exit(1)
+            sys.exit(1)
 
         if param.annotation is AlgorithmClient:
             # Algorithm client arguments do not have to be provided by the user

@@ -11,8 +11,8 @@ class StoreUserSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        username: str = None,
-        role: int = None,
+        username: str | None = None,
+        role: int | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[dict]:

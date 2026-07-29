@@ -13,6 +13,7 @@ from vantage6.cli.k8s_config import select_k8s_config
 from vantage6.cli.sandbox.config.hub import SandboxHubConfigManager
 from vantage6.cli.sandbox.start import execute_sandbox_start
 from vantage6.cli.utils import prompt_config_name
+import sys
 
 
 @click.command()
@@ -142,12 +143,12 @@ def cli_new_sandbox(
         data_dir = Path(data_dir)
         if not data_dir.exists():
             error(f"Data directory {data_dir} does not exist!")
-            exit(1)
+            sys.exit(1)
 
     hub_name = prompt_config_name(name)
     if HubContext.config_exists(hub_name, False, is_sandbox=True):
         error(f"Configuration {Fore.RED}{hub_name}{Style.RESET_ALL} already exists!")
-        exit(1)
+        sys.exit(1)
 
     # If using external databases, prompt for database URIs
     external_db_uris = None

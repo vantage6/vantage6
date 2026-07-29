@@ -45,7 +45,7 @@ class BaseHATEOASModelSchema(SQLAlchemyAutoSchema):
     api = None
 
     def create_hateoas(
-        self, name: str, obj: DeclarativeMeta, endpoint: str = None
+        self, name: str, obj: DeclarativeMeta, endpoint: str | None = None
     ) -> dict | None:
         """
         Create a HATEOAS link to a related object.

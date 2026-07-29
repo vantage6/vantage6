@@ -1587,7 +1587,7 @@ class ContainerManager:
         self._kill_algorithm_runs()
 
     def kill_algorithm_runs(
-        self, kill_list: list[ToBeKilled] = None
+        self, kill_list: list[ToBeKilled] | None = None
     ) -> list[KilledRun]:
         """
         Kill algorithm runs currently running on this node.
@@ -1623,7 +1623,7 @@ class ContainerManager:
 
     def _kill_algorithm_runs(
         self,
-        kill_list: list[ToBeKilled] = None,
+        kill_list: list[ToBeKilled] | None = None,
         initiator: KillInitiator = KillInitiator.USER,
     ) -> list[KilledRun]:
         """

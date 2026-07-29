@@ -21,6 +21,7 @@ from vantage6.cli.sandbox.populate.helpers.utils import (
     replace_wsl_path,
     str_replace_wsl_path,
 )
+import sys
 
 
 @dataclass
@@ -122,7 +123,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 f"Duplicate dataset labels found: {duplicates}. "
                 f"Please make sure all dataset labels are unique."
             )
-            exit(1)
+            sys.exit(1)
 
         # create the data files for the nodes and get the path and label for each
         # dataset

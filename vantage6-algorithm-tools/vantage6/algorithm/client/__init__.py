@@ -136,7 +136,7 @@ class AlgorithmClient(ClientBase):
 
         return self.result.from_task(task_id)
 
-    def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
+    def _multi_page_request(self, endpoint: str, params: dict | None = None) -> dict:
         """
         Make multiple requests to HQ to get all pages of a list of results.
 
@@ -328,9 +328,9 @@ class AlgorithmClient(ClientBase):
             self,
             method: str,
             arguments: dict | None = None,
-            organizations: list[int] = None,
+            organizations: list[int] | None = None,
             name: str = "subtask",
-            description: str = None,
+            description: str | None = None,
         ) -> dict:
             """
             Create a new (child) task at HQ.

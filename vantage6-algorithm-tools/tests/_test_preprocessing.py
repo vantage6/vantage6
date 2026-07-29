@@ -16,7 +16,7 @@ from vantage6.algorithm.preprocessing.filtering import select_rows
 
 
 def random_date(
-    start: datetime, end: datetime, fmt: str = "%Y-%m-%d", seed: int = None
+    start: datetime, end: datetime, fmt: str = "%Y-%m-%d", seed: int | None = None
 ) -> str:
     """
     Generate a random date between start and end.

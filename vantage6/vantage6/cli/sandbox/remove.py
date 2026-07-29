@@ -13,6 +13,7 @@ from vantage6.cli.context import get_context
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.hub.remove import cli_hub_remove
+import sys
 
 
 @click.command()
@@ -45,7 +46,7 @@ def cli_sandbox_remove(
             )
         except Exception:
             error("No configurations could be found!")
-            exit()
+            sys.exit()
 
     ctx = get_context(InstanceType.HUB, name, system_folders=False, is_sandbox=True)
 

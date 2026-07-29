@@ -20,6 +20,7 @@ from vantage6.cli.configuration_manager import (
 )
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import merge_nested_dicts
+import sys
 
 
 def add_common_backend_config(
@@ -130,7 +131,7 @@ def get_external_database_url(instance_type: InstanceType) -> dict:
     parsed = urlparse(database_uri)
     if parsed.scheme not in ["postgresql", "postgres"]:
         error(f"Unsupported database scheme: {parsed.scheme}. Use postgresql://")
-        exit(1)
+        sys.exit(1)
 
     return database_uri
 
@@ -260,4 +261,4 @@ def select_configuration_questionnaire(
         ).unsafe_ask()
     except KeyboardInterrupt:
         error("Aborted by user!")
-        exit(1)
+        sys.exit(1)

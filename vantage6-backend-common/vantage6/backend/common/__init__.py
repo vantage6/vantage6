@@ -40,6 +40,7 @@ from vantage6.backend.common.globals import (
 from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.mail_service import MailService
 from vantage6.backend.common.resource.output_schema import BaseHATEOASModelSchema
+import sys
 
 __version__ = importlib.metadata.version(__package__)
 
@@ -186,7 +187,7 @@ class Vantage6App:
             log.error(f"Failed to get keycloak public key: {e}")
             log.error("This means that you cannot login as a user")
             log.error("Exiting...")
-            exit(1)
+            sys.exit(1)
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
@@ -294,7 +295,7 @@ class Vantage6App:
         def output_json(
             data: base_db_model | list[base_db_model],
             code: HTTPStatus,
-            headers: dict = None,
+            headers: dict | None = None,
         ) -> Response:
             """
             Return jsonified data for request responses.

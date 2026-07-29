@@ -196,13 +196,13 @@ class ClientBase(BlobStorageMixin):
     def request(
         self,
         endpoint: str,
-        json: dict = None,
+        json: dict | None = None,
         method: str = "get",
-        params: dict = None,
-        headers: dict = None,
+        params: dict | None = None,
+        headers: dict | None = None,
         first_try: bool = True,
         retry: bool = True,
-        attempts_on_timeout: int = None,
+        attempts_on_timeout: int | None = None,
         is_for_algorithm_store: bool = False,
         silent_on_connection_error: bool = False,
     ) -> dict:

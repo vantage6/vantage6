@@ -38,13 +38,13 @@ class SessionSubClient(ClientBase.SubClient):
     @post_filtering()
     def list(
         self,
-        name: str = None,
-        user: int = None,
-        collaboration: int = None,
-        scope: str = None,
+        name: str | None = None,
+        user: int | None = None,
+        collaboration: int | None = None,
+        scope: str | None = None,
         page: int = 1,
         per_page: int = 20,
-        sort: str = None,
+        sort: str | None = None,
         display: bool = False,
     ):
         """
@@ -99,7 +99,7 @@ class SessionSubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def update(
-        self, id_: int, name: str = None, scope: str = None, display: bool = False
+        self, id_: int, name: str | None = None, scope: str | None = None, display: bool = False
     ):
         """
         Modify a session
@@ -139,9 +139,9 @@ class SessionSubClient(ClientBase.SubClient):
     def create(
         self,
         scope: str,
-        name: str = None,
-        collaboration: int = None,
-        study: int = None,
+        name: str | None = None,
+        collaboration: int | None = None,
+        study: int | None = None,
         display: bool = False,
     ):
         """
@@ -237,13 +237,13 @@ class SessionSubClient(ClientBase.SubClient):
 
     def tree(
         self,
-        name: str = None,
-        user: int = None,
-        collaboration: int = None,
-        scope: str = None,
+        name: str | None = None,
+        user: int | None = None,
+        collaboration: int | None = None,
+        scope: str | None = None,
         page: int = 1,
         per_page: int = 20,
-        sort: str = None,
+        sort: str | None = None,
     ):
         """
         Display a tree of sessions and their dataframes.

@@ -41,7 +41,7 @@ class AppContext(metaclass=Singleton):
         instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
-        config_file: Path | str = None,
+        config_file: Path | str | None = None,
         print_log_header: bool = True,
         logger_prefix: str = "",
         in_container: bool = False,
@@ -663,7 +663,7 @@ class AppContext(metaclass=Singleton):
                 f"Can't write to log dir (permissions error): "
                 f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
-            exit(1)
+            sys.exit(1)
 
         rfh.setLevel(level)
         rfh.setFormatter(logging.Formatter(format_, datefmt))

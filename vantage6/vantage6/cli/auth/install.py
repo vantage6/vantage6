@@ -42,7 +42,7 @@ def _get_latest_keycloak_version() -> str:
         if not version:
             error("No version found in the Keycloak Github releases.")
             info("Please specify a version manually using the --operator-version flag.")
-            exit(1)
+            sys.exit(1)
         # Remove 'v' prefix if present (e.g., "v24.0.0" -> "24.0.0")
         version = version.removeprefix("v")
         return version
@@ -58,11 +58,11 @@ def _get_latest_keycloak_version() -> str:
                 f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. "
             )
         info("Please specify a version manually using the --operator-version flag.")
-        exit(1)
+        sys.exit(1)
     except (requests.RequestException, KeyError, ValueError) as e:
         error(f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. ")
         info("Please specify a version manually using the --operator-version flag.")
-        exit(1)
+        sys.exit(1)
 
 
 @click.command()

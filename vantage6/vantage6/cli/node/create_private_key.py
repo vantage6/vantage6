@@ -18,6 +18,7 @@ from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.node.common import create_client_and_authenticate
+import sys
 
 
 @click.command()
@@ -101,7 +102,7 @@ def cli_node_create_private_key(
             )
         except Exception:
             error("No configurations could be found!")
-            exit(1)
+            sys.exit(1)
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
     # Authenticate with the hq to obtain organization name if it wasn't
@@ -141,7 +142,7 @@ def cli_node_create_private_key(
             error(f"Could not create new private key '{file_}'!?")
             debug(e)
             info("Bailing out ...")
-            exit(1)
+            sys.exit(1)
 
         warning(f"Private key written to '{file_}'")
         warning(
@@ -182,7 +183,7 @@ def cli_node_create_private_key(
         except Exception as e:
             error("Could not upload the public key!")
             debug(e)
-            exit(1)
+            sys.exit(1)
     else:
         warning("Public key not uploaded!")
 

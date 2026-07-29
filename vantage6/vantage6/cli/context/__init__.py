@@ -19,6 +19,7 @@ from vantage6.cli.context.auth import AuthContext
 from vantage6.cli.context.hq import HQContext
 from vantage6.cli.context.hub import HubContext
 from vantage6.cli.context.node import NodeContext
+import sys
 
 
 def select_context_class(
@@ -87,7 +88,7 @@ def get_context(
             f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
             f"exist in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
         )
-        exit(1)
+        sys.exit(1)
 
     # We do not want to log this here, we do this in the container and not on
     # the host. We only want CLI logging here.

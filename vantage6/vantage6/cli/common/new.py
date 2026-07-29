@@ -9,6 +9,7 @@ from vantage6.cli.common.utils import get_main_cli_command_name
 from vantage6.cli.configuration_create import make_configuration
 from vantage6.cli.context import select_context_class
 from vantage6.cli.utils import check_config_name_allowed, prompt_config_name
+import sys
 
 
 def new(
@@ -62,11 +63,11 @@ def new(
     try:
         if ctx_class.config_exists(name, system_folders, is_sandbox):
             error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
-            exit(1)
+            sys.exit(1)
     except Exception as e:
         error(e)
 
-        exit(1)
+        sys.exit(1)
 
     command_name = get_main_cli_command_name(type_)
 
@@ -77,7 +78,7 @@ def new(
             f"Create a new {command_name} using '{Fore.GREEN}v6 {command_name} new "
             f"--user{Style.RESET_ALL}' instead!"
         )
-        exit(1)
+        sys.exit(1)
 
     # create config in ctx location
     try:
@@ -94,7 +95,7 @@ def new(
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
-        exit(1)
+        sys.exit(1)
     if save_config_file:
         info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
         flag = "" if system_folders else "--user"

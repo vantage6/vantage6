@@ -17,6 +17,7 @@ from vantage6.common.globals import (
 from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig
 from vantage6.cli.utils import validate_input_cmd_args
+import sys
 
 
 def create_directory_if_not_exists(directory: Path) -> None:
@@ -27,7 +28,7 @@ def create_directory_if_not_exists(directory: Path) -> None:
         directory.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         error(f"Failed to create directory {directory}: {e}")
-        exit(1)
+        sys.exit(1)
 
 
 def find_running_service_names(
@@ -67,7 +68,7 @@ def find_running_service_names(
     validate_input_cmd_args(instance_type, "instance type", allow_none=False)
     if only_system_folders and only_user_folders:
         error("Cannot use both only_system_folders and only_user_folders")
-        exit(1)
+        sys.exit(1)
 
     # Create the command
     command = [
@@ -164,7 +165,7 @@ def select_running_service(
         ).unsafe_ask()
     except KeyboardInterrupt:
         error("Aborted by user!")
-        exit(1)
+        sys.exit(1)
     return name
 
 

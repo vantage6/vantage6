@@ -14,6 +14,7 @@ from vantage6.client.utils import LogLevel
 from vantage6.cli import __version__
 from vantage6.cli.common.decorator import click_insert_context
 from vantage6.cli.context.hq import HQContext
+import sys
 
 
 @click.command()
@@ -233,4 +234,4 @@ def _check_import_file(import_data: dict) -> dict:
     except ValidationError as err:
         # Handle validation errors gracefully
         error(f"Validation error: {err.messages}")
-        exit(1)
+        sys.exit(1)

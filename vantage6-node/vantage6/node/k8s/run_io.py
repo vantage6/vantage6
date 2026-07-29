@@ -28,8 +28,8 @@ class RunIO:
         session_id: int,
         action: AlgorithmStepType,
         client: NodeClient,
-        dataframe_details: dict = None,
-        task_dir_extension: str = None,
+        dataframe_details: dict | None = None,
+        task_dir_extension: str | None = None,
     ):
         """
         Responsible for the IO files between the node and the algorithm.
@@ -73,7 +73,7 @@ class RunIO:
             self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
 
     @classmethod
-    def from_dict(cls, data: dict, client: NodeClient, task_dir_extension: str = None):
+    def from_dict(cls, data: dict, client: NodeClient, task_dir_extension: str | None = None):
         # TODO validate that the keys are present
         return cls(
             run_id=int(data["run_id"]),

@@ -166,7 +166,7 @@ class NodeClient(ClientBase):
         """Subclient for the run endpoint."""
 
         def list(
-            self, state: str, include_task: bool, task_id: int = None
+            self, state: str, include_task: bool, task_id: int | None = None
         ) -> dict | list:
             """
             Obtain algorithm runs.
@@ -221,7 +221,7 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
+        def patch(self, id_: int, data: dict, init_org_id: int | None = None) -> dict | None:
             """
             Update the algorithm run data at HQ.
 

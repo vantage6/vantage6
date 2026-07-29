@@ -12,6 +12,7 @@ from vantage6.algorithm.data_extraction import (
     _read_sparql_database,
     _read_sql_database,
 )
+import sys
 
 
 class MockDatabaseType(StrEnumBase):
@@ -70,7 +71,7 @@ def load_mock_data(
             " Please check the node configuration."
         )
         info(f"Available mock database types: {', '.join(MockDatabaseType.list())}")
-        exit(1)
+        sys.exit(1)
 
     connection_details = {
         "uri": database_uri,
@@ -84,7 +85,7 @@ def load_mock_data(
     ):
         if not query:
             error(f"Query is required for {database_type} databases.")
-            exit(1)
+            sys.exit(1)
         return loader(connection_details, query)
     else:
         return loader(connection_details)

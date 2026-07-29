@@ -185,4 +185,4 @@ def cli_hub_install(
             "Failed to install the Keycloak operator while running 'v6 hub install'. "
             "Please inspect the logs above and try again."
         )
-        exit(1)
+        sys.exit(1)

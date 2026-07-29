@@ -18,6 +18,7 @@ from vantage6.cli.sandbox.populate.helpers.connect_store import connect_store
 from vantage6.cli.sandbox.populate.helpers.delete_fixtures import delete_fixtures
 from vantage6.cli.sandbox.populate.helpers.load_fixtures import create_fixtures
 from vantage6.cli.sandbox.populate.helpers.utils import NodeConfigCreationDetails
+import sys
 
 
 def populate_hub_dev(
@@ -122,7 +123,7 @@ def populate_hub_sandbox(
         error("Failed to populate hub")
         error(traceback.format_exc())
         error("=" * 80)
-        exit(1)
+        sys.exit(1)
 
     # return the details of the created nodes so that config files can be created
     return report_creation["nodes"]["created"]

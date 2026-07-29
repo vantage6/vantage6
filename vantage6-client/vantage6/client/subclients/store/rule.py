@@ -10,10 +10,10 @@ class StoreRuleSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        operation: str = None,
-        role: int = None,
-        user_id: int = None,
+        name: str | None = None,
+        operation: str | None = None,
+        role: int | None = None,
+        user_id: int | None = None,
         current_user: bool = False,
         page: int = 1,
         per_page: int = 10,

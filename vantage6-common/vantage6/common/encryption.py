@@ -139,7 +139,7 @@ class CryptorBase(metaclass=Singleton):
     def encrypt_stream(
         self,
         stream: IO[bytes],
-        pubkey_base64s: str = None,
+        pubkey_base64s: str | None = None,
         chunk_size=DEFAULT_CHUNK_SIZE,
     ):
         """

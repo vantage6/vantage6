@@ -329,7 +329,7 @@ with_node = only_for(("node",))
 with_container = only_for(("container",))
 
 
-def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int = None) -> list[int]:
+def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int | None = None) -> list[int]:
     """
     Get all organization ids from the collaborations the user or node is in.
 

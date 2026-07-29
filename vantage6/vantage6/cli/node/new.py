@@ -20,6 +20,7 @@ from vantage6.common.globals import (
 from vantage6.cli.common.new import new
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
 from vantage6.cli.utils import prompt_config_name
+import sys
 
 
 @click.command()
@@ -209,7 +210,7 @@ def node_configuration_questionaire(
             "If you continue, you should provide your collaboration settings manually."
         )
         if q.confirm("Do you want to abort?", default=True).unsafe_ask():
-            exit(0)
+            sys.exit(0)
 
     if client.whoami is not None:
         encryption = client.is_encrypted_collaboration()

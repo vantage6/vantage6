@@ -29,8 +29,8 @@ def filter_dicts_from_results(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper_filter(
         *args,
-        filter_: tuple[Any, Any] = None,
-        filters: list[tuple[Any, Any]] = None,
+        filter_: tuple[Any, Any] | None = None,
+        filters: list[tuple[Any, Any]] | None = None,
         **kwargs,
     ) -> list[dict]:
         """
@@ -77,7 +77,7 @@ def filter_keys_from_result(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def wrapper_filter(
-        *args, field: Any = None, fields: list[Any] = None, **kwargs
+        *args, field: Any = None, fields: list[Any] | None = None, **kwargs
     ) -> dict:
         """
         Apply filters to the results of the function. If no filters are given,
@@ -124,7 +124,7 @@ def filter_keys_from_results(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def wrapper_filter(
-        *args, field: Any = None, fields: list[Any] = None, **kwargs
+        *args, field: Any = None, fields: list[Any] | None = None, **kwargs
     ) -> list[dict]:
         """
         Apply filters to the results of the function. If no filters are given,

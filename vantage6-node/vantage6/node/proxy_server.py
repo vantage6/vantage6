@@ -81,9 +81,9 @@ def make_proxied_request(endpoint: str) -> Response:
 def make_request(
     method: str,
     endpoint: str,
-    json: dict = None,
-    params: dict = None,
-    headers: dict = None,
+    json: dict | None = None,
+    params: dict | None = None,
+    headers: dict | None = None,
 ) -> Response:
     """
     Make request to HQ

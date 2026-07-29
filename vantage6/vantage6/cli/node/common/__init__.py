@@ -19,6 +19,7 @@ from vantage6.client.utils import LogLevel
 
 from vantage6.cli.configuration_create import select_configuration_questionnaire
 from vantage6.cli.context.node import NodeContext
+import sys
 
 
 def _convert_k8s_url_to_localhost(url: str) -> str:
@@ -104,7 +105,7 @@ def create_client_and_authenticate(
     except Exception as exc:
         error("Could not authenticate!")
         debug(str(exc))
-        exit(1)
+        sys.exit(1)
 
     return client
 
@@ -133,12 +134,12 @@ def select_node(name: str, system_folders: bool) -> str:
         )
     except Exception:
         error("No configurations could be found!")
-        exit()
+        sys.exit()
 
     # raise error if config could not be found
     if not NodeContext.config_exists(name, system_folders):
         error(
             f"The configuration {Fore.RED}{name}{Style.RESET_ALL} could not be found."
         )
-        exit(1)
+        sys.exit(1)
     return name

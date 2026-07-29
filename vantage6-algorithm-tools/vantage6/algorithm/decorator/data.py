@@ -14,6 +14,7 @@ from vantage6.common.globals import (
 
 from vantage6.algorithm.tools.exceptions import UserInputError
 from vantage6.algorithm.tools.util import error, get_action, info, warn
+import sys
 
 
 def _get_user_dataframes() -> list[str]:
@@ -90,7 +91,7 @@ def _validate_user_provided_dataframes(
             f"but only {len(dataframes_grouped)} were provided. "
             "Exiting..."
         )
-        exit(1)
+        sys.exit(1)
     elif len(dataframes_grouped) > number_of_expected_arguments:
         warn(
             f"Algorithm requires only {number_of_expected_arguments} databases"
@@ -143,7 +144,7 @@ def _read_dataframes_from_disk(
                     "for preprocessing functions. Use @preprocessing instead. "
                     "Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
             requested_dataframes = dataframes_grouped[idx_dataframes]
             data_ = {
                 df_name: _read_df_from_disk(df_name) for df_name in requested_dataframes
@@ -243,13 +244,13 @@ def dataframe(*sources: str | int) -> Callable:
                     "The @dataframe decorator cannot be used for data extraction "
                     "functions. Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
 
             if getattr(func, "vantage6_dataframe_decorated", False):
                 error(
                     "The @dataframe decorator cannot be used multiple times. Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
 
             # read the data from the database(s)
             dataframes = _read_dataframes_from_disk(dataframes_grouped, sources, action)

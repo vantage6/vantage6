@@ -10,6 +10,7 @@ from vantage6.algorithm.tools.exceptions import (
 from vantage6.algorithm.tools.util import error, warn
 
 from vantage6.algorithm.mock.globals import MockDatabase
+import sys
 
 if TYPE_CHECKING:
     from vantage6.algorithm.mock.network import MockNetwork
@@ -260,20 +261,20 @@ class MockBaseClient:
                         "sure that the method is available in the top level of your "
                         "algorithm module?"
                     )
-                    exit(1)
+                    sys.exit(1)
                 except SessionActionMismatchError:
                     error(
                         f"The {method} method is not a computation task, are you sure "
                         "you specified the correct method?"
                     )
-                    exit(1)
+                    sys.exit(1)
                 except DataFrameNotFound as e:
                     error(f"A dataframe you specified does not exist: {e}")
-                    exit(1)
+                    sys.exit(1)
                 except Exception as e:
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
 
                 result_response = self.parent.network.hq.save_result(result, task["id"])
                 self.parent.network.hq.save_run(
@@ -581,7 +582,7 @@ class MockUserClient(MockBaseClient):
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a data extraction method.")
                     error("Exiting...")
-                    exit(1)
+                    sys.exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe creation for organization "
@@ -589,7 +590,7 @@ class MockUserClient(MockBaseClient):
                     )
                     error("Exiting...")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
 
                 dataframes.append(df_response)
 
@@ -634,7 +635,7 @@ class MockUserClient(MockBaseClient):
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a preprocessing method.")
                     error("Exiting...")
-                    exit(1)
+                    sys.exit(1)
                 except Exception as e:
                     error(
                         "Error simulating dataframe preprocessing for organization "
@@ -642,7 +643,7 @@ class MockUserClient(MockBaseClient):
                     )
                     error("Exiting...")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
                 dataframes.append(df)
 
                 result_response = self.parent.network.hq.save_result({}, task["id"])
@@ -686,7 +687,7 @@ class MockAlgorithmClient(MockBaseClient):
                     "parent task."
                 )
                 error("Exiting...")
-                exit(1)
+                sys.exit(1)
 
             # inject the mock data into the arguments
             kwargs["databases"] = self.parent.databases

@@ -109,8 +109,8 @@ def request_algo_store(
     algo_store_url: str,
     endpoint: str,
     method: str,
-    params: dict = None,
-    headers: dict = None,
+    params: dict | None = None,
+    headers: dict | None = None,
 ) -> tuple[dict | Response, HTTPStatus]:
     """
     Whitelist this vantage6 HQ url for the algorithm store.
@@ -198,8 +198,8 @@ def _execute_algo_store_request(
     algo_store_url: str,
     endpoint: str,
     method: str,
-    param_dict: dict = None,
-    headers: dict = None,
+    param_dict: dict | None = None,
+    headers: dict | None = None,
 ) -> requests.Response:
     """
     Send a request to the algorithm store to whitelist this vantage6 HQ URL for the

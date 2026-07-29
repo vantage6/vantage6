@@ -43,7 +43,7 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
             f"Task for {algo_name} failed. Check the log file of the task "
             f"{task_id} for more information."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def run_test(custom_args: dict | None = None):
@@ -65,7 +65,7 @@ def run_test(custom_args: dict | None = None):
         client.authenticate()
     except ConnectionError:
         error("Could not connect. Please check if a dev network is running.")
-        exit(1)
+        sys.exit(1)
 
     # if custom arguments are provided, use them for running the task
     if custom_args:

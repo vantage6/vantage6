@@ -12,6 +12,7 @@ from pathlib import Path
 import questionary as q
 
 from vantage6.common import error, info, warning
+import sys
 
 MAX_LEN_NAME = 16
 
@@ -41,7 +42,7 @@ def _check_k8s_dns_name(name: str) -> None:
             "letters, numbers, or '-', start with a letter, end with letter or number, "
             "and be at most 63 characters."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def check_config_name_allowed(name: str) -> None:
@@ -61,7 +62,7 @@ def check_config_name_allowed(name: str) -> None:
             f"Name '{name}' is not allowed. Please use only the following "
             "characters: a-zA-Z0-9_.-"
         )
-        exit(1)
+        sys.exit(1)
 
 
 def remove_file(file: str | Path, file_type: str) -> None:
@@ -106,10 +107,10 @@ def prompt_config_name(name: str | None) -> str:
             name = q.text("Please enter a configuration-name:").unsafe_ask()
         except KeyboardInterrupt:
             error("Aborted by user!")
-            exit(1)
+            sys.exit(1)
         if not name:
             error("No configuration name provided!")
-            exit(1)
+            sys.exit(1)
         if name.count(" ") > 0:
             name = name.replace(" ", "-")
             info(f"Replaced spaces from configuration name: {name}")
@@ -121,7 +122,7 @@ def prompt_config_name(name: str | None) -> str:
             f"Configuration name '{name}' is too long! Maximum length is "
             f"{MAX_LEN_NAME} characters."
         )
-        exit(1)
+        sys.exit(1)
     _check_k8s_dns_name(name)
     return name
 
@@ -185,7 +186,7 @@ def validate_input_cmd_args(
             f"Invalid {field_name}: {value}. Use only alphanumeric characters, "
             "dashes, underscores, or dots."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def merge_nested_dicts(base: dict, extra: dict) -> dict:

@@ -11,6 +11,7 @@ from vantage6.cli.configuration_create import (
 )
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.globals import DEFAULT_NODE_SYSTEM_FOLDERS as N_FOL
+import sys
 
 
 @click.command()
@@ -48,19 +49,19 @@ def cli_node_set_api_key(
             )
         except Exception:
             error("No configurations could be found!")
-            exit(1)
+            sys.exit(1)
 
     # Check that we can write in the config folder
     if not ensure_config_dir_writable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
-        exit(1)
+        sys.exit(1)
 
     if not api_key:
         try:
             api_key = q.text("Please enter your new API key:").unsafe_ask()
         except KeyboardInterrupt:
             error("API key input aborted.")
-            exit(1)
+            sys.exit(1)
 
     # get configuration manager
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)

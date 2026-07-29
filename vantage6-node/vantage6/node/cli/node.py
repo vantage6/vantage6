@@ -22,6 +22,7 @@ from vantage6.cli.context import NodeContext
 import vantage6.node.globals as constants
 from vantage6 import node
 from vantage6.node import __version__
+import sys
 
 
 @click.group(name="vnode-local")
@@ -76,14 +77,14 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
             except Exception:
                 error("No configurations could be found!")
                 info("Run `v6 node new` to create a new node configuration.")
-                exit(1)
+                sys.exit(1)
 
         # check that config exists in the APP, if not a questionaire will
         # be invoked
         if not NodeContext.config_exists(name, system_folders):
             error(f"Configuration '{name}' does not exist!")
             info("Run `v6 node new` to create a new node configuration.")
-            exit(1)
+            sys.exit(1)
 
         # create dummy node context
         ctx = NodeContext(name, system_folders, in_container=True)

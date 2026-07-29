@@ -14,6 +14,7 @@ from vantage6.common.globals import InstanceType
 from vantage6.cli.common.utils import check_running
 from vantage6.cli.globals import InfraComponentName
 from vantage6.cli.utils import remove_file
+import sys
 
 
 def execute_remove(
@@ -47,7 +48,7 @@ def execute_remove(
             f"The {infra_component.value} {name} is still running! Please stop the "
             f"{infra_component.value} before deleting it."
         )
-        exit(1)
+        sys.exit(1)
 
     if not force:
         if not q.confirm(
@@ -56,7 +57,7 @@ def execute_remove(
             default=False,
         ).ask():
             info(f"The {infra_component.value} {name} will not be deleted")
-            exit(0)
+            sys.exit(0)
 
     # remove the config file
     remove_file(ctx.config_file, "configuration")

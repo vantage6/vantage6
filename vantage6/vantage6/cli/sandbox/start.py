@@ -18,6 +18,7 @@ from vantage6.cli.globals import CLICommandName
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
 from vantage6.cli.sandbox.config.node import NodeDataset, NodeSandboxConfigManager
 from vantage6.cli.sandbox.populate import populate_hub_sandbox
+import sys
 
 
 @click.command()
@@ -289,4 +290,4 @@ def _wait_for_hq_to_be_ready(hq_url: str) -> None:
 
     if not ready:
         error("HQ did not become ready in time. Exiting...")
-        exit(1)
+        sys.exit(1)
