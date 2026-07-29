@@ -118,7 +118,9 @@ class TestRunner(unittest.TextTestRunner):
         return result
 
 
-def find_test_packages(suite, retval=set()):
+def find_test_packages(suite, retval=None):
+    if retval is None:
+        retval = set()
     for item in suite:
         if isinstance(item, unittest.TestSuite):
             find_test_packages(item, retval)
@@ -142,7 +144,7 @@ def find_tests(path=None):
 
     log.info("Found the following packages with tests:")
     for p in packages:
-        log.info("  * %s" % p)
+        log.info(f"  * {p}")
 
     return suites
 

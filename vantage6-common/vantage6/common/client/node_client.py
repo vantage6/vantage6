@@ -66,7 +66,7 @@ class NodeClient(ClientBase):
             self.obtain_new_token()
         except Exception as e:
             self.log.exception("Getting token failed: %s", e)
-            raise e
+            raise
 
         # get info on how HQ sees this node
         node = self.request("node/me")

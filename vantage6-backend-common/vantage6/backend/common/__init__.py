@@ -441,7 +441,7 @@ class Vantage6App:
             origins = [origins]
 
         for origin in origins:
-            if probably_regex(origin) and not origin == "*":
+            if probably_regex(origin) and origin != "*":
                 log.warning(
                     "CORS origin '%s' is a regular expression. Socket events sent from "
                     "this origin will not be handled properly.",

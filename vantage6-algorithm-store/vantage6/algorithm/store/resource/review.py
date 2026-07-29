@@ -52,7 +52,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Dictionary with services required for the resource endpoints
     """
 
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -138,7 +138,7 @@ class ReviewBase(AlgorithmStoreResources):
             True if the reviewers assignment is finished, False otherwise
         """
         # get the number of unique organizations assigned to review the algorithm.
-        current_orgs = len(set([(rev.reviewer.organization_id) for rev in reviews]))
+        current_orgs = len({(rev.reviewer.organization_id) for rev in reviews})
 
         return (
             current_orgs >= Policy.get_minimum_reviewing_orgs()
@@ -565,12 +565,12 @@ class Review(ReviewBase):
         if not algorithm.is_review_finished():
             # if number of reviews after deletion is less than the minium,
             # new reviewers should be assigned
-            other_reviews = [r for r in algorithm.reviews if not r.id == review.id]
+            other_reviews = [r for r in algorithm.reviews if r.id != review.id]
             if not other_reviews or not self._is_reviewers_assignment_finished(
                 other_reviews
             ):
                 algorithm.status = AlgorithmStatus.AWAITING_REVIEWER_ASSIGNMENT.value
-            elif all([r.status == ReviewStatus.APPROVED for r in other_reviews]):
+            elif all(r.status == ReviewStatus.APPROVED for r in other_reviews):
                 # if this was the last remaining review that needed to be approved, but
                 # it is now deleted, the algorithm should be approved
                 algorithm.status = AlgorithmStatus.APPROVED.value

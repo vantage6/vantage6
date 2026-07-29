@@ -251,6 +251,6 @@ class PermissionManagerBase(ABC):
         try:
             collection = self.collections[name]
             return collection
-        except Exception as e:
+        except Exception:
             log.critical(f"Missing permission collection! {name}")
-            raise e
+            raise

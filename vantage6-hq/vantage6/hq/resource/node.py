@@ -51,7 +51,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -472,9 +472,7 @@ class Nodes(NodeBase):
 
         # if no name is provided, generate one
         name = (
-            data["name"]
-            if "name" in data
-            else f"{organization.name}-{collaboration.name}-node"
+            data.get("name", f"{organization.name}-{collaboration.name}-node")
         )
         if " " in name:
             return {"msg": "Node name cannot contain spaces!"}, HTTPStatus.BAD_REQUEST

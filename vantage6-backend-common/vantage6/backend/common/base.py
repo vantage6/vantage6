@@ -248,8 +248,7 @@ class BaseDatabase:
         with self.engine.connect() as conn, conn.begin():
             conn.execute(
                 text(
-                    'ALTER TABLE "%s" ADD COLUMN %s %s'
-                    % (tab_name, col_name, col_type)
+                    f'ALTER TABLE "{tab_name}" ADD COLUMN {col_name} {col_type}'
                 )
             )
 
@@ -303,7 +302,7 @@ class BaseDatabaseSessionManager:
         boolean
             True if we are in a flask request, False otherwise
         """
-        return True if g else False
+        return bool(g)
 
     @staticmethod
     def _get_session(db_session_mgr: type["BaseDatabaseSessionManager"]) -> Session:

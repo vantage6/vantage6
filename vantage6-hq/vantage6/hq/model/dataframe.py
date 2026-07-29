@@ -76,10 +76,8 @@ class Dataframe(Base):
         # is successfully finished to determine if the dataframe is ready.
         return (
             all(
-                [
-                    run.status == RunStatus.COMPLETED
+                run.status == RunStatus.COMPLETED
                     for run in self.last_session_task.runs
-                ]
             )
             and len(self.last_session_task.runs) > 0
         )

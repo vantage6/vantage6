@@ -96,7 +96,7 @@ class Algorithm(Base):
         bool
             True if all reviews are approved, False otherwise
         """
-        return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
+        return all(review.status == ReviewStatus.APPROVED for review in self.reviews)
 
     def approve(self) -> None:
         """

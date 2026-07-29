@@ -221,13 +221,13 @@ def _initalize_client(hq_url: str, auth_url: str) -> Client:
             client.authenticate()
             info("Successfully authenticated!")
             break
-        except Exception as e:
+        except Exception:
             if attempt == max_attempts:
                 error(
                     f"Failed to authenticate after {max_attempts} attempts. "
                     "Vantage6 hub may not be online."
                 )
-                raise e
+                raise
 
             time.sleep(5)
             attempt += 1

@@ -50,14 +50,13 @@ def execute_remove(
         )
         sys.exit(1)
 
-    if not force:
-        if not q.confirm(
-            f"This {infra_component.value} will be deleted permanently including its "
-            "configuration. Are you sure?",
-            default=False,
-        ).ask():
-            info(f"The {infra_component.value} {name} will not be deleted")
-            sys.exit(0)
+    if not force and not q.confirm(
+        f"This {infra_component.value} will be deleted permanently including its "
+        "configuration. Are you sure?",
+        default=False,
+    ).ask():
+        info(f"The {infra_component.value} {name} will not be deleted")
+        sys.exit(0)
 
     # remove the config file
     remove_file(ctx.config_file, "configuration")

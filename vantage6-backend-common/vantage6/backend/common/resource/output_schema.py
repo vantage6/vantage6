@@ -99,7 +99,7 @@ class BaseHATEOASModelSchema(SQLAlchemyAutoSchema):
         endpoint = name + "_with_id"
         if self.api:
             if not self.api.owns_endpoint(endpoint):
-                Exception(f"Make sure {endpoint} exists!")
+                raise Exception(f"Make sure {endpoint} exists!")
 
             verbs = list(self.api.app.url_map._rules_by_endpoint[endpoint][0].methods)
             verbs.remove("HEAD")

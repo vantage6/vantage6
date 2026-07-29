@@ -43,7 +43,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -198,8 +198,7 @@ class BlobStream(BlobStreamBase):
             return {"msg": "Error streaming result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         def generate():
-            for chunk in blob_stream.chunks():
-                yield chunk
+            yield from blob_stream.chunks()
 
         return Response(
             stream_with_context(generate()),

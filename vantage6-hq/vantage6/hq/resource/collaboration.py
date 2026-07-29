@@ -45,7 +45,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -374,9 +374,9 @@ class Collaborations(CollaborationBase):
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
 
-        encrypted = True if data["encrypted"] == 1 else False
+        encrypted = data["encrypted"] == 1
         restricted_sessions = (
-            True if data["session_restrict_to_same_image"] == 1 else False
+            data["session_restrict_to_same_image"] == 1
         )
 
         collaboration = db.Collaboration(

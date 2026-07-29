@@ -69,7 +69,7 @@ def click_insert_context(
             "--user",
             "system_folders",
             flag_value=False,
-            default=False if type_ == InstanceType.NODE or is_sandbox else True,
+            default=not (type_ == InstanceType.NODE or is_sandbox),
             help="Use user folders instead of system folders",
         )
         @wraps(func)

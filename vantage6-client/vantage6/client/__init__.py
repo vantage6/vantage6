@@ -1468,8 +1468,8 @@ class UserClient(ClientBase):
             username: str,
             password: str | None = None,
             organization: int | None = None,
-            roles: list = [],
-            rules: list = [],
+            roles: list | None = None,
+            rules: list | None = None,
             is_service_account: bool = False,
         ) -> dict:
             """Create new user
@@ -1506,6 +1506,10 @@ class UserClient(ClientBase):
             dict
                 Containing data of the new user
             """
+            if rules is None:
+                rules = []
+            if roles is None:
+                roles = []
             user_data = {
                 "username": username,
                 "organization_id": organization,

@@ -45,7 +45,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -689,7 +689,7 @@ class DataframeColumns(SessionBase):
             return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # Validate that this node is part of the session
-        if not dataframe.session.collaboration_id == g.node.collaboration_id:
+        if dataframe.session.collaboration_id != g.node.collaboration_id:
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

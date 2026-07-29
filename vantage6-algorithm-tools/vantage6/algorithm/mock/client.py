@@ -30,8 +30,7 @@ class MockBaseClient:
         # Which organization do I belong to?
         self.organization_id = 0
         # Store missing attributes in a set for __getattr__ to check
-        self._missing_attributes = set(
-            [
+        self._missing_attributes = {
                 "_access_token",
                 "_ClientBase__auth_url",
                 "_ClientBase__check_algorithm_store_valid",
@@ -65,8 +64,7 @@ class MockBaseClient:
                 "token",
                 "wait_for_task_completion",
                 "whoami",
-            ]
-        )
+            }
 
     def __getattr__(self, name: str):
         """Handle access to missing attributes."""

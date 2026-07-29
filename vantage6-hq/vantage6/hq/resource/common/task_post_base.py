@@ -489,7 +489,7 @@ class TaskPostBase(ServicesResources):
         """Validates that the container is allowed to create the task."""
 
         # check that node id is indeed part of the collaboration
-        if not container["collaboration_id"] == collaboration_id:
+        if container["collaboration_id"] != collaboration_id:
             log.warning(
                 "Container attempts to create a task for collaboration_id=%s in "
                 "collaboration_id=%s!",

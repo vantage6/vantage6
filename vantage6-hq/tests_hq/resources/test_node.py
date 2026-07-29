@@ -147,7 +147,7 @@ class TestResources(TestResourceBase):
 
         # try to view as node from another organization
         headers = self.create_node_and_login()
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/node?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)

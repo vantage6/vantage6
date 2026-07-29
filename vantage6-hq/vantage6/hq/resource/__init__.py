@@ -178,9 +178,9 @@ def only_for(types: tuple[str] = ("user", "node", "container")) -> Callable:
         def decorator(*args, **kwargs):
             try:
                 _validate_user_or_node_token(types)
-            except Exception as exc:
+            except Exception:
                 if "container" not in types:
-                    raise exc
+                    raise
                 _validate_container_token()
 
             return fn(*args, **kwargs)
@@ -222,9 +222,9 @@ def _validate_user_or_node_token(types: tuple[str]) -> None:
     if g.type == "user":
         try:
             user = _get_and_update_authenticatable_info(identity)
-        except Exception as e:
+        except Exception:
             log.error("No user found for keycloak id %s", identity)
-            raise e
+            raise
 
         g.user = user
         assert g.user.type == g.type

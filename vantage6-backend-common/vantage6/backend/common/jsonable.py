@@ -32,7 +32,7 @@ def jsonable(value: list[DeclarativeMeta] | DeclarativeMeta) -> list | dict:
 
     elif isinstance(value, DeclarativeMeta):
         log.debug(f"preparing={value}")
-        retval = dict()
+        retval = {}
         mapper = sql.inspect(value.__class__)
 
         columns = [

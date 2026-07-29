@@ -51,12 +51,7 @@ class Scope(StrEnumBase):
         """
         Check if this scope is strictly lower than another scope.
         """
-        if self == Scope.OWN and other != Scope.OWN or self == Scope.ORGANIZATION and other in [
-            Scope.COLLABORATION,
-            Scope.GLOBAL,
-        ] or self == Scope.COLLABORATION and other == Scope.GLOBAL:
-            return True
-        return False
+        return bool(self == Scope.OWN and other != Scope.OWN or self == Scope.ORGANIZATION and other in [Scope.COLLABORATION, Scope.GLOBAL] or self == Scope.COLLABORATION and other == Scope.GLOBAL)
 
     def __le__(self, other: Scope) -> bool:
         """

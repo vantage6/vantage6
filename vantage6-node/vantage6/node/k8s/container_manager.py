@@ -82,9 +82,9 @@ class ContainerManager:
         # /var/run/secrets/kubernetes.io/serviceaccount/.
         try:
             config.load_incluster_config()
-        except Exception as e:
+        except Exception:
             self.log.exception("Error loading Kubernetes configuration")
-            raise e
+            raise
 
         # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
@@ -1121,7 +1121,7 @@ class ContainerManager:
             for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
                 "*.parquet"
             )
-            if not file_.stem == SESSION_STATE_FILENAME
+            if file_.stem != SESSION_STATE_FILENAME
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
@@ -1174,7 +1174,7 @@ class ContainerManager:
             )
             ok = False
 
-        if source_database["label"] not in self.databases.keys():
+        if source_database["label"] not in self.databases:
             self.log.error(
                 "The database used in the data extraction step does not exist."
             )
@@ -1394,7 +1394,7 @@ class ContainerManager:
             namespace=self.task_namespace,
             label_selector=f"app={label}",
         )
-        return True if pods.items else False
+        return bool(pods.items)
 
     def process_next_completed_run(self) -> Result:
         """

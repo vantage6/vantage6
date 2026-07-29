@@ -243,7 +243,7 @@ class _MixedBaseTypeField(fields.Field):
     """
 
     def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+        if isinstance(value, (str, int, float)):
             return value
         else:
             raise ValidationError("Values should be str, int or float")

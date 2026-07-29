@@ -191,7 +191,7 @@ def request_algo_store(
 
 def _contains_localhost(url: str) -> bool:
     """Check if the url refers to localhost address"""
-    return url.startswith(HTTP_LOCALHOST) or url.startswith(LINUX_LOCALHOST)
+    return url.startswith((HTTP_LOCALHOST, LINUX_LOCALHOST))
 
 
 def _execute_algo_store_request(

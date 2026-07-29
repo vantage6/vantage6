@@ -384,13 +384,13 @@ class UserWithPermissionDetailsSchema(UserSchema):
         # UI knows which organizations user has access to if they have
         # collaboration scope permissions
         orgs_in_collabs = list(
-            set(
-                [
+            {
+                
                     org.id
                     for collab in obj.organization.collaborations
                     for org in collab.organizations
-                ]
-            )
+                
+            }
         )
         return {
             "roles": role_ids,

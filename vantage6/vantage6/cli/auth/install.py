@@ -128,8 +128,8 @@ def cli_auth_install_operator(
             "clusterrolebinding",
             "keycloak-operator-clusterrole-binding",
             "--type=json",
-            '-p=[{"op": "replace", "path": "/subjects/0/namespace", "value":"'
-            'custom-namespace"}]',
+            ('-p=[{"op": "replace", "path": "/subjects/0/namespace", "value":"'
+            'custom-namespace"}]'),
         ],
         k8s_config=k8s_config,
     )

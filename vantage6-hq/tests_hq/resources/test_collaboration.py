@@ -91,7 +91,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test as node other organization - should not be permitted
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id + 1}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
