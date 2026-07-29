@@ -589,7 +589,7 @@ class DataframePreprocessing(SessionBase):
 
         # Meta data about the modifying task
         preprocessing_task = dataframe_step["task"]
-        if "description" in preprocessing_task and preprocessing_task["description"]:
+        if preprocessing_task.get("description"):
             description = preprocessing_task["description"]
         else:
             description = (

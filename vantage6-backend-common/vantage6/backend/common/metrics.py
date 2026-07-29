@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Type
+from typing import Any
 
 from prometheus_client import Gauge, start_http_server
 
@@ -11,7 +11,7 @@ class Metric:
     Represents a single metric with its name, expected type, and description.
     """
 
-    def __init__(self, name: str, type_: Type[Any], description: str):
+    def __init__(self, name: str, type_: type[Any], description: str):
         self.name = name
         self.type = type_
         self.description = description

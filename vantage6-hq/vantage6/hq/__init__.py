@@ -13,7 +13,7 @@ from vantage6.backend.common.globals import RequiredBackendEnvVars
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
-    # flake8: noqa: E402 (ignore import error)
+
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
@@ -389,7 +389,7 @@ class HQApp(Vantage6App):
         while True:
             # Send ping event
             try:
-                before_wait = dt.datetime.now(dt.timezone.utc)
+                before_wait = dt.datetime.now(dt.UTC)
 
                 # Wait a while to give nodes opportunity to pong. This interval
                 # is a bit longer than the interval at which the nodes ping,
@@ -401,7 +401,7 @@ class HQApp(Vantage6App):
                 # Otherwise set them to offline.
                 online_status_nodes = db.Node.get_online_nodes()
                 for node in online_status_nodes:
-                    if node.last_seen.replace(tzinfo=dt.timezone.utc) < before_wait:
+                    if node.last_seen.replace(tzinfo=dt.UTC) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
             except Exception as e:

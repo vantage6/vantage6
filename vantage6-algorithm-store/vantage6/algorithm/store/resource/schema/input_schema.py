@@ -4,9 +4,8 @@ Marshmallow schemas for validating input data for the API.
 
 import json
 
-import marshmallow.validate as validate
 from jsonschema import validate as json_validate
-from marshmallow import Schema, ValidationError, fields, validates_schema
+from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 
 from vantage6.common.enum import (
     AlgorithmArgumentType,

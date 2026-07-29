@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
@@ -27,7 +27,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
     azure_config = config.get("large_result_store", {})
     if azure_config:
         storage_adapter = AzureStorageService(azure_config)
-    threshold_date = datetime.now(timezone.utc) - timedelta(days=days)
+    threshold_date = datetime.now(UTC) - timedelta(days=days)
     session = DatabaseSessionManager.get_session()
 
     if not days or days < 1:
@@ -42,7 +42,6 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
             runs = session.scalars(
                 select(Run).filter(
                     Run.finished_at < threshold_date,
-                    # ruff: noqa: E711
                     Run.cleanup_at == None,
                     Run.status == RunStatus.COMPLETED,
                 )
@@ -69,7 +68,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                                 f"Failed to delete arguments {run.arguments}: {e}"
                             )
                     run.arguments = ""
-                run.cleanup_at = datetime.now(timezone.utc)
+                run.cleanup_at = datetime.now(UTC)
                 log.info("Cleared result for Run ID %s.", run.id)
 
         log.info(

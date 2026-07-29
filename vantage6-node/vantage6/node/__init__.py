@@ -457,7 +457,7 @@ class Node:
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
             update["finished_at"] = datetime.datetime.now(
-                datetime.timezone.utc
+                datetime.UTC
             ).isoformat()
         self.client.run.patch(id_=run_id, data=update)
 

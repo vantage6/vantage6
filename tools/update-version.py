@@ -1,7 +1,6 @@
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 import click
 
@@ -41,7 +40,7 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def find_pyproject_files() -> List[Path]:
+def find_pyproject_files() -> list[Path]:
     """
     Find all pyproject.toml files in the vantage6 packages.
 
@@ -221,7 +220,7 @@ def update_version_docker_files(version: str) -> None:
         with open(file, "r", encoding="utf-8") as f:
             content = f.read()
             new_content = re.sub(
-                r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
+                r"(ARG BASE=)(\d+.\d+)", rf"\g<1>{major_minor}", content
             )
         with open(file, "w", encoding="utf-8") as f:
             f.write(new_content)

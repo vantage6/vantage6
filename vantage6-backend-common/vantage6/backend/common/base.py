@@ -111,11 +111,11 @@ class BaseDatabase:
 
         URL = make_url(uri)
         log.info("Initializing the database")
-        log.debug("  driver:   {}".format(URL.drivername))
-        log.debug("  host:     {}".format(URL.host))
-        log.debug("  port:     {}".format(URL.port))
-        log.debug("  database: {}".format(URL.database))
-        log.debug("  username: {}".format(URL.username))
+        log.debug(f"  driver:   {URL.drivername}")
+        log.debug(f"  host:     {URL.host}")
+        log.debug(f"  port:     {URL.port}")
+        log.debug(f"  database: {URL.database}")
+        log.debug(f"  username: {URL.username}")
 
         # Make sure that the director for the file database exists.
         if URL.host is None and URL.database:
@@ -147,7 +147,7 @@ class BaseDatabase:
                 base.metadata.create_all(bind=self.engine)
                 break
             except OperationalError as e:
-                log.error(f"Connection attempt failed: {str(e)}")
+                log.error(f"Connection attempt failed: {e!s}")
 
                 # Check if the maximum retry duration has been exceeded
                 if attempt < MAX_NUMBER_OF_ATTEMPTS - 1:
@@ -245,14 +245,13 @@ class BaseDatabase:
             col_name,
             tab_name,
         )
-        with self.engine.connect() as conn:
-            with conn.begin():
-                conn.execute(
-                    text(
-                        'ALTER TABLE "%s" ADD COLUMN %s %s'
-                        % (tab_name, col_name, col_type)
-                    )
+        with self.engine.connect() as conn, conn.begin():
+            conn.execute(
+                text(
+                    'ALTER TABLE "%s" ADD COLUMN %s %s'
+                    % (tab_name, col_name, col_type)
                 )
+            )
 
     @staticmethod
     def is_column_missing(
@@ -504,7 +503,7 @@ class BaseModelBase:
             f"Methods: \n{methods}\n"
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check if the object is equal to another object.
 

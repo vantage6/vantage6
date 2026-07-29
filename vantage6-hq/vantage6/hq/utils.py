@@ -27,5 +27,5 @@ def parse_datetime(
             return dt.datetime.strptime(date, converter)
         else:
             # convert datetime to UTC
-            return date.astimezone(dt.timezone.utc)
+            return date.astimezone(dt.UTC)
     return default

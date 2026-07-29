@@ -1,4 +1,5 @@
-from typing import List
+
+import builtins
 
 from vantage6.common.client.client_base import ClientBase
 
@@ -132,7 +133,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
         partitioning: str,
         vantage6_version: str,
         code_url: str,
-        functions: List[dict],
+        functions: builtins.list[dict],
         documentation_url: str = None,
     ) -> dict:
         """
@@ -314,7 +315,7 @@ class AlgorithmSubClient(ClientBase.SubClient):
         vantage6_version: str = None,
         code_url: str = None,
         documentation_url: str = None,
-        functions: List[dict] = None,
+        functions: builtins.list[dict] = None,
         refresh_digest: bool = None,
     ) -> dict:
         """

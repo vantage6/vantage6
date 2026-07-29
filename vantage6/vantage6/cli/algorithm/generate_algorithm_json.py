@@ -3,11 +3,12 @@ import inspect
 import json
 import os
 import sys
+from collections import OrderedDict
 from collections.abc import Callable
 from inspect import getmembers, isfunction, ismodule, signature
 from pathlib import Path
 from types import ModuleType, UnionType
-from typing import Any, OrderedDict, get_args, get_origin
+from typing import Any, get_args, get_origin
 
 import click
 import pandas as pd
@@ -34,7 +35,7 @@ class MergePreference:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(MergePreference, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     @classmethod
@@ -476,7 +477,7 @@ def _get_functions_from_file(file_path: str) -> None:
     try:
         module = importlib.import_module(module_name)
     except ImportError as e:
-        raise ImportError(f"Could not import module {module_name}: {str(e)}") from e
+        raise ImportError(f"Could not import module {module_name}: {e!s}") from e
 
     def get_members_from_module(module: ModuleType) -> list:
         """Get the functions from the module"""

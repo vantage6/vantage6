@@ -82,8 +82,8 @@ class BlobStreamBase(ServicesResources):
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
-        self.r_run: RuleCollection = getattr(self.permissions, "run")
-        self.r_task: RuleCollection = getattr(self.permissions, "task")
+        self.r_run: RuleCollection = self.permissions.run
+        self.r_task: RuleCollection = self.permissions.task
         self.storage_adapter = storage_adapter
 
     def get_run_by_input_or_result(self, id) -> db_Run | None:

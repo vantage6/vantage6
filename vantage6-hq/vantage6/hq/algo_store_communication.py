@@ -58,8 +58,7 @@ def add_algorithm_store_to_database(
     # check if algorithm store is already available for the collaboration
     collaboration_id = data.get("collaboration_id", None)
     algorithm_store_url = data["algorithm_store_url"]
-    if algorithm_store_url.endswith("/"):
-        algorithm_store_url = algorithm_store_url[:-1]
+    algorithm_store_url = algorithm_store_url.removesuffix("/")
     api_path = data.get("api_path", DEFAULT_API_PATH)
 
     if not _check_algorithm_store_online(f"{algorithm_store_url}{api_path}"):
@@ -227,12 +226,10 @@ def _execute_algo_store_request(
         reachable, None is returned
     """
     # Remove trailing slash from base URL
-    if algo_store_url.endswith("/"):
-        algo_store_url = algo_store_url[:-1]
+    algo_store_url = algo_store_url.removesuffix("/")
 
     # Remove leading slash from endpoint to avoid double slashes
-    if endpoint.startswith("/"):
-        endpoint = endpoint[1:]
+    endpoint = endpoint.removeprefix("/")
 
     param_dict = param_dict if param_dict is not None else {}
     headers = headers if headers is not None else {}

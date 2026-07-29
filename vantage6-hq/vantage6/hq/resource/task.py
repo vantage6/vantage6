@@ -145,7 +145,7 @@ class TaskBase(TaskPostBase):
         self.r: RuleCollection = getattr(self.permissions, module_name)
         # permissions for the run resource are also relevant for the task
         # resource as they are sometimes included
-        self.r_run: RuleCollection = getattr(self.permissions, "run")
+        self.r_run: RuleCollection = self.permissions.run
 
     def _select_schema(self) -> TaskSchema:
         """

@@ -33,7 +33,7 @@ class Review(Base):
     reviewer_id = Column(Integer, ForeignKey("user.id"))
     requested_by_id = Column(Integer, ForeignKey("user.id"))
     requested_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.timezone.utc)
+        DateTime, default=datetime.datetime.now(datetime.UTC)
     )
     submitted_at = Column(DateTime)
     status = Column(Text, default=ReviewStatus.UNDER_REVIEW.value)

@@ -312,7 +312,7 @@ def _get_and_update_authenticatable_info(keycloak_id: int) -> db.Authenticatable
         User or node database model
     """
     auth = db.Authenticatable.get_by_keycloak_id(keycloak_id)
-    auth.last_seen = dt.datetime.now(dt.timezone.utc)
+    auth.last_seen = dt.datetime.now(dt.UTC)
     auth.save()
     return auth
 

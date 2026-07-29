@@ -8,7 +8,6 @@ import time
 import uuid
 from itertools import groupby
 from pathlib import Path
-from typing import Tuple
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client.rest import ApiException
@@ -829,7 +828,7 @@ class ContainerManager:
         mount_path: str,
         type_: str | None = None,
         read_only: bool = False,
-    ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
+    ) -> tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
 
@@ -871,7 +870,7 @@ class ContainerManager:
         run_io: RunIO,
         function_arguments: bytes,
         databases_to_use: list[dict],
-    ) -> Tuple[
+    ) -> tuple[
         list[k8s_client.V1Volume],
         list[k8s_client.V1VolumeMount],
         dict[str, str],
@@ -1375,7 +1374,7 @@ class ContainerManager:
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.
-        return any((c in pattern for c in common_regex_chars))
+        return any(c in pattern for c in common_regex_chars)
 
     def is_running(self, label: str) -> bool:
         """

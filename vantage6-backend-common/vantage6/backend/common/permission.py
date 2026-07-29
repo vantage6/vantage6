@@ -16,7 +16,10 @@ from vantage6.backend.common.permission_models import RuleInterface
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
-RuleNeed = NamedTuple("RuleNeed", [("name", str), ("scope", str), ("operation", str)])
+class RuleNeed(NamedTuple):
+    name: str
+    scope: str
+    operation: str
 
 
 def get_attribute_name(
@@ -109,14 +112,12 @@ class PermissionManagerBase(ABC):
         operation: Operation
             Operation that the rule applies to
         """
-        pass
 
     @abstractmethod
     def register_rule(self, *args, **kwargs) -> None:
         """
         Register a permission rule in the database.
         """
-        pass
 
     @abstractmethod
     def check_user_rules(self, rules: list[RuleInterface]) -> dict | None:
@@ -133,7 +134,6 @@ class PermissionManagerBase(ABC):
         dict | None
             Dict with a message which rule is missing, else None
         """
-        pass
 
     @abstractmethod
     def get_new_collection(self, name: str) -> RuleCollectionBase:
@@ -149,7 +149,6 @@ class PermissionManagerBase(ABC):
         RuleCollectionBase
             New RuleCollection
         """
-        pass
 
     def load_rules_from_resources(
         self, resources_location: str, resources: list[str]

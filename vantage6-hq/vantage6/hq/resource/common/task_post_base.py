@@ -389,7 +389,7 @@ class TaskPostBase(ServicesResources):
             method=data["method"],
             init_org=init_org,
             algorithm_store=store,
-            created_at=datetime.datetime.now(datetime.timezone.utc),
+            created_at=datetime.datetime.now(datetime.UTC),
             session=session,
             depends_on=dependent_tasks,
             dataframe_id=data.get("dataframe_id"),

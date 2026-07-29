@@ -27,7 +27,6 @@ from vantage6.node import __version__
 @click.group(name="vnode-local")
 def cli_node() -> None:
     """Command `vnode-local`."""
-    pass
 
 
 #

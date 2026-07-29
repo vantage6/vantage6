@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import importlib.metadata
 import logging
 import subprocess
@@ -63,7 +64,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(hq_url=hq_url, auth_url=auth_url)
+        super().__init__(hq_url=hq_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
@@ -258,16 +259,16 @@ class UserClient(ClientBase):
         except Exception as exc:  # pragma: no cover - environment-dependent
             self.log.warning("Could not open browser automatically: %s", exc)
             print("--------------------------------")
-            print("")
+            print()
             print("To authenticate, open the following URL in your browser:")
             print(f"  {verification_uri}")
             print("and enter this code:")
             print(f"  {user_code}")
             if verification_uri_complete:
-                print("")
+                print()
                 print("Alternatively, you can login directly with the following URL:")
                 print(f"  {verification_uri_complete}")
-            print("")
+            print()
             print("--------------------------------")
 
     def _poll_device_token(self, token_endpoint: str, device_data: dict) -> dict | None:
@@ -495,7 +496,7 @@ class UserClient(ClientBase):
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
         prev_level = self.log.level
-        self.log.setLevel(logging.WARN)
+        self.log.setLevel(logging.WARNING)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
         return self.result.from_task(task_id)
@@ -577,7 +578,7 @@ class UserClient(ClientBase):
             algorithm_store: int = None,
             page: int = 1,
             per_page: int = 20,
-        ) -> List[dict]:
+        ) -> builtins.list[dict]:
             """View your collaborations
 
             Parameters
@@ -741,7 +742,7 @@ class UserClient(ClientBase):
             id_: int = None,
             name: str = None,
             encrypted: bool = None,
-            organizations: List[int] = None,
+            organizations: builtins.list[int] = None,
         ) -> dict:
             """
             Update collaboration information
@@ -785,7 +786,7 @@ class UserClient(ClientBase):
 
         def add_organization(
             self, organization: int, collaboration: int = None
-        ) -> List[dict]:
+        ) -> builtins.list[dict]:
             """
             Add an organization to a collaboration
 
@@ -811,7 +812,7 @@ class UserClient(ClientBase):
 
         def remove_organization(
             self, organization: int, collaboration: int = None
-        ) -> List[dict]:
+        ) -> builtins.list[dict]:
             """
             Remove an organization from a collaboration
 

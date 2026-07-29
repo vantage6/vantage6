@@ -724,7 +724,7 @@ class Run(SingleRunBase):
                 .filter(db_Run.finished_at.is_(None))
             ).all()
             if siblings:
-                now = datetime.datetime.now(datetime.timezone.utc)
+                now = datetime.datetime.now(datetime.UTC)
                 reason = (
                     f"Marked as failed because sibling run id={run.id} "
                     f"failed with status '{run.status}'."

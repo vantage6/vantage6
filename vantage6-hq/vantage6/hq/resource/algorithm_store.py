@@ -63,7 +63,7 @@ class AlgorithmStoreBase(ServicesResources):
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
-        self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
+        self.r_col: RuleCollection = self.permissions.collaboration
 
     @staticmethod
     def _convert_k8s_url_to_localhost(store: db.AlgorithmStore) -> None:

@@ -44,8 +44,7 @@ def _get_latest_keycloak_version() -> str:
             info("Please specify a version manually using the --operator-version flag.")
             exit(1)
         # Remove 'v' prefix if present (e.g., "v24.0.0" -> "24.0.0")
-        if version.startswith("v"):
-            version = version[1:]
+        version = version.removeprefix("v")
         return version
     except requests.HTTPError as e:
         if e.response.status_code == 403:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import print_function, unicode_literals
 
 import logging
 import os
@@ -18,7 +17,7 @@ RESET = "\033[0m"
 
 class TestResult(unittest.TextTestResult):
     def __init__(self, stream, descriptions, verbosity, log):
-        super(TestResult, self).__init__(stream, descriptions, verbosity)
+        super().__init__(stream, descriptions, verbosity)
         self.log = log
 
     def startTest(self, test):
@@ -101,7 +100,7 @@ class TestRunner(unittest.TextTestRunner):
         buffer=False,
         resultclass=None,
     ):
-        super(TestRunner, self).__init__(
+        super().__init__(
             stream, descriptions, verbosity, failfast, buffer, resultclass
         )
         self.log = log

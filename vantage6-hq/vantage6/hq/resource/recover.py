@@ -57,7 +57,7 @@ class ResetAPIKey(ServicesResources):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
 
         # obtain permissions to check if user is allowed to modify nodes
-        self.r = getattr(self.permissions, "node")
+        self.r = self.permissions.node
 
     @with_user
     def post(self):

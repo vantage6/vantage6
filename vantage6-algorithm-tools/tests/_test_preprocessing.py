@@ -637,7 +637,7 @@ class TestPreprocessing(unittest.TestCase):
             '{"age":{"171":23,"342":23},"income":{"171":62026,"342":44074},'
             '"education":{"171":"Master","342":"Master"},"color_preference":'
             '{"171":"Green","342":"Green"},"purchased_product":{"171":1,"342":'
-            '0},"magic_date":{"171":"2022-11-12","342":"2020-01-20"},"income\/'
+            r'0},"magic_date":{"171":"2022-11-12","342":"2020-01-20"},"income\/'
             'age":{"171":0.9737126326,"342":0.0147479299},"age_days":{"171":'
             '8395,"342":8395},"age_days_td":{"171":"8395 days","342":"8395 '
             'days"}}'

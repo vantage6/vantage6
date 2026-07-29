@@ -283,8 +283,7 @@ class ClientBase(BlobStorageMixin):
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
                 # dots in the log message
-                if msg.endswith("."):
-                    msg = msg[:-1]
+                msg = msg.removesuffix(".")
                 self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))

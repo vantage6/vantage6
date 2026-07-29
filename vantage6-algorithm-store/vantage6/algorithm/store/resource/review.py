@@ -747,7 +747,7 @@ class ReviewApprove(ReviewUpdateResources):
 
         # update the review status to 'approved'
         review.status = ReviewStatus.APPROVED.value
-        review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
+        review.submitted_at = datetime.datetime.now(datetime.UTC)
         if comment := data.get("comment"):
             review.comment = comment
         review.save()
@@ -842,7 +842,7 @@ class ReviewReject(ReviewUpdateResources):
 
         # update the review status to 'rejected'
         review.status = ReviewStatus.REJECTED.value
-        review.submitted_at = datetime.datetime.now(datetime.timezone.utc)
+        review.submitted_at = datetime.datetime.now(datetime.UTC)
         if comment := data.get("comment"):
             review.comment = comment
         review.save()
@@ -850,7 +850,7 @@ class ReviewReject(ReviewUpdateResources):
         # also update the algorithm status to 'rejected'
         algorithm: db.Algorithm = review.algorithm
         algorithm.status = AlgorithmStatus.REJECTED.value
-        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.invalidated_at = datetime.datetime.now(datetime.UTC)
         algorithm.save()
 
         # the other reviews of this algorithm are dropped as they are no longer required

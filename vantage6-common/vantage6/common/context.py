@@ -5,7 +5,7 @@ import os
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from typing import Self, Tuple
+from typing import Self
 
 import appdirs
 import pyfiglet
@@ -685,7 +685,7 @@ class AppContext(metaclass=Singleton):
         logging.captureWarnings(True)
 
     @staticmethod
-    def configure_logger(name: str | None, level: str) -> Tuple[logging.Logger, int]:
+    def configure_logger(name: str | None, level: str) -> tuple[logging.Logger, int]:
         """
         Set the logging level of a logger.
 

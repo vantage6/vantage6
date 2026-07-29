@@ -61,7 +61,7 @@ class Algorithm(Base):
     vantage6_version = Column(String)
     digest = Column(String)
     submitted_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.timezone.utc)
+        DateTime, default=datetime.datetime.now(datetime.UTC)
     )
     approved_at = Column(DateTime)
     invalidated_at = Column(DateTime)
@@ -103,7 +103,7 @@ class Algorithm(Base):
         Approve the algorithm, and invalidate all other algorithms with the same image.
         """
         self.status = AlgorithmStatus.APPROVED.value
-        self.approved_at = datetime.datetime.now(datetime.timezone.utc)
+        self.approved_at = datetime.datetime.now(datetime.UTC)
         self.save()
 
         for other_version in self.get_by_image(self.image):

@@ -1,4 +1,4 @@
-from typing import List
+import builtins
 
 from vantage6.common.client.client_base import ClientBase
 
@@ -15,7 +15,7 @@ class StoreUserSubClient(ClientBase.SubClient):
         role: int = None,
         page: int = 1,
         per_page: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         List algorithms
 
@@ -90,7 +90,7 @@ class StoreUserSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def register(self, username: str, roles: List[int]) -> dict:
+    def register(self, username: str, roles: builtins.list[int]) -> dict:
         """
         Register a vantage6 user in this algorithm store.
 
@@ -126,7 +126,7 @@ class StoreUserSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def update(self, id_: int, roles: List[int]) -> dict:
+    def update(self, id_: int, roles: builtins.list[int]) -> dict:
         """
         Update a user registration by id
 

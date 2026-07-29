@@ -1,6 +1,5 @@
 import os
 import sys
-from typing import Optional
 
 import click
 import requests
@@ -65,7 +64,7 @@ def _check_cert_manager_crds_installed(k8s_config: KubernetesConfig) -> bool:
 
 def check_and_install_cert_manager_crds(
     k8s_config: KubernetesConfig,
-    version: Optional[str] = None,
+    version: str | None = None,
 ) -> None:
     """
     Ensure that cert-manager CRDs are installed in the cluster.

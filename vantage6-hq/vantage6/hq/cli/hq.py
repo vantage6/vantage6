@@ -86,7 +86,6 @@ def click_insert_context(func: Callable) -> Callable:
 @click.group(name="hq")
 def cli_hq() -> None:
     """Subcommand `vhq-local`."""
-    pass
 
 
 #

@@ -309,9 +309,7 @@ class Vantage6App:
                 Additional headers to be added to the response
             """
 
-            if isinstance(data, base_db_model):
-                data = jsonable(data)
-            elif (
+            if isinstance(data, base_db_model) or (
                 isinstance(data, list)
                 and len(data)
                 and isinstance(data[0], base_db_model)

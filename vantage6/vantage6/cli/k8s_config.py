@@ -1,7 +1,7 @@
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import appdirs
 import questionary

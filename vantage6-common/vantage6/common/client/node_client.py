@@ -355,7 +355,7 @@ class NodeClient(ClientBase):
         self.run.patch(
             id_,
             data={
-                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                "started_at": datetime.datetime.now(datetime.UTC).isoformat()
             },
         )
 

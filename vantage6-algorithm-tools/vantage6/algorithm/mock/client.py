@@ -71,7 +71,7 @@ class MockBaseClient:
         """Handle access to missing attributes."""
         if hasattr(self, "_missing_attributes") and name in self._missing_attributes:
             warn(f"The attribute {name} is not available in the mock client.")
-            return None
+            return
         raise AttributeError(
             f"'{self.__class__.__name__}' object has no attribute '{name}'"
         )
@@ -113,7 +113,6 @@ class MockBaseClient:
 
         def missing_method(self, method: str):
             warn(f"The method {method} is not available in the mock client.")
-            return
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """

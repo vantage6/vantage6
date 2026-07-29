@@ -1043,7 +1043,7 @@ class AlgorithmInvalidate(AlgorithmStoreResources):
             return {"msg": "Algorithm not found"}, HTTPStatus.NOT_FOUND
 
         # invalidate the algorithm
-        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.invalidated_at = datetime.datetime.now(datetime.UTC)
         algorithm.status = AlgorithmStatus.REMOVED.value
         algorithm.save()
 

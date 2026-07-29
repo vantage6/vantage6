@@ -474,7 +474,7 @@ def create_fixtures(
 
             except Exception as e:
                 traceback.print_exc()
-                print(f"Error creating node {name}: {str(e)}")
+                print(f"Error creating node {name}: {e!s}")
 
     # Print creation details
     printed_summary = print_creation_details(creation_details)

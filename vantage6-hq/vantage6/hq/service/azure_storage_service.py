@@ -1,5 +1,5 @@
 import logging
-from typing import IO, Union
+from typing import IO
 
 from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobServiceClient
@@ -87,7 +87,7 @@ class AzureStorageService:
         stream = blob_client.download_blob()
         return stream.readall()
 
-    def store_blob(self, blob_name: str, data: Union[IO, bytes]) -> None:
+    def store_blob(self, blob_name: str, data: IO | bytes) -> None:
         """
         Store data as a blob in Azure Blob Storage.
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template
@@ -91,7 +91,7 @@ class Configuration(collections.UserDict):
         return is_valid
 
 
-class ConfigurationManager(object):
+class ConfigurationManager:
     """Class to maintain valid configuration settings.
 
     Parameters
@@ -173,7 +173,7 @@ class ConfigurationManager(object):
     def from_file(
         cls,
         path: Path | str,
-        conf_class: Type[Configuration] = Configuration,
+        conf_class: type[Configuration] = Configuration,
         is_sandbox: bool = False,
     ) -> ConfigurationManager:
         """
@@ -263,7 +263,6 @@ class ConfigurationManager(object):
         """
         Get the configuration template for a specific infrastructure component.
         """
-        pass
 
     @classmethod
     def _get_config_template(cls, template_file: str) -> Template:

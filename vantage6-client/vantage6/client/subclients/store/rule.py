@@ -1,4 +1,3 @@
-from typing import List
 
 from vantage6.common.client.client_base import ClientBase
 
@@ -18,7 +17,7 @@ class StoreRuleSubClient(ClientBase.SubClient):
         current_user: bool = False,
         page: int = 1,
         per_page: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         List algorithms
 
