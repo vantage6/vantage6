@@ -60,7 +60,7 @@ from vantage6.backend.common.jsonable import jsonable
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.metrics import Metrics, start_prometheus_exporter
 from vantage6.backend.common.mail_service import MailService
-from vantage6.cli.context.server import ServerContext
+from vantage6.common.server_context import ServerContext
 from vantage6.server.model.base import DatabaseSessionManager, Database
 from vantage6.server.permission import PermissionManager
 from vantage6.server import db
