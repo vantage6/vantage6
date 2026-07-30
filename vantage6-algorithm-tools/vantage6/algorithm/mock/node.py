@@ -238,7 +238,9 @@ class MockNode:
         self.dataframes[dataframe_name] = df
         return df
 
-    def run(self, method_fn: Callable, arguments: dict, task_env_vars: dict | None = None):
+    def run(
+        self, method_fn: Callable, arguments: dict, task_env_vars: dict | None = None
+    ):
         """
         Run a method with the given arguments and task environment variables.
 

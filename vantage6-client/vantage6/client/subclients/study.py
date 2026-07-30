@@ -96,7 +96,10 @@ class StudySubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def create(
-        self, name: str, organizations: builtins.list[int], collaboration: int | None = None
+        self,
+        name: str,
+        organizations: builtins.list[int],
+        collaboration: int | None = None,
     ) -> dict:
         """
         Create new study
@@ -186,7 +189,9 @@ class StudySubClient(ClientBase.SubClient):
         data = self._clean_update_data(data)
         return self.parent.request(f"study/{id_}", method="patch", json=data)
 
-    def add_organization(self, organization: int, study: int | None = None) -> builtins.list[dict]:
+    def add_organization(
+        self, organization: int, study: int | None = None
+    ) -> builtins.list[dict]:
         """
         Add an organization to a study
 
@@ -208,7 +213,9 @@ class StudySubClient(ClientBase.SubClient):
             json={"id": organization},
         )
 
-    def remove_organization(self, organization: int, study: int | None = None) -> builtins.list[dict]:
+    def remove_organization(
+        self, organization: int, study: int | None = None
+    ) -> builtins.list[dict]:
         """
         Remove an organization from a study
 

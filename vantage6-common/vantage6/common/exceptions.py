@@ -15,4 +15,3 @@ class AlgorithmRetrievalError(Exception):
 class SuperUserAlreadyExistsError(Exception):
     """Exception to indicate that the super user already exists when it was
     expected not to (e.g. on first-time HQ setup)."""
-

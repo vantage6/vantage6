@@ -68,7 +68,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def create(self, name: str, description: str, rules: builtins.list[int]) -> dict[str, Any]:
+    def create(
+        self, name: str, description: str, rules: builtins.list[int]
+    ) -> dict[str, Any]:
         """
         Create a new role
 

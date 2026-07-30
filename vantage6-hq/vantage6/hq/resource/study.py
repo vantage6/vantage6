@@ -178,9 +178,7 @@ class StudyBase(ServicesResources):
             True if all organizations are members of the collaboration, False otherwise
         """
         collab = db.Collaboration.get(collaboration_id)
-        return set(organization_ids).issubset(
-            {org.id for org in collab.organizations}
-        )
+        return set(organization_ids).issubset({org.id for org in collab.organizations})
 
 
 class Studies(StudyBase):

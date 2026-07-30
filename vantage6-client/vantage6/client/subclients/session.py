@@ -99,7 +99,11 @@ class SessionSubClient(ClientBase.SubClient):
 
     @post_filtering(iterable=False)
     def update(
-        self, id_: int, name: str | None = None, scope: str | None = None, display: bool = False
+        self,
+        id_: int,
+        name: str | None = None,
+        scope: str | None = None,
+        display: bool = False,
     ):
         """
         Modify a session

@@ -1,4 +1,3 @@
-
 import builtins
 
 from vantage6.common.client.client_base import ClientBase

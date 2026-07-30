@@ -40,8 +40,12 @@ class HATEOASModelSchema(BaseHATEOASModelSchema):
         self.task = lambda obj: self.create_hateoas("task", obj)
         self.port = lambda obj: self.create_hateoas("port", obj)
         self.parent_ = lambda obj: self.create_hateoas("parent", obj, endpoint="task")
-        self.init_org_ = lambda obj: self.create_hateoas("init_org", obj, endpoint="organization")
-        self.init_user_ = lambda obj: self.create_hateoas("init_user", obj, endpoint="user")
+        self.init_org_ = lambda obj: self.create_hateoas(
+            "init_org", obj, endpoint="organization"
+        )
+        self.init_user_ = lambda obj: self.create_hateoas(
+            "init_user", obj, endpoint="user"
+        )
         self.study = lambda obj: self.create_hateoas("study", obj)
         self.algorithm_store = lambda obj: self.create_hateoas("algorithm_store", obj)
 
@@ -385,11 +389,9 @@ class UserWithPermissionDetailsSchema(UserSchema):
         # collaboration scope permissions
         orgs_in_collabs = list(
             {
-                
-                    org.id
-                    for collab in obj.organization.collaborations
-                    for org in collab.organizations
-                
+                org.id
+                for collab in obj.organization.collaborations
+                for org in collab.organizations
             }
         )
         return {

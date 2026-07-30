@@ -13,15 +13,12 @@ class TemporaryAlgorithmFail(Exception):
     """
 
 
-
 class UnknownAlgorithmStartFail(TemporaryAlgorithmFail):
     """Algorithm failed to start due to an unknown reason."""
 
 
-
 class AlgorithmContainerNotFound(TemporaryAlgorithmFail):
     """Algorithm container was lost."""
-
 
 
 #
@@ -33,12 +30,9 @@ class PermanentAlgorithmFail(Exception):
     """
 
 
-
 class DataFrameNotFound(PermanentAlgorithmFail):
     """DataFrame was not found."""
 
 
-
 class PermanentAlgorithmStartFail(PermanentAlgorithmFail):
     """Algorithm failed to start"""
-

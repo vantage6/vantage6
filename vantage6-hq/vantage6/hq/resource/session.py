@@ -277,7 +277,12 @@ class SessionBase(TaskPostBase):
         ):
             return True
 
-        return bool(self.is_user() and getattr(self.r, f"{op}_own").can() and session.user_id == g.user.id and session.scope == S.OWN)
+        return bool(
+            self.is_user()
+            and getattr(self.r, f"{op}_own").can()
+            and session.user_id == g.user.id
+            and session.scope == S.OWN
+        )
 
     def create_session_task(
         self,

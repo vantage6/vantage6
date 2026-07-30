@@ -471,9 +471,7 @@ class Nodes(NodeBase):
             }, HTTPStatus.BAD_REQUEST
 
         # if no name is provided, generate one
-        name = (
-            data.get("name", f"{organization.name}-{collaboration.name}-node")
-        )
+        name = data.get("name", f"{organization.name}-{collaboration.name}-node")
         if " " in name:
             return {"msg": "Node name cannot contain spaces!"}, HTTPStatus.BAD_REQUEST
         if db.Node.exists("name", name):

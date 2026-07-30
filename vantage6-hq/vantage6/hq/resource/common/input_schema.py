@@ -166,20 +166,16 @@ class CollaborationChangeOrganizationSchema(_OnlyIdSchema):
     """
 
 
-
 class CollaborationAddNodeSchema(_OnlyIdSchema):
     """Schema for validating requests that add a node to a collaboration."""
-
 
 
 class KillTaskInputSchema(_OnlyIdSchema):
     """Schema for validating input for killing a task."""
 
 
-
 class KillNodeTasksInputSchema(_OnlyIdSchema):
     """Schema for validating input for killing tasks on a node."""
-
 
 
 class NodeInputSchema(_NameValidationSchema):
@@ -204,7 +200,6 @@ class OrganizationInputSchema(_NameValidationSchema):
 
 class ResetAPIKeyInputSchema(_OnlyIdSchema):
     """Schema for validating input for resetting an API key."""
-
 
 
 class RunInputSchema(Schema):
@@ -363,10 +358,8 @@ class UserDeleteInputSchema(DeleteDependentsInputSchema):
     """Schema for validating input for deleting a user."""
 
 
-
 class NodeDeleteInputSchema(DeleteDependentsInputSchema):
     """Schema for validating input for deleting a node."""
-
 
 
 class ColumnNameInputSchema(Schema):
@@ -420,7 +413,6 @@ class StudyChangeOrganizationSchema(_OnlyIdSchema):
     """
     Schema for validating requests that add an organization to a study.
     """
-
 
 
 class SessionTaskInputSchema(Schema):

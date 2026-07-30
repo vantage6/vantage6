@@ -60,9 +60,7 @@ class Algorithm(Base):
     partitioning = Column(String)
     vantage6_version = Column(String)
     digest = Column(String)
-    submitted_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.UTC)
-    )
+    submitted_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     approved_at = Column(DateTime)
     invalidated_at = Column(DateTime)
     developer_id = Column(Integer, ForeignKey("user.id"))
