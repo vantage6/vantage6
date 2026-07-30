@@ -4,6 +4,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 import questionary as q
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import error, info, warning
 from vantage6.common.globals import InstanceType
@@ -278,39 +280,36 @@ def parse_database_uri_to_config(
         hostname = parsed.hostname
         port = parsed.port or 5432
         database_name = parsed.path.lstrip("/")
-
-        for required_field in [
-            ("username", username),
-            ("password", password),
-            ("hostname", hostname),
-            ("database name", database_name),
-        ]:
-            if not required_field[1]:
-                error(
-                    f"No {required_field[0]} could be found in the database URI. "
-                    f"Please provide a {required_field[0]}."
-                )
-                sys.exit(1)
-        if not port:
-            warning(
-                "No port could be found in the database URI. Using default port 5432."
-            )
-
-        return {
-            "external": True,
-            "host": hostname,
-            "port": port,
-            "name": database_name,
-            "username": username,
-            "password": password,
-        }
-
-    except Exception as e:
+    except ValueError as e:
         error(f"Failed to parse database URI: {e}")
         error(
             "Please use format: postgresql://username:password@hostname:port/database"
         )
         sys.exit(1)
+
+    for required_field in [
+        ("username", username),
+        ("password", password),
+        ("hostname", hostname),
+        ("database name", database_name),
+    ]:
+        if not required_field[1]:
+            error(
+                f"No {required_field[0]} could be found in the database URI. "
+                f"Please provide a {required_field[0]}."
+            )
+            sys.exit(1)
+    if not port:
+        warning("No port could be found in the database URI. Using default port 5432.")
+
+    return {
+        "external": True,
+        "host": hostname,
+        "port": port,
+        "name": database_name,
+        "username": username,
+        "password": password,
+    }
 
 
 def _add_keycloak_admin_secret(
@@ -369,7 +368,7 @@ def _add_keycloak_admin_secret(
             namespace=k8s_cfg.namespace,
             secret_data={"username": admin_user, "password": admin_password},
         )
-    except Exception as exc:
+    except (RuntimeError, ApiException, HTTPError) as exc:
         error(f"Failed to create Keycloak admin secret: {exc}")
         sys.exit(1)
 

@@ -60,7 +60,7 @@ def click_insert_context(func: Callable) -> Callable:
                     name = select_configuration_questionnaire(
                         InstanceType.HQ, system_folders
                     )
-                except Exception:
+                except FileNotFoundError:
                     error("No configurations could be found!")
                     sys.exit()
 

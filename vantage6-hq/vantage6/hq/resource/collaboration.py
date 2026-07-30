@@ -375,9 +375,7 @@ class Collaborations(CollaborationBase):
             }, HTTPStatus.UNAUTHORIZED
 
         encrypted = data["encrypted"] == 1
-        restricted_sessions = (
-            data["session_restrict_to_same_image"] == 1
-        )
+        restricted_sessions = data["session_restrict_to_same_image"] == 1
 
         collaboration = db.Collaboration(
             name=name,
@@ -456,11 +454,10 @@ class Collaboration(CollaborationBase):
         # verify that the user/node organization is within the
         # collaboration
         ids = [org.id for org in collaboration.organizations]
-        if not self.r.v_glo.can():
-            if not (self.r.v_org.can() and auth_org_id in ids):
-                return {
-                    "msg": "You lack the permission to do that!"
-                }, HTTPStatus.UNAUTHORIZED
+        if not self.r.v_glo.can() and not (self.r.v_org.can() and auth_org_id in ids):
+            return {
+                "msg": "You lack the permission to do that!"
+            }, HTTPStatus.UNAUTHORIZED
 
         schema = self._select_schema()
 

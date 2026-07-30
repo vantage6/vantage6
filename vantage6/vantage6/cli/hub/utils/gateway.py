@@ -123,7 +123,7 @@ def _detect_envoy_gateway(
                         gateway_class=name,
                         namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE,
                     )
-    except Exception:
+    except OSError:
         # Best-effort detection; fall through to "not found".
         pass
 
@@ -153,7 +153,7 @@ def _detect_envoy_gateway(
                     gateway_class=gateway_class_name,
                     namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE,
                 )
-    except Exception:
+    except OSError:
         pass
 
     return EnvoyGatewayStatus(exists=False)

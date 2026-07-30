@@ -45,10 +45,10 @@ def _wait_for_store_to_be_online(
             elif print_unexpected_error:
                 try:
                     error(f"Store returns unexpected error: {result.json()['msg']}")
-                except Exception:
+                except (requests.exceptions.JSONDecodeError, KeyError):
                     error(f"Store returns unexpected error: {result.status_code}")
                 print_unexpected_error = False
-        except Exception:
+        except requests.RequestException:
             info(f"Store not ready yet, waiting {wait_time} seconds...")
         time.sleep(wait_time)
 

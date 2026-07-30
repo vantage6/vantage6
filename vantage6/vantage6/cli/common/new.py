@@ -1,6 +1,7 @@
 import sys
 from collections.abc import Callable
 
+import yaml
 from colorama import Fore, Style
 
 from vantage6.common import ensure_config_dir_writable, error, info
@@ -64,8 +65,8 @@ def new(
         if ctx_class.config_exists(name, system_folders, is_sandbox):
             error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
             sys.exit(1)
-    except Exception as e:
-        error(e)
+    except (OSError, yaml.YAMLError, AssertionError) as e:
+        error(str(e))
 
         sys.exit(1)
 

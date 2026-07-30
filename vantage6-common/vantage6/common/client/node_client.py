@@ -64,8 +64,8 @@ class NodeClient(ClientBase):
         # get token from keycloak
         try:
             self.obtain_new_token()
-        except Exception as e:
-            self.log.exception("Getting token failed: %s", e)
+        except Exception:
+            self.log.exception("Getting token failed")
             raise
 
         # get info on how HQ sees this node
@@ -124,7 +124,7 @@ class NodeClient(ClientBase):
                 try:
                     self.obtain_new_token()
                     token_expired = False
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.log.error("Getting new token failed: %s", e)
                     # sleep for a bit and then try again. HQ might be
                     # unreachable or internet connection down. We sleep so long that
@@ -221,7 +221,9 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def patch(self, id_: int, data: dict, init_org_id: int | None = None) -> dict | None:
+        def patch(
+            self, id_: int, data: dict, init_org_id: int | None = None
+        ) -> dict | None:
             """
             Update the algorithm run data at HQ.
 
@@ -354,9 +356,7 @@ class NodeClient(ClientBase):
         """
         self.run.patch(
             id_,
-            data={
-                "started_at": datetime.datetime.now(datetime.UTC).isoformat()
-            },
+            data={"started_at": datetime.datetime.now(datetime.UTC).isoformat()},
         )
 
     def check_user_allowed_to_send_task(

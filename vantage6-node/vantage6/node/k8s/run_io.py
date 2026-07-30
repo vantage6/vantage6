@@ -73,7 +73,9 @@ class RunIO:
             self.run_folder = os.path.join(TASK_FILES_ROOT, str(self.run_id))
 
     @classmethod
-    def from_dict(cls, data: dict, client: NodeClient, task_dir_extension: str | None = None):
+    def from_dict(
+        cls, data: dict, client: NodeClient, task_dir_extension: str | None = None
+    ):
         # TODO validate that the keys are present
         return cls(
             run_id=int(data["run_id"]),
@@ -173,14 +175,12 @@ class RunIO:
         ]:
             try:
                 table = pq.read_table(self.output_file)
-            except Exception as e:
+            except Exception:
                 self.log.exception(
-                    "Error reading output file for run ID %s, session ID %s, action %s."
-                    " Exception: %s",
+                    "Error reading output file for run ID %s, session ID %s, action %s.",
                     self.run_id,
                     self.session_id,
                     self.action,
-                    str(e),
                 )
                 return b"", RunStatus.UNEXPECTED_OUTPUT
 

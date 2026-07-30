@@ -201,7 +201,7 @@ def node_configuration_questionaire(
     )
     try:
         client.authenticate()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Could not authenticate: {e}")
         error(
             "Please check your API key and if HQ and authentication service are online."

@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 
 import click
@@ -37,7 +38,7 @@ def _get_latest_cert_manager_version() -> str:
                 "No tag_name found in cert-manager GitHub releases response."
             )
         return version
-    except Exception as exc:  # pragma: no cover - best-effort helper
+    except requests.RequestException as exc:  # pragma: no cover - best-effort helper
         raise RuntimeError(
             f"Failed to fetch latest cert-manager version from GitHub: {exc!r}"
         ) from exc
@@ -58,7 +59,7 @@ def _check_cert_manager_crds_installed(k8s_config: KubernetesConfig) -> bool:
             use_k8s_config_namespace=False,
         )
         return result.returncode == 0
-    except Exception:
+    except OSError:
         return False
 
 
@@ -101,7 +102,10 @@ def check_and_install_cert_manager_crds(
             k8s_config=k8s_config,
         )
         info("✅ cert-manager CRDs installed successfully.")
-    except Exception as exc:  # pragma: no cover - best-effort helper
+    except (
+        OSError,
+        subprocess.CalledProcessError,
+    ) as exc:  # pragma: no cover - best-effort helper
         warning(f"⚠️  Could not ensure cert-manager CRDs are installed: {exc}")
         warning(
             "If hub installation fails due to missing Certificate CRDs, please run "
@@ -130,7 +134,7 @@ def cert_manager_seems_installed(k8s_config: KubernetesConfig) -> bool:
         )
         if result.returncode == 0:
             return True
-    except Exception:
+    except OSError:
         pass
 
     # Fallback: presence of the webhook configuration is a strong indicator
@@ -142,7 +146,7 @@ def cert_manager_seems_installed(k8s_config: KubernetesConfig) -> bool:
             check=False,
         )
         return result.returncode == 0
-    except Exception:
+    except OSError:
         return False
 
 

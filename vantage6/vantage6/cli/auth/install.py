@@ -5,6 +5,7 @@ import time
 
 import click
 import requests
+from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error, info, warning
 
@@ -202,7 +203,7 @@ def _wait_for_operator_ready(
                 info("Keycloak Operator is ready.")
                 return
 
-        except Exception as e:
+        except (OSError, subprocess.SubprocessError) as e:
             warning(f"Error checking operator status: {e}")
 
         time.sleep(5)
@@ -234,7 +235,7 @@ def check_and_install_keycloak_operator(k8s_config: KubernetesConfig):
             info("✅ Keycloak operator installed successfully.")
         else:
             info("✅ Keycloak operator is already installed.")
-    except Exception as e:
+    except (ConfigException, OSError, subprocess.SubprocessError) as e:
         warning(f"⚠️  Could not check Keycloak operator status: {e}")
         warning(
             "Continuing anyway. If Keycloak fails to start, run 'v6 auth "
@@ -270,5 +271,5 @@ def _check_keycloak_operator_installed(k8s_config: KubernetesConfig) -> bool:
             check=False,
         )
         return result.returncode == 0
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return False

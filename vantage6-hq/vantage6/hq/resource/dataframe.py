@@ -311,7 +311,7 @@ class SessionDataframes(SessionBase):
                 dataframe=dataframe,
                 store_id=task.get("store_id"),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             dataframe.delete()
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 

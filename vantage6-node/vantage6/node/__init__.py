@@ -42,6 +42,7 @@ from socketio import Client as SocketIO
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
+from vantage6.common.exceptions import EncryptionMismatchError
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     NodeConfigKey,
@@ -408,7 +409,7 @@ class Node:
                 id_=run_id,
                 data={
                     "status": RunStatus.FAILED.value,
-                    "finished_at": datetime.datetime.now().isoformat(),
+                    "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
@@ -456,9 +457,7 @@ class Node:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
-            update["finished_at"] = datetime.datetime.now(
-                datetime.UTC
-            ).isoformat()
+            update["finished_at"] = datetime.datetime.now(datetime.UTC).isoformat()
         self.client.run.patch(id_=run_id, data=update)
 
         # send socket event to alert everyone of task status change. In case the
@@ -543,7 +542,7 @@ class Node:
                         "result": results.data,
                         "log": results.logs,
                         "status": results.status.value,
-                        "finished_at": datetime.datetime.now().isoformat(),
+                        "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
                     },
                     init_org_id=init_org.get("id"),
                 )
@@ -564,9 +563,8 @@ class Node:
                 )
             except Exception as e:
                 self.log.exception(
-                    "poll_task_results (Speaking) thread had an exception: %s - %s",
+                    "poll_task_results (Speaking) thread had an exception: %s",
                     type(e).__name__,
-                    e,
                 )
 
             time.sleep(1)
@@ -598,7 +596,7 @@ class Node:
             except requests.exceptions.ConnectionError:
                 self.__print_connection_error_logs()
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 msg = (
                     "Authentication failed. Retrying in "
                     f"{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!"
@@ -651,7 +649,7 @@ class Node:
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
-            raise Exception("Expectations on encryption don't match?!")
+            raise EncryptionMismatchError("Expectations on encryption don't match?!")
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
@@ -727,16 +725,16 @@ class Node:
             try:
                 self.log.info("Waiting for new tasks....")
                 run_to_execute = self.runs_queue.get()
-            except Exception as e:
-                self.log.exception("Error while processing tasks queue: %s", e)
+            except Exception:
+                self.log.exception("Error while processing tasks queue")
                 time.sleep(1)
                 continue
 
             try:
                 self.log.info("New task received")
                 self.__start_task(run_to_execute)
-            except Exception as e:
-                self.log.exception("Error while starting task: %s", e)
+            except Exception:
+                self.log.exception("Error while starting task")
                 self.log.error(
                     "Task %s failed to start and will not be retried",
                     run_to_execute["task"]["id"],
@@ -750,8 +748,8 @@ class Node:
                             "log": "Error in the node while starting the task",
                         },
                     )
-                except Exception as e:
-                    self.log.exception("Error while patching task: %s", e)
+                except Exception:
+                    self.log.exception("Error while patching task")
                 time.sleep(1)
                 continue
 
@@ -863,14 +861,14 @@ class Node:
         try:
             if hasattr(self, "socketIO") and self.socketIO:
                 self.socketIO.disconnect()
-        except Exception as e:
-            self.log.exception("Error while disconnecting from socketIO: %s", e)
+        except Exception:
+            self.log.exception("Error while disconnecting from socketIO")
 
         try:
             if hasattr(self, "k8s_container_manager"):
                 self.k8s_container_manager.cleanup()
-        except Exception as e:
-            self.log.exception("Error while cleaning up k8s container manager: %s", e)
+        except Exception:
+            self.log.exception("Error while cleaning up k8s container manager")
 
         self.log.info("Bye!")
 

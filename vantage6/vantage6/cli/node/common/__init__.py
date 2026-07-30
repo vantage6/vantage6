@@ -5,6 +5,7 @@ Common functions that are used in node CLI commands
 import os
 import sys
 
+import requests
 from colorama import Fore, Style
 
 from vantage6.common import debug, error, info
@@ -102,7 +103,7 @@ def create_client_and_authenticate(
 
     try:
         client.authenticate()
-    except Exception as exc:
+    except (requests.RequestException, AttributeError) as exc:
         error("Could not authenticate!")
         debug(str(exc))
         sys.exit(1)
@@ -132,7 +133,7 @@ def select_node(name: str, system_folders: bool) -> str:
             if name
             else select_configuration_questionnaire(InstanceType.NODE, system_folders)
         )
-    except Exception:
+    except FileNotFoundError:
         error("No configurations could be found!")
         sys.exit()
 

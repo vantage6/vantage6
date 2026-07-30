@@ -1,4 +1,6 @@
 import click
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import info, warning
 from vantage6.common.globals import InstanceType
@@ -45,7 +47,7 @@ def auth_remove(ctx: AuthContext, name: str, system_folders: bool, force: bool) 
     # Best-effort cleanup of Keycloak PVCs and their bound PVs after uninstall
     try:
         _cleanup_auth_volumes(ctx)
-    except Exception as e:
+    except (RuntimeError, ApiException, HTTPError) as e:
         # Cleanup is best-effort; do not fail the remove command if cleanup fails
         warning(f"Failed to cleanup auth volumes: {e}")
 
@@ -77,7 +79,7 @@ def _cleanup_auth_volumes(ctx: AuthContext) -> None:
         try:
             info(f"Deleting persistent volume claim {name_} in namespace {ns}")
             core_api.delete_namespaced_persistent_volume_claim(name=name_, namespace=ns)
-        except Exception as e:
+        except (ApiException, HTTPError) as e:
             # Ignore failures; continue attempting other deletions
             warning(
                 f"Failed to delete persistent volume claim {name_} in namespace {ns}: "
@@ -89,5 +91,5 @@ def _cleanup_auth_volumes(ctx: AuthContext) -> None:
         try:
             info(f"Deleting persistent volume: {pv_name}")
             core_api.delete_persistent_volume(name=pv_name)
-        except Exception as e:
+        except (ApiException, HTTPError) as e:
             warning(f"Failed to delete persistent volume {pv_name}: {e}")

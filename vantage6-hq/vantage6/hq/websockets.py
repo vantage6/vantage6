@@ -88,9 +88,8 @@ class DefaultSocketNamespace(Namespace):
             emit("invalid_token", room=request.sid)
             return
 
-        except Exception as exc:
-            self.log.error("Couldn't connect client! No or Invalid JWT token?")
-            self.log.exception(exc)
+        except Exception:
+            self.log.exception("Couldn't connect client! No or Invalid JWT token?")
             return
 
         # get identity from token.
@@ -572,7 +571,7 @@ class DefaultSocketNamespace(Namespace):
                 )
             except ValueError as e:
                 self.log.warning(f"Invalid metric data: {e}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")

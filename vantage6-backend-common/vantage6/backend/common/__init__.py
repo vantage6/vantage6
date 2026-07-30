@@ -159,7 +159,9 @@ class Vantage6App:
             except KeyError as e:
                 log.error(f"Failed to get keycloak public key: {e}")
                 time.sleep(retry_delay)
-        raise Exception("Failed to get keycloak public key")
+        raise TimeoutError(
+            f"Failed to get keycloak public key after {num_attempts} attempts"
+        )
 
     def _configure_flask_base(
         self, database_session_manager: type["BaseDatabaseSessionManager"]
@@ -182,11 +184,11 @@ class Vantage6App:
         )
         try:
             self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
-        except Exception as e:
-            log.exception(e)
-            log.error(f"Failed to get keycloak public key: {e}")
-            log.error("This means that you cannot login as a user")
-            log.error("Exiting...")
+        except Exception:
+            log.exception(
+                "Could not get keycloak public key. This means that you "
+                "cannot login as a user. Exiting..."
+            )
             sys.exit(1)
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
@@ -363,12 +365,12 @@ class Vantage6App:
         try:
             super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
             super_user.save()
-        except Exception as exc:
-            log.error(
-                "Could not get keycloak ID for super user %s", super_user.username
+        except Exception:
+            log.exception(
+                "Could not get keycloak ID for super user %s. This means that you "
+                "cannot login as this user",
+                super_user.username,
             )
-            log.error("This means that you cannot login as this user")
-            log.exception(exc)
 
         # Also sync the organization ID of the super user in keycloak. Only do that
         # for HQ (where organization_id is defined), not for the algorithm store.
@@ -412,7 +414,7 @@ class Vantage6App:
                 organization_id,
                 username,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             log.critical(
                 "Could not set organization_id attribute for user %s in Keycloak",
                 username,

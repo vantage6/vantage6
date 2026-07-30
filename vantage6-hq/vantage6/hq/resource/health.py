@@ -64,8 +64,7 @@ class Health(ServicesResources):
         try:
             g.session.execute(text("SELECT 1"))
             db_ok = True
-        except Exception as e:
-            log.error("DB not responding")
-            log.exception(e)
+        except Exception:
+            log.exception("DB not responding")
 
         return {"api": True, "database": db_ok}, HTTPStatus.OK

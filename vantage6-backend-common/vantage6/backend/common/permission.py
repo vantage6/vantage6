@@ -16,6 +16,7 @@ from vantage6.backend.common.permission_models import RuleInterface
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
 
+
 class RuleNeed(NamedTuple):
     name: str
     scope: str
@@ -169,7 +170,7 @@ class PermissionManagerBase(ABC):
             module = importlib.import_module(f"{resources_location}.{res}")
             try:
                 module.permissions(self)
-            except Exception:
+            except Exception:  # noqa: BLE001  # noqa: BLE001
                 module_name = module.__name__.split(".")[-1]
                 log.debug(
                     "Resource '%s' contains no or invalid permissions", module_name

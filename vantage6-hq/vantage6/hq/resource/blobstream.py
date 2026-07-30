@@ -193,7 +193,7 @@ class BlobStream(BlobStreamBase):
         try:
             log.debug(f"Streaming result for run id={id}")
             blob_stream = self.storage_adapter.stream_blob(id)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.error(f"Error streaming result: {e}")
             return {"msg": "Error streaming result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -265,7 +265,7 @@ class BlobStream(BlobStreamBase):
             else:
                 data = request.get_data()
                 self.storage_adapter.store_blob(result_uuid, data)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.error(f"Error uploading result: {e}")
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 

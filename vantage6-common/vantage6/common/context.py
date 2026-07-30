@@ -9,6 +9,7 @@ from typing import Self
 
 import appdirs
 import pyfiglet
+import yaml
 
 from vantage6.common import Fore, Singleton, Style, __version__, error, get_config_path
 from vantage6.common.colors import ColorStreamHandler
@@ -410,7 +411,7 @@ class AppContext(metaclass=Singleton):
                     failed.append(file_)
                 else:
                     configs.append(conf_manager)
-            except Exception as e:
+            except (OSError, yaml.YAMLError, AssertionError) as e:
                 print(f"Error loading configuration file: {e}")
 
                 failed.append(file_)
@@ -597,7 +598,7 @@ class AppContext(metaclass=Singleton):
         # If filename is an absolute path `os.path.join()` ignores
         # `self.data_dir`.
         if not filename:
-            raise Exception('Argument "filename" should be provided!')
+            raise ValueError('Argument "filename" should be provided!')
         return os.path.join(self.data_dir, filename)
 
     def set_folders(

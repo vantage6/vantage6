@@ -24,7 +24,13 @@ def parse_datetime(
             converter = "%Y-%m-%dT%H:%M:%S.%f"
             if date.endswith("+00:00"):
                 converter += "%z"  # parse timezone
-            return dt.datetime.strptime(date, converter)
+            # DTZ007: %z is only appended above when present in the string; the
+            # naive case is handled explicitly right below, so this is safe.
+            parsed = dt.datetime.strptime(date, converter)  # noqa: DTZ007
+            if parsed.tzinfo is None:
+                # no timezone info was present in the string; assume UTC
+                parsed = parsed.replace(tzinfo=dt.UTC)
+            return parsed
         else:
             # convert datetime to UTC
             return date.astimezone(dt.UTC)

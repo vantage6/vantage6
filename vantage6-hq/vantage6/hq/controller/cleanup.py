@@ -1,6 +1,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
+from azure.core.exceptions import AzureError
 from sqlalchemy import select
 
 from vantage6.common.enum import RunStatus
@@ -51,7 +52,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                     log.debug(f"Deleting blob: {run.result}")
                     try:
                         storage_adapter.delete_blob(run.result)
-                    except Exception as e:
+                    except AzureError as e:
                         log.warning(f"Failed to delete result {run.result}: {e}")
                 run.result = ""
                 if include_args:
@@ -63,7 +64,7 @@ def cleanup_runs_data(config: dict, include_args: bool = False):
                         log.debug(f"Deleting blob: {run.arguments}")
                         try:
                             storage_adapter.delete_blob(run.arguments)
-                        except Exception as e:
+                        except AzureError as e:
                             log.warning(
                                 f"Failed to delete arguments {run.arguments}: {e}"
                             )

@@ -247,9 +247,8 @@ class AlgorithmClient(ClientBase):
                     result = json.loads(
                         base64s_to_bytes(response.get("result")).decode()
                     )
-                except Exception as e:
-                    self.parent.log.error("Unable to load results")
-                    self.parent.log.exception(e)
+                except Exception:
+                    self.parent.log.exception("Unable to load results")
             return result
 
         def from_task(self, task_id: int) -> list[Any]:
@@ -288,7 +287,7 @@ class AlgorithmClient(ClientBase):
                         return json.loads(run_data.decode(STRING_ENCODING))
                     else:
                         return json.loads(base64s_to_bytes(result_data).decode())
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.parent.log.error(
                         f"Unable to load results for task {task_id}: {e}"
                     )

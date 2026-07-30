@@ -6,7 +6,7 @@ python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
 
 import unittest
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -537,8 +537,8 @@ class TestPreprocessing(unittest.TestCase):
         df = get_test_dataframe()
 
         # Set start and end dates for random date generation
-        start_date = datetime(2020, 1, 1)
-        end_date = datetime(2022, 12, 31)
+        start_date = datetime(2020, 1, 1, tzinfo=UTC)
+        end_date = datetime(2022, 12, 31, tzinfo=UTC)
 
         # Generate a new column with random dates in string format
         magic_fmt = "(%d)+(%m)=(%Y)"

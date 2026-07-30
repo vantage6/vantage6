@@ -2,7 +2,7 @@ import logging
 import os
 from dataclasses import dataclass
 
-from keycloak import KeycloakAdmin, KeycloakOpenID
+from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID
 
 from vantage6.backend.common.globals import RequiredBackendEnvVars
 from vantage6.backend.common.resource.error_handling import BadRequestError
@@ -59,7 +59,7 @@ def get_keycloak_id_for_user(username: str):
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         keycloak_id = keycloak_admin.get_user_id(username)
     except Exception as exc:
-        log.exception(exc)
+        log.exception("Could not retrieve user from Keycloak")
         raise BadRequestError("Could not retrieve user from Keycloak") from exc
 
     if keycloak_id is None:
@@ -90,7 +90,7 @@ def get_user_from_keycloak(keycloak_user_id: str) -> dict:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         user_data = keycloak_admin.get_user(keycloak_user_id)
     except Exception as exc:
-        log.exception(exc)
+        log.exception("Could not retrieve user from Keycloak")
         raise BadRequestError("Could not retrieve user from Keycloak") from exc
 
     if user_data is None:
@@ -167,7 +167,7 @@ def create_service_account_in_keycloak(
         user_id = keycloak_admin.get_user_id(f"service-account-{client_name}")
         secret = keycloak_admin.get_client_secrets(client_id)
     except Exception as exc:
-        log.exception(exc)
+        log.exception("Could not create service account '%s' in Keycloak", client_name)
         raise BadRequestError(
             f"Could not create service account '{client_name}' in Keycloak"
         ) from exc
@@ -193,7 +193,7 @@ def delete_service_account_in_keycloak(client_id: str) -> None:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         keycloak_admin.delete_client(client_id)
     except Exception as exc:
-        log.exception(exc)
+        log.exception("Could not delete service account '%s' from Keycloak", client_id)
         raise BadRequestError(
             f"Service account '{client_id}' could not be deleted from Keycloak"
         ) from exc
@@ -217,6 +217,6 @@ def get_email_for_keycloak_id(keycloak_id: str) -> str | None:
         keycloak_admin: KeycloakAdmin = get_keycloak_admin_client()
         user_details = keycloak_admin.get_user(keycloak_id)
         return user_details["email"]
-    except Exception as exc:
+    except KeycloakError as exc:
         log.error(exc)
         return None

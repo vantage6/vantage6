@@ -417,8 +417,8 @@ class ContainerManager:
         except DataFrameNotFound as e:
             self.log.info(e)
             return RunStatus.DATAFRAME_NOT_FOUND
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Unknown error in creating volume mounts")
             return RunStatus.UNKNOWN_ERROR
 
         # Set environment variables for the algorithm client. This client is used
@@ -648,7 +648,7 @@ class ContainerManager:
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self.log.error(
                 f"Error creating Docker login secret for image {image}: {exc}"
             )
@@ -707,7 +707,7 @@ class ContainerManager:
                     },
                     namespace="/tasks",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.error(f"Error while streaming logs for run {run_io.run_id}: {e}")
         finally:
             w.stop()
@@ -1232,7 +1232,7 @@ class ContainerManager:
                 allowed_algorithms = [allowed_algorithms]
             try:
                 evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log.warning(
                     "Could not parse image with name %s: %s",
                     evaluated_img,
@@ -1243,7 +1243,7 @@ class ContainerManager:
                 if not self._is_regex_pattern(allowed_algo):
                     try:
                         allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001
                         self.log.warning(
                             "Could not parse allowed_algorithm policy with name %s: %s",
                             allowed_algo,
@@ -1296,7 +1296,7 @@ class ContainerManager:
             # get the store from the task_info
             try:
                 store_id = task_info["algorithm_store"]["id"]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 store_id = None
             if store_id:
                 store = self.client.algorithm_store.get(store_id)
@@ -1483,7 +1483,7 @@ class ContainerManager:
         """
         try:
             logs = self.__get_job_pod_logs(run_io=run_io)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.warning(
                 f"Error while getting logs of job {run_io.container_name}: {e}"
             )

@@ -2,7 +2,7 @@ import inspect as class_inspect
 import logging
 import os
 from time import sleep
-from typing import Any
+from typing import Any, ClassVar
 
 from flask.globals import g
 from sqlalchemy import (
@@ -154,7 +154,7 @@ class BaseDatabase:
                     log.info(f"Retrying in {RETRY_DELAY_IN_SECONDS} seconds...")
                     sleep(RETRY_DELAY_IN_SECONDS)
                 else:
-                    raise Exception(
+                    raise TimeoutError(
                         f"Unable to connect to the database!"
                         f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and "
                         f"{max_time_in_minutes} minutes."
@@ -247,9 +247,7 @@ class BaseDatabase:
         )
         with self.engine.connect() as conn, conn.begin():
             conn.execute(
-                text(
-                    f'ALTER TABLE "{tab_name}" ADD COLUMN {col_name} {col_type}'
-                )
+                text(f'ALTER TABLE "{tab_name}" ADD COLUMN {col_name} {col_type}')
             )
 
     @staticmethod
@@ -380,7 +378,7 @@ class BaseModelBase:
     from this class.
     """
 
-    _hidden_attributes = []
+    _hidden_attributes: ClassVar[list[str]] = []
 
     @declared_attr
     def __tablename__(cls):

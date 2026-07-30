@@ -472,7 +472,7 @@ def create_fixtures(
                         }
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 traceback.print_exc()
                 print(f"Error creating node {name}: {e!s}")
 

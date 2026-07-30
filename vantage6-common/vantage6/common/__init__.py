@@ -82,7 +82,7 @@ class Singleton(type):
     class to which it is the metaclass.
     """
 
-    _instances = {}
+    _instances: typing.ClassVar[dict[type, object]] = {}
 
     def __call__(cls, *args, **kwargs) -> object:
         """
@@ -279,7 +279,7 @@ def ensure_config_dir_writable(system_folders: bool = False) -> bool:
         try:
             os.makedirs(config_dir)
             w_ok = True
-        except Exception as e:
+        except OSError as e:
             error(f"Could not create directory '{config_dir}': {e}")
             w_ok = False
     elif not os.access(config_dir, os.W_OK):

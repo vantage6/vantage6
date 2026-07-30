@@ -26,7 +26,7 @@ def create_directory_if_not_exists(directory: Path) -> None:
     """
     try:
         directory.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
+    except OSError as e:
         error(f"Failed to create directory {directory}: {e}")
         sys.exit(1)
 

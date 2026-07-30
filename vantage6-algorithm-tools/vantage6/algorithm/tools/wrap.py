@@ -140,7 +140,7 @@ def _run_algorithm_method(
         arguments = {}
     try:
         result = method_fn(**arguments)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         error(f"Error encountered while calling {method}: {exc}")
         if log_traceback:
             error(traceback.print_exc())

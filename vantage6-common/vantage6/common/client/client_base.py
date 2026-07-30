@@ -18,6 +18,7 @@ from vantage6.common.globals import (
 )
 
 module_name = __name__.split(".")[1]
+log = logging.getLogger(module_name)
 
 
 @staticmethod
@@ -40,7 +41,7 @@ def _log_completion(task_id: int, start_time: float, log_animation: bool) -> Non
     if log_animation:
         print(f"\r{message}                     ")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 @staticmethod
@@ -67,7 +68,7 @@ def _log_progress(
     if log_animation:
         print(f"\r{message}", end="")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 class ClientBase(BlobStorageMixin):
@@ -468,8 +469,8 @@ class ClientBase(BlobStorageMixin):
             # of get_results
             run_data_ = cryptor.decrypt(run_data_)
 
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Failed to decrypt run data.")
 
         return run_data_
 
@@ -511,7 +512,7 @@ class ClientBase(BlobStorageMixin):
                     return decrypted
             try:
                 return decrypted.decode(STRING_ENCODING)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 self.log.error(
                     "Failed to decode the field %s. Skipping decoding, "
                     "returning bytes object.",

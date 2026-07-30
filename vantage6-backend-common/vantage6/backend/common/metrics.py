@@ -124,5 +124,5 @@ def start_prometheus_exporter(port: int = 9100) -> None:
     try:
         start_http_server(port)
         log.info("Prometheus exporter started on port %s", port)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.error("Failed to start Prometheus exporter: %s", e)

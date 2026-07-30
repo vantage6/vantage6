@@ -13,7 +13,6 @@ from vantage6.backend.common.globals import RequiredBackendEnvVars
 
 # This is a workaround for readthedocs
 if not os.environ.get("READTHEDOCS"):
-
     monkey.patch_all()
 
 # pylint: disable=wrong-import-position, wrong-import-order
@@ -30,9 +29,14 @@ from threading import Thread
 from flask import current_app
 from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
+from vantage6.common.exceptions import (
+    AuthenticationException,
+    SuperUserAlreadyExistsError,
+)
 from vantage6.common.globals import (
     DEFAULT_PROMETHEUS_EXPORTER_PORT,
     PING_INTERVAL_SECONDS,
@@ -159,7 +163,7 @@ class HQApp(Vantage6App):
                     splitted_rabbit_uri["port"],
                     splitted_rabbit_uri["vhost"],
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 log.warning(
                     "Failed to parse RabbitMQ URI. Will try to use the provided"
                     "URI to connect, but it may likely fail."
@@ -181,7 +185,7 @@ class HQApp(Vantage6App):
                 engineio_logger=debug_mode,
                 always_connect=True,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.warning(
                 "Default socketio settings failed, attempt to run "
                 "without gevent_uwsgi packages! This leads to "
@@ -261,8 +265,10 @@ class HQApp(Vantage6App):
             auth_identity = Identity(identity)
             try:
                 auth = db.Authenticatable.get_by_keycloak_id(identity)
-            except Exception:
-                raise Exception("No user or node found for keycloak id %s", identity)
+            except SQLAlchemyError as exc:
+                raise AuthenticationException(
+                    f"No user or node found for keycloak id {identity}"
+                ) from exc
 
             # in case of a user or node, we find an authenticated entity
             if isinstance(auth, db.Node):
@@ -354,15 +360,18 @@ class HQApp(Vantage6App):
             RequiredBackendEnvVars.KEYCLOAK_ADMIN_USERNAME.value
         )
         if not root_username:
-            raise Exception("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
+            raise OSError("Required env var KEYCLOAK_ADMIN_USERNAME is not set")
 
         # sanity check, this function should never be called in any other
         # context than the first run of HQ
         try:
             db.User.get_by_username(root_username)
-            raise Exception("Attempted to create super user when it already existed!")
         except NoResultFound:
             pass
+        else:
+            raise SuperUserAlreadyExistsError(
+                "Attempted to create super user when it already existed!"
+            )
 
         log.debug("Creating organization for root user")
         org = db.Organization.get_by_name("root")
@@ -404,8 +413,8 @@ class HQApp(Vantage6App):
                     if node.last_seen.replace(tzinfo=dt.UTC) < before_wait:
                         node.status = AuthStatus.OFFLINE.value
                         node.save()
-            except Exception as e:
-                log.exception("Node-status thread encountered an exception: %s", e)
+            except Exception:
+                log.exception("Node-status thread encountered an exception")
                 time.sleep(PING_INTERVAL_SECONDS)
 
     def __runs_data_cleanup_worker(self):
@@ -420,9 +429,8 @@ class HQApp(Vantage6App):
                     self.ctx.config,
                     include_args=include_args,
                 )
-            except Exception as e:
-                log.error("Results cleanup failed. Will try again in one hour.")
-                log.exception(e)
+            except Exception:
+                log.exception("Results cleanup failed. Will try again in one hour.")
             # simple for now: check every hour
             time.sleep(3600)
 

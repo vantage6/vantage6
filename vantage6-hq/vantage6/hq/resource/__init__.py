@@ -16,6 +16,7 @@ from flask_restful import Api
 from flask_socketio import SocketIO
 
 from vantage6.common import logger_name
+from vantage6.common.exceptions import AuthenticationException
 
 from vantage6.backend.common.permission import RuleNeed
 from vantage6.backend.common.resource.error_handling import UnauthorizedError
@@ -247,7 +248,7 @@ def _validate_container_token():
     # Get the token from the Authorization header
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise Exception("Missing or invalid Authorization header")
+        raise AuthenticationException("Missing or invalid Authorization header")
 
     # Extract the token
     token = auth_header.replace("Bearer ", "")
@@ -262,13 +263,13 @@ def _validate_container_token():
             algorithms=["HS256"],
             options={"verify_sub": False},
         )
-    except Exception as container_error:
+    except jwt.PyJWTError as container_error:
         log.error("Container authentication failed: %s", str(container_error))
-        raise Exception("Authentication failed")
+        raise AuthenticationException("Authentication failed")
 
     # Verify this is a container token
     if claims.get("sub", {}).get("vantage6_client_type") != "container":
-        raise Exception("Not a container token")
+        raise AuthenticationException("Not a container token")
 
     # Set the container info in the global context
     g.type = "container"
@@ -329,7 +330,9 @@ with_node = only_for(("node",))
 with_container = only_for(("container",))
 
 
-def get_org_ids_from_collabs(auth: Authenticatable, collab_id: int | None = None) -> list[int]:
+def get_org_ids_from_collabs(
+    auth: Authenticatable, collab_id: int | None = None
+) -> list[int]:
     """
     Get all organization ids from the collaborations the user or node is in.
 

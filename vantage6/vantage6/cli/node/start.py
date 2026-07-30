@@ -1,7 +1,10 @@
 import sys
 
 import click
+import requests
 from kubernetes import client as k8s_client
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import error, info, warning
 from vantage6.common.globals import (
@@ -79,7 +82,7 @@ def cli_node_start(
             version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
             major_minor = ".".join(version.split(".")[:2])
             image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
-        except Exception:
+        except (requests.RequestException, KeyError):
             warning("Could not determine HQ version. Using default node image")
 
         if major_minor and not __version__.startswith(major_minor):
@@ -133,7 +136,7 @@ def create_task_namespace_if_not_exists(ctx: NodeContext) -> None:
     core_api = get_core_api_with_ssl_handling()
     try:
         namespace_list = core_api.list_namespace()
-    except Exception:
+    except (ApiException, HTTPError):
         error(
             "Failed to list namespaces. Check if the cluster is running and reachable."
         )

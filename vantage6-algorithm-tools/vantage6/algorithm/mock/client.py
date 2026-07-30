@@ -31,40 +31,40 @@ class MockBaseClient:
         self.organization_id = 0
         # Store missing attributes in a set for __getattr__ to check
         self._missing_attributes = {
-                "_access_token",
-                "_ClientBase__auth_url",
-                "_ClientBase__check_algorithm_store_valid",
-                "_ClientBase__hq_url",
-                "_decrypt_run_data",
-                "_decrypt_field",
-                "_download_run_data_from_hq",
-                "_fetch_and_decrypt_run_data",
-                "_multi_page_request",
-                "_refresh_token",
-                "_upload_run_data_to_hq",
-                "auth_url",
-                "authenticate",
-                "check_if_blob_store_enabled",
-                "collaboration_id",
-                "cryptor",
-                "databases",
-                "generate_path_to",
-                "headers",
-                "image",
-                "log",
-                "name",
-                "node_id",
-                "obtain_new_token",
-                "request",
-                "hq_url",
-                "session_id",
-                "setup_encryption",
-                "store_id",
-                "study_id",
-                "token",
-                "wait_for_task_completion",
-                "whoami",
-            }
+            "_access_token",
+            "_ClientBase__auth_url",
+            "_ClientBase__check_algorithm_store_valid",
+            "_ClientBase__hq_url",
+            "_decrypt_run_data",
+            "_decrypt_field",
+            "_download_run_data_from_hq",
+            "_fetch_and_decrypt_run_data",
+            "_multi_page_request",
+            "_refresh_token",
+            "_upload_run_data_to_hq",
+            "auth_url",
+            "authenticate",
+            "check_if_blob_store_enabled",
+            "collaboration_id",
+            "cryptor",
+            "databases",
+            "generate_path_to",
+            "headers",
+            "image",
+            "log",
+            "name",
+            "node_id",
+            "obtain_new_token",
+            "request",
+            "hq_url",
+            "session_id",
+            "setup_encryption",
+            "store_id",
+            "study_id",
+            "token",
+            "wait_for_task_completion",
+            "whoami",
+        }
 
     def __getattr__(self, name: str):
         """Handle access to missing attributes."""
@@ -133,7 +133,7 @@ class MockBaseClient:
         return self.result.from_task(task_id)
 
     class Study(SubClient):
-        """ """
+        """Study subclient for the MockAlgorithmClient"""
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
@@ -269,7 +269,7 @@ class MockBaseClient:
                 except DataFrameNotFound as e:
                     error(f"A dataframe you specified does not exist: {e}")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     traceback.print_exc()
                     sys.exit(1)
@@ -581,7 +581,7 @@ class MockUserClient(MockBaseClient):
                     error(f"The function {method} is not a data extraction method.")
                     error("Exiting...")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     error(
                         "Error simulating dataframe creation for organization "
                         f"{org_id}: {e}"
@@ -610,7 +610,10 @@ class MockUserClient(MockBaseClient):
         def preprocess(
             self, id_: int, image: str, method: str, arguments: dict
         ) -> dict:
-            """ """
+            """
+            Preprocess a dataframe by creating a task that runs the preprocessing
+            method.
+            """
             dataframe = self.parent.network.hq.get_dataframe(id_)
             data_frame_name = dataframe.get("name")
             if not dataframe or not data_frame_name:
@@ -634,7 +637,7 @@ class MockUserClient(MockBaseClient):
                     error(f"The function {method} is not a preprocessing method.")
                     error("Exiting...")
                     sys.exit(1)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     error(
                         "Error simulating dataframe preprocessing for organization "
                         f"{org_id}: {e}"

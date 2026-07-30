@@ -252,7 +252,7 @@ def select_configuration_questionnaire(
         )
 
     if not choices:
-        raise Exception("No configurations could be found!")
+        raise FileNotFoundError("No configurations could be found!")
 
     # pop the question
     try:

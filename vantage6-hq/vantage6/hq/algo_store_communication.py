@@ -143,8 +143,7 @@ def request_algo_store(
         )
     except requests.exceptions.ConnectionError as exc:
         if not is_localhost_algo_store:
-            log.warning("Request to algorithm store failed")
-            log.exception(exc)
+            log.exception("Request to algorithm store failed", exc_info=exc)
         response = None
 
     # if the algorithm store is on localhost, we need to look for the local kubernetes
@@ -163,8 +162,7 @@ def request_algo_store(
                 new_url, endpoint, method, params, headers
             )
         except requests.exceptions.ConnectionError as exc:
-            log.warning("Request to algorithm store failed")
-            log.exception(exc)
+            log.exception("Request to algorithm store failed", exc_info=exc)
             response = None
 
     if response is None:

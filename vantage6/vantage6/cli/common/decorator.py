@@ -115,7 +115,7 @@ def click_insert_context(
                         name = select_configuration_questionnaire(
                             type_, system_folders, runtime_is_sandbox
                         )
-                    except Exception:
+                    except FileNotFoundError:
                         error("No configurations could be found!")
                         sys.exit(1)
 

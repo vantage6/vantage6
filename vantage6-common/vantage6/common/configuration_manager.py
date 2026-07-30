@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, Template
@@ -17,7 +17,7 @@ from vantage6.cli.globals import TEMPLATE_FOLDER
 class Configuration(collections.UserDict):
     """Base class to contain a single configuration."""
 
-    VALIDATORS = {}
+    VALIDATORS: ClassVar[dict[str, Any]] = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

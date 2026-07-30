@@ -48,7 +48,7 @@ def cli_node_set_api_key(
             name = select_configuration_questionnaire(
                 InstanceType.NODE, system_folders, is_sandbox
             )
-        except Exception:
+        except FileNotFoundError:
             error("No configurations could be found!")
             sys.exit(1)
 

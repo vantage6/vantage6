@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
+import datetime
 import logging
 import os
 import sys
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import datetime
 from io import StringIO
 
 # ANSI color codes
@@ -25,7 +25,7 @@ class TestResult(unittest.TextTestResult):
 
         if self.showAll:
             # self.stream.write("%-85s " % self.getDescription(test))
-            self.stream.write("%-85s " % str(test))
+            self.stream.write(f"{test:<85} ")
             self.stream.flush()
 
     def addError(self, test, err):
@@ -38,7 +38,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{RED}E{RESET}")
             self.stream.flush()
 
-        self.log.error("%-85s %s" % (test, error))
+        self.log.error(f"{test:<85} {error}")
         self.log.exception(err[1])
 
     def addFailure(self, test, err):
@@ -51,7 +51,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{RED}F{RESET}")
             self.stream.flush()
 
-        self.log.error("%-85s %s" % (test, fail))
+        self.log.info(f"{test:<85} {fail}")
         # self.log.error(self.separator1)
         # self.log.error("%s: %s" % ('FAIL', self.getDescription(test)))
         # self.log.error(self.separator2)
@@ -72,7 +72,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{YELLOW}s{RESET}")
             self.stream.flush()
 
-        self.log.info("%-85s %s" % (test, skipped))
+        self.log.info(f"{test:<85} {skipped}")
 
     def addSuccess(self, test):
         unittest.result.TestResult.addSuccess(self, test)
@@ -84,7 +84,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{GREEN}.{RESET}")
             self.stream.flush()
 
-        self.log.info("%-75s %s" % (test, ok))
+        self.log.info(f"{test:<75} {ok}")
 
 
 class TestRunner(unittest.TextTestRunner):
@@ -100,9 +100,7 @@ class TestRunner(unittest.TextTestRunner):
         buffer=False,
         resultclass=None,
     ):
-        super().__init__(
-            stream, descriptions, verbosity, failfast, buffer, resultclass
-        )
+        super().__init__(stream, descriptions, verbosity, failfast, buffer, resultclass)
         self.log = log
 
     def _makeResult(self):
@@ -152,7 +150,9 @@ def find_tests(path=None):
 def run_tests(suites) -> bool:
     log = logging.getLogger("utest")
     print("-" * 90)
-    print("Started: " + datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
+    print(
+        "Started: " + datetime.datetime.now(datetime.UTC).strftime("%d-%m-%Y %H:%M:%S")
+    )
     print("-" * 90)
 
     # Setting verbosity=1 will display dots instead.

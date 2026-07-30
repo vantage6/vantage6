@@ -4,6 +4,7 @@ with HQ. It contains general methods for any routes, and methods to handle tasks
 results, including their encryption and decryption.
 """
 
+import json
 import logging
 import traceback
 from collections.abc import Callable
@@ -147,7 +148,7 @@ def make_request(
             sleep(1)
 
     # if all attempts fail, raise an exception to be handled by its parent
-    raise Exception("Proxy request failed")
+    raise Exception("Proxy request failed")  # noqa: TRY002
 
 
 def decrypt_result(run: dict) -> dict:
@@ -431,7 +432,7 @@ def stream_handler(id: str) -> FlaskResponse:
         )
         try:
             log.warning("Error messages: %s", backend_response.json())
-        except Exception:
+        except json.JSONDecodeError:
             log.warning(
                 "Could not decode error response as JSON. Response text: %s",
                 backend_response.text,
@@ -515,7 +516,7 @@ def stream_handler_post() -> FlaskResponse:
         )
         try:
             log.warning("Error messages: %s", backend_response.json())
-        except Exception:
+        except json.JSONDecodeError:
             log.warning("Could not decode error response as JSON.")
         log.debug(
             "method: %s, url: %s, params: %s, headers: %s",

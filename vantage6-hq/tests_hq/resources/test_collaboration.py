@@ -55,7 +55,7 @@ class TestResources(TestResourceBase):
         headers = self.get_user_auth_header()
 
         # test that we can't view without permissions
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -63,14 +63,14 @@ class TestResources(TestResourceBase):
         # test view with organization scope
         rule = Rule.get_by_("collaboration", Scope.ORGANIZATION, Operation.VIEW)
         headers = self.get_user_auth_header(organization=org, rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test view with organization scope other organiation
         headers = self.get_user_auth_header(rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
@@ -78,14 +78,14 @@ class TestResources(TestResourceBase):
         # test view with global scope
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.VIEW)
         headers = self.get_user_auth_header(rules=[rule])
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test as node
         headers = self.create_node_and_login(organization=org, collaboration=col)
-        results, json_data = self.paginated_list(
+        results, _json_data = self.paginated_list(
             f"/api/collaboration?organization_id={org.id}", headers=headers
         )
         self.assertEqual(results.status_code, HTTPStatus.OK)

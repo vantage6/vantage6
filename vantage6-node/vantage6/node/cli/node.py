@@ -74,7 +74,7 @@ def cli_node_start(name: str, config: str, system_folders: bool) -> None:
                 name = select_configuration_questionnaire(
                     InstanceType.NODE, system_folders
                 )
-            except Exception:
+            except FileNotFoundError:
                 error("No configurations could be found!")
                 info("Run `v6 node new` to create a new node configuration.")
                 sys.exit(1)

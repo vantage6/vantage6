@@ -132,20 +132,22 @@ class ContainerToken(ServicesResources):
 
         # verify that task the token is requested for exists
         collaboration = db.Collaboration.get(db_task.collaboration_id)
-        if collaboration.session_restrict_to_same_image:
-            if claim_image != db_task.image:
-                log.warning(
-                    "Node %s attempts to generate key for image %s that does not belong"
-                    " to task %s. This is not allowed because this collaboration has "
-                    " the 'session_restrict_to_same_image' option set to True.",
-                    g.node.id,
-                    claim_image,
-                    task_id,
-                )
-                return {
-                    "msg": "This collaboration only allows a single image per session. "
-                    "You cannot create a task with a different image."
-                }, HTTPStatus.UNAUTHORIZED
+        if (
+            collaboration.session_restrict_to_same_image
+            and claim_image != db_task.image
+        ):
+            log.warning(
+                "Node %s attempts to generate key for image %s that does not belong"
+                " to task %s. This is not allowed because this collaboration has "
+                " the 'session_restrict_to_same_image' option set to True.",
+                g.node.id,
+                claim_image,
+                task_id,
+            )
+            return {
+                "msg": "This collaboration only allows a single image per session. "
+                "You cannot create a task with a different image."
+            }, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if TaskStatus.has_finished(db_task.status):

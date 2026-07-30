@@ -10,11 +10,10 @@ import sys
 import time
 import webbrowser
 from pathlib import Path
-from typing import List
 
 import pyfiglet
 import requests
-from keycloak import KeycloakAuthenticationError, KeycloakOpenID
+from keycloak import KeycloakAuthenticationError, KeycloakError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
@@ -180,9 +179,8 @@ class UserClient(ClientBase):
         """Retrieve device authorization and token endpoints from Keycloak."""
         try:
             well_known = self.kc_openid.well_known()
-        except Exception as exc:  # pragma: no cover - network failure
-            self.log.error("Failed to retrieve OpenID configuration from Keycloak")
-            self.log.exception(exc)
+        except KeycloakError:  # pragma: no cover - network failure
+            self.log.exception("Failed to retrieve OpenID configuration from Keycloak")
             return None, None
 
         device_endpoint = well_known.get("device_authorization_endpoint")
@@ -212,9 +210,8 @@ class UserClient(ClientBase):
                 },
                 timeout=30,
             )
-        except Exception as exc:
-            self.log.error("Failed to request device code from Keycloak")
-            self.log.exception(exc)
+        except requests.RequestException:
+            self.log.exception("Failed to request device code from Keycloak")
             return None
 
         if resp.status_code != 200:
@@ -256,7 +253,7 @@ class UserClient(ClientBase):
                     webbrowser.open(url_to_open)
             else:
                 webbrowser.open(url_to_open)
-        except Exception as exc:  # pragma: no cover - environment-dependent
+        except webbrowser.Error as exc:  # pragma: no cover - environment-dependent
             self.log.warning("Could not open browser automatically: %s", exc)
             print("--------------------------------")
             print()
@@ -297,9 +294,8 @@ class UserClient(ClientBase):
                     },
                     timeout=30,
                 )
-            except Exception as exc:
-                self.log.error("Error while polling Keycloak token endpoint")
-                self.log.exception(exc)
+            except requests.exceptions.RequestException:
+                self.log.exception("Error while polling Keycloak token endpoint")
                 return None
 
             if token_resp.status_code == 200:
@@ -308,7 +304,7 @@ class UserClient(ClientBase):
             elif token_resp.status_code == 400:
                 try:
                     error_payload = token_resp.json()
-                except Exception:
+                except requests.exceptions.JSONDecodeError:
                     error_payload = {}
 
                 error_code = error_payload.get("error")
@@ -444,13 +440,11 @@ class UserClient(ClientBase):
 
         try:
             new_token = self.kc_openid.refresh_token(self._refresh_token)
-        except KeycloakAuthenticationError as e:
-            self.log.error("Could not authenticate token. Please re-authenticate!")
-            self.log.exception(e)
+        except KeycloakAuthenticationError:
+            self.log.exception("Could not authenticate token. Please re-authenticate!")
             return
-        except Exception as e:
-            self.log.error("Error in refreshing token. Please re-authenticate!")
-            self.log.exception(e)
+        except KeycloakError:
+            self.log.exception("Error in refreshing token. Please re-authenticate!")
             return
 
         self._access_token = new_token["access_token"]
@@ -716,7 +710,9 @@ class UserClient(ClientBase):
                 },
             )
 
-        def delete(self, id_: int | None = None, delete_dependents: bool = False) -> None:
+        def delete(
+            self, id_: int | None = None, delete_dependents: bool = False
+        ) -> None:
             """Deletes a collaboration
 
             Parameters
@@ -1624,7 +1620,11 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, name: str, description: str, rules: list, organization: int | None = None
+            self,
+            name: str,
+            description: str,
+            rules: list,
+            organization: int | None = None,
         ) -> dict:
             """Register new role
 

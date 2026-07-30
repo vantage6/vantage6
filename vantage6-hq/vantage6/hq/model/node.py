@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, ClassVar
+
 from sqlalchemy import Column, ForeignKey, Integer, String, select
 from sqlalchemy.orm import relationship
 
@@ -51,7 +53,7 @@ class Node(Authenticatable):
     columns = relationship("Column", back_populates="node")
 
     # the type specification in Authenticatable
-    __mapper_args__ = {
+    __mapper_args__: ClassVar[dict[str, Any]] = {
         "polymorphic_identity": "node",
     }
 

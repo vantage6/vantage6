@@ -8,6 +8,8 @@ import questionary
 import yaml
 from colorama import Fore, Style
 from kubernetes import config as k8s_config
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import error, info, warning
 from vantage6.common.enum import StrEnumBase
@@ -210,7 +212,7 @@ class K8SConfigManager:
                     active_k8s_config.k8s_node = nodes.items[0].metadata.name
                 else:
                     active_k8s_config.k8s_node = None
-            except Exception:
+            except (RuntimeError, ApiException, HTTPError):
                 error("Failed to get Kubernetes nodes")
                 active_k8s_config.k8s_node = None
 

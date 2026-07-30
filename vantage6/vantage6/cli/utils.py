@@ -80,9 +80,9 @@ def remove_file(file: str | Path, file_type: str) -> None:
         info(f"Removing {file_type} file: {file}")
         try:
             os.remove(file)
-        except Exception as e:
+        except OSError as e:
             error(f"Could not delete file: {file}")
-            error(e)
+            error(str(e))
     else:
         warning(f"Could not remove {file_type} file: {file} does not exist")
 
