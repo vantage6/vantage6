@@ -82,7 +82,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{GREEN}.{RESET}")
             self.stream.flush()
 
-        self.log.info(f"{test:<75} {ok}")
+        self.log.info(f"{test!s:<85} {ok}")
 
 
 class TestRunner(unittest.TextTestRunner):
