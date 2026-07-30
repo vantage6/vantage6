@@ -1,9 +1,6 @@
-import ipaddress
-import socket
 import time
 import uuid
 from logging import Logger
-from urllib.parse import urlparse
 
 from kubernetes import client as k8s_client
 from kubernetes.client.rest import ApiException
@@ -18,79 +15,21 @@ from vantage6.node.globals import (
 )
 
 
-def ip_in_cidr(ip: str, cidr: str) -> bool:
+def _build_probe_command() -> list[str]:
     """
-    Return True if the IP address is contained in the CIDR range.
+    Build a shell command that tries every probe candidate in turn, stopping as
+    soon as one succeeds.
+
+    Probing all candidates - rather than trusting a single one - avoids
+    mistaking a blocked proxy or a single unreachable domain for network
+    isolation.
     """
-    return ipaddress.ip_address(ip) in ipaddress.ip_network(cidr, strict=False)
-
-
-def _extract_hostname_from_url(url: str) -> str:
-    hostname = urlparse(url).hostname
-    if not hostname:
-        raise ValueError(f"Could not extract hostname from probe URL: {url}")
-    return hostname
-
-
-def _resolve_host_ips(hostname: str) -> list[str]:
-    """Get all IP addresses for a hostname."""
-    try:
-        return list(
-            {
-                info[4][0]
-                for info in socket.getaddrinfo(
-                    hostname, 443, type=socket.SOCK_STREAM, proto=socket.IPPROTO_TCP
-                )
-            }
-        )
-    except socket.gaierror:
-        return []
-
-
-def _extract_whitelist_cidrs(whitelist_egress: list | None) -> list[str]:
-    if not whitelist_egress:
-        return []
-
-    cidrs = []
-    for entry in whitelist_egress:
-        if not isinstance(entry, dict):
-            continue
-        ip_block = entry.get("ipBlock")
-        if isinstance(ip_block, dict) and ip_block.get("cidr"):
-            cidrs.append(ip_block["cidr"])
-    return cidrs
-
-
-def _candidate_blocked_by_whitelist(hostname: str, cidrs: list[str]) -> bool:
-    """
-    Return True if all resolved addresses for the host are covered by the whitelist.
-    """
-    if not cidrs:
-        return False
-
-    try:
-        ips = [str(ipaddress.ip_address(hostname))]
-    except ValueError:
-        ips = _resolve_host_ips(hostname)
-
-    if not ips:
-        return False
-
-    return all(any(ip_in_cidr(ip, cidr) for cidr in cidrs) for ip in ips)
-
-
-def select_probe_target(whitelist_egress: list | None) -> str | None:
-    """
-    Select a probe URL that is not covered by central_compute egress whitelist CIDRs.
-
-    Returns None if every candidate is whitelisted (e.g. 0.0.0.0/0).
-    """
-    cidrs = _extract_whitelist_cidrs(whitelist_egress)
-    for url in ISOLATION_PROBE_CANDIDATES:
-        hostname = _extract_hostname_from_url(url)
-        if not _candidate_blocked_by_whitelist(hostname, cidrs):
-            return url
-    return None
+    checks = " || ".join(
+        "curl -s -o /dev/null --max-time "
+        f"{ISOLATION_PROBE_CURL_MAX_TIME_SECONDS} {url}"
+        for url in ISOLATION_PROBE_CANDIDATES
+    )
+    return ["sh", "-c", checks]
 
 
 def _wait_for_probe_pod(
@@ -129,7 +68,6 @@ def _probe_pod_reached_target(pod: k8s_client.V1Pod) -> bool:
 def validate_algorithm_isolation(
     core_api: k8s_client.CoreV1Api,
     task_namespace: str,
-    whitelist_egress: list | None,
     log: Logger,
 ) -> tuple[bool, str]:
     """
@@ -138,22 +76,14 @@ def validate_algorithm_isolation(
     Returns
     -------
     tuple[bool, str]
-        (is_isolated, message) where is_isolated is True when egress to an
-        unwhitelisted external address is blocked.
+        (is_isolated, message) where is_isolated is True when egress to all
+        probe targets is blocked.
     """
-    probe_url = select_probe_target(whitelist_egress)
-    if probe_url is None:
-        return False, (
-            "All isolation probe targets are covered by the central_compute "
-            "egress whitelist. Broad whitelisting (e.g. 0.0.0.0/0) prevents "
-            "algorithm network isolation"
-        )
-
     pod_name = "v6-isolation-probe-" + str(uuid.uuid4())[:8]
     log.info(
         "Running algorithm network isolation probe in namespace '%s' using %s",
         task_namespace,
-        probe_url,
+        ", ".join(ISOLATION_PROBE_CANDIDATES),
     )
 
     try:
@@ -173,15 +103,7 @@ def validate_algorithm_isolation(
                         k8s_client.V1Container(
                             name="probe",
                             image=ISOLATION_PROBE_IMAGE,
-                            command=[
-                                "curl",
-                                "-s",
-                                "-o",
-                                "/dev/null",
-                                "--max-time",
-                                str(ISOLATION_PROBE_CURL_MAX_TIME_SECONDS),
-                                probe_url,
-                            ],
+                            command=_build_probe_command(),
                         )
                     ],
                 ),
@@ -219,10 +141,10 @@ def validate_algorithm_isolation(
 
     if _probe_pod_reached_target(pod):
         return False, (
-            f"Algorithm containers can reach the public internet (probe URL: "
-            f"{probe_url}). This usually means Kubernetes NetworkPolicies are not "
-            f"enforced (e.g. Docker Desktop) or are missing in namespace "
-            f"'{task_namespace}'"
+            "Algorithm containers can reach the public internet (probe targets: "
+            f"{', '.join(ISOLATION_PROBE_CANDIDATES)}). This usually means "
+            "Kubernetes NetworkPolicies are not enforced (e.g. Docker Desktop) or "
+            f"are missing in namespace '{task_namespace}'"
         )
 
-    return True, f"Algorithm network isolation verified (probe URL: {probe_url})."
+    return True, "Algorithm network isolation verified."

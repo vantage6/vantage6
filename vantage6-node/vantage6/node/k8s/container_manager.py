@@ -193,21 +193,16 @@ class ContainerManager:
 
     def validate_algorithm_isolation(self) -> tuple[bool, str]:
         """
-        Verify that algorithm containers cannot reach unwhitelisted external hosts.
+        Verify that algorithm containers cannot reach the public internet.
 
         Returns
         -------
         tuple[bool, str]
             (is_isolated, message)
         """
-        whitelist = self.ctx.config.get("whitelist", {})
-        central_compute = whitelist.get("central_compute", {})
-        whitelist_egress = central_compute.get("egress")
-
         return validate_algorithm_isolation(
             core_api=self.core_api,
             task_namespace=self.task_namespace,
-            whitelist_egress=whitelist_egress,
             log=self.log,
         )
 

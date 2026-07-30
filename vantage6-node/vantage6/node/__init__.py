@@ -156,7 +156,7 @@ class Node:
 
     def check_algorithm_isolation(self) -> None:
         """
-        Verify that algorithm containers cannot reach unwhitelisted external hosts.
+        Verify that algorithm containers cannot reach the public internet.
 
         When ``production`` is true (default), the node exits if isolation is not
         enforced. Otherwise, a failed check is logged as a warning only.

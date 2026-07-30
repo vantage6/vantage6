@@ -91,7 +91,3 @@ data:
       - {{ . }}
       {{- end }}
     {{- end }}
-    {{- if .Values.node.whitelist }}
-    whitelist:
-{{ .Values.node.whitelist | toYaml | indent 6 }}
-    {{- end }}

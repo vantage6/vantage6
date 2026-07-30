@@ -6,101 +6,8 @@ from kubernetes import client as k8s_client
 from vantage6.node import Node
 from vantage6.node.k8s.network_isolation import (
     _probe_pod_reached_target,
-    _resolve_host_ips,
-    ip_in_cidr,
-    select_probe_target,
     validate_algorithm_isolation,
 )
-
-EXAMPLE_COM_IP = "93.184.216.34"
-EXAMPLE_ORG_IP = "93.184.216.35"
-EXAMPLE_NET_IP = "93.184.216.36"
-
-
-class TestIpInCidr:
-    def test_ip_inside_cidr(self):
-        assert ip_in_cidr("203.0.113.10", "203.0.113.0/24") is True
-
-    def test_ip_outside_cidr(self):
-        assert ip_in_cidr("203.0.113.10", "10.0.0.0/8") is False
-
-    def test_whole_internet_cidr(self):
-        assert ip_in_cidr("203.0.113.10", "0.0.0.0/0") is True
-
-
-class TestSelectProbeTarget:
-    @patch(
-        "vantage6.node.k8s.network_isolation._resolve_host_ips",
-        side_effect=lambda host: {
-            "example.com": [EXAMPLE_COM_IP],
-            "example.org": [EXAMPLE_ORG_IP],
-            "example.net": [EXAMPLE_NET_IP],
-        }[host],
-    )
-    def test_no_whitelist_returns_first_candidate(self, _mock_resolve):
-        target = select_probe_target(None)
-        assert target == "https://example.com"
-
-    @patch(
-        "vantage6.node.k8s.network_isolation._resolve_host_ips",
-        side_effect=lambda host: {
-            "example.com": [EXAMPLE_COM_IP],
-            "example.org": [EXAMPLE_ORG_IP],
-            "example.net": [EXAMPLE_NET_IP],
-        }[host],
-    )
-    def test_empty_whitelist_returns_first_candidate(self, _mock_resolve):
-        target = select_probe_target([])
-        assert target == "https://example.com"
-
-    @patch(
-        "vantage6.node.k8s.network_isolation._resolve_host_ips",
-        side_effect=lambda host: {
-            "example.com": [EXAMPLE_COM_IP],
-            "example.org": [EXAMPLE_ORG_IP],
-            "example.net": [EXAMPLE_NET_IP],
-        }[host],
-    )
-    def test_google_whitelist_does_not_affect_target(self, _mock_resolve):
-        whitelist = [{"ipBlock": {"cidr": "142.250.0.0/15"}}]
-        target = select_probe_target(whitelist)
-        assert target == "https://example.com"
-
-    @patch(
-        "vantage6.node.k8s.network_isolation._resolve_host_ips",
-        side_effect=lambda host: {
-            "example.com": [EXAMPLE_COM_IP],
-            "example.org": [EXAMPLE_ORG_IP],
-            "example.net": [EXAMPLE_NET_IP],
-        }[host],
-    )
-    def test_matching_cidr_skips_candidate(self, _mock_resolve):
-        whitelist = [{"ipBlock": {"cidr": f"{EXAMPLE_COM_IP}/32"}}]
-        target = select_probe_target(whitelist)
-        assert target == "https://example.org"
-
-    @patch(
-        "vantage6.node.k8s.network_isolation._resolve_host_ips",
-        side_effect=lambda host: {
-            "example.com": [EXAMPLE_COM_IP],
-            "example.org": [EXAMPLE_ORG_IP],
-            "example.net": [EXAMPLE_NET_IP],
-        }[host],
-    )
-    def test_broad_whitelist_returns_none(self, _mock_resolve):
-        whitelist = [{"ipBlock": {"cidr": "0.0.0.0/0"}}]
-        assert select_probe_target(whitelist) is None
-
-
-class TestResolveHostIps:
-    @patch("vantage6.node.k8s.network_isolation.socket.getaddrinfo")
-    def test_returns_unique_ipv4_addresses(self, mock_getaddrinfo):
-        mock_getaddrinfo.return_value = [
-            (None, None, None, None, ("93.184.216.34", 443)),
-            (None, None, None, None, ("93.184.216.34", 443)),
-        ]
-
-        assert _resolve_host_ips("example.com") == ["93.184.216.34"]
 
 
 class TestProbePodReachedTarget:
@@ -132,21 +39,6 @@ class TestProbePodReachedTarget:
 
 
 class TestValidateAlgorithmIsolation:
-    def test_all_candidates_whitelisted_returns_not_isolated(self):
-        whitelist = [{"ipBlock": {"cidr": "0.0.0.0/0"}}]
-        with patch(
-            "vantage6.node.k8s.network_isolation._resolve_host_ips",
-            return_value=[EXAMPLE_COM_IP],
-        ):
-            isolated, message = validate_algorithm_isolation(
-                core_api=MagicMock(),
-                task_namespace="vantage6-tasks",
-                whitelist_egress=whitelist,
-                log=MagicMock(),
-            )
-        assert isolated is False
-        assert "whitelist" in message
-
     @patch("vantage6.node.k8s.network_isolation._wait_for_probe_pod")
     def test_reachable_target_returns_not_isolated(self, mock_wait):
         mock_wait.return_value = TestProbePodReachedTarget()._pod_with_exit_code(0)
@@ -155,7 +47,6 @@ class TestValidateAlgorithmIsolation:
         isolated, message = validate_algorithm_isolation(
             core_api=core_api,
             task_namespace="vantage6-tasks",
-            whitelist_egress=None,
             log=MagicMock(),
         )
 
@@ -171,7 +62,6 @@ class TestValidateAlgorithmIsolation:
         isolated, message = validate_algorithm_isolation(
             core_api=core_api,
             task_namespace="vantage6-tasks",
-            whitelist_egress=None,
             log=MagicMock(),
         )
 
