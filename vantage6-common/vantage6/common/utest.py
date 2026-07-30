@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import datetime
 import logging
 import os
@@ -25,7 +23,7 @@ class TestResult(unittest.TextTestResult):
 
         if self.showAll:
             # self.stream.write("%-85s " % self.getDescription(test))
-            self.stream.write(f"{test:<85} ")
+            self.stream.write(f"{test!s:<85} ")
             self.stream.flush()
 
     def addError(self, test, err):
@@ -38,7 +36,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{RED}E{RESET}")
             self.stream.flush()
 
-        self.log.error(f"{test:<85} {error}")
+        self.log.error(f"{test!s:<85} {error}")
         self.log.exception(err[1])
 
     def addFailure(self, test, err):
@@ -51,7 +49,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{RED}F{RESET}")
             self.stream.flush()
 
-        self.log.info(f"{test:<85} {fail}")
+        self.log.info(f"{test!s:<85} {fail}")
         # self.log.error(self.separator1)
         # self.log.error("%s: %s" % ('FAIL', self.getDescription(test)))
         # self.log.error(self.separator2)
@@ -72,7 +70,7 @@ class TestResult(unittest.TextTestResult):
             self.stream.write(f"{YELLOW}s{RESET}")
             self.stream.flush()
 
-        self.log.info(f"{test:<85} {skipped}")
+        self.log.info(f"{test!s:<85} {skipped}")
 
     def addSuccess(self, test):
         unittest.result.TestResult.addSuccess(self, test)
