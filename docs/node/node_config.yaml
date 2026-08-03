@@ -160,6 +160,11 @@ node:
     # if internet connection is not available. Default value is true.
     require_algorithm_pull: true
 
+  # Provide additional environment variables passed to algorithm containers. Keys must
+  # start with a letter and contain only letters, numbers, and underscores.
+  algorithm_env:
+    # threshold_example: 10
+
   # Whitelisting settings to specify external addresses algorithms are allowed to
   # connect to. Only Kubernetes network policies are supported. See:
   # https://kubernetes.io/docs/concepts/services-networking/network-policies
