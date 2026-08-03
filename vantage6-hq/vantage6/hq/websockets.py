@@ -238,7 +238,11 @@ class DefaultSocketNamespace(Namespace):
             # delete any data on the node stored on HQ (e.g. configuration data)
             self.__clean_node_data(auth)
 
-        self.log.info(f"{session.name} disconnected (reason: {reason})")
+        self.log.info(
+            "%s disconnected (reason: %s)",
+            session.name,
+            reason if reason else "unknown"
+        )
 
         # cleanup (e.g. database session)
         self.__cleanup()

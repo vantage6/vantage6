@@ -58,7 +58,10 @@ class NodeTaskNamespace(ClientNamespace):
             'ping timeout' or 'transport error'.
         """
         # self.node_worker_ref.socketIO.disconnect()
-        self.log.info(f"Disconnected from HQ (reason: {reason})")
+        self.log.info(
+            "Disconnected from HQ (reason: %s)",
+            reason if reason else "unknown"
+        )
 
     def on_new_task_update(self, data: dict):
         """
