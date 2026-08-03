@@ -2904,7 +2904,7 @@ wheels = [
 
 [[package]]
 name = "vantage6"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6" }
 dependencies = [
     { name = "appdirs" },
@@ -2960,7 +2960,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-algorithm-store"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-algorithm-store" }
 dependencies = [
     { name = "flask" },
@@ -3010,7 +3010,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-algorithm-tools"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-algorithm-tools" }
 dependencies = [
     { name = "openpyxl" },
@@ -3050,7 +3050,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-backend-common"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-backend-common" }
 dependencies = [
     { name = "flask" },
@@ -3104,7 +3104,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-base"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "vantage6" },
@@ -3162,7 +3162,7 @@ provides-extras = ["dev", "docs"]
 
 [[package]]
 name = "vantage6-client"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-client" }
 dependencies = [
     { name = "httpx" },
@@ -3194,7 +3194,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-common"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-common" }
 dependencies = [
     { name = "appdirs" },
@@ -3240,7 +3240,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-hq"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-hq" }
 dependencies = [
     { name = "azure-identity" },
@@ -3312,7 +3312,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "vantage6-node"
-version = "5.0.2rc2"
+version = "5.0.2"
 source = { editable = "vantage6-node" }
 dependencies = [
     { name = "click" },
