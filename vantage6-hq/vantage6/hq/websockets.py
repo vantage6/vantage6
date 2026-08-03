@@ -201,13 +201,19 @@ class DefaultSocketNamespace(Namespace):
                 node.collaboration_id,
             )
 
-    def on_disconnect(self) -> None:
+    def on_disconnect(self, reason: str | None = None) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
 
         If nodes disconnect, their status is also set to offline and users may
         be alerted to that. Also, any information on the node (e.g.
         configuration) is removed from the database.
+
+        Parameters
+        ----------
+        reason: str | None
+            Reason for the disconnect as reported by the socket.io server, e.g.
+            'ping timeout' or 'transport error'.
         """
         if not self.__is_identified_client():
             self.log.debug("Client disconnected before identification")
@@ -232,7 +238,11 @@ class DefaultSocketNamespace(Namespace):
             # delete any data on the node stored on HQ (e.g. configuration data)
             self.__clean_node_data(auth)
 
-        self.log.info(f"{session.name} disconnected")
+        self.log.info(
+            "%s disconnected (reason: %s)",
+            session.name,
+            reason if reason else "unknown"
+        )
 
         # cleanup (e.g. database session)
         self.__cleanup()
