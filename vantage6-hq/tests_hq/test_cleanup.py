@@ -37,7 +37,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.commit()
 
         run = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=31),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result=self.uuid,
             arguments="arguments",
             log="log should be preserved",
@@ -67,7 +67,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.commit()
 
         run = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=31),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result=self.uuid,
             arguments="arguments",
             log="log should be preserved",
@@ -98,7 +98,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         # Ineligible: completed, but not old enough
 
         run = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=10),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result=self.uuid,
             arguments="arguments",
             status=RunStatus.COMPLETED.value,
@@ -115,7 +115,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
     def test_no_cleanup_non_completed_run(self):
         # Ineligible: not COMPLETED, albeit old enough
         run = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=31),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result=self.uuid,
             arguments="arguments",
             status=RunStatus.FAILED.value,  # Not COMPLETED, so ineligible
@@ -132,7 +132,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
     def test_cleanup_without_clearing_arguments(self):
         # Eligible: completed > 30 days ago
         run = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=40),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=40),
             result=self.uuid,
             arguments="arguments",
             status=RunStatus.COMPLETED.value,
@@ -160,37 +160,37 @@ class TestCleanupRunsCount(unittest.TestCase):
 
     def create_runs(self):
         run0 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=31),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result0",
             arguments="arguments0",
             status=RunStatus.COMPLETED.value,
         )
         run1 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=200),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=200),
             result="result1",
             arguments="arguments1",
             status=RunStatus.COMPLETED.value,
         )
         run2 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=10),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result2",
             arguments="arguments2",
             status=RunStatus.COMPLETED.value,
         )
         run3 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=10),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result3",
             arguments="arguments3",
             status=RunStatus.PENDING.value,
         )
         run4 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=31),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
             result="result4",
             arguments="arguments4",
             status=RunStatus.FAILED.value,
         )
         run5 = Run(
-            finished_at=datetime.now(timezone.UTC) - timedelta(days=10),
+            finished_at=datetime.now(timezone.utc) - timedelta(days=10),
             result="result5",
             arguments="arguments5",
             status=RunStatus.ACTIVE.value,

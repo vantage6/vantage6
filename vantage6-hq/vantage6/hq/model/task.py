@@ -109,7 +109,7 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"), nullable=False)
     init_user_id = Column(Integer, ForeignKey("user.id"))
-    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.UTC))
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
     algorithm_store_id = Column(Integer, ForeignKey("algorithmstore.id"))
 
     # relationships
