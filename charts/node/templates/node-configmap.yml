@@ -86,7 +86,7 @@ data:
     {{- end }}
     {{- if .Values.node.algorithm_env }}
     algorithm_env:
-      {{- range .Values.node.algorithm_env }}
-      - {{ . }}
+      {{- range $key, $value := .Values.node.algorithm_env }}
+      {{ $key }}: {{ $value }}
       {{- end }}
     {{- end }}
