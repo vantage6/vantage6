@@ -1,11 +1,12 @@
 """
-Regression tests for issue #2654 (WebSocket DB connection leaks).
+Tests that WebSocket event handlers release their database session.
 
-WebSocket event handlers run inside a Flask request context, but Flask's
-``after_request`` hook does not fire for socket events, and is skipped whenever a
-handler raises. Cleanup of the database session is therefore driven by a
-``teardown_request`` hook, which runs on every request-context pop - including on
-exceptions - so a handler that raises cannot leak a pooled connection.
+WebSocket handlers run inside a Flask request context, and the database session
+is cleared by a ``teardown_request`` hook rather than ``after_request``, since
+the latter does not fire for socket events and is skipped when a handler raises.
+These tests check that the teardown hook clears the session even when a handler
+raises, and that it is a harmless no-op for handlers that never touch the
+database.
 """
 
 from unittest import TestCase
