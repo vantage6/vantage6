@@ -64,10 +64,10 @@ data:
     {{- if .Values.hq.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.hq.runs_data_cleanup_include_args }}
     {{- end }}
-    {{- if .Values.hq.database_pool_size }}
+    {{- if hasKey .Values.hq "database_pool_size" }}
     database_pool_size: {{ .Values.hq.database_pool_size }}
     {{- end }}
-    {{- if .Values.hq.database_max_overflow }}
+    {{- if hasKey .Values.hq "database_max_overflow" }}
     database_max_overflow: {{ .Values.hq.database_max_overflow }}
     {{- end }}
     {{- if and .Values.prometheus .Values.prometheus.enabled }}
