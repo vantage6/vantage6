@@ -125,7 +125,7 @@ def _add_smtp_config(config: dict) -> dict:
 
     smtp_config["host"] = q.text(
         "SMTP server hostname:",
-        default="smtp.example.com",
+        default="smtp.mydomain.com",
     ).unsafe_ask()
 
     smtp_config["port"] = q.text(

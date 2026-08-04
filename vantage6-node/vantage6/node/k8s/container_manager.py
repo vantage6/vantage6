@@ -56,6 +56,7 @@ from vantage6.node.k8s.exceptions import (
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_run_pod_status,
 )
+from vantage6.node.k8s.network_isolation import validate_algorithm_isolation
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.util import get_parent_id
 
@@ -189,6 +190,21 @@ class ContainerManager:
         self.core_api.delete_namespaced_pod(test_pod_name, self.task_namespace)
 
         return True
+
+    def validate_algorithm_isolation(self) -> tuple[bool, str]:
+        """
+        Verify that algorithm containers cannot reach the public internet.
+
+        Returns
+        -------
+        tuple[bool, str]
+            (is_isolated, message)
+        """
+        return validate_algorithm_isolation(
+            core_api=self.core_api,
+            task_namespace=self.task_namespace,
+            log=self.log,
+        )
 
     def _setup_policies(self, config: dict) -> dict:
         """

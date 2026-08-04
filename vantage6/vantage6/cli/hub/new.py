@@ -225,11 +225,11 @@ def _get_base_config() -> dict[str, Any]:
     if k8s_node_name != no_local_storage:
         base_config["k8sNodeName"] = k8s_node_name
     info("We need you to provide a domain where you will deploy the hub services.")
-    info("For instance, the domain 'example.com' will lead to the following URLs:")
-    info("Authentication:  https://auth.example.com")
-    info("HQ:              https://hq.example.com")
-    info("UI:              https://portal.example.com")
-    info("Algorithm store: https://store.example.com")
+    info("For instance, the domain 'mydomain.com' will lead to the following URLs:")
+    info("Authentication:  https://auth.mydomain.com")
+    info("HQ:              https://hq.mydomain.com")
+    info("UI:              https://portal.mydomain.com")
+    info("Algorithm store: https://store.mydomain.com")
     url_domain = q.text(
         "On what domain will the services be reachable?",
         default="vantage6.ai",
