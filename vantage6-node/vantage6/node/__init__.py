@@ -540,42 +540,15 @@ class Node:
         results : Result
             Result of the completed run
         """
-        # FIXME: why are we retrieving the result *again*? Shouldn't we just store
-        # the task_id when retrieving the task the first time?
-        response = self.client.request(f"run/{results.run_id}")
-        task_id = response.get("task", {}).get("id")
-
-        init_org_id = None
-        if not task_id:
-            self.log.error(
-                "Task id for run id=%s could not be retrieved", results.run_id
-            )
-        else:
-            init_org = self.client.request(f"task/{task_id}").get("init_org")
-            if not init_org:
-                self.log.error(
-                    "Initiator organization from task (id=%s) could not be retrieved!",
-                    task_id,
-                )
-            else:
-                init_org_id = init_org.get("id")
-
         data = {
             "log": results.logs,
             "status": results.status.value,
             "finished_at": datetime.datetime.now().isoformat(),
+            "result": results.data,
         }
-        if init_org_id:
-            # The result can only be encrypted when the initiator organization is
-            # known. Without it the run is still marked as finished - the result data
-            # is lost, but HQ stops re-sending this run indefinitely.
-            data["result"] = results.data
-        else:
-            self.log.error(
-                "Marking run id=%s as finished without result", results.run_id
-            )
-
-        self.client.run.patch(id_=results.run_id, data=data, init_org_id=init_org_id)
+        self.client.run.patch(
+            id_=results.run_id, data=data, init_org_id=results.init_org_id
+        )
 
         # notify HQ, other nodes, and clients about algorithm status change
         self.__emit_algorithm_status_change(
