@@ -92,11 +92,13 @@ class HQApp(Vantage6App):
         self.socketio = self.setup_socket_connection()
 
         self.setup_large_result_store()
-        # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
+        
+        with DatabaseSessionManager.session_scope():
+            # setup the permission manager for the API endpoints
+            self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Load API resources
-        self.load_resources()
+            # Load API resources
+            self.load_resources()
 
         if self.ctx.config.get("runs_data_cleanup_days"):
             log.info(

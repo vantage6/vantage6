@@ -74,17 +74,18 @@ class AlgorithmStoreApp(Vantage6App):
             static_folder=Path(__file__).parent / "static",
         )
 
-        # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
+        with DatabaseSessionManager.session_scope():
+            # setup the permission manager for the API endpoints
+            self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Load API resources
-        self.load_resources()
+            # Load API resources
+            self.load_resources()
 
-        # sync policies with the database
-        self.setup_policies(self.ctx.config)
+            # sync policies with the database
+            self.setup_policies(self.ctx.config)
 
-        if self.ctx.config.get("dev", {}).get("disable_review", False):
-            self.setup_disable_review()
+            if self.ctx.config.get("dev", {}).get("disable_review", False):
+                self.setup_disable_review()
 
         log.info("Initialization done")
 

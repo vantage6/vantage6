@@ -119,6 +119,22 @@ class DatabaseSessionManager(BaseDatabaseSessionManager):
         """
         BaseDatabaseSessionManager._new_session(DatabaseSessionManager, Database)
 
+    @staticmethod
+    def session_scope():
+        """
+        Context manager that yields a session and always releases it.
+
+        Use this for database work that runs outside the Flask request
+        lifecycle (e.g. application startup), where the request hooks that
+        normally clear the session do not fire.
+
+        Returns
+        -------
+        contextmanager
+            A context manager yielding a database session
+        """
+        return BaseDatabaseSessionManager._session_scope(DatabaseSessionManager)
+
 
 class ModelBase(BaseModelBase):
     """
