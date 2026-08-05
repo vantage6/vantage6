@@ -132,14 +132,14 @@ class CryptorBase(metaclass=Singleton):
         elif isinstance(data, str):
             return self.str_to_bytes(data)
         else:
-            raise ValueError(
+            raise TypeError(
                 "Data passed for decryption must be either a string or bytes."
             )
 
     def encrypt_stream(
         self,
         stream: IO[bytes],
-        pubkey_base64s: str = None,
+        pubkey_base64s: str | None = None,
         chunk_size=DEFAULT_CHUNK_SIZE,
     ):
         """

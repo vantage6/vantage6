@@ -45,7 +45,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -311,7 +311,7 @@ class SessionDataframes(SessionBase):
                 dataframe=dataframe,
                 store_id=task.get("store_id"),
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             dataframe.delete()
             return {"msg": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -589,7 +589,7 @@ class DataframePreprocessing(SessionBase):
 
         # Meta data about the modifying task
         preprocessing_task = dataframe_step["task"]
-        if "description" in preprocessing_task and preprocessing_task["description"]:
+        if preprocessing_task.get("description"):
             description = preprocessing_task["description"]
         else:
             description = (
@@ -689,7 +689,7 @@ class DataframeColumns(SessionBase):
             return {"msg": f"Dataframe with id={id} not found"}, HTTPStatus.NOT_FOUND
 
         # Validate that this node is part of the session
-        if not dataframe.session.collaboration_id == g.node.collaboration_id:
+        if dataframe.session.collaboration_id != g.node.collaboration_id:
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

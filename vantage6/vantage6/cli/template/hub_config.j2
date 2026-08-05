@@ -9,7 +9,7 @@ hubGateway:
   enabled: {{ hg.enabled | default(false) }}
 
   # Public hostnames per component (subdomain routing).
-  # Example: auth.example.com, hq.example.com, portal.example.com, store.example.com
+  # Example: auth.mydomain.com, hq.mydomain.com, portal.mydomain.com, store.mydomain.com
   hosts:
     auth: {{ hg_hosts.auth | default('') }}
     hq: {{ hg_hosts.hq | default('') }}

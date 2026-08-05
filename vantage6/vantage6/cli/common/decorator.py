@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
@@ -68,7 +69,7 @@ def click_insert_context(
             "--user",
             "system_folders",
             flag_value=False,
-            default=False if type_ == InstanceType.NODE or is_sandbox else True,
+            default=not (type_ == InstanceType.NODE or is_sandbox),
             help="Use user folders instead of system folders",
         )
         @wraps(func)
@@ -114,9 +115,9 @@ def click_insert_context(
                         name = select_configuration_questionnaire(
                             type_, system_folders, runtime_is_sandbox
                         )
-                    except Exception:
+                    except FileNotFoundError:
                         error("No configurations could be found!")
-                        exit(1)
+                        sys.exit(1)
 
                 ctx = get_context(type_, name, system_folders, runtime_is_sandbox)
             extra_args = []

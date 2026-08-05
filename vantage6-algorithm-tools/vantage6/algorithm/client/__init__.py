@@ -136,7 +136,7 @@ class AlgorithmClient(ClientBase):
 
         return self.result.from_task(task_id)
 
-    def _multi_page_request(self, endpoint: str, params: dict = None) -> dict:
+    def _multi_page_request(self, endpoint: str, params: dict | None = None) -> dict:
         """
         Make multiple requests to HQ to get all pages of a list of results.
 
@@ -247,9 +247,8 @@ class AlgorithmClient(ClientBase):
                     result = json.loads(
                         base64s_to_bytes(response.get("result")).decode()
                     )
-                except Exception as e:
-                    self.parent.log.error("Unable to load results")
-                    self.parent.log.exception(e)
+                except Exception:
+                    self.parent.log.exception("Unable to load results")
             return result
 
         def from_task(self, task_id: int) -> list[Any]:
@@ -288,7 +287,7 @@ class AlgorithmClient(ClientBase):
                         return json.loads(run_data.decode(STRING_ENCODING))
                     else:
                         return json.loads(base64s_to_bytes(result_data).decode())
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.parent.log.error(
                         f"Unable to load results for task {task_id}: {e}"
                     )
@@ -328,9 +327,9 @@ class AlgorithmClient(ClientBase):
             self,
             method: str,
             arguments: dict | None = None,
-            organizations: list[int] = None,
+            organizations: list[int] | None = None,
             name: str = "subtask",
-            description: str = None,
+            description: str | None = None,
         ) -> dict:
             """
             Create a new (child) task at HQ.

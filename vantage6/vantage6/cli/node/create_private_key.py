@@ -1,6 +1,8 @@
+import sys
 from pathlib import Path
 
 import click
+import requests
 from colorama import Fore, Style
 
 from vantage6.common import (
@@ -99,9 +101,9 @@ def cli_node_create_private_key(
             name = select_configuration_questionnaire(
                 InstanceType.NODE, system_folders, is_sandbox
             )
-        except Exception:
+        except FileNotFoundError:
             error("No configurations could be found!")
-            exit(1)
+            sys.exit(1)
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)
 
     # Authenticate with the hq to obtain organization name if it wasn't
@@ -137,11 +139,11 @@ def cli_node_create_private_key(
             info("Generating new private key")
             private_key = RSACryptor.create_new_rsa_key(file_)
 
-        except Exception as e:
+        except OSError as e:
             error(f"Could not create new private key '{file_}'!?")
             debug(e)
             info("Bailing out ...")
-            exit(1)
+            sys.exit(1)
 
         warning(f"Private key written to '{file_}'")
         warning(
@@ -179,10 +181,10 @@ def cli_node_create_private_key(
                 json={"public_key": bytes_to_base64s(public_key)},
             )
 
-        except Exception as e:
+        except requests.RequestException as e:
             error("Could not upload the public key!")
             debug(e)
-            exit(1)
+            sys.exit(1)
     else:
         warning("Public key not uploaded!")
 

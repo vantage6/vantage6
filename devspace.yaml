@@ -435,6 +435,7 @@ deployments:
         node:
           name: dummy-node-name  # will be overridden by the environment variables
           apiKey: dummy-api-key  # will be overridden by the environment variables
+          production: false
           image: ${NODE_IMAGE}
           imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}

@@ -42,7 +42,7 @@ class DefaultSocketNamespace(Namespace):
 
     def _is_node(self) -> bool:
         if session.type != "node":
-            self.log.warn(
+            self.log.warning(
                 "Only nodes can send algorithm updates! "
                 f"{session.type} {session.auth_id} is not allowed."
             )
@@ -87,9 +87,8 @@ class DefaultSocketNamespace(Namespace):
             emit("invalid_token", room=request.sid)
             return
 
-        except Exception as exc:
-            self.log.error("Couldn't connect client! No or Invalid JWT token?")
-            self.log.exception(exc)
+        except Exception:
+            self.log.exception("Couldn't connect client! No or Invalid JWT token?")
             return
 
         # get identity from token.
@@ -197,13 +196,19 @@ class DefaultSocketNamespace(Namespace):
                 node.collaboration_id,
             )
 
-    def on_disconnect(self) -> None:
+    def on_disconnect(self, reason: str | None = None) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
 
         If nodes disconnect, their status is also set to offline and users may
         be alerted to that. Also, any information on the node (e.g.
         configuration) is removed from the database.
+
+        Parameters
+        ----------
+        reason: str | None
+            Reason for the disconnect as reported by the socket.io server, e.g.
+            'ping timeout' or 'transport error'.
         """
         if not self.__is_identified_client():
             self.log.debug("Client disconnected before identification")
@@ -228,7 +233,11 @@ class DefaultSocketNamespace(Namespace):
             # delete any data on the node stored on HQ (e.g. configuration data)
             self.__clean_node_data(auth)
 
-        self.log.info(f"{session.name} disconnected")
+        self.log.info(
+            "%s disconnected (reason: %s)",
+            session.name,
+            reason if reason else "unknown",
+        )
 
     def on_message(self, message: str) -> None:
         """
@@ -400,7 +409,7 @@ class DefaultSocketNamespace(Namespace):
             )
 
         auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.timezone.utc)
+        auth.last_seen = dt.datetime.now(dt.UTC)
         auth.save()
 
     def on_dataframe_deleted(self, data: dict) -> None:
@@ -553,7 +562,7 @@ class DefaultSocketNamespace(Namespace):
                 )
             except ValueError as e:
                 self.log.warning(f"Invalid metric data: {e}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")

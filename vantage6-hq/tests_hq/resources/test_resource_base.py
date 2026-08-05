@@ -119,24 +119,38 @@ class TestResourceBase(unittest.TestCase):
 
     def tearDown(self):
         # unset session.session
+        # note that the order matters: records that refer to others must be deleted
+        # first, else the reference is nullified - which is not allowed for e.g.
+        # Task.init_org_id
         for table in [
+            Run,
+            Task,
+            Column,
             Dataframe,
             Session,
             User,
-            Organization,
-            Collaboration,
             Node,
-            Run,
             AlgorithmStore,
             Study,
-            Task,
-            Column,
+            Collaboration,
+            Organization,
         ]:
             table_to_delete = table.get()
             for t in table_to_delete:
                 t.delete()
 
         DatabaseSessionManager.clear_session()
+
+    def delete_tasks(self):
+        """
+        Delete all tasks.
+
+        Tests that clean up their own organizations should call this first: an
+        organization that still initiated tasks cannot be deleted, as that would
+        clear the (non-nullable) Task.init_org_id.
+        """
+        for task in Task.get():
+            task.delete()
 
     def login(self, user: User | None = None):
         if user is None:
@@ -244,6 +258,7 @@ class TestResourceBase(unittest.TestCase):
             task = Task(
                 image="some-image",
                 collaboration=collaboration,
+                init_org=organization,
                 runs=[Run(status=RunStatus.PENDING.value, action=action.value)],
             )
             task.save()
@@ -270,7 +285,9 @@ class TestResourceBase(unittest.TestCase):
         headers = {"Authorization": "Bearer {}".format(token["container_token"])}
         return headers
 
-    def paginated_list(self, url: str, headers: dict = None) -> tuple[Response, list]:
+    def paginated_list(
+        self, url: str, headers: dict | None = None
+    ) -> tuple[Response, list]:
         """
         Get all resources of a list endpoint by browsing through all pages
 
@@ -330,10 +347,15 @@ class TestResourceBase(unittest.TestCase):
                 name=str(uuid1()), organizations=[organization]
             )
             collaboration.save()
+        elif collaboration.organizations:
+            organization = collaboration.organizations[0]
+        else:
+            organization = self.create_organization()
 
         task = Task(
             image="some-image",
             collaboration=collaboration,
+            init_org=organization,
             session=session,
         )
         task.save()

@@ -26,7 +26,9 @@ log = logging.getLogger(logger)
 
 class TestResources(TestResourceBase):
     def test_task_with_id(self):
-        task = Task(name="unit")
+        org = Organization()
+        org.save()
+        task = Task(name="unit", init_org=org)
         task.save()
         headers = self.login_as_root()
         result = self.app.get(f"/api/task/{task.id}", headers=headers)
@@ -353,7 +355,7 @@ class TestResources(TestResourceBase):
         session = Session(name="test_session", user_id=user.id, collaboration=col)
         session.save()
 
-        parent_task = Task(collaboration=col, image="some-image")
+        parent_task = Task(collaboration=col, image="some-image", init_org=org)
         parent_task.save()
         parent_res = Run(
             organization=org,
@@ -434,13 +436,12 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
-        Task.get()[::-1][0].delete()
+        self.delete_tasks()
         session.delete()
         org.delete()
         col.delete()
         node2.delete()
         col2.delete()
-        # delete the 1 task that was created in this unit test
 
     def test_delete_task_permissions(self):
         # test non-existing task
@@ -466,7 +467,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test with global permissions
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         task.save()
         rule = Rule.get_by_("task", Scope.GLOBAL, Operation.DELETE)
         headers = self.get_user_auth_header(rules=[rule])
@@ -474,7 +475,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
         # test that all results are also deleted
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         run = Run(task=task)
         run.save()
         run_id = run.id  # cannot access this after deletion
@@ -693,6 +694,7 @@ class TestResources(TestResourceBase):
             name="parent-task",
             image="parent-image",
             collaboration=collaboration,
+            init_org=org_parent,
             job_id=90001,
         )
         parent_task.save()
@@ -705,6 +707,7 @@ class TestResources(TestResourceBase):
             name="child-task",
             image="child-image",
             collaboration=collaboration,
+            init_org=org_parent,
             parent=parent_task,
             job_id=90001,
         )

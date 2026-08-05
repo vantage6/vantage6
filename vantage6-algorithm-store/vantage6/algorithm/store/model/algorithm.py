@@ -60,9 +60,7 @@ class Algorithm(Base):
     partitioning = Column(String)
     vantage6_version = Column(String)
     digest = Column(String)
-    submitted_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.timezone.utc)
-    )
+    submitted_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     approved_at = Column(DateTime)
     invalidated_at = Column(DateTime)
     developer_id = Column(Integer, ForeignKey("user.id"))
@@ -96,14 +94,14 @@ class Algorithm(Base):
         bool
             True if all reviews are approved, False otherwise
         """
-        return all([review.status == ReviewStatus.APPROVED for review in self.reviews])
+        return all(review.status == ReviewStatus.APPROVED for review in self.reviews)
 
     def approve(self) -> None:
         """
         Approve the algorithm, and invalidate all other algorithms with the same image.
         """
         self.status = AlgorithmStatus.APPROVED.value
-        self.approved_at = datetime.datetime.now(datetime.timezone.utc)
+        self.approved_at = datetime.datetime.now(datetime.UTC)
         self.save()
 
         for other_version in self.get_by_image(self.image):

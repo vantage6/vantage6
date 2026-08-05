@@ -4,9 +4,9 @@ import os
 from collections.abc import Generator
 from contextlib import contextmanager
 from time import sleep
-from typing import Any
+from typing import Any, ClassVar
 
-from flask.globals import g
+from flask.globals import app_ctx, g, request_ctx
 from sqlalchemy import (
     Column,
     Integer,
@@ -35,6 +35,44 @@ from vantage6.backend.common.globals import (
 
 module_name = logger_name(__name__)
 log = logging.getLogger(module_name)
+
+# Fallback scope key for `_flask_request_scope` when there is no Flask context
+# at all (e.g. `scoped_session.configure()` at connect time).
+_NO_FLASK_CONTEXT = object()
+
+
+def _flask_request_scope():
+    """
+    Scope key for the per-request database session.
+
+    Returns one session per Flask *request* context instead of the default
+    ``threading.local()`` (which, under gevent, is one session per greenlet).
+
+    Flask-SocketIO dispatches every socket-event handler inside a fresh request
+    context (``with app.request_context(environ)``). Under gevent a socket
+    handler can run *synchronously inside* a ``socketio.emit()`` - e.g. a node
+    disconnect triggered by delivering to a half-open client - which nests it in
+    the greenlet that is still handling an HTTP request. With greenlet scoping
+    the two share one session, so the nested handler's ``clear_session()``
+    detaches the ORM objects the outer request is still using
+    (``DetachedInstanceError``). Scoping per request context gives them separate
+    sessions. See https://github.com/vantage6/vantage6/issues/2656.
+
+    The scope must be the request context, not the app context: Flask reuses a
+    single app context across nested same-app request contexts, so app-context
+    scoping would not separate the two handlers.
+    """
+    try:
+        return id(request_ctx._get_current_object())
+    except RuntimeError:
+        pass
+    try:
+        # No request context (e.g. a bare app context pushed by a CLI command).
+        # There is no nested-handler hazard here; fall back to the app context.
+        return id(app_ctx._get_current_object())
+    except RuntimeError:
+        # No Flask context at all (e.g. `configure()` during connect).
+        return id(_NO_FLASK_CONTEXT)
 
 
 class BaseDatabase:
@@ -126,11 +164,11 @@ class BaseDatabase:
 
         URL = make_url(uri)
         log.info("Initializing the database")
-        log.debug("  driver:   {}".format(URL.drivername))
-        log.debug("  host:     {}".format(URL.host))
-        log.debug("  port:     {}".format(URL.port))
-        log.debug("  database: {}".format(URL.database))
-        log.debug("  username: {}".format(URL.username))
+        log.debug(f"  driver:   {URL.drivername}")
+        log.debug(f"  host:     {URL.host}")
+        log.debug(f"  port:     {URL.port}")
+        log.debug(f"  database: {URL.database}")
+        log.debug(f"  username: {URL.username}")
 
         # Make sure that the director for the file database exists.
         if URL.host is None and URL.database:
@@ -143,8 +181,13 @@ class BaseDatabase:
 
                 # Create a session for flask requests. If a session already
                 # exists it will return the same session (!).
+                # Scoped per Flask request context (see `_flask_request_scope`)
+                # rather than the default per-greenlet, so a socket handler that
+                # runs nested inside a request's `socketio.emit()` cannot clear
+                # the request's session out from under it (issue #2656).
                 self.session_flask_requests = scoped_session(
-                    sessionmaker(autocommit=False, autoflush=False)
+                    sessionmaker(autocommit=False, autoflush=False),
+                    scopefunc=_flask_request_scope,
                 )
                 self.session_flask_requests.configure(bind=self.engine)
 
@@ -163,14 +206,14 @@ class BaseDatabase:
                 base.metadata.create_all(bind=self.engine)
                 break
             except OperationalError as e:
-                log.error(f"Connection attempt failed: {str(e)}")
+                log.error(f"Connection attempt failed: {e!s}")
 
                 # Check if the maximum retry duration has been exceeded
                 if attempt < MAX_NUMBER_OF_ATTEMPTS - 1:
                     log.info(f"Retrying in {RETRY_DELAY_IN_SECONDS} seconds...")
                     sleep(RETRY_DELAY_IN_SECONDS)
                 else:
-                    raise Exception(
+                    raise TimeoutError(
                         f"Unable to connect to the database!"
                         f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and "
                         f"{max_time_in_minutes} minutes."
@@ -300,14 +343,10 @@ class BaseDatabase:
             col_name,
             tab_name,
         )
-        with self.engine.connect() as conn:
-            with conn.begin():
-                conn.execute(
-                    text(
-                        'ALTER TABLE "%s" ADD COLUMN %s %s'
-                        % (tab_name, col_name, col_type)
-                    )
-                )
+        with self.engine.connect() as conn, conn.begin():
+            conn.execute(
+                text(f'ALTER TABLE "{tab_name}" ADD COLUMN {col_name} {col_type}')
+            )
 
     @staticmethod
     def is_column_missing(
@@ -359,7 +398,7 @@ class BaseDatabaseSessionManager:
         boolean
             True if we are in a flask request, False otherwise
         """
-        return True if g else False
+        return bool(g)
 
     @staticmethod
     def _get_session(db_session_mgr: type["BaseDatabaseSessionManager"]) -> Session:
@@ -472,7 +511,7 @@ class BaseModelBase:
     from this class.
     """
 
-    _hidden_attributes = []
+    _hidden_attributes: ClassVar[list[str]] = []
 
     @declared_attr
     def __tablename__(cls):
@@ -594,7 +633,7 @@ class BaseModelBase:
             f"Methods: \n{methods}\n"
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check if the object is equal to another object.
 

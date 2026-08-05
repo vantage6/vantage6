@@ -143,7 +143,7 @@ class ModelBase(BaseModelBase):
     """
 
     @classmethod
-    def get(cls, id_: int = None):
+    def get(cls, id_: int | None = None):
         """
         Get a single object by its id, or a list of objects when no id is
         specified.

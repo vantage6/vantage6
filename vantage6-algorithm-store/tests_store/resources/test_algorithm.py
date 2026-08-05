@@ -546,7 +546,7 @@ class TestAlgorithmResources(TestResources):
 
         # check that algorithm cannot be updated if it is approved
         algorithm.status = AlgorithmStatus.APPROVED.value
-        algorithm.approved_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.approved_at = datetime.datetime.now(datetime.UTC)
         algorithm.save()
         response = self.app.patch(
             f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}
@@ -554,7 +554,7 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         # check that algorithm cannot be updated if it is invalidated
-        algorithm.invalidated_at = datetime.datetime.now(datetime.timezone.utc)
+        algorithm.invalidated_at = datetime.datetime.now(datetime.UTC)
         algorithm.save()
         response = self.app.patch(
             f"/api/algorithm/{algorithm.id}", json={"description": "new_description"}

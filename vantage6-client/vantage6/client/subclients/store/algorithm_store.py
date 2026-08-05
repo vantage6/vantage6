@@ -73,8 +73,8 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        url: str = None,
+        name: str | None = None,
+        url: str | None = None,
         collaboration: int | None = None,
         page: int = 1,
         per_page: int = 10,
@@ -184,10 +184,10 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
     @post_filtering(iterable=False)
     def update(
         self,
-        id_: int = None,
-        name: str = None,
-        collaboration: int = None,
-        all_collaborations: bool = None,
+        id_: int | None = None,
+        name: str | None = None,
+        collaboration: int | None = None,
+        all_collaborations: bool | None = None,
     ) -> dict:
         """Update an algorithm store.
 
@@ -226,7 +226,7 @@ class AlgorithmStoreSubClient(ClientBase.SubClient):
             data["collaboration_id"] = collaboration
         return self.parent.request(f"algorithmstore/{id_}", method="patch", json=data)
 
-    def delete(self, id_: int = None) -> None:
+    def delete(self, id_: int | None = None) -> None:
         """Delete an algorithm store.
 
         Parameters

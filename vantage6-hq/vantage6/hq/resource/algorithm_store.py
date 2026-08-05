@@ -32,7 +32,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info('Setting up "%s" and subdirectories', path)
 
     api.add_resource(
@@ -63,7 +63,7 @@ class AlgorithmStoreBase(ServicesResources):
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
-        self.r_col: RuleCollection = getattr(self.permissions, "collaboration")
+        self.r_col: RuleCollection = self.permissions.collaboration
 
     @staticmethod
     def _convert_k8s_url_to_localhost(store: db.AlgorithmStore) -> None:

@@ -5,6 +5,7 @@ import time
 
 import click
 import requests
+from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error, info, warning
 
@@ -42,10 +43,9 @@ def _get_latest_keycloak_version() -> str:
         if not version:
             error("No version found in the Keycloak Github releases.")
             info("Please specify a version manually using the --operator-version flag.")
-            exit(1)
+            sys.exit(1)
         # Remove 'v' prefix if present (e.g., "v24.0.0" -> "24.0.0")
-        if version.startswith("v"):
-            version = version[1:]
+        version = version.removeprefix("v")
         return version
     except requests.HTTPError as e:
         if e.response.status_code == 403:
@@ -59,11 +59,11 @@ def _get_latest_keycloak_version() -> str:
                 f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. "
             )
         info("Please specify a version manually using the --operator-version flag.")
-        exit(1)
+        sys.exit(1)
     except (requests.RequestException, KeyError, ValueError) as e:
         error(f"Failed to fetch latest Keycloak Operator version from GitHub: {e}. ")
         info("Please specify a version manually using the --operator-version flag.")
-        exit(1)
+        sys.exit(1)
 
 
 @click.command()
@@ -129,8 +129,10 @@ def cli_auth_install_operator(
             "clusterrolebinding",
             "keycloak-operator-clusterrole-binding",
             "--type=json",
-            '-p=[{"op": "replace", "path": "/subjects/0/namespace", "value":"'
-            'custom-namespace"}]',
+            (
+                '-p=[{"op": "replace", "path": "/subjects/0/namespace", "value":"'
+                'custom-namespace"}]'
+            ),
         ],
         k8s_config=k8s_config,
     )
@@ -203,7 +205,7 @@ def _wait_for_operator_ready(
                 info("Keycloak Operator is ready.")
                 return
 
-        except Exception as e:
+        except (OSError, subprocess.SubprocessError) as e:
             warning(f"Error checking operator status: {e}")
 
         time.sleep(5)
@@ -235,7 +237,7 @@ def check_and_install_keycloak_operator(k8s_config: KubernetesConfig):
             info("✅ Keycloak operator installed successfully.")
         else:
             info("✅ Keycloak operator is already installed.")
-    except Exception as e:
+    except (ConfigException, OSError, subprocess.SubprocessError) as e:
         warning(f"⚠️  Could not check Keycloak operator status: {e}")
         warning(
             "Continuing anyway. If Keycloak fails to start, run 'v6 auth "
@@ -271,5 +273,5 @@ def _check_keycloak_operator_installed(k8s_config: KubernetesConfig) -> bool:
             check=False,
         )
         return result.returncode == 0
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return False

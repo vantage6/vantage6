@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import importlib.metadata
 import logging
 import subprocess
@@ -9,11 +10,10 @@ import sys
 import time
 import webbrowser
 from pathlib import Path
-from typing import List
 
 import pyfiglet
 import requests
-from keycloak import KeycloakAuthenticationError, KeycloakOpenID
+from keycloak import KeycloakAuthenticationError, KeycloakError, KeycloakOpenID
 
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
@@ -63,7 +63,7 @@ class UserClient(ClientBase):
         log_level : str, optional
             The log level to use, by default 'info'
         """
-        super(UserClient, self).__init__(hq_url=hq_url, auth_url=auth_url)
+        super().__init__(hq_url=hq_url, auth_url=auth_url)
 
         # Replace logger by print logger
         self.log = self._get_logger(log_level)
@@ -179,9 +179,8 @@ class UserClient(ClientBase):
         """Retrieve device authorization and token endpoints from Keycloak."""
         try:
             well_known = self.kc_openid.well_known()
-        except Exception as exc:  # pragma: no cover - network failure
-            self.log.error("Failed to retrieve OpenID configuration from Keycloak")
-            self.log.exception(exc)
+        except KeycloakError:  # pragma: no cover - network failure
+            self.log.exception("Failed to retrieve OpenID configuration from Keycloak")
             return None, None
 
         device_endpoint = well_known.get("device_authorization_endpoint")
@@ -211,9 +210,8 @@ class UserClient(ClientBase):
                 },
                 timeout=30,
             )
-        except Exception as exc:
-            self.log.error("Failed to request device code from Keycloak")
-            self.log.exception(exc)
+        except requests.RequestException:
+            self.log.exception("Failed to request device code from Keycloak")
             return None
 
         if resp.status_code != 200:
@@ -255,19 +253,19 @@ class UserClient(ClientBase):
                     webbrowser.open(url_to_open)
             else:
                 webbrowser.open(url_to_open)
-        except Exception as exc:  # pragma: no cover - environment-dependent
+        except webbrowser.Error as exc:  # pragma: no cover - environment-dependent
             self.log.warning("Could not open browser automatically: %s", exc)
             print("--------------------------------")
-            print("")
+            print()
             print("To authenticate, open the following URL in your browser:")
             print(f"  {verification_uri}")
             print("and enter this code:")
             print(f"  {user_code}")
             if verification_uri_complete:
-                print("")
+                print()
                 print("Alternatively, you can login directly with the following URL:")
                 print(f"  {verification_uri_complete}")
-            print("")
+            print()
             print("--------------------------------")
 
     def _poll_device_token(self, token_endpoint: str, device_data: dict) -> dict | None:
@@ -296,9 +294,8 @@ class UserClient(ClientBase):
                     },
                     timeout=30,
                 )
-            except Exception as exc:
-                self.log.error("Error while polling Keycloak token endpoint")
-                self.log.exception(exc)
+            except requests.exceptions.RequestException:
+                self.log.exception("Error while polling Keycloak token endpoint")
                 return None
 
             if token_resp.status_code == 200:
@@ -307,7 +304,7 @@ class UserClient(ClientBase):
             elif token_resp.status_code == 400:
                 try:
                     error_payload = token_resp.json()
-                except Exception:
+                except requests.exceptions.JSONDecodeError:
                     error_payload = {}
 
                 error_code = error_payload.get("error")
@@ -443,13 +440,11 @@ class UserClient(ClientBase):
 
         try:
             new_token = self.kc_openid.refresh_token(self._refresh_token)
-        except KeycloakAuthenticationError as e:
-            self.log.error("Could not authenticate token. Please re-authenticate!")
-            self.log.exception(e)
+        except KeycloakAuthenticationError:
+            self.log.exception("Could not authenticate token. Please re-authenticate!")
             return
-        except Exception as e:
-            self.log.error("Error in refreshing token. Please re-authenticate!")
-            self.log.exception(e)
+        except KeycloakError:
+            self.log.exception("Error in refreshing token. Please re-authenticate!")
             return
 
         self._access_token = new_token["access_token"]
@@ -495,7 +490,7 @@ class UserClient(ClientBase):
         # Disable logging (additional logging would prevent the 'wait' message
         # from being printed on a single line)
         prev_level = self.log.level
-        self.log.setLevel(logging.WARN)
+        self.log.setLevel(logging.WARNING)
         self.wait_for_task_completion(self.request, task_id, interval, True)
         self.log.setLevel(prev_level)
         return self.result.from_task(task_id)
@@ -503,7 +498,7 @@ class UserClient(ClientBase):
     class Util(ClientBase.SubClient):
         """Collection of general utilities"""
 
-        def get_hq_version(self, attempts_on_timeout: int = None) -> dict:
+        def get_hq_version(self, attempts_on_timeout: int | None = None) -> dict:
             """View the version number of vantage6 HQ
 
             Parameters
@@ -538,7 +533,7 @@ class UserClient(ClientBase):
                 "health", silent_on_connection_error=silent_on_connection_error
             )
 
-        def generate_private_key(self, file_: str = None) -> None:
+        def generate_private_key(self, file_: str | None = None) -> None:
             """Generate new private key
 
             Parameters
@@ -571,13 +566,13 @@ class UserClient(ClientBase):
         def list(
             self,
             scope: str = "organization",
-            name: str = None,
-            encrypted: bool = None,
-            organization: int = None,
-            algorithm_store: int = None,
+            name: str | None = None,
+            encrypted: bool | None = None,
+            organization: int | None = None,
+            algorithm_store: int | None = None,
             page: int = 1,
             per_page: int = 20,
-        ) -> List[dict]:
+        ) -> builtins.list[dict]:
             """View your collaborations
 
             Parameters
@@ -715,7 +710,9 @@ class UserClient(ClientBase):
                 },
             )
 
-        def delete(self, id_: int = None, delete_dependents: bool = False) -> None:
+        def delete(
+            self, id_: int | None = None, delete_dependents: bool = False
+        ) -> None:
             """Deletes a collaboration
 
             Parameters
@@ -738,10 +735,10 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def update(
             self,
-            id_: int = None,
-            name: str = None,
-            encrypted: bool = None,
-            organizations: List[int] = None,
+            id_: int | None = None,
+            name: str | None = None,
+            encrypted: bool | None = None,
+            organizations: builtins.list[int] | None = None,
         ) -> dict:
             """
             Update collaboration information
@@ -784,8 +781,8 @@ class UserClient(ClientBase):
             )
 
         def add_organization(
-            self, organization: int, collaboration: int = None
-        ) -> List[dict]:
+            self, organization: int, collaboration: int | None = None
+        ) -> builtins.list[dict]:
             """
             Add an organization to a collaboration
 
@@ -810,8 +807,8 @@ class UserClient(ClientBase):
             )
 
         def remove_organization(
-            self, organization: int, collaboration: int = None
-        ) -> List[dict]:
+            self, organization: int, collaboration: int | None = None
+        ) -> builtins.list[dict]:
             """
             Remove an organization from a collaboration
 
@@ -835,7 +832,7 @@ class UserClient(ClientBase):
                 json={"id": organization},
             )
 
-        def __get_id_or_use_provided_id(self, id_: int = None) -> int:
+        def __get_id_or_use_provided_id(self, id_: int | None = None) -> int:
             """
             Get the collaboration id from the parent object or use the provided id
             """
@@ -883,13 +880,13 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            name: str = None,
-            organization: int = None,
-            collaboration: int = None,
-            study: int = None,
-            is_online: bool = None,
-            last_seen_from: str = None,
-            last_seen_till: str = None,
+            name: str | None = None,
+            organization: int | None = None,
+            collaboration: int | None = None,
+            study: int | None = None,
+            is_online: bool | None = None,
+            last_seen_from: str | None = None,
+            last_seen_till: str | None = None,
             page: int = 1,
             per_page: int = 20,
         ) -> list[dict]:
@@ -961,8 +958,8 @@ class UserClient(ClientBase):
         def create(
             self,
             collaboration: int | None = None,
-            organization: int = None,
-            name: str = None,
+            organization: int | None = None,
+            name: str | None = None,
         ) -> dict:
             """Register new node
 
@@ -1010,7 +1007,7 @@ class UserClient(ClientBase):
             return self.parent.request("node", method="post", json=body)
 
         @post_filtering(iterable=False)
-        def update(self, id_: int, name: str = None) -> dict:
+        def update(self, id_: int, name: str | None = None) -> dict:
             """Update node information
 
             Parameters
@@ -1075,12 +1072,12 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            name: str = None,
-            country: int = None,
-            collaboration: int = None,
-            study: int = None,
-            page: int = None,
-            per_page: int = None,
+            name: str | None = None,
+            country: int | None = None,
+            collaboration: int | None = None,
+            study: int | None = None,
+            page: int | None = None,
+            per_page: int | None = None,
         ) -> list[dict]:
             """List organizations
 
@@ -1133,7 +1130,7 @@ class UserClient(ClientBase):
             return self.parent.request("organization", params=params)
 
         @post_filtering(iterable=False)
-        def get(self, id_: int = None) -> dict:
+        def get(self, id_: int | None = None) -> dict:
             """View specific organization
 
             Parameters
@@ -1165,14 +1162,14 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def update(
             self,
-            id_: int = None,
-            name: str = None,
-            address1: str = None,
-            address2: str = None,
-            zipcode: str = None,
-            country: str = None,
-            domain: str = None,
-            public_key: str = None,
+            id_: int | None = None,
+            name: str | None = None,
+            address1: str | None = None,
+            address2: str | None = None,
+            zipcode: str | None = None,
+            country: str | None = None,
+            domain: str | None = None,
+            public_key: str | None = None,
         ) -> dict:
             """Update organization information
 
@@ -1237,7 +1234,7 @@ class UserClient(ClientBase):
             zipcode: str,
             country: str,
             domain: str,
-            public_key: str = None,
+            public_key: str | None = None,
         ) -> dict:
             """Create new organization
 
@@ -1309,12 +1306,12 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            username: str = None,
-            organization: int = None,
-            role: int = None,
-            rule: int = None,
-            last_seen_from: str = None,
-            last_seen_till: str = None,
+            username: str | None = None,
+            organization: int | None = None,
+            role: int | None = None,
+            rule: int | None = None,
+            last_seen_from: str | None = None,
+            last_seen_till: str | None = None,
             page: int = 1,
             per_page: int = 20,
         ) -> list:
@@ -1372,7 +1369,7 @@ class UserClient(ClientBase):
             return self.parent.request("user", params=params)
 
         @post_filtering(iterable=False)
-        def get(self, id_: int = None) -> dict:
+        def get(self, id_: int | None = None) -> dict:
             """View user information
 
             Parameters
@@ -1417,9 +1414,9 @@ class UserClient(ClientBase):
         @post_filtering(iterable=False)
         def update(
             self,
-            id_: int = None,
-            rules: list = None,
-            roles: list = None,
+            id_: int | None = None,
+            rules: list | None = None,
+            roles: list | None = None,
         ) -> dict:
             """Update user details
 
@@ -1465,10 +1462,10 @@ class UserClient(ClientBase):
         def create(
             self,
             username: str,
-            password: str = None,
-            organization: int = None,
-            roles: list = [],
-            rules: list = [],
+            password: str | None = None,
+            organization: int | None = None,
+            roles: list | None = None,
+            rules: list | None = None,
             is_service_account: bool = False,
         ) -> dict:
             """Create new user
@@ -1505,6 +1502,10 @@ class UserClient(ClientBase):
             dict
                 Containing data of the new user
             """
+            if rules is None:
+                rules = []
+            if roles is None:
+                roles = []
             user_data = {
                 "username": username,
                 "organization_id": organization,
@@ -1531,12 +1532,12 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            name: str = None,
-            description: str = None,
-            organization: int = None,
-            rule: int = None,
-            user: int = None,
-            include_root: bool = None,
+            name: str | None = None,
+            description: str | None = None,
+            organization: int | None = None,
+            rule: int | None = None,
+            user: int | None = None,
+            include_root: bool | None = None,
             page: int = 1,
             per_page: int = 20,
         ) -> list[dict]:
@@ -1619,7 +1620,11 @@ class UserClient(ClientBase):
 
         @post_filtering(iterable=False)
         def create(
-            self, name: str, description: str, rules: list, organization: int = None
+            self,
+            name: str,
+            description: str,
+            rules: list,
+            organization: int | None = None,
         ) -> dict:
             """Register new role
 
@@ -1665,9 +1670,9 @@ class UserClient(ClientBase):
         def update(
             self,
             role: int,
-            name: str = None,
-            description: str = None,
-            rules: list = None,
+            name: str | None = None,
+            description: str | None = None,
+            rules: list | None = None,
         ) -> dict:
             """Update role
 
@@ -1751,23 +1756,23 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            initiating_org: int = None,
-            initiating_user: int = None,
-            collaboration: int = None,
-            study: int = None,
-            store: int = None,
-            image: str = None,
-            parent: int = None,
-            job: int = None,
-            name: str = None,
+            initiating_org: int | None = None,
+            initiating_user: int | None = None,
+            collaboration: int | None = None,
+            study: int | None = None,
+            store: int | None = None,
+            image: str | None = None,
+            parent: int | None = None,
+            job: int | None = None,
+            name: str | None = None,
             include_results: bool = False,
-            description: str = None,
-            database: str = None,
-            run: int = None,
-            status: str = None,
-            user_created: bool = None,
-            session: int = None,
-            dataframe: int = None,
+            description: str | None = None,
+            database: str | None = None,
+            run: int | None = None,
+            status: str | None = None,
+            user_created: bool | None = None,
+            session: int | None = None,
+            dataframe: int | None = None,
             page: int = 1,
             per_page: int = 20,
         ) -> dict:
@@ -2183,17 +2188,17 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            task: int = None,
-            organization: int = None,
-            state: str = None,
-            node: int = None,
+            task: int | None = None,
+            organization: int | None = None,
+            state: str | None = None,
+            node: int | None = None,
             include_task: bool = False,
-            started: tuple[str, str] = None,
-            assigned: tuple[str, str] = None,
-            finished: tuple[str, str] = None,
-            port: int = None,
-            page: int = None,
-            per_page: int = None,
+            started: tuple[str, str] | None = None,
+            assigned: tuple[str, str] | None = None,
+            finished: tuple[str, str] | None = None,
+            port: int | None = None,
+            page: int | None = None,
+            per_page: int | None = None,
         ) -> dict | list[dict]:
             """List runs
 
@@ -2435,10 +2440,10 @@ class UserClient(ClientBase):
         @post_filtering()
         def list(
             self,
-            name: str = None,
-            operation: str = None,
-            scope: str = None,
-            role: int = None,
+            name: str | None = None,
+            operation: str | None = None,
+            scope: str | None = None,
+            role: int | None = None,
             page: int = 1,
             per_page: int = 20,
         ) -> list:

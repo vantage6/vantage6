@@ -28,17 +28,12 @@ LOGGING_VALIDATORS = {
 class HQConfiguration(Configuration):
     """Stores the HQ's configuration and defines a set of HQ-specific validators."""
 
-    # TODO: explore how to validate helm values.yaml files, see issue 2105
-    VALIDATORS = {}
-
 
 class AlgorithmStoreConfiguration(Configuration):
     """
     Stores the algorithm store's configuration and defines a set of algorithm
     store-specific validators.
     """
-
-    VALIDATORS = {}
 
 
 class NodeConfiguration(Configuration):
@@ -49,34 +44,43 @@ class NodeConfiguration(Configuration):
 
     # TODO perhaps we can remove these classes and do validation of the configuration
     # file more easily with helm values.yaml checks.
-    VALIDATORS = {
-        # # TODO enable validators for node. To see if it works, use v6 node list
-        # "node": {
-        #     "hq_url": Use(str),
-        #     "port": Or(Use(int), None),
-        #     "task_dir": Use(str),
-        #     # TODO: remove `dict` validation from databases
-        #     "api_path": Use(str),
-        #     "logging": LOGGING_VALIDATORS,
-        #     "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
-        #     Optional("node_extra_env"): dict,
-        #     Optional("node_extra_mounts"): [str],
-        #     Optional("node_extra_hosts"): dict,
-        #     Optional("share_algorithm_logs"): Use(bool),
-        # }
-    }
+    # VALIDATORS = {
+    # # TODO enable validators for node. To see if it works, use v6 node list
+    # "node": {
+    #     "hq_url": Use(str),
+    #     "port": Or(Use(int), None),
+    #     "task_dir": Use(str),
+    #     # TODO: remove `dict` validation from databases
+    #     "api_path": Use(str),
+    #     "logging": LOGGING_VALIDATORS,
+    #     "encryption": {"enabled": bool, Optional("private_key"): Use(str)},
+    #     Optional("node_extra_env"): dict,
+    #     Optional("node_extra_mounts"): [str],
+    #     Optional("node_extra_hosts"): dict,
+    #     Optional("share_algorithm_logs"): Use(bool),
+    # }
+    # }
 
 
 class AuthConfiguration(Configuration):
-    VALIDATORS = {}
+    """
+    Stores the auth's configuration and defines a set of auth-specific
+    validators.
+    """
 
 
 class HubConfiguration(Configuration):
-    VALIDATORS = {}
+    """
+    Stores the hub's configuration and defines a set of hub-specific
+    validators.
+    """
 
 
 class TestConfiguration(Configuration):
-    VALIDATORS = {}
+    """
+    Stores the testing configuration and defines a set of test-specific
+    validators.
+    """
 
 
 class NodeConfigurationManager(ConfigurationManager):

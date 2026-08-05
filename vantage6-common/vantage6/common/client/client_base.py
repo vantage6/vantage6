@@ -18,6 +18,7 @@ from vantage6.common.globals import (
 )
 
 module_name = __name__.split(".")[1]
+log = logging.getLogger(module_name)
 
 
 @staticmethod
@@ -40,7 +41,7 @@ def _log_completion(task_id: int, start_time: float, log_animation: bool) -> Non
     if log_animation:
         print(f"\r{message}                     ")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 @staticmethod
@@ -67,7 +68,7 @@ def _log_progress(
     if log_animation:
         print(f"\r{message}", end="")
     else:
-        logging.info(message)
+        log.info(message)
 
 
 class ClientBase(BlobStorageMixin):
@@ -196,13 +197,13 @@ class ClientBase(BlobStorageMixin):
     def request(
         self,
         endpoint: str,
-        json: dict = None,
+        json: dict | None = None,
         method: str = "get",
-        params: dict = None,
-        headers: dict = None,
+        params: dict | None = None,
+        headers: dict | None = None,
         first_try: bool = True,
         retry: bool = True,
-        attempts_on_timeout: int = None,
+        attempts_on_timeout: int | None = None,
         is_for_algorithm_store: bool = False,
         silent_on_connection_error: bool = False,
     ) -> dict:
@@ -283,8 +284,7 @@ class ClientBase(BlobStorageMixin):
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
                 # dots in the log message
-                if msg.endswith("."):
-                    msg = msg[:-1]
+                msg = msg.removesuffix(".")
                 self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
@@ -469,8 +469,8 @@ class ClientBase(BlobStorageMixin):
             # of get_results
             run_data_ = cryptor.decrypt(run_data_)
 
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Failed to decrypt run data.")
 
         return run_data_
 
@@ -512,7 +512,7 @@ class ClientBase(BlobStorageMixin):
                     return decrypted
             try:
                 return decrypted.decode(STRING_ENCODING)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 self.log.error(
                     "Failed to decode the field %s. Skipping decoding, "
                     "returning bytes object.",

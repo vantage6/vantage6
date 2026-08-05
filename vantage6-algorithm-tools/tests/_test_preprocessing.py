@@ -6,7 +6,7 @@ python -m unittest vantage6-algorithm-tools.tests.test_preprocessing
 """
 
 import unittest
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from vantage6.algorithm.preprocessing.filtering import select_rows
 
 
 def random_date(
-    start: datetime, end: datetime, fmt: str = "%Y-%m-%d", seed: int = None
+    start: datetime, end: datetime, fmt: str = "%Y-%m-%d", seed: int | None = None
 ) -> str:
     """
     Generate a random date between start and end.
@@ -537,8 +537,8 @@ class TestPreprocessing(unittest.TestCase):
         df = get_test_dataframe()
 
         # Set start and end dates for random date generation
-        start_date = datetime(2020, 1, 1)
-        end_date = datetime(2022, 12, 31)
+        start_date = datetime(2020, 1, 1, tzinfo=UTC)
+        end_date = datetime(2022, 12, 31, tzinfo=UTC)
 
         # Generate a new column with random dates in string format
         magic_fmt = "(%d)+(%m)=(%Y)"
@@ -637,7 +637,7 @@ class TestPreprocessing(unittest.TestCase):
             '{"age":{"171":23,"342":23},"income":{"171":62026,"342":44074},'
             '"education":{"171":"Master","342":"Master"},"color_preference":'
             '{"171":"Green","342":"Green"},"purchased_product":{"171":1,"342":'
-            '0},"magic_date":{"171":"2022-11-12","342":"2020-01-20"},"income\/'
+            r'0},"magic_date":{"171":"2022-11-12","342":"2020-01-20"},"income\/'
             'age":{"171":0.9737126326,"342":0.0147479299},"age_days":{"171":'
             '8395,"342":8395},"age_days_td":{"171":"8395 days","342":"8395 '
             'days"}}'

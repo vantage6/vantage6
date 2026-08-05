@@ -11,7 +11,7 @@ from vantage6.algorithm.store import run_store
 
 if len(sys.argv) < 2:
     error("No config file provided from WSGI! Exiting...")
-    exit(1)
+    sys.exit(1)
 config_file = sys.argv[1]
 
 store_app = run_store(config_file, system_folders=False)

@@ -15,13 +15,13 @@ from vantage6.algorithm.decorator.metadata import metadata
 from vantage6.algorithm.decorator.ohdsi import omop_data_extraction
 
 __all__ = [
+    "algorithm_client",
     "central",
     "data_extraction",
-    "federated",
-    "preprocessing",
-    "algorithm_client",
     "dataframe",
     "dataframes",
+    "federated",
     "metadata",
     "omop_data_extraction",
+    "preprocessing",
 ]

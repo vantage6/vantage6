@@ -43,7 +43,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info('Setting up "%s" and subdirectories', path)
 
     api.add_resource(
@@ -178,9 +178,7 @@ class StudyBase(ServicesResources):
             True if all organizations are members of the collaboration, False otherwise
         """
         collab = db.Collaboration.get(collaboration_id)
-        return set(organization_ids).issubset(
-            set([org.id for org in collab.organizations])
-        )
+        return set(organization_ids).issubset({org.id for org in collab.organizations})
 
 
 class Studies(StudyBase):

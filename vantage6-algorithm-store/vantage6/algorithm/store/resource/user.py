@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 from http import HTTPStatus
 
@@ -49,7 +48,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         Dictionary with services required for the resource endpoints
     """
 
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
