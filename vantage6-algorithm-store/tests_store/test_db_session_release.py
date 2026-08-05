@@ -49,10 +49,9 @@ class TestSessionScope(TestCase):
 
     def test_session_released_when_body_raises(self):
         """The session is cleared even when the body raises - the actual bug."""
-        with self.assertRaises(RuntimeError):
-            with DatabaseSessionManager.session_scope():
-                self.assertIsNotNone(session_module.session)
-                raise RuntimeError("work blew up mid-scope")
+        with self.assertRaises(RuntimeError), DatabaseSessionManager.session_scope():
+            self.assertIsNotNone(session_module.session)
+            raise RuntimeError("work blew up mid-scope")
         self.assertIsNone(session_module.session)
 
 

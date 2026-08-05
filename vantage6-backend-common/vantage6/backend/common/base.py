@@ -477,7 +477,7 @@ class BaseDatabaseSessionManager:
     @contextmanager
     def _session_scope(
         db_session_mgr: type["BaseDatabaseSessionManager"],
-    ) -> Generator[Session, None, None]:
+    ) -> Generator[Session]:
         """
         Context manager that yields a session and guarantees it is released.
 
