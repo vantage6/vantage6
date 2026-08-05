@@ -76,8 +76,8 @@ def _cleanup_auth_volumes(ctx: AuthContext) -> None:
     for pvc in pvcs:
         ns = pvc.metadata.namespace
         name_ = pvc.metadata.name
+        info(f"Deleting pers istent volume claim {name_} in namespace {ns}")
         try:
-            info(f"Deleting persistent volume claim {name_} in namespace {ns}")
             core_api.delete_namespaced_persistent_volume_claim(name=name_, namespace=ns)
         except (ApiException, HTTPError) as e:
             # Ignore failures; continue attempting other deletions
@@ -88,8 +88,8 @@ def _cleanup_auth_volumes(ctx: AuthContext) -> None:
 
     # Delete PVs that were bound to those PVCs (cluster-scoped)
     for pv_name in pv_names:
+        info(f"Deleting persistent volume: {pv_name}")
         try:
-            info(f"Deleting persistent volume: {pv_name}")
             core_api.delete_persistent_volume(name=pv_name)
         except (ApiException, HTTPError) as e:
             warning(f"Failed to delete persistent volume {pv_name}: {e}")

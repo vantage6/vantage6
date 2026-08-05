@@ -15,3 +15,8 @@ class AlgorithmRetrievalError(Exception):
 class SuperUserAlreadyExistsError(Exception):
     """Exception to indicate that the super user already exists when it was
     expected not to (e.g. on first-time HQ setup)."""
+
+
+class ProxyRequestError(Exception):
+    """Exception to indicate that the node's proxy server could not successfully
+    forward a request to HQ after exhausting all retries."""

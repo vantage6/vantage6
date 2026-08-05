@@ -18,6 +18,7 @@ from requests import Response
 from vantage6.common import base64s_to_bytes, bytes_to_base64s, logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
+from vantage6.common.exceptions import ProxyRequestError
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -148,7 +149,7 @@ def make_request(
             sleep(1)
 
     # if all attempts fail, raise an exception to be handled by its parent
-    raise Exception("Proxy request failed")  # noqa: TRY002
+    raise ProxyRequestError("Proxy request failed")
 
 
 def decrypt_result(run: dict) -> dict:

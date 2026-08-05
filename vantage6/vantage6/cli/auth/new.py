@@ -357,11 +357,11 @@ def _add_keycloak_admin_secret(
         admin_password = generate_password()
 
     # Determine namespace/context and create a Kubernetes Secret with the credentials
+    secret_name = (
+        f"{APPNAME}-{name}-{InstanceType.AUTH.value}-kc-admin-user-"
+        f"{uuid.uuid4().hex[:8]}"
+    )
     try:
-        secret_name = (
-            f"{APPNAME}-{name}-{InstanceType.AUTH.value}-kc-admin-user-"
-            f"{uuid.uuid4().hex[:8]}"
-        )
         create_kubernetes_secret(
             core_api=get_core_api_with_ssl_handling(),
             secret_name=secret_name,
