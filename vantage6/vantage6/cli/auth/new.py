@@ -287,15 +287,15 @@ def parse_database_uri_to_config(
         )
         sys.exit(1)
 
-    for required_field in [
+    for label, value in [
         ("username", username),
         ("password", password),
         ("hostname", hostname),
         ("database name", database_name),
     ]:
-        if not required_field[1]:
+        if not value:
             error(
-                f"No {required_field[0]} could be found in the database URI. "
+                f"No {label} could be found in the database URI. "
                 f"Please provide a {required_field[0]}."
             )
             sys.exit(1)
