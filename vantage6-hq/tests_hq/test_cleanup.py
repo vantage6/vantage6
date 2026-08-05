@@ -8,7 +8,7 @@ from sqlalchemy import select
 from vantage6.common.enum import RunStatus
 
 from vantage6.hq.controller import cleanup
-from vantage6.hq.model import Task
+from vantage6.hq.model import Organization, Task
 from vantage6.hq.model.base import Database, DatabaseSessionManager
 from vantage6.hq.model.run import Run
 
@@ -31,6 +31,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             name="test-task",
             description="Test task for cleanup",
             image="test-image:latest",
+            init_org=Organization(name="test-org"),
         )
         self.session.add(task)
         self.session.commit()
@@ -60,6 +61,7 @@ class TestCleanupRunsIsolated(unittest.TestCase):
             name="test-task",
             description="Test task for cleanup",
             image="test-image:latest",
+            init_org=Organization(name="test-org"),
         )
         self.session.add(task)
         self.session.commit()

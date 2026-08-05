@@ -221,7 +221,7 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
+        def patch(self, id_: int, data: dict, init_org_id: int | None = None) -> dict:
             """
             Update the algorithm run data at HQ.
 
@@ -233,23 +233,17 @@ class NodeClient(ClientBase):
                 ID of the run to patch
             data: Dict
                 Dictionary of fields that are to be patched
-            init_org_id: int, optional
-                Organization id of the origin of the task. This is required
-                when the run dict includes results, because then results have
-                to be encrypted specifically for them
+            init_org_id: int | None, optional
+                Organization id of the origin of the task. This is required when
+                `data` includes a result, because the result has to be encrypted
+                specifically for that organization. It is not used otherwise.
 
             Returns
             -------
-            dict | None
-                The response from HQ, or None if wrong data was provided
+            dict
+                The response from HQ
             """
             if "result" in data:
-                if not init_org_id:
-                    self.parent.log.critical(
-                        "Organization id is not provided: cannot send results "
-                        "to HQ as they cannot be encrypted"
-                    )
-                    return
                 self.parent.log.debug(
                     f"Retrieving public key from organization={init_org_id}"
                 )

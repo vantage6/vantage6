@@ -220,7 +220,7 @@ class TestRunModel(TestModelBase):
     def test_insert(self):
         org = Organization(name=str(uuid.uuid4()))
         org.save()
-        task = Task(name="unit_task")
+        task = Task(name="unit_task", init_org=org)
         run = Run(task=task, organization=org, arguments="something")
         run.save()
         self.assertEqual(run, run)
@@ -232,7 +232,7 @@ class TestRunModel(TestModelBase):
     def test_relations(self):
         org = Organization(name=str(uuid.uuid4()))
         col = Collaboration(name=str(uuid.uuid4()), organizations=[org])
-        task = Task(name="unit_task", collaboration=col)
+        task = Task(name="unit_task", collaboration=col, init_org=org)
         run = Run(task=task, organization=org)
         run.save()
         self.assertIsInstance(run.organization, Organization)
@@ -256,12 +256,14 @@ class TestTaskModel(TestModelBase):
                 self.assertIsInstance(run, Run)
 
     def test_insert(self):
-        col = Collaboration(name=str(uuid.uuid4()))
+        org = Organization(name=str(uuid.uuid4()))
+        col = Collaboration(name=str(uuid.uuid4()), organizations=[org])
         col.save()
         task = Task(
             name="unit_task",
             image="some-image",
             collaboration=col,
+            init_org=org,
             job_id=1,
         )
         task.save()
@@ -285,6 +287,7 @@ class TestTaskModel(TestModelBase):
         task = Task(
             name="unit_task",
             collaboration=col,
+            init_org=org,
             runs=[Run(organization=org)],
         )
         task.save()

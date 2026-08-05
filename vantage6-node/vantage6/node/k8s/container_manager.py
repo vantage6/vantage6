@@ -378,8 +378,7 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        init_org_ref = task_info.get("init_org", {})
-        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        init_org_id = task_info["init_org"]["id"]
         self.log.debug(
             "[Algorithm run %s - requested by org %s] Setting up algorithm run",
             run_id,
@@ -553,7 +552,8 @@ class ContainerManager:
             annotations={
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
-                "task_parent_id": str(parent_task_id),
+                "task_parent_id": str(parent_task_id) if parent_task_id else "",
+                "init_org_id": str(init_org_id),
                 "action": action.value,
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
@@ -1450,9 +1450,10 @@ class ContainerManager:
 
             # Check if any of the jobs is completed
             for job in finished_jobs:
+                annotations = job.metadata.annotations
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
-                    job.metadata.annotations,
+                    annotations,
                     self.client,
                     task_dir_extension=self.ctx.config.get("dev", {}).get(
                         "task_dir_extension"
@@ -1469,16 +1470,18 @@ class ContainerManager:
                 self.log.info(
                     "Sending results of run_id=%s and task_id=%s back to HQ",
                     run_io.run_id,
-                    job.metadata.annotations["task_id"],
+                    annotations["task_id"],
                 )
 
+                parent_id = annotations["task_parent_id"]
                 result = Result(
                     run_id=run_io.run_id,
-                    task_id=job.metadata.annotations["task_id"],
+                    task_id=int(annotations["task_id"]),
                     logs=logs,
                     data=results,
                     status=status,
-                    parent_id=job.metadata.annotations["task_parent_id"],
+                    parent_id=int(parent_id) if parent_id else None,
+                    init_org_id=int(annotations["init_org_id"]),
                 )
 
                 self.num_active_tasks -= 1
@@ -1766,10 +1769,12 @@ class ContainerManager:
             core_api=self.core_api,
             batch_api=self.batch_api,
         )
+        annotations = job_to_kill.metadata.annotations
+        parent_id = annotations["task_parent_id"]
         return KilledRun(
-            run_id=job_to_kill.metadata.annotations["run_id"],
-            task_id=job_to_kill.metadata.annotations["task_id"],
-            parent_id=job_to_kill.metadata.annotations["task_parent_id"],
+            run_id=int(annotations["run_id"]),
+            task_id=int(annotations["task_id"]),
+            parent_id=int(parent_id) if parent_id else None,
             logs=logs,
         )
 
