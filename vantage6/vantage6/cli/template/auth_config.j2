@@ -4,11 +4,12 @@ keycloak:
   # Whether the Keycloak is deployed standalone or as part of a vantage6 hub.
   standalone: {{ keycloak.standalone | default(false) }}
 
-  # Specify the version of the Keycloak Operator to use.
+  # The CLI installs the compatibility-tested 26.6.2 operator by default. Setting a
+  # different version opts into a release that may not have been tested with vantage6.
   {% if keycloak.operatorVersion is defined %}
   operatorVersion: {{ keycloak.operatorVersion }}
   {% else %}
-  # operatorVersion: "26.0.0"
+  # operatorVersion: "26.6.2"
   {% endif %}
 
   # Specify the number of Keycloak instances to deploy.

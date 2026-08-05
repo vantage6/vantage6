@@ -80,3 +80,8 @@ command), you can install them using the following command:
 .. code-block:: bash
 
     v6 auth install-keycloak
+
+By default, vantage6 installs Keycloak Operator version ``26.6.2``, the version tested
+for compatibility with this vantage6 release. You can opt into another release with
+``--operator-version major.minor.patch``; overridden versions may not have been tested
+with vantage6.
