@@ -8,6 +8,8 @@ vantage6 applications with naming conventions, standard file locations, and
 more.
 """
 
+import sys
+
 from colorama import Fore, Style
 
 from vantage6.common import error
@@ -87,7 +89,7 @@ def get_context(
             f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not "
             f"exist in the {Fore.RED}{scope}{Style.RESET_ALL} folders!"
         )
-        exit(1)
+        sys.exit(1)
 
     # We do not want to log this here, we do this in the container and not on
     # the host. We only want CLI logging here.

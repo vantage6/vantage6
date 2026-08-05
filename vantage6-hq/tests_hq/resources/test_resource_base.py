@@ -285,7 +285,9 @@ class TestResourceBase(unittest.TestCase):
         headers = {"Authorization": "Bearer {}".format(token["container_token"])}
         return headers
 
-    def paginated_list(self, url: str, headers: dict = None) -> tuple[Response, list]:
+    def paginated_list(
+        self, url: str, headers: dict | None = None
+    ) -> tuple[Response, list]:
         """
         Get all resources of a list endpoint by browsing through all pages
 

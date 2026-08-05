@@ -84,13 +84,13 @@ class TestResources(TestResourceBase):
             task=task,
             organization=org2,
             status=RunStatus.PENDING.value,
-            started_at=datetime.datetime.now(datetime.timezone.utc),
+            started_at=datetime.datetime.now(datetime.UTC),
         )
         finished_sibling = Run(
             task=task,
             organization=org2,
             status=RunStatus.COMPLETED.value,
-            finished_at=datetime.datetime.now(datetime.timezone.utc),
+            finished_at=datetime.datetime.now(datetime.UTC),
         )
         failing_run.save()
         pending_sibling.save()

@@ -74,23 +74,23 @@ class TestNodeProductionGating:
         ctx = MagicMock()
         ctx.config = {"production": True}
 
-        with patch("vantage6.node.validate_required_env_vars"):
-            with patch("vantage6.node.ContainerManager") as mock_cm_cls:
-                mock_cm = mock_cm_cls.return_value
-                mock_cm.ensure_task_namespace.return_value = True
-                mock_cm.validate_algorithm_isolation.return_value = (
-                    False,
-                    "probe failed",
-                )
-                with patch(
-                    "vantage6.node.exit", side_effect=SystemExit(1)
-                ) as mock_exit:
-                    with patch.object(
-                        Node, "_setup_node_client", return_value=MagicMock()
-                    ):
-                        with pytest.raises(SystemExit):
-                            Node(ctx)
-                    mock_exit.assert_called_once_with(1)
+        with (
+            patch("vantage6.node.validate_required_env_vars"),
+            patch("vantage6.node.ContainerManager") as mock_cm_cls,
+        ):
+            mock_cm = mock_cm_cls.return_value
+            mock_cm.ensure_task_namespace.return_value = True
+            mock_cm.validate_algorithm_isolation.return_value = (
+                False,
+                "probe failed",
+            )
+            with patch("vantage6.node.exit", side_effect=SystemExit(1)) as mock_exit:
+                with (
+                    patch.object(Node, "_setup_node_client", return_value=MagicMock()),
+                    pytest.raises(SystemExit),
+                ):
+                    Node(ctx)
+                mock_exit.assert_called_once_with(1)
 
     def test_production_false_warns_on_isolation_failure(self, caplog):
         ctx = MagicMock()
@@ -99,26 +99,26 @@ class TestNodeProductionGating:
         def _connect_socket(self):
             self.socketIO = MagicMock()
 
-        with patch("vantage6.node.validate_required_env_vars"):
-            with patch("vantage6.node.ContainerManager") as mock_cm_cls:
-                mock_cm = mock_cm_cls.return_value
-                mock_cm.ensure_task_namespace.return_value = True
-                mock_cm.validate_algorithm_isolation.return_value = (
-                    False,
-                    "probe failed",
-                )
-                with patch("vantage6.node.exit") as mock_exit:
-                    with patch.object(
-                        Node, "_setup_node_client", return_value=MagicMock()
-                    ):
-                        with patch.object(Node, "authenticate"):
-                            with patch.object(Node, "setup_encryption"):
-                                with patch.object(
-                                    Node, "connect_to_socket", _connect_socket
-                                ):
-                                    with patch.object(Node, "start_processing_threads"):
-                                        with patch("vantage6.node.Thread"):
-                                            with caplog.at_level("WARNING"):
-                                                Node(ctx)
-                    mock_exit.assert_not_called()
+        with (
+            patch("vantage6.node.validate_required_env_vars"),
+            patch("vantage6.node.ContainerManager") as mock_cm_cls,
+        ):
+            mock_cm = mock_cm_cls.return_value
+            mock_cm.ensure_task_namespace.return_value = True
+            mock_cm.validate_algorithm_isolation.return_value = (
+                False,
+                "probe failed",
+            )
+            with patch("vantage6.node.exit") as mock_exit:
+                with (
+                    patch.object(Node, "_setup_node_client", return_value=MagicMock()),
+                    patch.object(Node, "authenticate"),
+                    patch.object(Node, "setup_encryption"),
+                    patch.object(Node, "connect_to_socket", _connect_socket),
+                    patch.object(Node, "start_processing_threads"),
+                    patch("vantage6.node.Thread"),
+                    caplog.at_level("WARNING"),
+                ):
+                    Node(ctx)
+                mock_exit.assert_not_called()
         assert "probe failed" in caplog.text

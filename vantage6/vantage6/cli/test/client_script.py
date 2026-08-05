@@ -155,7 +155,9 @@ def cli_test_client_script(
     else:
         subprocess_args = ["python", script, task_arguments]
 
-    result = subprocess.run(subprocess_args, stdout=sys.stdout, stderr=sys.stderr)
+    result = subprocess.run(
+        subprocess_args, stdout=sys.stdout, stderr=sys.stderr, check=False
+    )
 
     # check the exit code. If the test passed, it should be 0
     if result.returncode == 0:

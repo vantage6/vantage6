@@ -109,7 +109,7 @@ class Task(Base):
     parent_id = Column(Integer, ForeignKey("task.id"))
     init_org_id = Column(Integer, ForeignKey("organization.id"), nullable=False)
     init_user_id = Column(Integer, ForeignKey("user.id"))
-    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
     algorithm_store_id = Column(Integer, ForeignKey("algorithmstore.id"))
 
     # relationships
@@ -204,9 +204,9 @@ class Task(Base):
             Status of task
         """
         run_statuses = [r.status for r in self.runs]
-        if any([RunStatus.has_failed(status) for status in run_statuses]):
+        if any(RunStatus.has_failed(status) for status in run_statuses):
             return TaskStatus.FAILED.value
-        elif all([RunStatus.has_finished(status) for status in run_statuses]):
+        elif all(RunStatus.has_finished(status) for status in run_statuses):
             return TaskStatus.COMPLETED.value
         else:
             return TaskStatus.WAITING.value

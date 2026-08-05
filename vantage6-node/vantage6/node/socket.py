@@ -59,8 +59,7 @@ class NodeTaskNamespace(ClientNamespace):
         """
         # self.node_worker_ref.socketIO.disconnect()
         self.log.info(
-            "Disconnected from HQ (reason: %s)",
-            reason if reason else "unknown"
+            "Disconnected from HQ (reason: %s)", reason if reason else "unknown"
         )
 
     def on_new_task_update(self, data: dict):

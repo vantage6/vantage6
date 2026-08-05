@@ -1,6 +1,7 @@
 import importlib
 import json
 import os
+import sys
 import traceback
 from typing import Any
 
@@ -47,7 +48,7 @@ def wrap_algorithm(log_traceback: bool = True) -> None:
             "No PKG_NAME specified! Make sure that the PKG_NAME environment "
             "variable is specified in the Dockerfile. Exiting..."
         )
-        exit(1)
+        sys.exit(1)
     info(f"wrapper for {module}")
 
     # Decode environment variables that are encoded by the node.
@@ -112,7 +113,7 @@ def _run_algorithm_method(
         error(f"Module '{module}' can not be imported! Exiting...")
         if log_traceback:
             error(traceback.print_exc())
-        exit(1)
+        sys.exit(1)
 
     # get algorithm method and attempt to load it
     try:
@@ -121,7 +122,7 @@ def _run_algorithm_method(
         error(f"Method '{method}' not found!\n")
         if log_traceback:
             error(traceback.print_exc())
-        exit(1)
+        sys.exit(1)
 
     # check if the method is decorated with a vantage6 decorator. If it is not,
     # we need to raise an error. It is important to check this, because the decorator
@@ -132,18 +133,18 @@ def _run_algorithm_method(
             "algorithm functions should have a decorator such as @federated, "
             "@central, @preprocessing, @data_extraction, etc."
         )
-        exit(1)
+        sys.exit(1)
 
     # try to run the method
     if not arguments:
         arguments = {}
     try:
         result = method_fn(**arguments)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         error(f"Error encountered while calling {method}: {exc}")
         if log_traceback:
             error(traceback.print_exc())
-        exit(1)
+        sys.exit(1)
 
     return result
 

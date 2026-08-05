@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import click
@@ -200,7 +201,7 @@ def node_configuration_questionaire(
     )
     try:
         client.authenticate()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Could not authenticate: {e}")
         error(
             "Please check your API key and if HQ and authentication service are online."
@@ -209,7 +210,7 @@ def node_configuration_questionaire(
             "If you continue, you should provide your collaboration settings manually."
         )
         if q.confirm("Do you want to abort?", default=True).unsafe_ask():
-            exit(0)
+            sys.exit(0)
 
     if client.whoami is not None:
         encryption = client.is_encrypted_collaboration()

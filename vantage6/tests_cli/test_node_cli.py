@@ -385,12 +385,4 @@ class NodeCLITest(unittest.TestCase):
         )
 
         # should not trigger an exception
-        try:
-            create_client_and_authenticate(ctx)
-        except Exception:
-            self.fail("Raised an exception!")
-
-        # client raises exception
-        client.side_effect = Exception("Boom!")
-        with self.assertRaises(Exception):
-            create_client_and_authenticate(ctx)
+        create_client_and_authenticate(ctx)

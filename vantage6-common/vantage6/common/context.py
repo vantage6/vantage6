@@ -5,10 +5,11 @@ import os
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from typing import Self, Tuple
+from typing import Self
 
 import appdirs
 import pyfiglet
+import yaml
 
 from vantage6.common import Fore, Singleton, Style, __version__, error, get_config_path
 from vantage6.common.colors import ColorStreamHandler
@@ -41,7 +42,7 @@ class AppContext(metaclass=Singleton):
         instance_type: InstanceType,
         instance_name: str,
         system_folders: bool = False,
-        config_file: Path | str = None,
+        config_file: Path | str | None = None,
         print_log_header: bool = True,
         logger_prefix: str = "",
         in_container: bool = False,
@@ -410,7 +411,7 @@ class AppContext(metaclass=Singleton):
                     failed.append(file_)
                 else:
                     configs.append(conf_manager)
-            except Exception as e:
+            except (OSError, yaml.YAMLError, AssertionError) as e:
                 print(f"Error loading configuration file: {e}")
 
                 failed.append(file_)
@@ -597,7 +598,7 @@ class AppContext(metaclass=Singleton):
         # If filename is an absolute path `os.path.join()` ignores
         # `self.data_dir`.
         if not filename:
-            raise Exception('Argument "filename" should be provided!')
+            raise ValueError('Argument "filename" should be provided!')
         return os.path.join(self.data_dir, filename)
 
     def set_folders(
@@ -663,7 +664,7 @@ class AppContext(metaclass=Singleton):
                 f"Can't write to log dir (permissions error): "
                 f"{Fore.RED}{self.log_file}{Style.RESET_ALL}!"
             )
-            exit(1)
+            sys.exit(1)
 
         rfh.setLevel(level)
         rfh.setFormatter(logging.Formatter(format_, datefmt))
@@ -685,7 +686,7 @@ class AppContext(metaclass=Singleton):
         logging.captureWarnings(True)
 
     @staticmethod
-    def configure_logger(name: str | None, level: str) -> Tuple[logging.Logger, int]:
+    def configure_logger(name: str | None, level: str) -> tuple[logging.Logger, int]:
         """
         Set the logging level of a logger.
 

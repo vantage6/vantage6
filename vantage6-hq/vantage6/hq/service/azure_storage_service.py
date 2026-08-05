@@ -1,6 +1,7 @@
 import logging
-from typing import IO, Union
+from typing import IO
 
+from azure.core.exceptions import AzureError
 from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobServiceClient
 from sqlalchemy import event
@@ -87,7 +88,7 @@ class AzureStorageService:
         stream = blob_client.download_blob()
         return stream.readall()
 
-    def store_blob(self, blob_name: str, data: Union[IO, bytes]) -> None:
+    def store_blob(self, blob_name: str, data: IO | bytes) -> None:
         """
         Store data as a blob in Azure Blob Storage.
 
@@ -105,7 +106,7 @@ class AzureStorageService:
         )
         try:
             blob_client.upload_blob(data, overwrite=True)
-        except Exception as e:
+        except AzureError as e:
             log.error(f"Failed to upload blob '{blob_name}': {e}")
             raise RuntimeError(f"Failed to upload blob '{blob_name}': {e}")
 
@@ -156,7 +157,7 @@ class AzureStorageService:
                     self.delete_blob(target.result)
                 if target.input:
                     self.delete_blob(target.input)
-            except Exception as e:
+            except AzureError as e:
                 error_msg = f"Failed to delete blob for run {target.id}: {e}"
                 log.error(error_msg)
                 raise RuntimeError(error_msg)

@@ -213,7 +213,7 @@ def link_algorithms_from_config(config: dict) -> None:
         developer = db.User.get_first_user()
     if not developer:
         log.warning(
-            "link_algorithms: No users found; skipping seeding",
+            "link_algorithms: No users found (root_username=%s); skipping seeding",
             root_username,
         )
         return

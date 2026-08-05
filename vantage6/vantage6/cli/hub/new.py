@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 from urllib.parse import urlparse
 
@@ -66,7 +67,7 @@ def cli_hub_new(
 
     if HubContext.config_exists(name, system_folders):
         error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
-        exit(1)
+        sys.exit(1)
 
     k8s_cfg = select_k8s_config(context=context, namespace=namespace)
 

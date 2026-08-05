@@ -92,13 +92,15 @@ class TestWebsocketSessionCleanupWiring(TestResourceBase):
         session. `after_request` does not run for a bare request context (nor
         for socket events), so this only passes if a teardown hook is
         registered."""
-        with patch.object(
-            DatabaseSessionManager,
-            "clear_session",
-            wraps=DatabaseSessionManager.clear_session,
-        ) as clear_spy:
-            with self.server.app.test_request_context():
-                DatabaseSessionManager.new_session()
+        with (
+            patch.object(
+                DatabaseSessionManager,
+                "clear_session",
+                wraps=DatabaseSessionManager.clear_session,
+            ) as clear_spy,
+            self.server.app.test_request_context(),
+        ):
+            DatabaseSessionManager.new_session()
 
         self.assertTrue(
             clear_spy.called,

@@ -10,6 +10,8 @@ from vantage6.client import Client
 
 import vantage6.cli.test.algo_test_scripts.algo_test_arguments as arguments
 
+log = logging.getLogger(__name__)
+
 
 def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algorithm"):
     """
@@ -36,14 +38,14 @@ def create_and_run_task(client: Client, task_args: dict, algo_name: str = "algor
         # check if the task has failed
         assert client.task.get(task_id)["status"] != TaskStatus.FAILED
 
-        logging.info("Task for %s completed successfully.", algo_name)
+        log.info("Task for %s completed successfully.", algo_name)
 
     except AssertionError:
         error(
             f"Task for {algo_name} failed. Check the log file of the task "
             f"{task_id} for more information."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def run_test(custom_args: dict | None = None):
@@ -65,7 +67,7 @@ def run_test(custom_args: dict | None = None):
         client.authenticate()
     except ConnectionError:
         error("Could not connect. Please check if a dev network is running.")
-        exit(1)
+        sys.exit(1)
 
     # if custom arguments are provided, use them for running the task
     if custom_args:
@@ -74,8 +76,8 @@ def run_test(custom_args: dict | None = None):
     else:
         # Run the task for each algorithm in the arguments file
         for algo, task_args in arguments.args.items():
-            logging.info("Running task for %s", algo)
-            logging.info("Task arguments: %s", task_args)
+            log.info("Running task for %s", algo)
+            log.info("Task arguments: %s", task_args)
             create_and_run_task(client, task_args, algo)
 
 

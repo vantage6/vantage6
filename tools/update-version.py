@@ -1,7 +1,6 @@
+import datetime
 import re
-from datetime import datetime
 from pathlib import Path
-from typing import List
 
 import click
 
@@ -41,7 +40,7 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def find_pyproject_files() -> List[Path]:
+def find_pyproject_files() -> list[Path]:
     """
     Find all pyproject.toml files in the vantage6 packages.
 
@@ -217,11 +216,11 @@ def update_version_docker_files(version: str) -> None:
     ]
     for file in files:
         if not file.exists():
-            raise Exception(f"Skipping missing Dockerfile: {file}")
+            raise FileNotFoundError(f"Dockerfile not found: {file}")
         with open(file, "r", encoding="utf-8") as f:
             content = f.read()
             new_content = re.sub(
-                r"(ARG BASE=)(\d+.\d+)", r"\g<1>{}".format(major_minor), content
+                r"(ARG BASE=)(\d+.\d+)", rf"\g<1>{major_minor}", content
             )
         with open(file, "w", encoding="utf-8") as f:
             f.write(new_content)
@@ -283,7 +282,7 @@ def update_uv_lock(version: str, spec: str, build: int, post: int) -> None:
     """
     uv_lock = repo_root() / "uv.lock"
     if not uv_lock.exists():
-        raise Exception(f"Skipping uv.lock update: {uv_lock} not found")
+        raise FileNotFoundError(f"{uv_lock} not found")
 
     new_version = build_version_string(version, spec, build, post)
     print(f"Updating workspace package versions in {uv_lock}")
@@ -332,7 +331,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
 
     for chart_file in chart_files:
         if not chart_file.exists():
-            raise Exception(f"Skipping missing chart: {chart_file}")
+            raise FileNotFoundError(f"Chart file not found: {chart_file}")
         print(f"Updating version in {chart_file}")
         with open(chart_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -364,7 +363,7 @@ def update_helm_charts(version: str, spec: str, build: int) -> None:
         with open(chart_file, "w", encoding="utf-8") as f:
             f.write(content)
 
-    generated = datetime.now().astimezone().isoformat()
+    generated = datetime.datetime.now(datetime.UTC).astimezone().isoformat()
     for lock_file in sorted((root / "charts").rglob("Chart.lock")):
         print(f"Updating dependency versions in {lock_file}")
         with open(lock_file, "r", encoding="utf-8") as f:

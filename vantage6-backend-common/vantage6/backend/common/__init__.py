@@ -4,6 +4,7 @@ import importlib.metadata
 import json
 import logging
 import os
+import sys
 import time
 import traceback
 from abc import abstractmethod
@@ -158,7 +159,9 @@ class Vantage6App:
             except KeyError as e:
                 log.error(f"Failed to get keycloak public key: {e}")
                 time.sleep(retry_delay)
-        raise Exception("Failed to get keycloak public key")
+        raise TimeoutError(
+            f"Failed to get keycloak public key after {num_attempts} attempts"
+        )
 
     def _configure_flask_base(
         self, database_session_manager: type["BaseDatabaseSessionManager"]
@@ -181,12 +184,12 @@ class Vantage6App:
         )
         try:
             self.app.config["JWT_PUBLIC_KEY"] = self._get_keycloak_public_key()
-        except Exception as e:
-            log.exception(e)
-            log.error(f"Failed to get keycloak public key: {e}")
-            log.error("This means that you cannot login as a user")
-            log.error("Exiting...")
-            exit(1)
+        except Exception:
+            log.exception(
+                "Could not get keycloak public key. This means that you "
+                "cannot login as a user. Exiting..."
+            )
+            sys.exit(1)
         self.app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
 
         # Mail settings
@@ -307,7 +310,7 @@ class Vantage6App:
         def output_json(
             data: base_db_model | list[base_db_model],
             code: HTTPStatus,
-            headers: dict = None,
+            headers: dict | None = None,
         ) -> Response:
             """
             Return jsonified data for request responses.
@@ -322,9 +325,7 @@ class Vantage6App:
                 Additional headers to be added to the response
             """
 
-            if isinstance(data, base_db_model):
-                data = jsonable(data)
-            elif (
+            if isinstance(data, base_db_model) or (
                 isinstance(data, list)
                 and len(data)
                 and isinstance(data[0], base_db_model)
@@ -377,12 +378,12 @@ class Vantage6App:
         try:
             super_user.keycloak_id = get_keycloak_id_for_user(super_user.username)
             super_user.save()
-        except Exception as exc:
-            log.error(
-                "Could not get keycloak ID for super user %s", super_user.username
+        except Exception:
+            log.exception(
+                "Could not get keycloak ID for super user %s. This means that you "
+                "cannot login as this user",
+                super_user.username,
             )
-            log.error("This means that you cannot login as this user")
-            log.exception(exc)
 
         # Also sync the organization ID of the super user in keycloak. Only do that
         # for HQ (where organization_id is defined), not for the algorithm store.
@@ -426,7 +427,7 @@ class Vantage6App:
                 organization_id,
                 username,
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             log.critical(
                 "Could not set organization_id attribute for user %s in Keycloak",
                 username,
@@ -455,7 +456,7 @@ class Vantage6App:
             origins = [origins]
 
         for origin in origins:
-            if probably_regex(origin) and not origin == "*":
+            if probably_regex(origin) and origin != "*":
                 log.warning(
                     "CORS origin '%s' is a regular expression. Socket events sent from "
                     "this origin will not be handled properly.",

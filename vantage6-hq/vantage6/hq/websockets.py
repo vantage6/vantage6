@@ -42,7 +42,7 @@ class DefaultSocketNamespace(Namespace):
 
     def _is_node(self) -> bool:
         if session.type != "node":
-            self.log.warn(
+            self.log.warning(
                 "Only nodes can send algorithm updates! "
                 f"{session.type} {session.auth_id} is not allowed."
             )
@@ -87,9 +87,8 @@ class DefaultSocketNamespace(Namespace):
             emit("invalid_token", room=request.sid)
             return
 
-        except Exception as exc:
-            self.log.error("Couldn't connect client! No or Invalid JWT token?")
-            self.log.exception(exc)
+        except Exception:
+            self.log.exception("Couldn't connect client! No or Invalid JWT token?")
             return
 
         # get identity from token.
@@ -237,7 +236,7 @@ class DefaultSocketNamespace(Namespace):
         self.log.info(
             "%s disconnected (reason: %s)",
             session.name,
-            reason if reason else "unknown"
+            reason if reason else "unknown",
         )
 
     def on_message(self, message: str) -> None:
@@ -410,7 +409,7 @@ class DefaultSocketNamespace(Namespace):
             )
 
         auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.timezone.utc)
+        auth.last_seen = dt.datetime.now(dt.UTC)
         auth.save()
 
     def on_dataframe_deleted(self, data: dict) -> None:
@@ -563,7 +562,7 @@ class DefaultSocketNamespace(Namespace):
                 )
             except ValueError as e:
                 self.log.warning(f"Invalid metric data: {e}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")

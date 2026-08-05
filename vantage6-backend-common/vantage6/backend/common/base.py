@@ -2,7 +2,7 @@ import inspect as class_inspect
 import logging
 import os
 from time import sleep
-from typing import Any
+from typing import Any, ClassVar
 
 from flask.globals import app_ctx, g, request_ctx
 from sqlalchemy import (
@@ -149,11 +149,11 @@ class BaseDatabase:
 
         URL = make_url(uri)
         log.info("Initializing the database")
-        log.debug("  driver:   {}".format(URL.drivername))
-        log.debug("  host:     {}".format(URL.host))
-        log.debug("  port:     {}".format(URL.port))
-        log.debug("  database: {}".format(URL.database))
-        log.debug("  username: {}".format(URL.username))
+        log.debug(f"  driver:   {URL.drivername}")
+        log.debug(f"  host:     {URL.host}")
+        log.debug(f"  port:     {URL.port}")
+        log.debug(f"  database: {URL.database}")
+        log.debug(f"  username: {URL.username}")
 
         # Make sure that the director for the file database exists.
         if URL.host is None and URL.database:
@@ -190,14 +190,14 @@ class BaseDatabase:
                 base.metadata.create_all(bind=self.engine)
                 break
             except OperationalError as e:
-                log.error(f"Connection attempt failed: {str(e)}")
+                log.error(f"Connection attempt failed: {e!s}")
 
                 # Check if the maximum retry duration has been exceeded
                 if attempt < MAX_NUMBER_OF_ATTEMPTS - 1:
                     log.info(f"Retrying in {RETRY_DELAY_IN_SECONDS} seconds...")
                     sleep(RETRY_DELAY_IN_SECONDS)
                 else:
-                    raise Exception(
+                    raise TimeoutError(
                         f"Unable to connect to the database!"
                         f" Timeout after {MAX_NUMBER_OF_ATTEMPTS} attempts and "
                         f"{max_time_in_minutes} minutes."
@@ -288,14 +288,10 @@ class BaseDatabase:
             col_name,
             tab_name,
         )
-        with self.engine.connect() as conn:
-            with conn.begin():
-                conn.execute(
-                    text(
-                        'ALTER TABLE "%s" ADD COLUMN %s %s'
-                        % (tab_name, col_name, col_type)
-                    )
-                )
+        with self.engine.connect() as conn, conn.begin():
+            conn.execute(
+                text(f'ALTER TABLE "{tab_name}" ADD COLUMN {col_name} {col_type}')
+            )
 
     @staticmethod
     def is_column_missing(
@@ -347,7 +343,7 @@ class BaseDatabaseSessionManager:
         boolean
             True if we are in a flask request, False otherwise
         """
-        return True if g else False
+        return bool(g)
 
     @staticmethod
     def _get_session(db_session_mgr: type["BaseDatabaseSessionManager"]) -> Session:
@@ -429,7 +425,7 @@ class BaseModelBase:
     from this class.
     """
 
-    _hidden_attributes = []
+    _hidden_attributes: ClassVar[list[str]] = []
 
     @declared_attr
     def __tablename__(cls):
@@ -551,7 +547,7 @@ class BaseModelBase:
             f"Methods: \n{methods}\n"
         )
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check if the object is equal to another object.
 

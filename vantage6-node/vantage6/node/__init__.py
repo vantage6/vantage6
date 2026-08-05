@@ -42,6 +42,7 @@ from socketio import Client as SocketIO
 from vantage6.common import logger_name, validate_required_env_vars
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.enum import AlgorithmStepType, RunStatus, TaskStatusQueryOptions
+from vantage6.common.exceptions import EncryptionMismatchError
 from vantage6.common.globals import (
     PING_INTERVAL_SECONDS,
     NodeConfigKey,
@@ -119,7 +120,7 @@ class Node:
         namespace_created = self.k8s_container_manager.ensure_task_namespace()
         if not namespace_created:
             self.log.error("Could not create the task namespace. Exiting.")
-            exit(1)
+            sys.exit(1)
 
         self.check_algorithm_isolation()
 
@@ -174,7 +175,7 @@ class Node:
                     "central_compute egress whitelist (e.g. 0.0.0.0/0).",
                     isolation_message,
                 )
-                exit(1)
+                sys.exit(1)
             self.log.warning(
                 "Algorithm network isolation check failed: %s",
                 isolation_message,
@@ -307,7 +308,7 @@ class Node:
                 "proxy-server is not set"
             )
             self.log.info("Shutting down the node...")
-            exit(1)
+            sys.exit(1)
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -354,7 +355,7 @@ class Node:
             )
             self.log.info("%s: %s", type(e), e)
             self.log.info("Shutting down the node...")
-            exit(1)
+            sys.exit(1)
 
     def sync_task_queue_with_HQ(self) -> None:
         """Get all unprocessed tasks from HQ for this node."""
@@ -439,7 +440,7 @@ class Node:
                 id_=run_id,
                 data={
                     "status": RunStatus.FAILED.value,
-                    "finished_at": datetime.datetime.now().isoformat(),
+                    "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
@@ -489,9 +490,7 @@ class Node:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
-            update["finished_at"] = datetime.datetime.now(
-                datetime.timezone.utc
-            ).isoformat()
+            update["finished_at"] = datetime.datetime.now(datetime.UTC).isoformat()
         self.client.run.patch(id_=run_id, data=update)
 
         # send socket event to alert everyone of task status change. In case the
@@ -554,9 +553,8 @@ class Node:
                 self.__report_finished_run(results)
             except Exception as e:
                 self.log.exception(
-                    "poll_task_results (Speaking) thread had an exception: %s - %s",
+                    "poll_task_results (Speaking) thread had an exception: %s",
                     type(e).__name__,
-                    e,
                 )
 
             time.sleep(1)
@@ -574,7 +572,7 @@ class Node:
         data = {
             "log": results.logs,
             "status": results.status.value,
-            "finished_at": datetime.datetime.now().isoformat(),
+            "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
             "result": results.data,
         }
         self.client.run.patch(
@@ -613,7 +611,7 @@ class Node:
             except requests.exceptions.ConnectionError:
                 self.__print_connection_error_logs()
                 time.sleep(SLEEP_BTWN_NODE_LOGIN_TRIES)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 msg = (
                     "Authentication failed. Retrying in "
                     f"{SLEEP_BTWN_NODE_LOGIN_TRIES} seconds!"
@@ -631,7 +629,7 @@ class Node:
             self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
             self.log.critical("Unable to authenticate. Exiting")
-            exit(1)
+            sys.exit(1)
 
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_renew_token()
@@ -666,7 +664,9 @@ class Node:
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
-            raise Exception("Expectations on encryption don't match?!")
+            raise EncryptionMismatchError(
+                "Expectations on encryption between node and server do not match"
+            )
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
@@ -707,7 +707,7 @@ class Node:
                     "Could not connect to the websocket channels, do you have a "
                     "slow connection?"
                 )
-                exit(1)
+                sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)
             i += 1
@@ -742,16 +742,16 @@ class Node:
             try:
                 self.log.info("Waiting for new tasks....")
                 run_to_execute = self.runs_queue.get()
-            except Exception as e:
-                self.log.exception("Error while processing tasks queue: %s", e)
+            except Exception:
+                self.log.exception("Error while processing tasks queue")
                 time.sleep(1)
                 continue
 
             try:
                 self.log.info("New task received")
                 self.__start_task(run_to_execute)
-            except Exception as e:
-                self.log.exception("Error while starting task: %s", e)
+            except Exception:
+                self.log.exception("Error while starting task")
                 self.log.error(
                     "Task %s failed to start and will not be retried",
                     run_to_execute["task"]["id"],
@@ -765,8 +765,8 @@ class Node:
                             "log": "Error in the node while starting the task",
                         },
                     )
-                except Exception as e:
-                    self.log.exception("Error while patching task: %s", e)
+                except Exception:
+                    self.log.exception("Error while patching task")
                 time.sleep(1)
                 continue
 
@@ -834,11 +834,10 @@ class Node:
         config_to_share = {}
 
         encryption_config = self.config.get("encryption")
-        if encryption_config:
-            if encryption_config.get("enabled") is not None:
-                config_to_share[NodeConfigKey.ENCRYPTION.value] = str(
-                    encryption_config.get("enabled")
-                )
+        if encryption_config and encryption_config.get("enabled") is not None:
+            config_to_share[NodeConfigKey.ENCRYPTION.value] = str(
+                encryption_config.get("enabled")
+            )
 
         # share node policies (e.g. who can run which algorithms)
         policies = self.config.get("policies", {})
@@ -879,14 +878,14 @@ class Node:
         try:
             if hasattr(self, "socketIO") and self.socketIO:
                 self.socketIO.disconnect()
-        except Exception as e:
-            self.log.exception("Error while disconnecting from socketIO: %s", e)
+        except Exception:
+            self.log.exception("Error while disconnecting from socketIO")
 
         try:
             if hasattr(self, "k8s_container_manager"):
                 self.k8s_container_manager.cleanup()
-        except Exception as e:
-            self.log.exception("Error while cleaning up k8s container manager: %s", e)
+        except Exception:
+            self.log.exception("Error while cleaning up k8s container manager")
 
         self.log.info("Bye!")
 

@@ -277,8 +277,7 @@ class TestTaskModel(TestModelBase):
     def test_methods(self):
         highest_id = 0
         for task in Task.get():
-            if task.id > highest_id:
-                highest_id = task.id
+            highest_id = max(highest_id, task.id)
 
     def test_relations(self):
         org = Organization(name=str(uuid.uuid4()))
