@@ -20,6 +20,12 @@ def run():
     cli_test_suites = find_tests(str(Path(__file__).parent / "vantage6"))
     success_cli = run_tests(cli_test_suites)
 
+    # run node tests
+    node_test_suites = find_tests(
+        str(Path(__file__).parent / "vantage6-node" / "tests_node")
+    )
+    success_node = run_tests(node_test_suites)
+
     # run server tests
     server_test_suites = find_tests(str(Path(__file__).parent / "vantage6-server"))
     success_server = run_tests(server_test_suites)
@@ -40,6 +46,7 @@ def run():
         not (
             success_server
             and success_cli
+            and success_node
             and success_common
             and success_algorithm_store
             and success_algorithm_tools
