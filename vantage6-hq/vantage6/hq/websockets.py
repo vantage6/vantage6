@@ -236,7 +236,7 @@ class DefaultSocketNamespace(Namespace):
         self.log.info(
             "%s disconnected (reason: %s)",
             session.name,
-            reason if reason else "unknown"
+            reason if reason else "unknown",
         )
 
     def on_message(self, message: str) -> None:

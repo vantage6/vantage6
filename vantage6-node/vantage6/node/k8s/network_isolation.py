@@ -25,8 +25,7 @@ def _build_probe_command() -> list[str]:
     isolation.
     """
     checks = " || ".join(
-        "curl -s -o /dev/null --max-time "
-        f"{ISOLATION_PROBE_CURL_MAX_TIME_SECONDS} {url}"
+        f"curl -s -o /dev/null --max-time {ISOLATION_PROBE_CURL_MAX_TIME_SECONDS} {url}"
         for url in ISOLATION_PROBE_CANDIDATES
     )
     return ["sh", "-c", checks]
