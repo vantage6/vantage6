@@ -1,0 +1,184 @@
+# TODO: This is just a draft, ultimately we want to simplify build process (less images, smaller, simpler workflows)
+name: Release node and server images
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  release-node-image:
+    name: Release node image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      IMAGE_REPOSITORY: ghcr.io/vantage6/infrastructure/node
+
+    steps:
+      - name: Checkout repository
+        # https://github.com/actions/checkout/releases/tag/v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve image metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#version/}"
+          if [ -z "$VERSION" ]; then
+            echo "Version is empty" >&2
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "Version contains unsupported characters: $VERSION" >&2
+            exit 1
+          fi
+
+          IMAGE_NAME="${IMAGE_REPOSITORY}"
+          IMAGE_TAG="${IMAGE_REPOSITORY}:${VERSION}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        # https://github.com/docker/setup-buildx-action/releases/tag/v4.0.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push image
+        id: push
+        # https://github.com/docker/build-push-action/releases/tag/v7.1.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+        with:
+          context: .
+          file: docker/node.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.image_tag }}
+          provenance: mode=max
+          sbom: true
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Generate GitHub artifact attestation
+        # https://github.com/actions/attest/releases/tag/v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
+        with:
+          subject-name: ${{ steps.meta.outputs.image_name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Show published image
+        shell: bash
+        run: |
+          echo "Built image tag:    ${{ steps.meta.outputs.image_tag }}"
+          echo "Built image digest: ${{ steps.push.outputs.digest }}"
+          echo "Pull by digest:     ${{ steps.meta.outputs.image_name }}@${{ steps.push.outputs.digest }}"
+
+  release-server-image:
+    name: Release server image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      IMAGE_REPOSITORY: ghcr.io/vantage6/infrastructure/server
+
+    steps:
+      - name: Checkout repository
+        # https://github.com/actions/checkout/releases/tag/v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve image metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#version/}"
+          if [ -z "$VERSION" ]; then
+            echo "Version is empty" >&2
+            exit 1
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "Version contains unsupported characters: $VERSION" >&2
+            exit 1
+          fi
+
+          IMAGE_NAME="${IMAGE_REPOSITORY}"
+          IMAGE_TAG="${IMAGE_REPOSITORY}:${VERSION}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        # https://github.com/docker/setup-buildx-action/releases/tag/v4.0.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - name: Log in to GHCR
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push image
+        id: push
+        # https://github.com/docker/build-push-action/releases/tag/v7.1.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+        with:
+          context: .
+          file: docker/server.Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.image_tag }}
+          provenance: mode=max
+          sbom: true
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Generate GitHub artifact attestation
+        # https://github.com/actions/attest/releases/tag/v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
+        with:
+          subject-name: ${{ steps.meta.outputs.image_name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Show published image
+        shell: bash
+        run: |
+          echo "Built image tag:    ${{ steps.meta.outputs.image_tag }}"
+          echo "Built image digest: ${{ steps.push.outputs.digest }}"
+          echo "Pull by digest:     ${{ steps.meta.outputs.image_name }}@${{ steps.push.outputs.digest }}"

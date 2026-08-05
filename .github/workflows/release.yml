@@ -228,6 +228,17 @@ jobs:
         run: make ui-image TAG=$version BASE=${major}.${minor} PUSH_REG=true
           TAG_LATEST=$tag_latest
 
+  # TODO: This is just a draft, ultimately we want to simplify build process
+  # (less images, smaller, simpler more predictable workflows). Which might mean doing away
+  # with this release.yml or majorly refactoring.
+  # node-server-images:
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     attestations: write
+  #     id-token: write
+  #   uses: ./.github/workflows/release-node-server-images.yml
+
   algorithm-base-image:
     name: Build algorithm base image
     runs-on: ubuntu-latest
