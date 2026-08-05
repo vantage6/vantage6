@@ -4,17 +4,21 @@ This module contains global variables that are used throughout the CLI.
 
 from enum import Enum
 from pathlib import Path
-from vantage6.common.globals import APPNAME
+from vantage6.common.globals import (
+    APPNAME,
+    DEFAULT_NODE_SYSTEM_FOLDERS as _DEFAULT_NODE_SYSTEM_FOLDERS,
+    DEFAULT_SERVER_SYSTEM_FOLDERS as _DEFAULT_SERVER_SYSTEM_FOLDERS,
+)
 
 #
 #   SERVER SETTINGS
 #
-DEFAULT_SERVER_SYSTEM_FOLDERS = True
+DEFAULT_SERVER_SYSTEM_FOLDERS = _DEFAULT_SERVER_SYSTEM_FOLDERS
 
 #
 #   NODE SETTINGS
 #
-DEFAULT_NODE_SYSTEM_FOLDERS = False
+DEFAULT_NODE_SYSTEM_FOLDERS = _DEFAULT_NODE_SYSTEM_FOLDERS
 
 #
 #   INSTALLATION SETTINGS

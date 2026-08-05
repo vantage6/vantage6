@@ -50,6 +50,10 @@ ENV_VAR_EQUALS_REPLACEMENT = "!"
 DEFAULT_API_PATH = "/api"
 DEFAULT_PROMETHEUS_EXPORTER_PORT = 7603
 
+# We use user-specific folders for nodes and system-wide folders for servers by default.
+DEFAULT_NODE_SYSTEM_FOLDERS = False
+DEFAULT_SERVER_SYSTEM_FOLDERS = True
+
 # Maximum interval to wait for requesting results from a task
 MAX_INTERVAL = 300
 
