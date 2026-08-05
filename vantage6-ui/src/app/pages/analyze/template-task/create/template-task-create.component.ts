@@ -30,34 +30,34 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-template-task-create',
-    templateUrl: './template-task-create.component.html',
-    styleUrls: ['./template-task-create.component.scss'],
-    imports: [
-        PageHeaderComponent,
-        MatFormField,
-        MatLabel,
-        MatSelect,
-        ReactiveFormsModule,
-        NgFor,
-        MatOption,
-        NgIf,
-        MatCard,
-        MatCardContent,
-        MatStepper,
-        MatStepperIcon,
-        MatIcon,
-        MatStep,
-        MatStepLabel,
-        MatInput,
-        MatButton,
-        MatStepperNext,
-        DatabaseStepComponent_1,
-        MatStepperPrevious,
-        MatProgressSpinner,
-        AsyncPipe,
-        TranslateModule
-    ]
+  selector: 'app-template-task-create',
+  templateUrl: './template-task-create.component.html',
+  styleUrls: ['./template-task-create.component.scss'],
+  imports: [
+    PageHeaderComponent,
+    MatFormField,
+    MatLabel,
+    MatSelect,
+    ReactiveFormsModule,
+    NgFor,
+    MatOption,
+    NgIf,
+    MatCard,
+    MatCardContent,
+    MatStepper,
+    MatStepperIcon,
+    MatIcon,
+    MatStep,
+    MatStepLabel,
+    MatInput,
+    MatButton,
+    MatStepperNext,
+    DatabaseStepComponent_1,
+    MatStepperPrevious,
+    MatProgressSpinner,
+    AsyncPipe,
+    TranslateModule
+  ]
 })
 export class TemplateTaskCreateComponent implements OnInit {
   @HostBinding('class') class = 'card-container';
@@ -233,7 +233,7 @@ export class TemplateTaskCreateComponent implements OnInit {
       image: this.algorithm?.image || '',
       collaboration_id: this.chosenCollaborationService.collaboration$.value?.id || -1,
       store_id: this.algorithm?.algorithm_store_id || -1,
-      server_url: environment.server_url,
+      server_url: `${environment.server_url}${environment.api_path}`,
       databases: taskDatabases,
       organizations: selectedOrganizations.map((organizationID) => {
         return { id: Number.parseInt(organizationID), input: btoa(JSON.stringify(input)) || '' };
