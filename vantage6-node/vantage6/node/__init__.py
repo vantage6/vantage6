@@ -649,7 +649,9 @@ class Node:
 
         if encrypted_collaboration != encrypted_node:
             # You can't force it if it just ain't right, you know?
-            raise EncryptionMismatchError("Expectations on encryption don't match?!")
+            raise EncryptionMismatchError(
+                "Expectations on encryption between node and server do not match"
+            )
 
         if encrypted_collaboration:
             self.log.warning("Enabling encryption!")
