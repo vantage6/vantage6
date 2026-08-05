@@ -96,9 +96,8 @@ class TestWebsocketSessionCleanupWiring(TestResourceBase):
             DatabaseSessionManager,
             "clear_session",
             wraps=DatabaseSessionManager.clear_session,
-        ) as clear_spy:
-            with self.server.app.test_request_context():
-                DatabaseSessionManager.new_session()
+        ) as clear_spy, self.server.app.test_request_context():
+            DatabaseSessionManager.new_session()
 
         self.assertTrue(
             clear_spy.called,

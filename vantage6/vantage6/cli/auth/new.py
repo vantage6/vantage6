@@ -296,7 +296,7 @@ def parse_database_uri_to_config(
         if not value:
             error(
                 f"No {label} could be found in the database URI. "
-                f"Please provide a {required_field[0]}."
+                f"Please provide a {label}."
             )
             sys.exit(1)
     if not port:

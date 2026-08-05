@@ -175,7 +175,7 @@ class Node:
                     "central_compute egress whitelist (e.g. 0.0.0.0/0).",
                     isolation_message,
                 )
-                exit(1)
+                sys.exit(1)
             self.log.warning(
                 "Algorithm network isolation check failed: %s",
                 isolation_message,
