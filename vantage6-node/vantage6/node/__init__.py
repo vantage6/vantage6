@@ -60,7 +60,7 @@ from vantage6.node.globals import (
     TIME_LIMIT_RETRY_CONNECT_NODE,
 )
 from vantage6.node.k8s.container_manager import ContainerManager
-from vantage6.node.k8s.data_classes import ToBeKilled
+from vantage6.node.k8s.data_classes import Result, ToBeKilled
 from vantage6.node.socket import NodeTaskNamespace
 from vantage6.node.util import get_parent_id
 
@@ -122,6 +122,8 @@ class Node:
             self.log.error("Could not create the task namespace. Exiting.")
             sys.exit(1)
 
+        self.check_algorithm_isolation()
+
         self.log.info("Connecting to HQ: %s", self.client.hq_url)
 
         # Authenticate with HQ, obtaining a JSON Web Token.
@@ -152,6 +154,35 @@ class Node:
             t.start()
 
         self.log.info("Init complete")
+
+    def check_algorithm_isolation(self) -> None:
+        """
+        Verify that algorithm containers cannot reach the public internet.
+
+        When ``production`` is true (default), the node exits if isolation is not
+        enforced. Otherwise, a failed check is logged as a warning only.
+        """
+        isolated, isolation_message = (
+            self.k8s_container_manager.validate_algorithm_isolation()
+        )
+        if not isolated:
+            if self.config.get("production", True):
+                self.log.error(
+                    "Algorithm network isolation check failed: %s. Nodes with "
+                    "production=true require a Kubernetes environment that enforces "
+                    "NetworkPolicies. Common causes: Docker Desktop Kubernetes, missing "
+                    "NetworkPolicies in the task namespace, or a broad "
+                    "central_compute egress whitelist (e.g. 0.0.0.0/0).",
+                    isolation_message,
+                )
+                exit(1)
+            self.log.warning(
+                "Algorithm network isolation check failed: %s",
+                isolation_message,
+            )
+            return
+
+        self.log.info(isolation_message)
 
     def _setup_node_client(self, config: dict) -> NodeClient:
         return NodeClient(
@@ -413,7 +444,9 @@ class Node:
                     "log": f"Unrecognized action {run_to_execute['action']}",
                 },
             )
-            self.__emit_algorithm_status_change(task, run_to_execute, RunStatus.FAILED)
+            self.__emit_algorithm_status_change(
+                task["id"], run_id, get_parent_id(task), RunStatus.FAILED
+            )
             return
 
         # Only compute containers need a token as they are the only ones that should
@@ -463,20 +496,24 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(task, run_id, run_status)
+        self.__emit_algorithm_status_change(
+            task["id"], run_id, get_parent_id(task), run_status
+        )
 
     def __emit_algorithm_status_change(
-        self, task: dict, run_id: int, status: RunStatus
+        self, task_id: int, run_id: int, parent_id: int | None, status: RunStatus
     ) -> None:
         """
         Emit a socket event to alert everyone of task status change.
 
         Parameters
         ----------
-        task_id : dict
-            Task metadata
+        task_id : int
+            Task ID
         run_id : int
             Run ID
+        parent_id : int | None
+            ID of the parent task, if any
         status : RunStatus
             Status of the algorithm run
         """
@@ -496,10 +533,10 @@ class Node:
                 "node_id": self.client.whoami.id_,
                 "status": status.value,
                 "run_id": run_id,
-                "task_id": task["id"],
+                "task_id": task_id,
                 "collaboration_id": self.client.collaboration_id,
                 "organization_id": self.client.whoami.organization_id,
-                "parent_id": get_parent_id(task),
+                "parent_id": parent_id,
             },
             namespace="/tasks",
         )
@@ -513,54 +550,7 @@ class Node:
             try:
                 results = self.k8s_container_manager.process_next_completed_run()
                 self.log.info(f"Sending result (run={results.run_id}) to HQ!")
-
-                # FIXME: why are we retrieving the result *again*? Shouldn't we
-                # just store the task_id when retrieving the task the first
-                # time?
-                response = self.client.request(f"run/{results.run_id}")
-                task_id = response.get("task", {}).get("id")
-
-                if not task_id:
-                    self.log.error(
-                        "Task id for run id=%s could not be retrieved", results.run_id
-                    )
-                    return
-
-                response = self.client.request(f"task/{task_id}")
-
-                init_org = response.get("init_org")
-                if not init_org:
-                    self.log.error(
-                        "Initiator organization from task (id=%s) could not be "
-                        "retrieved!",
-                        task_id,
-                    )
-
-                self.client.run.patch(
-                    id_=results.run_id,
-                    data={
-                        "result": results.data,
-                        "log": results.logs,
-                        "status": results.status.value,
-                        "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                    },
-                    init_org_id=init_org.get("id"),
-                )
-
-                # notify HQ, other nodes, and clients about algorithm status change
-                self.socketIO.emit(
-                    "algorithm_status_change",
-                    data={
-                        "node_id": self.client.whoami.id_,
-                        "status": results.status.value,
-                        "run_id": results.run_id,
-                        "task_id": results.task_id,
-                        "collaboration_id": self.client.collaboration_id,
-                        "organization_id": self.client.whoami.organization_id,
-                        "parent_id": results.parent_id,
-                    },
-                    namespace="/tasks",
-                )
+                self.__report_finished_run(results)
             except Exception as e:
                 self.log.exception(
                     "poll_task_results (Speaking) thread had an exception: %s",
@@ -568,6 +558,31 @@ class Node:
                 )
 
             time.sleep(1)
+
+    def __report_finished_run(self, results: Result) -> None:
+        """
+        Send the outcome of a completed algorithm run to HQ and notify the other
+        parties of the status change.
+
+        Parameters
+        ----------
+        results : Result
+            Result of the completed run
+        """
+        data = {
+            "log": results.logs,
+            "status": results.status.value,
+            "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
+            "result": results.data,
+        }
+        self.client.run.patch(
+            id_=results.run_id, data=data, init_org_id=results.init_org_id
+        )
+
+        # notify HQ, other nodes, and clients about algorithm status change
+        self.__emit_algorithm_status_change(
+            results.task_id, results.run_id, results.parent_id, results.status
+        )
 
     def __print_connection_error_logs(self):
         """Print error message when node cannot find HQ"""

@@ -135,6 +135,7 @@ class TestResources(TestResourceBase):
         results = self.app.get(f"/api/collaboration/{col.id}", headers=headers)
         self.assertEqual(results.status_code, HTTPStatus.OK)
 
+        self.delete_tasks()
         org.delete()
         col.delete()
 
@@ -241,7 +242,7 @@ class TestResources(TestResourceBase):
         col.save()
 
         # test that collaboration cannot be deleted if it has resources inside it
-        task = Task(collaboration=col)
+        task = Task(collaboration=col, init_org=org)
         task.save()
         rule = Rule.get_by_("collaboration", Scope.GLOBAL, Operation.DELETE)
         headers = self.get_user_auth_header(rules=[rule])

@@ -21,7 +21,9 @@ log = logging.getLogger(logger)
 
 class TestResources(TestResourceBase):
     def test_run_without_id(self):
-        task = Task()
+        org = Organization()
+        org.save()
+        task = Task(init_org=org)
         task.save()
 
         headers = self.login_as_root()

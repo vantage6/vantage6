@@ -258,6 +258,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         """
         config = {
             "node": {
+                "production": False,
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "apiKey": node_specific_config["api_key"],
                 "name": node_specific_config["node_name"],

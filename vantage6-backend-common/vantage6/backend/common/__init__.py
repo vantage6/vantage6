@@ -250,6 +250,19 @@ class Vantage6App:
             database_session_manager.clear_session()
             return response
 
+        @self.app.teardown_request
+        def remove_db_session_on_teardown(exc):
+            """When the request context is torn down.
+
+            Flask's `after_request` does NOT run for Flask-SocketIO events (they
+            never go through the full HTTP dispatch), and it is skipped whenever
+            a handler raises. `teardown_request` runs on every request-context
+            pop - including on exceptions and for socket events - so this is the
+            single guarantee that a handler cannot leak a pooled database
+            connection. See https://github.com/vantage6/vantage6/issues/2654.
+            """
+            database_session_manager.clear_session()
+
         @self.app.errorhandler(HTTPException)
         def error_remove_db_session(error: HTTPException):
             """In case an HTTP-exception occurs during the request.

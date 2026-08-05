@@ -10,6 +10,12 @@ node:
   # The API key of the node.
   apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
+  # When true, the node verifies at startup that algorithm network isolation is
+  # enforced by Kubernetes. If the check fails, the node refuses to start. Set to
+  # false for development and sandbox environments only; failures are then logged as
+  # warnings.
+  production: true
+
   # The image to use for the node.
   image: ghcr.io/vantage6/infrastructure/node:latest
 
