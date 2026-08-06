@@ -4,6 +4,7 @@ import sys
 import time
 
 import click
+from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error, info, warning
 
