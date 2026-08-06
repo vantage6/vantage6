@@ -1,7 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: {{ .Release.Name }}-create-tasks-role
+  namespace: {{ .Values.node.taskNamespace }}
   labels:
 {{- include "node.labels" . | nindent 4 }}
 rules:
@@ -32,14 +33,25 @@ rules:
   resources: ["services"]
   verbs: ["create", "delete", "get", "list"]
 
-# The node needs to be able to create and manage namespaces for task isolation.
-# This is used by the ensure_task_namespace() method.
-- apiGroups: [""]
-  resources: ["namespaces"]
-  verbs: ["create", "get", "list", "watch"]
-
 # The node needs to be able to create and manage secrets for storing sensitive data
 # that algorithms might need, such as credentials or configuration.
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "delete", "get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-get-task-namespace-role
+  labels:
+{{- include "node.labels" . | nindent 4 }}
+rules:
+# Namespace is a cluster-scoped resource, so reading it can't be granted via a namespaced
+# Role. ensure_task_namespace() only ever calls read_namespace() (verb: get); the chart now
+# creates the task namespace itself (see task-namespace.yml), so the node no longer needs
+# create/list/watch here. resourceNames restricts this to exactly the one task namespace
+# this node uses, not namespaces in general.
+- apiGroups: [""]
+  resources: ["namespaces"]
+  resourceNames: [{{ .Values.node.taskNamespace }}]
+  verbs: ["get"]

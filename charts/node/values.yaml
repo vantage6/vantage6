@@ -18,6 +18,7 @@ node:
   image: ghcr.io/vantage6/infrastructure/node:uluru
 
   taskNamespace: vantage6-tasks
+  manageTaskNamespace: true
   k8sNodeName: docker-desktop
 
   databases:
@@ -67,6 +68,8 @@ node:
   share_config: true
 
   share_algorithm_logs: true
+
+  production: true
 
   prometheus:
     enabled: false

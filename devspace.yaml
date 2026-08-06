@@ -425,6 +425,7 @@ deployments:
       # are set.
       values:
         node:
+          production: false
           name: dummy-node-name  # will be overridden by the environment variables
           apiKey: dummy-api-key  # will be overridden by the environment variables
           image: ${NODE_IMAGE}
