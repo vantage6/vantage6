@@ -574,7 +574,7 @@ class Node:
         else:
             logs = "Node does not allow sharing algorithm logs"
         data = {
-            "log": results.logs,
+            "log": logs,
             "status": results.status.value,
             "finished_at": datetime.datetime.now(datetime.UTC).isoformat(),
             "result": results.data,
