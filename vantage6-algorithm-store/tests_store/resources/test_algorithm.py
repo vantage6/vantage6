@@ -136,6 +136,63 @@ class TestAlgorithmResources(TestResources):
         policy.delete()
         user.delete()
 
+    def test_view_algorithm_decorator_node(self):
+        """
+        Test that a node JWT is always allowed to list approved algorithms
+        (`allow_node=True` on the decorator), even under the store's most
+        restrictive algorithm_view policy - and that this does not extend to
+        non-approved algorithms.
+        """
+        # even the most restrictive policy should not block a node
+        policy = Policy(
+            key=StorePolicies.ALGORITHM_VIEW.value,
+            value=AlgorithmViewPolicies.ONLY_WITH_EXPLICIT_PERMISSION.value,
+        )
+        policy.save()
+
+        node_headers = self.login_node()
+
+        # a node with a valid token can list approved algorithms
+        rv = self.app.get("/api/algorithm", headers=node_headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+
+        # a node cannot use this to see non-approved algorithms
+        for arg in [
+            "awaiting_reviewer_assignment",
+            "under_review",
+            "in_review_process",
+            "invalidated",
+        ]:
+            rv = self.app.get(f"/api/algorithm?{arg}=1", headers=node_headers)
+            self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # this is not a blanket bypass: a request without a token is still governed
+        # by the normal policy
+        rv = self.app.get("/api/algorithm")
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        policy.delete()
+
+    def test_view_algorithm_single_not_affected_by_node_bypass(self):
+        """
+        Test that the node bypass on the algorithm list endpoint does not extend to
+        /api/algorithm/<id>, which was deliberately left on the un-modified
+        decorator.
+        """
+        algorithm = Algorithm(
+            name="test_algorithm", status=AlgorithmStatus.APPROVED.value
+        )
+        algorithm.save()
+
+        # no policy is defined, so the default (AUTHENTICATED) applies - and a node
+        # token is not looked up as a store User, so it is rejected here
+        rv = self.app.get(f"/api/algorithm/{algorithm.id}", headers=self.login_node())
+        self.assertEqual(rv.status_code, HTTPStatus.UNAUTHORIZED)
+
+        # cleanup
+        algorithm.delete()
+
     @patch("vantage6.algorithm.store.resource._authenticate")
     def test_algorithm_view_multi(self, authenticate_mock):
         """Test GET /api/algorithm"""

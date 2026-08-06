@@ -101,7 +101,7 @@ class AlgorithmStoreApp(Vantage6App):
         """Configure JWT authentication."""
 
         @self.jwt.user_lookup_loader
-        def user_lookup_loader(jwt_payload: dict, jwt_headers: dict) -> db.User:
+        def user_lookup_loader(jwt_payload: dict, jwt_headers: dict) -> db.User | str:
             """
             Load the user, node or container instance from the JWT payload.
 
@@ -114,10 +114,20 @@ class AlgorithmStoreApp(Vantage6App):
 
             Returns
             -------
-            db.User:
-                The user identity.
+            db.User | str:
+                The user identity, or the keycloak id if it is a node that is
+                authenticating.
+
+            Raises
+            ------
+            AuthenticationException
+                If no store `User` is registered for this (non-node) identity.
             """
             identity = jwt_headers["sub"]
+
+            if jwt_headers.get("vantage6_client_type") == "node":
+                return identity
+
             auth_identity = Identity(identity)
 
             user = db.User.get_by_keycloak_id(identity)
