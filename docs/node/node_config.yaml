@@ -4,10 +4,6 @@ namespace: vantage6-node
 
 node:
 
-  # Whether this is a production deployment. When true,ensures this node does not share
-  # its task namespace, so that data is not shared with other nodes in the cluster
-  production: true
-
   # The name of the node.
   name: node-1
 
@@ -15,9 +11,10 @@ node:
   apiKey: abcdefghijklmnopqrstuvwxyz1234567890
 
   # When true, the node verifies at startup that algorithm network isolation is
-  # enforced by Kubernetes. If the check fails, the node refuses to start. Set to
-  # false for development and sandbox environments only; failures are then logged as
-  # warnings.
+  # enforced by Kubernetes. If the check fails, the node refuses to start. Also, if
+  # true,ensures this node does not share its task namespace, so that data is not shared
+  # with other nodes in the cluster. Set to false for development and sandbox
+  # environments only; failures are then logged as warnings.
   production: true
 
   # The image to use for the node.
