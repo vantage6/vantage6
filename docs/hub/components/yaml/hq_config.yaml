@@ -5,7 +5,7 @@ nameOverride: vantage6-hq
 # by default the Release.Namespace is used
 namespace: vantage6-hq
 
-server:
+hq:
 
   # Whether the HQ is deployed standalone or as part of a vantage6 hub.
   standalone: false

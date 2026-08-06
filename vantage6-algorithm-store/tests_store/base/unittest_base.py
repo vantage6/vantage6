@@ -107,10 +107,10 @@ class TestResources(unittest.TestCase):
     def register_user(
         self,
         username: str = "test_user",
-        user_roles: list[Role] = None,
-        user_rules: list[Rule] = None,
+        user_roles: list[Role] | None = None,
+        user_rules: list[Rule] | None = None,
         organization_id: int = 1,
-        authenticate_mock: Mock = None,
+        authenticate_mock: Mock | None = None,
         auth: bool = True,
     ) -> User:
         user = User(username=username, organization_id=organization_id)

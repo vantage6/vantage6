@@ -1,3 +1,5 @@
+import sys
+
 import click
 from kubernetes.config.config_exception import ConfigException
 from kubernetes.stream import stream
@@ -100,7 +102,7 @@ def _get_pod_name_for_helm_release(
             f"No pods found for Helm release '{helm_release}' in ns "
             f"'{k8s_config.namespace}'"
         )
-        exit(1)
+        sys.exit(1)
     # Prefer a Ready pod
     for p in pods:
         for cond in p.status.conditions or []:

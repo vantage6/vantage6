@@ -61,8 +61,17 @@ the different options:
   it would be preferable to use a Kubernetes cluster, e.g for easier scaling.
 - **Docker Desktop**: If you are using Docker Desktop, you can simply
   `switch on Kubernetes <https://docs.docker.com/desktop/features/kubernetes/>`_.
-  This is useful for development  environments. This is only recommended for development
+  This is useful for development environments. This is only recommended for development
   environments.
+
+  .. warning::
+
+     Do **not** use Docker Desktop Kubernetes for production vantage6 nodes. Docker
+     Desktop accepts NetworkPolicy resources but its built-in networking stack does not
+     reliably **enforce** egress rules. Algorithm containers may therefore reach the
+     public internet despite configured policies, thereby removing one of the most
+     important security features of vantage6.
+
 - **Kubernetes Cluster**: For production environments, we recommend using a Kubernetes
   cluster. There are numerous cloud providers that offer Kubernetes as a service. An
   example is the `Azure Kubernetes Service <https://azure.microsoft.com/en-us/products/kubernetes-service>`_

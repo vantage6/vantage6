@@ -26,6 +26,7 @@ from flask_principal import Identity, identity_changed
 
 from vantage6.common import logger_name
 from vantage6.common.enum import StorePolicies
+from vantage6.common.exceptions import AuthenticationException
 from vantage6.common.globals import DEFAULT_API_PATH
 
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
@@ -121,7 +122,9 @@ class AlgorithmStoreApp(Vantage6App):
 
             user = db.User.get_by_keycloak_id(identity)
             if not user:
-                raise Exception("No user found for keycloak id %s", identity)
+                raise AuthenticationException(
+                    f"No user found for keycloak id {identity}"
+                )
 
             # add role permissions
             for role in user.roles:

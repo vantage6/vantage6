@@ -68,7 +68,7 @@ class Page:
         if self.has_next:
             self.next_page = page + 1
         self.total = total
-        self.pages = int(math.ceil(total / float(page_size)))
+        self.pages = math.ceil(total / float(page_size))
 
 
 class Pagination:
@@ -308,7 +308,7 @@ class Pagination:
             sort_asc = True
             if sorter.startswith("-"):
                 sort_asc = False
-            if sorter.startswith("+") or sorter.startswith("-"):
+            if sorter.startswith(("+", "-")):
                 sorter = sorter[1:]
             if not hasattr(resource_model, sorter):
                 raise AttributeError(

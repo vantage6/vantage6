@@ -1,5 +1,3 @@
-from typing import List
-
 from marshmallow import Schema, ValidationError, fields, validates
 from marshmallow.validate import Length, Range
 
@@ -55,7 +53,7 @@ class _NameValidationSchema(Schema):
 class RoleInputSchema(_NameValidationSchema):
     """Schema for validating input for creating a role."""
 
-    def __init__(self, default_roles: List[str]):
+    def __init__(self, default_roles: list[str]):
         super().__init__()
         self.default_roles = default_roles
 

@@ -80,6 +80,14 @@ up the following variables:
     for the file paths. Note also that these files may be deleted when you restart
     WSL or your machine itself.
 
+.. note::
+
+    Because the mount path is located outside of the repository on WSL, the test datasets
+    that are shipped in the ``dev`` folder are copied to ``NODE_TEST_DATABASE_MOUNT_PATH``
+    automatically every time you start the development environment. This also restores them
+    after a WSL restart. If a dataset with the same name is already present at that
+    location, it is left untouched, so you can safely put your own test data there.
+
 Running the development environment
 ----------------------------------
 

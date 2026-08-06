@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Type
+from typing import Any
 
 from prometheus_client import Gauge, start_http_server
 
@@ -11,7 +11,7 @@ class Metric:
     Represents a single metric with its name, expected type, and description.
     """
 
-    def __init__(self, name: str, type_: Type[Any], description: str):
+    def __init__(self, name: str, type_: type[Any], description: str):
         self.name = name
         self.type = type_
         self.description = description
@@ -124,5 +124,5 @@ def start_prometheus_exporter(port: int = 9100) -> None:
     try:
         start_http_server(port)
         log.info("Prometheus exporter started on port %s", port)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.error("Failed to start Prometheus exporter: %s", e)

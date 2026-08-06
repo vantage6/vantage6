@@ -33,8 +33,8 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
-    log.info('Setting up "{}" and subdirectories'.format(path))
+    path = f"{api_base}/{module_name}"
+    log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
         ContainerToken,
@@ -132,20 +132,22 @@ class ContainerToken(ServicesResources):
 
         # verify that task the token is requested for exists
         collaboration = db.Collaboration.get(db_task.collaboration_id)
-        if collaboration.session_restrict_to_same_image:
-            if claim_image != db_task.image:
-                log.warning(
-                    "Node %s attempts to generate key for image %s that does not belong"
-                    " to task %s. This is not allowed because this collaboration has "
-                    " the 'session_restrict_to_same_image' option set to True.",
-                    g.node.id,
-                    claim_image,
-                    task_id,
-                )
-                return {
-                    "msg": "This collaboration only allows a single image per session. "
-                    "You cannot create a task with a different image."
-                }, HTTPStatus.UNAUTHORIZED
+        if (
+            collaboration.session_restrict_to_same_image
+            and claim_image != db_task.image
+        ):
+            log.warning(
+                "Node %s attempts to generate key for image %s that does not belong"
+                " to task %s. This is not allowed because this collaboration has "
+                " the 'session_restrict_to_same_image' option set to True.",
+                g.node.id,
+                claim_image,
+                task_id,
+            )
+            return {
+                "msg": "This collaboration only allows a single image per session. "
+                "You cannot create a task with a different image."
+            }, HTTPStatus.UNAUTHORIZED
 
         # validate that the task not has been finished yet
         if TaskStatus.has_finished(db_task.status):

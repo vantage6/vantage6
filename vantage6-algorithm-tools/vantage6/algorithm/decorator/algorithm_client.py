@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Optional
@@ -69,7 +70,7 @@ def _algorithm_client() -> Callable:
                     "Token not found. Is the method you called started as a "
                     "compute container? Exiting..."
                 )
-                exit(1)
+                sys.exit(1)
 
             # read HQ address from the environment
             host = os.environ[ContainerEnvNames.HOST.value]

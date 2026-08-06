@@ -1,24 +1,24 @@
+import builtins
 from enum import Enum, StrEnum
 
 # Note: List is used instead of regular list, because StrEnumBase already contains list()
-from typing import List
 
 
 class EnumBase(Enum):
     """Base class for all enums"""
 
     @classmethod
-    def list(cls) -> List[str]:
+    def list(cls) -> list[str]:
         """Return a list of all the enum values"""
         return [status.value for status in cls]
 
     @classmethod
-    def names(cls) -> List[str]:
+    def names(cls) -> builtins.list[str]:
         """Return a list of all the enum names"""
         return [status.name.lower() for status in cls]
 
     @classmethod
-    def items(cls) -> List[tuple[str, str]]:
+    def items(cls) -> builtins.list[tuple[str, str]]:
         """Return a list of (name, value) tuples for all enum members"""
         return [(status.name.lower(), status.value) for status in cls]
 

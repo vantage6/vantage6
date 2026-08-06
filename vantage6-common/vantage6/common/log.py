@@ -61,7 +61,7 @@ def get_file_logger(
     logger_name: str,
     file_path: Path | str,
     log_level_file: int = logging.DEBUG,
-    log_level_console: int = logging.WARN,
+    log_level_console: int = logging.WARNING,
 ) -> logging.Logger:
     """
     Create a logger that primarily writes to a file.

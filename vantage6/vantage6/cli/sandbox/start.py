@@ -1,7 +1,9 @@
+import sys
 import time
 from pathlib import Path
 
 import click
+import requests
 from colorama import Fore, Style
 
 from vantage6.common import error, info, warning
@@ -283,10 +285,10 @@ def _wait_for_hq_to_be_ready(hq_url: str) -> None:
                 info("HQ is ready.")
                 ready = True
                 break
-        except Exception:
+        except requests.RequestException:
             info("Waiting for HQ to be ready...")
             time.sleep(wait_time)
 
     if not ready:
         error("HQ did not become ready in time. Exiting...")
-        exit(1)
+        sys.exit(1)

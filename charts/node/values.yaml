@@ -3,6 +3,8 @@
 node:
   createSecrets: true
 
+  production: true
+
   name: ""
   # apiKey: "put-your-api-key-here"
 

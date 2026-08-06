@@ -6,7 +6,7 @@ spec:
   acme:
     # Change this to a valid email address for your organization. It will be
     # used by Let's Encrypt to send expiry and problem notifications.
-    email: you@example.org
+    email: you@yourdomain.com
     # Use the Let's Encrypt production ACME endpoint. For testing, you can
     # temporarily switch this to the staging endpoint.
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -19,4 +19,3 @@ spec:
             # Ingress class that should be used for HTTP-01 challenges. This
             # should match the class used by your nginx ingress controller.
             class: nginx
-

@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 from importlib import resources as impresources
 from pathlib import Path
@@ -122,7 +123,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
                 f"Duplicate dataset labels found: {duplicates}. "
                 f"Please make sure all dataset labels are unique."
             )
-            exit(1)
+            sys.exit(1)
 
         # create the data files for the nodes and get the path and label for each
         # dataset
@@ -257,6 +258,7 @@ class NodeSandboxConfigManager(BaseSandboxConfigManager):
         """
         config = {
             "node": {
+                "production": False,
                 "proxyPort": 7676 + int(node_specific_config["org_id"]),
                 "apiKey": node_specific_config["api_key"],
                 "name": node_specific_config["node_name"],

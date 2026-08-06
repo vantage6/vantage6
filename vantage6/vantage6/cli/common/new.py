@@ -1,5 +1,7 @@
+import sys
 from collections.abc import Callable
 
+import yaml
 from colorama import Fore, Style
 
 from vantage6.common import ensure_config_dir_writable, error, info
@@ -62,11 +64,11 @@ def new(
     try:
         if ctx_class.config_exists(name, system_folders, is_sandbox):
             error(f"Configuration {Fore.RED}{name}{Style.RESET_ALL} already exists!")
-            exit(1)
-    except Exception as e:
-        error(e)
+            sys.exit(1)
+    except (OSError, yaml.YAMLError, AssertionError) as e:
+        error(str(e))
 
-        exit(1)
+        sys.exit(1)
 
     command_name = get_main_cli_command_name(type_)
 
@@ -77,7 +79,7 @@ def new(
             f"Create a new {command_name} using '{Fore.GREEN}v6 {command_name} new "
             f"--user{Style.RESET_ALL}' instead!"
         )
-        exit(1)
+        sys.exit(1)
 
     # create config in ctx location
     try:
@@ -94,7 +96,7 @@ def new(
         )
     except KeyboardInterrupt:
         error("Configuration creation aborted.")
-        exit(1)
+        sys.exit(1)
     if save_config_file:
         info(f"New configuration created: {Fore.GREEN}{cfg_file}{Style.RESET_ALL}")
         flag = "" if system_folders else "--user"

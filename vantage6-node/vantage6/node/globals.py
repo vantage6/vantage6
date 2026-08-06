@@ -58,3 +58,20 @@ DATABASE_BASE_PATH = "/app/databases/"
 # Default proxy server port. It may be changed when starting the proxy if
 # the port is already in use
 DEFAULT_PROXY_PORT = 7654
+
+# Image used to probe algorithm network isolation at node startup.
+ISOLATION_PROBE_IMAGE = "curlimages/curl:latest"
+
+# RFC 2606 example domains that respond on the public internet. These are unlikely
+# to appear in production whitelists.
+ISOLATION_PROBE_CANDIDATES = (
+    "https://example.com",
+    "https://example.org",
+    "https://example.net",
+)
+
+# Maximum curl time for each isolation probe request.
+ISOLATION_PROBE_CURL_MAX_TIME_SECONDS = 5
+
+# Maximum time to wait for the isolation probe pod to complete.
+ISOLATION_PROBE_TIMEOUT_SECONDS = 15
