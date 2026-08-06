@@ -160,7 +160,7 @@ def _convert_envvar_to_int(envvar_name: str, envvar_value: str) -> int:
         ) from exc
 
 
-def check_envvar_value_positive(envvar_name: str, envvar_value: int | float) -> None:
+def check_envvar_value_positive(envvar_name: str, envvar_value: float) -> None:
     """
     Check whether an environment variable is a positive integer.
 

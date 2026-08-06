@@ -15,6 +15,7 @@ from vantage6.common.enum import (
     TaskDatabaseType,
     TaskStatus,
 )
+from vantage6.common.exceptions import AlgorithmRetrievalError
 from vantage6.common.globals import STRING_ENCODING, NodeConfigKey, NodePolicy
 
 from vantage6.backend.common.resource.error_handling import (
@@ -389,7 +390,7 @@ class TaskPostBase(ServicesResources):
             method=data["method"],
             init_org=init_org,
             algorithm_store=store,
-            created_at=datetime.datetime.now(datetime.timezone.utc),
+            created_at=datetime.datetime.now(datetime.UTC),
             session=session,
             depends_on=dependent_tasks,
             dataframe_id=data.get("dataframe_id"),
@@ -489,7 +490,7 @@ class TaskPostBase(ServicesResources):
         """Validates that the container is allowed to create the task."""
 
         # check that node id is indeed part of the collaboration
-        if not container["collaboration_id"] == collaboration_id:
+        if container["collaboration_id"] != collaboration_id:
             log.warning(
                 "Container attempts to create a task for collaboration_id=%s in "
                 "collaboration_id=%s!",
@@ -835,7 +836,7 @@ class TaskPostBase(ServicesResources):
                     image = algorithm["image"]
                     digest = algorithm["digest"]
                 except Exception as e:
-                    log.exception("Error while getting image from store: %s", e)
+                    log.exception("Error while getting image from store")
                     raise BadRequestError(str(e)) from e
 
                 if digest:
@@ -889,12 +890,12 @@ class TaskPostBase(ServicesResources):
             headers={"Authorization": request.headers["Authorization"]},
         )
         if status_code != HTTPStatus.OK:
-            raise Exception(
+            raise AlgorithmRetrievalError(
                 f"Could not retrieve algorithm from store! {response.get('msg')}"
             )
         try:
             algorithm = response.json()["data"][0]
         except Exception as e:
-            raise Exception("Algorithm not found in store!") from e
+            raise AlgorithmRetrievalError("Algorithm not found in store!") from e
 
         return algorithm

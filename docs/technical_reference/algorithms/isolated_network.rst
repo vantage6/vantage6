@@ -9,6 +9,13 @@ container that is not connected to the internet. The isolation from the internet
 is achieved by starting the algorithm container as a Kubernetes job that is not
 given access to the internet (neither outbound nor inbound).
 
+.. warning::
+
+  Isolation depends on the Kubernetes cluster enforcing NetworkPolicies. Docker Desktop
+  Kubernetes does **not** meet this requirement at the time of writing, making it
+  unsuitable for production use. Nodes with setting ``production: true``
+  will verify isolation at startup and refuse to run if the check fails.
+
 .. note::
 
   Before version 5, vantage6 did not use Kubernetes. Then, algorithms were run in

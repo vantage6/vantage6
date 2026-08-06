@@ -2,6 +2,7 @@ import json
 import secrets
 import string
 import subprocess
+import sys
 from pathlib import Path
 
 import questionary as q
@@ -25,9 +26,9 @@ def create_directory_if_not_exists(directory: Path) -> None:
     """
     try:
         directory.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
+    except OSError as e:
         error(f"Failed to create directory {directory}: {e}")
-        exit(1)
+        sys.exit(1)
 
 
 def find_running_service_names(
@@ -67,7 +68,7 @@ def find_running_service_names(
     validate_input_cmd_args(instance_type, "instance type", allow_none=False)
     if only_system_folders and only_user_folders:
         error("Cannot use both only_system_folders and only_user_folders")
-        exit(1)
+        sys.exit(1)
 
     # Create the command
     command = [
@@ -164,7 +165,7 @@ def select_running_service(
         ).unsafe_ask()
     except KeyboardInterrupt:
         error("Aborted by user!")
-        exit(1)
+        sys.exit(1)
     return name
 
 

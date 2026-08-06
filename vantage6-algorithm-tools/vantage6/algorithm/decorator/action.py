@@ -1,4 +1,5 @@
 import os
+import sys
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
@@ -181,10 +182,10 @@ def data_extraction(func: Callable) -> Callable:
         type_ = get_env_var(ContainerEnvNames.DATABASE_TYPE.value, mock_type)
         if not uri:
             error("No database URI provided. Exiting...")
-            exit(1)
+            sys.exit(1)
         if not type_:
             error("No database type provided. Exiting...")
-            exit(1)
+            sys.exit(1)
 
         connection_details["uri"] = uri
         connection_details["type"] = type_

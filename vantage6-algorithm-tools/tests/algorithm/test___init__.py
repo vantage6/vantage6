@@ -88,11 +88,7 @@ class TestAlgorithmClient(unittest.TestCase):
         results = self.client.result.from_task(task_id=1)
         self.assertEqual(results[0], {"foo": "bar"})
 
-    @patch("vantage6.algorithm.client.AlgorithmClient._multi_page_request")
-    @patch("vantage6.common.client.client_base.ClientBase._download_run_data_from_hq")
-    def test_result_from_task_azure(
-        self, mock_download_run_data, mock_multi_page_request
-    ):
+    def test_result_from_task_azure(self):
         with (
             patch.object(
                 self.client.result.parent, "_multi_page_request"

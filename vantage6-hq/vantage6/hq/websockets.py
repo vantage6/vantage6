@@ -15,7 +15,6 @@ from vantage6.backend.common.metrics import Metrics
 
 from vantage6.hq import db
 from vantage6.hq.model.authenticatable import Authenticatable
-from vantage6.hq.model.base import DatabaseSessionManager
 from vantage6.hq.model.dataframe_to_be_deleted_at_node import (
     DataframeToBeDeletedAtNode,
 )
@@ -43,7 +42,7 @@ class DefaultSocketNamespace(Namespace):
 
     def _is_node(self) -> bool:
         if session.type != "node":
-            self.log.warn(
+            self.log.warning(
                 "Only nodes can send algorithm updates! "
                 f"{session.type} {session.auth_id} is not allowed."
             )
@@ -88,9 +87,8 @@ class DefaultSocketNamespace(Namespace):
             emit("invalid_token", room=request.sid)
             return
 
-        except Exception as exc:
-            self.log.error("Couldn't connect client! No or Invalid JWT token?")
-            self.log.exception(exc)
+        except Exception:
+            self.log.exception("Couldn't connect client! No or Invalid JWT token?")
             return
 
         # get identity from token.
@@ -113,9 +111,6 @@ class DefaultSocketNamespace(Namespace):
 
         for room in session.rooms:
             self.__join_room_and_notify(room)
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
 
     def _handle_node_connection(self, node: Authenticatable) -> None:
         """
@@ -201,13 +196,19 @@ class DefaultSocketNamespace(Namespace):
                 node.collaboration_id,
             )
 
-    def on_disconnect(self) -> None:
+    def on_disconnect(self, reason: str | None = None) -> None:
         """
         Client that disconnects is removed from all rooms they were in.
 
         If nodes disconnect, their status is also set to offline and users may
         be alerted to that. Also, any information on the node (e.g.
         configuration) is removed from the database.
+
+        Parameters
+        ----------
+        reason: str | None
+            Reason for the disconnect as reported by the socket.io server, e.g.
+            'ping timeout' or 'transport error'.
         """
         if not self.__is_identified_client():
             self.log.debug("Client disconnected before identification")
@@ -232,10 +233,11 @@ class DefaultSocketNamespace(Namespace):
             # delete any data on the node stored on HQ (e.g. configuration data)
             self.__clean_node_data(auth)
 
-        self.log.info(f"{session.name} disconnected")
-
-        # cleanup (e.g. database session)
-        self.__cleanup()
+        self.log.info(
+            "%s disconnected (reason: %s)",
+            session.name,
+            reason if reason else "unknown",
+        )
 
     def on_message(self, message: str) -> None:
         """
@@ -338,9 +340,6 @@ class DefaultSocketNamespace(Namespace):
             room=f"collaboration_{collaboration_id}",
         )
 
-        # cleanup (e.g. database session)
-        self.__cleanup()
-
     def on_node_info_update(self, node_config: dict) -> None:
         """
         A node sends information about its configuration and other properties.
@@ -390,9 +389,6 @@ class DefaultSocketNamespace(Namespace):
         node.config = to_store
         node.save()
 
-        # cleanup (e.g. database session)
-        self.__cleanup()
-
     def on_ping(self) -> None:
         """
         A client sends a ping to HQ, which detects who sent the ping and sets them as
@@ -413,10 +409,8 @@ class DefaultSocketNamespace(Namespace):
             )
 
         auth.status = AuthStatus.ONLINE.value
-        auth.last_seen = dt.datetime.now(dt.timezone.utc)
+        auth.last_seen = dt.datetime.now(dt.UTC)
         auth.save()
-
-        self.__cleanup()
 
     def on_dataframe_deleted(self, data: dict) -> None:
         """
@@ -431,8 +425,6 @@ class DefaultSocketNamespace(Namespace):
             data["df_name"], data["session_id"], data["node_id"]
         )
         df_to_be_deleted.delete()
-
-        self.__cleanup()
 
     def __join_room_and_notify(self, room: str) -> None:
         """
@@ -533,8 +525,6 @@ class DefaultSocketNamespace(Namespace):
             room=f"collaboration_{collaboration_id}",
         )
 
-        self.__cleanup()
-
     def _append_log(self, log_message, run):
         if run.log:
             if not run.log.endswith("\n"):
@@ -572,12 +562,10 @@ class DefaultSocketNamespace(Namespace):
                 )
             except ValueError as e:
                 self.log.warning(f"Invalid metric data: {e}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log.error(f"Failed to process metric '{metric_name}': {e}")
 
         self.log.info(f"Updated metrics for node {node.id}")
-
-        self.__cleanup()
 
     @staticmethod
     def __is_identified_client() -> bool:
@@ -604,11 +592,6 @@ class DefaultSocketNamespace(Namespace):
         """
         for conf in node.config:
             conf.delete()
-
-    @staticmethod
-    def __cleanup() -> None:
-        """Cleanup database connections"""
-        DatabaseSessionManager.clear_session()
 
 
 def send_delete_dataframe_event(

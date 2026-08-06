@@ -42,7 +42,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -190,10 +190,7 @@ class SessionBase(TaskPostBase):
         ) and session.owner.organization_id == self.obtain_organization_id():
             return True
 
-        if self.is_user() and session.user_id == g.user.id:
-            return True
-
-        return False
+        return bool(self.is_user() and session.user_id == g.user.id)
 
     def can_edit_session(self, session: db.Session) -> bool:
         """
@@ -263,9 +260,8 @@ class SessionBase(TaskPostBase):
 
         op = "e" if operation == P.EDIT else "d"
 
-        if operation == P.DELETE:
-            if getattr(self.r, f"{op}_glo").can():
-                return True
+        if operation == P.DELETE and getattr(self.r, f"{op}_glo").can():
+            return True
 
         if (
             getattr(self.r, f"{op}_col").can()
@@ -281,15 +277,12 @@ class SessionBase(TaskPostBase):
         ):
             return True
 
-        if (
+        return bool(
             self.is_user()
             and getattr(self.r, f"{op}_own").can()
             and session.user_id == g.user.id
             and session.scope == S.OWN
-        ):
-            return True
-
-        return False
+        )
 
     def create_session_task(
         self,

@@ -1,4 +1,5 @@
 import itertools
+import sys
 from pathlib import Path
 from shutil import rmtree
 
@@ -47,16 +48,18 @@ def execute_remove(
             f"The {infra_component.value} {name} is still running! Please stop the "
             f"{infra_component.value} before deleting it."
         )
-        exit(1)
+        sys.exit(1)
 
-    if not force:
-        if not q.confirm(
+    if (
+        not force
+        and not q.confirm(
             f"This {infra_component.value} will be deleted permanently including its "
             "configuration. Are you sure?",
             default=False,
-        ).ask():
-            info(f"The {infra_component.value} {name} will not be deleted")
-            exit(0)
+        ).ask()
+    ):
+        info(f"The {infra_component.value} {name} will not be deleted")
+        sys.exit(0)
 
     # remove the config file
     remove_file(ctx.config_file, "configuration")

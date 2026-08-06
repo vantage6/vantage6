@@ -92,6 +92,6 @@ def cli_start_dev_env(
         error(f"❌ Error running devspace: {e}")
         info("Note that you need to run this command from the vantage6 root directory.")
         sys.exit(e.returncode)
-    except Exception as e:
+    except OSError as e:
         error(f"❌ Unexpected error: {e}")
         sys.exit(1)

@@ -26,7 +26,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -64,8 +64,7 @@ class Health(ServicesResources):
         try:
             g.session.execute(text("SELECT 1"))
             db_ok = True
-        except Exception as e:
-            log.error("DB not responding")
-            log.exception(e)
+        except Exception:
+            log.exception("DB not responding")
 
         return {"api": True, "database": db_ok}, HTTPStatus.OK
