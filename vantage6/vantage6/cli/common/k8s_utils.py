@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import time
 
 from vantage6.common import error, info, warning
@@ -96,7 +97,7 @@ def wait_for_pod_ready(
         attempt += 1
         if attempt == max_attempts:
             error(f"Timeout while waiting for {description} pod(s) to be created.")
-            exit(1)
+            sys.exit(1)
 
     info(f"{description} pod(s) created, waiting for them to become Ready...")
     try:

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, List
+from typing import Any
 
 from requests import Session
 from sqlalchemy import or_
@@ -20,10 +20,9 @@ def validate_request_body(schema, data, partial=False):
     errors = schema.validate(data, partial=partial)
     if errors:
         raise BadRequestError(errors)
-    return None
 
 
-def get_rules(data: Any, db: Session) -> List:
+def get_rules(data: Any, db: Session) -> list:
     rules = []
     if data["rules"]:
         for rule_id in data["rules"]:
@@ -99,7 +98,7 @@ def update_role(role, data, db, permissions: PermissionManagerBase):
 def can_delete_dependents(role, delete_dependents):
     if role.users:
         if delete_dependents:
-            log.warn(
+            log.warning(
                 f"Role {id} will be deleted even though it was assigned to users. This may result in missing permissions."
             )
         else:

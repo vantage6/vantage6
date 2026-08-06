@@ -166,7 +166,7 @@ class DiagnosticRunner:
         runs = self.client.run.from_task(task_id=task_id)["data"]
         print("\n")
         for res in results:
-            matched_run = [run for run in runs if run["id"] == res["run"]["id"]][0]
+            matched_run = next(run for run in runs if run["id"] == res["run"]["id"])
             self.display_diagnostic_results(res, matched_run["organization"]["id"])
             print()
         return results

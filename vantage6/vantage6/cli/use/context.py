@@ -1,6 +1,7 @@
 import click
 import questionary
 from kubernetes import client, config
+from kubernetes.config.config_exception import ConfigException
 
 from vantage6.common import error
 
@@ -40,7 +41,7 @@ def cli_use_context(context: str):
     # Load the selected context
     try:
         config.load_kube_config(context=context)
-    except Exception:
+    except ConfigException:
         error(f"Cannot not find {context} in kube config")
         return
 

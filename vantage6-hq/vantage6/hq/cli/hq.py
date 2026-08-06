@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable
 from functools import wraps
 
@@ -59,9 +60,9 @@ def click_insert_context(func: Callable) -> Callable:
                     name = select_configuration_questionnaire(
                         InstanceType.HQ, system_folders
                     )
-                except Exception:
+                except FileNotFoundError:
                     error("No configurations could be found!")
-                    exit()
+                    sys.exit()
 
             # raise error if config could not be found
             if not HQContext.config_exists(name, system_folders):
@@ -70,7 +71,7 @@ def click_insert_context(func: Callable) -> Callable:
                     f"Configuration {Fore.RED}{name}{Style.RESET_ALL} does not"
                     f" exist in the {Fore.RED}{scope}{Style.RESET_ALL} folder!"
                 )
-                exit(1)
+                sys.exit(1)
 
             # create HQ context, and initialize db
             ctx = HQContext(name, system_folders=system_folders, in_container=True)
@@ -86,7 +87,6 @@ def click_insert_context(func: Callable) -> Callable:
 @click.group(name="hq")
 def cli_hq() -> None:
     """Subcommand `vhq-local`."""
-    pass
 
 
 #

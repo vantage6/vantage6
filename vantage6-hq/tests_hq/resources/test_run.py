@@ -21,7 +21,9 @@ log = logging.getLogger(logger)
 
 class TestResources(TestResourceBase):
     def test_run_without_id(self):
-        task = Task()
+        org = Organization()
+        org.save()
+        task = Task(init_org=org)
         task.save()
 
         headers = self.login_as_root()
@@ -82,13 +84,13 @@ class TestResources(TestResourceBase):
             task=task,
             organization=org2,
             status=RunStatus.PENDING.value,
-            started_at=datetime.datetime.now(datetime.timezone.utc),
+            started_at=datetime.datetime.now(datetime.UTC),
         )
         finished_sibling = Run(
             task=task,
             organization=org2,
             status=RunStatus.COMPLETED.value,
-            finished_at=datetime.datetime.now(datetime.timezone.utc),
+            finished_at=datetime.datetime.now(datetime.UTC),
         )
         failing_run.save()
         pending_sibling.save()

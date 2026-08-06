@@ -1,4 +1,5 @@
 import click
+import requests
 
 from vantage6.common import info, warning
 from vantage6.common.globals import (
@@ -74,7 +75,7 @@ def cli_node_start(
             version = client.util.get_hq_version(attempts_on_timeout=3)["version"]
             major_minor = ".".join(version.split(".")[:2])
             image = f"{DEFAULT_NODE_IMAGE_WO_TAG}:{major_minor}"
-        except Exception:
+        except (requests.RequestException, KeyError):
             warning("Could not determine HQ version. Using default node image")
 
         if major_minor and not __version__.startswith(major_minor):

@@ -18,7 +18,7 @@ class SessionFileManager:
     Class to manage session state on the node.
     """
 
-    def __init__(self, session_id: str, task_dir_extension: str = None):
+    def __init__(self, session_id: str, task_dir_extension: str | None = None):
         """
         Parameters
         ----------
@@ -81,7 +81,7 @@ class SessionFileManager:
                 {
                     "action": action,
                     "file": filename,
-                    "timestamp": datetime.datetime.now(),
+                    "timestamp": datetime.datetime.now(datetime.UTC),
                     "message": message,
                     "dataframe": df_name,
                 }
@@ -152,7 +152,7 @@ class SessionFileManager:
             {
                 "action": [""],
                 "file": [self.session_state_file_name],
-                "timestamp": [datetime.datetime.now()],
+                "timestamp": [datetime.datetime.now(datetime.UTC)],
                 "message": ["Created this session file."],
                 "dataframe": [""],
             }

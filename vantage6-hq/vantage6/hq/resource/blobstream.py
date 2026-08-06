@@ -43,7 +43,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -82,8 +82,8 @@ class BlobStreamBase(ServicesResources):
 
     def __init__(self, socketio, storage_adapter, mail, api, permissions, config):
         super().__init__(socketio, storage_adapter, mail, api, permissions, config)
-        self.r_run: RuleCollection = getattr(self.permissions, "run")
-        self.r_task: RuleCollection = getattr(self.permissions, "task")
+        self.r_run: RuleCollection = self.permissions.run
+        self.r_task: RuleCollection = self.permissions.task
         self.storage_adapter = storage_adapter
 
     def get_run_by_input_or_result(self, id) -> db_Run | None:
@@ -193,13 +193,12 @@ class BlobStream(BlobStreamBase):
         try:
             log.debug(f"Streaming result for run id={id}")
             blob_stream = self.storage_adapter.stream_blob(id)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.error(f"Error streaming result: {e}")
             return {"msg": "Error streaming result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         def generate():
-            for chunk in blob_stream.chunks():
-                yield chunk
+            yield from blob_stream.chunks()
 
         return Response(
             stream_with_context(generate()),
@@ -266,7 +265,7 @@ class BlobStream(BlobStreamBase):
             else:
                 data = request.get_data()
                 self.storage_adapter.store_blob(result_uuid, data)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.error(f"Error uploading result: {e}")
             return {"msg": "Error uploading result!"}, HTTPStatus.INTERNAL_SERVER_ERROR
 

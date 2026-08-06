@@ -1,6 +1,8 @@
 import click
 import questionary
 from kubernetes import client
+from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from vantage6.common import error
 
@@ -23,7 +25,7 @@ def cli_use_namespace(namespace: str):
 
     try:
         namespace_list = core_api.list_namespace()
-    except Exception:
+    except (ApiException, HTTPError):
         error(
             "Failed to connect to Kubernetes cluster. Check if the cluster is running "
             "and reachable."

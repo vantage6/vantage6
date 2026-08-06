@@ -8,7 +8,6 @@ import time
 import uuid
 from itertools import groupby
 from pathlib import Path
-from typing import Tuple
 
 from kubernetes import client as k8s_client, config, watch
 from kubernetes.client.rest import ApiException
@@ -56,6 +55,7 @@ from vantage6.node.k8s.exceptions import (
 from vantage6.node.k8s.jobpod_state_to_run_status_mapper import (
     compute_run_pod_status,
 )
+from vantage6.node.k8s.network_isolation import validate_algorithm_isolation
 from vantage6.node.k8s.run_io import RunIO
 from vantage6.node.util import get_parent_id
 
@@ -83,9 +83,9 @@ class ContainerManager:
         # /var/run/secrets/kubernetes.io/serviceaccount/.
         try:
             config.load_incluster_config()
-        except Exception as e:
+        except Exception:
             self.log.exception("Error loading Kubernetes configuration")
-            raise e
+            raise
 
         # Get the location where the file is stored on the host system,
         self.host_data_dir = self.ctx.config["task_dir"]
@@ -189,6 +189,21 @@ class ContainerManager:
         self.core_api.delete_namespaced_pod(test_pod_name, self.task_namespace)
 
         return True
+
+    def validate_algorithm_isolation(self) -> tuple[bool, str]:
+        """
+        Verify that algorithm containers cannot reach the public internet.
+
+        Returns
+        -------
+        tuple[bool, str]
+            (is_isolated, message)
+        """
+        return validate_algorithm_isolation(
+            core_api=self.core_api,
+            task_namespace=self.task_namespace,
+            log=self.log,
+        )
 
     def _setup_policies(self, config: dict) -> dict:
         """
@@ -362,8 +377,7 @@ class ContainerManager:
         RunStatus
             Returns the status of the run
         """
-        init_org_ref = task_info.get("init_org", {})
-        init_org_id = init_org_ref.get("id") if init_org_ref else None
+        init_org_id = task_info["init_org"]["id"]
         self.log.debug(
             "[Algorithm run %s - requested by org %s] Setting up algorithm run",
             run_id,
@@ -418,8 +432,8 @@ class ContainerManager:
         except DataFrameNotFound as e:
             self.log.info(e)
             return RunStatus.DATAFRAME_NOT_FOUND
-        except Exception as e:
-            self.log.exception(e)
+        except Exception:
+            self.log.exception("Unknown error in creating volume mounts")
             return RunStatus.UNKNOWN_ERROR
 
         # Set environment variables for the algorithm client. This client is used
@@ -537,7 +551,8 @@ class ContainerManager:
             annotations={
                 "run_id": str(run_io.run_id),
                 "task_id": str(task_id),
-                "task_parent_id": str(parent_task_id),
+                "task_parent_id": str(parent_task_id) if parent_task_id else "",
+                "init_org_id": str(init_org_id),
                 "action": action.value,
                 "session_id": str(session_id),
                 "df_name": df_details.get("name") if df_details else "",
@@ -649,7 +664,7 @@ class ContainerManager:
             self.core_api.create_namespaced_secret(
                 namespace=self.task_namespace, body=secret
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self.log.error(
                 f"Error creating Docker login secret for image {image}: {exc}"
             )
@@ -708,7 +723,7 @@ class ContainerManager:
                     },
                     namespace="/tasks",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.error(f"Error while streaming logs for run {run_io.run_id}: {e}")
         finally:
             w.stop()
@@ -829,7 +844,7 @@ class ContainerManager:
         mount_path: str,
         type_: str | None = None,
         read_only: bool = False,
-    ) -> Tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
+    ) -> tuple[k8s_client.V1Volume, k8s_client.V1VolumeMount]:
         """
         Create a volume and its corresponding volume mount
 
@@ -871,7 +886,7 @@ class ContainerManager:
         run_io: RunIO,
         function_arguments: bytes,
         databases_to_use: list[dict],
-    ) -> Tuple[
+    ) -> tuple[
         list[k8s_client.V1Volume],
         list[k8s_client.V1VolumeMount],
         dict[str, str],
@@ -1122,7 +1137,7 @@ class ContainerManager:
             for file_ in Path(run_io.session_file_manager.local_session_folder).glob(
                 "*.parquet"
             )
-            if not file_.stem == SESSION_STATE_FILENAME
+            if file_.stem != SESSION_STATE_FILENAME
         }
         # check that requested dataframes are a subset of available dataframes
         if requested_dataframes and not requested_dataframes.issubset(
@@ -1175,7 +1190,7 @@ class ContainerManager:
             )
             ok = False
 
-        if source_database["label"] not in self.databases.keys():
+        if source_database["label"] not in self.databases:
             self.log.error(
                 "The database used in the data extraction step does not exist."
             )
@@ -1233,7 +1248,7 @@ class ContainerManager:
                 allowed_algorithms = [allowed_algorithms]
             try:
                 evaluated_img_wo_tag = get_image_name_wo_tag(evaluated_img)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self.log.warning(
                     "Could not parse image with name %s: %s",
                     evaluated_img,
@@ -1244,7 +1259,7 @@ class ContainerManager:
                 if not self._is_regex_pattern(allowed_algo):
                     try:
                         allowed_wo_tag = get_image_name_wo_tag(allowed_algo)
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001
                         self.log.warning(
                             "Could not parse allowed_algorithm policy with name %s: %s",
                             allowed_algo,
@@ -1297,7 +1312,7 @@ class ContainerManager:
             # get the store from the task_info
             try:
                 store_id = task_info["algorithm_store"]["id"]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 store_id = None
             if store_id:
                 store = self.client.algorithm_store.get(store_id)
@@ -1375,7 +1390,7 @@ class ContainerManager:
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.
-        return any((c in pattern for c in common_regex_chars))
+        return any(c in pattern for c in common_regex_chars)
 
     def is_running(self, label: str) -> bool:
         """
@@ -1395,7 +1410,7 @@ class ContainerManager:
             namespace=self.task_namespace,
             label_selector=f"app={label}",
         )
-        return True if pods.items else False
+        return bool(pods.items)
 
     def process_next_completed_run(self) -> Result:
         """
@@ -1434,9 +1449,10 @@ class ContainerManager:
 
             # Check if any of the jobs is completed
             for job in finished_jobs:
+                annotations = job.metadata.annotations
                 # Create helper object to process the output of the job
                 run_io = RunIO.from_dict(
-                    job.metadata.annotations,
+                    annotations,
                     self.client,
                     task_dir_extension=self.ctx.config.get("dev", {}).get(
                         "task_dir_extension"
@@ -1453,16 +1469,18 @@ class ContainerManager:
                 self.log.info(
                     "Sending results of run_id=%s and task_id=%s back to HQ",
                     run_io.run_id,
-                    job.metadata.annotations["task_id"],
+                    annotations["task_id"],
                 )
 
+                parent_id = annotations["task_parent_id"]
                 result = Result(
                     run_id=run_io.run_id,
-                    task_id=job.metadata.annotations["task_id"],
+                    task_id=int(annotations["task_id"]),
                     logs=logs,
                     data=results,
                     status=status,
-                    parent_id=job.metadata.annotations["task_parent_id"],
+                    parent_id=int(parent_id) if parent_id else None,
+                    init_org_id=int(annotations["init_org_id"]),
                 )
 
                 self.num_active_tasks -= 1
@@ -1484,7 +1502,7 @@ class ContainerManager:
         """
         try:
             logs = self.__get_job_pod_logs(run_io=run_io)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.log.warning(
                 f"Error while getting logs of job {run_io.container_name}: {e}"
             )
@@ -1588,7 +1606,7 @@ class ContainerManager:
         self._kill_algorithm_runs()
 
     def kill_algorithm_runs(
-        self, kill_list: list[ToBeKilled] = None
+        self, kill_list: list[ToBeKilled] | None = None
     ) -> list[KilledRun]:
         """
         Kill algorithm runs currently running on this node.
@@ -1624,7 +1642,7 @@ class ContainerManager:
 
     def _kill_algorithm_runs(
         self,
-        kill_list: list[ToBeKilled] = None,
+        kill_list: list[ToBeKilled] | None = None,
         initiator: KillInitiator = KillInitiator.USER,
     ) -> list[KilledRun]:
         """
@@ -1750,10 +1768,12 @@ class ContainerManager:
             core_api=self.core_api,
             batch_api=self.batch_api,
         )
+        annotations = job_to_kill.metadata.annotations
+        parent_id = annotations["task_parent_id"]
         return KilledRun(
-            run_id=job_to_kill.metadata.annotations["run_id"],
-            task_id=job_to_kill.metadata.annotations["task_id"],
-            parent_id=job_to_kill.metadata.annotations["task_parent_id"],
+            run_id=int(annotations["run_id"]),
+            task_id=int(annotations["task_id"]),
+            parent_id=int(parent_id) if parent_id else None,
             logs=logs,
         )
 

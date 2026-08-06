@@ -38,9 +38,8 @@ class MailService:
         with app.app_context():
             try:
                 self.mail.send(msg)
-            except Exception as e:
-                log.error("Mailserver error!")
-                log.exception(e)
+            except Exception:
+                log.exception("Mailserver error!")
 
     def send_email(
         self,

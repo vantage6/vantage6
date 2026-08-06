@@ -1,5 +1,3 @@
-from typing import List
-
 from vantage6.common.client.client_base import ClientBase
 
 from vantage6.client.filter import post_filtering
@@ -11,15 +9,15 @@ class ReviewSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        algorithm: int = None,
-        reviewer: int = None,
-        under_review: bool = None,
-        reviewed: bool = None,
-        approved: bool = None,
-        rejected: bool = None,
+        algorithm: int | None = None,
+        reviewer: int | None = None,
+        under_review: bool | None = None,
+        reviewed: bool | None = None,
+        approved: bool | None = None,
+        rejected: bool | None = None,
         page: int = 1,
         per_page: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         List reviews
 
@@ -156,7 +154,7 @@ class ReviewSubClient(ClientBase.SubClient):
         )
         self.parent.log.info(f"--> {res.get('msg')}")
 
-    def approve(self, id_: int, comment: str = None) -> dict:
+    def approve(self, id_: int, comment: str | None = None) -> dict:
         """
         Approve a review.
 
@@ -182,7 +180,7 @@ class ReviewSubClient(ClientBase.SubClient):
             json=body,
         )
 
-    def reject(self, id_: int, comment: str = None) -> dict:
+    def reject(self, id_: int, comment: str | None = None) -> dict:
         """
         Reject a review.
 

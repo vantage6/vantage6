@@ -12,19 +12,13 @@ class TemporaryAlgorithmFail(Exception):
     again would resolve the issue.
     """
 
-    pass
-
 
 class UnknownAlgorithmStartFail(TemporaryAlgorithmFail):
     """Algorithm failed to start due to an unknown reason."""
 
-    pass
-
 
 class AlgorithmContainerNotFound(TemporaryAlgorithmFail):
     """Algorithm container was lost."""
-
-    pass
 
 
 #
@@ -35,16 +29,10 @@ class PermanentAlgorithmFail(Exception):
     be run again.
     """
 
-    pass
-
 
 class DataFrameNotFound(PermanentAlgorithmFail):
     """DataFrame was not found."""
 
-    pass
-
 
 class PermanentAlgorithmStartFail(PermanentAlgorithmFail):
     """Algorithm failed to start"""
-
-    pass

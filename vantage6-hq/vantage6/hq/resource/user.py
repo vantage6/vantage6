@@ -62,7 +62,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -415,14 +415,11 @@ class Users(UserBase):
         # user needs global permissions in case it is not their own
         organization_id = g.user.organization_id
         if data.get("organization_id"):
-            if data["organization_id"] != organization_id:
-                if self.r.c_glo.can():
-                    # check if organization exists
-                    org = db.Organization.get(data["organization_id"])
-                    if not org:
-                        return {
-                            "msg": "Organization does not exist."
-                        }, HTTPStatus.NOT_FOUND
+            if data["organization_id"] != organization_id and self.r.c_glo.can():
+                # check if organization exists
+                org = db.Organization.get(data["organization_id"])
+                if not org:
+                    return {"msg": "Organization does not exist."}, HTTPStatus.NOT_FOUND
             organization_id = data["organization_id"]
 
         # check that user is allowed to create users
@@ -510,7 +507,7 @@ class Users(UserBase):
             }
             return keycloak_admin.create_user(user_payload)
         except Exception as exc:
-            log.exception(exc)
+            log.exception("User could not be created in Keycloak")
             raise BadRequestError("User could not be created in Keycloak") from exc
 
 
@@ -874,5 +871,5 @@ class User(UserBase):
         try:
             keycloak_admin.delete_user(user.keycloak_id)
         except KeycloakDeleteError as exc:
-            log.exception(exc)
+            log.exception("User could not be deleted from Keycloak")
             raise BadRequestError("User could not be deleted from Keycloak") from exc

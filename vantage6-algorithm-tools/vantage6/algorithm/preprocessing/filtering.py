@@ -83,8 +83,8 @@ def select_rows(df: pd.DataFrame, query: str) -> pd.DataFrame:
 def filter_range(
     df: pd.DataFrame,
     column: str,
-    min_value: float = None,
-    max_value: float = None,
+    min_value: float | None = None,
+    max_value: float | None = None,
     include_min: bool = True,
     include_max: bool = True,
 ) -> pd.DataFrame:

@@ -112,6 +112,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(results.status_code, HTTPStatus.UNAUTHORIZED)
 
         # cleanup
+        self.delete_tasks()
         org.delete()
         org2.delete()
         col.delete()
@@ -417,6 +418,7 @@ class TestResources(TestResourceBase):
         self.assertEqual(len(json_data), len(study.organizations))
 
         # cleanup
+        self.delete_tasks()
         org.delete()
         org2.delete()
         col.delete()

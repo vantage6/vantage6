@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Column,
@@ -69,8 +69,8 @@ class Session(Base):
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     collaboration_id = Column(Integer, ForeignKey("collaboration.id"), nullable=False)
     study_id = Column(Integer, ForeignKey("study.id"))
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    last_used_at = Column(DateTime, default=datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=datetime.now(UTC))
+    last_used_at = Column(DateTime, default=datetime.now(UTC))
     scope = Column(String, default=Scope.OWN.value)
     image = Column(String)
 

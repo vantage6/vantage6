@@ -48,7 +48,7 @@ def _read_csv(connection_details: dict) -> pd.DataFrame:
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading CSV file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading CSV file: {e}")
@@ -87,7 +87,7 @@ def _read_parquet(connection_details: dict) -> pd.DataFrame:
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading Parquet file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading Parquet file: {e}")
@@ -137,7 +137,7 @@ def _read_excel(
         error(f"File not found: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"File not found: {e}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading Excel file: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading Excel file: {e}")
@@ -180,7 +180,7 @@ def _read_sparql_database(connection_details: dict, query: str) -> pd.DataFrame:
 
     try:
         df = pd.read_csv(io.StringIO(result))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         error(f"Error reading SPARQL data: {e}")
         # pylint: disable=raise-missing-from
         raise DataReadError(f"Error reading SPARQL data: {e}")

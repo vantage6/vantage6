@@ -1,3 +1,5 @@
+import sys
+
 import click
 import requests
 import yaml
@@ -233,4 +235,4 @@ def _check_import_file(import_data: dict) -> dict:
     except ValidationError as err:
         # Handle validation errors gracefully
         error(f"Validation error: {err.messages}")
-        exit(1)
+        sys.exit(1)

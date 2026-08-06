@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 
@@ -83,7 +84,7 @@ def _ensure_envoy_gateway_class(k8s_config: KubernetesConfig) -> None:
             "❌ Failed to create or update GatewayClass for Envoy Gateway. "
             "Please create a GatewayClass manually."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def _detect_envoy_gateway(
@@ -122,7 +123,7 @@ def _detect_envoy_gateway(
                         gateway_class=name,
                         namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE,
                     )
-    except Exception:
+    except OSError:
         # Best-effort detection; fall through to "not found".
         pass
 
@@ -152,7 +153,7 @@ def _detect_envoy_gateway(
                     gateway_class=gateway_class_name,
                     namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE,
                 )
-    except Exception:
+    except OSError:
         pass
 
     return EnvoyGatewayStatus(exists=False)
@@ -200,7 +201,7 @@ def _wait_for_envoy_gateway_ready(
         "Please check the Envoy Gateway installation (pods, events, and logs) "
         "and try again."
     )
-    exit(1)
+    sys.exit(1)
 
 
 def ensure_envoy_gateway(
@@ -232,7 +233,7 @@ def ensure_envoy_gateway(
             "is disabled. If hub gateway is enabled, you must install Envoy Gateway "
             "manually or disable hubGateway.enabled."
         )
-        exit(1)
+        sys.exit(1)
 
     info(
         "No suitable Envoy Gateway installation detected. Installing Envoy Gateway "
@@ -250,7 +251,7 @@ def ensure_envoy_gateway(
                 "Please re-run 'v6 hub start' with --envoy-gateway-version to specify "
                 "the Envoy Gateway version explicitly."
             )
-            exit(1)
+            sys.exit(1)
 
     try:
         subprocess.run(
@@ -274,7 +275,7 @@ def ensure_envoy_gateway(
             "Please install Envoy Gateway manually following the official "
             "documentation."
         )
-        exit(exc.returncode)
+        sys.exit(exc.returncode)
 
     _wait_for_envoy_gateway_ready(
         k8s_config, namespace=_DEFAULT_ENVOY_GATEWAY_NAMESPACE

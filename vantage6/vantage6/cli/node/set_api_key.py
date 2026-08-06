@@ -1,3 +1,5 @@
+import sys
+
 import click
 import questionary as q
 
@@ -46,21 +48,21 @@ def cli_node_set_api_key(
             name = select_configuration_questionnaire(
                 InstanceType.NODE, system_folders, is_sandbox
             )
-        except Exception:
+        except FileNotFoundError:
             error("No configurations could be found!")
-            exit(1)
+            sys.exit(1)
 
     # Check that we can write in the config folder
     if not ensure_config_dir_writable(system_folders):
         error("Your user does not have write access to all folders. Exiting")
-        exit(1)
+        sys.exit(1)
 
     if not api_key:
         try:
             api_key = q.text("Please enter your new API key:").unsafe_ask()
         except KeyboardInterrupt:
             error("API key input aborted.")
-            exit(1)
+            sys.exit(1)
 
     # get configuration manager
     ctx = NodeContext(name, system_folders=system_folders, is_sandbox=is_sandbox)

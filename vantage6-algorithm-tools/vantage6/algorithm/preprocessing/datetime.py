@@ -5,7 +5,7 @@ for converting strings to datetime, adding fixed or variable timedeltas, and
 calculating ages from birthdate columns.
 """
 
-from datetime import date
+import datetime
 
 import pandas as pd
 
@@ -316,7 +316,7 @@ def calculate_age(
     1  1980-05-15   44
     """
     if reference_date is None:
-        reference_date = date.today()
+        reference_date = datetime.datetime.now(datetime.UTC).date()
     else:
         try:
             reference_date = pd.to_datetime(reference_date)

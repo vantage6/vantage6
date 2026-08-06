@@ -36,10 +36,7 @@ class RuleCollection(RuleCollectionBase):
         """
         perm = getattr(self, operation, None)
 
-        if perm and perm.can():
-            return True
-
-        return False
+        return bool(perm and perm.can())
 
 
 class PermissionManager(PermissionManagerBase):

@@ -132,15 +132,11 @@ class RuleCollection(RuleCollectionBase):
         # check if the entity has collaboration permission and the subject
         # collaboration is in the collaborations of the user/node
         col_perm = getattr(self, get_attribute_name(operation, Scope.COLLABORATION))
-        if (
+        return (
             col_perm
             and col_perm.can()
             and self._id_in_list(collaboration_id, auth_collabs)
-        ):
-            return True
-
-        # no permission found
-        return False
+        )
 
     def get_max_scope(self, operation: Operation) -> Scope | None:
         """

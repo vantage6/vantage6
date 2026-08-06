@@ -89,3 +89,13 @@ cluster access during `helm install`/`upgrade` — it returns nothing during off
 {{- end -}}
 {{- if $owned }}true{{- else }}false{{- end -}}
 {{- end }}
+
+{{/*
+Returns "true" if .Values.node.taskNamespace already exists in the cluster (regardless of
+who owns it), "false" otherwise. Used to skip declaring the Namespace resource when it's
+already there, rather than asking Helm to manage/adopt a resource that may not carry this
+release's ownership metadata - Helm refuses to do that by default. See task-namespace.yml.
+*/}}
+{{- define "node.taskNamespaceExists" -}}
+{{- if lookup "v1" "Namespace" "" .Values.node.taskNamespace }}true{{- else }}false{{- end -}}
+{{- end }}

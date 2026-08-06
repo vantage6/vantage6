@@ -1,4 +1,5 @@
 import json
+import sys
 import traceback
 from typing import TYPE_CHECKING, Any
 
@@ -29,49 +30,47 @@ class MockBaseClient:
         # Which organization do I belong to?
         self.organization_id = 0
         # Store missing attributes in a set for __getattr__ to check
-        self._missing_attributes = set(
-            [
-                "_access_token",
-                "_ClientBase__auth_url",
-                "_ClientBase__check_algorithm_store_valid",
-                "_ClientBase__hq_url",
-                "_decrypt_run_data",
-                "_decrypt_field",
-                "_download_run_data_from_hq",
-                "_fetch_and_decrypt_run_data",
-                "_multi_page_request",
-                "_refresh_token",
-                "_upload_run_data_to_hq",
-                "auth_url",
-                "authenticate",
-                "check_if_blob_store_enabled",
-                "collaboration_id",
-                "cryptor",
-                "databases",
-                "generate_path_to",
-                "headers",
-                "image",
-                "log",
-                "name",
-                "node_id",
-                "obtain_new_token",
-                "request",
-                "hq_url",
-                "session_id",
-                "setup_encryption",
-                "store_id",
-                "study_id",
-                "token",
-                "wait_for_task_completion",
-                "whoami",
-            ]
-        )
+        self._missing_attributes = {
+            "_access_token",
+            "_ClientBase__auth_url",
+            "_ClientBase__check_algorithm_store_valid",
+            "_ClientBase__hq_url",
+            "_decrypt_run_data",
+            "_decrypt_field",
+            "_download_run_data_from_hq",
+            "_fetch_and_decrypt_run_data",
+            "_multi_page_request",
+            "_refresh_token",
+            "_upload_run_data_to_hq",
+            "auth_url",
+            "authenticate",
+            "check_if_blob_store_enabled",
+            "collaboration_id",
+            "cryptor",
+            "databases",
+            "generate_path_to",
+            "headers",
+            "image",
+            "log",
+            "name",
+            "node_id",
+            "obtain_new_token",
+            "request",
+            "hq_url",
+            "session_id",
+            "setup_encryption",
+            "store_id",
+            "study_id",
+            "token",
+            "wait_for_task_completion",
+            "whoami",
+        }
 
     def __getattr__(self, name: str):
         """Handle access to missing attributes."""
         if hasattr(self, "_missing_attributes") and name in self._missing_attributes:
             warn(f"The attribute {name} is not available in the mock client.")
-            return None
+            return
         raise AttributeError(
             f"'{self.__class__.__name__}' object has no attribute '{name}'"
         )
@@ -113,7 +112,6 @@ class MockBaseClient:
 
         def missing_method(self, method: str):
             warn(f"The method {method} is not available in the mock client.")
-            return
 
     def wait_for_results(self, task_id: int, interval: float = 1) -> list:
         """
@@ -135,7 +133,7 @@ class MockBaseClient:
         return self.result.from_task(task_id)
 
     class Study(SubClient):
-        """ """
+        """Study subclient for the MockAlgorithmClient"""
 
         def __init__(self, parent) -> None:
             super().__init__(parent)
@@ -261,20 +259,20 @@ class MockBaseClient:
                         "sure that the method is available in the top level of your "
                         "algorithm module?"
                     )
-                    exit(1)
+                    sys.exit(1)
                 except SessionActionMismatchError:
                     error(
                         f"The {method} method is not a computation task, are you sure "
                         "you specified the correct method?"
                     )
-                    exit(1)
+                    sys.exit(1)
                 except DataFrameNotFound as e:
                     error(f"A dataframe you specified does not exist: {e}")
-                    exit(1)
-                except Exception as e:
+                    sys.exit(1)
+                except Exception as e:  # noqa: BLE001
                     error(f"Error simulating task run for organization {org_id}: {e}")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
 
                 result_response = self.parent.network.hq.save_result(result, task["id"])
                 self.parent.network.hq.save_run(
@@ -582,15 +580,15 @@ class MockUserClient(MockBaseClient):
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a data extraction method.")
                     error("Exiting...")
-                    exit(1)
-                except Exception as e:
+                    sys.exit(1)
+                except Exception as e:  # noqa: BLE001
                     error(
                         "Error simulating dataframe creation for organization "
                         f"{org_id}: {e}"
                     )
                     error("Exiting...")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
 
                 dataframes.append(df_response)
 
@@ -612,7 +610,10 @@ class MockUserClient(MockBaseClient):
         def preprocess(
             self, id_: int, image: str, method: str, arguments: dict
         ) -> dict:
-            """ """
+            """
+            Preprocess a dataframe by creating a task that runs the preprocessing
+            method.
+            """
             dataframe = self.parent.network.hq.get_dataframe(id_)
             data_frame_name = dataframe.get("name")
             if not dataframe or not data_frame_name:
@@ -635,15 +636,15 @@ class MockUserClient(MockBaseClient):
                 except SessionActionMismatchError:
                     error(f"The function {method} is not a preprocessing method.")
                     error("Exiting...")
-                    exit(1)
-                except Exception as e:
+                    sys.exit(1)
+                except Exception as e:  # noqa: BLE001
                     error(
                         "Error simulating dataframe preprocessing for organization "
                         f"{org_id}: {e}"
                     )
                     error("Exiting...")
                     traceback.print_exc()
-                    exit(1)
+                    sys.exit(1)
                 dataframes.append(df)
 
                 result_response = self.parent.network.hq.save_result({}, task["id"])
@@ -687,7 +688,7 @@ class MockAlgorithmClient(MockBaseClient):
                     "parent task."
                 )
                 error("Exiting...")
-                exit(1)
+                sys.exit(1)
 
             # inject the mock data into the arguments
             kwargs["databases"] = self.parent.databases

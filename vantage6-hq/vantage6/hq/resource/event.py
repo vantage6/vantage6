@@ -36,7 +36,7 @@ def setup(api: Api, api_base: str, services: dict) -> None:
     services : dict
         Dictionary with services required for the resource endpoints
     """
-    path = "/".join([api_base, module_name])
+    path = f"{api_base}/{module_name}"
     log.info(f'Setting up "{path}" and subdirectories')
 
     api.add_resource(
@@ -328,7 +328,7 @@ def kill_task(task: db.Task, socket: SocketIO) -> None:
             if RunStatus.has_finished(run.status):
                 continue  # don't overwrite status if run is already finished
             run.status = RunStatus.KILLED.value
-            run.finished_at = dt.datetime.now(dt.timezone.utc)
+            run.finished_at = dt.datetime.now(dt.UTC)
             run.save()
 
     set_killed(task)

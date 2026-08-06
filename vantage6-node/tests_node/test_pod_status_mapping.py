@@ -63,7 +63,6 @@ class TestPodStatus(unittest.TestCase):
         )
 
         self.mock_pod = V1Pod(metadata={"name": ""}, status=self.mock_pod_status)
-        pass
 
     def test_running_job_pod(self):
         self.mock_pod.status.phase = "Running"

@@ -3,6 +3,8 @@
 node:
   createSecrets: true
 
+  production: true
+
   name: ""
   # apiKey: "put-your-api-key-here"
 
@@ -68,8 +70,6 @@ node:
   share_config: true
 
   share_algorithm_logs: true
-
-  production: true
 
   prometheus:
     enabled: false

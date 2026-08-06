@@ -16,6 +16,7 @@ import ssl
 from pathlib import Path
 from urllib.parse import urlparse
 
+import yaml
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
 
@@ -57,7 +58,7 @@ def _configure_microk8s_ssl(cfg: client.Configuration) -> None:
                 "the CLI."
             )
 
-    except Exception as e:
+    except OSError as e:
         warning(f"Could not configure MicroK8s SSL settings: {e}")
         warning("You may run into errors when using the CLI.")
 
@@ -109,7 +110,7 @@ def _configure_with_certificate(cert_path: Path, cfg: client.Configuration) -> N
         # Apply the configuration to the default client
         client.Configuration.set_default(cfg)
 
-    except Exception as e:
+    except OSError as e:
         warning(f"Failed to configure with certificate {cert_path}: {e}")
         warning("You may run into errors when using the CLI.")
 
@@ -152,7 +153,7 @@ def _validate_certificate(cert_path: Path) -> bool:
             and b"-----END CERTIFICATE-----" in cert_data
         )
 
-    except Exception as e:
+    except OSError as e:
         warning(f"Certificate validation failed: {e}")
         return False
 
@@ -186,9 +187,8 @@ def _validate_certificate_with_ssl(cert_data: bytes) -> bool:
             cert_der = base64.b64decode(cert_b64)
             ssl.DER_cert_to_PEM_cert(cert_der)
             return True
-    except Exception:
-        pass
-    return False
+    except ValueError:
+        return False
 
 
 def load_kubernetes_config_with_fallback() -> bool:
@@ -267,7 +267,7 @@ def is_microk8s_context() -> bool:
         _, active_context = config.list_kube_config_contexts()
         current_context = active_context.get("name", "") if active_context else ""
         return "microk8s" in current_context.lower()
-    except Exception:
+    except (ConfigException, OSError, yaml.YAMLError):
         return False
 
 

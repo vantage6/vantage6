@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -113,9 +113,9 @@ class MockHQ:
         last_run_id = len(self.runs) + 1
         run = {
             "id": last_run_id,
-            "started_at": datetime.now(timezone.utc).isoformat(),
-            "assigned_at": datetime.now(timezone.utc).isoformat(),
-            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
+            "assigned_at": datetime.now(UTC).isoformat(),
+            "finished_at": datetime.now(UTC).isoformat(),
             "log": "mock_log",
             "ports": [],
             "status": "completed",

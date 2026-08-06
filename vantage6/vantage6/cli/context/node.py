@@ -39,7 +39,7 @@ class NodeContext(AppContext):
         self,
         instance_name: str,
         system_folders: bool = N_FOL,
-        config_file: str = None,
+        config_file: str | None = None,
         print_log_header: bool = True,
         logger_prefix: str = "",
         in_container: bool = False,
