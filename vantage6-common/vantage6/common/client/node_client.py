@@ -402,7 +402,7 @@ class NodeClient(ClientBase):
         # check if task-initiating org name is in allowed orgs
         for allowed_org in allowed_orgs:
             resp = self.request("organization", params={"name": allowed_org})
-            for org in resp:
+            for org in resp.get("data", []):
                 if org.get("name") == allowed_org and org.get("id") == init_org_id:
                     return True
 
