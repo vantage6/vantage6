@@ -22,7 +22,7 @@ spec:
       # initialize by making the volume writable inside the container
       initContainers:
       - name: volume-permissions
-        image: dhi.io/busybox:1
+        image: dhi.io/busybox:1-alpine
         command: ["sh", "-c"]
         args:
           - chmod -R 777 /prometheus
