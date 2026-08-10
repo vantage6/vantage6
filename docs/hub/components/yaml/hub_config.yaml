@@ -71,12 +71,12 @@ global:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: curlimages/curl:8.7.1
+      image: dhi.io/curl:8-alpine
     store:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: curlimages/curl:8.7.1
+      image: dhi.io/curl:8-alpine
 
 hq:
   # configuration for the headquarters should be placed here

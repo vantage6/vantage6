@@ -265,7 +265,7 @@ prometheus:
   # The port on which the Prometheus exporter will be available.
   exporter_port: 7603
   # image to use for the Prometheus server.
-  image: prom/prometheus:latest
+  image: dhi.io/prometheus:3.13
   # The size of the storage for the Prometheus server.
   storageSize: 2Gi
   # The kubernetes storage class to use for the Prometheus server.

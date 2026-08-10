@@ -27,7 +27,7 @@ spec:
       {{- if and ($waitAuth.enabled | default false) (ne (trim $authUrl) "") }}
       initContainers:
         - name: wait-for-auth
-          image: {{ $waitAuth.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitAuth.image | default "dhi.io/curl:8-alpine" }}
           command:
             - /bin/sh
             - -ec
