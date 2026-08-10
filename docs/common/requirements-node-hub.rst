@@ -94,10 +94,13 @@ is used to deploy and manage the Kubernetes resources for the vantage6 infrastru
 The vantage6 infrastructure is available in several Helm charts. Therefore, you need
 ``helm`` to deploy and manage the Kubernetes resources for the vantage6 infrastructure.
 
-.. _dhi-registry:
-
 Docker Hardened Images Registry
 """""""""""""""""""""""""""""""
+
+.. note::
+
+   For more information on Docker Hardened Images, see the `Docker Hardened
+   Images documentation <https://docs.docker.com/dhi/how-to/use/>`_.
 
 Some vantage6 init containers use images from the `Docker Hardened Images
 <https://dhi.io>`_ registry. The following images are affected:
@@ -107,32 +110,40 @@ Some vantage6 init containers use images from the `Docker Hardened Images
 - ``dhi.io/busybox:1`` -- used for volume permission initialization in the Prometheus deployment
 - ``dhi.io/prometheus:3.13`` -- used for the Prometheus deployment
 
+These are Docker's "Community" tier hardened images. Authentication to
+``dhi.io`` is required to pull them. You can authenticate using your
+`Docker ID <https://docs.docker.com/docker-hub/>`_ and password, or by
+creating a `personal access token <https://docs.docker.com/security/access-tokens/>`_
+on Docker Hub.
+
 If your Kubernetes cluster cannot pull these images, you will see
 ``ImagePullBackOff`` errors for the affected pods.
 
-To authenticate your cluster, log in to ``dhi.io`` (using your Docker account)
-and create a Kubernetes secret with your credentials:
+To authenticate your cluster, first log in to the ``dhi.io`` registry:
 
 .. code-block:: bash
 
-   # Log in to the dhi.io registry (uses your Docker account)
    docker login dhi.io
 
-   # Create a Kubernetes secret for dhi.io
-   kubectl create secret docker-registry docker-registry-secret \
+Then, create a Kubernetes secret. You can use either an access token or your
+Docker ID credentials:
+
+.. code-block:: bash
+
+   kubectl create secret docker-registry dhi-pull-secret \
      --docker-server=dhi.io \
-     --docker-username=<your-username> \
-     --docker-password=<your-password> \
+     --docker-username=<your-docker-username> \
+     --docker-password=<your-access-token-or-password> \
      --docker-email=<your-email>
 
-You can then configure the secret as an ``imagePullSecret`` in your Helm
-values. For example, in your ``values.yaml``:
+Configure the secret as an ``imagePullSecret`` in your Helm values. For example,
+in your ``values.yaml``:
 
 .. code-block:: yaml
 
    global:
      imagePullSecrets:
-       - name: docker-registry-secret
+       - name: dhi-pull-secret
 
 Alternatively, you can override the individual images in your Helm values
 to use publicly accessible alternatives, for example:
