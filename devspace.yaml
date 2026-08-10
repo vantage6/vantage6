@@ -151,6 +151,7 @@ pipelines:
       start_dev \
         vantage6-hq \
         vantage6-hq-db \
+        vantage6-prometheus \
         vantage6-ui
 
   node:
@@ -530,6 +531,15 @@ dev:
       - port: 7632:5432
         bindAddress: localhost
       - port: 7632:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
+
+  vantage6-prometheus:
+    labelSelector:
+      component: prometheus
+    ports:
+      - port: 7604:9090
+        bindAddress: localhost
+      - port: 7604:9090
         bindAddress: ${PORTS_BIND_ADDRESS}
 
   vantage6-store:
