@@ -295,6 +295,8 @@ deployments:
             internal:
               auth: ${KEYCLOAK_URL}
               store: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
+          imagePullSecrets:
+            - name: dhi-pull-secret
           wait:
             auth:
               enabled: true
@@ -348,7 +350,7 @@ deployments:
           volumePath: ${HQ_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         prometheus:
-          enabled: false
+          enabled: true
         rabbitmq:
           username: rabbitmquser
           password: rabbitmquserpassword

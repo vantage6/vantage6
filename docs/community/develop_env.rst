@@ -46,6 +46,32 @@ main directory.
 First time running the development environment
 ----------------------------------
 
+Before running the development environment, you need to authenticate to the
+`Docker Hardened Images <https://dhi.io>`_ registry. The devspace configuration
+references images like ``dhi.io/curl:8-alpine`` and ``dhi.io/kubectl:1`` for
+init containers. These are free to use with a Docker account.
+
+First, log in to the ``dhi.io`` registry:
+
+.. code-block:: bash
+
+    docker login dhi.io
+
+Then, create a Kubernetes ``imagePullSecret``:
+
+.. code-block:: bash
+
+    kubectl create secret docker-registry dhi-pull-secret \
+      --docker-server=dhi.io \
+      --docker-username=<your-docker-username> \
+      --docker-password=<your-access-token-or-password> \
+      --docker-email=<your-email>
+
+You can use your Docker Hub username and password, or create a
+`personal access token <https://docs.docker.com/security/access-tokens/>`_
+for better security. The ``v6 dev`` / devspace commands will use this secret
+automatically.
+
 To run the development environment for the first time, execute these commands:
 
 .. code-block:: bash
