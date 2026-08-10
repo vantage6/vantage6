@@ -88,7 +88,7 @@ def handle_exceptions(func):
         ) as e:
             return {"msg": e.message}, e.status_code
         except Exception as e:
-            log.exception(e)
+            log.exception("Unexpected error occurred in function %s", func.__name__)
             return {
                 "msg": "An unexpected error occurred: " + str(e)
             }, HTTPStatus.INTERNAL_SERVER_ERROR

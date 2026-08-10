@@ -128,20 +128,20 @@ For example, you can create a new organization by running:
 from vantage6.client import Client
 
 client = Client(
-  hq_url='http://localhost:30761/api',
-  auth_url='http://localhost:30764',
-  log_level='debug'
+    hq_url="http://localhost:30761/api",
+    auth_url="http://localhost:30764",
+    log_level="debug",
 )
 client.authenticate()
 client.setup_encryption(None)
 
 client.organization.create(
-    name='My organization',
-    address1='My address',
-    address2='My address',
-    zipcode='1234AB',
-    country='The Netherlands',
-    domain='my-organization.com'
+    name="My organization",
+    address1="My address",
+    address2="My address",
+    zipcode="1234AB",
+    country="The Netherlands",
+    domain="my-organization.com",
 )
 ```
 

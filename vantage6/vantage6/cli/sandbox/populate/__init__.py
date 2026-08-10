@@ -2,13 +2,13 @@
 Script to populate the hub with basic fixtures.
 """
 
+import sys
 import time
 import traceback
-from logging import info
 
 import requests
 
-from vantage6.common import error
+from vantage6.common import error, info
 from vantage6.common.globals import Ports
 
 from vantage6.client import Client
@@ -72,7 +72,7 @@ def populate_hub_dev(
 
         return report_deletion + "\n" + report_creation + "\n" + report_store
 
-    except Exception:
+    except Exception:  # noqa: BLE001
         error("=" * 80)
         error("Failed to populate hub")
         error(traceback.format_exc())
@@ -117,12 +117,12 @@ def populate_hub_sandbox(
             return_as_dict=True,
         )
         connect_store(client, store_port=Ports.SANDBOX_ALGO_STORE.value)
-    except Exception:
+    except Exception:  # noqa: BLE001
         error("=" * 80)
         error("Failed to populate hub")
         error(traceback.format_exc())
         error("=" * 80)
-        exit(1)
+        sys.exit(1)
 
     # return the details of the created nodes so that config files can be created
     return report_creation["nodes"]["created"]
@@ -220,13 +220,13 @@ def _initalize_client(hq_url: str, auth_url: str) -> Client:
             client.authenticate()
             info("Successfully authenticated!")
             break
-        except Exception as e:
+        except (requests.RequestException, AttributeError):
             if attempt == max_attempts:
                 error(
                     f"Failed to authenticate after {max_attempts} attempts. "
                     "Vantage6 hub may not be online."
                 )
-                raise e
+                raise
 
             time.sleep(5)
             attempt += 1

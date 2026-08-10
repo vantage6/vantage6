@@ -64,9 +64,9 @@ class NodeClient(ClientBase):
         # get token from keycloak
         try:
             self.obtain_new_token()
-        except Exception as e:
-            self.log.exception("Getting token failed: %s", e)
-            raise e
+        except Exception:
+            self.log.exception("Getting token failed")
+            raise
 
         # get info on how HQ sees this node
         node = self.request("node/me")
@@ -124,7 +124,7 @@ class NodeClient(ClientBase):
                 try:
                     self.obtain_new_token()
                     token_expired = False
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self.log.error("Getting new token failed: %s", e)
                     # sleep for a bit and then try again. HQ might be
                     # unreachable or internet connection down. We sleep so long that
@@ -166,7 +166,7 @@ class NodeClient(ClientBase):
         """Subclient for the run endpoint."""
 
         def list(
-            self, state: str, include_task: bool, task_id: int = None
+            self, state: str, include_task: bool, task_id: int | None = None
         ) -> dict | list:
             """
             Obtain algorithm runs.
@@ -221,7 +221,7 @@ class NodeClient(ClientBase):
 
             return run_data
 
-        def patch(self, id_: int, data: dict, init_org_id: int = None) -> dict | None:
+        def patch(self, id_: int, data: dict, init_org_id: int | None = None) -> dict:
             """
             Update the algorithm run data at HQ.
 
@@ -233,23 +233,17 @@ class NodeClient(ClientBase):
                 ID of the run to patch
             data: Dict
                 Dictionary of fields that are to be patched
-            init_org_id: int, optional
-                Organization id of the origin of the task. This is required
-                when the run dict includes results, because then results have
-                to be encrypted specifically for them
+            init_org_id: int | None, optional
+                Organization id of the origin of the task. This is required when
+                `data` includes a result, because the result has to be encrypted
+                specifically for that organization. It is not used otherwise.
 
             Returns
             -------
-            dict | None
-                The response from HQ, or None if wrong data was provided
+            dict
+                The response from HQ
             """
             if "result" in data:
-                if not init_org_id:
-                    self.parent.log.critical(
-                        "Organization id is not provided: cannot send results "
-                        "to HQ as they cannot be encrypted"
-                    )
-                    return
                 self.parent.log.debug(
                     f"Retrieving public key from organization={init_org_id}"
                 )
@@ -354,9 +348,7 @@ class NodeClient(ClientBase):
         """
         self.run.patch(
             id_,
-            data={
-                "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
-            },
+            data={"started_at": datetime.datetime.now(datetime.UTC).isoformat()},
         )
 
     def check_user_allowed_to_send_task(

@@ -225,6 +225,14 @@ hooks:
     command: |
       dev/check_microk8s_storage_enabled.sh
     events: ["before:deploy:vantage6-auth"]
+  # Note: new hooks must be appended at the end of this list, as the
+  # 'with-prometheus' profile patches a hook by its index in dev/pipeline/profiles.yaml
+  - name: "copy-node-test-data"
+    command: |
+      echo "Copying node test data to ${NODE_TEST_DATABASE_MOUNT_PATH}"
+      python dev/copy_test_data.py ${NODE_TEST_DATABASE_MOUNT_PATH} \
+        ${NODE_TEST_DATABASE_NAME} km_dataset.csv
+    events: ["before:deploy:vantage6-node"]
 
 # This is a list of `images` that DevSpace can build for this project. These can be
 # build with `devspace build` or when running `devspace dev -b`.
@@ -441,6 +449,7 @@ deployments:
         node:
           name: dummy-node-name  # will be overridden by the environment variables
           apiKey: dummy-api-key  # will be overridden by the environment variables
+          production: false
           image: ${NODE_IMAGE}
           imagePullPolicy: IfNotPresent
           numberOfNodes: ${NUMBER_OF_NODES}

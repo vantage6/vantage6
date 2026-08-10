@@ -71,7 +71,6 @@ class BaseBackendContext(AppContext):
         HQContext | AlgorithmStoreContext
             Base backend context object
         """
-        cls = super().from_external_config_file(
+        return super().from_external_config_file(
             path, backend_type, system_folders, in_container
         )
-        return cls

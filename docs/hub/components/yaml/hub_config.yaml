@@ -79,10 +79,17 @@ global:
       image: dhi.io/curl:8-alpine
 
 hq:
+  # Set to false to skip deploying the HQ subchart when using the hub parent chart.
+  enabled: true
   # configuration for the headquarters should be placed here
 
 auth:
+  # Set to false to skip deploying the auth subchart when using the hub parent chart.
+  enabled: true
   # configuration for the authentication service should be placed here
 
 store:
+  # Set to false to skip deploying the algorithm store subchart when using the hub
+  # parent chart.
+  enabled: true
   # configuration for the algorithm store should be placed here

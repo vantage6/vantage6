@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from os import PathLike
 from pathlib import Path
 
@@ -79,7 +80,7 @@ def prestart_checks(
 
     if check_running(ctx.helm_release_name, instance_type, name, system_folders):
         error(f"Instance '{name}' is already running.")
-        exit(1)
+        sys.exit(1)
 
 
 def helm_install(
@@ -181,13 +182,13 @@ def helm_install(
         )
     except subprocess.CalledProcessError:
         error(f"Failed to install release '{release_name}'.")
-        exit(1)
+        sys.exit(1)
     except FileNotFoundError:
         error(
             "Helm command not found. Please ensure Helm is installed and available in "
             "the PATH."
         )
-        exit(1)
+        sys.exit(1)
 
 
 def _helm_dependency_update(local_chart_dir: str, chart_name: ChartName) -> None:
@@ -217,10 +218,10 @@ def _helm_dependency_update(local_chart_dir: str, chart_name: ChartName) -> None
             f"Failed to update Helm dependencies for chart "
             f"'{chart_name.value}' in '{chart_path}'."
         )
-        exit(1)
+        sys.exit(1)
     except FileNotFoundError:
         error(
             "Helm command not found. Please ensure Helm is installed and "
             "available in the PATH."
         )
-        exit(1)
+        sys.exit(1)

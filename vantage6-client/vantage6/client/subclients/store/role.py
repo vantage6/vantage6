@@ -1,4 +1,5 @@
-from typing import Any, List
+import builtins
+from typing import Any
 
 from vantage6.common.client.client_base import ClientBase
 
@@ -11,12 +12,12 @@ class StoreRoleSubClient(ClientBase.SubClient):
     @post_filtering(iterable=True)
     def list(
         self,
-        name: str = None,
-        description: str = None,
-        user: int = None,
+        name: str | None = None,
+        description: str | None = None,
+        user: int | None = None,
         page: int = 1,
         per_page: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         List algorithms
 
@@ -67,7 +68,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
         )
 
     @post_filtering(iterable=False)
-    def create(self, name: str, description: str, rules: List[int]) -> dict[str, Any]:
+    def create(
+        self, name: str, description: str, rules: builtins.list[int]
+    ) -> dict[str, Any]:
         """
         Create a new role
 
@@ -101,9 +104,9 @@ class StoreRoleSubClient(ClientBase.SubClient):
     def edit(
         self,
         role_id: int,
-        name: str = None,
-        description: str = None,
-        rules: List[int] = None,
+        name: str | None = None,
+        description: str | None = None,
+        rules: builtins.list[int] | None = None,
     ) -> dict[str, Any]:
         """
         Edit an existing role
