@@ -33,7 +33,7 @@ keycloak:
     # never gets requeued once it comes up.
     waitForKeycloak:
       enabled: true
-      image: rancher/kubectl:v1.31.0
+      image: dhi.io/kubectl@sha256:6a5a293ad57a893a7133a809895f2eaaf6bc699c0b2cd2ff43ee774b02ab4139
       # Keep below Helm's --timeout (default 5m): the release aborts on that budget
       # first, so raising this without also raising --timeout has no effect.
       timeout: 300s
