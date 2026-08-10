@@ -93,3 +93,53 @@ Helm
 is used to deploy and manage the Kubernetes resources for the vantage6 infrastructure.
 The vantage6 infrastructure is available in several Helm charts. Therefore, you need
 ``helm`` to deploy and manage the Kubernetes resources for the vantage6 infrastructure.
+
+.. _dhi-registry:
+
+Docker Hardened Images Registry
+"""""""""""""""""""""""""""""""
+
+Some vantage6 init containers use images from the `Docker Hardened Images
+<https://dhi.io>`_ registry. The following images are affected:
+
+- ``dhi.io/curl:8-alpine`` -- used for HTTP health checks in HQ and algorithm store init containers
+- ``dhi.io/kubectl:1`` -- used for Keycloak readiness checks
+- ``dhi.io/busybox:1`` -- used for volume permission initialization in the Prometheus deployment
+- ``dhi.io/prometheus:3.13`` -- used for the Prometheus deployment
+
+If your Kubernetes cluster cannot pull these images, you will see
+``ImagePullBackOff`` errors for the affected pods.
+
+To authenticate your cluster, you need to log in to Docker and create a
+Kubernetes secret with your Docker credentials:
+
+.. code-block:: bash
+
+   # Log in to Docker (dhi.io uses your Docker Hub credentials)
+   docker login
+
+   # Create a Kubernetes secret from your Docker credentials
+   kubectl create secret docker-registry docker-registry-secret \
+     --docker-server=https://index.docker.io/v1/ \
+     --docker-config=~/.docker/config.json
+
+You can then configure the secret as an ``imagePullSecret`` in your Helm
+values. For example, in your ``values.yaml``:
+
+.. code-block:: yaml
+
+   global:
+     imagePullSecrets:
+       - name: docker-registry-secret
+
+Alternatively, you can override the individual images in your Helm values
+to use publicly accessible alternatives, for example:
+
+.. code-block:: yaml
+
+   global:
+     wait:
+       auth:
+         image: "curlimages/curl:8.7.1"
+       store:
+         image: "curlimages/curl:8.7.1"

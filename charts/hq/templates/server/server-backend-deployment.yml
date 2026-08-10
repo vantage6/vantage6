@@ -43,7 +43,7 @@ spec:
       initContainers:
         {{- if $waitAuth }}
         - name: wait-for-auth
-          image: {{ $waitAuthCfg.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitAuthCfg.image | default "dhi.io/curl:8-alpine" }}
           command:
             - /bin/sh
             - -ec
@@ -61,7 +61,7 @@ spec:
         {{- end }}
         {{- if $waitStore }}
         - name: wait-for-store
-          image: {{ $waitStoreCfg.image | default "curlimages/curl:8.7.1" }}
+          image: {{ $waitStoreCfg.image | default "dhi.io/curl:8-alpine" }}
           command:
             - /bin/sh
             - -ec
