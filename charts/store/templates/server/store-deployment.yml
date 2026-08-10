@@ -29,19 +29,9 @@ spec:
         - name: wait-for-auth
           image: {{ $waitAuth.image | default "dhi.io/curl:8-alpine" }}
           command:
-            - /bin/sh
-            - -ec
-            - |
-{{ include "common.waitForComponentReadyScript" . | nindent 14 }}
-          env:
-            - name: TARGET_URL
-              value: {{ $authUrl | quote }}
-            - name: MAX_ATTEMPTS
-              value: {{ $waitAuth.maxAttempts | default 60 | quote }}
-            - name: INTERVAL_SECONDS
-              value: {{ $waitAuth.intervalSeconds | default 5 | quote }}
-            - name: WAIT_LABEL
-              value: "Auth"
+            - curl
+          args:
+{{- include "common.waitForComponentReadyArgs" (dict "url" $authUrl "label" "Auth" "maxAttempts" ($waitAuth.maxAttempts | default 60) "intervalSeconds" ($waitAuth.intervalSeconds | default 5)) | nindent 12 }}
       {{- end }}
       {{- $storeKeycloak := default (dict) .Values.store.keycloak }}
       containers:
