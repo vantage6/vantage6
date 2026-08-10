@@ -101,18 +101,20 @@ Some vantage6 init containers use images from the `Docker Hardened Images
 If your Kubernetes cluster cannot pull these images, you will see
 ``ImagePullBackOff`` errors for the affected pods.
 
-To authenticate your cluster, you need to log in to Docker and create a
-Kubernetes secret with your Docker credentials:
+To authenticate your cluster, log in to ``dhi.io`` (using your Docker account)
+and create a Kubernetes secret with your credentials:
 
 .. code-block:: bash
 
-   # Log in to Docker (dhi.io uses your Docker Hub credentials)
-   docker login
+   # Log in to the dhi.io registry (uses your Docker account)
+   docker login dhi.io
 
-   # Create a Kubernetes secret from your Docker credentials
+   # Create a Kubernetes secret for dhi.io
    kubectl create secret docker-registry docker-registry-secret \
-     --docker-server=https://index.docker.io/v1/ \
-     --docker-config=~/.docker/config.json
+     --docker-server=dhi.io \
+     --docker-username=<your-username> \
+     --docker-password=<your-password> \
+     --docker-email=<your-email>
 
 You can then configure the secret as an ``imagePullSecret`` in your Helm
 values. For example, in your ``values.yaml``:
