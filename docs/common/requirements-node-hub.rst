@@ -107,7 +107,7 @@ Some vantage6 init containers use images from the `Docker Hardened Images
 
 - ``dhi.io/curl:8-alpine`` -- used for HTTP health checks in HQ and algorithm store init containers
 - ``dhi.io/kubectl:1`` -- used for Keycloak readiness checks
-- ``dhi.io/busybox:1`` -- used for volume permission initialization in the Prometheus deployment
+- ``dhi.io/busybox:1-alpine`` -- used for volume permission initialization in the Prometheus deployment
 - ``dhi.io/prometheus:3.13`` -- used for the Prometheus deployment
 
 These are Docker's "Community" tier hardened images. Authentication to
