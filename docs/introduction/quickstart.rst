@@ -50,31 +50,6 @@ Then, install the vantage6 command line interface (CLI) by running:
 Start a local vantage6 network
 ------------------------------
 
-Before starting the sandbox, you need to authenticate to the
-`Docker Hardened Images <https://dhi.io>`_ registry. The sandbox uses
-images like ``dhi.io/curl:8-alpine`` and ``dhi.io/kubectl:1`` for init
-containers. These are free to use with a Docker account.
-
-First, log in to the ``dhi.io`` registry:
-
-.. code-block:: bash
-
-    docker login dhi.io
-
-Then, create a Kubernetes ``imagePullSecret``:
-
-.. code-block:: bash
-
-    kubectl create secret docker-registry dhi-pull-secret \
-      --docker-server=dhi.io \
-      --docker-username=<your-docker-username> \
-      --docker-password=<your-access-token-or-password> \
-      --docker-email=<your-email>
-
-You can use your Docker Hub username and password, or create a
-`personal access token <https://docs.docker.com/security/access-tokens/>`_
-for better security.
-
 In the Python environment where you installed the `vantage6` package, you can easily set up a
 local vantage6 network by running the following command:
 

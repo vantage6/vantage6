@@ -32,6 +32,35 @@ their own (advanced usage).
 The image registry, mailserver and blob storage are optional components that cannot be
 installed by vantage6. You have to install and deploy them yourself.
 
+Using your own images
+^^^^^^^^^^^^^^^^^^^^^
+
+If your cluster cannot reach ``ghcr.io``, for example in an air-gapped
+environment, copy or build the images to a registry it can reach and override them in
+your Helm values.
+
+.. code-block:: yaml
+
+   global:
+     # only needed if your registry requires authentication; create the
+     # docker-registry secret in the namespace first
+     imagePullSecrets:
+       - name: my-registry-secret
+     wait:
+       auth:
+         image: my-registry.example.org/curl:5.0.0
+       store:
+         image: my-registry.example.org/curl:5.0.0
+   auth:
+     keycloak:
+       realmImport:
+         waitForKeycloak:
+           image: my-registry.example.org/kubectl:5.0.0
+   hq:
+     prometheus:
+       image: my-registry.example.org/prometheus:5.0.0
+       initImage: my-registry.example.org/busybox:5.0.0
+
 
 Configuration
 -------------

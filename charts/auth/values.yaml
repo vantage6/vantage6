@@ -33,7 +33,6 @@ keycloak:
     # never gets requeued once it comes up.
     waitForKeycloak:
       enabled: true
-      image: dhi.io/kubectl:1
       # Keep below Helm's --timeout (default 5m): the release aborts on that budget
       # first, so raising this without also raising --timeout has no effect.
       timeout: 300s

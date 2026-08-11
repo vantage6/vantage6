@@ -126,11 +126,6 @@ class SandboxHubConfigManager(BaseSandboxConfigManager):
         hub_config = {
             "urls": urls,
             "keycloak": keycloak,
-            # The sandbox uses Docker Hardened Images for init containers, which
-            # require authentication. Reference the dhi-pull-secret created by the user.
-            "imagePullSecrets": [
-                {"name": "dhi-pull-secret"},
-            ],
             # Pass through the component-specific values so the hub chart's
             # subcharts receive the same configuration as the standalone charts.
             "hq": self.hq_config,

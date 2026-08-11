@@ -19,10 +19,11 @@ spec:
 {{ include "vantage6.labels" . | indent 8 }}
         component: prometheus
     spec:
+      {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
       # initialize by making the volume writable inside the container
       initContainers:
       - name: volume-permissions
-        image: dhi.io/busybox:1-alpine
+        image: {{ include "common.supportImage" (dict "Chart" .Chart "name" "busybox" "override" .Values.prometheus.initImage) }}
         command: ["sh", "-c"]
         args:
           - chmod -R 777 /prometheus
@@ -34,7 +35,7 @@ spec:
       # run the prometheus container
       containers:
       - name: prometheus
-        image: {{ .Values.prometheus.image | default "dhi.io/prometheus:3.13" }}
+        image: {{ include "common.supportImage" (dict "Chart" .Chart "name" "prometheus" "override" .Values.prometheus.image) }}
         ports:
         - containerPort: 9090
           name: prometheus

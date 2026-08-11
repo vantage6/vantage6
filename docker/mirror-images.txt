@@ -1,0 +1,19 @@
+# Third-party images re-published into ghcr.io/vantage6/infrastructure so that
+# vantage6 users do not need dhi.io credentials to start a hub, a node or a
+# sandbox.
+#
+# These are Docker Hardened Images "Community" images: Apache-2.0 licensed and
+# explicitly free to use, share and build on. We authenticate to dhi.io with the
+# project's own Docker Hub credentials and copy with regctl. Do NOT switch this
+# to `docker dhi mirror` -- that is an Enterprise-licensed feature that vantage6
+# is not entitled to. The Apache-2.0 grant is what permits the re-publishing;
+# the dhi.io login is only a read-side access control on the source registry.
+#
+# The GHCR tag is the vantage6 version the image shipped with, so a chart always
+# pulls the copy it was tested against. See tools/mirror-images.sh.
+#
+# name        upstream reference
+curl          dhi.io/curl:8-alpine
+kubectl       dhi.io/kubectl:1
+busybox       dhi.io/busybox:1-alpine
+prometheus    dhi.io/prometheus:3.13

@@ -231,6 +231,15 @@ jobs:
       - name: Build and push support images
         run: make support-image TAG=$version PUSH_REG=true TAG_LATEST=$tag_latest
 
+  # Re-publish the third-party images defined in docker/mirror-images.txt.
+  mirror-images:
+    name: Re-publish third-party images
+    needs: version
+    uses: ./.github/workflows/mirror-images.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.version.outputs.version }}
+
   infrastructure-images:
     name: Build infrastructure images
     runs-on: ubuntu-latest

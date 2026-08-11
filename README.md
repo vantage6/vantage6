@@ -78,11 +78,6 @@ view all available options, run:
 v6 --help
 ```
 
-**Note:** before running the sandbox for the first time, you need to authenticate
-to the [Docker Hardened Images](https://dhi.io) registry and create a Kubernetes
-image pull secret. See the [quickstart documentation](https://docs.vantage6.ai)
-for instructions.
-
 For example you can create a local test setup by using:
 
 ```bash

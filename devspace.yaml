@@ -302,8 +302,6 @@ deployments:
             internal:
               auth: ${KEYCLOAK_URL}
               store: http://vantage6-store-store.${CURRENT_NAMESPACE}.svc.cluster.local:7602
-          imagePullSecrets:
-            - name: dhi-pull-secret
           wait:
             auth:
               enabled: true
