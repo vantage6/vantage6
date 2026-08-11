@@ -1,3 +1,4 @@
+import logging
 from unittest import TestCase, main
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ class TestCheckUserAllowedToSendTask(TestCase):
     def setUpClass(cls):
         # Create a client without calling __init__ (avoids needing credentials)
         cls.client = object.__new__(NodeClient)
+        cls.client.log = logging.getLogger(__name__)
 
     def test_org_id_match_returns_true(self):
         """Matching org by ID should return True without an API call."""
@@ -65,6 +67,43 @@ class TestCheckUserAllowedToSendTask(TestCase):
             )
         self.assertTrue(result)
         mock_request.assert_not_called()
+
+    def test_int_org_id_from_config_matches(self):
+        """Org IDs written as ints in the config file should match (issue #1218)."""
+        with patch.object(self.client.__class__, "request") as mock_request:
+            result = self.client.check_user_allowed_to_send_task(
+                allowed_users=[],
+                allowed_orgs=[7],
+                init_org_id=7,
+                init_user_id=1,
+            )
+        self.assertTrue(result)
+        mock_request.assert_not_called()
+
+    def test_int_user_id_from_config_matches(self):
+        """User IDs written as ints in the config file should match."""
+        with patch.object(self.client.__class__, "request") as mock_request:
+            result = self.client.check_user_allowed_to_send_task(
+                allowed_users=[2],
+                allowed_orgs=[],
+                init_org_id=7,
+                init_user_id=2,
+            )
+        self.assertTrue(result)
+        mock_request.assert_not_called()
+
+    def test_error_response_denies_task(self):
+        """An error response should deny the task rather than raise."""
+        with patch.object(
+            self.client.__class__, "request", return_value={"msg": "Unauthorized"}
+        ):
+            result = self.client.check_user_allowed_to_send_task(
+                allowed_users=[],
+                allowed_orgs=["TestOrg"],
+                init_org_id=7,
+                init_user_id=1,
+            )
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":
