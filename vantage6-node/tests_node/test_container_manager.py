@@ -1,6 +1,7 @@
 import logging
+import os
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from vantage6.common.globals import NodePolicy
 
@@ -112,6 +113,63 @@ class TestIsImageAllowed(unittest.TestCase):
             self.manager.is_image_allowed("some/image:tag", self._task_info(store_id=1))
         )
         self.manager.client.algorithm_store.get_algorithm.assert_not_called()
+
+    def test_allowed_algorithm_stores_localhost_translated_in_k8s(self):
+        """
+        A store registered under a `localhost` URL (e.g. running on the same local
+        dev machine as the node) is translated to an address reachable from inside
+        the node's pod before the live verification call, when V6_K8S_NODE_NAME
+        indicates a local k8s dev deployment.
+        """
+        self.manager._policies = {
+            NodePolicy.ALLOWED_ALGORITHM_STORES.value: ["http://localhost:7601"]
+        }
+        self.manager.client.algorithm_store.get.return_value = {
+            "url": "http://localhost:7601",
+            "api_path": "/api",
+        }
+        self.manager.client.algorithm_store.get_algorithm.return_value = {
+            "image": "some/image:tag",
+            "digest": "abc123",
+        }
+
+        with patch.dict(os.environ, {"V6_K8S_NODE_NAME": "docker-desktop"}):
+            self.assertTrue(
+                self.manager.is_image_allowed(
+                    "some/image:tag", self._task_info(store_id=1)
+                )
+            )
+
+        self.assertEqual(
+            self.manager.client.algorithm_store.url,
+            "http://host.docker.internal:7601/api",
+        )
+
+    def test_allowed_algorithm_stores_localhost_unchanged_without_k8s_node(self):
+        """
+        Without V6_K8S_NODE_NAME set (the default outside local dev deployments), a
+        `localhost` store URL is used as-is - a real deployment never has the node
+        and the store on the same machine, so there is nothing to translate.
+        """
+        self.manager._policies = {
+            NodePolicy.ALLOWED_ALGORITHM_STORES.value: ["http://localhost:7601"]
+        }
+        self.manager.client.algorithm_store.get.return_value = {
+            "url": "http://localhost:7601",
+            "api_path": "/api",
+        }
+        self.manager.client.algorithm_store.get_algorithm.return_value = {
+            "image": "some/image:tag",
+            "digest": "abc123",
+        }
+
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("V6_K8S_NODE_NAME", None)
+            self.manager.is_image_allowed("some/image:tag", self._task_info(store_id=1))
+
+        self.assertEqual(
+            self.manager.client.algorithm_store.url, "http://localhost:7601/api"
+        )
 
     def test_allow_either_whitelist_or_store(self):
         """

@@ -35,6 +35,7 @@ from vantage6.common.kubernetes.utils import database_env_label
 
 from vantage6.cli.context.node import NodeContext
 from vantage6.cli.node.common.task_cleanup import delete_run_related_pods
+from vantage6.cli.utils_kubernetes import replace_localhost_for_k8s
 
 from vantage6.node.enum import KillInitiator
 from vantage6.node.globals import (
@@ -1337,8 +1338,14 @@ class ContainerManager:
                     # algorithm in that store - HQ is the one asserting that
                     # association, and HQ is not fully trusted here. Re-verify
                     # directly with the store itself instead of trusting HQ's claim.
+                    #
+                    # If the store is registered under a `localhost` URL (dev env)
+                    # translate it to an address reachable from inside this pod
+                    reachable_store_url = replace_localhost_for_k8s(
+                        store_info["url"], os.environ.get("V6_K8S_NODE_NAME") or None
+                    )
                     self.client.algorithm_store.url = (
-                        f"{store_info['url']}{store_info['api_path']}"
+                        f"{reachable_store_url}{store_info['api_path']}"
                     )
                     self.client.algorithm_store.store_id = store_id
                     algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
