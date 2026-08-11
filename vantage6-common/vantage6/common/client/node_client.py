@@ -353,8 +353,8 @@ class NodeClient(ClientBase):
 
     def check_user_allowed_to_send_task(
         self,
-        allowed_users: list[str],
-        allowed_orgs: list[str],
+        allowed_users: list[str | int],
+        allowed_orgs: list[str | int],
         init_org_id: int,
         init_user_id: int,
     ) -> bool:
@@ -363,9 +363,9 @@ class NodeClient(ClientBase):
 
         Parameters
         ----------
-        allowed_users: list[str]
+        allowed_users: list[str | int]
             List of allowed user IDs or usernames
-        allowed_orgs: list[str]
+        allowed_orgs: list[str | int]
             List of allowed organization IDs or names
         init_org_id: int
             ID of the organization that initiated the task
@@ -377,12 +377,16 @@ class NodeClient(ClientBase):
         bool
             Whether or not the user is allowed to send a task to this node
         """
+        # Because we can get both str and int values (also strings as ints)
+        allowed_users = [str(user) for user in allowed_users]
+        allowed_orgs = [str(org) for org in allowed_orgs]
+
         # check if task-initating user id is in allowed users
-        if any(str(init_user_id) == user for user in allowed_users):
+        if str(init_user_id) in allowed_users:
             return True
 
         # check if task-initiating org id is in allowed orgs
-        if any(str(init_org_id) == org for org in allowed_orgs):
+        if str(init_org_id) in allowed_orgs:
             return True
 
         # TODO it would be nicer to check all users in a single request
@@ -394,15 +398,28 @@ class NodeClient(ClientBase):
         # check if task-initiating user name is in allowed users
         # for user in allowed_users:
         #     resp = self.request("user", params={"username": user})
-        #     print(resp)
-        #     for d in resp:
+        #     for d in resp.get("data", []):
         #         if d.get("username") == user and d.get("id") == init_user_id:
         #             return True
 
         # check if task-initiating org name is in allowed orgs
+        #
+        # Organization names are unique, so we expect at most one result per policy
+        # entry and the first page of results is always enough. The exception is a
+        # policy entry containing SQL LIKE wildcards (e.g. `%`), which the server
+        # matches against multiple organizations - those cannot pass the exact name
+        # comparison below anyway, so they are never allowed regardless of paging.
         for allowed_org in allowed_orgs:
             resp = self.request("organization", params={"name": allowed_org})
-            for org in resp:
+            if not resp or "data" not in resp:
+                self.log.warning(
+                    "Could not check organization policy '%s': unexpected response "
+                    "from the server (%s). Task will not be allowed on this basis.",
+                    allowed_org,
+                    resp,
+                )
+                continue
+            for org in resp["data"]:
                 if org.get("name") == allowed_org and org.get("id") == init_org_id:
                     return True
 
