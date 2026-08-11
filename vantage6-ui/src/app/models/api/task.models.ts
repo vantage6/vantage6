@@ -130,7 +130,7 @@ export interface RunNode {
 
 export interface TaskParameter {
   label: string;
-  value: string;
+  value: unknown;
 }
 
 export interface TaskResult {
