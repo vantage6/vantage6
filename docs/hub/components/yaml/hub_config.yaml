@@ -63,6 +63,11 @@ global:
   # If set, HQ and Store can inherit this when they use hostPath PVs.
   k8sNodeName: linux-node-1
 
+  # Only needed when images are overridden to point at a registry that requires
+  # authentication. The secrets must already exist in the namespace.
+  imagePullSecrets:
+    - name: my-registry-secret
+
   # Optional wait settings used by initContainers when deploying via the hub
   # chart. When enabled, Store and HQ will wait for Auth (and HQ can wait for
   # Store) before starting their main containers.

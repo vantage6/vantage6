@@ -65,6 +65,17 @@ keycloak:
   realmImport:
     enabled: true
 
+    # Wait for Keycloak to report Ready before applying the realm import. This
+    # prevents a race on fresh installs where the realm-import controller
+    # reconciles before the Keycloak StatefulSet exists.
+    waitForKeycloak:
+      enabled: true
+      # Keep this below Helm's --timeout (default 5m): the release aborts on that
+      # budget first, so raising this without also raising --timeout has no effect.
+      timeout: 300s
+      # image used to check whether Keycloak is ready.
+      image: ghcr.io/vantage6/infrastructure/kubectl:<vantage6-version>
+
     # Keycloak realm name. If used as not standalone, not that this overwrites the
     # global hub setting.
     realm: vantage6
