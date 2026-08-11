@@ -27,14 +27,8 @@ keycloak:
 
   realmImport:
     enabled: true
-    # Ensures the KeycloakRealmImport CR is only applied once the Keycloak CR reports
-    # Ready, via a post-install hook Job. Prevents a race on fresh installs where the
-    # realm-import controller reconciles before the Keycloak StatefulSet exists and
-    # never gets requeued once it comes up.
     waitForKeycloak:
       enabled: true
-      # Keep below Helm's --timeout (default 5m): the release aborts on that budget
-      # first, so raising this without also raising --timeout has no effect.
       timeout: 300s
     accessTokenLifespan: 300
     ssoSessionIdleTimeout: 1800
