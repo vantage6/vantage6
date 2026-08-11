@@ -91,7 +91,8 @@ pipelines:
         --task-directory $TASK_DIRECTORY \
         --task-namespace $TASK_NAMESPACE \
         --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER \
-        --populate-marker $POPULATE_MARKER
+        --populate-marker $POPULATE_MARKER \
+        --prometheus-enabled
 
   all-without-populate:
     run: |-
@@ -478,6 +479,11 @@ deployments:
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/node
+          # The node pushes its system metadata to the HQ over the websocket
+          # connection; the HQ exposes it to Prometheus on its exporter port.
+          prometheus:
+            enabled: true
+            report_interval_seconds: 45
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
