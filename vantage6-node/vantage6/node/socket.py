@@ -20,6 +20,32 @@ class NodeTaskNamespace(ClientNamespace):
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger(logger_name(__name__))
 
+    def trigger_event(self, event, *args):
+        """
+        Dispatch an event to its handler, without letting the handler take down the
+        thread it runs in.
+
+        Each incoming event is handled in its own thread, and an exception that escapes
+        a handler would otherwise be reported outside of the node's logging setup and
+        leave the event half-handled.
+
+        Parameters
+        ----------
+        event: str
+            Name of the socket event to dispatch.
+        *args
+            Arguments that HQ sent along with the event.
+
+        Returns
+        -------
+        Any
+            Whatever the handler returned, or None if it raised an exception.
+        """
+        try:
+            return super().trigger_event(event, *args)
+        except Exception:
+            self.log.exception("Error while handling socket event '%s'", event)
+
     def on_message(self, msg):
         """
         Receive messages over socket connection
@@ -192,20 +218,28 @@ class NodeTaskNamespace(ClientNamespace):
         """
         Action to be taken when a dataframe is instructed to be deleted.
         """
-        self.log.info("Received instruction to delete dataframe: %s", data["df_name"])
+        session_id = data.get("session_id")
+        df_name = data.get("df_name")
+        if session_id is None or df_name is None:
+            self.log.error(
+                "Cannot delete dataframe: incomplete instruction received (%s)", data
+            )
+            return
+
+        self.log.info("Received instruction to delete dataframe: %s", df_name)
         session_file_manager = SessionFileManager(
-            data["session_id"],
+            session_id,
             task_dir_extension=self.node_worker_ref.ctx.config.get("dev", {}).get(
                 "task_dir_extension"
             ),
         )
-        session_file_manager.delete_dataframe_file(data["df_name"])
+        session_file_manager.delete_dataframe_file(df_name)
         # send back a socket event to HQ to indicate that the dataframe has been deleted
         self.emit(
             "dataframe_deleted",
             {
-                "df_name": data["df_name"],
-                "session_id": data["session_id"],
+                "df_name": df_name,
+                "session_id": session_id,
                 "node_id": self.node_worker_ref.client.whoami.id_,
             },
             namespace="/tasks",
