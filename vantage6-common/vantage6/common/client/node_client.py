@@ -377,9 +377,7 @@ class NodeClient(ClientBase):
         bool
             Whether or not the user is allowed to send a task to this node
         """
-        # Policy values come straight from the node config file, where IDs are
-        # commonly written as integers (e.g. `allowed_organizations: [7]`), so
-        # normalize everything to strings before comparing.
+        # Because we can get both str and int values (also strings as ints)
         allowed_users = [str(user) for user in allowed_users]
         allowed_orgs = [str(org) for org in allowed_orgs]
 
