@@ -12,8 +12,9 @@ Deliberately shell-free: the hardened curl image ships no /bin/sh, so the wait
 is expressed with curl's own retry flags instead of a polling loop.
 
 Feedback in `kubectl logs`, since there is no shell to echo progress:
-  - one line per failed attempt, from --show-error;
-  - a closing line with the status, retry count and elapsed time;
+  - one line per failed attempt saying what went wrong;
+  - one line per retry with the remaining countdown;
+  - a closing line with the status and elapsed time;
   - an extra line naming the component when it never came up.
 
 Input (dict):
@@ -29,26 +30,42 @@ Input (dict):
 {{- $interval := int (.intervalSeconds | default 5) -}}
 {{- /* --retry counts the retries *after* the first attempt, so drop that one. */ -}}
 {{- $retries := max 0 (sub $attempts 1) -}}
-{{- /* Text before %{onerror} is printed either way; only the tail is error-only. */ -}}
-{{- $writeOut := printf "%%{stderr}Waited for %s at %%{url}: HTTP %%{http_code} after %%{num_retries} retries (%%{time_total}s)\\n%%{onerror}%s did not become ready, giving up (curl exit %%{exitcode}).\\n" $label $label -}}
+{{- /*
+The closing summary, in two halves. Everything up to %{onerror} is printed
+whether or not the wait succeeded; the tail only when curl gives up.
+
+%{num_retries} is deliberately not used here: it needs curl >= 8.9 and older
+images print "unknown --write-out variable" in the middle of the line instead.
+The per-retry countdown below already reports the attempt number.
+
+%{time_total} covers the last attempt only, not the whole wait, hence the
+wording: after 12 retries it still reports a fraction of a second.
+*/ -}}
+{{- $summary := printf "%%{stderr}%s at %%{url}: HTTP %%{http_code} (last attempt took %%{time_total}s)\\n" $label -}}
+{{- $gaveUp := printf "%%{onerror}%s did not become ready, giving up (curl exit %%{exitcode}).\\n" $label -}}
+# Treat HTTP errors as failures. --no-progress-meter rather than --silent: it
+# drops the progress bar but keeps the per-retry countdown, which --silent hides.
 - --fail
-- --silent
+- --no-progress-meter
 - --show-error
+# Bound a single attempt, so attempts stay roughly on the configured interval.
 - --connect-timeout
 - {{ $interval | quote }}
 - --max-time
 - {{ add $interval 1 | quote }}
+# Retry up to maxAttempts times. On a fresh install the target Service may not
+# resolve at all yet, so retry DNS and connection errors too, not just the
+# transient ones curl retries by default.
 - --retry
 - {{ $retries | quote }}
 - --retry-delay
 - {{ $interval | quote }}
-{{- /* The target Service may not resolve at all yet on a fresh install, so
-       retry DNS and HTTP errors too, not just the transient ones. */}}
 - --retry-connrefused
 - --retry-all-errors
+# Discard the body; only reachability matters.
 - --output
 - /dev/null
 - --write-out
-- {{ $writeOut | squote }}
+- {{ printf "%s%s" $summary $gaveUp | squote }}
 - {{ $url | quote }}
 {{- end -}}
