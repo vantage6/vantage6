@@ -26,6 +26,7 @@ import importlib.metadata
 import logging
 import os
 import queue
+import signal
 import sys
 import threading
 import time
@@ -119,8 +120,7 @@ class Node:
         self.log.debug("Ensuring that the task namespace is properly configured")
         namespace_created = self.k8s_container_manager.ensure_task_namespace()
         if not namespace_created:
-            self.log.error("Could not create the task namespace. Exiting.")
-            sys.exit(1)
+            self._fatal("Could not create the task namespace. Exiting.")
 
         self.check_algorithm_isolation()
 
@@ -155,6 +155,29 @@ class Node:
 
         self.log.info("Init complete")
 
+    def _fatal(self, message: str, *args) -> None:
+        """
+        Log why the node cannot continue and shut it down.
+
+        Note that `sys.exit()` cannot be used for this, as fatal errors
+        are also detected in the node's other threads, where it would only end that
+        single thread and leave the node running without a proxy server or a connection
+        to HQ.
+
+        Parameters
+        ----------
+        message: str
+            Message that explains why the node is shutting down. May contain %s-style
+            placeholders.
+        *args
+            Values for the placeholders in the message.
+        """
+        self.log.critical(message, *args)
+        os.kill(os.getpid(), signal.SIGTERM)
+        # the signal already terminated the node; this makes the method verifiably
+        # terminal for its callers - and for the tests, which patch os.kill()
+        raise SystemExit(1)
+
     def check_algorithm_isolation(self) -> None:
         """
         Verify that algorithm containers cannot reach the public internet.
@@ -162,12 +185,13 @@ class Node:
         When ``production`` is true (default), the node exits if isolation is not
         enforced. Otherwise, a failed check is logged as a warning only.
         """
-        isolated, isolation_message = (
-            self.k8s_container_manager.validate_algorithm_isolation()
-        )
+        (
+            isolated,
+            isolation_message,
+        ) = self.k8s_container_manager.validate_algorithm_isolation()
         if not isolated:
             if self.config.get("production", True):
-                self.log.error(
+                self._fatal(
                     "Algorithm network isolation check failed: %s. Nodes with "
                     "production=true require a Kubernetes environment that enforces "
                     "NetworkPolicies. Common causes: Docker Desktop Kubernetes, missing "
@@ -175,7 +199,6 @@ class Node:
                     "central_compute egress whitelist (e.g. 0.0.0.0/0).",
                     isolation_message,
                 )
-                sys.exit(1)
             self.log.warning(
                 "Algorithm network isolation check failed: %s",
                 isolation_message,
@@ -303,12 +326,10 @@ class Node:
             proxy_host = os.environ.get("V6_PROXY_HOST")
             os.environ["V6_PROXY_HOST"] = proxy_host
         else:
-            self.log.error(
+            self._fatal(
                 "The environment variable V6_PROXY_HOST, required to start the Node's "
-                "proxy-server is not set"
+                "proxy-server is not set. Shutting down the node..."
             )
-            self.log.info("Shutting down the node...")
-            sys.exit(1)
 
         # 'app' is defined in vantage6.node.proxy_server
         debug_mode = self.debug.get("proxy_server", False)
@@ -354,8 +375,7 @@ class Node:
                 node_proxy_port,
             )
             self.log.info("%s: %s", type(e), e)
-            self.log.info("Shutting down the node...")
-            sys.exit(1)
+            self._fatal("Could not start the proxy server. Shutting down the node...")
 
     def sync_task_queue_with_HQ(self) -> None:
         """Get all unprocessed tasks from HQ for this node."""
@@ -593,7 +613,8 @@ class Node:
         """
         Authenticate with HQ using the API key from the configuration file. If HQ
         rejects the authentication for any reason -other than a wrong API key-
-        several attempts are taken to retry.
+        several attempts are taken to retry. If the node cannot be authenticated at
+        all, it is shut down.
         """
 
         success = False
@@ -628,8 +649,7 @@ class Node:
         if success:
             self.log.info("Node '%s' authenticated successfully", self.client.name)
         else:
-            self.log.critical("Unable to authenticate. Exiting")
-            sys.exit(1)
+            self._fatal("Unable to authenticate. Exiting")
 
         # start thread to keep the connection alive by refreshing the token
         self.client.auto_renew_token()
@@ -681,7 +701,8 @@ class Node:
     def connect_to_socket(self) -> None:
         """
         Create long-lasting websocket connection with HQ. The connection is used to
-        receive status updates, such as new tasks.
+        receive status updates, such as new tasks. If the connection cannot be
+        established, the node is shut down.
         """
         debug_mode = self.debug.get("socketio", False)
         if debug_mode:
@@ -703,11 +724,10 @@ class Node:
         i = 0
         while not self.socketIO.connected:
             if i > TIME_LIMIT_INITIAL_CONNECTION_WEBSOCKET:
-                self.log.critical(
+                self._fatal(
                     "Could not connect to the websocket channels, do you have a "
                     "slow connection?"
                 )
-                sys.exit(1)
             self.log.debug("Waiting for socket connection...")
             time.sleep(1)
             i += 1
