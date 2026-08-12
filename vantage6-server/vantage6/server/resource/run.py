@@ -521,9 +521,9 @@ class SingleRunBase(RunBase):
         if not run:
             return {"msg": f"Run id={id} not found!"}, HTTPStatus.NOT_FOUND
 
-        if not self.r.allowed_for_org(P.VIEW, run.task.init_org_id) and not (
-            self.r.v_own.can() and run.task.init_user_id == g.user.id
-        ):
+        if not self.r.allowed_for_org(
+            P.VIEW, run.task.init_org_id, run.task.collaboration_id
+        ) and not (self.r.v_own.can() and run.task.init_user_id == g.user.id):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED

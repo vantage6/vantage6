@@ -178,7 +178,9 @@ class BlobStream(BlobStreamBase):
             return {
                 "msg": f"No run found with input or result id={id}"
             }, HTTPStatus.NOT_FOUND
-        if not self.r_run.allowed_for_org(P.VIEW, run.task.init_org_id):
+        if not self.r_run.allowed_for_org(
+            P.VIEW, run.task.init_org_id, run.task.collaboration_id
+        ):
             return {
                 "msg": "You lack the permission to do that!"
             }, HTTPStatus.UNAUTHORIZED
