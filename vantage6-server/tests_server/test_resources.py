@@ -266,6 +266,27 @@ class TestResources(unittest.TestCase):
             self.assertIn("access_token", tokens)
             self.assertIn("refresh_token", tokens)
 
+    def test_validate_node_token(self):
+        """Test /api/token/node/validate"""
+        node, api_key = self.create_node()
+        headers = self.login_node(api_key)
+
+        # a valid node token is accepted, and its identity is returned
+        rv = self.app.post("/api/token/node/validate", headers=headers)
+        self.assertEqual(rv.status_code, HTTPStatus.OK)
+        self.assertEqual(rv.json["node_id"], node.id)
+        self.assertEqual(rv.json["name"], node.name)
+        self.assertEqual(rv.json["organization_id"], node.organization_id)
+
+        # a user token is not a node token, and is rejected here
+        user_headers = self.create_user_and_login()
+        rv = self.app.post("/api/token/node/validate", headers=user_headers)
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
+        # no token at all is rejected
+        rv = self.app.post("/api/token/node/validate")
+        self.assertNotEqual(rv.status_code, HTTPStatus.OK)
+
     def test_organization(self):
         rule = Rule.get_by_("organization", Scope.GLOBAL, Operation.VIEW)
         headers = self.create_user_and_login(rules=[rule])

@@ -120,6 +120,16 @@ class Node:
         self.queue = queue.Queue()
         self._using_encryption = None
 
+        # Same convention already used by the server and the algorithm store: a
+        # `localhost` algorithm store URL (in e.g. allowed_algorithm_stores) refers
+        # to this node's own container, not the store's - dev.host_uri lets a
+        # developer point it at the host machine's address instead. Unset/no-op in
+        # a real deployment, where the node and the store are never on the same
+        # machine.
+        host_uri = self.config.get("dev", {}).get("host_uri")
+        if host_uri:
+            os.environ["HOST_URI_ENV_VAR"] = host_uri
+
         # initialize Node connection to the server
         self.client = NodeClient(
             host=self.config.get("server_url"),

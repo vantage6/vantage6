@@ -5,6 +5,7 @@ central server.
 
 import jwt
 import datetime
+import os
 import time
 
 from threading import Thread
@@ -29,6 +30,10 @@ class NodeClient(ClientBase):
 
         self.run = self.Run(self)
         self.algorithm_store = self.AlgorithmStore(self)
+        # ClientBase.request()/generate_path_to() look up `self.store` for
+        # `is_for_algorithm_store=True` requests (i.e. requests sent to the algorithm
+        # store itself, rather than to the central server).
+        self.store = self.algorithm_store
 
     def authenticate(self, api_key: str) -> None:
         """
@@ -255,8 +260,14 @@ class NodeClient(ClientBase):
                     data["result"] = result_uuid
             return self.parent.request(f"run/{id_}", json=data, method="patch")
 
-    class AlgorithmStore(ClientBase.SubClient):
+    class AlgorithmStore(ClientBase.AlgorithmStoreSubClientBase):
         """Subclient for the algorithm store endpoint."""
+
+        # Not importable here - vantage6.backend.common.globals.HOST_URI_ENV (the same
+        # name) is only a dependency of the server/store packages, not of this one.
+        # Duplicates the convention already used there for algorithm store calls made
+        # from the server and the store itself (dev.host_uri config option).
+        _HOST_URI_ENV_VAR = "HOST_URI_ENV_VAR"
 
         def get(self, id_) -> dict:
             """
@@ -273,6 +284,54 @@ class NodeClient(ClientBase):
                 The algorithms as json.
             """
             return self.parent.request(f"algorithmstore/{id_}")
+
+        def get_algorithm(self, image: str) -> dict | None:
+            """
+            Ask the algorithm store directly whether `image` is a registered,
+            approved algorithm. Unlike `get`, this talks to the algorithm store
+            server itself rather than to the central server's own record of it -
+            call `set` first to select which store to query.
+
+            Parameters
+            ----------
+            image : str
+                URI of the image to look up in the store.
+
+            Returns
+            -------
+            dict | None
+                The algorithm as registered in the store, or None if the store
+                could not confirm that this image is a registered, approved
+                algorithm (including when the store could not be reached at all,
+                or does not yet support node requests - callers should treat this
+                as "could not verify", not just "not found").
+            """
+            if self.url and ("localhost" in self.url or "127.0.0.1" in self.url):
+                host_uri = os.environ.get(self._HOST_URI_ENV_VAR)
+                if host_uri:
+                    # A `localhost` algorithm store URL refers to this node's own
+                    # container, not the store's - translate it, same convention
+                    # already used for server<->store communication.
+                    self.url = (
+                        self.url.replace("localhost", host_uri)
+                        .replace("127.0.0.1", host_uri)
+                        .replace("http://http://", "http://")
+                    )
+
+            response = self.parent.request(
+                "algorithm",
+                params={"image": image},
+                is_for_algorithm_store=True,
+                headers={
+                    "Server-Url": self.parent.base_path,
+                    "Client-Type": "node",
+                },
+                # don't retry indefinitely if the store is unreachable - a single
+                # task's policy check should not be able to stall the node
+                attempts_on_timeout=3,
+            )
+            data = (response or {}).get("data") or []
+            return data[0] if data else None
 
     def is_encrypted_collaboration(self) -> bool:
         """

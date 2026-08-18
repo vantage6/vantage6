@@ -90,6 +90,14 @@ def setup(api: Api, api_base: str, services: dict) -> None:
         resource_class_kwargs=services,
     )
 
+    api.add_resource(
+        NodeValidateToken,
+        path + "/node/validate",
+        endpoint="validate_node_token",
+        methods=("POST",),
+        resource_class_kwargs=services,
+    )
+
 
 user_token_input_schema = TokenUserInputSchema()
 node_token_input_schema = TokenNodeInputSchema()
@@ -412,6 +420,37 @@ class ValidateToken(ServicesResources):
             "username": g.user.username,
             "email": g.user.email,
             "organization_id": g.user.organization_id,
+        }, HTTPStatus.OK
+
+
+class NodeValidateToken(ServicesResources):
+    """Resource for api/token/node/validate"""
+
+    @with_node
+    def post(self):
+        """Validate a node token
+        ---
+        description: >-
+          Validate that a node token is valid. This is used by external
+          services such as an algorithm store to validate that a node token
+          is valid, without requiring the node to be registered as a user of
+          that service.
+
+        responses:
+          200:
+            description: Token is valid
+          401:
+            description: Token is invalid
+
+        tags: ["Authentication"]
+        """
+        # Note: if the token is invalid, the with_node decorator will return
+        # an error response. So if we get here, the token is valid.
+        return {
+            "msg": "Token is valid",
+            "node_id": g.node.id,
+            "name": g.node.name,
+            "organization_id": g.node.organization_id,
         }, HTTPStatus.OK
 
 

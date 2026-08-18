@@ -515,20 +515,49 @@ class DockerManager(DockerBaseManager):
             except Exception:
                 store_id = None
             if store_id:
-                store = self.client.algorithm_store.get(store_id)
-                store_from_task = store["url"]
+                store_info = self.client.algorithm_store.get(store_id)
+                store_from_task = store_info["url"]
                 # check if the store matches any of the regex cases
                 if isinstance(allowed_stores, str):
                     allowed_stores = [allowed_stores]
-                for store in allowed_stores:
-                    if not self._is_regex_pattern(store):
+                store_url_whitelisted = False
+                for allowed_store in allowed_stores:
+                    if not self._is_regex_pattern(allowed_store):
                         # check if string matches exactly
-                        if store == store_from_task:
-                            store_whitelisted = True
+                        if allowed_store == store_from_task:
+                            store_url_whitelisted = True
                     else:
-                        expr_ = re.compile(store)
+                        expr_ = re.compile(allowed_store)
                         if expr_.match(store_from_task):
-                            store_whitelisted = True
+                            store_url_whitelisted = True
+
+                if store_url_whitelisted:
+                    # The store's URL is whitelisted, but that alone does not prove
+                    # that the evaluated image is actually a registered, approved
+                    # algorithm in that store - the server is the one asserting that
+                    # association, and the server is not fully trusted here.
+                    # Re-verify directly with the store itself instead of trusting
+                    # the server's claim.
+                    # `store_info['url']` is the full base URL the store was
+                    # registered with, including its API path (default `/api`, but
+                    # configurable per store) - nothing needs to be appended here.
+                    self.client.algorithm_store.url = store_info["url"]
+                    self.client.algorithm_store.store_id = store_id
+                    algorithm = self.client.algorithm_store.get_algorithm(
+                        evaluated_img
+                    )
+                    if algorithm:
+                        store_whitelisted = True
+                    else:
+                        self.log.warning(
+                            "Algorithm store %s did not confirm that image %s is a "
+                            "registered, approved algorithm there. Denying the "
+                            "allowed_algorithm_stores policy for this image. This "
+                            "can also happen if the algorithm store does not yet "
+                            "support node verification requests.",
+                            store_from_task,
+                            evaluated_img,
+                        )
 
         allowed_from_whitelist = not allowed_algorithms or algorithm_whitelisted
         allowed_from_store = not allowed_stores or store_whitelisted
