@@ -7,25 +7,27 @@ for creating docker networks, docker volumes, start containers and retrieve
 results from finished containers.
 """
 
-import os
-from socket import SocketIO
-import time
 import logging
-import docker
+import os
 import re
 import shutil
-
-from typing import NamedTuple
+import time
 from pathlib import Path
+from socket import SocketIO
+from typing import NamedTuple
 
-from vantage6.common import logger_name
-from vantage6.common import get_database_config
+import docker
+from vantage6.algorithm.tools.wrappers import get_column_names
+from vantage6.cli.context.node import NodeContext
+from vantage6.common import get_database_config, logger_name
+from vantage6.common.client.node_client import NodeClient
 from vantage6.common.docker.addons import (
     get_container,
     get_digest,
     get_image_name_wo_tag,
     running_in_docker,
 )
+from vantage6.common.docker.network_manager import NetworkManager
 from vantage6.common.globals import (
     APPNAME,
     BASIC_PROCESSING_IMAGE,
@@ -33,22 +35,18 @@ from vantage6.common.globals import (
     NodePolicy,
 )
 from vantage6.common.task_status import TaskStatus, has_task_failed
-from vantage6.common.docker.network_manager import NetworkManager
-from vantage6.algorithm.tools.wrappers import get_column_names
-from vantage6.cli.context.node import NodeContext
 from vantage6.node.context import DockerNodeContext
 from vantage6.node.docker.docker_base import DockerBaseManager
-from vantage6.node.docker.vpn_manager import VPNManager
-from vantage6.node.docker.task_manager import DockerTaskManager
-from vantage6.node.docker.squid import Squid
-from vantage6.common.client.node_client import NodeClient
 from vantage6.node.docker.exceptions import (
-    UnknownAlgorithmStartFail,
-    PermanentAlgorithmStartFail,
     AlgorithmContainerNotFound,
+    PermanentAlgorithmStartFail,
+    UnknownAlgorithmStartFail,
 )
-from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
+from vantage6.node.docker.squid import Squid
+from vantage6.node.docker.task_manager import DockerTaskManager
 from vantage6.node.docker.utils import login_to_registries
+from vantage6.node.docker.vpn_manager import VPNManager
+from vantage6.node.globals import DEFAULT_REQUIRE_ALGO_IMAGE_PULL
 
 log = logging.getLogger(logger_name(__name__))
 
@@ -414,7 +412,7 @@ class DockerManager(DockerBaseManager):
         )
         if evaluated_img.startswith(BASIC_PROCESSING_IMAGE):
             if not allow_basics:
-                self.log.warn(
+                self.log.warning(
                     "A task was sent with a basics algorithm that "
                     "this node does not allow to run."
                 )
@@ -543,9 +541,7 @@ class DockerManager(DockerBaseManager):
                     # configurable per store) - nothing needs to be appended here.
                     self.client.algorithm_store.url = store_info["url"]
                     self.client.algorithm_store.store_id = store_id
-                    algorithm = self.client.algorithm_store.get_algorithm(
-                        evaluated_img
-                    )
+                    algorithm = self.client.algorithm_store.get_algorithm(evaluated_img)
                     if algorithm:
                         store_whitelisted = True
                     else:
@@ -616,11 +612,11 @@ class DockerManager(DockerBaseManager):
             "}",
             "|",
             "+",
-            "\.",
+            r"\.",
         ]
         # Use common characters used in regular expressions as a proxy
         # for if this string is in fact a regex.
-        return any((c in pattern for c in common_regex_chars))
+        return any(c in pattern for c in common_regex_chars)
 
     def is_running(self, run_id: int) -> bool:
         """
@@ -939,7 +935,7 @@ class DockerManager(DockerBaseManager):
                     )
                 )
             else:
-                self.log.warn(
+                self.log.warning(
                     "Received instruction to kill run_id="
                     f"{container_to_kill['run_id']}, but it was not "
                     "found running on this node."
@@ -969,18 +965,18 @@ class DockerManager(DockerBaseManager):
             killed_runs = self.kill_selected_tasks(org_id=org_id, kill_list=kill_list)
         else:
             # received instruction to kill all tasks on this node
-            self.log.warn(
+            self.log.warning(
                 "Received instruction from server to kill all algorithms "
                 "running on this node. Executing that now..."
             )
             killed_runs = self.cleanup_tasks()
             if len(killed_runs):
-                self.log.warn(
+                self.log.warning(
                     "Killed the following run ids as instructed via socket:"
                     f" {', '.join([str(r.run_id) for r in killed_runs])}"
                 )
             else:
-                self.log.warn("Instructed to kill tasks but none were running")
+                self.log.warning("Instructed to kill tasks but none were running")
         return killed_runs
 
     def get_column_names(self, label: str, type_: str) -> list[str]:

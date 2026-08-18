@@ -1,16 +1,16 @@
 import itertools
+import json as json_lib
 import logging
 import time
-import requests
-import json as json_lib
 from pathlib import Path
 
-from vantage6.common.exceptions import AuthenticationException
-from vantage6.common.encryption import RSACryptor, DummyCryptor
-from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING
-from vantage6.common.client.utils import print_qr_code
-from vantage6.common.task_status import has_task_finished
+import requests
 from vantage6.common.client.blob_storage import BlobStorageMixin
+from vantage6.common.client.utils import print_qr_code
+from vantage6.common.encryption import DummyCryptor, RSACryptor
+from vantage6.common.exceptions import AuthenticationException
+from vantage6.common.globals import INTERVAL_MULTIPLIER, MAX_INTERVAL, STRING_ENCODING
+from vantage6.common.task_status import has_task_finished
 
 module_name = __name__.split(".")[1]
 
@@ -310,8 +310,7 @@ class ClientBase(BlobStorageMixin):
                 msg = response.json().get("msg", "")
                 # remove dot at the end of the message if it is there to prevent double
                 # dots in the log message
-                if msg.endswith("."):
-                    msg = msg[:-1]
+                msg = msg.removesuffix(".")
                 self.log.error("msg: %s. Endpoint: %s", msg, endpoint)
                 if response.json().get("errors"):
                     self.log.error("errors:" + str(response.json().get("errors")))
@@ -360,9 +359,9 @@ class ClientBase(BlobStorageMixin):
             If the client is not authenticated
         """
         assert self._access_token, "Encryption can only be setup after authentication"
-        assert (
-            self.whoami.organization_id
-        ), "Organization unknown... Did you authenticate?"
+        assert self.whoami.organization_id, (
+            "Organization unknown... Did you authenticate?"
+        )
 
         if private_key_file is None:
             self.cryptor = DummyCryptor()
@@ -621,7 +620,7 @@ class ClientBase(BlobStorageMixin):
             decrypted = self._fetch_and_decrypt_run_data(value, blob_storage_used)
             if not isinstance(decrypted, bytes):
                 self.log.error(
-                    "The field %s is not properly encoded. Expected bytes, got" " %s.",
+                    "The field %s is not properly encoded. Expected bytes, got %s.",
                     field,
                     type(decrypted),
                 )

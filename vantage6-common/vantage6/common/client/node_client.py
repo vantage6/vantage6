@@ -3,13 +3,12 @@ This module provides a client interface for the node to communicate with the
 central server.
 """
 
-import jwt
 import datetime
-import os
 import time
-
 from threading import Thread
+from urllib.parse import urlparse
 
+import jwt
 from vantage6.common import WhoAmI
 from vantage6.common.client.client_base import ClientBase
 from vantage6.common.globals import (
@@ -263,11 +262,10 @@ class NodeClient(ClientBase):
     class AlgorithmStore(ClientBase.AlgorithmStoreSubClientBase):
         """Subclient for the algorithm store endpoint."""
 
-        # Not importable here - vantage6.backend.common.globals.HOST_URI_ENV (the same
-        # name) is only a dependency of the server/store packages, not of this one.
-        # Duplicates the convention already used there for algorithm store calls made
-        # from the server and the store itself (dev.host_uri config option).
-        _HOST_URI_ENV_VAR = "HOST_URI_ENV_VAR"
+        @staticmethod
+        def _is_localhost(url: str | None) -> bool:
+            """Check whether `url` refers to the caller's own container/host."""
+            return bool(url) and ("localhost" in url or "127.0.0.1" in url)
 
         def get(self, id_) -> dict:
             """
@@ -306,24 +304,40 @@ class NodeClient(ClientBase):
                 or does not yet support node requests - callers should treat this
                 as "could not verify", not just "not found").
             """
-            if self.url and ("localhost" in self.url or "127.0.0.1" in self.url):
-                host_uri = os.environ.get(self._HOST_URI_ENV_VAR)
-                if host_uri:
-                    # A `localhost` algorithm store URL refers to this node's own
-                    # container, not the store's - translate it, same convention
-                    # already used for server<->store communication.
+            if self._is_localhost(self.url) and not self._is_localhost(
+                self.parent.host
+            ):
+                # This node is talking to its own server just fine, which means
+                # self.parent.host already resolves the host machine from
+                # inside this node's own container - since the store is
+                # typically exposed on that same host machine in dev/test
+                # setups, reuse that address rather than asking for the same
+                # information to be configured a second time. Only the
+                # scheme+hostname are reused, not the server's own port - the
+                # store almost certainly listens on a different one.
+                parsed_server = urlparse(self.parent.host)
+                if parsed_server.scheme and parsed_server.hostname:
+                    host_uri = f"{parsed_server.scheme}://{parsed_server.hostname}"
                     self.url = (
                         self.url.replace("localhost", host_uri)
                         .replace("127.0.0.1", host_uri)
                         .replace("http://http://", "http://")
                     )
 
+            # we should also ensure server URL header is passed as localhost instead
+            # of host.docker.internal
+            server_url_header = self.parent.base_path
+            if "host.docker.internal" in server_url_header:
+                server_url_header = server_url_header.replace(
+                    "host.docker.internal", "localhost"
+                )
+
             response = self.parent.request(
                 "algorithm",
                 params={"image": image},
                 is_for_algorithm_store=True,
                 headers={
-                    "Server-Url": self.parent.base_path,
+                    "Server-Url": server_url_header,
                     "Client-Type": "node",
                 },
                 # don't retry indefinitely if the store is unreachable - a single
@@ -417,8 +431,8 @@ class NodeClient(ClientBase):
         )
         ovpn_config = response.get("ovpn_config")
         if not ovpn_config:
-            self.log.warn("Refreshing VPN keypair not successful!")
-            self.log.warn("Disabling node-to-node communication via VPN")
+            self.log.warning("Refreshing VPN keypair not successful!")
+            self.log.warning("Disabling node-to-node communication via VPN")
             return False
 
         # write new configuration back to file
