@@ -47,7 +47,7 @@
     "@angular-eslint/schematics": "^22.0.0",
     "@angular-eslint/template-parser": "^22.0.0",
     "@angular/build": "^22.0.3",
-    "@angular/cli": "^22.0.3",
+    "@angular/cli": "^22.1.4",
     "@angular/compiler-cli": "^22.0.2",
     "@types/crypto-js": "^4.2.2",
     "@types/d3": "^7.4.3",
