@@ -544,6 +544,21 @@ class TestAlgorithmResources(TestResources):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json["description"], "new_description")
 
+        # check that another developer cannot update this algorithm - they are
+        # not its owner
+        self.register_user(
+            username="other_developer",
+            user_rules=[Rule.get_by_("algorithm", Operation.EDIT)],
+            authenticate_mock=authenticate_mock,
+        )
+        response = self.app.patch(
+            f"/api/algorithm/{algorithm.id}", json={"description": "other_description"}
+        )
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+
+        # switch back to the algorithm's own developer for the remaining checks
+        self._mock_auth(user, authenticate_mock, True)
+
         # check that algorithm cannot be updated if it is approved
         algorithm.status = AlgorithmStatus.APPROVED.value
         algorithm.approved_at = datetime.datetime.now(datetime.UTC)
