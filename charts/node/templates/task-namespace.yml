@@ -26,7 +26,8 @@ metadata:
   labels:
 {{- include "node.labels" . | nindent 4 }}
   annotations:
-    # Don't delete a namespace that may still hold running task pods/jobs (or another
-    # release's, if shared) just because this release is uninstalled.
+    # Don't delete a task namespace. In many k8s clusters permission to create
+    # namespaces is not always available, so we should not delete task namespace to
+    # prevent that we cannot create it again
     "helm.sh/resource-policy": keep
 {{- end }}
