@@ -7,8 +7,7 @@ Set a unique 'node.taskNamespace' value for this release, or set node.production
 this is an intentional shared/development setup.` .Values.node.taskNamespace .Release.Name) }}
 {{- end }}
 {{- if and .Values.node.manageTaskNamespace (eq (include "node.taskNamespaceExists" .) "false") }}
-# Owning the task namespace here (rather than relying on the node process to create it on
-# first boot, as it did before) lets the Role/RoleBinding below be scoped to this namespace
+# Owning the task namespace here lets the Role/RoleBinding below be scoped to this namespace
 # instead of needing cluster-wide permissions to reach it.
 #
 # Helm always creates Namespace resources before Role/RoleBinding/other kinds in the same
