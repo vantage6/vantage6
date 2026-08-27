@@ -6,6 +6,7 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from itertools import groupby
 from pathlib import Path
 
@@ -349,6 +350,7 @@ class ContainerManager:
         token: str,
         databases_to_use: list[dict],
         action: AlgorithmStepType,
+        on_status_change: Callable[[RunStatus], None] | None = None,
     ) -> RunStatus:
         """
         Run a vantage6 algorithm on the Kubernetes cluster.
@@ -371,6 +373,9 @@ class ContainerManager:
             Metadata of the databases to use.
         action: AlgorithmStepType
             The action to perform
+        on_status_change: Callable[[RunStatus], None] | None
+            Called whenever the run changes status while the algorithm is being
+            started. Not called with the final status that is returned here.
 
         Returns
         -------
@@ -622,6 +627,7 @@ class ContainerManager:
         status = self.__wait_until_pod_running(
             run_io=run_io,
             label=f"app={run_io.container_name}",
+            on_status_change=on_status_change,
         )
 
         # start streaming logs to HQ
@@ -728,7 +734,12 @@ class ContainerManager:
         finally:
             w.stop()
 
-    def __wait_until_pod_running(self, run_io: RunIO, label: str) -> RunStatus:
+    def __wait_until_pod_running(
+        self,
+        run_io: RunIO,
+        label: str,
+        on_status_change: Callable[[RunStatus], None] | None = None,
+    ) -> RunStatus:
         """"
         This method monitors the status of a Kubernetes POD created by a task job and
         waits until it transitions to a 'Running' state or another terminal state
@@ -749,6 +760,9 @@ class ContainerManager:
             RunIO object that contains information about the run
         label : str
             Label selector to identify the POD associated with the task job.
+        on_status_change: Callable[[RunStatus], None] | None
+            Called whenever the pod changes to a status that is not final yet, such as
+            RunStatus.PULLING_IMAGE.
 
         Returns
         -------
@@ -767,6 +781,20 @@ class ContainerManager:
 
         # Wait until the POD is created
         w = watch.Watch()
+
+        last_reported_status: RunStatus | None = None
+
+        def report_intermediate_status(status: RunStatus) -> None:
+            """Report a non-final status, but only when it differs from the last one.
+
+            The pod is watched through an event stream that fires on every pod update,
+            so without this check the same status would be reported over and over.
+            """
+            nonlocal last_reported_status
+            if on_status_change is None or status == last_reported_status:
+                return
+            last_reported_status = status
+            on_status_change(status)
 
         try:
             while True:
@@ -794,8 +822,15 @@ class ContainerManager:
                         task_namespace=self.task_namespace,
                     )
 
-                    if pod_phase != RunStatus.INITIALIZING:
+                    # The pod has either started or given up trying: this is the
+                    # status to report back. Anything else means the pod is still on
+                    # its way to being started, so keep waiting.
+                    if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(
+                        pod_phase
+                    ):
                         return pod_phase
+
+                    report_intermediate_status(pod_phase)
 
                 # POD event-watch TIMEOUT (timeout_seconds) was reached.
                 self.log.debug(
@@ -821,11 +856,12 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outer loop is performed if the pod is
-                # pending for reasons other than missing/invalid Docker image (which is
-                # reported as INITIALIZING).
-                if pod_phase != RunStatus.INITIALIZING:
+                # Another iteration on the outer loop is performed if the pod has
+                # not started yet (e.g. because a large image is still being pulled).
+                if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(pod_phase):
                     return pod_phase
+
+                report_intermediate_status(pod_phase)
 
                 self.log.debug(
                     "Task run (label %s, namespace %s) still pulling the algorithm "

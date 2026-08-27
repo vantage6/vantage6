@@ -4,6 +4,7 @@ import { Task, TaskStatus, TaskStatusGroup } from 'src/app/models/api/task.model
 export const getChipTypeForStatus = (status: TaskStatus): 'default' | 'active' | 'success' | 'error' => {
   switch (status) {
     case TaskStatus.Initializing:
+    case TaskStatus.PullingImage:
     case TaskStatus.Active:
       return 'active';
     case TaskStatus.Completed:
@@ -34,6 +35,7 @@ export const getTaskStatusTranslation = (translateService: TranslateService, sta
 export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
   switch (status) {
     case TaskStatus.Initializing:
+    case TaskStatus.PullingImage:
     case TaskStatus.Active:
       return TaskStatusGroup.Active;
     case TaskStatus.Completed:
@@ -52,5 +54,5 @@ export const getStatusType = (status: TaskStatus): TaskStatusGroup => {
 };
 
 export const isTaskFinished = (task: Task): boolean => {
-  return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.Active].includes(task.status);
+  return ![TaskStatus.Pending, TaskStatus.Initializing, TaskStatus.PullingImage, TaskStatus.Active].includes(task.status);
 };

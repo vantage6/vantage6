@@ -46,12 +46,22 @@ RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING = {
     "ContainerCannotRun": "The container failed to run.",
 }
 
-# The reasons reported for a 'waiting' state on a POD's container (when the POD is
-# Pending) that are related to an ongoing image pull or container initialization
-POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING = {
+# The reason reported for a 'waiting' state on a POD's container (when the POD is
+# Pending) that indicates the algorithm image is still being fetched onto the node.
+#
+# Note: kubelet reports 'ContainerCreating' for both pulling the image and creating the
+# container. Creating takes well under a second, while pulling a large image dominates
+# the wait, so this is reported as PULLING_IMAGE. Separating the two would require
+# reading the pod's events.
+IMAGE_PULL_RELATED_REASONS_FOR_STILL_PENDING = {
     "ContainerCreating": (
         "Container image is being pulled and/or container is being created."
     ),
+}
+
+# The reasons reported for a 'waiting' state on a POD's container (when the POD is
+# Pending) that are related to an ongoing container initialization
+POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING = {
     "PodInitializing": "Init containers are still running or haven't finished.",
 }
 
@@ -80,8 +90,9 @@ def compute_run_pod_status(
               problematic Docker image.
             - RunStatus.CRASHED: If the pod is still in pending status but has reported
               a runtime crash.
-            - RunStatus.INITIALIZING: If the pod is still initializing or waiting for
-              image pull.
+            - RunStatus.PULLING_IMAGE: If the pod is waiting for the algorithm image
+              to be pulled onto the node.
+            - RunStatus.INITIALIZING: If the pod is still initializing.
             - RunStatus.UNKNOWN_ERROR: If the pod is in an unexpected or unknown state.
             - RunStatus.COMPLETED: Not expected to happen but still possible: the task
               pod is reported as Succeded shortly after being created.
@@ -148,8 +159,24 @@ def compute_run_pod_status(
                         ],
                     )
                     return RunStatus.CRASHED
-                # The reason the POD status is "Pending" is an image still being pulled
-                # or intialized: INITIALIZING
+                # The reason the POD status is "Pending" is that the algorithm image
+                # is still being pulled onto the node: PULLING_IMAGE
+                elif (
+                    pending_status_reason
+                    in IMAGE_PULL_RELATED_REASONS_FOR_STILL_PENDING
+                ):
+                    log.debug(
+                        "Task run (label %s, namespace %s) - Reporting PULLING_IMAGE "
+                        "status: %s",
+                        label,
+                        task_namespace,
+                        IMAGE_PULL_RELATED_REASONS_FOR_STILL_PENDING[
+                            pending_status_reason
+                        ],
+                    )
+                    return RunStatus.PULLING_IMAGE
+                # The reason the POD status is "Pending" is a container still being
+                # initialized: INITIALIZING
                 elif (
                     pending_status_reason
                     in POD_INITIALIZATION_RELATED_REASONS_FOR_STILL_PENDING
