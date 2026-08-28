@@ -30,6 +30,7 @@ from threading import Thread
 from flask import current_app
 from flask_principal import Identity, identity_changed
 from flask_socketio import SocketIO
+from engineio.payload import Payload
 from sqlalchemy.orm.exc import NoResultFound
 
 from vantage6.common import logger_name, split_rabbitmq_uri
@@ -170,6 +171,18 @@ class HQApp(Vantage6App):
             log.debug("SocketIO debug mode enabled")
 
         cors_settings = self.ctx.config.get("cors_allowed_origins", "*")
+
+        # python-engineio bundles multiple packets into a single payload when
+        # using the HTTP long-polling transport, and by default only allows
+        # 16 packets per payload. When many nodes send status messages in a
+        # short time window, this limit is easily exceeded, which causes the
+        # server to fail to decode (and silently drop) the remaining packets
+        # in that payload. This is configurable so that deployments with many
+        # nodes can raise it if they run into lost websocket messages.
+        Payload.max_decode_packets = self.ctx.config.get(
+            "socketio_max_decode_packets", 128
+        )
+
         try:
             socketio = SocketIO(
                 self.app,
