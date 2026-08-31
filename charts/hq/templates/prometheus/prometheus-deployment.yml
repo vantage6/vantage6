@@ -22,7 +22,7 @@ spec:
       # initialize by making the volume writable inside the container
       initContainers:
       - name: volume-permissions
-        image: busybox:latest
+        image: dhi.io/busybox:1-alpine
         command: ["sh", "-c"]
         args:
           - chmod -R 777 /prometheus
@@ -34,7 +34,7 @@ spec:
       # run the prometheus container
       containers:
       - name: prometheus
-        image: {{ .Values.prometheus.image | default "prom/prometheus:latest" }}
+        image: {{ .Values.prometheus.image | default "dhi.io/prometheus:3.13" }}
         ports:
         - containerPort: 9090
           name: prometheus
