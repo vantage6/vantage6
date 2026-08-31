@@ -10,7 +10,9 @@
 # the dhi.io login is only a read-side access control on the source registry.
 #
 # The GHCR tag is the vantage6 version the image shipped with, so a chart always
-# pulls the copy it was tested against. See tools/mirror-images.sh.
+# pulls the copy it was tested against. A release additionally moves the floating
+# `major.minor` and `latest` tags, in the same way as the alpine support image.
+# See tools/mirror-images.sh.
 #
 # name        upstream reference
 curl          dhi.io/curl:8-alpine

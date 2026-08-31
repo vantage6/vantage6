@@ -1,5 +1,8 @@
 # Re-publish the third-party support images listed in docker/mirror-images.txt
-# into ghcr.io/vantage6/infrastructure, tagged with the vantage6 version.
+# into ghcr.io/vantage6/infrastructure, tagged with the vantage6 version. A
+# release also moves the floating `major.minor` and `latest` tags; a manual run
+# does not, unless `floating_tags` is ticked, so that mirroring an older version
+# by hand cannot drag `latest` backwards.
 #
 # These are Docker Hardened Images "Community" images: Apache-2.0 licensed and
 # free to use, share and build on. We authenticate to dhi.io with the project's
@@ -19,12 +22,22 @@ on:
         description: Tag to publish the images under, i.e. the vantage6 version
         required: true
         type: string
+      floating_tags:
+        description: Also move the major.minor and latest tags
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
     inputs:
       version:
         description: Tag to publish the images under, i.e. the vantage6 version
         required: true
         type: string
+      floating_tags:
+        description: Also move the major.minor and latest tags
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   mirror:
@@ -65,5 +78,7 @@ jobs:
 
       - name: Copy images
         run: make mirror-images TAG=$version PUSH_REG=true
+          FLOATING_TAGS=$floating_tags
         env:
           version: ${{ inputs.version }}
+          floating_tags: ${{ inputs.floating_tags }}

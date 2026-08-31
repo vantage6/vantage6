@@ -239,6 +239,7 @@ jobs:
     secrets: inherit
     with:
       version: ${{ needs.version.outputs.version }}
+      floating_tags: true
 
   infrastructure-images:
     name: Build infrastructure images
