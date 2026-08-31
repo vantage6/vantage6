@@ -110,7 +110,7 @@ keycloak:
       {% if keycloak.waitForKeycloakImage is defined %}
       image: {{ keycloak.waitForKeycloakImage }}
       {% else %}
-      # image: ghcr.io/vantage6/infrastructure/kubectl:<vantage6-version>
+      # image: ghcr.io/vantage6/infrastructure/kubectl:5.0
       {% endif %}
 
     # access token lifespan in seconds

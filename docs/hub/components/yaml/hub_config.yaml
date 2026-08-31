@@ -76,12 +76,12 @@ global:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: ghcr.io/vantage6/infrastructure/curl:<vantage6-version>
+      image: ghcr.io/vantage6/infrastructure/curl:5.0
     store:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: ghcr.io/vantage6/infrastructure/curl:<vantage6-version>
+      image: ghcr.io/vantage6/infrastructure/curl:5.0
 
 hq:
   # Set to false to skip deploying the HQ subchart when using the hub parent chart.
