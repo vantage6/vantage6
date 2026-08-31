@@ -146,8 +146,10 @@ The release pipeline executes the following steps:
 2. Update the version in the repository code to the version specified in the
    tag and commit this back to the main branch.
 3. Build and push the Docker images and Helm charts to ``ghcr.io/vantage6``.
-4. Create a Github release with the version number and the release notes.
-5. Upload the package to PyPi.
+4. Re-publish the third-party support images to ``ghcr.io/vantage6``, tagged
+   with the same version. See :ref:`mirror-third-party-images` below.
+5. Create a Github release with the version number and the release notes.
+6. Upload the package to PyPi.
 
 .. note::
 
@@ -174,13 +176,33 @@ in the table below.
        token is used to add new issues to project boards.
    * - ``COVERALLS_TOKEN``
      - Token from coveralls to post the test coverage stats.
-   * - ``DOCKER_TOKEN``
-     - Token used together ``DOCKER_USERNAME`` to upload the container images
-       to ``ghcr.io/vantage6/infrastructure``.
-   * - ``DOCKER_USERNAME``
-     - See ``DOCKER_TOKEN``.
+   * - ``DOCKERHUB_TOKEN``
+     - Token used together with ``DOCKERHUB_USERNAME`` to *read* the
+       third-party support images from ``dhi.io``.
+   * - ``DOCKERHUB_USERNAME``
+     - See ``DOCKERHUB_TOKEN``.
    * - ``PYPI_TOKEN``
      - Token used to upload the Python packages to PyPi.
+
+.. _mirror-third-party-images:
+
+Mirroring third-party images
+----------------------------
+
+A vantage6 deployment also uses a few third-party support images (``curl``,
+``kubectl``, ``busybox``, ...), listed in ``docker/mirror-images.txt``. These are
+copied to ``ghcr.io/vantage6/infrastructure`` under the vantage6 version, so that
+clients only pull from our registry. They are Docker Hardened Images
+"Community" images: Apache-2.0 licensed, but reading them from ``dhi.io``
+requires a Docker Hub account - hence ``DOCKERHUB_USERNAME`` and
+``DOCKERHUB_TOKEN``.
+
+Apart from running as part of a release, the mirroring can be triggered on its
+own via *Run workflow* on the
+`Re-publish third-party images <https://github.com/vantage6/vantage6/actions/workflows/mirror-images.yml>`_
+actions page, e.g. to pick up an upstream security fix in between releases or
+for development purposes. The version that is filled in there is used as the
+image tag; the selected branch only determines which version of the workflow is run.
 
 .. _release-strategy:
 
