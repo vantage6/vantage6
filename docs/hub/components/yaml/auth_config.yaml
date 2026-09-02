@@ -3,7 +3,9 @@ keycloak:
   standalone: false
 
   # Specify the version of the Keycloak Operator to use.
-  operatorVersion: "26.0.0"
+  # The CLI installs the compatibility-tested 26.6.2 operator by default. Setting a
+  # different version opts into a release that may not have been tested with vantage6.
+  operatorVersion: "26.6.2"
 
   # Specify the number of Keycloak instances to deploy.
   instances: 1
