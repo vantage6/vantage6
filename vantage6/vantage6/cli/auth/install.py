@@ -15,12 +15,14 @@ KEYCLOAK_CLIENT_CRDS_MIN_VERSION = (26, 7, 0)
 
 def _parse_operator_version(version: str) -> tuple[int, int, int]:
     """Validate and convert a Keycloak operator version to a comparable tuple."""
-    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+    try:
+        version = Version(version)
+    except InvalidVersion:
         raise click.BadParameter(
             "must use semantic version format 'major.minor.patch'",
             param_hint="--operator-version",
         )
-    return tuple(int(part) for part in version.split("."))
+    return (version.major, version.minor, version.micro)
 
 
 @click.command()
