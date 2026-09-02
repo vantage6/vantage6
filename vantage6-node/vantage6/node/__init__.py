@@ -471,8 +471,13 @@ class Node:
                     },
                 )
 
+        task_id = task["id"]
+        parent_id = get_parent_id(task)
+
         # Run the container. This adds the created container/task to the list
-        # __docker.active_tasks
+        # __docker.active_tasks. Starting may take a while - most notably when the
+        # algorithm image still has to be pulled - so the statuses the run goes through
+        # in the meantime are reported to HQ as they happen.
         run_status: RunStatus = self.k8s_container_manager.run(
             action=container_action,
             run_id=run_id,
@@ -482,11 +487,36 @@ class Node:
             session_id=task["session"]["id"],
             token=token,
             databases_to_use=task.get("databases", []),
+            on_status_change=lambda status: self.__report_run_status(
+                run_id, task_id, parent_id, status
+            ),
         )
 
+        self.__report_run_status(run_id, task_id, parent_id, run_status)
+
+    def __report_run_status(
+        self, run_id: int, task_id: int, parent_id: int | None, status: RunStatus
+    ) -> None:
+        """
+        Report a status of an algorithm run to HQ.
+
+        This is called both while the algorithm is still being started (e.g. while its
+        image is being pulled) and when the run has reached its final status.
+
+        Parameters
+        ----------
+        run_id : int
+            Run ID
+        task_id : int
+            Task ID
+        parent_id : int | None
+            ID of the parent task, if any
+        status : RunStatus
+            Status of the algorithm run
+        """
         # save task status to HQ
-        update = {"status": run_status.value}
-        if run_status == RunStatus.NOT_ALLOWED:
+        update = {"status": status.value}
+        if status == RunStatus.NOT_ALLOWED:
             # set finished_at to now, so that the task is not picked up again
             # (as the task is not started at all, unlike other crashes, it will
             # never finish and hence not be set to finished)
@@ -496,9 +526,7 @@ class Node:
         # send socket event to alert everyone of task status change. In case the
         # namespace is not connected, the socket notification will not be sent to other
         # nodes, but the task will still be processed
-        self.__emit_algorithm_status_change(
-            task["id"], run_id, get_parent_id(task), run_status
-        )
+        self.__emit_algorithm_status_change(task_id, run_id, parent_id, status)
 
     def __emit_algorithm_status_change(
         self, task_id: int, run_id: int, parent_id: int | None, status: RunStatus
