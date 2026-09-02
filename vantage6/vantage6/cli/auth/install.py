@@ -4,7 +4,7 @@ import time
 
 import click
 from kubernetes.config.config_exception import ConfigException
-from packaging.version import Version, InvalidVersion
+from packaging.version import InvalidVersion, Version
 
 from vantage6.common import error, info, warning
 
