@@ -49,6 +49,11 @@ Release notes
   - Made the ``init_org_id`` field mandatory in the data model, as it was already
     always provided
     (`PR#2663 <https://github.com/vantage6/vantage6/pull/2663>`_).
+  - ``v6 auth install-keycloak`` now installs the compatibility-tested Keycloak
+    Operator version ``26.6.2`` by default, instead of looking up the latest release
+    on GitHub at install time. Another release can be selected with
+    ``--operator-version``, which opts into a version that has not been tested with
+    vantage6 (`Issue#2661 <https://github.com/vantage6/vantage6/issues/2661>`_).
 
 - **Bugfix**
 
@@ -79,6 +84,11 @@ Release notes
     (`PR#2660 <https://github.com/vantage6/vantage6/pull/2660>`_).
   - Prevent double periods in log messages
     (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Fix the Keycloak Operator installation: the operator manifest is now applied only
+    after all custom resource definitions it requires are present, the client CRDs are
+    installed for operator versions that ship them, and the command now exits with an
+    error when the operator does not become ready in time instead of reporting success
+    (`Issue#2661 <https://github.com/vantage6/vantage6/issues/2661>`_).
 
 5.0.2
 -----
