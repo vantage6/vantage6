@@ -1,6 +1,85 @@
 Release notes
 =============
 
+5.0.3
+-----
+
+*31 August 2026*
+
+- **Security**
+
+  - Prevent that data values leak into the algorithm logs. The ``handle_pandas_errors``
+    decorator only caught exceptions from ``pandas.errors``, while pandas operations
+    often raise plain Python errors that contain data values. Those errors were passed
+    on untouched and ended up in the algorithm logs, which are sent to HQ and can be
+    read by the researcher
+    (`Issue#2499 <https://github.com/vantage6/vantage6/issues/2499>`_).
+  - Only the developer that submitted an algorithm to an algorithm store may edit it
+    while it is pending review. Before, any user with algorithm edit permission could
+    edit another developer's submission
+    (`PR#2720 <https://github.com/vantage6/vantage6/pull/2720>`_).
+  - Nodes now check on startup that algorithm containers are properly isolated from the
+    internet, and refuse to start if they are not
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Update UI and Python dependencies to fix security vulnerabilities
+    (`PR#2701 <https://github.com/vantage6/vantage6/pull/2701>`_,
+    `PR#2698 <https://github.com/vantage6/vantage6/pull/2698>`_,
+    `PR#2696 <https://github.com/vantage6/vantage6/pull/2696>`_,
+    `PR#2643 <https://github.com/vantage6/vantage6/pull/2643>`_,
+    `PR#2642 <https://github.com/vantage6/vantage6/pull/2642>`_,
+    `PR#2639 <https://github.com/vantage6/vantage6/pull/2639>`_,
+    `PR#2718 <https://github.com/vantage6/vantage6/pull/2718>`_).
+
+- **Change**
+
+  - The test datasets of the node are now copied to the development mount path
+    automatically, so that the development environment also works on WSL
+    (`PR#2693 <https://github.com/vantage6/vantage6/pull/2693>`_).
+  - Nodes in development and sandbox networks are explicitly configured as
+    non-production nodes
+    (`PR#2706 <https://github.com/vantage6/vantage6/pull/2706>`_).
+  - Added missing configuration options to the example configuration YAMLs, and include
+    the full URLs of the algorithm preset links
+    (`PR#2659 <https://github.com/vantage6/vantage6/pull/2659>`_).
+  - Renamed mentions of ``example.com`` in the configuration templates and
+    documentation, as it is a real domain
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+  - Applied the checks of the latest ``ruff`` version to improve the code style
+    (`PR#2682 <https://github.com/vantage6/vantage6/pull/2682>`_).
+  - Made the ``init_org_id`` field mandatory in the data model, as it was already
+    always provided
+    (`PR#2663 <https://github.com/vantage6/vantage6/pull/2663>`_).
+
+- **Bugfix**
+
+  - Guarantee that the database session of a WebSocket event is always cleaned up.
+    Before, a handler that raised an exception permanently leaked a pooled database
+    connection (`Issue#2654 <https://github.com/vantage6/vantage6/issues/2654>`_).
+  - Fix intermittent ``DetachedInstanceError`` errors by scoping the database session
+    per request context
+    (`Issue#2656 <https://github.com/vantage6/vantage6/issues/2656>`_).
+  - Fix the import order of the gevent monkey-patch in HQ. Modules that were imported
+    before patching performed blocking SSL I/O, which stalled the event loop
+    (`PR#2669 <https://github.com/vantage6/vantage6/pull/2669>`_).
+  - Fix that the worker that polls for task results in the node stopped silently when
+    the task metadata could not be retrieved from HQ
+    (`Issue#2649 <https://github.com/vantage6/vantage6/issues/2649>`_).
+  - Add the ``reason`` argument to the WebSocket ``on_disconnect`` handlers of the node
+    and HQ, to match the signature of the SocketIO version in use
+    (`Issue#2655 <https://github.com/vantage6/vantage6/issues/2655>`_).
+  - Fix that the node Helm chart's ConfigMap rendered ``algorithm_env`` as a list
+    instead of a map, which dropped the keys
+    (`Issue#2645 <https://github.com/vantage6/vantage6/issues/2645>`_).
+  - Quote the entries of the node policies ``allowed_users``, ``allowed_organizations``,
+    ``allowed_algorithms`` and ``allowed_algorithm_stores`` in the node Helm chart's
+    ConfigMap, so that numeric IDs are no longer re-parsed as integers and therefore
+    never matched (`Issue#2644 <https://github.com/vantage6/vantage6/issues/2644>`_).
+  - Only create the ``local-storage`` storage class once when the hub chart installs the
+    HQ, auth and store subcharts together, which otherwise made the deployment fail
+    (`PR#2660 <https://github.com/vantage6/vantage6/pull/2660>`_).
+  - Prevent double periods in log messages
+    (`PR#2641 <https://github.com/vantage6/vantage6/pull/2641>`_).
+
 5.0.2
 -----
 
