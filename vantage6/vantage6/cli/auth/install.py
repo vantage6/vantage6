@@ -1,10 +1,10 @@
+import re
 import subprocess
 import sys
 import time
 
 import click
 from kubernetes.config.config_exception import ConfigException
-from packaging.version import InvalidVersion, Version
 
 from vantage6.common import error, info, warning
 
@@ -17,14 +17,13 @@ KEYCLOAK_CLIENT_CRDS_MIN_VERSION = (26, 7, 0)
 
 def _parse_operator_version(version: str) -> tuple[int, int, int]:
     """Validate and convert a Keycloak operator version to a comparable tuple."""
-    try:
-        version = Version(version)
-    except InvalidVersion:
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
+    if not match:
         raise click.BadParameter(
             "must use semantic version format 'major.minor.patch'",
             param_hint="--operator-version",
         )
-    return (version.major, version.minor, version.micro)
+    return tuple(int(part) for part in match.groups())
 
 
 @click.command()
