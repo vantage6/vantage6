@@ -297,7 +297,14 @@ prometheus:
   {% if prometheus.image is defined %}
   image: {{ prometheus.image }}
   {% else %}
-  # image: prom/prometheus:latest
+  # image: ghcr.io/vantage6/infrastructure/prometheus:5.0
+  {% endif %}
+
+  # The image used by the init container that prepares the Prometheus volume.
+  {% if prometheus.initImage is defined %}
+  initImage: {{ prometheus.initImage }}
+  {% else %}
+  # initImage: ghcr.io/vantage6/infrastructure/busybox:5.0
   {% endif %}
   # The size of the storage for the Prometheus server.
   {% if prometheus.storageSize is defined %}

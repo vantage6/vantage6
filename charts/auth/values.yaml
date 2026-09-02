@@ -27,6 +27,9 @@ keycloak:
 
   realmImport:
     enabled: true
+    waitForKeycloak:
+      enabled: true
+      timeout: 300s
     accessTokenLifespan: 300
     ssoSessionIdleTimeout: 1800
     passwordPolicy: "length(8) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"

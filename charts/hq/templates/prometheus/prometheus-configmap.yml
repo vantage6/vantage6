@@ -18,5 +18,5 @@ data:
       - job_name: vantage6_hq_metrics
         static_configs:
           - targets:
-              - {{ .Release.Name }}-prometheus:{{ .Values.prometheus.exporter_port | default 7603 }}
+              - {{ .Release.Name }}-hq:{{ .Values.prometheus.exporter_port | default 7603 }}
 {{- end }}

@@ -22,6 +22,7 @@ spec:
 {{ include "vantage6.labels" . | indent 8 }}
         component: ui
     spec:
+      {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
       containers:
       - name: vantage6-ui
         image: {{ .Values.ui.image }}

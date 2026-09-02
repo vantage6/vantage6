@@ -1,0 +1,84 @@
+# Re-publish the third-party support images listed in docker/mirror-images.txt
+# into ghcr.io/vantage6/infrastructure, tagged with the vantage6 version. A
+# release also moves the floating `major.minor` and `latest` tags; a manual run
+# does not, unless `floating_tags` is ticked, so that mirroring an older version
+# by hand cannot drag `latest` backwards.
+#
+# These are Docker Hardened Images "Community" images: Apache-2.0 licensed and
+# free to use, share and build on. We authenticate to dhi.io with the project's
+# own Docker Hub credentials and copy them with regctl, so that vantage6 users
+# do not need dhi.io credentials of their own. This deliberately does NOT use
+# `docker dhi mirror`, which is an Enterprise-licensed feature we are not
+# entitled to.
+#
+# Runs as part of a release, and can be dispatched manually to seed a tag or to
+# pick up an upstream security fix between releases.
+name: Re-publish third-party images
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Tag to publish the images under, i.e. the vantage6 version
+        required: true
+        type: string
+      floating_tags:
+        description: Also move the major.minor and latest tags
+        required: false
+        default: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Tag to publish the images under, i.e. the vantage6 version
+        required: true
+        type: string
+      floating_tags:
+        description: Also move the major.minor and latest tags
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  mirror:
+    name: Copy images to GHCR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # regctl copies the full multi-arch index along with the attached SBOM and
+      # provenance referrers; docker pull/push would drop both.
+      - name: Install regctl
+        # pinned to: https://github.com/regclient/actions/releases/tag/v0.1.0
+        uses: regclient/actions/regctl-installer@1b705e32d40851370799ea5814e83d0a5f6a70dc
+        with:
+          release: v0.11.5
+
+      # Reading dhi.io requires a Docker Hub account, even though the images
+      # themselves are free. Writing to GHCR uses the workflow token.
+      - name: Log in to dhi.io
+        # pinned to: https://github.com/regclient/actions/releases/tag/v0.1.0
+        uses: regclient/actions/regctl-login@1b705e32d40851370799ea5814e83d0a5f6a70dc
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        # pinned to: https://github.com/regclient/actions/releases/tag/v0.1.0
+        uses: regclient/actions/regctl-login@1b705e32d40851370799ea5814e83d0a5f6a70dc
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Copy images
+        run: make mirror-images TAG=$version PUSH_REG=true
+          FLOATING_TAGS=$floating_tags
+        env:
+          version: ${{ inputs.version }}
+          floating_tags: ${{ inputs.floating_tags }}

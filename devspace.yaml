@@ -19,15 +19,16 @@ vars:
   STORE_IMAGE: ghcr.io/vantage6/infrastructure/algorithm-store
   UI_IMAGE: ghcr.io/vantage6/infrastructure/ui
   NODE_PROXY_STARTING_PORT_NUMBER: 7654
+  HOST_DATA_PATH:
+    question: "Where should the development environment store its data (databases, logs and tasks) on the host machine?"
+    default: ${DEV_MOUNT_BASE_PATH}
   NODE_TEST_DATABASE_MOUNT_PATH:
     question: "Where is the parent folder where the node test data is located on the host machine?"
     default: ${DEV_MOUNT_BASE_PATH}
   NODE_TEST_DATABASE_NAME:
     question: "What is the name of your node test data file?"
     default: olympic_athletes_2016.csv
-  TASK_DIRECTORY:
-    question: "Where is your task directory located on the host machine?"
-    default: ${DEV_MOUNT_BASE_PATH}/.tasks
+  TASK_DIRECTORY: ${HOST_DATA_PATH}/.tasks
   HOST_URI:
     question: "What is the ip address of your host machine?"
     default: host.docker.internal
@@ -39,18 +40,11 @@ vars:
     question: "How many nodes do you want to create for your development environment?"
     default: 3
   TASK_NAMESPACE: vantage6-tasks
-  HQ_DATABASE_MOUNT_PATH:
-    question: "Where is your HQ database located on the host machine?"
-    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_hq
-  STORE_DATABASE_MOUNT_PATH:
-    question: "Where is your store database located on the host machine?"
-    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_store
-  AUTH_DATABASE_MOUNT_PATH:
-    question: "Where is your auth database located on the host machine?"
-    default: ${DEV_MOUNT_BASE_PATH}/.db/db_pv_auth
-  LOG_MOUNT_PATH:
-    question: "Where should your logs be saved on the host machine?"
-    default: ${DEV_MOUNT_BASE_PATH}/.log
+  HQ_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_hq
+  STORE_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_store
+  AUTH_DATABASE_MOUNT_PATH: ${HOST_DATA_PATH}/.db/db_pv_auth
+  LOG_MOUNT_PATH: ${HOST_DATA_PATH}/.log
+  PROMETHEUM_MOUNT_PATH: ${HOST_DATA_PATH}/.prometheus
   K8S_NODE_NAME:
     question: "What is the name of the k8s node where the databases are running? You can find this by running 'kubectl get nodes' and looking at the name column."
     default: docker-desktop
@@ -88,7 +82,8 @@ pipelines:
         --task-directory $TASK_DIRECTORY \
         --task-namespace $TASK_NAMESPACE \
         --starting-port-number $NODE_PROXY_STARTING_PORT_NUMBER \
-        --populate-marker $POPULATE_MARKER
+        --populate-marker $POPULATE_MARKER \
+        --prometheus-enabled
 
   all-without-populate:
     run: |-
@@ -124,7 +119,7 @@ pipelines:
       create_deployments \
         vantage6-auth
       echo "Waiting for Keycloak pod to be ready..."
-      wait_for_pod_ready app.kubernetes.io/instance=vantage6-auth-kc 300s
+      wait_for_pod_ready app=keycloak,app.kubernetes.io/instance=vantage6-auth-kc 300s
       echo "Keycloak is ready, starting dev mode..."
       start_dev \
         vantage6-auth
@@ -148,6 +143,7 @@ pipelines:
       start_dev \
         vantage6-hq \
         vantage6-hq-db \
+        vantage6-prometheus \
         vantage6-ui
 
   node:
@@ -213,12 +209,15 @@ hooks:
       echo "Creating algorithm store database folder"
       python dev/create_mount_directory.py ${STORE_DATABASE_MOUNT_PATH}
     events: ["before:deploy:vantage6-store"]
+  - name: "create-prometheus-folder"
+    command: |
+      echo "Creating Prometheus data folder"
+      python dev/create_mount_directory.py ${PROMETHEUM_MOUNT_PATH}
+    events: ["before:deploy:vantage6-hq"]
   - name: "check-storage-enabled-microk8s"
     command: |
       dev/check_microk8s_storage_enabled.sh
     events: ["before:deploy:vantage6-auth"]
-  # Note: new hooks must be appended at the end of this list, as the
-  # 'with-prometheus' profile patches a hook by its index in dev/pipeline/profiles.yaml
   - name: "copy-node-test-data"
     command: |
       echo "Copying node test data to ${NODE_TEST_DATABASE_MOUNT_PATH}"
@@ -356,7 +355,11 @@ deployments:
           volumePath: ${HQ_DATABASE_MOUNT_PATH}
           k8sNodeName: ${K8S_NODE_NAME}
         prometheus:
-          enabled: false
+          enabled: true
+          exporter_port: 7603
+          storageSize: 2Gi
+          storageClass: local-storage
+          volumeHostPath: ${PROMETHEUM_MOUNT_PATH}
         rabbitmq:
           username: rabbitmquser
           password: rabbitmquserpassword
@@ -463,11 +466,17 @@ deployments:
           logging:
             level: DEBUG
             volumeHostPath: ${LOG_MOUNT_PATH}/node
+          # The node pushes its system metadata to the HQ over the websocket
+          # connection; the HQ exposes it to Prometheus on its exporter port.
+          prometheus:
+            enabled: true
+            report_interval_seconds: 45
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
   vantage6-auth:
     labelSelector:
+      app: keycloak
       app.kubernetes.io/instance: vantage6-auth-kc
     ports:
       - port: 7680:7680
@@ -515,6 +524,15 @@ dev:
       - port: 7632:5432
         bindAddress: localhost
       - port: 7632:5432
+        bindAddress: ${PORTS_BIND_ADDRESS}
+
+  vantage6-prometheus:
+    labelSelector:
+      component: prometheus
+    ports:
+      - port: 7604:9090
+        bindAddress: localhost
+      - port: 7604:9090
         bindAddress: ${PORTS_BIND_ADDRESS}
 
   vantage6-store:

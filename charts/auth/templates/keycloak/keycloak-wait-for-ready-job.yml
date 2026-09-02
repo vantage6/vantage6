@@ -1,0 +1,46 @@
+{{- $realmImport := .Values.keycloak.realmImport | default (dict) }}
+{{- $realmImportEnabled := and .Values.keycloak.realmImport (ne $realmImport.enabled false) }}
+{{- $waitForKeycloak := $realmImport.waitForKeycloak | default (dict) }}
+{{- if and $realmImportEnabled (ne $waitForKeycloak.enabled false) }}
+{{- $namespace := .Values.namespace | default .Release.Namespace }}
+# Runs before the KeycloakRealmImport CR is applied (see keycloak-realm-import.yml,
+# hook-weight "1") so the import is never reconciled while the Keycloak StatefulSet is
+# still coming up. Without this, the realm-import controller can observe "no Deployment
+# found yet", record HasErrors, and never get requeued once Keycloak becomes Ready.
+# post-install only, matching the realm import CR it gates - there is nothing to wait for
+# on an upgrade.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-kc-wait-ready
+  namespace: {{ $namespace }}
+  labels:
+{{ include "auth.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  # Tolerate a transient pod failure (e.g. image pull hiccup) rather than failing the
+  # whole release; a genuine readiness timeout still fails after the retries.
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+{{ include "auth.labels" . | indent 8 }}
+    spec:
+      {{- include "common.imagePullSecrets" (dict "Values" .Values "indent" 6) }}
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-realm-import-waiter
+      containers:
+      - name: wait-for-keycloak
+        image: {{ include "common.supportImage" (dict "Chart" .Chart "name" "kubectl" "override" $waitForKeycloak.image) }}
+        command:
+        - kubectl
+        - wait
+        - keycloak/{{ .Release.Name }}-kc
+        - -n
+        - {{ $namespace }}
+        - --for=condition=Ready
+        - --timeout={{ $waitForKeycloak.timeout | default "300s" }}
+{{- end }}
