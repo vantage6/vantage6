@@ -1,13 +1,15 @@
-import re
 import subprocess
 import sys
 import time
+
 import click
 from kubernetes.config.config_exception import ConfigException
+from packaging.version import Version, InvalidVersion
+
 from vantage6.common import error, info, warning
+
 from vantage6.cli.common.k8s_utils import run_kubectl_command
 from vantage6.cli.k8s_config import KubernetesConfig, select_k8s_config
-
 
 SUPPORTED_KEYCLOAK_OPERATOR_VERSION = "26.6.2"
 KEYCLOAK_CLIENT_CRDS_MIN_VERSION = (26, 7, 0)
