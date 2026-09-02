@@ -75,17 +75,18 @@ class AlgorithmStoreApp(Vantage6App):
             static_folder=Path(__file__).parent / "static",
         )
 
-        # setup the permission manager for the API endpoints
-        self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
+        with DatabaseSessionManager.session_scope():
+            # setup the permission manager for the API endpoints
+            self.permissions = PermissionManager(RESOURCES_PATH, RESOURCES, DefaultRole)
 
-        # Load API resources
-        self.load_resources()
+            # Load API resources
+            self.load_resources()
 
-        # sync policies with the database
-        self.setup_policies(self.ctx.config)
+            # sync policies with the database
+            self.setup_policies(self.ctx.config)
 
-        if self.ctx.config.get("dev", {}).get("disable_review", False):
-            self.setup_disable_review()
+            if self.ctx.config.get("dev", {}).get("disable_review", False):
+                self.setup_disable_review()
 
         log.info("Initialization done")
 
@@ -318,5 +319,10 @@ def run_store(config: str, system_folders: bool = True) -> AlgorithmStoreApp:
     ctx = AlgorithmStoreContext.from_external_config_file(
         config, system_folders, in_container=True
     )
-    Database().connect(uri=ctx.get_database_uri(), allow_drop_all=False)
+    Database().connect(
+        uri=ctx.get_database_uri(),
+        allow_drop_all=False,
+        pool_size=ctx.config.get("database_pool_size"),
+        max_overflow=ctx.config.get("database_max_overflow"),
+    )
     return AlgorithmStoreApp(ctx)

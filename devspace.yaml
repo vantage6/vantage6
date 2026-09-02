@@ -124,7 +124,7 @@ pipelines:
       create_deployments \
         vantage6-auth
       echo "Waiting for Keycloak pod to be ready..."
-      wait_for_pod_ready app.kubernetes.io/instance=vantage6-auth-kc 300s
+      wait_for_pod_ready app=keycloak,app.kubernetes.io/instance=vantage6-auth-kc 300s
       echo "Keycloak is ready, starting dev mode..."
       start_dev \
         vantage6-auth
@@ -468,6 +468,7 @@ deployments:
 dev:
   vantage6-auth:
     labelSelector:
+      app: keycloak
       app.kubernetes.io/instance: vantage6-auth-kc
     ports:
       - port: 7680:7680

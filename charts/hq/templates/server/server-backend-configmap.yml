@@ -64,6 +64,12 @@ data:
     {{- if .Values.hq.runs_data_cleanup_include_args }}
     runs_data_cleanup_include_args: {{ .Values.hq.runs_data_cleanup_include_args }}
     {{- end }}
+    {{- if hasKey .Values.hq "database_pool_size" }}
+    database_pool_size: {{ .Values.hq.database_pool_size }}
+    {{- end }}
+    {{- if hasKey .Values.hq "database_max_overflow" }}
+    database_max_overflow: {{ .Values.hq.database_max_overflow }}
+    {{- end }}
     {{- if and .Values.prometheus .Values.prometheus.enabled }}
     prometheus:
       enabled: {{ .Values.prometheus.enabled }}
