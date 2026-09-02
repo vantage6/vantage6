@@ -119,9 +119,7 @@ class AuthInstallTest(unittest.TestCase):
     @patch("vantage6.cli.auth.install.subprocess.run")
     @patch("vantage6.cli.auth.install.time.sleep")
     @patch("vantage6.cli.auth.install.time.time", side_effect=[0, 0, 1])
-    def test_wait_for_operator_ready_returns_on_success(
-        self, _time, _sleep, run
-    ):
+    def test_wait_for_operator_ready_returns_on_success(self, _time, _sleep, run):
         run.return_value = MagicMock(stdout="True\n")
 
         _wait_for_operator_ready("test-ns", self.k8s_config, timeout=1)
