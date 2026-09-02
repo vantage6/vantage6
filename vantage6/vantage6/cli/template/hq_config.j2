@@ -297,7 +297,7 @@ prometheus:
   {% if prometheus.image is defined %}
   image: {{ prometheus.image }}
   {% else %}
-  # image: prom/prometheus:latest
+  # image: dhi.io/prometheus:3.13
   {% endif %}
   # The size of the storage for the Prometheus server.
   {% if prometheus.storageSize is defined %}

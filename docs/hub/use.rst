@@ -129,6 +129,13 @@ To see all the options that are available per command use the ``--help`` flag, e
 Testing
 ^^^^^^^
 
+.. note::
+
+   Before running the sandbox for the first time, you need to authenticate to the
+   `Docker Hardened Images <https://dhi.io>`_ registry. See the
+   :ref:`quickstart` section for instructions on creating the required
+   Kubernetes ``imagePullSecret``.
+
 You can test the infrastructure via the ``v6 sandbox`` and ``v6 test`` commands. The purpose of
 ``v6 sandbox`` is to easily setup and run a test hub accompanied by `N` nodes locally
 (default is 3 nodes). For example, if you have `N = 10` datasets to test a particular
