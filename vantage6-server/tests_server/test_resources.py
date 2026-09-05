@@ -26,6 +26,7 @@ from vantage6.server import ServerApp
 from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
 from vantage6.server.resource.event import kill_task
+from vantage6.server.resource.recover import _handle_password_recovery
 from vantage6.server.model import (
     Rule,
     Role,
@@ -603,6 +604,37 @@ class TestResources(unittest.TestCase):
     def test_reset_password_missing_error(self, send_email):
         result = self.app.post("/api/recover/lost", json={})
         self.assertEqual(result.status_code, 400)
+
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_can_be_requested_multiple_times(self, send_email):
+        """Regression test for a bug where a second password reset request
+        raised `TypeError: can't compare offset-naive and offset-aware
+        datetimes`, because `last_email_recover_password_sent` is stored in
+        a naive DateTime column and comes back naive after a DB round trip
+        (session commit expires the object), while it was compared against
+        an aware `datetime.now(timezone.utc)`.
+
+        `_handle_password_recovery` is normally scheduled via
+        `gevent.spawn_later`, so it never actually runs within the request/
+        response cycle exercised by `test_reset_password` above. Calling it
+        directly here is what makes the bug reproducible in a test.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        # first request: no throttle timestamp set yet, email should be sent
+        # and `user.last_email_recover_password_sent` persisted to the DB
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
+
+        # second request straight away: must not raise, and must be
+        # throttled (no additional email sent)
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
 
     @patch("vantage6.server.resource.recover.decode_token")
     def test_recover_password(self, decode_token):
