@@ -30,7 +30,7 @@ All Python packages install under the `vantage6.*` namespace:
 
 Each `pyproject.toml` maps source via hatch, so e.g. `vantage6-hq/vantage6/hq/` becomes `vantage6.hq` when installed.
 
-**HQ and node are delivered as Docker images, not PyPI packages for end users.**
+**HQ, node and algorithm store are delivered as Docker images, the common packages are (common) dependencies for the other packages. Only the vantage6 package from pypi is intended for end users. The vantage6-algorithm-tools package is intalled by algorithm developers and by images that contain algorithms.**
 
 ## Setup and Development Commands
 
