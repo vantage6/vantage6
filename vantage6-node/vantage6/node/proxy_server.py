@@ -20,7 +20,7 @@ from flask import Flask, request, stream_with_context, Response as FlaskResponse
 from vantage6.common import bytes_to_base64s, base64s_to_bytes, logger_name
 from vantage6.common.client.node_client import NodeClient
 from vantage6.common.client.utils import is_uuid
-from vantage6.common.globals import STRING_ENCODING
+from vantage6.common.globals import HTTP_UPLOAD_CHUNK_SIZE, STRING_ENCODING
 
 # Initialize FLASK
 app = Flask(__name__)
@@ -509,7 +509,9 @@ def stream_handler_post() -> FlaskResponse:
     url = f"{server_url}/blobstream"
     log.debug("Making proxied POST request to %s", url)
 
-    encrypted_stream = client.cryptor.encrypt_stream(request.stream, pubkey_base64)
+    encrypted_stream = client.cryptor.encrypt_stream(
+        request.stream, pubkey_base64, chunk_size=HTTP_UPLOAD_CHUNK_SIZE
+    )
     # Stream the data to the server while encrypting it.
     # This is done to avoid loading the entire content into memory.
     # The encrypted stream is a generator that yields chunks of encrypted data.
