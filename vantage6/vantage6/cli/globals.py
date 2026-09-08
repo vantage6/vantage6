@@ -69,6 +69,16 @@ class ServerGlobals(str, Enum):
     CONFIG_NAME_ENV_VAR = "VANTAGE6_CONFIG_NAME"
 
 
+class ServerMountPath(str, Enum):
+    """In-container bind-mount paths used by the server / algorithm-store CLI."""
+
+    CONFIG = "/mnt/config.yaml"
+    IMPORT_CONFIG = "/mnt/import.yaml"
+    LOG_DIR = "/mnt/log/"
+    DATABASE_DIR = "/mnt/database/"
+    RUN_DATA_STORAGE = "/mnt/run_data"
+
+
 class AlgoStoreGlobals(str, Enum):
     """Enum containing algorithm store environment variables"""
 

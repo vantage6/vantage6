@@ -18,6 +18,7 @@ from vantage6.cli.common.start import (
 )
 from vantage6.cli.context.algorithm_store import AlgorithmStoreContext
 from vantage6.cli.common.decorator import click_insert_context
+from vantage6.cli.globals import ServerMountPath
 
 
 @click.command()
@@ -61,7 +62,7 @@ def cli_algo_store_start(
     info("Pulling algorithm store image...")
     pull_infra_image(docker_client, image, InstanceType.ALGORITHM_STORE)
 
-    config_file = "/mnt/config.yaml"
+    config_file = ServerMountPath.CONFIG.value
     mounts = mount_config_file(ctx, config_file)
 
     src_mount = mount_source(mount_src)

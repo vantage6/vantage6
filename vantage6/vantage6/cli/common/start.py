@@ -23,7 +23,7 @@ from vantage6.common.docker.addons import check_docker_running, pull_image
 from vantage6.cli.context import AlgorithmStoreContext, ServerContext
 from vantage6.cli.common.utils import print_log_worker
 from vantage6.cli.utils import check_config_name_allowed
-from vantage6.cli.globals import ServerGlobals, AlgoStoreGlobals
+from vantage6.cli.globals import AlgoStoreGlobals, ServerGlobals, ServerMountPath
 
 
 def check_for_start(ctx: AppContext, type_: InstanceType) -> DockerClient:
@@ -257,16 +257,19 @@ def mount_database(
         os.makedirs(dirname, exist_ok=True)
 
         # we're mounting the entire folder that contains the database
-        mount = docker.types.Mount("/mnt/database/", dirname, type="bind")
+        mount = docker.types.Mount(
+            ServerMountPath.DATABASE_DIR.value, dirname, type="bind"
+        )
+        db_uri = f"sqlite:///{ServerMountPath.DATABASE_DIR.value}{basename}"
 
         if type_ == InstanceType.SERVER:
             environment_vars = {
-                ServerGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                ServerGlobals.DB_URI_ENV_VAR.value: db_uri,
                 ServerGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
         elif type_ == InstanceType.ALGORITHM_STORE:
             environment_vars = {
-                AlgoStoreGlobals.DB_URI_ENV_VAR.value: f"sqlite:////mnt/database/{basename}",
+                AlgoStoreGlobals.DB_URI_ENV_VAR.value: db_uri,
                 AlgoStoreGlobals.CONFIG_NAME_ENV_VAR.value: ctx.config_file_name,
             }
     else:
@@ -277,6 +280,31 @@ def mount_database(
         info("Consider using the docker-compose method to start a server")
 
     return mount, environment_vars
+
+
+def mount_run_data_storage(ctx: ServerContext) -> docker.types.Mount | None:
+    """
+    Mount the on-disk run-data store for the file-based
+    ``large_run_data_store`` backend.
+
+    If ``large_run_data_store`` is ``"filesystem"``,
+    ``<ctx.data_dir>/run_data`` on the host is bind-mounted into the
+    server container at the default in-container path. Otherwise run
+    data would accumulate inside the (ephemeral) container filesystem.
+
+    The CLI does not expose any knob for changing either side of this
+    mount — operators who need a different layout should use the
+    docker-compose deployment path instead.
+    """
+    if ctx.config.get("large_run_data_store") != "filesystem":
+        return None
+
+    host_path = str(ctx.data_dir / "run_data")
+    os.makedirs(host_path, exist_ok=True)
+    container_path = ServerMountPath.RUN_DATA_STORAGE.value
+    info(f"Mounting run data storage host dir {host_path} -> {container_path}")
+
+    return docker.types.Mount(container_path, host_path, type="bind")
 
 
 def attach_logs(container: Container, type_: InstanceType) -> None:

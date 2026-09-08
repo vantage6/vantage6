@@ -8,6 +8,7 @@ from vantage6.common import info, error, debug as debug_msg
 from vantage6.common.docker.addons import check_docker_running
 from vantage6.common.globals import APPNAME, InstanceType
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import ServerMountPath
 from vantage6.cli.common.decorator import click_insert_context
 
 
@@ -45,7 +46,7 @@ def cli_server_shell(ctx: ServerContext) -> None:
                 "vserver-local",
                 "shell",
                 "-c",
-                "/mnt/config.yaml",
+                ServerMountPath.CONFIG.value,
             ]
         )
     except Exception as e:

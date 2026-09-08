@@ -13,6 +13,7 @@ from vantage6.common.globals import (
 
 from vantage6.common.globals import Ports, DEFAULT_PROMETHEUS_EXPORTER_PORT
 from vantage6.cli.context.server import ServerContext
+from vantage6.cli.globals import ServerMountPath
 from vantage6.cli.rabbitmq.queue_manager import RabbitMQManager
 from vantage6.cli.server.common import stop_ui
 from vantage6.cli.common.decorator import click_insert_context
@@ -21,6 +22,7 @@ from vantage6.cli.common.start import (
     attach_logs,
     check_for_start,
     get_image,
+    mount_run_data_storage,
     mount_database,
     mount_source,
     pull_infra_image,
@@ -105,19 +107,18 @@ def cli_server_start(
     pull_infra_image(docker_client, image, InstanceType.SERVER)
 
     info("Creating mounts")
-    config_file = "/mnt/config.yaml"
+    config_file = ServerMountPath.CONFIG.value
     mounts = [
         docker.types.Mount(config_file, str(ctx.config_file), type="bind"),
-        docker.types.Mount("/mnt/log/", str(ctx.log_dir), type="bind"),
+        docker.types.Mount(
+            ServerMountPath.LOG_DIR.value, str(ctx.log_dir), type="bind"
+        ),
     ]
 
-    src_mount = mount_source(mount_src)
-    if src_mount:
-        mounts.append(src_mount)
+    db_mount, environment_vars = mount_database(ctx, InstanceType.SERVER)
+    run_data_mount = mount_run_data_storage(ctx)
 
-    mount, environment_vars = mount_database(ctx, InstanceType.SERVER)
-    if mount:
-        mounts.append(mount)
+    mounts.extend(m for m in (mount_source(mount_src), db_mount, run_data_mount) if m)
 
     # Create a docker network for the server and other services like RabbitMQ
     # to reside in
