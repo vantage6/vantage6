@@ -7,6 +7,7 @@ from unittest.mock import patch, call
 from vantage6.server.model.run import Run
 from vantage6.server.model.base import Database, DatabaseSessionManager
 from vantage6.server.controller import cleanup
+from vantage6.server.service.azure_storage_service import AzureStorageService
 from vantage6.common.task_status import TaskStatus
 from vantage6.server.model import Task
 
@@ -52,9 +53,9 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.assertIsNotNone(run.cleanup_at)
 
     @patch(
-        "vantage6.server.service.azure_storage_service.AzureStorageService.delete_blob"
+        "vantage6.server.service.azure_storage_service.AzureStorageService.delete_run_data"
     )
-    def test_cleanup_completed_old_blob(self, mock_delete_blob):
+    def test_cleanup_completed_old_run_data(self, mock_delete_run_data):
         task = Task(
             name="test-task",
             description="Test task for cleanup",
@@ -75,8 +76,8 @@ class TestCleanupRunsIsolated(unittest.TestCase):
 
         config = {
             "runs_data_cleanup_days": 30,
-            "large_result_store": {
-                "type": "azure",
+            "large_run_data_store": "azure",
+            "azure_run_data_store": {
                 "container_name": "test-container",
                 "connection_string": "DefaultEndpointsProtocol=https;AccountName=dummyname;AccountKey=dummykey",
             },
@@ -85,11 +86,14 @@ class TestCleanupRunsIsolated(unittest.TestCase):
         self.session.add(run)
         self.session.commit()
 
-        cleanup.cleanup_runs_data(config, include_input=True)
+        storage_adapter = AzureStorageService(config["azure_run_data_store"])
+        cleanup.cleanup_runs_data(
+            config, storage_adapter=storage_adapter, include_input=True
+        )
         self.session.refresh(run)
 
         expected_calls = [call(self.uuid), call("input")]
-        mock_delete_blob.assert_has_calls(expected_calls, any_order=False)
+        mock_delete_run_data.assert_has_calls(expected_calls, any_order=False)
 
     def test_no_cleanup_recent_completed_run(self):
         # Ineligible: completed, but not old enough
@@ -197,7 +201,6 @@ class TestCleanupRunsCount(unittest.TestCase):
         return run0, run1, run2, run3, run4, run5
 
     def test_cleanup_runs_count(self):
-
         # Insert runs into db
         runs = self.create_runs()
 

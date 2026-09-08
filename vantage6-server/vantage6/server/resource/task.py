@@ -760,7 +760,7 @@ class Tasks(TaskBase):
         # to the database as it may be sensitive information. Vice versa, if
         # the collaboration is not encrypted, we should not allow the user to
         # send encrypted input.
-        blob_storage_used = bool(config.get("large_result_store", {}))
+        blob_storage_used = config.get("large_run_data_store") is not None
 
         is_valid_input, error_msg = Tasks._check_input(
             organizations_json_list, collaboration, blob_storage_used

@@ -80,7 +80,7 @@ from vantage6.server.websockets import DefaultSocketNamespace
 from vantage6.server.default_roles import get_default_roles, DefaultRole
 from vantage6.server.hashedpassword import HashedPassword
 from vantage6.server.controller import cleanup
-from vantage6.server.service.azure_storage_service import AzureStorageService
+from vantage6.server.service.storage_adapter import build_storage_adapter
 
 # make sure the version is available
 from vantage6.server._version import __version__  # noqa: F401
@@ -202,20 +202,26 @@ class ServerApp:
 
     def setup_large_result_store(self):
         """
-        Setup the large result store for storing large results.
-        If configured, inputs and results will be stored in blob Storage.
+        Setup the large run-data store for storing large inputs and results.
+        If configured, inputs and results will be stored in the selected
+        backend (Azure Blob Storage or local filesystem); otherwise the
+        relational database is used.
+
+        The factory is always consulted, even when no store is configured:
+        it is what rejects the deprecated ``large_result_store`` key, and
+        skipping it would let a server with the old config shape start
+        silently without the store it used to have.
         """
-
-        self.storage_adapter = None
-        large_result_config = self.ctx.config.get("large_result_store", {})
-        if not large_result_config:
+        self.storage_adapter = build_storage_adapter(self.ctx.config)
+        if self.storage_adapter is None:
             log.info(
-                "No large result store configured, using relational database for input and result storage"
+                "No large run-data store configured, using relational database for input and result storage"
             )
-            return
-
-        log.info("Using Azure Blob Storage as large result store")
-        self.storage_adapter = AzureStorageService(config=large_result_config)
+        else:
+            log.info(
+                "Using %r backend as large run-data store",
+                self.ctx.config.get("large_run_data_store"),
+            )
 
     @staticmethod
     def _warn_if_cors_regex(origins: str | list[str]) -> None:
@@ -886,6 +892,7 @@ class ServerApp:
             try:
                 cleanup.cleanup_runs_data(
                     self.ctx.config,
+                    storage_adapter=self.storage_adapter,
                     include_input=include_input,
                 )
             except Exception as e:

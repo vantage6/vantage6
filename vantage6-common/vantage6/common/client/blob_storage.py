@@ -10,7 +10,8 @@ from vantage6.common.client.utils import is_uuid
 
 class BlobStorageMixin:
     """
-    Mixin class to add blob storage functionality to client classes.
+    Mixin class to add large-result-store (run data streaming) functionality
+    to client classes.
     """
 
     def _upload_run_data_to_server(
@@ -50,13 +51,13 @@ class BlobStorageMixin:
                 url, data=chunked_run_data_stream(run_data_bytes), headers=headers
             )
         except requests.RequestException as e:
-            self.log.error(f"Error occurred while uploading blob stream: {e}")
+            self.log.error(f"Error occurred while uploading run data stream: {e}")
             raise requests.RequestException(
-                "Error occurred while uploading blob stream"
+                "Error occurred while uploading run data stream"
             )
 
         if not (200 <= response.status_code < 300):
-            error_msg = f"Failed to upload blob to server: {response.text}"
+            error_msg = f"Failed to upload run data to server: {response.text}"
             self.log.error(error_msg)
             raise RuntimeError(error_msg)
 
@@ -131,9 +132,9 @@ class BlobStorageMixin:
 
     def check_if_blob_store_enabled(self):
         """
-        Check if the blob store is enabled on the server.
-        This function sends a request to the blob stream status endpoint
-        and returns whether the blob store is enabled or not.
+        Check if the large result store is enabled on the server.
+        This function sends a request to the status endpoint and returns
+        whether the large result store is enabled or not.
 
         This is used so that the user does not need to be aware of storage
         used at the server when uploading the first input in the client.
@@ -141,12 +142,12 @@ class BlobStorageMixin:
         Returns
         -------
         bool
-            True if blob store is enabled, False otherwise.
+            True if the large result store is enabled, False otherwise.
 
         Raises
         ------
         requests.RequestException
-            If the request to check blob store status fails.
+            If the request to check the large-result-store status fails.
         """
         base_url = self.generate_path_to("blobstream", False)
         status_url = f"{base_url}/status"
@@ -155,8 +156,8 @@ class BlobStorageMixin:
         response = requests.get(status_url, headers=headers)
         if not response.ok:
             self.log.warning(
-                f"Blob store check failed with status code {response.status_code}. "
-                "Assuming blob store is disabled. Does the server version match this client's version?"
+                f"Large-result-store status check failed with status code {response.status_code}. "
+                "Assuming the large result store is disabled. Does the server version match this client's version?"
             )
             return False
         response_json = response.json()

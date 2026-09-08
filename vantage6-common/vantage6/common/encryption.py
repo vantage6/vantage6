@@ -103,7 +103,7 @@ class CryptorBase(metaclass=Singleton):
         skip_base64_encoding_of_msg: bool
             If True, the encrypted message will not be base64 encoded.
             This is useful when the data is already in bytes format and
-            does not need further encoding (e.g., when uploading to blob storage).
+            does not need further encoding (e.g., when uploading to the large result store).
 
         Returns
         -------
@@ -121,14 +121,14 @@ class CryptorBase(metaclass=Singleton):
         data: str | bytes
             The data to decrypt. Can be either a
             string or bytes, depending on whether
-            the data comes from blob storage or not.
+            the data comes from the large result store or not.
 
         Returns
         -------
         bytes
             The decrypted data.
         """
-        # If the data comes from blob storage, decode it to a string first.
+        # If the data comes from the large result store, decode it to a string first.
         if isinstance(data, bytes):
             return self.str_to_bytes(data.decode(STRING_ENCODING))
         elif isinstance(data, str):
@@ -556,7 +556,7 @@ class RSACryptor(CryptorBase):
         skip_base64_encoding_of_msg: bool
             If True, the encrypted message will not be base64 encoded.
             This is useful when the data is already in bytes format and
-            does not need further encoding (e.g., when uploading to blob storage).
+            does not need further encoding (e.g., when uploading to the large result store).
 
         Returns
         -------
@@ -604,7 +604,7 @@ class RSACryptor(CryptorBase):
         ----------
         data: str | bytes
             The data to decrypt. Can be either a string or bytes,
-            depending on whether the data comes from blob storage or not.
+            depending on whether the data comes from the large result store or not.
 
         Returns
         -------
@@ -612,13 +612,13 @@ class RSACryptor(CryptorBase):
             The decrypted data.
         """
         if isinstance(data, bytes):
-            return self.decrypt_bytes_blob_storage(data)
+            return self.decrypt_bytes_run_data(data)
         elif isinstance(data, str):
             return self.decrypt_str_to_bytes(data)
 
-    def decrypt_bytes_blob_storage(self, data: bytes) -> bytes:
+    def decrypt_bytes_run_data(self, data: bytes) -> bytes:
         """
-        Decrypt *bytes* data coming from blob storage.
+        Decrypt *bytes* data coming from the large result store.
         This function expects the data to be in the format:
         <encrypted_key>$<iv>$<encrypted_msg>
 
