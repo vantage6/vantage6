@@ -5,8 +5,10 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 ## AI Agent Rules
 
 - **After every Python code change**: run `ruff format .` to apply formatting
-- **Never run `kubectl`** — K8s cluster state is outside the agent's scope
-- **Never run `devspace` or `v6 dev` commands** — these modify running K8s clusters and have long-running side effects
+- **Keep docstrings and comments to a minimum** — as concise as possible; explain only what the code cannot say for itself, never restate the signature or narrate the obvious
+- **Never reference issues in code** — no issue, ticket, or PR numbers (and no links to them) in comments or docstrings
+- **Never run `kubectl`** — K8s cluster state is outside the agent's scope, unless explicitly asked to do so
+- **Never run `devspace` or `v6 dev` commands** — these should be user controlled
 - **Never run `v6 sandbox` commands** — these spin up Docker infrastructure
 - **Never modify `uv.lock` directly** — always regenerate through `make lock`
 - **Never run `make image` or `make publish`** — builds and releases are deliberate, user-initiated actions
@@ -30,7 +32,7 @@ All Python packages install under the `vantage6.*` namespace:
 
 Each `pyproject.toml` maps source via hatch, so e.g. `vantage6-hq/vantage6/hq/` becomes `vantage6.hq` when installed.
 
-**HQ and node are delivered as Docker images, not PyPI packages for end users.**
+**HQ, node and algorithm store are delivered as Docker images, the common packages are (common) dependencies for the other packages. Only the vantage6 package from pypi is intended for end users. The vantage6-algorithm-tools package is intalled by algorithm developers and by images that contain algorithms.**
 
 ## Setup and Development Commands
 

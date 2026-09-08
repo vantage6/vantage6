@@ -53,9 +53,7 @@ global:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: "dhi.io/curl:8-alpine"
     store:
       enabled: true
       maxAttempts: 60
       intervalSeconds: 5
-      image: "dhi.io/curl:8-alpine"

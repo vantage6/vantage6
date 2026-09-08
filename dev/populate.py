@@ -40,9 +40,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--prometheus-enabled",
-    type=bool,
-    default=False,
-    help="Whether to enable Prometheus",
+    action=argparse.BooleanOptionalAction,
+    default=True,
+    help="Whether to enable Prometheus in the nodes",
 )
 args = parser.parse_args()
 

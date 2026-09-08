@@ -64,7 +64,7 @@ data:
     prometheus:
       enabled: {{ .Values.node.prometheus.enabled }}
       {{- if .Values.node.prometheus.enabled }}
-      report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds }}
+      report_interval_seconds: {{ .Values.node.prometheus.report_interval_seconds | default 60 }}
       {{- end }}
     {{- if .Values.node.private_docker_registries }}
     private_docker_registries:

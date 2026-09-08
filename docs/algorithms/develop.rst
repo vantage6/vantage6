@@ -257,24 +257,26 @@ vantage6 algorithm tools:
    for instance that a certain data value is not a valid date.
 
    To help you keep such sensitive information private, vantage6
-   provides a decorator that can be used to handle pandas errors. This decorator will
-   catch all pandas errors and return a generic error message. You can use this
-   decorator by adding it to your algorithm function:
+   provides a decorator that can be used to handle errors from data manipulation. This
+   decorator will catch such errors and return a generic error message. You can use
+   this decorator by adding it to your algorithm function:
 
    .. code:: python
 
-      from vantage6.algorithm.tools.error_handling import handle_pandas_errors
+      from vantage6.algorithm.tools.error_handling import handle_data_errors
 
-      @handle_pandas_errors
+      @handle_data_errors
       def my_function(data: pd.DataFrame):
          return data
 
    All data extraction and preprocessing functions provided by the vantage6 algorithm
-   tools package are decorated with the ``handle_pandas_errors`` decorator, so that any
-   pandas-related error occurring during the execution of the function will be caught
-   and a generic error message will be returned instead of the traceback. Note that
-   this decorator does not catch all errors, so you should still be careful with the
-   data you handle in your algorithm functions.
+   tools package are decorated with the ``handle_data_errors`` decorator, so that any
+   error occurring during the execution of the function will be caught and a generic
+   error message will be returned instead of the traceback.
+
+   The errors defined in ``vantage6.algorithm.tools.exceptions`` are an exception to
+   this rule: they are not replaced, as their messages are written by you and are
+   meant to be shown to the user. Make sure not to include any sensitive data in them.
 
 .. _mock-test-algo-dev:
 

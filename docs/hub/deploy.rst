@@ -32,7 +32,6 @@ their own (advanced usage).
 The image registry, mailserver and blob storage are optional components that cannot be
 installed by vantage6. You have to install and deploy them yourself.
 
-
 Configuration
 -------------
 

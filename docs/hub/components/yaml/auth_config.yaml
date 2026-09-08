@@ -3,7 +3,9 @@ keycloak:
   standalone: false
 
   # Specify the version of the Keycloak Operator to use.
-  operatorVersion: "26.0.0"
+  # The CLI installs the compatibility-tested 26.6.2 operator by default. Setting a
+  # different version opts into a release that may not have been tested with vantage6.
+  operatorVersion: "26.6.2"
 
   # Specify the number of Keycloak instances to deploy.
   instances: 1
@@ -64,6 +66,17 @@ keycloak:
   # ensures that Keycloak is ready to be used by vantage6 services.
   realmImport:
     enabled: true
+
+    # Wait for Keycloak to report Ready before applying the realm import. This
+    # prevents a race on fresh installs where the realm-import controller
+    # reconciles before the Keycloak StatefulSet exists.
+    waitForKeycloak:
+      enabled: true
+      # Keep this below Helm's --timeout (default 5m): the release aborts on that
+      # budget first, so raising this without also raising --timeout has no effect.
+      timeout: 300s
+      # image used to check whether Keycloak is ready.
+      image: ghcr.io/vantage6/infrastructure/kubectl:5.0
 
     # Keycloak realm name. If used as not standalone, not that this overwrites the
     # global hub setting.

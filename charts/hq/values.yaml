@@ -57,3 +57,4 @@ ui:
 
 prometheus:
   enabled: false
+  volumeHostPath: "/var/lib/prometheus"

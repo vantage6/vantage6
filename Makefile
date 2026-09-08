@@ -51,6 +51,7 @@ help:
 	@echo "  base-image           : build the infrastructure base image"
 	@echo "  algorithm-base-image : build the algorithm base image"
 	@echo "  support-image        : build the supporing images"
+	@echo "  mirror-images        : re-publish third-party support images to our registry"
 	@echo "  rebuild              : rebuild all python packages"
 	@echo "  publish              : publish built python packages to pypi.org (BE CAREFUL!)"
 	@echo "  test                 : run all unittests and compute coverage"
@@ -137,6 +138,11 @@ support-alpine-image:
 		--platform ${PLATFORMS} \
 		-f ./docker/alpine.Dockerfile \
 		$(if ${_condition_push},--push .,.)
+
+# Copy the third-party support images listed in docker/mirror-images.txt
+mirror-images:
+	@echo "Re-publishing third-party images into ${REGISTRY} as :${TAG}"
+	REGISTRY=${REGISTRY} TAG=${TAG} PUSH_REG=${PUSH_REG} ./tools/mirror-images.sh
 
 image:
 	@echo "Building ${REGISTRY}/node:${TAG}"
