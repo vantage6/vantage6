@@ -5,8 +5,8 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 ## AI Agent Rules
 
 - **After every Python code change**: run `ruff format .` to apply formatting
-- **Never run `kubectl`** — K8s cluster state is outside the agent's scope
-- **Never run `devspace` or `v6 dev` commands** — these modify running K8s clusters and have long-running side effects
+- **Never run `kubectl`** — K8s cluster state is outside the agent's scope, unless explicitly asked to do so
+- **Never run `devspace` or `v6 dev` commands** — these should be user controlled
 - **Never run `v6 sandbox` commands** — these spin up Docker infrastructure
 - **Never modify `uv.lock` directly** — always regenerate through `make lock`
 - **Never run `make image` or `make publish`** — builds and releases are deliberate, user-initiated actions
