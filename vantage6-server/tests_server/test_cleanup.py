@@ -1,6 +1,8 @@
+import tempfile
 import unittest
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 import uuid
 from unittest.mock import patch, call
 
@@ -94,6 +96,57 @@ class TestCleanupRunsIsolated(unittest.TestCase):
 
         expected_calls = [call(self.uuid), call("input")]
         mock_delete_run_data.assert_has_calls(expected_calls, any_order=False)
+
+    def test_cleanup_completed_old_run_data_file_backend(self):
+        task = Task(
+            name="test-task",
+            description="Test task for cleanup",
+            image="test-image:latest",
+        )
+        self.session.add(task)
+        self.session.commit()
+
+        result_uuid = str(uuid.uuid4())
+        input_uuid = str(uuid.uuid4())
+
+        run = Run(
+            finished_at=datetime.now(timezone.utc) - timedelta(days=31),
+            result=result_uuid,
+            input=input_uuid,
+            log="log should be preserved",
+            status=TaskStatus.COMPLETED,
+            task=task,
+            blob_storage_used=True,
+        )
+
+        with tempfile.TemporaryDirectory() as base_dir:
+            from vantage6.server.service.file_storage_service import FileStorageService
+
+            adapter = FileStorageService({}, base_path=base_dir)
+            adapter.store_run_data(result_uuid, b"result-bytes")
+            adapter.store_run_data(input_uuid, b"input-bytes")
+            result_path = Path(base_dir) / result_uuid[:2] / result_uuid
+            input_path = Path(base_dir) / input_uuid[:2] / input_uuid
+            assert result_path.is_file()
+            assert input_path.is_file()
+
+            config = {
+                "runs_data_cleanup_days": 30,
+                "large_run_data_store": "filesystem",
+            }
+
+            self.session.add(run)
+            self.session.commit()
+
+            cleanup.cleanup_runs_data(
+                config, storage_adapter=adapter, include_input=True
+            )
+            self.session.refresh(run)
+
+            assert not result_path.exists()
+            assert not input_path.exists()
+            assert run.result == ""
+            assert run.input == ""
 
     def test_no_cleanup_recent_completed_run(self):
         # Ineligible: completed, but not old enough
