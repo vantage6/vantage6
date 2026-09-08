@@ -5,6 +5,8 @@ Privacy-preserving federated learning infrastructure. Python 3.13 monorepo manag
 ## AI Agent Rules
 
 - **After every Python code change**: run `ruff format .` to apply formatting
+- **Keep docstrings and comments to a minimum** — as concise as possible; explain only what the code cannot say for itself, never restate the signature or narrate the obvious
+- **Never reference issues in code** — no issue, ticket, or PR numbers (and no links to them) in comments or docstrings
 - **Never run `kubectl`** — K8s cluster state is outside the agent's scope, unless explicitly asked to do so
 - **Never run `devspace` or `v6 dev` commands** — these should be user controlled
 - **Never run `v6 sandbox` commands** — these spin up Docker infrastructure
