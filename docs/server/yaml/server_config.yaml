@@ -225,12 +225,28 @@ prometheus:
   # Ensure that Prometheus is in the same Docker network as the vantage6 server to resolve the hostname.
   exporter_port: 7603
 
-# Settings for the large result store. By default, the server uses a database to store all inputs and results.
-# Adding this will set Vantage6 to use blob storage rather than the database for both inputs and results.
-large_result_store:
-  # Type of the large result store. Currently, only "azure" is supported.
-  type: "azure"
-  # The name of the Blob Storage container to use for storing large results.
+# Settings for the large run-data store. By default (key absent), the
+# server uses the relational database to store all inputs and results.
+# Set this to enable streaming large inputs and results out of the
+# database instead.
+#
+# Two backends are supported; pick exactly one:
+#
+#   large_run_data_store: "filesystem"
+#     Stores inputs and results on the local filesystem. Under
+#     docker-compose, mount your host directory of choice to
+#     /mnt/run_data inside the server container. Under `v6 server start`,
+#     the CLI bind-mounts <ctx.data_dir>/run_data automatically.
+#
+#   large_run_data_store: "azure"
+#     Stores inputs and results in Azure Blob Storage. Requires the
+#     azure_run_data_store block below.
+large_run_data_store: "azure"
+
+# Required when large_run_data_store is "azure"; ignored otherwise.
+azure_run_data_store:
+  # The name of the Blob Storage container to use. Create this container
+  # in Azure beforehand.
   container_name: test-container
 
   # Use this block for connection string authentication:
