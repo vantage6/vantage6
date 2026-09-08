@@ -318,3 +318,9 @@ prometheus:
   {% else %}
   # storageClass: local-storage
   {% endif %}
+  # The host path for storing the Prometheus server data.
+  {% if prometheus.volumeHostPath is defined %}
+  volumeHostPath: {{ prometheus.volumeHostPath }}
+  {% else %}
+  # volumeHostPath: /var/lib/prometheus
+  {% endif %}
