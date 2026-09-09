@@ -475,9 +475,7 @@ class Node:
         parent_id = get_parent_id(task)
 
         # Run the container. This adds the created container/task to the list
-        # __docker.active_tasks. Starting may take a while - most notably when the
-        # algorithm image still has to be pulled - so the statuses the run goes through
-        # in the meantime are reported to HQ as they happen.
+        # __docker.active_tasks
         run_status: RunStatus = self.k8s_container_manager.run(
             action=container_action,
             run_id=run_id,
@@ -500,8 +498,7 @@ class Node:
         """
         Report a status of an algorithm run to HQ.
 
-        This is called both while the algorithm is still being started (e.g. while its
-        image is being pulled) and when the run has reached its final status.
+        Used for both intermediate statuses and the final one.
 
         Parameters
         ----------

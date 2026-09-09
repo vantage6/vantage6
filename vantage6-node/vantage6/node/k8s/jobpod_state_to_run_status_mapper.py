@@ -47,12 +47,8 @@ RUNTIME_POD_RELATED_REASONS_FOR_STILL_PENDING = {
 }
 
 # The reason reported for a 'waiting' state on a POD's container (when the POD is
-# Pending) that indicates the algorithm image is still being fetched onto the node.
-#
-# Note: kubelet reports 'ContainerCreating' for both pulling the image and creating the
-# container. Creating takes well under a second, while pulling a large image dominates
-# the wait, so this is reported as PULLING_IMAGE. Separating the two would require
-# reading the pod's events.
+# Pending) related to an ongoing image pull. 'ContainerCreating' also covers creating
+# the container, which is negligible next to pulling a large image.
 IMAGE_PULL_RELATED_REASONS_FOR_STILL_PENDING = {
     "ContainerCreating": (
         "Container image is being pulled and/or container is being created."

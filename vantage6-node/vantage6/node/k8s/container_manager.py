@@ -785,11 +785,8 @@ class ContainerManager:
         last_reported_status: RunStatus | None = None
 
         def report_intermediate_status(status: RunStatus) -> None:
-            """Report a non-final status, but only when it differs from the last one.
-
-            The pod is watched through an event stream that fires on every pod update,
-            so without this check the same status would be reported over and over.
-            """
+            """Report a non-final status, skipping repeats: the pod event stream
+            fires on every pod update, and each report is a request to HQ."""
             nonlocal last_reported_status
             if status == last_reported_status:
                 return
@@ -822,9 +819,6 @@ class ContainerManager:
                         task_namespace=self.task_namespace,
                     )
 
-                    # The pod has either started or given up trying: this is the
-                    # status to report back. Anything else means the pod is still on
-                    # its way to being started, so keep waiting.
                     if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(
                         pod_phase
                     ):
@@ -856,8 +850,8 @@ class ContainerManager:
                     task_namespace=self.task_namespace,
                 )
 
-                # Another iteration on the outer loop is performed if the pod has
-                # not started yet (e.g. because a large image is still being pulled).
+                # Keep watching if the pod has not started yet, e.g. because a
+                # large image is still being pulled.
                 if pod_phase == RunStatus.ACTIVE or RunStatus.has_finished(pod_phase):
                     return pod_phase
 
