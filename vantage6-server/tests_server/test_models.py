@@ -22,7 +22,6 @@ from vantage6.server.model import (
     Role,
 )
 from vantage6.server.model.rule import Scope, Operation
-from vantage6.server.utils import parse_datetime
 
 log = logging.getLogger(__name__.split(".")[-1])
 log.level = logging.CRITICAL
@@ -106,28 +105,26 @@ class TestUserModel(TestBaseModel):
 
     def test_last_email_recover_password_sent_survives_db_round_trip(self):
         """`last_email_recover_password_sent` is stored in a naive DateTime
-        column, so after a save (which expires and reloads the object) it
-        comes back naive. `parse_datetime` must be used to make it
-        comparable to an aware `datetime.now(timezone.utc)` again - without
-        it this raises `TypeError: can't compare offset-naive and
-        offset-aware datetimes`.
+        column: an aware UTC value goes in, and after a save (which expires
+        and reloads the object) it comes back naive with the same wall-clock
+        fields. Re-attaching UTC with `replace(tzinfo=...)` must therefore
+        restore the exact instant that was stored - the invariant the
+        password reset throttle in `resource/recover.py` relies on. Comparing
+        the naive value to an aware `datetime.now(timezone.utc)` directly
+        raises `TypeError: can't compare offset-naive and offset-aware
+        datetimes`.
         """
+        sent_at = datetime.datetime.now(datetime.timezone.utc)
         user = User(username="reset-pw-user", email="reset-pw-user@org.org")
-        user.last_email_recover_password_sent = datetime.datetime.now(
-            datetime.timezone.utc
-        )
+        user.last_email_recover_password_sent = sent_at
         user.save()
 
         # force a reload from the database, as happens the second time
         # `_handle_password_recovery` looks up the user
         reloaded_user = User.get_by_username("reset-pw-user")
-        self.assertIsNone(reloaded_user.last_email_recover_password_sent.tzinfo)
-
-        # this must not raise
-        self.assertLess(
-            parse_datetime(reloaded_user.last_email_recover_password_sent),
-            datetime.datetime.now(datetime.timezone.utc),
-        )
+        stored = reloaded_user.last_email_recover_password_sent
+        self.assertIsNone(stored.tzinfo)
+        self.assertEqual(stored.replace(tzinfo=datetime.timezone.utc), sent_at)
 
 
 class TestCollaborationModel(TestBaseModel):

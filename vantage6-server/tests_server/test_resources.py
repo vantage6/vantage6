@@ -7,6 +7,8 @@ import random
 import string
 import yaml
 import datetime
+import os
+import time
 
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -634,6 +636,44 @@ class TestResources(unittest.TestCase):
         _handle_password_recovery(
             self.server.app, user.username, None, config, self.server.mail
         )
+        self.assertEqual(send_email.call_count, 1)
+
+    @unittest.skipUnless(
+        hasattr(time, "tzset"), "time.tzset is unavailable on this platform"
+    )
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_throttle_holds_on_a_non_utc_server(self, send_email):
+        """The throttle must not depend on the server's local timezone.
+
+        ``last_email_recover_password_sent`` is a naive column whose value is
+        UTC. Attaching that zone is correct; converting with ``astimezone``
+        treats the value as local time and shifts it by the local offset,
+        which moves the timestamp into the past on a server ahead of UTC and
+        lets every request through. CI runs in UTC, where the offset is zero
+        and the two are indistinguishable, so pin a non-UTC zone here.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        original_tz = os.environ.get("TZ")
+        # a DST-free zone whose offset (+9) is far larger than the 60-minute
+        # throttle window, so the shifted comparison fails unambiguously
+        os.environ["TZ"] = "Asia/Tokyo"
+        time.tzset()
+        try:
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+        finally:
+            if original_tz is None:
+                del os.environ["TZ"]
+            else:
+                os.environ["TZ"] = original_tz
+            time.tzset()
+
         self.assertEqual(send_email.call_count, 1)
 
     @patch("vantage6.server.resource.recover.decode_token")
