@@ -96,6 +96,32 @@ class TestPodStatus(unittest.TestCase):
             RunStatus.NO_DOCKER_IMAGE,
         )
 
+    def test_image_being_pulled(self):
+        self.mock_pod.status.phase = "Pending"
+        self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
+        self.mock_pod.status.container_statuses[
+            0
+        ].state.waiting.reason = "ContainerCreating"
+        self.assertEqual(
+            compute_run_pod_status(
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
+            ),
+            RunStatus.PULLING_IMAGE,
+        )
+
+    def test_pod_still_initializing(self):
+        self.mock_pod.status.phase = "Pending"
+        self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
+        self.mock_pod.status.container_statuses[
+            0
+        ].state.waiting.reason = "PodInitializing"
+        self.assertEqual(
+            compute_run_pod_status(
+                log=self.silent_logger, task_namespace="", label="", pod=self.mock_pod
+            ),
+            RunStatus.INITIALIZING,
+        )
+
     def test_waiting_reason_not_ready_err(self):
         self.mock_pod.status.phase = "Pending"
         self.mock_pod.status.container_statuses[0].state = self.waiting_container_state
