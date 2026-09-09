@@ -350,7 +350,7 @@ class ContainerManager:
         token: str,
         databases_to_use: list[dict],
         action: AlgorithmStepType,
-        on_status_change: Callable[[RunStatus], None] | None = None,
+        on_status_change: Callable[[RunStatus], None],
     ) -> RunStatus:
         """
         Run a vantage6 algorithm on the Kubernetes cluster.
@@ -373,7 +373,7 @@ class ContainerManager:
             Metadata of the databases to use.
         action: AlgorithmStepType
             The action to perform
-        on_status_change: Callable[[RunStatus], None] | None
+        on_status_change: Callable[[RunStatus], None]
             Called whenever the run changes status while the algorithm is being
             started. Not called with the final status that is returned here.
 
@@ -738,7 +738,7 @@ class ContainerManager:
         self,
         run_io: RunIO,
         label: str,
-        on_status_change: Callable[[RunStatus], None] | None = None,
+        on_status_change: Callable[[RunStatus], None],
     ) -> RunStatus:
         """"
         This method monitors the status of a Kubernetes POD created by a task job and
@@ -760,7 +760,7 @@ class ContainerManager:
             RunIO object that contains information about the run
         label : str
             Label selector to identify the POD associated with the task job.
-        on_status_change: Callable[[RunStatus], None] | None
+        on_status_change: Callable[[RunStatus], None]
             Called whenever the pod changes to a status that is not final yet, such as
             RunStatus.PULLING_IMAGE.
 
@@ -791,7 +791,7 @@ class ContainerManager:
             so without this check the same status would be reported over and over.
             """
             nonlocal last_reported_status
-            if on_status_change is None or status == last_reported_status:
+            if status == last_reported_status:
                 return
             last_reported_status = status
             on_status_change(status)
