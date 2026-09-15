@@ -7,6 +7,8 @@ import random
 import string
 import yaml
 import datetime
+import os
+import time
 
 from http import HTTPStatus
 from unittest.mock import MagicMock, patch
@@ -26,6 +28,7 @@ from vantage6.server import ServerApp
 from vantage6.server.default_roles import DefaultRole
 from vantage6.backend.common import session
 from vantage6.server.resource.event import kill_task
+from vantage6.server.resource.recover import _handle_password_recovery
 from vantage6.server.model import (
     Rule,
     Role,
@@ -603,6 +606,75 @@ class TestResources(unittest.TestCase):
     def test_reset_password_missing_error(self, send_email):
         result = self.app.post("/api/recover/lost", json={})
         self.assertEqual(result.status_code, 400)
+
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_can_be_requested_multiple_times(self, send_email):
+        """Regression test for a bug where a second password reset request
+        raised `TypeError: can't compare offset-naive and offset-aware
+        datetimes`, because `last_email_recover_password_sent` is stored in
+        a naive DateTime column and comes back naive after a DB round trip
+        (session commit expires the object), while it was compared against
+        an aware `datetime.now(timezone.utc)`.
+
+        `_handle_password_recovery` is normally scheduled via
+        `gevent.spawn_later`, so it never actually runs within the request/
+        response cycle exercised by `test_reset_password` above. Calling it
+        directly here is what makes the bug reproducible in a test.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        # first request: no throttle timestamp set yet, email should be sent
+        # and `user.last_email_recover_password_sent` persisted to the DB
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
+
+        # second request straight away: must not raise, and must be
+        # throttled (no additional email sent)
+        _handle_password_recovery(
+            self.server.app, user.username, None, config, self.server.mail
+        )
+        self.assertEqual(send_email.call_count, 1)
+
+    @unittest.skipUnless(
+        hasattr(time, "tzset"), "time.tzset is unavailable on this platform"
+    )
+    @patch("vantage6.backend.common.mail_service.MailService.send_email")
+    def test_reset_password_throttle_holds_on_a_non_utc_server(self, send_email):
+        """The throttle must not depend on the server's local timezone.
+
+        ``last_email_recover_password_sent`` is a naive column whose value is
+        UTC. Attaching that zone is correct; converting with ``astimezone``
+        treats the value as local time and shifts it by the local offset,
+        which moves the timestamp into the past on a server ahead of UTC and
+        lets every request through. CI runs in UTC, where the offset is zero
+        and the two are indistinguishable, so pin a non-UTC zone here.
+        """
+        user = self.create_user()
+        config = {"smtp": {"email_from": "test@vantage6.ai"}}
+
+        original_tz = os.environ.get("TZ")
+        # a DST-free zone whose offset (+9) is far larger than the 60-minute
+        # throttle window, so the shifted comparison fails unambiguously
+        os.environ["TZ"] = "Asia/Tokyo"
+        time.tzset()
+        try:
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+            _handle_password_recovery(
+                self.server.app, user.username, None, config, self.server.mail
+            )
+        finally:
+            if original_tz is None:
+                del os.environ["TZ"]
+            else:
+                os.environ["TZ"] = original_tz
+            time.tzset()
+
+        self.assertEqual(send_email.call_count, 1)
 
     @patch("vantage6.server.resource.recover.decode_token")
     def test_recover_password(self, decode_token):
