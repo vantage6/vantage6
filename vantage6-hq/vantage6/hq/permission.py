@@ -83,8 +83,7 @@ class RuleCollection(RuleCollectionBase):
             True if the operation is allowed on the organization, False
             otherwise
         """
-        if isinstance(subject_org_id, str):
-            subject_org_id = int(subject_org_id)
+        subject_org_id = int(subject_org_id)
 
         auth_org = obtain_auth_organization()
 
@@ -142,10 +141,8 @@ class RuleCollection(RuleCollectionBase):
             True if the operation is allowed on the organization, False
             otherwise
         """
-        if isinstance(subject_org_id, str):
-            subject_org_id = int(subject_org_id)
-        if isinstance(collaboration_id, str):
-            collaboration_id = int(collaboration_id)
+        subject_org_id = int(subject_org_id)
+        collaboration_id = int(collaboration_id)
 
         auth_org = obtain_auth_organization()
 

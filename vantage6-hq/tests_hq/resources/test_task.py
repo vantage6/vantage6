@@ -27,8 +27,8 @@ log = logging.getLogger(logger)
 class TestResources(TestResourceBase):
     def test_task_with_id(self):
         org = Organization()
-        org.save()
-        task = Task(name="unit", init_org=org)
+        col = Collaboration(organizations=[org])
+        task = Task(name="unit", collaboration=col, init_org=org)
         task.save()
         headers = self.login_as_root()
         result = self.app.get(f"/api/task/{task.id}", headers=headers)
